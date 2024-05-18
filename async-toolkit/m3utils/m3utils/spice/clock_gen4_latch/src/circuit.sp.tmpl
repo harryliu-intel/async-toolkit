@@ -37,9 +37,7 @@
 Vvcc    vcc   0 DC=vtrue
 Vvssx   vssx  0 DC=0
 
-Xu_clkgen CLKOUT[0] CLKOUT[1] CLKOUT[2] CLKOUT[3]
-+vssx @PW_SPEC@
-+REFCLK vcc RSTB
+Xu_clkgen @IF_SPEC@
 +core_D_crypto_D_bitcoin_D_clock_D_TEST_U_CLOCK_U_GEN4_U_LATCH_D_1000
 
 
@@ -53,7 +51,7 @@ Xu_clkgen CLKOUT[0] CLKOUT[1] CLKOUT[2] CLKOUT[3]
 .PARAM resettime=1n
 .PARAM runtime=1
 
-.PARAM cycle=10000p
+.PARAM cycle=@CYCLE@
 .PARAM rise=@RISE@
 .PARAM halfcycle='cycle * 0.5'
 .PARAM halfrise='rise * 0.5'

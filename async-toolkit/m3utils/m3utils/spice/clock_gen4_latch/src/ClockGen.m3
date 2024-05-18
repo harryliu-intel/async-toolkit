@@ -27,6 +27,8 @@ IMPORT ProcUtils;
 FROM TechCleanup IMPORT DeleteMatching, DeleteRecursively,
                         CompressFile;
 IMPORT Word;
+IMPORT TimingCheckers;
+IMPORT CheckDir;
 
 <*FATAL Thread.Alerted*>
 <*FATAL OSError.E, Rd.Failure, Wr.Failure, Rd.EndOfFile*>
@@ -58,9 +60,26 @@ PROCEDURE GetNode(trace : Trace.T; nm : TEXT) : Trace.NodeId =
     END;
     RETURN idx
   END GetNode;
+
+TYPE
+  LatchArc = RECORD
+    d, clk : TEXT;
+  END;
+
+CONST
+  MyArcs = ARRAY OF LatchArc {
+  LatchArc { "clk4[0]", "rfck" },
+  LatchArc { "clk4[3]", "rfck" },
+  LatchArc { "clk2[0]", "_rfck" },
+  LatchArc { "clk2[1]", "_rfck" },
+  LatchArc { "clk2[2]", "_rfck" },
+  LatchArc { "clk2[3]", "_rfck" }
+  };
+
+CONST DutName = "u_clkgen";
   
 TYPE
-  ResultCol = { dl0, pw0, dl1, pw1, dl2, pw2, dl3, pw3 };
+  ResultCol = { dl0, pw0, dl1, pw1, dl2, pw2, dl3, pw3, minh, mins };
   
   Result = ARRAY ResultCol OF LONGREAL;
 
@@ -159,6 +178,63 @@ PROCEDURE DoTrace(traceRt : Pathname.T; mWr : Wr.T) : Result =
         result[VAL(2*i    ,ResultCol)] := latency;
         result[VAL(2*i + 1,ResultCol)] := pw
       END
+    END;
+
+    (* let's measure the setup and hold timings *)
+
+    VAR 
+      minHold := LAST(LONGREAL);
+      minSetup := LAST(LONGREAL);
+      arcHold, arcSetup : LONGREAL;
+    BEGIN
+      FOR i := FIRST(MyArcs) TO LAST(MyArcs) DO
+        arcHold := LAST(LONGREAL);
+        arcSetup := LAST(LONGREAL);
+        WITH arc   = MyArcs[i],
+             dnm   = DutName & "." & arc.d,
+             dId   = GetNode (trace, dnm),
+             dseq  = tranFinder.forNode(dId, TRUE),
+             
+             clknm = DutName & "." & arc.clk,
+             clkId = GetNode (trace, clknm),
+             cseq  = tranFinder.forNode(clkId, TRUE) DO
+          
+          FOR j := 0 TO cseq.size() - 1 DO
+            WITH ctran = cseq.get(j) DO
+              IF ctran.dir = 1 THEN
+                WITH thisSetup = TimingCheckers.MeasureSetup(j,
+                                                             dseq,
+                                                             cseq,
+                                                             CheckDir.All),
+                     thisHold  = TimingCheckers.MeasureHold(j,
+                                                            dseq,
+                                                            cseq,
+                                                            CheckDir.All) DO
+                  Debug.Out(F("clock tran %s at %s, data %s, hold %s setup %s",
+                              clknm,
+                              LR(ctran.at),
+                              dnm,
+                              LR(thisHold),
+                              LR(thisSetup)));
+                              
+                  arcHold := MIN(arcHold, thisHold);
+                  arcSetup := MIN(arcSetup, thisSetup);
+                END
+              END
+            END
+          END;
+          
+          Debug.Out(F("Arc %s -> %s hold %s setup %s",
+                      dnm, clknm, LR(arcHold), LR(arcSetup)))
+          
+        END;
+        minHold := MIN(minHold, arcHold);
+        minSetup := MIN(minSetup, arcSetup);
+      END;
+
+      Debug.Out(F("Worst timing : hold %s setup %s", LR(minHold), LR(minSetup)));
+      result[ResultCol.minh] := minHold;
+      result[ResultCol.mins] := minSetup
     END;
 
     IF mWr # NIL THEN
@@ -293,7 +369,7 @@ PROCEDURE DoPre() =
     VAR
       hspiceFile : TEXT;
       pwCount    := PwCount[cell];
-      pwSpec     := "";
+      ifSpec     := "";
       speedStr := "";
       val : TEXT;
     BEGIN
@@ -310,8 +386,10 @@ PROCEDURE DoPre() =
           
           speedStr := speedStr & F("Vpwdly%s PW_DLY[%s] 0 DC=%s\n",
                                    Int(i), Int(i), val);
-          pwSpec := "PW_DLY[0] PW_DLY[1] PW_DLY[2] PW_DLY[3]"
-        END
+        END;
+
+        ifSpec := "CLKOUT[0] CLKOUT[1] CLKOUT[2] CLKOUT[3] vssx PW_DLY[0] PW_DLY[1] PW_DLY[2] PW_DLY[3] REFCLK vcc RSTB"
+
 
       |
         Cell.LatchTherm =>
@@ -327,14 +405,31 @@ PROCEDURE DoPre() =
           speedStr := speedStr & F("Vpwdly%s PW_DLY[%s] 0 DC=%s\n",
                                    Int(i), Int(i), val);
 
-          pwSpec := "PW_DLY[0] PW_DLY[10] PW_DLY[11] PW_DLY[12] PW_DLY[13] PW_DLY[14] PW_DLY[15] PW_DLY[1] PW_DLY[2] PW_DLY[3] PW_DLY[4] PW_DLY[5] PW_DLY[6] PW_DLY[7] PW_DLY[8] PW_DLY[9]"
-        END
+        END;
+        ifSpec := "CLKOUT[0] CLKOUT[1] CLKOUT[2] CLKOUT[3] vssx PW_DLY[0] PW_DLY[10] PW_DLY[11] PW_DLY[12] PW_DLY[13] PW_DLY[14] PW_DLY[15] PW_DLY[1] PW_DLY[2] PW_DLY[3] PW_DLY[4] PW_DLY[5] PW_DLY[6] PW_DLY[7] PW_DLY[8] PW_DLY[9] REFCLK vcc RSTB"
+
+      |
+        Cell.LatchOnehot =>
+        hspiceFile := "CLOCK_GEN4_LATCH_ONEHOT_ROUTED_100C.hspice";
+
+        FOR i := 0 TO pwCount - 1 DO
+          IF speed = i THEN
+            val := "vtrue"
+          ELSE
+            val := "0"
+          END;
+          
+          speedStr := speedStr & F("Vpwdly%s PW_DLY[%s] 0 DC=%s\n",
+                                   Int(i), Int(i), val);
+        END;
+
+        ifSpec := "CLKOUT[0] CLKOUT[1] CLKOUT[2] CLKOUT[3] PW_DLY[0] PW_DLY[10] PW_DLY[11] PW_DLY[12] PW_DLY[13] PW_DLY[14] PW_DLY[1] PW_DLY[2] PW_DLY[3] PW_DLY[4] PW_DLY[5] PW_DLY[6] PW_DLY[7] PW_DLY[8] PW_DLY[9] REFCLK RSTB vcc vssx"
 
       END;
 
       EVAL map.put("@HSPICE_FILE@", hspiceFile);
       EVAL map.put("@SPEED@", speedStr);
-      EVAL map.put("@PW_SPEC@", pwSpec)
+      EVAL map.put("@IF_SPEC@", ifSpec)
     END;
     
     (********************* done setting up map *********************)
@@ -427,7 +522,7 @@ PROCEDURE DoClean() =
 TYPE
   Phase = { Pre, Sim, Conv, Clean, Post };
   Proc  = PROCEDURE();
-  Cell  = { Latch, LatchTherm };
+  Cell  = { Latch, LatchTherm, LatchOnehot };
   
 CONST
   PhaseNames = ARRAY Phase OF TEXT       { "pre", "sim", "conv", "clean", "post" };
@@ -435,9 +530,10 @@ CONST
   DefSweeps  = 4;
   DefSpeed   = 0;
   DefRise    = 30.0d-12;
+  DefCycle   = 10000.0d-12; (* 10 ns *)
 
-  CellNames = ARRAY Cell OF TEXT     { "latch", "latch_therm" };
-  PwCount   = ARRAY Cell OF CARDINAL { 4, 16 };
+  CellNames = ARRAY Cell OF TEXT     { "latch", "latch_therm", "latch_onehot" };
+  PwCount   = ARRAY Cell OF CARDINAL { 4, 16, 15 };
   
 VAR
   pp                          := NEW(ParseParams.T).init(Stdio.stderr);
@@ -457,6 +553,8 @@ VAR
   rise                        := DefRise;
 
   cell                        := Cell.Latch;
+
+  cycle                       := DefCycle;
   
 BEGIN
   IF m3utils = NIL THEN
@@ -498,6 +596,10 @@ BEGIN
 
     IF pp.keywordPresent("-process") THEN
       process := pp.getNext()
+    END;
+
+    IF pp.keywordPresent("-cycle") THEN
+      cycle := pp.getNextLongReal()
     END;
 
     IF pp.keywordPresent("-p") THEN

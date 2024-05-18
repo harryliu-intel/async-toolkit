@@ -10,14 +10,16 @@ nb_qslot=${NBQSLOT}
 step=1
 
 sweeps="40"
-temps="-40 0 25 50 75 85 100 125"
+temps="-40 0 25 75 85 100 125"
 procs="tttt rcff rcss rxsf rxfs"
 volts="0.225 0.250 0.275 0.300 0.325 0.350 0.375 0.450"
 #speeds="16"
-speeds="0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16"
-rises="30e-12 50e-12 70e-12 90e-12"
-#cells="latch latch_therm"
-cells="latch_therm"
+speeds="0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15"
+#rises="30e-12 50e-12 70e-12 90e-12"
+rises="30e-12 75e-12"
+#cells="latch latch_therm latch_onehot"
+cells="latch_onehot"
+cycles="500"
 
 # for testing:
 
@@ -28,7 +30,7 @@ if [ "${testing}" == "1" ]; then
     volts="0.30"
     sweeps="4"
     procs="tttt"
-    speeds="5"
+    speeds="0 1 5 15"
     rises="30e-12"
 fi
 
@@ -59,13 +61,14 @@ EOF
 
 tasknum=0
 
-for cell in ${cells}; do
-for rise in ${rises}; do
+for cycl in ${cycles}; do
+for cell in ${cells};  do
+for rise in ${rises};  do
 for sped in ${speeds}; do
-for proc in ${procs}; do
-for sweep in ${sweeps}; do
-for volt in ${volts}; do
-for temp in ${temps}; do
+for proc in ${procs};  do
+for swep in ${sweeps}; do
+for volt in ${volts};  do
+for temp in ${temps};  do
             
     runfile=${RUNDIR}/${tasknum}.sh
     
@@ -81,11 +84,11 @@ for temp in ${temps}; do
     echo "cd ${runsubdir}"     >> ${runfile}
     
     
-    basecmd="${CLOCKGENSIM} -vdd ${volt} -temp ${temp} -process ${proc} -rise ${rise} -cell ${cell}"
+    basecmd="${CLOCKGENSIM} -vdd ${volt} -temp ${temp} -process ${proc} -rise ${rise} -cycle ${cycl} -cell ${cell}"
     
     echo >> ${runfile}
     
-    realcmd="${basecmd} -speed ${sped} -sweeps ${sweep}"
+    realcmd="${basecmd} -speed ${sped} -sweeps ${swep}"
     
     echo "${realcmd} -p pre"   >> ${runfile}
     echo "${realcmd} -p sim"   >> ${runfile}
@@ -96,6 +99,7 @@ for temp in ${temps}; do
     
     tasknum=`expr $tasknum + 1`
             
+done
 done
 done
 done

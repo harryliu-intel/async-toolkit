@@ -1,6 +1,7 @@
 import ("libm3")
 import ("cit_util")
 import ("spicelib")
+import ("spicetiming")
 import ("tracelib")
 import ("metalib")
 import ("techc")

@@ -21,23 +21,23 @@ PROCEDURE MeasureFromSpice(spiceFn        : Pathname.T;
                            mapper         : Mapper;
                            traceRt        : Pathname.T;
                            graphNs        : LONGREAL;
-                       Dot      : TEXT;
-                       allNames : TextSet.T;
-                       dutPfx   : TEXT;
-                      tranFinder        : TransitionFinder.T;
-                      resetTime         : LONGREAL;
-                    mappedNames : TextTextTbl.T);
-
+                           Dot            : TEXT;
+                           allNames       : TextSet.T;
+                           dutPfx         : TEXT;
+                           tranFinder     : TransitionFinder.T;
+                           resetTime      : LONGREAL;
+                           mappedNames    : TextTextTbl.T);
+  
 PROCEDURE MeasureByName(truncValues : CARDINAL;
                         trace       : Trace.T;
                         traceRt     : TEXT;
                         vdd         : LONGREAL;
                         valueTag    : TEXT;
                         graphNs     : LONGREAL;
-                      nMargins          : CARDINAL;
-                      tranFinder        : TransitionFinder.T;
-                      resetTime         : LONGREAL;
-                    mappedNames : TextTextTbl.T);
+                        nMargins    : CARDINAL;
+                        tranFinder  : TransitionFinder.T;
+                        resetTime   : LONGREAL;
+                        mappedNames : TextTextTbl.T);
 
 TYPE
   Node = RECORD
@@ -62,10 +62,10 @@ TYPE
   END;
 
 CONST
-  MaxArcs = 6;
+  MaxArcs      = 6;
   QuickMargins = 1000;
-  NoNode = N { NIL, FALSE };
-  NoArc   = Arc { NoNode, NoNode, FIRST(CheckMode.T), 0, Dn };
+  NoNode       = N { NIL, FALSE };
+  NoArc        = Arc { NoNode, NoNode, FIRST(CheckMode.T), 0, Dn };
 
 CONST
   Up = CheckDir.T { 1 };
