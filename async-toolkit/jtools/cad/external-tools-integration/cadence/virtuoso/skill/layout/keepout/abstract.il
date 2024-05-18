@@ -60,28 +60,32 @@
   ; create keepout for all existing vias and metal
   (for m 0 TopMetal-1
        name = Via[m]
-       map = (list name)
-       (foreach purpose (list "drawing" "gnd" "vdd" "fill")
-                map = (append map (list (list Via[m] purpose)))
-                )
-       inLayerMap = (cons map inLayerMap)
-       outLayerMap = (cons (list name (list Via[m] KeepoutPurpose)) outLayerMap)
-       map = (list (sprintf nil "flood_%s" Via[m]) (list Via[m] "blockage"))
-       inLayerMap = (cons map inLayerMap)
+       (when name
+         map = (list name)
+         (foreach purpose (list "drawing" "gnd" "vdd" "fill")
+                  map = (append map (list (list Via[m] purpose)))
+                  )
+         inLayerMap = (cons map inLayerMap)
+         outLayerMap = (cons (list name (list Via[m] KeepoutPurpose)) outLayerMap)
+         map = (list (sprintf nil "flood_%s" Via[m]) (list Via[m] "blockage"))
+         inLayerMap = (cons map inLayerMap)
+         )
        )
   (for m 0 TopMetal
        name = Metal[m]
-       map = (list name)
-       (foreach purpose (list "drawing" "gnd" "vdd" "fill")
-                map = (append map (list (list Metal[m] purpose)))
-                (when m==0 || m>=2 && m<=5 ; complement layers too
-                      map = (append map (list (list (sprintf nil "mc%d" m) purpose)))
-                      )
-                )
-       inLayerMap = (cons map inLayerMap)
-       outLayerMap = (cons (list name (list Metal[m] KeepoutPurpose)) outLayerMap)
-       map = (list (sprintf nil "flood_%s" Metal[m]) (list Metal[m] "blockage"))
-       inLayerMap = (cons map inLayerMap)
+       (when name
+         map = (list name)
+         (foreach purpose (list "drawing" "gnd" "vdd" "fill")
+                  map = (append map (list (list Metal[m] purpose)))
+                  (when m==0 || m>=2 && m<=5 ; complement layers too
+                        map = (append map (list (list (sprintf nil "mc%d" m) purpose)))
+                        )
+                  )
+         inLayerMap = (cons map inLayerMap)
+         outLayerMap = (cons (list name (list Metal[m] KeepoutPurpose)) outLayerMap)
+         map = (list (sprintf nil "flood_%s" Metal[m]) (list Metal[m] "blockage"))
+         inLayerMap = (cons map inLayerMap)
+         )
        )
 
   (ICVLayerProcessorSimple abstractCV abstractCV "MakeAbstract" inLayerMap outLayerMap)
@@ -367,6 +371,7 @@
 ; Chop holes in flooded keepout around pins
 (defun AbstractCutAroundPins (cv pinlpp keepoutlpp @key (cutout nil))
   (unless cutout cutout = MetalSpace[(car pinlpp)])
+  (unless cutout (error "No MetalSpace for %s\n" (car pinlpp)))
   (betterLayerSize cv pinlpp cutout Scratch1LPP)
   (leLayerAndNot cv keepoutlpp Scratch1LPP Scratch2LPP)
   (foreach shape cv->shapes
@@ -383,6 +388,7 @@
     (unless space  space= MetalSpace[(car lpp)])
     (unless shrink shrink=FloodfillBoundarySpace[(car lpp)])
     (unless shrink shrink=MetalBoundarySpace[(car lpp)])
+    (unless shrink shrink=(list 0 0) (warn "No shrink value specified for AbstractInvertKeepout for %s\n" (car lpp)))
     (foreach shape cv1->shapes
              (when shape->lpp==lpp (dbCopyFig shape cv2)->lpp=Scratch1LPP)
              )
