@@ -1,0 +1,12 @@
+import ("libm3")
+import ("cit_util")
+import ("spicelib")
+import ("spicetiming")
+import ("tracelib")
+import ("metalib")
+
+implementation ("Main")
+
+program ("spicetiming")
+
+
