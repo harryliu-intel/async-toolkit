@@ -481,8 +481,7 @@ PROCEDURE Convert1(fsdbRoot : Pathname.T) =
                                         stdin  := NIL);
   BEGIN
     TRY
-      cm.wait();
-      FS.DeleteFile(fsdbRoot & ".fsdb")
+      cm.wait()
     EXCEPT
       ProcUtils.ErrorExit(err) =>
       Debug.Error(F("Couldn't run convert1 (%s) : %s", cmd, ProcUtils.FormatError(err)))
@@ -507,6 +506,7 @@ PROCEDURE DoClean() =
     iter := FS.Iterate(".");
     fn   : Pathname.T;
   BEGIN
+    DeleteMatching(".", "\\.fsdb$");
     DeleteMatching(".", "\\.ic0$");
     DeleteMatching(".", "\\.mc0$");
     WHILE iter.next(fn) DO
