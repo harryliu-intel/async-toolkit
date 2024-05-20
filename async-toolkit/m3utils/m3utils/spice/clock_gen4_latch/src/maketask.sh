@@ -19,7 +19,9 @@ speeds="0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15"
 rises="30e-12 75e-12"
 #cells="latch latch_therm latch_onehot"
 cells="latch_onehot"
-cycles="500"
+cycles="500e-12"
+
+doclean=1
 
 # for testing:
 
@@ -32,6 +34,7 @@ if [ "${testing}" == "1" ]; then
     procs="tttt"
     speeds="0 1 5 15"
     rises="30e-12"
+    doclean=0
 fi
 
 
@@ -93,7 +96,9 @@ for temp in ${temps};  do
     echo "${realcmd} -p pre"   >> ${runfile}
     echo "${realcmd} -p sim"   >> ${runfile}
     echo "${realcmd} -p conv"  >> ${runfile}
-    echo "${realcmd} -p clean" >> ${runfile}
+    if [ "${doclean}" == "1" ]; then
+        echo "${realcmd} -p clean" >> ${runfile}
+    fi
     echo "${realcmd} -p post"  >> ${runfile}
     chmod +x ${runfile}
     

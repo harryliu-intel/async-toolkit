@@ -355,7 +355,7 @@ PROCEDURE DoPre() =
     
     Debug.Out("DoPre()");
 
-    EVAL map.put("@RISE@", LR(rise));
+    EVAL map.put("@CYCLE@", LR(cycle));
     
     EVAL map.put("@HSP_DIR@","/nfs/site/disks/zsc9_fwr_sd_001/mnystroe/p1278_3x0p9eu1/2023ww43d5/models_core_hspice/m14_2x_1xa_1xb_6ya_2yb_2yc__bm5_1ye_1yf_2ga_mim3x_1gb__bumpp");
     EVAL map.put("@VDD@", LR(vdd));
