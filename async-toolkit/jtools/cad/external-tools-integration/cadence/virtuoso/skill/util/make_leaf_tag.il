@@ -2,7 +2,7 @@
 (defun MakeLeafTag (@key (CV (geGetEditCellView))
                          (targetViewName "layout_tag"))
   (let (tagCV CopyExact lpp z th pcre fillCV abstractCV bbox rows cols
-              ete0 ete1 ete2 w h x0 y0 x1 y1 fill x y fig rect points l0 l1 l2 pins)
+              ete0 ete1 ete2 w h x0 y0 x1 y1 fill x y fig rect points l0 l1 l2 pins n)
     (printf "MakeLeafTag %s\n" CV->cellName)
 
     ; find abstract view
@@ -49,6 +49,7 @@
     cols=(round (x1-x0)/GridPolyPitch)
     rows=(round (y1-y0)/TrackPitch)
     fill=0
+    n=0
     (for row -1 rows
          (for col -2 cols+1
               x=x0+col*GridPolyPitch
@@ -56,6 +57,7 @@
               (when col<0 || col>=cols || row<0 || row>=rows
                     inst=(dbCreateInst tagCV fillCV (sprintf nil "fill%d" fill) x:y "R0")
                     (LegalizeShortInstance inst)
+                    n=(PromotePolyTcnPins inst ?CV tagCV ?n n)
                     fill++
                     )
               )
@@ -157,4 +159,30 @@
     (dbSave tagCV)
     tagCV
     )
+  )
+
+; promote Poly and Tcn pins from a fill cell instance
+(defun PromotePolyTcnPins (inst @key (n 0) (CV (geGetEditCellView)))
+  (let (fig bbox)
+    (foreach s inst->master->shapes
+             (cond (s->lpp==(list "poly" "drawing")
+                            bbox=(dbTransformBBox s->bBox inst->transform)
+                            (unless (dbGetOverlaps CV bbox (list "fti" "drawing") 0:31)!=nil &&
+                                    (dbGetOverlaps CV bbox (list "poly" "pin") 0:31)!=nil
+                                    fig=(dbCopyFig s CV inst->transform)
+                                    fig->lpp=(list "poly" "pin")
+                                    (dbCreatePin (dbMakeNet CV (sprintf nil "poly_zone_%d" n++)) fig)
+                                    (LabelPin CV fig)
+                                    )
+                            )
+                   (s->lpp==(list "tcn" "fill")
+                            fig=(dbCopyFig s CV inst->transform)
+                            fig->lpp=(list "tcn" "pin")
+                            (dbCreatePin (dbMakeNet CV (sprintf nil "diffcon_zone_%d" n++)) fig)
+                            (LabelPin CV fig)
+                            )
+                   )
+             )
+    )
+  n
   )
