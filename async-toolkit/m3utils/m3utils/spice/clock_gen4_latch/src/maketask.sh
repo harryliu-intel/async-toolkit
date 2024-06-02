@@ -7,19 +7,26 @@ SRCDIR=${M3UTILS}/spice/clock_gen4_latch/src
 
 nb_queue=${NBPOOL}
 nb_qslot=${NBQSLOT}
+
+# kill if > 128GB real memory
+
+nb_constraints="--job-constraints 'tRM>131072:kill'"
+
 step=1
 
 sweeps="40"
 temps="-40 0 25 75 85 100 125"
 procs="tttt rcff rcss rxsf rxfs"
-volts="0.225 0.250 0.275 0.300 0.325 0.350 0.375 0.450"
+#volts="0.225 0.250 0.275 0.300 0.325 0.350 0.375 0.450 0.500 0.600 0.650 0.750 0.900"
+volts="0.500 0.600 0.650 0.750 0.900"
 #speeds="16"
 speeds="0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15"
 #rises="30e-12 50e-12 70e-12 90e-12"
 rises="30e-12 75e-12"
 #cells="latch latch_therm latch_onehot"
 cells="latch_onehot"
-cycles="500e-12"
+#cycles="500e-12"
+cycles="2000e-12"
 
 doclean=1
 
@@ -48,7 +55,7 @@ cat > ${taskfile} <<EOF
     
 JobsTask {
   WorkArea ${RUNDIR}
-  SubmissionArgs --class SLES12SP5
+  SubmissionArgs --class SLES12SP5 --class 4C
 
   Queue ${nb_queue} {
     Qslot ${nb_qslot}
@@ -120,7 +127,7 @@ launchnum=0
 echo "tasknum ${tasknum} launchnum ${launchnum}"
 
 while [ "${launchnum}" -lt "${tasknum}" ]; do
-    echo "nbjob run --log-file ${RUNDIR}/${launchnum}.log ${SRCDIR}/launcher.sh ${RUNDIR} ${launchnum} ${step}"    >> $taskfile
+    echo "nbjob run ${nb_constraints} --log-file ${RUNDIR}/${launchnum}.log ${SRCDIR}/launcher.sh ${RUNDIR} ${launchnum} ${step}"    >> $taskfile
     launchnum=`expr $launchnum + $step`
 done
 
