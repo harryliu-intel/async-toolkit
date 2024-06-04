@@ -319,7 +319,10 @@
                y=(round y/MfgGrid)
                nx=(round nx/MfgGrid)
                ny=(round ny/MfgGrid)
-               aligned=aligned && x==nx && y==ny
+               (unless x==nx && y==ny
+                       (printf "misaligned boundary point %g:%g\n" (car xy) (cadr xy))
+                       aligned=nil
+                       )
                )
       )
     aligned
