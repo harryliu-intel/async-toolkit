@@ -806,17 +806,19 @@ useICV = t
 
 ; Flip and offset mis-aligned single-height standard cells
 (defun LegalizeShortInstance (inst)
-  (let (x y type)
+  (let (x y type pitch)
     type = (dbFindProp inst->master "CopyExact")->value
-    (when type && ((strncmp type "g1i" 3)==0 || (strncmp type "g1m" 3)==0 || (strncmp type "i0s" 3)==0) &&
-          ((substring type 13 1)=="n" || type=="g1izh7dbaseyls04x")
+    (when type && ((strncmp type "g1i" 3)==0 || (strncmp type "g1m" 3)==0 ||
+                   (strncmp type "i0s" 3)==0 || (strncmp type "i0m" 3)==0 || (strncmp type "x78" 3)==0) &&
+                   ((substring type 13 1)=="n" || type=="g1izh7dbaseyls04x")
       (unless (CheckInstanceAlignment inst ?check_x nil ?check_parent_grid nil)
         x = (car  inst->xy)
         y = (cadr inst->xy)
-        (cond (inst->orient=="R0"   inst->orient="MX"   inst->xy=x:y+TrackPitch)
-              (inst->orient=="MX"   inst->orient="R0"   inst->xy=x:y-TrackPitch)
-              (inst->orient=="MY"   inst->orient="R180" inst->xy=x:y+TrackPitch)
-              (inst->orient=="R180" inst->orient="MY"   inst->xy=x:y-TrackPitch)
+        pitch=(abs (cadr (cadr inst->master->prBoundary->bBox))-(cadr (car inst->master->prBoundary->bBox)))
+        (cond (inst->orient=="R0"   inst->orient="MX"   inst->xy=x:y+pitch)
+              (inst->orient=="MX"   inst->orient="R0"   inst->xy=x:y-pitch)
+              (inst->orient=="MY"   inst->orient="R180" inst->xy=x:y+pitch)
+              (inst->orient=="R180" inst->orient="MY"   inst->xy=x:y-pitch)
               )
         )
       )
