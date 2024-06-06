@@ -13,6 +13,7 @@ useICV = t
         (ConnectDanglingPins nil)  ; paint metal on top of one-terminal subcell pins
         (ConnectAbuttingPins t)    ; paint metal between nearby pins on the same net
 	(inPlacePins t)            ; allow drawing of InPlace pins
+        (ignorePinError t)         ; don't abort if in-place pins aren't good
         (ConnectNearbyShapes t)    ; connect toplevel shapes with RouteNearby
         (powerGrid nil)            ; add a power grid
         (colorGrid nil)            ; add a color grid
@@ -44,14 +45,14 @@ useICV = t
 
     ; lock all instances unless softMacro
     (unless softMacro (foreach x CV->instances x->status="locked"))
-
+    
     ; draw pins and canonicalize preroutes
     (AddBusWires ?CV CV)
     (DeletePinsByType "InPlace" ?CV CV)
     (CanonicalizePins ?CV CV) ; for flattened pins
     (UpdateFloorplan ?CV CV ?recurse nil ?skipInstances t ?skipNets t) ; connect subcell pins for in-place pins
     (RefreshAllBuswires ?CV CV)
-    (DrawMidLevelPins ?CV CV ?include_supply t ?inplace_pins inPlacePins)
+    (DrawMidLevelPins ?CV CV ?include_supply t ?inplace_pins inPlacePins ?ignore_error ignorePinError)
     (CanonicalizeNets ?CV CV)
     (UpdateFloorplan ?CV CV ?recurse nil ?skipInstances t) ; set pin directions
 

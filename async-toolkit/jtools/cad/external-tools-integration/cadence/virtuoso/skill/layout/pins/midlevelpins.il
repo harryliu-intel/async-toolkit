@@ -25,7 +25,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defun DrawMidLevelPins ( @key (CV (UIGetCellView)) (include_supply nil) (supply_topMetal TopSupplyMetal)
-                               (all_supply nil) (all_signal nil) (inplace_pins t) )
+                               (all_supply nil) (all_signal nil) (inplace_pins t) (ignore_error nil))
   (let (TEMP
         WarningFile
         ErrorFile
@@ -70,7 +70,7 @@
       )
     (close Warnport)
     (close Errport)
-    (when status (error "Fatal InPlace Pin Error"))
+    (when status && !ignore_error (error "Fatal InPlace Pin Error"))
     )
   t
   )
