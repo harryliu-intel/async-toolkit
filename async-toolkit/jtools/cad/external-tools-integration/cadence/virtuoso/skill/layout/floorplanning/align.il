@@ -53,6 +53,12 @@
                      oy = 0.18 ; I0M cells are offset by one row from origin
                      (list lib h v oy)
                      )
+          (CopyExact && (substring CopyExact 1 6)=="x78srm"
+                     h = (substring CopyExact 13 1)
+                     v = (substring CopyExact 12 1)
+                     oy = 0.0 ; X78 sram column cells are not offset
+                     (list lib h v oy)
+                     )
           (t nil)
           )
     )
@@ -75,6 +81,11 @@
                  (CopyExact && (substring CopyExact 1 3)=="i0m"
                             ox=0.5*GridPolyPitch
                             gy=0.18*(if h=="n" && CV->viewName=="floorplan" 1 2)
+                            )
+                 (CopyExact && (substring CopyExact 1 6)=="x78srm"
+                            (printf "x78srm\n")
+                            ox=0.5*GridPolyPitch
+                            gy=0.21*(if h=="n" && CV->viewName=="floorplan" 1 2)
                             )
                  (l=="i0s" && v=="1" gx=  GridPolyPitch ox=0.5*GridPolyPitch)
                  (l=="i0s" && v=="4" gx=4*GridPolyPitch ox=0.5*GridPolyPitch)
