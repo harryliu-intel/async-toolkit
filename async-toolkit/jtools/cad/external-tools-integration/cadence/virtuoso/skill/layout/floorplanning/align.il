@@ -83,7 +83,6 @@
                             gy=0.18*(if h=="n" && CV->viewName=="floorplan" 1 2)
                             )
                  (CopyExact && (substring CopyExact 1 6)=="x78srm"
-                            (printf "x78srm\n")
                             ox=0.5*GridPolyPitch
                             gy=0.21*(if h=="n" && CV->viewName=="floorplan" 1 2)
                             )
