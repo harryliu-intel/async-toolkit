@@ -810,7 +810,8 @@ useICV = t
   (let (x y type pitch)
     type = (dbFindProp inst->master "CopyExact")->value
     (when type && ((strncmp type "g1i" 3)==0 || (strncmp type "g1m" 3)==0 ||
-                   (strncmp type "i0s" 3)==0 || (strncmp type "i0m" 3)==0 || (strncmp type "x78" 3)==0) &&
+                   (strncmp type "i0s" 3)==0 || (strncmp type "i0m" 3)==0 ||
+                   (strncmp type "x78srm" 6)==0) &&
                    ((substring type 13 1)=="n" || type=="g1izh7dbaseyls04x")
       (unless (CheckInstanceAlignment inst ?check_x nil ?check_parent_grid nil)
         x = (car  inst->xy)
