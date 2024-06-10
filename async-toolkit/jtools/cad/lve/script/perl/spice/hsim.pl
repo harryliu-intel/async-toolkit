@@ -58,8 +58,8 @@ my $env_spice_file = "";
 my $accurate = 0;
 my %default_voltage = ('ground' => 0, 'power' => 'true',
                        'reset' => 'true',
-                       'start' => 'true', 'step' => 'true', 'capture' => 'true',
-                       'cutscan' => 0, 'delay' => 0);
+                       'start' => 'true', 'step' => 'true', 'capture' => 'true', 'passthru' => 'true',
+                       'cutscan' => 0, 'delay' => 0, 'inject' => 0);
 my %voltage;
 my %special_net;
 
@@ -97,7 +97,7 @@ sub usage() {
     $usage .= "    --totem-mode (for running totem dynamic\n";
     $usage .= "    --sigma-factor (to vary corner limits, 0..1)\n";
     $usage .= "    --extra-includes (for files needed for running totem in hsim)\n";
-    $usage .= "    --default-(ground|power|reset|start|step|capture|cutscan|delay)=voltage (specify default voltage)\n";
+    $usage .= "    --default-(ground|power|reset|start|step|capture|cutscan|delay|passthru|inject)=voltage (specify default voltage)\n";
     $usage .= "    --voltage:node=voltage (set voltage for specific ground/power/reset nets)\n";
     die "$usage";
 }
@@ -179,7 +179,7 @@ while (defined $ARGV[0] && $ARGV[0] =~ /^--(.*)/) {
             if ($fields[16] eq "OUT") { push @out_nodes, $fields[0]; }
         }
         close NODE_PROPS;
-    } elsif ($flag =~ "default-(power|ground|reset|start|step|capture|cutscan|delay)") {
+    } elsif ($flag =~ "default-(power|ground|reset|start|step|capture|cutscan|delay|passthru|inject)") {
         $default_voltage{$1} = $value;
     } elsif ($flag =~ /^voltage:(\S+)$/) {
         $voltage{$1} = $value;
@@ -373,7 +373,7 @@ if ($env_spice_file ne "") {
         if (/^\*\* JFlat:begin/../^\*\* JFlat:end/) {
             last if /^\*\* JFlat:end/;
             chomp;
-            if (/^\*\* JFlat:(ground|power|reset|start|step|capture|cutscan|delay)_net:(.*)/) {
+            if (/^\*\* JFlat:(ground|power|reset|start|step|capture|cutscan|delay|passthru|inject)_net:(.*)/) {
                 my $type = $1;
                 my @aliases;
                 foreach my $net (split("=",$2)) {
@@ -415,7 +415,7 @@ foreach my $type ('ground', 'power') {
     }
 }
 
-# reset/start/step/capture/cutscan/delay are driven through a resistor so it can be overpowered by env driver
+# reset/start/step/capture/cutscan/delay/passthru/inject are driven through a resistor so it can be overpowered by env driver
 if (defined $special_net{'reset'}) {
     foreach my $name (sort @{$special_net{'reset'}}) {
         my $t0 = $reset_time;
@@ -436,7 +436,7 @@ foreach my $type ('start', 'step', 'capture') {
         }
     }
 }
-foreach my $type ('delay', 'cutscan') {
+foreach my $type ('delay', 'cutscan', 'passthru', 'inject') {
     if (defined $special_net{$type}) {
         foreach my $name (sort @{$special_net{$type}}) {
             my $v = get_voltage($name, $type);
