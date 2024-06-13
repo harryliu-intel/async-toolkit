@@ -705,7 +705,7 @@ useICV = t
 
 ; inline one level with correct instance names but no extra work
 (defun TrivialInline (inst @key (CV (geGetEditCellView)))
-  (let (sub2 path prefixes newprefixes orient flipX flipY)
+  (let (sub2 path prefixes newprefixes orient flipX flipY netmap)
     ; flatten instances
     (foreach sub1 inst->master->instances
              sub2 = (dbCopyFig sub1 CV inst->transform)
@@ -736,11 +736,15 @@ useICV = t
                    (dbReplaceProp path "BusFlipY" "boolean" flipY)
                    )
              )
+    ; net mapping table if pins are declared
+    netmap=(makeTable "netmap" nil)
+    (foreach term inst->terminals netmap[term->term->net]=term->net)
+
     ; flatten paths
     (foreach s inst->master->shapes
              (when s->objType=="path" && s->purpose=="drawing" && s->net
                    path=(dbCopyFig s CV inst->transform)
-                   path->net=(dbMakeNet CV (strcat inst->name "." s->net->name))
+                   path->net=(if netmap[s->net] netmap[s->net] (dbMakeNet CV (strcat inst->name "." s->net->name)))
                    path->routeStatus="locked"
                    )
              )
@@ -748,7 +752,8 @@ useICV = t
     (foreach s inst->master->shapes
              (when s->purpose=="pin" && s->pin
                    path=(dbCopyFig s CV inst->transform)
-                   (dbCreatePin (dbMakeNet CV (strcat inst->name "." s->net->name)) path)
+                   path->net=(if netmap[s->net] netmap[s->net] (dbMakeNet CV (strcat inst->name "." s->net->name)))
+                   (dbCreatePin path->net path)
                    path->routeStatus="locked"
                    )
              )
