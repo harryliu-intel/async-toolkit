@@ -1253,7 +1253,14 @@ if($stage4a){
 
     # make sure graybox extract didn't mess up for BUG 20233
     print "Checking for any top-level transistors ...\n";
-    my $flat_transistors = `grep -c ^M '$spice_topcell'`;
+    my %starcmd = ();
+    read_starcmd("$conf_dir/star.cmd", \%starcmd);
+    # if XREF_LAYOUT_INST_PREFIX is defined, allow layout only top-level transistors
+    my $prefix = $starcmd{'XREF_LAYOUT_INST_PREFIX'};
+    my $cmd = defined($prefix) ?
+        "grep ^M '$spice_topcell' | grep -c -v '^M$prefix'" :
+        "grep -c ^M '$spice_topcell'";
+    my $flat_transistors = `$cmd`;
     chomp($flat_transistors);
     if ($flat_transistors!=0) {
         print "Error: Found $flat_transistors flat transistors in graybox $spice_topcell (see BUG 20233).\n";
