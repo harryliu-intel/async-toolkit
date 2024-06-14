@@ -766,7 +766,7 @@ EOF
         # is the default behavior if POWER_NETS are not specified, but Cheetah
         # default StarRC command file includes POWER_NETS, so we also need to
         # explicitly override with the correct POWER_NETS
-        my %supplies = ();
+        my %supplies = ('ground' => [], 'power' => []);
         open(my $fh, "lve_supplies.rs") or die "Can't open lve_supplies.rs: $!";
         while(<$fh>) {
             if (/lve_(ground|power)/) {
@@ -777,10 +777,10 @@ EOF
             }
         }
         close($fh);
-        $supplies{"ground"} = ["VSS", "GND", "vss"]
+        $supplies{"ground"} = ["VSS", "GND", "vss*"]
             unless @{$supplies{"ground"}};
         $supplies{"power"} = ["vcc*", "Vdd", "VDD", "VDDM", "VDDIOS", "VDDION", "VDDA"]
-            unless @{$supplies{"ground"}};
+            unless @{$supplies{"power"}};
         my @power_nets = (@{$supplies{"ground"}}, @{$supplies{"power"}});
         $cth_cmd{'POWER_NETS'} = join(' ', sort @power_nets);
 
