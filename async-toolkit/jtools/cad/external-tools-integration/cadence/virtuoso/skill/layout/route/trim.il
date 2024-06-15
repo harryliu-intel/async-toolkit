@@ -5,7 +5,7 @@
 ; Trim dangling paths and contacts for all nets except PowerGroundNets
 (defun TrimDanglingWires
   (@key (CV (geGetEditCellView))
-        (aligned nil)
+        (grid nil)
         (nets nil)
         (depth 32)
         )
@@ -19,7 +19,7 @@
         progress = progress + (MergePaths net)
         progress = progress + (TrimDuplicateContacts net)
         progress = progress + (TrimDanglingPaths net ?CV CV
-                                                 ?aligned aligned ?depth depth)
+                                                 ?grid grid ?depth depth)
         progress = progress + (TrimDanglingContacts net ?CV CV ?depth depth)
         total = total + progress
         )
@@ -91,9 +91,9 @@
 ; Trim dangling paths on a net.  Delete if it only overlaps one
 ; contact or path.  Optionally align the ETE cut to a grid.
 (defun TrimDanglingPaths
-  (net @key (CV (geGetEditCellView)) (aligned nil) (depth 32))
+  (net @key (CV (geGetEditCellView)) (grid nil) (depth 32))
   (let (progress paths xy0 xy1 x0 y0 x1 y1 bbox overlaps unknown
-        xy bxy0 bxy1 bx0 by1 bx1 by1 overlap_bbox horz space grid m
+        xy bxy0 bxy1 bx0 by1 bx1 by1 overlap_bbox horz space m gx gy
         nx0 ny0 nx1 xy1 n progress)
     progress = 0
     paths = (setof obj net->figs
@@ -113,14 +113,8 @@
       ; find spacing
       m=(MetalNumber path->layerName)
       horz = (mod m 2)==0
-      (cond (horz
-             space=(car  MetalSpace[path->layerName])/2
-             grid=0.15
-             )
-            (t
-             space=(cadr MetalSpace[path->layerName])/2
-             grid=0.12
-             )
+      (cond (horz space=(car  MetalSpace[path->layerName])/2)
+            (t    space=(cadr MetalSpace[path->layerName])/2)
             )
 
       ; find bbox of overlapping paths and contacts
@@ -156,14 +150,16 @@
              nx1 = (min bx1 (max bx0 x1))
              ny0 = (min by1 (max by0 y0))
              ny1 = (min by1 (max by0 y1))
-             (when aligned
+             (when grid
                (cond (horz
-                      nx0=(max x0 (floor   (nx0-space)/grid)*grid+space)
-                      nx1=(min x1 (ceiling (nx1+space)/grid)*grid-space)
+                      gx=(car grid)
+                      nx0=(max x0 (floor   (nx0-space)/gx)*gx+space)
+                      nx1=(min x1 (ceiling (nx1+space)/gx)*gx-space)
                       )
                      (t
-                      ny0=(max y0 (floor   (ny0-space)/grid)*grid+space)
-                      ny1=(min y1 (ceiling (ny1+space)/grid)*grid-space)
+                      gy=(cadr grid)
+                      ny0=(max y0 (floor   (ny0-space)/gy)*gy+space)
+                      ny1=(min y1 (ceiling (ny1+space)/gy)*gy-space)
                       )
                      )
                )
