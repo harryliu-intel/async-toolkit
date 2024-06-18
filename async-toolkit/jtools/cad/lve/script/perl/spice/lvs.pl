@@ -155,7 +155,7 @@ if ($oasis) {
 
 my $longcellnametop = length($cell_name) > $cell_name_limit ? 1 : 0;
 my $topcell=$longcellnametop ? "TOP_CELL" : $cell_name;
-$cdl_cell_name ne "" or $cdl_cell_name=$topcell;
+$cdl_cell_name ne "" or $cdl_cell_name=$cell_name;
 my $longcellnamegray=0;
 my %graylist=();
 my %reversegraylist=();
@@ -395,10 +395,12 @@ sub fix_cdl_long_name {
         open (GOUT, '>', 'longcell.map');
         if ($longcellnametop) {
             print GOUT "cell $cell_name $topcell\n";
+            $cdl_cell_name = $topcell if $cdl_cell_name eq $cell_name;
         }
         if ($longcellnamegray) {
             foreach my $name (sort keys %graylist) {
                 print GOUT "cell $name $graylist{$name}\n";
+                $cdl_cell_name = $graylist{$name} if $cdl_cell_name eq $name;
             }
         }
         close GOUT;
