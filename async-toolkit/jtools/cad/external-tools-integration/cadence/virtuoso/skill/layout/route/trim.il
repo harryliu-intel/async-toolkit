@@ -153,13 +153,13 @@
              (when grid
                (cond (horz
                       gx=(car grid)
-                      nx0=(floor   (nx0-space)/gx)*gx+space
-                      nx1=(ceiling (nx1+space)/gx)*gx-space
+                      nx0=(max x0 (floor   (nx0-space)/gx)*gx+space)
+                      nx1=(min x1 (ceiling (nx1+space)/gx)*gx-space)
                       )
                      (t
                       gy=(cadr grid)
-                      ny0=(floor   (ny0-space)/gy)*gy+space
-                      ny1=(ceiling (ny1+space)/gy)*gy-space
+                      ny0=(max y0 (floor   (ny0-space)/gy)*gy+space)
+                      ny1=(min y1 (ceiling (ny1+space)/gy)*gy-space)
                       )
                      )
                )
