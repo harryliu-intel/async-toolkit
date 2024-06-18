@@ -104,10 +104,10 @@
       ; create bbox from 2 points of path
       xy0 = (car  path->points)
       xy1 = (cadr path->points)
-      x0 = (car  xy0)
-      y0 = (cadr xy0)
-      x1 = (car  xy1)
-      y1 = (cadr xy1)
+      x0 = (min (car  xy0) (car xy1))
+      y0 = (min (cadr xy0) (cadr xy1))
+      x1 = (max (car  xy0) (car xy1))
+      y1 = (max (cadr xy0) (cadr xy1))
       bbox = path->bBox
 
       ; find spacing
@@ -153,13 +153,13 @@
              (when grid
                (cond (horz
                       gx=(car grid)
-                      nx0=(max x0 (floor   (nx0-space)/gx)*gx+space)
-                      nx1=(min x1 (ceiling (nx1+space)/gx)*gx-space)
+                      nx0=(floor   (nx0-space)/gx)*gx+space
+                      nx1=(ceiling (nx1+space)/gx)*gx-space
                       )
                      (t
                       gy=(cadr grid)
-                      ny0=(max y0 (floor   (ny0-space)/gy)*gy+space)
-                      ny1=(min y1 (ceiling (ny1+space)/gy)*gy-space)
+                      ny0=(floor   (ny0-space)/gy)*gy+space
+                      ny1=(ceiling (ny1+space)/gy)*gy-space
                       )
                      )
                )
