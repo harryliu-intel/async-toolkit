@@ -505,7 +505,7 @@ defun( nrCreateMidAbstract ( libName cellName viewName
 ; where the inner list is a layerName followed by a list of rectangles
 ; in the parent coordinate system.
 (defun nrFindPinShapes (net pinLPPs @key (topShapes nil))
-  (let (layerName inst transform pinRectList lppList ret)
+  (let (layerName inst transform pinRectList lppList ret bbox)
     (foreach lpp pinLPPs
       layerName = (car lpp)
       pinRectList = nil
@@ -515,7 +515,8 @@ defun( nrCreateMidAbstract ( libName cellName viewName
         (foreach s net->figs
                  (when s->lpp==lpp &&
                        (s->objType=="rect" || s->objType=="path" || s->objType=="pathSeg")
-                       pinRectList = (cons s->bBox pinRectList)
+                       bbox=(BBoxCanonicalize s->bBox)
+                       pinRectList = (cons bbox pinRectList)
                        )
                  )
         )
@@ -527,7 +528,9 @@ defun( nrCreateMidAbstract ( libName cellName viewName
           transform = (geGetInstTransform inst)
           (foreach pin instTerm->term->pins
             (when pin->fig->layerName==layerName
-              pinRectList = (cons (dbTransformBBox pin->fig->bBox transform) pinRectList)
+              bbox=(dbTransformBBox pin->fig->bBox transform)
+              bbox=(BBoxCanonicalize bbox)
+              pinRectList = (cons bbox pinRectList)
               )
             )
           )
@@ -542,7 +545,7 @@ defun( nrCreateMidAbstract ( libName cellName viewName
 ; rectangle to avoid connecting the same net in the same subcell.
 ; Also puts pin and drawing purposes in the same set.
 (defun nrFindPinShapesWithNet (net layerNames @key (topShapes t) (subShapes t))
-  (let (inst transform pinRectList ret)
+  (let (inst transform pinRectList ret bbox)
     (foreach layerName layerNames
       pinRectList = nil
 
@@ -551,7 +554,8 @@ defun( nrCreateMidAbstract ( libName cellName viewName
         (foreach s net->figs
                  (when s->lpp==(list layerName "drawing")
                        (s->objType=="rect" || s->objType=="path" || s->objType=="pathSeg")
-                       pinRectList = (cons (list nil s->net s->bBox) pinRectList)
+                       bbox=(BBoxCanonicalize s->bBox)
+                       pinRectList = (cons (list nil s->net bbox) pinRectList)
                        )
                  )
         )
@@ -564,7 +568,9 @@ defun( nrCreateMidAbstract ( libName cellName viewName
             transform = (geGetInstTransform inst)
             (foreach pin instTerm->term->pins
               (when pin->fig->lpp==(list layerName "pin")
-                    pinRectList = (cons (list inst pin->fig->net (dbTransformBBox pin->fig->bBox transform)) pinRectList)
+                    bbox=(dbTransformBBox pin->fig->bBox transform)
+                    bbox=(BBoxCanonicalize bbox)
+                    pinRectList = (cons (list inst pin->fig->net bbox) pinRectList)
                     )
               )
             )

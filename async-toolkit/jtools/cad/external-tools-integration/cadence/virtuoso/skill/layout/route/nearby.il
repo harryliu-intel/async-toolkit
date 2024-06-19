@@ -52,7 +52,6 @@
         inst1 = (car   e1)
         net1  = (cadr  e1)
         rect1 = (caddr e1)
-        rect1 = (BBoxCanonicalize rect1)
         list2 = list1
         (while list2
           e2    = (car list2)
@@ -60,7 +59,6 @@
           inst2 = (car   e2)
           net2  = (cadr  e2)
           rect2 = (caddr e2)
-          rect2 = (BBoxCanonicalize rect2)
           (when (inst1==nil || inst2==nil || net1!=net2 || inst1!=inst2) && !(BBoxAnd rect1 rect2)
             overlap=nil
             r1x0=(car  (car  rect1))
@@ -148,11 +146,11 @@
       (foreach e1 list1
         inst1 = (car   e1)
         net1  = (cadr  e1)
-        rect1 = (BBoxCanonicalize (caddr e1))
+        rect1 = (caddr e1)
         (foreach e2 list2
           inst2 = (car  e2)
           net2  = (cadr e2)
-          rect2 = (BBoxCanonicalize (caddr e2))
+          rect2 = (caddr e2)
           overlap = (BBoxAnd rect1 rect2)
           (when overlap && (inst1==nil || inst2==nil || net1!=net2 || inst1!=inst2) &&
                 (dbGetOverlaps CV overlap (list Via[v] "drawing") 0:31)==nil
