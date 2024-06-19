@@ -41,10 +41,14 @@
         (error "No MetalHaloBoundarySpace defined for layer %s\n" layerName)
         )
       horz = (layerNum&1)==0
-      list1=pinRectList
       space=2*MetalHaloBoundarySpace[layerName]
       (cond (distance &&  horz space+=(car  distance))
             (distance && !horz space+=(cadr distance))
+            )
+      ; sort rectangles by X or Y coordinate to enable pruning when checking for overlaps
+      list1=(copy pinRectList)
+      (cond (horz list1=(sort list1 (lambda (a b) (cadr (cadr (caddr a))) < (cadr (car (caddr b)))))) ; y sort
+            (t    list1=(sort list1 (lambda (a b) (car  (cadr (caddr a))) < (car  (car (caddr b)))))) ; x sort
             )
       (while list1
         e1    = (car list1)
@@ -59,6 +63,11 @@
           inst2 = (car   e2)
           net2  = (cadr  e2)
           rect2 = (caddr e2)
+          ; prune search when sorted X or Y coordinates no longer overlap
+          (when ( horz && ((cadr (car rect2)) > (cadr (cadr rect1))+MfgGrid)) || ; bottom of rect2 > top of rect1
+                (!horz && ((car  (car rect2)) > (car  (cadr rect1))+MfgGrid))    ; left of rect2 > right of rect1
+                list2=nil
+                )
           (when (inst1==nil || inst2==nil || net1!=net2 || inst1!=inst2) && !(BBoxAnd rect1 rect2)
             overlap=nil
             r1x0=(car  (car  rect1))
@@ -143,7 +152,7 @@
       list2 = (setof a MasterRectList (car a)==Metal[v+1])
       list1 = (cadr (car list1))
       list2 = (cadr (car list2))
-      (foreach e1 list1
+      (foreach e1 list1 ; NOTE: slow O(N^2) algorithm
         inst1 = (car   e1)
         net1  = (cadr  e1)
         rect1 = (caddr e1)
@@ -157,7 +166,7 @@
             vrect=(if horz rect2 rect1)
             hrect=(if horz rect1 rect2)
             xy = ((car (car vrect))+(car (cadr vrect)))/2 : ((cadr (car hrect))+(cadr (cadr hrect)))/2
-            (printf "%g:%g\n" (car xy) (cadr xy))
+            ; (printf "%g:%g\n" (car xy) (cadr xy))
             wb = (if offGrid (GetWireWidth v rect1) (GetTrackWidth v xy))
             (unless wb (error "no track width for %d %g:%g\n" v (car xy) (cadr xy)))
             wt = (if offGrid (GetWireWidth v+1 rect2) (GetTrackWidth v+1 xy))
