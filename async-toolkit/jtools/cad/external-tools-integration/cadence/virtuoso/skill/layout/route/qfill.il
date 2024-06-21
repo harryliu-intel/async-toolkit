@@ -28,16 +28,13 @@
     (unless (member botLayer all_layers) (error "botLayer not valid"))
     (unless (member topLayer all_layers) (error "topLayer not valid"))
     (when botLayer all_layers = (member botLayer all_layers))
+    
     (unless layers
       done = nil
       (foreach layer all_layers
                (unless done
                  layers = (append layers (list layer))
-                 (cond (layer=="v1" layers=(append layers (list "via1_signal_color")))
-                       (layer=="v2" layers=(append layers (list "via2_signal_color")))
-                       (layer=="v3" layers=(append layers (list "via3_signal_color")))
-                       (t fill_layers=t)
-                       )
+                 fill_layers=t
                  done = layer==topLayer
                  )
                )
@@ -61,29 +58,20 @@
     (ExportOAS ?CV ExportCV)
 
     ; run qfill
-    cmd = (sprintf nil "cd %s; qfill run_fill --process %s --recipe qfill_recipe_%s_%s.yaml --layers %s --input_layout %s.oas"
-                   WDIR TechLibName TechLibName recipe (buildString layers " ") oasName)
-    (printf "%s\n" cmd)
+    cmd = (sprintf nil "cd %s; qfill run_fill --layers %s  --input %s.oas"
+                   WDIR (buildString layers " ") oasName)
+    (printf "\n%s\n" cmd)
     (shell cmd)
 
     ; import metal_via_fill
     (when fill_layers
-        oasFile = (sprintf nil "%s/qfill_work/qfill_%s_%s_s_%s_run_metal_via_fill/qfill_run_metal_via_fill_output/%s_metal_via_fill.oas" WDIR oasName TechLibName recipe oasName)
-        qCV = (ImportOAS oasFile CV->libName (strcat oasName "_metal_via_fill") "qfill")
+        oasFile = (sprintf nil "%s/qfill_work_run_fill/qfill_%s_%s_s_custom_merged_design/%s.oas"
+		  	   WDIR oasName TechLibName oasName)
+
+        qCV = (ImportOAS oasFile CV->libName (strcat oasName "_fill") "qfill")
         (CopyQfillShapes CV qCV offset)
         )
-
-    ; import signal_via_color
-    (when (member "via1_signal_color" layers )!=nil ||
-          (member "via2_signal_color" layers )!=nil ||
-          (member "via3_signal_color" layers )!=nil
-          oasFile = (sprintf nil "%s/qfill_work/qfill_%s_%s_s_%s_run_via_coloring/qfill_run_via_coloring_output/%s_signal_via_color.oas" WDIR oasName TechLibName recipe oasName)
-          qCV = (ImportOAS oasFile CV->libName (strcat oasName "_signal_via_color") "qfill")
-          (CopyQfillShapes CV qCV offset)
-          )
-
-    ; Colorize
-    (ColorizeByOverlay ?CV CV)
+    (dbSave CV)
     )
   CV
   )
@@ -91,10 +79,11 @@
 ; Copy shapes from qfill import and set autogen property
 (defun CopyQfillShapes (CV qCV offset)
   (let (color)
+    (foreach inst qCV->instances
+           (dbFlattenInst inst 1 t)
+           )
     (foreach shape qCV->shapes
-  	   color = (GetShapeColor shape)
            shape = (dbCopyShape shape CV (list -(car offset):-(cadr offset) "R0"))
-	   (SetShapeColor shape color)
            (dbReplaceProp shape "autogen" "string" "qfill")
            )
     qCV
