@@ -280,9 +280,25 @@ PROCEDURE Emit(typeNm : TEXT;
         FOR i := 0 TO type.params.size() - 1 DO
           Wr.PutText(wr, ".probe v(");
           Wr.PutText(wr, type.params.get(i));
-          Wr.PutText(wr, ")\n")
+          Wr.PutText(wr, ")\n");
+
+        END
+      END;
+
+      IF typeProbes THEN
+        FOR i := 0 TO type.params.size() - 1 DO
+          WITH untypedName = type.params.get(i),
+               typedName   = type.name & "_" & untypedName DO
+            Wr.PutText(wr, F("V%s %s %s DC 0\n",
+                             typedName, untypedName, typedName)
+            );
+            Wr.PutText(wr, ".probe v(");
+            Wr.PutText(wr, typedName);
+            Wr.PutText(wr, ")\n");
+          END
         END
       END
+
     END Probes;
 
   VAR
@@ -378,6 +394,7 @@ VAR
   ofn        : Pathname.T     := "-";
   doTransistorCkts : BOOLEAN;
   probeSubckts : BOOLEAN;
+  typeProbes   : BOOLEAN;
   noProbes                    := FALSE;
   scmFiles                    := NEW(TextSeq.T).init();
   scm      : Scheme.T;
@@ -392,6 +409,10 @@ BEGIN
     stdModification.modifiers := NEW(CharTextTbl.Default).init();
 
     probeSubckts := pp.keywordPresent("-probesubckts");
+
+    IF probeSubckts THEN
+      typeProbes := pp.keywordPresent("-typeprobes");
+    END;
     
     IF pp.keywordPresent("-i") THEN
       spiceFn := pp.getNext()
