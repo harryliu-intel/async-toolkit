@@ -12,7 +12,12 @@ use LveUtil;
 
 # get raw files
 my $scale=1;
-if (@ARGV && $ARGV[0] =~ /--scale-frequency=(.*)/) { $scale=$1; shift; }
+my $all_columns=0;
+while (@ARGV) {
+    if    ($ARGV[0] =~ /--scale-frequency=(.*)/) { $scale=$1; shift; }
+    elsif ($ARGV[0] =~ /--all-columns/) { $all_columns=1; shift; }
+    else { last; }
+}
 my @files = @ARGV;
 if (@files==0) {
     @files = `find . -name aspice.raw -or -name hsim.raw -or -name hspice.raw -or -name xa.raw`;
@@ -38,7 +43,7 @@ foreach my $file (@files) {
                 my @f = split(" ",$key);
                 for ($i=0; $i<10; $i++) {
                     if ($field[$i] eq "") { $field[$i]=$f[$i]; }
-                    elsif ($field[$i] ne $f[$i]) { $diff[$i]=1; }
+                    elsif ($all_columns || $field[$i] ne $f[$i]) { $diff[$i]=1; }
                 }
             }
         }
