@@ -207,7 +207,7 @@ PROCEDURE DoTrace(traceRt : Pathname.T; mWr : Wr.T) : Result =
              fastMult = slow.cyc / fast.cyc DO
           Debug.Out("Fast speed " & SpeedSample.Format(fast));
           Debug.Out("Slow speed " & SpeedSample.Format(slow));
-          Debug.Out("Range " & LR (fastMult));
+          Debug.Out("Tap " & LR (fastMult));
 
           minCyc := fast.cyc;
           maxCyc := slow.cyc
@@ -238,10 +238,10 @@ PROCEDURE DoTrace(traceRt : Pathname.T; mWr : Wr.T) : Result =
           SpeedSampleArraySort.Sort(a^);
           WITH smallStep = a[1].pctFromPrev,
                bigStep   = a[LAST(a^)].pctFromPrev,
-               relRange  = bigStep / smallStep DO
+               relTap  = bigStep / smallStep DO
             Debug.Out("big   step " & LR(bigStep));
             Debug.Out("small step " & LR(smallStep));
-            Debug.Out("ratio      " & LR(relRange));
+            Debug.Out("ratio      " & LR(relTap));
 
             maxStep := bigStep
           END
@@ -354,9 +354,9 @@ PROCEDURE DoPost() =
     min   := LastResult;
     max   := FirstResult;
   BEGIN
-    WITH settingsPerRange        = ninterp * settings,
-         ranges                  = stages - 1,
-         totalSpeeds             = ranges * settingsPerRange + 1 DO
+    WITH settingsPerTap        = ninterp * settings,
+         taps                  = stages - 1,
+         totalSpeeds             = taps * settingsPerTap + 1 DO
       maxSpeed := MIN(maxSpeed, totalSpeeds - 1);
     END;
       
@@ -439,34 +439,34 @@ PROCEDURE FmtCoarse(READONLY a : ARRAY OF [0..1]) : TEXT =
 
 PROCEDURE ToSettings(speed : CARDINAL) : Settings =
   VAR
-    settingsPerRange        := ninterp * settings;
+    settingsPerTap        := ninterp * settings;
     res := Settings { coarseCode := NEW(REF ARRAY OF [0..1],   stages),
                       interpCode := NEW(REF ARRAY OF CARDINAL, ninterp) };
-    rangeLo      := speed DIV settingsPerRange;
-    rangeHi      := rangeLo + 1;
-    speedInRange := speed MOD settingsPerRange;
+    tapLo      := speed DIV settingsPerTap;
+    tapHi      := tapLo + 1;
+    speedInTap := speed MOD settingsPerTap;
     
-    codeInRange : CARDINAL; (* actual code *)
+    codeInTap : CARDINAL; (* actual code *)
     debugStr     := "";
-    ranges                  := stages - 1;
-    totalSpeeds             := ranges * settingsPerRange + 1;
+    taps                  := stages - 1;
+    totalSpeeds             := taps * settingsPerTap + 1;
   BEGIN
     IF speed > totalSpeeds - 1 THEN
       Debug.Error(F("?error in ToSettings : speed %s > %s", Int(speed), Int(totalSpeeds - 1)))
     END;
 
-    (* if range is odd, we have to reverse the code *)
-    IF rangeLo MOD 2 = 0 THEN
-      codeInRange := speedInRange
+    (* if tap is odd, we have to reverse the code *)
+    IF tapLo MOD 2 = 0 THEN
+      codeInTap := speedInTap
     ELSE
-      codeInRange := settingsPerRange - speedInRange
+      codeInTap := settingsPerTap - speedInTap
     END;
     
     FOR i := FIRST(res.interpCode^) TO LAST(res.interpCode^) DO
-      IF    codeInRange DIV settings > i THEN
+      IF    codeInTap DIV settings > i THEN
         res.interpCode[i] := settings
-      ELSIF codeInRange DIV settings = i THEN
-        res.interpCode[i] := codeInRange MOD settings
+      ELSIF codeInTap DIV settings = i THEN
+        res.interpCode[i] := codeInTap MOD settings
       ELSE
         res.interpCode[i] := 0
       END;
@@ -475,7 +475,7 @@ PROCEDURE ToSettings(speed : CARDINAL) : Settings =
     END;
 
     FOR i := 0 TO stages - 1 DO
-      IF i = rangeLo OR i = rangeHi THEN
+      IF i = tapLo OR i = tapHi THEN
         res.coarseCode[i] := 1
       ELSE
         res.coarseCode[i] := 0
@@ -608,9 +608,9 @@ PROCEDURE DoPre() =
     rise = 10.0d-12;
   VAR
     map := NEW(TextTextTbl.Default).init();
-    settingsPerRange        := ninterp * settings;
-    ranges                  := stages - 1;
-    totalSpeeds             := ranges * settingsPerRange + 1;
+    settingsPerTap        := ninterp * settings;
+    taps                  := stages - 1;
+    totalSpeeds             := taps * settingsPerTap + 1;
     fullSimEnd : LONGREAL;
 
   BEGIN
@@ -621,8 +621,8 @@ PROCEDURE DoPre() =
     
     Debug.Out("DoPre()");
 
-    Debug.Out(FN("ninterp %s, settings %s, settingsPerRange %s, ranges %s, totalSpeeds %s, speed %s",
-                 TA { Int(ninterp), Int(settings), Int(settingsPerRange), Int(ranges), Int(totalSpeeds), Int(speed) }));
+    Debug.Out(FN("ninterp %s, settings %s, settingsPerTap %s, taps %s, totalSpeeds %s, speed %s",
+                 TA { Int(ninterp), Int(settings), Int(settingsPerTap), Int(taps), Int(totalSpeeds), Int(speed) }));
 
     IF speed > totalSpeeds - 1 THEN
       Debug.Error(F("?error speed %s > %s", Int(speed), Int(totalSpeeds - 1)))
@@ -643,29 +643,29 @@ PROCEDURE DoPre() =
     END;
     
     VAR
-      rangeLo      := speed DIV settingsPerRange;
-      speedInRange := speed MOD settingsPerRange;
-      rangeHi      := rangeLo + 1;
+      tapLo      := speed DIV settingsPerTap;
+      speedInTap := speed MOD settingsPerTap;
+      tapHi      := tapLo + 1;
 
-      codeInRange : CARDINAL; (* actual code *)
+      codeInTap : CARDINAL; (* actual code *)
       
       interpCode   := NEW(REF ARRAY OF CARDINAL, ninterp); (* per interpolator *)
 
       debugStr     := "";
       
     BEGIN
-      (* if range is odd, we have to reverse the code *)
-      IF rangeLo MOD 2 = 0 THEN
-        codeInRange := speedInRange
+      (* if tap is odd, we have to reverse the code *)
+      IF tapLo MOD 2 = 0 THEN
+        codeInTap := speedInTap
       ELSE
-        codeInRange := settingsPerRange - speedInRange
+        codeInTap := settingsPerTap - speedInTap
       END;
 
       FOR i := FIRST(interpCode^) TO LAST(interpCode^) DO
-        IF    codeInRange DIV settings > i THEN
+        IF    codeInTap DIV settings > i THEN
           interpCode[i] := settings
-        ELSIF codeInRange DIV settings = i THEN
-          interpCode[i] := codeInRange MOD settings
+        ELSIF codeInTap DIV settings = i THEN
+          interpCode[i] := codeInTap MOD settings
         ELSE
           interpCode[i] := 0
         END;
@@ -675,7 +675,7 @@ PROCEDURE DoPre() =
 
       Debug.Out("interpCode : " & debugStr);
 
-      (* note that for the SLOWEST speed (only), rangeHi will 
+      (* note that for the SLOWEST speed (only), tapHi will 
          refer to a block that does not exist *)
 
       WITH interpWx = Wx.New(),
@@ -729,7 +729,7 @@ PROCEDURE DoPre() =
           |
             1 => nam := F("od%s", Int(i DIV 2))
           END;
-          IF i = rangeLo OR i = rangeHi THEN
+          IF i = tapLo OR i = tapHi THEN
             pow := "rstb"
           ELSE
             pow := "vssx"
