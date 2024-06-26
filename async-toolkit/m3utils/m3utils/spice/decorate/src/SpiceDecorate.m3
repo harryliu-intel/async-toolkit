@@ -288,7 +288,7 @@ PROCEDURE Emit(typeNm : TEXT;
       IF typeProbes THEN
         FOR i := 0 TO type.params.size() - 1 DO
           WITH untypedName = type.params.get(i),
-               typedName   = type.name & "_" & untypedName DO
+               typedName   = probePfx & type.name & "_" & untypedName DO
             Wr.PutText(wr, F("V%s %s %s DC 0\n",
                              typedName, untypedName, typedName)
             );
@@ -395,6 +395,7 @@ VAR
   doTransistorCkts : BOOLEAN;
   probeSubckts : BOOLEAN;
   typeProbes   : BOOLEAN;
+  probePfx                    := "";
   noProbes                    := FALSE;
   scmFiles                    := NEW(TextSeq.T).init();
   scm      : Scheme.T;
@@ -410,8 +411,12 @@ BEGIN
 
     probeSubckts := pp.keywordPresent("-probesubckts");
 
-    IF probeSubckts THEN
-      typeProbes := pp.keywordPresent("-typeprobes");
+    typeProbes := pp.keywordPresent("-typeprobesubckts");
+
+    IF typeProbes THEN
+      IF pp.keywordPresent("-probeprefix") THEN
+        probePfx := pp.getNext()
+      END
     END;
     
     IF pp.keywordPresent("-i") THEN
