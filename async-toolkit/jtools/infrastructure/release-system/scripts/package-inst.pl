@@ -294,7 +294,7 @@ if ( ! system (@cmd) ) {
       mkwrapper "$bin"
     }
     if ( -d "$bin" ) {
-      my @archfiles = `find "$arch_bin" -type f -o -type l`;
+      my @archfiles = `find "$arch_bin" \\( -type f -o -type l \\) \\! -name .nfs\\*`;
       chomp @archfiles;
       foreach my $f ( @archfiles ) {
           my $fl = $f;
