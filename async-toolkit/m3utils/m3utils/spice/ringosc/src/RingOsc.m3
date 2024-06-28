@@ -729,7 +729,7 @@ PROCEDURE DoPre() =
           |
             1 => nam := F("od%s", Int(i DIV 2))
           END;
-          IF i = tapLo OR i = tapHi THEN
+          IF i = tapLo OR i = tapHi OR (tapHi = taps AND i = taps - 2) THEN
             pow := "rstb"
           ELSE
             pow := "vssx"
