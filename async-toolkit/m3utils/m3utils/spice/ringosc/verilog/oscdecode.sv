@@ -1,4 +1,8 @@
 
+// decoder circuit for "Korean" ring oscillator
+// Author : mika.nystroem@intel.com
+// June, 2024
+
 module oscdecode
   #(parameter NSETTINGS=4,
     parameter NINTERP  =8,
@@ -14,6 +18,9 @@ module oscdecode
     output logic [ NINTERP - 1 : 0][ NSETTINGS - 1 : 0 ] o_interp_ctrl
     );
 
+
+   // the following are the constant arrays that hold the pre-computed values
+   // the actual logic will mux in the values as needed.
    logic                          [ NSTAGES - 1 : 0 ] coarsecode [ NTOTAL_SPEEDS - 1 : 0];
    logic [ NINTERP - 1 : 0][ NSETTINGS - 1 : 0 ]   finecode[ NTOTAL_SPEEDS - 1 : 0]   ;
    

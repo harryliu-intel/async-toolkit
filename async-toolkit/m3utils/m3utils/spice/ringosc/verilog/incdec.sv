@@ -2,6 +2,9 @@
 // W-bit saturating counter, configurable count range
 // range is [ 0 .. MAXVAL ]
 // saturates at ends of range
+// Author : mika.nystroem@intel.com
+// June, 2024
+
 module incdec
   #(parameter W=8,
     parameter MAXVAL=160)
