@@ -51,6 +51,7 @@
     (LabelsToPins ?CV CV) ; create pins by finding labels on "pin" purpose rectangles
     (DeleteLabels ?CV CV ?keepLPPs (list NWellLPP))
     (LabelPins ?CV CV)
+    (dbSave CV)
 
     ; return top-level CV
     CV

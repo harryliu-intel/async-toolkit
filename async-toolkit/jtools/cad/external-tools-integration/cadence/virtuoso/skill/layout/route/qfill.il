@@ -56,7 +56,8 @@
     oasName = (NameDoRename CID CV->cellName)
     (NameStopRename CID)
     (ExportOAS ?CV ExportCV)
-
+    (ddDeleteObj (ddGetObj ExportCV->libName ExportCV->cellName ExportCV->viewName))
+    
     ; run qfill
     cmd = (sprintf nil "cd %s; qfill run_fill --layers %s  --input %s.oas"
                    WDIR (buildString layers " ") oasName)
@@ -67,9 +68,11 @@
     (when fill_layers
         oasFile = (sprintf nil "%s/qfill_work_run_fill/qfill_%s_%s_s_custom_merged_design/%s.oas"
 		  	   WDIR oasName TechLibName oasName)
-
         qCV = (ImportOAS oasFile CV->libName (strcat oasName "_fill") "qfill")
         (CopyQfillShapes CV qCV offset)
+        (foreach suffix (list "_fill" "_front_fill")
+                 (ddDeleteObj (ddGetObj CV->libName (strcat oasName suffix) "qfill"))
+                 )
         )
     (dbSave CV)
     )
@@ -86,6 +89,6 @@
            shape = (dbCopyShape shape CV (list -(car offset):-(cadr offset) "R0"))
            (dbReplaceProp shape "autogen" "string" "qfill")
            )
-    qCV
     )
+  t
   )
