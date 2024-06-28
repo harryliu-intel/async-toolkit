@@ -104,10 +104,14 @@
       ; create bbox from 2 points of path
       xy0 = (car  path->points)
       xy1 = (cadr path->points)
-      x0 = (min (car  xy0) (car xy1))
+      x0 = (min (car  xy0) (car  xy1))
       y0 = (min (cadr xy0) (cadr xy1))
-      x1 = (max (car  xy0) (car xy1))
+      x1 = (max (car  xy0) (car  xy1))
       y1 = (max (cadr xy0) (cadr xy1))
+      x0 = (round x0/MfgGrid)
+      x1 = (round x1/MfgGrid)
+      y0 = (round y0/MfgGrid)
+      y1 = (round y1/MfgGrid)
       bbox = path->bBox
 
       ; find spacing
@@ -116,6 +120,7 @@
       (cond (horz space=(car  MetalSpace[path->layerName])/2)
             (t    space=(cadr MetalSpace[path->layerName])/2)
             )
+      space = (round space/MfgGrid)
 
       ; find bbox of overlapping paths and contacts
       overlaps = (append (dbGetOverlaps CV bbox (list path->layerName "drawing") depth)
@@ -146,32 +151,43 @@
              by0 = (cadr bxy0)
              bx1 = (car  bxy1)
              by1 = (cadr bxy1)
-             nx0 = (min bx1 (max bx0 x0))
-             nx1 = (min bx1 (max bx0 x1))
-             ny0 = (min by1 (max by0 y0))
-             ny1 = (min by1 (max by0 y1))
-             (when grid
-               (cond (horz
-                      gx=(car grid)
-                      nx0=(max x0 (floor   (nx0-space)/gx)*gx+space)
-                      nx1=(min x1 (ceiling (nx1+space)/gx)*gx-space)
+             bx0 = (round bx0/MfgGrid)
+             bx1 = (round bx1/MfgGrid)
+             by0 = (round by0/MfgGrid)
+             by1 = (round by1/MfgGrid)
+             (cond (horz
+                    nx0 = (min bx0 bx1)
+                    nx1 = (max bx0 bx1)
+                    ny0 = y0
+                    ny1 = y1
+                    (when (car grid)
+                      gx=(round (car grid)/MfgGrid)
+                      nx0=((nx0-space     )/gx)*gx+space
+                      nx1=((nx1+space+gx-1)/gx)*gx-space
                       )
-                     (t
-                      gy=(cadr grid)
-                      ny0=(max y0 (floor   (ny0-space)/gy)*gy+space)
-                      ny1=(min y1 (ceiling (ny1+space)/gy)*gy-space)
+                    nx0=(max x0 nx0)
+                    nx1=(min x1 nx1)
+                    )
+                   (t
+                    ny0 = (min by0 by1)
+                    ny1 = (max by0 by1)
+                    nx0 = x0
+                    nx1 = x1
+                    (when (cadr grid)
+                      gy=(round (cadr grid)/MfgGrid)
+                      ny0=((ny0-space     )/gy)*gy+space
+                      ny1=((ny1+space+gy-1)/gy)*gy-space
                       )
-                     )
-               )
-             (when (round nx0/MfgGrid)!=(round x0/MfgGrid) ||
-                   (round nx1/MfgGrid)!=(round x1/MfgGrid) ||
-                   (round ny0/MfgGrid)!=(round y0/MfgGrid) ||
-                   (round ny1/MfgGrid)!=(round y1/MfgGrid)
+                    ny0=(max y0 ny0)
+                    ny1=(min y1 ny1)
+                    )
+                   )
+             (when nx0!=x0 || nx1!=x1 || ny0!=y0 || ny1!=y1
                    (when nx0==nx1 && ny0==ny1
                          (geSelectObject path)
                          (error)
                          )
-                   path->points = (list nx0:ny0 nx1:ny1)
+                   path->points = (list MfgGrid*nx0:MfgGrid*ny0 MfgGrid*nx1:MfgGrid*ny1)
                    progress = progress+1
                    )
              )
