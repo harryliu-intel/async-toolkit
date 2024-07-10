@@ -1,7 +1,7 @@
 ; Run QFILL to add fill and color shapes to a cell
 (defun DoFill (@key (CV (geGetEditCellView)) (botLayer "m0") (topLayer "m10")
-                    (layers nil) (delete t) (recipe "asic_g1i"))
-  (let (TEMP WDIR ExportCV offset all_layers dir cmd CID oasName oasFile qCV fill_layers
+                    (layers nil) (delete t))
+  (let (TEMP WDIR ExportCV offset all_layers dir cmd CID oasName oasFile qCV
              done offset)
     ; pick list of layers to fill
     all_layers = (list "cell"
@@ -34,7 +34,6 @@
       (foreach layer all_layers
                (unless done
                  layers = (append layers (list layer))
-                 fill_layers=t
                  done = layer==topLayer
                  )
                )
@@ -55,25 +54,23 @@
     CID = (NameStartRename "cell" "cadence" "gds2")
     oasName = (NameDoRename CID CV->cellName)
     (NameStopRename CID)
-    (ExportOAS ?CV ExportCV)
+    (ExportOAS ?CV ExportCV ?renameTop nil)
     (ddDeleteObj (ddGetObj ExportCV->libName ExportCV->cellName ExportCV->viewName))
     
     ; run qfill
-    cmd = (sprintf nil "cd %s; qfill run_fill --layers %s  --input %s.oas"
+    cmd = (sprintf nil "cd %s; qfill run_fill --layers %s --input %s.oas"
                    WDIR (buildString layers " ") oasName)
     (printf "\n%s\n" cmd)
     (shell cmd)
 
     ; import metal_via_fill
-    (when fill_layers
-        oasFile = (sprintf nil "%s/qfill_work_run_fill/qfill_%s_%s_s_custom_merged_design/%s.oas"
-		  	   WDIR oasName TechLibName oasName)
-        qCV = (ImportOAS oasFile CV->libName (strcat oasName "_fill") "qfill")
-        (CopyQfillShapes CV qCV offset)
-        (foreach suffix (list "_fill" "_front_fill")
-                 (ddDeleteObj (ddGetObj CV->libName (strcat oasName suffix) "qfill"))
-                 )
-        )
+    oasFile = (sprintf nil "%s/qfill_work_run_fill/qfill_%s_%s_s_custom_merged_design/%s.oas"
+                       WDIR oasName TechLibName oasName)
+    qCV = (ImportOAS oasFile CV->libName (strcat oasName "_fill") "qfill")
+    (CopyQfillShapes CV qCV offset)
+    (foreach suffix (list "_fill" "_front_fill")
+             (ddDeleteObj (ddGetObj CV->libName (strcat oasName suffix) "qfill"))
+             )
     (dbSave CV)
     )
   CV
