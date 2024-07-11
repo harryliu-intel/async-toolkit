@@ -1432,7 +1432,7 @@ sub setup_cdswd {
     mkdir "$GS_r->{WORK_DIR}/cds_wd";
     
     # parse args
-    my $user_template = "$GS_r->{PDK_ROOT}/share/Fulcrum/supersize/cds_wd";
+    my $user_template = "$GS_r->{PDK_ROOT}/share/Fulcrum/cds_wd";
     while (num_args(\@_)) {
         my @arg = shift_next_arg(\@_);
         if ($arg[0] == $TYPE_SCALAR && $arg[1] eq "--user-template") {
