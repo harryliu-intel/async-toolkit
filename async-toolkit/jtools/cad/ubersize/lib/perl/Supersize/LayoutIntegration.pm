@@ -1438,7 +1438,7 @@ sub setup_cdswd {
         if ($arg[0] == $TYPE_SCALAR && $arg[1] eq "--user-template") {
             my $eq         = shift_next_scalar(\@_);
             $user_template = shift_next_scalar(\@_);
-            if (!defined $eq || $eq ne "=" || !defined $user_template) {
+            if (!defined $eq || $eq ne "=" || !defined $user_template || !-e $user_template) {
                 command_die($SS_r, "Bad --user_template arguments.\n");
                 return;
             }
@@ -1452,7 +1452,7 @@ sub setup_cdswd {
     $cmd .= "'--dfII-dir=$GS_r->{DFII_DIR}' \\\n";
     $cmd .= "--force \\\n";
     $cmd .= "--p4-client=$GS_r->{P4_DFII_CLIENT} \\\n";
-    $cmd .= "--user-template=$user_template \\\n";
+    if (-e $user_template) { $cmd .= "--user-template=$user_template \\\n"; }
     supersize_system($SS_r, $cmd, $LOCAL_JOB, {}, "/dev/null");
 }
 
