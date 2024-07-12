@@ -5,317 +5,142 @@
 
 ; choose automatically which type of abstract to make
 (defun MakeAbstract (@key (CV (geGetEditCellView))
-                          (cutaroundpins t)
                           (topMetal nil))
-  (if (IsLeafCell CV->cellName)
-    (MakeLeafAbstract ?CV CV)
+  (when (IsLeafCell CV->cellName)
+    (MakeSimpleAbstract ?CV CV ?topMetal -1 ?leaf t)
     (MakeSimpleAbstract ?CV CV ?cutaroundpins cutaroundpins ?topMetal topMetal)
     )
   )
 
-; compatibility wrapper for UI menu
-(defun MakeMidAbstract (@key (CV (geGetEditCellView)))
-  (MakeSimpleAbstract ?CV CV)
-  )
+; compatibility wrappers for UI menu
+(defun MakeMidAbstract  (@key (CV (geGetEditCellView))) (MakeSimpleAbstract ?CV CV))
+(defun MakeLeafAbstract (@key (CV (geGetEditCellView))) (MakeSimpleAbstract ?CV CV ?topMetal -1 ?leaf t))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;; MakeSimpleAbstract ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defun MakeSimpleAbstract (@key (CV (geGetEditCellView))
-                                (cutaroundpins t)
                                 (topMetal nil)
+                                (cutaroundpins t)
                                 (convertpinvias t)
+                                (leaf nil)
+                                (flood nil) ; optional table of layerNames to flood-fill
                                 )
- (let (abstractCV name net fig term pinlayer map inLayerMap outLayerMap inst 
-       allpinfigs pinsonlayer allblockages viashape)
-
-  ; set topMetal
-  (unless topMetal topMetal = (dbGetPropByName CV "topMetal")->value)
-  (unless topMetal (LoadWires ?CV CV) topMetal = bundled_top_layer)
-
-  ; create view
-  abstractCV=(dbOpenCellViewByType CV->libName CV->cellName "abstract" "maskLayout" "w")
-  (when !abstractCV
-    (printf "Couldn't edit abstract view for %s\n" CV->cellName)
-    (error "Cellview not writable.\n")
-  )
-  (printf "Generating abstract of %s at %s\n" CV->cellName (getCurrentTime))
-  (foreach shape abstractCV->shapes
-    (when shape (dbDeleteObject shape) )
-    )
-
-  ; create prBoundary
-  prb = (dbCreatePRBoundary abstractCV (GetPrboundPoints CV))
-  (dbCreatePolygon abstractCV BoundaryLPP (GetPrboundPoints CV))
-
-  ; instantiate layout view so we can flatten its shapes
-  inst = (dbCreateInst abstractCV CV "inst" 0:0 "R0")
-
-  ; invert keepout (use blockage layer to avoid polygons with too many points)
-  (for m 0 topMetal (AbstractInvertKeepout (list Metal[m] "blockage") CV abstractCV))
-
-  ; flood via keepout (use blockage layer to avoid polygons with too many points)
-  ; keep vias within a lego spacing of the prBoundary just to be safe!
-  (for m 0 topMetal-2 (AbstractInvertKeepout (list Via[m] "blockage") CV abstractCV ?space 0:0))
-
-  ; create keepout for all existing vias and metal
-  (for m 0 TopMetal-1
-       name = Via[m]
-       (when name
-         map = (list name)
-         (foreach purpose (list "drawing" "gnd" "vdd" "fill")
-                  map = (append map (list (list Via[m] purpose)))
-                  )
-         inLayerMap = (cons map inLayerMap)
-         outLayerMap = (cons (list name (list Via[m] KeepoutPurpose)) outLayerMap)
-         map = (list (sprintf nil "flood_%s" Via[m]) (list Via[m] "blockage"))
-         inLayerMap = (cons map inLayerMap)
-         )
-       )
-  (for m 0 TopMetal
-       name = Metal[m]
-       (when name
-         map = (list name)
-         (foreach purpose (list "drawing" "gnd" "vdd" "fill")
-                  map = (append map (list (list Metal[m] purpose)))
-                  (when m==0 || m>=2 && m<=5 ; complement layers too
-                        map = (append map (list (list (sprintf nil "mc%d" m) purpose)))
-                        )
-                  )
-         inLayerMap = (cons map inLayerMap)
-         outLayerMap = (cons (list name (list Metal[m] KeepoutPurpose)) outLayerMap)
-         map = (list (sprintf nil "flood_%s" Metal[m]) (list Metal[m] "blockage"))
-         inLayerMap = (cons map inLayerMap)
-         )
-       )
-
-  (ICVLayerProcessorSimple abstractCV abstractCV "MakeAbstract" inLayerMap outLayerMap)
-
-  ; convert blockages to keepout (avoid polygons with too many points)
-  (foreach shape abstractCV->shapes
-           (when shape->purpose=="blockage"
-                 shape->lpp = (list (car shape->lpp) "keepout")
-                 )
-           )
-
-  ; delete the inst
-  (dbDeleteObject inst)
-
-
-  ; copy pins to abstract
-  pinlayer = (makeTable "pinlayer" nil)
-  (foreach shape CV->shapes
-    (when shape->pin
-      name=shape->net->name
-      net=(dbFindNetByName abstractCV name)
-      (unless net net=(dbCreateNet abstractCV name))
-      term=(dbFindTermByName abstractCV name)
-      (unless term term=(dbCreateTerm net name shape->pin->term->direction))
-      fig=(dbCopyFig shape abstractCV)
-      fig->lpp = (list (car fig->lpp) "drawing")
-      (dbCreatePin net fig)
-      allpinfigs = (cons fig allpinfigs) 
-      (for m 0 TopMetal
-           (when shape->layerName==Metal[m] pinlayer[m]=t)
-           )
-      )
-    )
-  (DeleteLabels ?CV abstractCV)
-
-  ; chop keepouts around pins
-  (when cutaroundpins
-    (for m 0 TopMetal
-         (when pinlayer[m]
-           (AbstractCutAroundPins abstractCV MetalDrawing[m] MetalKeepout[m])
-           )
-         )
-    )
-
-  ; for pins, convert the via- or via+ into a pin with the same net
-  ; try to filter out the big floodfilled blockage
-  (when convertpinvias
-    (for m 0 TopMetal
-         (when pinlayer[m]
-           pinsonlayer = (setof pin allpinfigs (car pin->lpp)==Metal[m])
-           (foreach pin pinsonlayer
-             allblockages = (FindBlockageOverlaps abstractCV pin->bBox Via[m-1])
-             (foreach via allblockages
-               viashape = (car via)
-               (AttachViaToPin pin via)
-               )
-             allblockages = (FindBlockageOverlaps abstractCV pin->bBox Via[m])
-             (foreach via allblockages
-               viashape = (car via)
-               (AttachViaToPin pin via)
-               )
-             )
-           )
-         )
-    )
-
-    ; make all remaining vias a member of NULL net, per Georgois's request
-    nullnet = (dbCreateNet abstractCV "NULL")
-    (for m 0 TopMetal
-      (foreach viashape abstractCV->shapes
-        (when (car viashape->lpp)==Via[m]
-          (when !viashape->net
-            (dbCreatePin nullnet viashape)
-            )
-          )
-        )
-      )
-
-  ; add M1 blockage on edges
-  (BlockEdgeM1 ?CV abstractCV)
-
-  ; save and exit
-  (ConvertKeepoutToBlockage abstractCV)
-  (SetLefProperties abstractCV CV)
-  (dbSave abstractCV)
-  abstractCV
-  )
- )
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;; MakeLeafAbstract ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(defun MakeLeafAbstract (@key (CV (geGetEditCellView))
-                              (floodfillM2Keepout nil)
-                              (floodfillM1Keepout nil)
-                              (floodfillM0Keepout nil)
-                              (extendM2Keepout nil)
-                              (extendM1Keepout nil)
-                              (extendM0Keepout nil)
-                              (convertpinvias t)
-                              )
-  (let (abstractCV name net fig term pin prb dd_CV layer purpose map inLayerMap outLayerMap
-         allpinfigs pinsonlayer allblockages viashape m nullnet hasM2fill
-         )
-
-    ; sanity check
-    (when CV->viewName=="abstract"
-          (error "Can't call MakeAbstract on abstract view of %s\n" CV->cellName)
-          )
-
-    ; check for prBoundary first
-    prb = (GetPrbound CV)
-    (unless prb (error "No prBoundary object in %s\n" CV->cellName))
-
-    ; check if it has m2 fill shapes
-    hasM2fill = (setof x CV->shapes x->lpp==(list "m2" "fill"))!=nil 
+  (let (abstractCV inst m name net term fig allpinfigs pinlayer map inLayerMap outLayerMap)
 
     ; create empty abstract view
-    (printf "Generating abstract of %s at %s\n" CV->cellName (getCurrentTime))
+    (printf "Generating abstract view of %s\n" CV->cellName)
     abstractCV=(dbOpenCellViewByType CV->libName CV->cellName "abstract" "maskLayout" "w")
-    (when !abstractCV (error "Couldn't edit abstract view for %s\n" CV->cellName))
+    (unless abstractCV (error "Couldn't create abstract view of %s\n" CV->cellName))
 
-    ; flatten pcells and vias to abstract_temp view
-    CV=(betterCopyCellView CV CV->libName CV->cellName "abstract_temp" nil nil t)
-    (when !CV (error "Couldn't edit abstract_temp view for %s\n" CV->cellName))
-    (foreach inst CV->instances (dbFlattenInst inst 32 t))
-    (foreach inst CV->vias      (dbFlattenInst inst 32 t))
-    (dbSave CV)
+    ; pick which layers to flood-fill with blockage
+    (unless flood
+      (unless topMetal topMetal = (dbGetPropByName CV "topMetal")->value)
+      (unless topMetal (LoadWires ?CV CV) topMetal = bundled_top_layer)
+      flood=(makeTable "flood" nil)
+      (for m 0 topMetal   flood[Metal[m]]=t)
+      (for m 0 topMetal-2 flood[Via[m]]=t) ; keep detailed vias on layer below topMetal
+      )
 
-    ; create prBoundary
+    ; create prBoundary object and polygon for layer processing
     (dbCreatePRBoundary abstractCV (GetPrboundPoints CV))
     (dbCreatePolygon abstractCV BoundaryLPP (GetPrboundPoints CV))
 
-    ; flood fill 
-    (when floodfillM0Keepout (AbstractInvertKeepout MetalKeepout[0] CV abstractCV) )
-    (when floodfillM1Keepout (AbstractInvertKeepout MetalKeepout[1] CV abstractCV) )
-    (when floodfillM2Keepout (AbstractInvertKeepout MetalKeepout[2] CV abstractCV) )
+    ; instantiate layout view so we can flatten its shapes
+    inst = (dbCreateInst abstractCV CV "inst" 0:0 "R0")
 
-    ; extend keepout to left and right sides of cell
-    (when !floodfillM2Keepout && extendM2Keepout (AbstractExtendHorizontal CV 2 prb->bBox))
-    (when !floodfillM1Keepout && extendM1Keepout (AbstractExtendVertical   CV 1 prb->bBox))
-    (when !floodfillM0Keepout && extendM0Keepout (AbstractExtendHorizontal CV 0 prb->bBox))
-
-    ; copy pins on metal layers
+    ; copy pins to abstract view and make them "pin" purpose (except keep "ipc" purpose)
+    pinlayer = (makeTable "pinlayer" nil)
     (foreach shape CV->shapes
-             (when shape->pin && (isMetal (car shape->lpp))
+             m=MetalNum[shape->layerName]
+             (when shape->pin && m
                name=shape->net->name
                net=(dbFindNetByName abstractCV name)
                (unless net net=(dbCreateNet abstractCV name))
                term=(dbFindTermByName abstractCV name)
                (unless term term=(dbCreateTerm net name shape->pin->term->direction))
-               pin=(car term->pins)
-               (unless pin pin=(dbCreatePin net nil))
                fig=(dbCopyFig shape abstractCV)
-               fig->lpp = (list (car fig->lpp) "drawing")
-               (dbAddFigToPin pin fig) ; strongly connected figures
-               allpinfigs = (cons fig allpinfigs) 
+               (unless fig->purpose=="ipc" fig->lpp=(list (car fig->lpp) "pin"))
+               (dbCreatePin net fig)
+               allpinfigs = (cons fig allpinfigs)
+               pinlayer[m]=t
                )
              )
     (DeleteLabels ?CV abstractCV)
 
-    ; chop flooded/extended keepout near pins
-    (for m 0 4 (AbstractCutAroundPins abstractCV MetalDrawing[m] MetalKeepout[m]))
+    ; flood-fill blockage on selected layers
+    (foreach e (tableToList flood)
+             (AbstractInvertKeepout (list (car e) "blockage") CV abstractCV)
+             )
 
-    ; create keepout for vias and metal
-    (for m 0 3
-         name = Via[m]
-         map = (list name)
-         (foreach purpose (list "drawing" "gnd" "vdd" "fill")
-                  map = (append map (list (list Via[m] purpose)))
-                  )
-         inLayerMap = (cons map inLayerMap)
-         outLayerMap = (cons (list name (list Via[m] KeepoutPurpose)) outLayerMap)
-         )
-    (for m 0 4
-         name = Metal[m]
-         map = (list name)
-         (foreach purpose (list "drawing" "gnd" "vdd" "fill")
-                  map = (append map (list (list Metal[m] purpose)))
-                  (when m==0 || m==2 ; complement layers too
-                        map = (append map (list (list (sprintf nil "mc%d" m) purpose)))
-                        )
-                  )
-         inLayerMap = (cons map inLayerMap)
-         outLayerMap = (cons (list name (list Metal[m] KeepoutPurpose)) outLayerMap)
-         )
-    (ICVLayerProcessorSimple CV abstractCV "mergeShape" inLayerMap outLayerMap)
-
-    ; chop keepout overlapping pins
-    (for m 0 4 (AbstractCutAroundPins abstractCV MetalDrawing[m] MetalKeepout[m] ?cutout 0:0))
-
-    ; add M1:keepout on edges if M2:fill is used in cell
-    (when TechLibName=="731" && hasM2fill (BlockEdgeM1 ?CV abstractCV))
-
-    ; for pins, convert the via- or via+ into a pin with the same net
-    (when convertpinvias
-      m = 0
-      pinsonlayer = (setof pin allpinfigs (car pin->lpp)==Metal[m])
-      (foreach pin pinsonlayer
-               allblockages = (FindBlockageOverlaps abstractCV pin->bBox Via[m])
-               (foreach via allblockages
-                        viashape = (car via)
-                        (AttachViaToPin pin via)
-                        )
-               )
-      (for m 1 2
-           pinsonlayer = (setof pin allpinfigs (car pin->lpp)==Metal[m])
-           (foreach pin pinsonlayer
-                    allblockages = (FindBlockageOverlaps abstractCV pin->bBox Via[m-1])
-                    (foreach via allblockages
-                             viashape = (car via)
-                             (AttachViaToPin pin via)
-                             )
-                    allblockages = (FindBlockageOverlaps abstractCV pin->bBox Via[m])
-                    (foreach via allblockages
-                             viashape = (car via)
-                             (AttachViaToPin pin via)
-                             )
-                    )
+    ; chop flood-filled blockage around pins with default spacing by layer
+    (when cutaroundpins
+      (for m 0 TopMetal
+           (when pinlayer[m]
+             (AbstractCutAroundPins abstractCV MetalPin[m] (list Metal[m] "blockage"))
+             )
            )
       )
 
-    ; create final boundary shapes and blockage objects
-    (ConvertKeepoutToBlockage abstractCV)
-    (Colorize ?CV abstractCV ?doBlockages t)
+    ; create flattened blockage shapes for all vias and metal using ICV layer processor
+    (for m 0 TopMetal-1
+         name = Via[m]
+         (when name
+           map = (list name)
+           (foreach purpose (list "drawing" "fill" "blockage")
+                    map = (append map (list (list Via[m] purpose)))
+                    )
+           inLayerMap = (cons map inLayerMap)
+           outLayerMap = (cons (list name (list Via[m] "blockage")) outLayerMap)
+           map = (list (sprintf nil "flood_%s" Via[m]) (list Via[m] "blockage"))
+           inLayerMap = (cons map inLayerMap)
+           )
+         )
+    (for m 0 TopMetal
+         name = Metal[m]
+         (when name
+           map = (list name)
+           (foreach purpose (list "drawing" "fill" "blockage")
+                    map = (append map (list (list Metal[m] purpose)))
+                    (when TechLibName=="731" && (m==0 || m>=2 && m<=5) ; complement layers too
+                          map = (append map (list (list (sprintf nil "mc%d" m) purpose)))
+                          )
+                    )
+           inLayerMap = (cons map inLayerMap)
+           outLayerMap = (cons (list name (list Metal[m] "blockage")) outLayerMap)
+           map = (list (sprintf nil "flood_%s" Metal[m]) (list Metal[m] "blockage"))
+           inLayerMap = (cons map inLayerMap)
+           )
+         )
+    (ICVLayerProcessorSimple abstractCV abstractCV "MakeAbstract" inLayerMap outLayerMap)
 
-    ; save and exit
-    (SetLefProperties abstractCV CV ?leaf t)
+    ; delete the layout inst
+    (dbDeleteObject inst)
+
+    ; chop blockage overlapping pins (without cutout spacing this time)
+    (when cutaroundpins
+      (for m 0 TopMetal
+           (when pinlayer[m]
+             (AbstractCutAroundPins abstractCV MetalPin[m] (list Metal[m] "blockage") ?cutout 0:0)
+             )
+           )
+      )
+
+    ; convert vias connected to pins into pins on the same net
+    (when convertpinvias
+      (foreach pin allpinfigs
+               (AttachViasToPin abstractCV pin flood)
+               )
+      )
+
+    ; block M1 on edges if M2 is flood-filled to avoid routing unreachable M1
+    (when TechLibName=="731" && flood[Metal[2]] (BlockEdgeM1 ?CV abstractCV))
+
+    ; convert layers and set LEF properties
+    (ConvertKeepoutToBlockage abstractCV)
+    (SetLefProperties abstractCV CV ?leaf leaf)
+
+    ; save and return
     (dbSave abstractCV)
-    dd_CV = (ddGetObj abstractCV->libName abstractCV->cellName "abstract_temp")
-    (when dd_CV (ddDeleteObj dd_CV))
     abstractCV
     )
   )
@@ -323,21 +148,21 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; Utilities ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ; convert MetalKeepout and ViaKeepout to blockage objects
-(defun ConvertKeepoutToBlockage (cv)
+(defun ConvertKeepoutToBlockage (CV)
   (let (shapes)
-    (foreach shape cv->shapes
-       (when shape->purpose=="keepout"
-             shapes = (dbLayerTile cv shape->lpp (list shape)) ; convert to rectangles
+    (foreach shape CV->shapes
+       (when shape->purpose==KeepoutPurpose || shape->purpose=="blockage"
+             shapes = (dbLayerTile CV shape->lpp (list shape)) ; convert to rectangles
              (foreach shape shapes
-                      (dbCreateLayerBlockage cv shape->layerName "routing"
+                      (dbCreateLayerBlockage CV shape->layerName "routing"
                                              (RectGetPolygonPoints shape->bBox))
-                      (dbCreateLayerBlockage cv shape->layerName "fill"
+                      (dbCreateLayerBlockage CV shape->layerName "fill"
                                              (RectGetPolygonPoints shape->bBox))
                       )
              )
        )
-    (foreach shape cv->shapes
-             (when shape->purpose=="keepout" (dbDeleteObject shape))
+    (foreach shape CV->shapes
+             (when shape->purpose==KeepoutPurpose || shape->purpose=="blockage" (dbDeleteObject shape))
              )
     )
   t
@@ -369,12 +194,12 @@
   )
 
 ; Chop holes in flooded keepout around pins
-(defun AbstractCutAroundPins (cv pinlpp keepoutlpp @key (cutout nil))
+(defun AbstractCutAroundPins (CV pinlpp keepoutlpp @key (cutout nil))
   (unless cutout cutout = MetalSpace[(car pinlpp)])
   (unless cutout (error "No MetalSpace for %s\n" (car pinlpp)))
-  (betterLayerSize cv pinlpp cutout Scratch1LPP)
-  (leLayerAndNot cv keepoutlpp Scratch1LPP Scratch2LPP)
-  (foreach shape cv->shapes
+  (betterLayerSize CV pinlpp cutout Scratch1LPP)
+  (leLayerAndNot CV keepoutlpp Scratch1LPP Scratch2LPP)
+  (foreach shape CV->shapes
            (cond (shape->lpp==keepoutlpp  (dbDeleteObject shape))
                  (shape->lpp==Scratch1LPP (dbDeleteObject shape))
                  (shape->lpp==Scratch2LPP shape->lpp=keepoutlpp))
@@ -383,24 +208,22 @@
   )
 
 ; Floodfill keepout: KEEPOUT = (shrink PRB MetalBoundarySpace) & !(grow KEEPOUT MetalSpace)
-(defun AbstractInvertKeepout (lpp cv1 cv2 @key (space nil) (shrink nil))
-  (let ()
-    (unless space  space= MetalSpace[(car lpp)])
-    (unless shrink shrink=FloodfillBoundarySpace[(car lpp)])
-    (unless shrink shrink=MetalBoundarySpace[(car lpp)])
-    (unless shrink shrink=(list 0 0) (warn "No shrink value specified for AbstractInvertKeepout for %s\n" (car lpp)))
-    (foreach shape cv1->shapes
-             (when shape->lpp==lpp (dbCopyFig shape cv2)->lpp=Scratch1LPP)
-             )
-    (betterLayerSize cv2 Scratch1LPP space Scratch1LPP)
-    (betterLayerSize cv2 BoundaryLPP -(car shrink):-(cadr shrink) Scratch2LPP)
-    (leLayerAndNot cv2 Scratch2LPP Scratch1LPP lpp)
-    (foreach shape cv2->shapes
-             (cond (shape->lpp==Scratch1LPP (dbDeleteObject shape))
-                   (shape->lpp==Scratch2LPP (dbDeleteObject shape))
-                   )
-             )
-    )
+(defun AbstractInvertKeepout (lpp CV1 CV2 @key (space nil) (shrink nil))
+  (unless space  space= MetalSpace[(car lpp)])
+  (unless shrink shrink=FloodfillBoundarySpace[(car lpp)])
+  (unless shrink shrink=MetalBoundarySpace[(car lpp)])
+  (unless shrink shrink=(list 0 0) (warn "No shrink value specified for AbstractInvertKeepout for %s\n" (car lpp)))
+  (foreach shape CV1->shapes
+           (when shape->lpp==lpp (dbCopyFig shape CV2)->lpp=Scratch1LPP)
+           )
+  (betterLayerSize CV2 Scratch1LPP space Scratch1LPP)
+  (betterLayerSize CV2 BoundaryLPP -(car shrink):-(cadr shrink) Scratch2LPP)
+  (leLayerAndNot CV2 Scratch2LPP Scratch1LPP lpp)
+  (foreach shape CV2->shapes
+           (cond (shape->lpp==Scratch1LPP (dbDeleteObject shape))
+                 (shape->lpp==Scratch2LPP (dbDeleteObject shape))
+                 )
+           )
   t
   )
 
@@ -444,41 +267,23 @@
   t
   )
 
-; find overlaps on "keepout" purpose, return list of polygon/blockage pairs 
-(defun FindBlockageOverlaps (CV bbox layerName)
-  (let (alloverlaps overlaps keepouts keepout blockage)
-    alloverlaps = (dbGetOverlaps CV bbox)
-    keepouts = (setof overlap alloverlaps (car overlap->lpp)==layerName && (cadr overlap->lpp)=="keepout")
-    (foreach keepout keepouts
-      blockage = (car (setof blockage CV->blockages blockage->bBox==keepout->bBox))
-      ; if this (car) doesn't work right, we'll have to do something more clever to loop through
-      ; all overlapping blockages 
-      overlaps = (cons (list keepout blockage) overlaps)
-      )
-    overlaps
+; Find via keepout shapes that overlap a rectangular pin and attach them to the same net
+(defun AttachViasToPin (CV pinfig flood)
+  (let (m v)
+    (when pinfig->objType=="rect"
+          m=MetalNum[pinfig->layerName]
+          (for v m-1 m
+               (when Via[v] && !flood[Via[v]]
+                     (foreach overlap (dbGetOverlaps CV pinfig->bBox (list Via[v] "blockage"))
+                              overlap->lpp=(list (car overlap->lpp) "pin")
+                              (dbCreatePin pinfig->net overlap)
+                              )
+                     )
+               )
+          )
     )
+  t
   )
-
-; for via keepout on pin make it into a pin with same connectivity and delete blockage
-; used in conjunction with FindBlockageOverlap above
-(defun AttachViaToPin (pinfig blockage)
-  (let (viafig block)
-    viafig = (car blockage)
-    viafig->lpp = (list (car viafig->lpp) "drawing")
-    (if pinfig->net then
-      (dbCreatePin pinfig->net viafig)
-    else
-      (printf "No net for figure\n")
-      )
-    block=(cadr blockage)
-    (when block
-      (dbDeleteObject block)
-      )
-    )
-  )
-
-
-;;;;;;;;;;;;;;;;;;;;;;; HACK: implement asymmetric leLayerSize ;;;;;;;;;;;;;;;;;;;;;;;
 
 ; like leLayerSize but with asymmetric x:y bloat
 (defun betterLayerSize (CV lpp1 xy lpp2)
