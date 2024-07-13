@@ -15,6 +15,7 @@ IMPORT FileWr;
 IMPORT ParseParams;
 IMPORT Stdio;
 IMPORT Params;
+IMPORT Scan;
 
 CONST LR = LongReal;
 
@@ -28,8 +29,7 @@ TYPE
   END;
   
 PROCEDURE DoOne(root             : Pathname.T;
-                srcNode, tgtNode : TEXT;
-                vtrue            : LONGREAL) : Result
+                srcNode, tgtNode : Node) : Result
   RAISES  { Error } =
   BEGIN
     TRY
@@ -38,22 +38,25 @@ PROCEDURE DoOne(root             : Pathname.T;
 
         
         sIdx, tIdx   : Trace.NodeId;
-        hadSrcNode := trace.getNodeIdx(srcNode, sIdx);
-        hadTgtNode := trace.getNodeIdx(tgtNode, tIdx);
+        hadSrcNode := trace.getNodeIdx(srcNode.name, sIdx);
+        hadTgtNode := trace.getNodeIdx(tgtNode.name, tIdx);
 
-        tf    := NEW(TransitionFinder.T).init(trace,
-                                              0.5d0 * vtrue,
-                                              0.1d0 * vtrue);
+        stf    := NEW(TransitionFinder.T).init(trace,
+                                               0.5d0 * srcNode.true,
+                                               0.1d0 * srcNode.true);
+        ttf    := NEW(TransitionFinder.T).init(trace,
+                                               0.5d0 * tgtNode.true,
+                                               0.1d0 * tgtNode.true);
 
-        sTrans := tf.forNode(sIdx);
-        tTrans := tf.forNode(tIdx);
+        sTrans := stf.forNode(sIdx);
+        tTrans := ttf.forNode(tIdx);
 
       BEGIN
         IF NOT hadSrcNode THEN
-          Debug.Error(F("Couldnt find source node %s", srcNode))
+          Debug.Error(F("Couldnt find source node %s", srcNode.name))
         END;
         IF NOT hadTgtNode THEN
-          Debug.Error(F("Couldnt find target node %s", tgtNode))
+          Debug.Error(F("Couldnt find target node %s", tgtNode.name))
         END;
         
         <*ASSERT hadSrcNode AND hadTgtNode*>
@@ -82,6 +85,12 @@ PROCEDURE DoOne(root             : Pathname.T;
     END
   END DoOne;
 
+TYPE
+  Node = RECORD
+    name : TEXT;
+    true : LONGREAL;
+  END;
+    
 CONST
   Zsfx = ".ztrace";
   SkipIter = "@1"; (* skip the nominal iteration *)
@@ -91,27 +100,35 @@ VAR
   nf, sumPw, sumSqPw, sumId, sumSqId := 0.0d0;
   haveError := FALSE;
   pp                        := NEW(ParseParams.T).init(Stdio.stderr);
-  src, tgt : TEXT := NIL;
-  vTrue : LONGREAL;
+  src, tgt : Node;
+  vTrue := FIRST(LONGREAL);
   inputWidth := 1000.0d-12;
 BEGIN
   TRY
     IF pp.keywordPresent("-vtrue") THEN
       vTrue := pp.getNextLongReal()
-    ELSE
-      Debug.Error("Must specify -vtrue")
     END;
 
     IF pp.keywordPresent("-tgt") THEN
-      tgt := pp.getNext()
+      tgt := Node { pp.getNext(), vTrue }
+    ELSIF pp.keywordPresent("-vtgt") THEN
+      WITH v = Scan.LongReal(pp.getNext()),
+           n = pp.getNext() DO
+        tgt := Node { n, v }
+      END
     ELSE
-      Debug.Error("Must specify -tgt")
+      Debug.Error("Must specify -[v]tgt")
     END;
 
     IF pp.keywordPresent("-src") THEN
-      src := pp.getNext()
+      src := Node { pp.getNext(), vTrue }
+    ELSIF pp.keywordPresent("-vsrc") THEN
+      WITH v = Scan.LongReal(pp.getNext()),
+           n = pp.getNext() DO
+        src := Node { n, v }
+      END
     ELSE
-      Debug.Error("Must specify -src")
+      Debug.Error("Must specify -[v]src")
     END;
     
     IF pp.keywordPresent("-inputwidth") THEN
@@ -127,7 +144,7 @@ BEGIN
       WITH root = CitTextUtils.RemoveSuffix(fn, Zsfx) DO
         IF NOT CitTextUtils.HaveSuffix(root, SkipIter) THEN
           TRY
-            WITH r = DoOne(root, src, tgt, vTrue) DO
+            WITH r = DoOne(root, src, tgt) DO
               nf := nf + 1.0d0;
               sumPw := sumPw + r.pw;
               sumSqPw := sumSqPw + r.pw * r.pw;
