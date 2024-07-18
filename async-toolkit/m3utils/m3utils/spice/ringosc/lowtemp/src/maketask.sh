@@ -60,7 +60,7 @@ cat > ${taskfile} <<EOF
     
 JobsTask {
   WorkArea ${RUNDIR}
-  SubmissionArgs --class SLES12SP5
+  SubmissionArgs --class 'SLES12SP5&&32G&&4C'
 
   Queue ${nb_queue} {
     Qslot ${nb_qslot}
@@ -129,7 +129,7 @@ launchnum=0
 echo "tasknum ${tasknum} launchnum ${launchnum}"
 
 while [ "${launchnum}" -lt "${tasknum}" ]; do
-    echo "nbjob run --log-file ${RUNDIR}/${launchnum}.log ${SRCDIR}/launcher.sh ${RUNDIR} ${launchnum} ${step}"    >> $taskfile
+    echo "nbjob run --log-file ${RUNDIR}/${launchnum}.log ${LAUNCHER} ${RUNDIR} ${launchnum} ${step}"    >> $taskfile
     launchnum=`expr $launchnum + $step`
 done
 
