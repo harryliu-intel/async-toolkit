@@ -183,9 +183,9 @@ PROCEDURE DoTrace(traceRt : Pathname.T; mWr : Wr.T) : Result =
       WITH resetEnd = step - 0.5d0 * rise,
 
            out4  = outSeq.get(4),
-           out10 = outSeq.get(10),
+           out8  = outSeq.get(8),
 
-           cycleTime = (out10.at - out4.at) / 6.0d0,
+           cycleTime = (out8.at - out4.at) / 2.0d0,
            
            swiMean = -Trace.MeanValue(timea^, dataa^, 2.0d0 * step, 5.0d0*step),
            leaMean = -Trace.MeanValue(timea^, dataa^, 0.2d0 * step, resetEnd),
@@ -289,7 +289,7 @@ PROCEDURE DoPost() =
     IF measureFn # NIL THEN
       mWr := FileWr.Open(measureFn & ".stat");
       Wr.PutText(mWr, Concat(",",
-                             FmtLRA(LRA { vdd, temp, cscale, rscale, deln, delp })^,
+                             FmtLRA(LRA { vdd, temp, cscale, rscale, deln, delp , FLOAT(stages,LONGREAL)})^,
                              TA { Bool(modLeaves) },
                              TA { LibNames[lib], TranNames[tran] },
                              FmtLRA(DoStats(n, sum, sumSq)^)^));
