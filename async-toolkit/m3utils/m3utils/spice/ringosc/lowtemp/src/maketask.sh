@@ -12,15 +12,13 @@ nb_queue=${NBPOOL}
 nb_qslot=${NBQSLOT}
 step=1
 
-temps="0 25 50 60 75 85 100 125"
-sweeps="100"
-#sweeps=10
+sweeps="50"
 
-stages="10 20 40 80"
-volts="0.16 0.18 0.20 0.22 0.24 0.26 0.28 0.30 0.32 0.34 0.36 0.38 0.40 0.45"
+stages="10 20 40 80 160"
+volts="0.16 0.18 0.21 0.24 0.27 0.30 0.34 0.39 0.44 0.52"
 
 #trantypes="lvt ulvt" # svt doesnt work yet
-trantypes="ulvt" # svt doesnt work yet
+trantypes="ulvt lvt" # svt doesnt work yet
 #libs="i0s i0m"
 libs="i0s"
 
@@ -32,13 +30,13 @@ cscales="1.0"
 
 modleaves="true"
 
-delns="0.000 0.010 0.020 0.040 0.060 0.085 0.100 0.120"
-delps="0.000 0.010 0.020 0.040 0.060 0.085 0.100 0.120"
-temps="-80 -40 -20 0 25 50 75 85 105"
+delns="0.000 0.020 0.040 0.080 0.120"
+delps="0.000 0.010 0.020"
+temps="-80 -40 0 50 85 105"
 
 # for testing:
 
-testing=1
+testing=0
 
 if [ "${testing}" == "1" ]; then
     stages="10"

@@ -73,7 +73,7 @@ Vvssx   vssx  0 DC=0
 .include "the_scaled_dut.sp"
 
 * Simulate
-.TRAN 1ps '6*step' sweep monte=@SWEEPS@
+.TRAN 1ps '60*step' sweep monte=@SWEEPS@
 
 
 * Measure
@@ -83,7 +83,7 @@ Xdut _RESET out vcc vssx the_oscillator
 .measure tran IdleCurrent   avg i(Vvcc) from '0.5*step' to 'step-0.5*rise'
 .measure tran IdlePower     PARAM='(-IdleCurrent*vtrue)'
 
-.param measure_cycles=10
+.param measure_cycles=4
 .param skip_cycles=2
 
 .measure tran Cycle

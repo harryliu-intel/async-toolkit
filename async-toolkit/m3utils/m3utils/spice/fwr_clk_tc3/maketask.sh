@@ -16,14 +16,14 @@ PDMI_LIB="/p/hdk/cad/pdk/pdk783_r0.8_23ww24.2/cmi/hspice/pdmi/lnx86/64bit/pdmi.s
 XA="/p/hdk/cad/xa/U-2023.03-1/bin/xa"
 HSPICE="/p/hdk/cad/hspice/U-2023.03-2/hspice/bin/hspice"
 
-cells="i0sgdsi00bb1co0x5"
+cells="i0sgdsi00bb1co0x5 i0sgdsi00bb1c18x5"
 
 corners="tttt rcss rcff rxsf rxfs"
 
 temps="0 50 85 100"
 
 #volts="0.20 0.22 0.24 0.26 0.28 0.30 0.32 0.34"
-volts="0.30"
+volts="0.21 0.24 0.27 0.30 0.33"
 
 #cycles="225 250 333 400 500 555 600 750 800 900 1000 1100 1200 1300 1400 1500 1750 2000 2500 3000"
 
@@ -40,7 +40,7 @@ tgt_aplot=`echo ${tgt_node} | tr '/' '^'`
 
 # for testing
 
-testing=1
+testing=0
 
 if [ "${testing}" == "1" ]; then
     corners="tttt"
@@ -113,6 +113,7 @@ tasknum=0
 EOF
 
             pulsewidth=`expr ${cycl} / 2`
+            vchannel=`expr ${volt} * 2.0`
             echo "hostname" >> ${runfile}
             echo "pwd" >> ${runfile}
             echo "export PDMI_LIB="${PDMI_LIB} >> ${runfile}
@@ -124,7 +125,7 @@ EOF
             echo "./do_measure.sh hspice 1278p3,${corn},${cycl},${cell},dyn,hspice,1,${volt},${temp}, > measure.dat" >> ${runfile}
 
             echo "${M3UTILS}/spice/ct/AMD64_LINUX/ct -F -threads 4 -R 1e-12 -z -translate -C *.fsdb && /bin/rm -rf *.ctwork && /bin/rm -f *.fsdb" >> ${runfile}
-	    echo "${measure} -inputwidth ${pulsewidth}e-12 -vtgt ${volt} ${tgt_aplot} -vsrc 0.75 ${src_aplot}" >> ${runfile} 
+	    echo "${measure} -inputwidth ${pulsewidth}e-12 -vtgt ${volt} ${tgt_aplot} -vsrc ${vchannel} ${src_aplot}" >> ${runfile} 
 
             cat > ${spfile} <<EOF
 

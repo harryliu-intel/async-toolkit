@@ -487,6 +487,7 @@ PROCEDURE DoClean() =
   BEGIN
     DeleteMatching(".", "\\.ic0$");
     DeleteMatching(".", "\\.mc0$");
+    DeleteMatching(".", "\\.fsdb$");
     WHILE iter.next(fn) DO
       IF CitTextUtils.HaveSuffix(fn, ".ctwork") THEN
         DeleteRecursively(".", fn)
@@ -591,7 +592,7 @@ BEGIN
     END;
 
     IF pp.keywordPresent("-delp") THEN
-      delp := pp.getNextLongReal()
+      delp := deln + pp.getNextLongReal()
     END;
     
     IF pp.keywordPresent("-p") THEN
