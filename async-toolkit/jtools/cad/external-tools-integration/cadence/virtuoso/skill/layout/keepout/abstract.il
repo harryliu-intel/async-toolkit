@@ -175,7 +175,7 @@
           (leaf      CV->cellType="core")
           (t         CV->cellType="block")
           )
-    (dbSetCellViewSymmetry CV "any") ; SYMMETRY X Y R90
+    (dbSetCellViewSymmetry CV "XY") ; SYMMETRY X Y
     v = (caddr (GetLibHeightVariant ?CV srcCV))
     (cond (v=="1" || v=="2" || v=="3" CV->sitePattern = (list (list "core"   0:0 "R0")))
           (v=="0" || v=="4" || v=="5" CV->sitePattern = (list (list "corev2" 0:0 "R0")))
