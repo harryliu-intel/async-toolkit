@@ -865,7 +865,7 @@ $dr_defines
 set boxfile
 if (-f gray_list.xref) set boxfile='-boxfile gray_list.xref'
 /p/hdk/bin/cth_psetup -p ilcth -cfg IL76P31_NCL.cth -tool ipde_all -cfg_ov '$cfg_ov' -nowash -common_ward -cmd '\$SETUP_IPDE; \$VMAC/release/extractor/run_xtract.pl -cell '"'"$topcell"'"' -gdsfile cell.gds2 -cdlfile cell.cdl_gds2 -temp $temperature -corner $extractCorner -append_usercmd_file lve_override.cmd $flow '"\$boxfile"
-test -f '$spf' && ln -s '$spf' '$cell_name.spf'
+test -f '$spf' && ln -s '$spf' '$spiceTemp'
 EOF
             close($fh);
             my_system("chmod 755 run_cth");
