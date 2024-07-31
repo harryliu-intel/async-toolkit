@@ -26,6 +26,8 @@ IMPORT Thread;
 FROM TechConfig IMPORT Tran, TranNames;
 FROM TechLookup IMPORT Lookup;
 IMPORT Env;
+FROM P1278p3TechProcess IMPORT Stdcells, StdcellNames;
+IMPORT FileWr;
 
 TYPE
   T = LRVector.T;
@@ -41,13 +43,14 @@ VAR
   NbPool  := Env.Get("NBPOOL");
   NbQslot := Env.Get("NBQSLOT");
   M3Utils := Env.Get("M3UTILS");
+  NbOpts  := Env.Get("NBRUNOPTIONS");
   
 TYPE
   BaseEvaluator = LRScalarField.T OBJECT
     mult     := DefMult;
   METHODS
-    init() : LRScalarField.T := InitDummy;
-    mapP(inPlaceP : LRVector.T) : LRVector.T := BaseMapP;
+    init()                      : LRScalarField.T := InitDummy;
+    mapP(inPlaceP : LRVector.T) : LRVector.T      := BaseMapP;
   OVERRIDES
     eval     := BaseEval;
     evalHint := BaseEvalHint;
@@ -59,7 +62,7 @@ TYPE
   END;
 
 PROCEDURE BaseMapP(<*UNUSED*>base : BaseEvaluator;
-                   pa   : LRVector.T) : LRVector.T =
+                   pa             : LRVector.T) : LRVector.T =
   VAR
     sumSq := 0.0d0;
     p := NEW(LRVector.T, NUMBER(pa^));
@@ -164,16 +167,29 @@ PROCEDURE AttemptEval(base : BaseEvaluator; q : LRVector.T) : LONGREAL
 
     tranStr        := "-thresh " & TranNames[tran];
     zStr           := "-z " & Int(z);
+    libStr         := "-lib " & StdcellNames[lib];
 
     opt            := ARRAY BOOLEAN OF TEXT { "", "-single" } [ single ];
     modelSpec      := F("-hspicemodelroot %s %s", hspiceModelRoot, hspiceModelName);
+
+    nbopts     : TEXT;
+    cmd        : TEXT;
+    cm         : ProcUtils.Completion;
+  BEGIN
+
+    IF NbOpts # NIL THEN
+      nbopts := NbOpts
+    ELSE
+      nbopts := F("--target %s --class 4C --class SLES12", NbPool);
+    END;
     
-    cmd            := FN("nbjob run --target %s --class 4C --class SLES12 --mode interactive %s %s %s %s -T %s -r %s %s %s", ARRAY OF TEXT { NbPool, bin, opt, tranStr, zStr, templatePath, subdirPath, modelSpec, pos } );
+    cmd            := FN("nbjob run %s --mode interactive %s %s %s %s %s -T %s -r %s %s %s", ARRAY OF TEXT { nbopts, bin, opt, tranStr, zStr, libStr, templatePath, subdirPath, modelSpec, pos } );
+
     cm             := ProcUtils.RunText(cmd,
                                         stdout := stdout,
                                         stderr := stderr,
                                         stdin  := NIL);
-  BEGIN
+
     TRY
 
       Debug.Out(F("BaseEval : q = %s\nrunning : %s", FmtP(q), cmd));
@@ -195,6 +211,12 @@ PROCEDURE AttemptEval(base : BaseEvaluator; q : LRVector.T) : LONGREAL
                             LongReal(base.mult),
                             FmtP(q),
                             LongReal(res)));
+
+                WITH wr = FileWr.Open(subdirPath & "/compres.dat") DO
+                  Wr.PutText(wr, F("%s %s %s\n", LongReal(res), LongReal(progVal), subdirPath));
+                  Wr.Close(wr)
+                END;
+                
                 RETURN res
               END
             END
@@ -293,9 +315,9 @@ PROCEDURE NextIdx() : CARDINAL =
 
 PROCEDURE ParseResult(VAR tgt : ARRAY OF LONGREAL; str : TEXT) =
   VAR
-    reader := NEW(TextReader.T).init(str);
+    reader  := NEW(TextReader.T).init(str);
     shatter := reader.shatter(" ", "", skipNulls := TRUE);
-    p := shatter;
+    p       := shatter;
   BEGIN
     FOR i := FIRST(tgt) TO LAST(tgt) DO
       tgt[i] := Scan.LongReal(p.head);
@@ -345,7 +367,8 @@ VAR
   MaxSumSq     := DefMaxSumSq;
   hspiceModelRoot : TEXT := "/p/hdk/cad/pdk/pdk783_r0.5_22ww52.5/models/core/hspice/m15_2x_1xa_1xb_4ya_2yb_2yc_3yd__bm5_1ye_1yf_2ga_mim3x_1gb__bumpp";
   hspiceModelName : TEXT := "0p5";
-  
+  lib               : Stdcells;
+
 BEGIN
   IF NbPool = NIL THEN
     Debug.Error("Must set NBPOOL env var.")
@@ -385,6 +408,12 @@ BEGIN
       z := pp.getNextInt()
     ELSE
       Debug.Error("Must provide -z")
+    END;
+
+    IF pp.keywordPresent("-lib") THEN
+      lib := VAL(Lookup(pp.getNext(), StdcellNames), Stdcells)
+    ELSE
+      Debug.Error("Must provide -lib")
     END;
 
     IF pp.keywordPresent("-sumsq") THEN

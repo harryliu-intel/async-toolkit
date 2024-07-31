@@ -1,4 +1,11 @@
 MODULE SpiceDecorate EXPORTS Main;
+
+(*
+
+  this program manipulates spice decks in various ways...
+
+*)
+
 IMPORT ParseParams;
 IMPORT Stdio;
 IMPORT Debug;
@@ -18,11 +25,19 @@ IMPORT Thread;
 IMPORT TextSetDef;
 IMPORT Time;
 IMPORT Text;
+IMPORT CharTextTbl;
+IMPORT TextSeq;
+IMPORT Scheme;
+IMPORT SchemeM3;
+IMPORT SchemeSymbol;
+IMPORT SchemeStubs;
+IMPORT RTBrand;
+IMPORT RegEx, RegExList;
 
 <*FATAL Thread.Alerted*>
 
 CONST
-  Usage   = "";
+  Usage   = "-i <input filename> -root <root type> [-o (<output filename>|-)] [-mincap <min cap>] [-minres <min res>] [-transistorckts] [[-n <type-not-to-probe>]...] [-t <transistor type file name>]";
   LR      = LongReal;
   TE      = Text.Equal;
 
@@ -51,7 +66,64 @@ PROCEDURE EnsureEmitted(typeNm : TEXT;
     END
   END EnsureEmitted;
 
-PROCEDURE EmitElem(elem : SpiceObject.T; parent : SpiceCircuit.T)
+PROCEDURE ModifyElem(elem         : SpiceObject.T;
+                     parent       : SpiceCircuit.T;
+                     modification : Modification) : SpiceObject.T =
+  VAR
+    char   : CHAR;
+    modScm : TEXT;
+  BEGIN
+    TYPECASE elem OF
+      SpiceObject.R =>
+      char := 'R'
+    |
+      SpiceObject.C =>
+      char := 'C'
+    |
+      SpiceObject.L =>
+      char := 'L'
+    |
+      SpiceObject.X =>
+      char := 'X'
+    |
+      SpiceObject.M =>
+      char := 'M'
+    |
+      SpiceObject.D =>
+      char := 'D'
+    ELSE
+      <*ASSERT FALSE*>
+    END;
+
+    IF modification.modifiers # NIL              AND
+       modification.modifiers.get(char, modScm)          THEN
+      scm.defineInGlobalEnv(SchemeSymbol.FromText("the-spice-object"), elem);
+      scm.defineInGlobalEnv(SchemeSymbol.FromText("the-spice-parent"), parent);
+      TRY
+        WITH res = scm.loadEvalText(modScm) DO
+          IF ISTYPE(res, SpiceObject.T) THEN
+            RETURN res
+          ELSE
+            Debug.Error(F("?error : %s returns wrong type : %s",
+                          modScm, RTBrand.GetName(TYPECODE(res))))
+          END
+        END
+      EXCEPT
+        Scheme.E(err) =>
+        Debug.Error(F("?error modifying element \"%s\" : Scheme.E : %s",
+                      SpiceObject.Format(elem),
+                      err));
+        <*ASSERT FALSE*>
+      END
+    ELSE
+      RETURN elem
+    END
+  END ModifyElem;
+  
+PROCEDURE EmitElem(elem         : SpiceObject.T;
+                   parent       : SpiceCircuit.T;
+                   modification : Modification
+                   )
   RAISES { Wr.Failure } =
 
   PROCEDURE Terminals() 
@@ -92,10 +164,10 @@ PROCEDURE EmitElem(elem : SpiceObject.T; parent : SpiceCircuit.T)
       Wr.PutText(wr, LR(x))
     END R;
 
-  PROCEDURE V(v : SpiceObject.RealValue)
+  PROCEDURE V(v : SpiceObject.RealValue; mul : LONGREAL)
   RAISES { Wr.Failure } =
     BEGIN
-      Wr.PutText(wr, SpiceObject.FmtReal(v))
+      Wr.PutText(wr, SpiceObject.FmtReal(v, mul))
     END V;
 
 
@@ -110,7 +182,7 @@ PROCEDURE EmitElem(elem : SpiceObject.T; parent : SpiceCircuit.T)
     
   VAR
     char : CHAR;
-    addProbes := TRUE;
+    addProbes := NOT noProbes;
     type := "";
 
   TYPE
@@ -120,20 +192,20 @@ PROCEDURE EmitElem(elem : SpiceObject.T; parent : SpiceCircuit.T)
     IF Verbose THEN
       Debug.Out("EmitElem " & elem.name)
     END;
-    
+
     TYPECASE elem OF
       SpiceObject.R(r) =>
-      char := 'R'; Terminals(); V(r.r);
+      char := 'R'; Terminals(); V(r.r, modification.resmul);
       
-      addProbes := NOT ISTYPE(r.r, Literal) OR NARROW(r.r, Literal).v > minres
+      addProbes := addProbes AND (NOT ISTYPE(r.r, Literal) OR NARROW(r.r, Literal).v > minres)
     |
       SpiceObject.C(c) =>
-      char := 'C'; Terminals(); V(c.c);
+      char := 'C'; Terminals(); V(c.c, modification.capmul);
 
-      addProbes := NOT ISTYPE(c.c, Literal) OR NARROW(c.c, Literal).v > mincap
+      addProbes := addProbes AND (NOT ISTYPE(c.c, Literal) OR NARROW(c.c, Literal).v > mincap)
     |
       SpiceObject.L(l) =>
-      char := 'L'; Terminals(); V(l.l)
+      char := 'L'; Terminals(); V(l.l, modification.indmul)
     |
       SpiceObject.X(x) =>
       char := 'X'; Terminals(); T(x.type); type := x.type
@@ -208,19 +280,55 @@ PROCEDURE Emit(typeNm : TEXT;
         FOR i := 0 TO type.params.size() - 1 DO
           Wr.PutText(wr, ".probe v(");
           Wr.PutText(wr, type.params.get(i));
-          Wr.PutText(wr, ")\n")
+          Wr.PutText(wr, ")\n");
+
+        END
+      END;
+
+      IF typeProbes THEN
+        FOR i := 0 TO type.params.size() - 1 DO
+          WITH untypedName = type.params.get(i),
+               typedName   = probePfx & type.name & "_" & untypedName DO
+            Wr.PutText(wr, F("V%s %s %s DC 0\n",
+                             typedName, untypedName, typedName)
+            );
+            Wr.PutText(wr, ".probe v(");
+            Wr.PutText(wr, typedName);
+            Wr.PutText(wr, ")\n");
+          END
         END
       END
+
     END Probes;
 
   VAR
-    stype : SpiceCircuit.T;
+    stype        : SpiceCircuit.T;
+    modification : Modification;
   BEGIN
     <*ASSERT type # NIL*>
     <*ASSERT typeNm # NIL*>
 
     IF Verbose THEN
       Debug.Out(F("Emit %s", typeNm))
+    END;
+
+    (* see if we are restricting the modTypes, and if so, if the type
+       we are processing is on the modification list *)
+    IF modTypes = NIL THEN
+      modification := stdModification
+    ELSE
+      modification := NoModification;
+      VAR
+        p := modTypes;
+      BEGIN
+        WHILE p # NIL DO
+          IF RegEx.Execute(p.head, typeNm) # -1 THEN
+            modification := stdModification;
+            EXIT
+          END;
+          p := modTypes.tail
+        END
+      END
     END;
     
     FOR i := 0 TO type.elements.size() - 1 DO
@@ -254,12 +362,23 @@ PROCEDURE Emit(typeNm : TEXT;
     <*ASSERT type.elements # NIL*>
     FOR i := 0 TO type.elements.size() - 1 DO
       WITH elem = type.elements.get(i) DO
-        EmitElem(elem, type)
+        WITH modElem = ModifyElem(elem, type, modification) DO
+          EmitElem(modElem, type, modification)
+        END
       END
     END;
     Probes();
     Wr.PutText(wr, F(".ENDS %s\n\n", typeNm));
   END Emit;
+
+TYPE
+  Modification = RECORD
+    capmul, resmul, indmul : LONGREAL;
+    modifiers              : CharTextTbl.T;
+  END;
+
+VAR
+  NoModification := Modification { 1.0d0, 1.0d0, 1.0d0, NIL };
 
 VAR
   pp                          := NEW(ParseParams.T).init(Stdio.stderr);
@@ -268,24 +387,50 @@ VAR
   rootType   : TEXT := NIL;
   rootCkt    : SpiceCircuit.T;
   wr         : Wr.T;
-  trantypes  := NEW(TextSetDef.T).init();
+  trantypes                   := NEW(TextSetDef.T).init();
   mincap,
-  minres     := 0.0d0;
-  noprobe    := SET OF CHAR { };
-  ofn        : Pathname.T := "-";
+  minres                      := 0.0d0;
+  noprobe                     := SET OF CHAR { };
+  ofn        : Pathname.T     := "-";
   doTransistorCkts : BOOLEAN;
   probeSubckts : BOOLEAN;
+  typeProbes   : BOOLEAN;
+  probePfx                    := "";
+  noProbes                    := FALSE;
+  scmFiles                    := NEW(TextSeq.T).init();
+  scm      : Scheme.T;
+
+  stdModification             := NoModification;
+
+  modTypes : RegExList.T      := NIL;
   
 BEGIN
   TRY
 
+    stdModification.modifiers := NEW(CharTextTbl.Default).init();
+
     probeSubckts := pp.keywordPresent("-probesubckts");
+
+    typeProbes := pp.keywordPresent("-typeprobesubckts");
+
+    IF typeProbes THEN
+      IF pp.keywordPresent("-probeprefix") THEN
+        probePfx := pp.getNext()
+      END
+    END;
     
     IF pp.keywordPresent("-i") THEN
       spiceFn := pp.getNext()
+    ELSE
+      Debug.Error("?error : must provide -i <input file name>")
     END;
     IF pp.keywordPresent("-root") THEN
       rootType := pp.getNext()
+    ELSE
+      Debug.Error("?error : must provide -root <root type>")
+    END;
+    IF pp.keywordPresent("-noprobe") THEN
+      noProbes := TRUE
     END;
     IF pp.keywordPresent("-o") THEN
       ofn := pp.getNext()
@@ -295,6 +440,38 @@ BEGIN
     END;
     IF pp.keywordPresent("-minres") THEN
       minres := pp.getNextLongReal()
+    END;
+    IF pp.keywordPresent("-capmul") THEN
+      stdModification.capmul := pp.getNextLongReal()
+    END;
+    IF pp.keywordPresent("-resmul") THEN
+      stdModification.resmul := pp.getNextLongReal()
+    END;
+    IF pp.keywordPresent("-indmul") THEN
+      stdModification.indmul := pp.getNextLongReal()
+    END;
+
+    WHILE pp.keywordPresent("-modregex") DO
+      WITH regExStr = pp.getNext() DO
+        TRY
+          modTypes := RegExList.Cons(RegEx.Compile(regExStr), modTypes)
+        EXCEPT
+          RegEx.Error(x) =>
+          Debug.Error(F("Cannot compile regex /%s/ : RegEx.Error : %s",
+                        regExStr,
+                        x))
+        END
+      END
+    END;
+
+    IF pp.keywordPresent("-modify") THEN
+      WITH char = pp.getNext(),
+           cmd  = pp.getNext() DO
+        IF Text.Length(char) # 1 THEN
+          Debug.Error("?not a character : " & char)
+        END;
+        EVAL stdModification.modifiers.put(Text.GetChar(char, 0), cmd)
+      END
     END;
 
     doTransistorCkts := pp.keywordPresent("-transistorckts");
@@ -331,10 +508,35 @@ BEGIN
         END
       END        
     END;
+
+    WHILE pp.keywordPresent("-scminit") OR pp.keywordPresent("-S") DO
+      scmFiles.addhi(pp.getNext())
+    END;
+    
     pp.skipParsed();
     pp.finish()
   EXCEPT
     ParseParams.Error => Debug.Error("Can't parse command-line parameters\nUsage: " & Params.Get(0) & " " & Usage)
+  END;
+
+  IF stdModification.modifiers.size() # 0 THEN
+    WITH scmarr = NEW(REF ARRAY OF Pathname.T, scmFiles.size()) DO
+      FOR i := FIRST(scmarr^) TO LAST(scmarr^) DO
+        scmarr[i] := scmFiles.get(i)
+      END;
+      TRY
+        SchemeStubs.RegisterStubs();
+        scm := NEW(SchemeM3.T).init(ARRAY OF Pathname.T{ "require", "m3" });
+        FOR i := FIRST(scmarr^) TO LAST(scmarr^) DO
+          WITH rd = FileRd.Open(scmarr[i]) DO
+            EVAL scm.loadRd(rd, scmarr[i])
+          END
+        END
+      EXCEPT
+        Scheme.E(x) =>
+        Debug.Error(F("EXCEPTION! Scheme.E \"%s\" when initializing interpreter", x))
+      END
+    END
   END;
 
   IF TE(ofn, "-") THEN

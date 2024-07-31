@@ -47,7 +47,17 @@ CONST
     NilCellPaths,
     NilCellPaths,
     NilCellPaths,
+    NilCellPaths,
+
+    NilCellPaths,
+    NilCellPaths,
+    NilCellPaths,
+
+    NilCellPaths,
+    NilCellPaths,
+    NilCellPaths,
     NilCellPaths
+
   },
 
   cellNames :=ARRAY Gate OF ARRAY Tran OF TEXT {
@@ -65,6 +75,15 @@ CONST
     NilCellNames,
     NilCellNames,
     NilCellNames,
+    NilCellNames,
+    NilCellNames,
+    NilCellNames,
+    NilCellNames,
+
+    NilCellNames,
+    NilCellNames,
+    NilCellNames,
+
     NilCellNames,
     NilCellNames,
     NilCellNames,

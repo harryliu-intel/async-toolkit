@@ -109,7 +109,7 @@ PROCEDURE ParseLine(VAR circuit   : SpiceCircuitList.T; (* circuit stack *)
         END;
         circuit := circuit.tail (* pop *)
       ELSIF HavePrefix(line, p, ".PROBE") THEN
-        IF GetWord(line, p, str) THEN
+        IF GetRest(line, p, str) THEN
           circuit.head.probes.addhi(str)
         ELSE
           RAISE SpiceError.E(SpiceError.Data {
@@ -409,6 +409,22 @@ PROCEDURE GetWord(READONLY line : ARRAY OF CHAR;
     RETURN TRUE
   END GetWord;
 
+PROCEDURE GetRest(READONLY line : ARRAY OF CHAR;
+                  VAR      p    : CARDINAL;
+                  VAR      w    : TEXT           ) : BOOLEAN =
+  VAR
+    s : CARDINAL;
+  BEGIN
+    WHILE p < NUMBER(line) AND line[p] IN White DO
+      INC(p)
+    END;
+    IF p = NUMBER(line) THEN RETURN FALSE END;
+    s := p;
+    WHILE p < NUMBER(line) DO INC(p) END;
+    w := Text.FromChars(SUBARRAY(line,s,p-s));
+    RETURN TRUE
+  END GetRest;
+
 PROCEDURE StuffData(o             : SpiceObject.T;
                     READONLY line : ARRAY OF CHAR;
                     VAR      p    : CARDINAL;
@@ -446,12 +462,19 @@ PROCEDURE Format(a : T) : TEXT =
     END
   END Format;
 
-PROCEDURE FmtReal(rv : RealValue) : TEXT =
+PROCEDURE FmtReal(rv : RealValue; mul := 1.0d0) : TEXT =
   BEGIN
     TYPECASE rv OF
-      RealLiteral(rl) => RETURN LR(rl.v)
+      RealLiteral(rl) => RETURN LR(rl.v * mul)
     |
-      RealExpression(rx) => RETURN rx.x
+      RealExpression(rx) =>
+      IF    mul = 0.0d0 THEN
+        RETURN "0"
+      ELSIF mul = 1.0d0 THEN
+        RETURN rx.x
+      ELSE
+        RETURN F("( %s * ( %s ) )", LR(mul), rx.x) (* dubious, what about quoting? *)
+      END
     ELSE
       <*ASSERT FALSE*>
     END

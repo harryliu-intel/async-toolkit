@@ -7,6 +7,7 @@ m3_optimize("T")
 
 Module ("Trace")
 Interface ("TraceRep")
+implementation("TraceMeanValue")
 
 module ("TraceUnsafe")
 
@@ -14,8 +15,10 @@ interface ("TraceHeader")
 table ("CardTextSeq", "Cardinal", "TextSeq")
 
 Module ("Transition")
-Sequence ("Transition", "Transition")
+Sequence ("SimpleTransition", "Transition")
 Module ("TransitionFinder")
+
+Interface("TransitionSeq")
 
 Array_sort("Transition", "Transition")
 
@@ -31,5 +34,8 @@ Module ("TraceInterpolator")
 
 Module ("TransitionPickler")
 Module ("TransitionLeaderBoard")
+
+Interface ("V01X")
+Table     ("CardV01X", "Cardinal", "V01X")
 
 library ("tracelib")

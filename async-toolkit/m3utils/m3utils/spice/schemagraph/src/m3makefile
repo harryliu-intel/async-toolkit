@@ -1,0 +1,18 @@
+import ("libm3")
+import ("cit_util")
+import ("parseparams")
+import ("tracelib")
+import ("mscheme")
+
+implementation ("SchemaGraph")
+interface ("Field")
+module ("FData")
+
+sequence ("FData", "FData")
+
+module ("Entry")
+sequence ("Entry", "Entry")
+table("TextEntrySeq", "Text", "EntrySeq")
+array_sort("Entry","Entry")
+
+program ("graph")

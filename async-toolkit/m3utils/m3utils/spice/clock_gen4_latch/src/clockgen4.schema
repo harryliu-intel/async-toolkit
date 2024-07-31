@@ -1,0 +1,46 @@
+
+
+
+
+
+sweep vdd,sweep temp,collate rise,collate corner, sweep speed,
+ignore samples,
+report dl0_mean, report dl0_sdev, report pw0_mean, report pw0_sdev,
+report dl1_mean, report dl1_sdev, report pw1_mean, report pw1_sdev,
+report dl2_mean, report dl2_sdev, report pw2_mean, report pw2_sdev,
+report dl3_mean, report dl3_sdev, report pw3_mean, report pw3_sdev,
+report minh_mean, report minh_sdev,
+report mins_mean, report mins_sdev,
+ignore dl0_min, ignore pw0_min,
+ignore dl1_min, ignore pw1_min, 
+ignore dl2_min, ignore pw2_min, 
+ignore dl3_min, ignore pw3_min, 
+ignore minh_min, ignore mins_min,
+ignore dl0_max, ignore pw0_max,
+ignore dl1_max, ignore pw1_max, 
+ignore dl2_max, ignore pw2_max, 
+ignore dl3_max, ignore pw3_max, 
+ignore minh_max, ignore mins_max,
+formula pw0_smin (- pw0_mean (* Klatency pw0_sdev)),
+formula pw0_smax (+ pw0_mean (* Klatency pw0_sdev)),
+formula minh_smin (- minh_mean (* Klatency minh_sdev)),
+formula mins_smin (- mins_mean (* Klatency mins_sdev))
+
+
+# ignore: ignore col
+#
+# collate: collate col (in filenames)
+#
+# sweep: this is an independent variable.  Sweep it, but when sweeping another,
+# this variable is collated.
+#
+# report: this is a dependent variable.  Produce it as output.
+#
+# formula: this is a dependent formula.  It can depend on any column.
+#
+# formula fields must come after all the fields from the input schema
+#
+# note that any column can be named.
+#
+# references can only be backward.
+#

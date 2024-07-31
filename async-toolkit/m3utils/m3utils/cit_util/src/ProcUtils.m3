@@ -26,10 +26,11 @@ IMPORT AL;
 IMPORT Debug;
 IMPORT Time;
 IMPORT Usignal;
+IMPORT Wx;
 
 <* FATAL Thread.Alerted *>
 
-VAR DoDebug := Debug.DebugThis("PROCUTILS");
+VAR DoDebug := Debug.DebugThis("PROCUTILS") OR Debug.DebugThis("ProcUtils");
 
 TYPE
   PrivateCompletion = Completion OBJECT
@@ -38,9 +39,10 @@ TYPE
     main    : MainClosure;
     th      : Thread.T;
   OVERRIDES
-    wait := Wait;
-    abort := Abort;
+    wait     := Wait;
+    abort    := Abort;
     getState := GetState;
+    getPID   := GetPID;
   END;
 
   MainClosure = Thread.Closure OBJECT
@@ -50,6 +52,7 @@ TYPE
     mu      : MUTEX;
     cn      : Thread.Condition;
 
+    env     : Env       := NIL;
     sub     : Process.T := NIL;
     created             := FALSE;
 
@@ -61,6 +64,17 @@ TYPE
 
   SSClosure = Thread.Closure OBJECT ss: SS; OVERRIDES apply:=SSApply; END;
 
+VAR fileMu := NEW(MUTEX); (* issues with file descriptors ? *)
+    
+PROCEDURE GetPID(pc : PrivateCompletion) : Process.ID =
+  BEGIN
+    IF pc.main = NIL OR pc.main.sub = NIL THEN
+      RETURN 0
+    ELSE
+      RETURN Process.GetID(pc.main.sub)
+    END
+  END GetPID;
+  
 PROCEDURE Abort(pc : PrivateCompletion) =
   VAR
     id : Process.ID;
@@ -117,6 +131,9 @@ PROCEDURE GetState(pc : PrivateCompletion) : State =
   
 PROCEDURE SSApply(self: SSClosure): REFANY =
   BEGIN
+    IF DoDebug THEN
+      Debug.Out("SSApply")
+    END;
     TRY
       LOOP
         Wr.PutChar(self.ss.wr,Rd.GetChar(self.ss.rd));
@@ -126,7 +143,9 @@ PROCEDURE SSApply(self: SSClosure): REFANY =
     EXCEPT 
       Rd.EndOfFile => 
       IF DoDebug THEN Debug.Out("SSApply exiting on Rd.EndOfFile") END;
-      TRY Rd.Close(self.ss.rd) EXCEPT ELSE END;
+      LOCK fileMu DO
+        TRY Rd.Close(self.ss.rd) EXCEPT ELSE END;
+      END;
       RETURN NIL
     |
       Rd.Failure, Wr.Failure => 
@@ -153,16 +172,18 @@ PROCEDURE ForkReader(r: Reader): Reader =
     RETURN r;
   END ForkReader;
 
-PROCEDURE RunText(source: TEXT;
-                  stdout,stderr: Writer;
-                  stdin: Reader;
-                  wd0: Pathname.T): Completion =
-  BEGIN RETURN Run(TextRd.New(source),stdout,stderr,stdin,wd0) END RunText;
+PROCEDURE RunText(source        : TEXT;
+                  stdout,stderr : Writer;
+                  stdin         : Reader;
+                  wd0           : Pathname.T;
+                  env           : Env): Completion =
+  BEGIN RETURN Run(TextRd.New(source),stdout,stderr,stdin,wd0,env) END RunText;
 
-PROCEDURE Run(source: Rd.T;
-              stdout,stderr: Writer := NIL;
-              stdin: Reader := NIL;
-              wd0: Pathname.T := NIL): Completion =
+PROCEDURE Run(source        : Rd.T;
+              stdout,stderr : Writer     := NIL;
+              stdin         : Reader     := NIL;
+              wd0           : Pathname.T := NIL;
+              env           : Env        := NIL): Completion =
   VAR
     c := NEW(PrivateCompletion,
              po := ForkWriter(stdout),
@@ -171,6 +192,7 @@ PROCEDURE Run(source: Rd.T;
              main := NEW(MainClosure, 
                          src := source, 
                          wd0 := wd0,
+                         env := env,
                          mu  := NEW(MUTEX), 
                          cn  := NEW(Thread.Condition)));
   BEGIN
@@ -189,7 +211,10 @@ PROCEDURE Run(source: Rd.T;
       END
     END;
 
-    IF DoDebug THEN Debug.Out("Run : process has been created, continuing...") END;
+    IF DoDebug THEN
+      Debug.Out(F("Run : process PID %s has been created, continuing...",
+                  Int(c.getPID())))
+    END;
     
     RETURN c;
   END Run;
@@ -206,6 +231,7 @@ PROCEDURE Apply(self: MainClosure): REFANY =
     wd := self.wd0;
     cm := self.c;
     rd := self.src;
+    env:= self.env;
     c: CHAR;
     p: TEXT;
     i2, stdout,stderr,stdin: File.T := NIL;
@@ -229,17 +255,21 @@ PROCEDURE Apply(self: MainClosure): REFANY =
         TRY
           c := Rd.GetChar(rd);
           WHILE c IN White DO c := Rd.GetChar(rd); END;
-          VAR
-            r,w: Pipe.T;
-          BEGIN
-            Pipe.Open(r,w);
-            i2 := r;
-            stdout := w;
+          LOCK fileMu DO
+            VAR
+              r,w: Pipe.T;
+            BEGIN
+              Pipe.Open(r,w);
+              i2 := r;
+              stdout := w;
+            END;
           END;
           IF c = '&' THEN
-            c := Rd.GetChar(rd);
-            stderr := stdout;
-          END;
+            LOCK fileMu DO
+              c := Rd.GetChar(rd);
+              stderr := stdout;
+            END
+          END
         EXCEPT Rd.EndOfFile => <* ASSERT FALSE *>
         END;
       ELSE
@@ -273,12 +303,25 @@ PROCEDURE Apply(self: MainClosure): REFANY =
               sub  : Process.T;
             BEGIN
               IF DoDebug THEN
-                Debug.Out("ProcUtils.Apply.Exec: creating subprocess")
+                VAR
+                  wx := Wx.New();
+                BEGIN
+                  Wx.PutText(wx, l.head);
+                  FOR i := FIRST(params^) TO LAST(params^) DO
+                    Wx.PutChar(wx, ' ');
+                    Wx.PutText(wx, params[i])
+                  END;
+                  Debug.Out("ProcUtils.Apply.Exec: creating subprocess \"" & Wx.ToText(wx) & "\"")
+                END
               END;
               TRY 
-                sub := Process.Create(l.head, params^,
-                                      NIL, wd,
-                                      stdin, stdout,stderr);
+                sub := Process.Create(l.head,
+                                      params^,
+                                      env,
+                                      wd,
+                                      stdin,
+                                      stdout,
+                                      stderr);
                 LOCK self.mu DO
                   self.state := State.Created
                 END
@@ -288,7 +331,7 @@ PROCEDURE Apply(self: MainClosure): REFANY =
                   RAISE OSError.E(x)
               END;
               IF DoDebug THEN
-                Debug.Out("ProcUtils.Apply.Exec: created subprocess")
+                Debug.Out("ProcUtils.Apply.Exec: created subprocess PID=" & Int(Process.GetID(sub)))
               END;
 
               LOCK self.mu DO
@@ -439,6 +482,7 @@ PROCEDURE Apply(self: MainClosure): REFANY =
           Debug.Out("ProcUtils.Apply: finally clause : close i/o");
         END;
 
+        LOCK fileMu DO
         IF DoDebug THEN Debug.Out("ProcUtils.Apply: closing cm.po") END;
 
         IF cm.po#NIL AND cm.po.close THEN 
@@ -446,7 +490,9 @@ PROCEDURE Apply(self: MainClosure): REFANY =
             IF DoDebug THEN Debug.Out("cant close stdout") END
           END END;
           
-          TRY cm.po.f.close() EXCEPT ELSE END; 
+          TRY cm.po.f.close() EXCEPT ELSE
+            IF DoDebug THEN Debug.Out("cant close cm.po.f") END
+          END; 
           (*
           IF cm.po.aux # NIL THEN
             TRY cm.po.aux.close() EXCEPT ELSE END 
@@ -461,7 +507,9 @@ PROCEDURE Apply(self: MainClosure): REFANY =
             IF DoDebug THEN Debug.Out("cant close stderr") END
           END END;
           
-          TRY cm.pe.f.close() EXCEPT ELSE END;
+          TRY cm.pe.f.close() EXCEPT ELSE
+            IF DoDebug THEN Debug.Out("cant close cm.pe.f") END
+          END;
           (*
           IF cm.pe.aux # NIL THEN
             TRY cm.pe.aux.close() EXCEPT ELSE END 
@@ -476,12 +524,16 @@ PROCEDURE Apply(self: MainClosure): REFANY =
             IF DoDebug THEN Debug.Out("cant close stdin") END
           END END;
           
-          TRY cm.pi.f.close() EXCEPT ELSE END;
+          TRY cm.pi.f.close() EXCEPT ELSE
+            IF DoDebug THEN Debug.Out("cant close cm.pi.f") END
+          END;
           (*
           IF cm.pi.aux # NIL THEN
             TRY cm.pi.aux.close() EXCEPT ELSE END 
           END
           *)
+        END;
+
         END
       END;
       LOCK self.mu DO
@@ -716,8 +768,10 @@ PROCEDURE GimmeRd(VAR rd: Rd.T): Writer RAISES { OSError.E } =
   VAR
     hr,hw: Pipe.T;
   BEGIN
-    Pipe.Open(hr, hw);
-    rd := NEW(FileRd.T).init(hr);
+    LOCK fileMu DO
+      Pipe.Open(hr, hw);
+      rd := NEW(FileRd.T).init(hr);
+    END;
     RETURN NEW(Writer,f:=hw,ss:=NIL,aux := hr,close:=TRUE);
   END GimmeRd;
 
@@ -754,8 +808,10 @@ PROCEDURE GimmeWr(VAR wr: Wr.T): Reader RAISES { OSError.E } =
   VAR
     hr,hw: Pipe.T;
   BEGIN
-    Pipe.Open(hr, hw);
-    wr := NEW(FileWr.T).init(hw);
+    LOCK fileMu DO
+      Pipe.Open(hr, hw);
+      wr := NEW(FileWr.T).init(hw);
+    END;
     RETURN NEW(Reader,f:=hr,ss:=NIL,aux:=hw,close:=TRUE);
   END GimmeWr;
 

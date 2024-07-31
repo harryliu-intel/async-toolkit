@@ -1,0 +1,21 @@
+#1278p3,rxfs,2000,i0scinv00aa1d36x5,dyn,hspice,1,0.350,100,,,,/nfs/site/home/mnystroe/work/m3utils/spice/fwr_clk_tc2/work/nb.run-2024-01-12T09:53:36-08:00/999.run,default,TRUE,19,9.954346384524993e-10,-4.565361547500786e-12,1.0965092190402953e-11
+
+ignore,collate,collate,collate,ignore,ignore,ignore,sweep V,sweep T,,,,ignore,ignore,ignore,ignore,ignore,report pw_mean,report pw_sigma,report idelay_mean, report idelay_sigma, formula pw_min (- pw_mean (* Kpw pw_sigma)), formula pw_max (+ pw_mean (* Kpw pw_sigma))
+
+# ignore: ignore col
+#
+# collate: collate col (in filenames)
+#
+# sweep: this is an independent variable.  Sweep it, but when sweeping another,
+# this variable is collated.
+#
+# report: this is a dependent variable.  Produce it as output.
+#
+# formula: this is a dependent formula.  It can depend on any column.
+#
+# formula fields must come after all the fields from the input schema
+#
+# note that any column can be named.
+#
+# references can only be backward.
+#

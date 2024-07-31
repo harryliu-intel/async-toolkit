@@ -8,17 +8,42 @@ IMPORT Params;
 IMPORT Scan;
 IMPORT LongRealSeq AS LRSeq;
 IMPORT Stdio, Rd;
+IMPORT ParseParams;
+IMPORT Pathname;
+IMPORT Debug;
 
 VAR
-  ofn     := Params.Get(1);
-  buckets := Scan.Int(Params.Get(2));
+  ofn     :Pathname.T;
+  buckets : CARDINAL;
 
   rd := Stdio.stdin;
   line : TEXT;
   data : REF ARRAY OF LONGREAL;
   dataSeq := NEW(LRSeq.T).init();
+  pp := NEW(ParseParams.T).init(Stdio.stderr);
 
+  min := Histogram.AutomaticMin;
+  max := Histogram.AutomaticMax;
+  
 BEGIN
+  TRY
+
+    IF pp.keywordPresent("-min") THEN
+      min := pp.getNextLongReal()
+    END;
+    
+    IF pp.keywordPresent("-max") THEN
+      max := pp.getNextLongReal()
+    END;
+    
+    pp.skipParsed();
+    ofn     := pp.getNext();
+    buckets := pp.getNextInt();
+    pp.finish()
+  EXCEPT
+    ParseParams.Error => Debug.Error("Can't parse command line")
+  END;
+  
   TRY
     LOOP
       line := Rd.GetLine(rd);
@@ -37,6 +62,6 @@ BEGIN
 
   LongrealArraySort.Sort(data^);
   
-  Histogram.Do(ofn, data^, TRUE, buckets)
+  Histogram.Do(ofn, data^, TRUE, buckets, forceMin := min, forceMax := max)
 
 END Main.

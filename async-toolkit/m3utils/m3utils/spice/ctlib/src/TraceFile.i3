@@ -22,11 +22,13 @@ TYPE
          nNames : CARDINAL;
          fnr    : FileNamer.T) : T;
 
-    write(fmt : Version);
+    write(fmt : Version) : Pathname.T;
+    (* returns name of file written *)
 
     writePll(wthreads          : CARDINAL;
              writeTraceCmdPath : Pathname.T;
-             fmt               : Version);
+             fmt               : Version) : Pathname.T;
+    (* returns name of file written *)
     
   END;
 

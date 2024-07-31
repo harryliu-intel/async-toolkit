@@ -41,7 +41,14 @@ CONST
     BufPaths,
     BufPaths,
     BufPaths,
-    BufPaths
+    BufPaths,
+    NilPaths,
+    NilPaths,
+    NilPaths,
+    NilPaths,
+    NilPaths,
+    NilPaths,
+    NilPaths
   },
 
     cellNames := ARRAY Gate OF ARRAY Tran OF TEXT {
@@ -61,11 +68,19 @@ CONST
     OaiCellNames,  (* should be Z1 *)
     OaiCellNames,  (* should be Z1 *)
     OaiCellNames,  (* should be Z2 *)
-    OaiCellNames   (* should be Z2 *)
+    OaiCellNames,  (* should be Z2 *)
+    NilCellNames,
+    NilCellNames,
+    NilCellNames,
+    NilCellNames,
+    NilCellNames,
+    NilCellNames,
+    NilCellNames
   },
     plugText := "vcc vssx"
   };
 
+  NilPaths  = ARRAY Tran OF TEXT { NIL, NIL, NIL, NIL, NIL, NIL, NIL };
 
   BufPaths = ARRAY Tran OF TEXT {
   "/p/tech/n5/tech-prerelease/.dr/tcbn05_bwph210l6p51cnod_base_elvt_lib/v0.9.0_pre.1/lpe_spice/tcbn05_bwph210l6p51cnod_base_elvt_090a/tcbn05_bwph210l6p51cnod_base_elvt_090a_lpe_typical_125c.spi",

@@ -19,7 +19,7 @@ TYPE
            VAR     ctr : CARDINAL) RAISES { Wr.Failure };
   END;
 
-  RealValue = OBJECT END;
+  RealValue = ROOT OBJECT END;
 
   RealLiteral = RealValue OBJECT v : LONGREAL END;
 
@@ -57,6 +57,6 @@ PROCEDURE Hash(a : T) : Word.T;
 
 PROCEDURE Format(a : T) : TEXT;
 
-PROCEDURE FmtReal(rv : RealValue) : TEXT;
+PROCEDURE FmtReal(rv : RealValue; mul := 1.0d0) : TEXT;
   
 END SpiceObject.

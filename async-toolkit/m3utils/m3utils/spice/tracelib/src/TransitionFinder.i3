@@ -3,6 +3,7 @@ IMPORT TransitionSeq;
 IMPORT Trace;
 IMPORT Rd;
 IMPORT Transition;
+IMPORT V01X;
 
 TYPE
   T <: Public;
@@ -12,6 +13,7 @@ TYPE
 
     forNode(id : CARDINAL; doSlew := FALSE) : TransitionSeq.T
       RAISES { Rd.EndOfFile, Rd.Failure } ;
+
   END;
 
 
@@ -22,10 +24,12 @@ PROCEDURE Find(READONLY timea, nodea : ARRAY OF LONGREAL;
 TYPE
   Index = [ -1 .. LAST(CARDINAL) ];
   
-PROCEDURE FindFloorIdx(seq : TransitionSeq.T;
+PROCEDURE FindFloorIdx(seq  : TransitionSeq.T;
                        time : LONGREAL) : Index;
   (* find the index of last transition that occurred no later than time time in
      sequence -- -1 if the first transition occurred after the sought time *)
+
+PROCEDURE FindValueAt(seq : TransitionSeq.T; time : LONGREAL) : V01X.T;
   
 CONST Brand = "TransitionFinder";
 

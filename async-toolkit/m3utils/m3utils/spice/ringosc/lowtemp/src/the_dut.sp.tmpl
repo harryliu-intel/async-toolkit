@@ -1,0 +1,36 @@
+
+.include "include.sp"
+
+
+* Generic ring stage (make appropriate in/out/power connections to dut_cell)
+.subckt ring_stage in out vcc vssx
+
+*      A     B     OUT    <--PWR-->
+X0     in    vssx  xi     vcc  vssx   @i0mxor002aa1n02x5@
+X1     vssx  xi    out    vcc  vssx   @i0mxor002aa1n02x5@
+
+* dummy loads on xi
+xload0 xi    vssx  unc[0] vcc  vssx   @i0mxor002aa1n02x5@
+xload1 xi    vssx  unc[1] vcc  vssx   @i0mxor002aa1n02x5@
+xload2 xi    vssx  unc[2] vcc  vssx   @i0mxor002aa1n02x5@
+
+.ends
+
+* Ring stage with fanout=N
+*   => N-1 extra copies of dut_cell as load driven by in, with separate supply
+
+.subckt ring_stage_fo4 in out vcc vload vssx
+
+xstage in out    vcc vssx ring_stage
+
+* dummy loads on input
+xload0 in unc[0] vcc vssx ring_stage
+xload1 in unc[1] vcc vssx ring_stage
+xload2 in unc[2] vcc vssx ring_stage
+
+.ends
+
+.subckt the_oscillator _RESET x0000 vcc vssx
+Xres _RESET x0000 x0001 vcc vssx @i0mnand02aa1n02x5@
+@THE_STAGES@
+.ends

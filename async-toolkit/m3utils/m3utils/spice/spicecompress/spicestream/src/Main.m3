@@ -7,7 +7,7 @@ IMPORT AL;
 IMPORT OSError;
 IMPORT Rd;
 IMPORT Pathname;
-FROM Fmt IMPORT F, Int, LongReal;
+FROM Fmt IMPORT F, Int, LongReal, FN;
 IMPORT Trace;
 IMPORT Wr, FileWr;
 IMPORT TextWr;
@@ -31,8 +31,12 @@ CONST
   TE       = Text.Equal;
   LR       = LongReal;
 
+VAR
+  DoDebug := Debug.DebugThis("SpiceStream");
+
 TYPE
   Mode = { ReadBinary, Compress, Filter, ExtractOne };
+  TA   = ARRAY OF TEXT;
 
 CONST
   ModeNames = ARRAY Mode OF TEXT { "ReadBinary", "Compress", "Filter", "ExtractOne" };
@@ -79,6 +83,26 @@ PROCEDURE OpenTrace() =
     END;
   END OpenTrace;
 
+PROCEDURE MaxVal(READONLY a : ARRAY OF LONGREAL) : LONGREAL =
+  VAR
+    res := FIRST(LONGREAL);
+  BEGIN
+    FOR i := FIRST(a) TO LAST(a) DO
+      res := MAX(res, a[i])
+    END;
+    RETURN res
+  END MaxVal;
+  
+PROCEDURE MinVal(READONLY a : ARRAY OF LONGREAL) : LONGREAL =
+  VAR
+    res := LAST(LONGREAL);
+  BEGIN
+    FOR i := FIRST(a) TO LAST(a) DO
+      res := MIN(res, a[i])
+    END;
+    RETURN res
+  END MinVal;
+  
 PROCEDURE GetNode(nodeId : CARDINAL) : REF ARRAY OF LONGREAL =
     VAR
       nSteps := trace.getSteps();
@@ -116,6 +140,9 @@ VAR
   quick         : BOOLEAN;
   
 BEGIN
+  IF DoDebug THEN
+    Debug.Out("spicestream start")
+  END;
 
   TRY
 
@@ -269,6 +296,9 @@ BEGIN
 
         (* first write to mem *)
         TRY
+          IF DoDebug THEN
+            Debug.Out("spicestream calling CompressArray")
+          END;
           SpiceCompress.CompressArray("zdebug",
                                       a^,
                                       z^,
@@ -278,7 +308,11 @@ BEGIN
                                       norm,
                                       mem    := NEW(TripleRefTbl.Default).init(),
                                       doDump := doDump,
-                                      quick  := quick)
+                                      quick  := quick);
+          IF DoDebug THEN
+            Debug.Out("spicestream CompressArray done")
+          END;
+
         EXCEPT
           Matrix.Singular =>
           Debug.Error("Internal error attempting waveform compression : Matrix.Singular")
@@ -308,20 +342,50 @@ BEGIN
        with the trace file format specification, used in tracelib and also
        (eventually) in aplot.
     *)
-    VAR
-      rd     := Stdio.stdin;
-      a      := NEW(REF ARRAY OF LONGREAL, fd.npoints);
-      
-      nodeid   : CARDINAL;
-      finalLen : CARDINAL;
-    BEGIN
-      FsdbComms.ReadInterpolatedBinaryNodeDataG(rd,
-                                                nodeid,
-                                                a^,
-                                                fd.interpolate,
-                                                fd.unit);
+    TRY
+      LOOP
+      VAR
+        rd     := Stdio.stdin;
+        a      := NEW(REF ARRAY OF LONGREAL, fd.npoints);
+        
+        nodeid   : CARDINAL;
+      BEGIN
 
-      TRY
+        (* check that we have data *)
+
+        TRY
+          WITH c = Rd.GetChar(rd) DO
+            Rd.UnGetChar(rd)
+          END
+        EXCEPT
+          Rd.EndOfFile => (* we're done *)
+          IF DoDebug THEN
+            Debug.Out("spicestream has EOF on input, exiting")
+          END;
+          EXIT
+        END;
+        
+        IF DoDebug THEN
+          Debug.Out("spicestream calling FsdbComms.ReadInterpolatedBinaryNodeDataG, fd.npoints=" & Int(fd.npoints))
+        END;
+        FsdbComms.ReadInterpolatedBinaryNodeDataG(rd,
+                                                  nodeid,
+                                                  a^,
+                                                  fd.interpolate,
+                                                  fd.unit);
+
+        IF DoDebug THEN
+          Debug.Out(FN("spicestream nodeid %s, points %s, first %s, last %s, max %s, min %s",
+                       TA {
+          Int(nodeid),
+          Int(NUMBER(a^)),
+          LR(a[FIRST(a^)]),
+          LR(a[LAST(a^)]),
+          LR(MaxVal(a^)),
+          LR(MinVal(a^)) }
+          ))
+        END;
+        
         VAR
           code : ArithConstants.Encoding;
         BEGIN
@@ -332,6 +396,9 @@ BEGIN
             code := ArithConstants.FirstArith
           END;
           
+          IF DoDebug THEN
+            Debug.Out("spicestream calling DistZTrace.WriteOut")
+          END;
           DistZTrace.WriteOut(wr,
                               a^,
                               nodeid,
@@ -341,16 +408,24 @@ BEGIN
                               code,
                               quick)
         END;
-        Wr.Close(wr)
-      EXCEPT 
-          Matrix.Singular =>
-          Debug.Error("Internal error attempting waveform compression : Matrix.Singular")
-        |
-          Wr.Failure(x) =>
-            Debug.Error(F("Can't write compressed trace data (%s bytes) : Wr.Failure : %s",
-                          Int(finalLen + 1), AL.Format(x)))
-
       END;
-    END
+      IF DoDebug THEN
+        Debug.Out("spicestream iteration end.")
+      END
+      
+      END
+    EXCEPT 
+      Matrix.Singular =>
+      Debug.Error("Internal error attempting waveform compression : Matrix.Singular")
+    |
+      Wr.Failure(x) =>
+      Debug.Error(F("Can't write compressed trace data (? bytes) : Wr.Failure : %s",
+                     AL.Format(x)))
+    END;
+    Wr.Close(wr)
+
+  END;
+  IF DoDebug THEN
+    Debug.Out("spicestream done.")
   END
 END Main.

@@ -1,0 +1,45 @@
+
+#0.21,85,1,1,0.04,0.06,10,TRUE,i0s,lvt,50,8.170792877991777e-9,3.723084555932084e-10,1.0360273475792226e-14,5.928147876608985e-16,7.637129562754338e-7,4.6889426498402406e-8,4.1205102850133344e-15,3.937975405799999e-16
+
+sweep   vdd,
+collate temp,
+collate csc,
+ignore  rsc,
+collate delnvth,
+collate delpvth,
+collate stages,
+collate modleaves,
+collate lib,
+collate tran,
+ignore,
+report  mean_cycle,
+report  sdev_cycle,
+report  mean_swE,
+report  sdev_swE,
+report  mean_leaP,
+report  sdev_leaP,
+report  mean_dynE,
+report  sdev_dynE,
+formula max_cycle  (+ mean_cycle (* Kcycle sdev_cycle)),
+formula min_freq   (/ 1 max_cycle),
+formula cop        (achievable-efficiency  temp *base-temp*),
+formula cooled_swE (cooled-energy mean_swE temp *base-temp*)
+
+
+# ignore: ignore col
+#
+# collate: collate col (in filenames)
+#
+# sweep: this is an independent variable.  Sweep it, but when sweeping another,
+# this variable is collated.
+#
+# report: this is a dependent variable.  Produce it as output.
+#
+# formula: this is a dependent formula.  It can depend on any column.
+#
+# formula fields must come after all the fields from the input schema
+#
+# note that any column can be named.
+#
+# references can only be backward.
+#

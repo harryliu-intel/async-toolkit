@@ -31,7 +31,7 @@ ct [-help]
 
 -- or --
 
-ct [-fsdb <fsdbPath>]
+ct [-fsdb <fsdbPath> | -F | -Fnetbatch]
    [-compress <compressPath>]
    [-rename <dutName>]
    [-scaletime <timeScaleFactor>]
@@ -47,7 +47,10 @@ ct [-fsdb <fsdbPath>]
    [-maxnodes <nodes>]
    [-wait]
    [-prec <precision>]
-   [-translate] <inFileName> <outFileRoot>
+   [-translate]
+   [ [ -copyrootname | -C ] <inFileName0> [<inFileName1> ...] |
+     <inFileName0> <outFileRoot0> [ <inFileName1> <outFileRoot1> ] ... ]
+   
 
 Output files
 ============
@@ -62,7 +65,7 @@ Detailed command-line option documentation
 
 Command-line option meaning is as follows
 
-  -help        be helpful
+  -help|--help be helpful
 
   -fsdb        read FSDB format.  Argument is absolute path
                to FSDB reading program (can be a shell script
@@ -72,6 +75,14 @@ Command-line option meaning is as follows
 
                If CT_NANOSIMRD_PATH is set in the environment,
                that value is used as if we had typed "-fsdb <value>"
+
+  -F           read FSDB format using default FSDB reading program
+
+               ${M3UTILS}/spice/fsdb/src/nanosimrd
+
+  -Fnetbatch   read FSDB format using default FSDB Netbatch reading program
+
+               ${M3UTILS}/spice/fsdb/src/nanosimrd.nb
 
   -compress    Compress waveform data.  Argument is absolute path to 
                compression program (usually spicestream).
@@ -90,6 +101,10 @@ Command-line option meaning is as follows
 
                If CT_COMPRESS_PATH is set in the environment, that
                value is used as if we had typed "-compress <value>"
+
+               If nothing is set, the default is
+
+               ${M3UTILS}/spice/spicecompress/spicestream/AMD64_LINUX/spicestream
 
   -resample    resample data at timestep given [short form -R]
 
@@ -137,6 +152,24 @@ Command-line option meaning is as follows
   -wait        ???
 
   <inFileName> is name of input file in FSDB or CSDF format
+
+  -quick       Run faster, but compress less
+
+  -execute     Run the program as requested.  Default is to run a wrapper,
+               which in turn uses -execute, and attempts to re-run the program
+               repeatedly if it crashes
+
+  -starttime   Use together with -execute to denote the time the job was
+               started.  Output files that are newer than -starttime are
+               assumed to have been created by this program and are not
+               re-created
+
+  -force       Equal to setting -starttime to the end of time (LAST(Time.T))
+               so all output files are re-generated
+
+  -copyrootname Use prefix of inFileName before last period as outfileRoot
+
+  -C           Same as -copyrootname
 
   <outfileRoot> is the root of the output files
 

@@ -14,10 +14,16 @@ PROCEDURE Do(ofn          : TEXT;
 
              H            : CARDINAL := DefaultBuckets (* # of buckets *);
 
-             G            : CARDINAL := DefaultLossSteps
+             G            : CARDINAL := DefaultLossSteps;
+
+             forceMin                := AutomaticMin;
+             forceMax                := AutomaticMax
   ) RAISES { OSError.E, Wr.Failure, Thread.Alerted };
 
 CONST DefaultBuckets   = 15;
       DefaultLossSteps = 1000;
+
+      AutomaticMin     = LAST (LONGREAL);
+      AutomaticMax     = FIRST(LONGREAL);
 
 END Histogram.

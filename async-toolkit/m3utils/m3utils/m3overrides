@@ -175,6 +175,7 @@ override ("rep16", TOP & "/spice")
 override ("unsaferdwr", TOP & "/spice")
 override ("tracelib", TOP & "/spice")
 override ("spicecompress", TOP & "/spice")
+override ("spicetiming", TOP & "/spice")
 override ("gds2cast", TOP & "/spice")
 override ("techc", TOP & "/spice")
 
@@ -208,3 +209,5 @@ override("mpfr", TOP & "/mpfr")
 %override("mysql", TOP)
 override("hammingnn", TOP)
 override("arithcode", TOP)
+
+override("parseliberty", TOP & "/liberty")

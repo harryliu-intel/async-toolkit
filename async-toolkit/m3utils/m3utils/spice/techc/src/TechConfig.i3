@@ -9,7 +9,8 @@ TYPE
            P1276p4_aml2,
            N3,
            N3E,
-           P1278p3 };
+           P1278p3,
+           P1278p3_i0m };
   (* supported technologies *)
 
   Corp = { Tsmc, Intc };
@@ -64,7 +65,16 @@ TYPE
            Oai_Z1_0p0sigma,  (* special variation sim w/o variation *)
            Oai_Z1_5p3sigma,  (* special variation sim w/ 5.3 sigma variation *)
            Oai_Z2_0p0sigma,  (* special variation sim w/o variation *)
-           Oai_Z2_5p3sigma   (* special variation sim w/ 5.3 sigma variation *)
+           Oai_Z2_5p3sigma,  (* special variation sim w/ 5.3 sigma variation *)
+
+           Xor_Z1,           (* Z1 XOR, no variation *)
+           Xor_Z2,           (* Z2 XOR, no variation *)
+           Xor_Z3,           (* Z3 XOR, no variation *)
+
+           Xor_Z6,
+           Xor_Z9,
+           Xor_Z12,
+           Xor_Z18
   
   };
   
@@ -88,7 +98,11 @@ CONST
                                    "aoi_z1_0p0sigma", "aoi_z1_5p3sigma",
                                    "aoi_z2_0p0sigma", "aoi_z2_5p3sigma",
                                    "oai_z1_0p0sigma", "oai_z1_5p3sigma",
-                                   "oai_z2_0p0sigma", "oai_z2_5p3sigma"
+                                   "oai_z2_0p0sigma", "oai_z2_5p3sigma",
+
+                                   "xor_z1", "xor_z2", "xor_z3",
+                                   "xor_z6", "xor_z9", "xor_z12", "xor_z18"
+
                                    };
   (* should not ask for an oai, should only ask for aoi *)
 
@@ -99,7 +113,8 @@ CONST
                                    "1276p4_aml2",
                                    "n3",
                                    "n3e",
-                                   "1278p3" };
+                                   "1278p3",
+                                   "1278p3_i0m" };
 
   TemplateNames = ARRAY Gate OF Pathname.T {
 
@@ -124,7 +139,16 @@ CONST
   "ckt_varaoi.sp",
   "ckt_varaoi.sp",
   "ckt_varaoi.sp",
-  "ckt_varaoi.sp"
+  "ckt_varaoi.sp",
+
+  "ckt_varosc.sp",
+  "ckt_varosc.sp",
+  "ckt_varosc.sp",
+
+  "ckt_varosc.sp",
+  "ckt_varosc.sp",
+  "ckt_varosc.sp",
+  "ckt_varosc.sp"
   };
 
   TechCorp  = ARRAY Tech OF Corp { Corp.Tsmc,
@@ -134,6 +158,7 @@ CONST
                                    Corp.Intc,
                                    Corp.Tsmc,
                                    Corp.Tsmc,
+                                   Corp.Intc,
                                    Corp.Intc };
 
   Gate1 = ARRAY Gate OF Gate
@@ -146,7 +171,10 @@ CONST
     Gate.Oai_Z2_0p0sigma, Gate.Oai_Z2_5p3sigma,
 
     Gate.Aoi_Z1_0p0sigma, Gate.Aoi_Z1_5p3sigma,
-    Gate.Aoi_Z2_0p0sigma, Gate.Aoi_Z2_5p3sigma
+    Gate.Aoi_Z2_0p0sigma, Gate.Aoi_Z2_5p3sigma,
+
+    Gate.Xor_Z1, Gate.Xor_Z2, Gate.Xor_Z3,
+    Gate.Xor_Z6, Gate.Xor_Z9, Gate.Xor_Z12, Gate.Xor_Z18
 
     };
   (* second gate type for each first gate --
@@ -169,8 +197,12 @@ TYPE
     gate   : Gate;
     fanout : CARDINAL := 1;
 
-    volt := 0.0d0;
-    temp := 0.0d0;
+    volt     := 0.0d0;
+    temp     := 0.0d0;
+    sigma    := 0.0d0; (* not always used *)
+    stdcells := "std";
+
+    loadCap  := 0.0d0;
     
     nanoseconds     : LONGREAL; (* length of sim in ns *)
     timestep        : LONGREAL; (* in seconds *)
@@ -191,7 +223,8 @@ TYPE
 
     pdmiLib         : Pathname.T;
     simRoot := DefSimRoot;
-    xaPath : Pathname.T := "/p/hdk/cad/xa/U-2023.03-2/bin/";
+    xaPath     : Pathname.T := "/p/hdk/cad/xa/U-2023.03-2/bin/";
+    hspicePath : Pathname.T := "/p/hdk/cad/hspice/U-2023.03-2/hspice/bin/";
 
     para : BOOLEAN; (* parasitic simulation yes/no *)
   END;

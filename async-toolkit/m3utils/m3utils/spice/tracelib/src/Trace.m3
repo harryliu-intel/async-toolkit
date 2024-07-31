@@ -52,6 +52,9 @@ REVEAL
     close            := Close;
     sharedTime       := SharedTime;
     getActualFormat  := GetActualFormat;
+    getMaxVal        := GetMaxVal;
+    getMinVal        := GetMinVal;
+    getMeanVal        := GetMeanVal;
   END;
 
 TYPE
@@ -608,5 +611,44 @@ PROCEDURE SharedTime(t : T) : REF ARRAY OF LONGREAL
     END;
     RETURN t.timeArr
   END SharedTime;
+
+PROCEDURE GetMaxVal(t : T; idx : NodeId) : LONGREAL
+  RAISES { Rd.Failure, Rd.EndOfFile } =
+  VAR
+    arr := NEW(REF ARRAY OF LONGREAL, t.getSteps());
+    res := FIRST(LONGREAL);
+  BEGIN
+    t.getNodeData(idx, arr^);
+    FOR i := FIRST(arr^) TO LAST(arr^) DO
+      res := MAX(res, arr[i])
+    END;
+    RETURN res
+  END GetMaxVal;
+  
+PROCEDURE GetMinVal(t : T; idx : NodeId) : LONGREAL
+  RAISES { Rd.Failure, Rd.EndOfFile } =
+  VAR
+    arr := NEW(REF ARRAY OF LONGREAL, t.getSteps());
+    res := FIRST(LONGREAL);
+  BEGIN
+    t.getNodeData(idx, arr^);
+    FOR i := FIRST(arr^) TO LAST(arr^) DO
+      res := MIN(res, arr[i])
+    END;
+    RETURN res
+  END GetMinVal;
+
+PROCEDURE GetMeanVal(t : T; idx : NodeId) : LONGREAL
+  RAISES { Rd.Failure, Rd.EndOfFile } =
+  VAR
+    arr := NEW(REF ARRAY OF LONGREAL, t.getSteps());
+    res := 0.0d0;
+  BEGIN
+    t.getNodeData(idx, arr^);
+    FOR i := FIRST(arr^) TO LAST(arr^) DO
+      res := res + arr[i]
+    END;
+    RETURN res/FLOAT(NUMBER(arr^), LONGREAL)
+  END GetMeanVal;
   
 BEGIN END Trace.

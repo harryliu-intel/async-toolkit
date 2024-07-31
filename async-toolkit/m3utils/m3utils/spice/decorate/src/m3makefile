@@ -1,6 +1,21 @@
 import ("libm3")
 import ("cit_util")
 import ("spicelib")
+import ("mscheme")
+import ("modula3scheme")
+import ("sstubgen")
+import ("ctlib")
+
+table ("CharText", "Char", "Text")
+
+SchemeStubs ("Math")
+SchemeStubs ("SpiceObject")
+SchemeStubs ("TextSeq")
+SchemeStubs ("Text")
+
+ExportSchemeStubs("spicedecorate")
+
+importSchemeStubs()
 
 implementation ("SpiceDecorate")
 

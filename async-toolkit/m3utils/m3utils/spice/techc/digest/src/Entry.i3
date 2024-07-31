@@ -5,8 +5,9 @@ TYPE
 
   (* independent variables : *)
   Tech, Corn, Tran, Cell, Mode,
-  Simu, Fano, Volt, Temp,
-
+  Simu, Cels, Fano, Volt, Temp,
+  Sigm, Lcap,
+  
   (* dependent variables : *)
   Cycl, Curr, Icur, Path,
 
@@ -29,10 +30,14 @@ PROCEDURE CompareLR(a, b : T; col : CsvCols) : [-1 .. 1];
 CONST
   CsvColNames = ARRAY CsvCols OF TEXT 
   { "Tech", "Corn", "Tran", "Cell", "Mode",
-    "Simu", "Fano", "Volt", "Temp",
+    "Simu", "Cels", "Fano", "Volt", "Temp",
+    "Sigm", "Lcap",
     "Cycl", "Curr", "Icur", "Path",
     "MoNm"
 
   };
+
+
+PROCEDURE Format(t : T) : TEXT;
   
 END Entry.

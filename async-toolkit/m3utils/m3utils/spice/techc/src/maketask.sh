@@ -21,10 +21,15 @@ nb_qslot=/XCC/LBM/RTL
 nb_queue=${NBPOOL}
 nb_qslot=${NBQSLOT}
 
+nb_maxjobs=2000
+
+#SIM=xa
+SIM=hspice
+
 step=4
 # we get about 4 CPUs per machine?  6 ought to be more than enough, 4 might be optimal?
 
-fo="1"
+fos="1"
 corners="ss tt ff"
 xor_corners="tt"
 aoi_corners="tt"
@@ -71,6 +76,20 @@ p1278p3roots="0p5:/p/hdk/cad/pdk/pdk783_r0.5_22ww52.5/models/core/hspice/m15_2x_
 
 p1278p3_0p8roots='0p8:/p/hdk/cad/pdk/pdk783_r0.8_23ww24.2/models/core/hspice/m14_2x_1xa_1xb_6ya_2yb_2yc__bm5_1ye_1yf_2ga_mim3x_1gb__bumpp'
 
+p1278p3_0p9eroot='/p/hdk/cad/pdk/pdk783_r0.9e_23ww29.2_beta/models/core/hspice/m15_2x_1xa_1xb_4ya_2yb_2yc_3yd__bm5_1ye_1yf_2ga_mim3x_1gb__bumpp'
+
+p1278p3_0p9u2root='/nfs/site/disks/zsc9_fwr_sd_001/mnystroe/p1278_3x0p9u2/models_core_hspice/m14_2x_1xa_1xb_6ya_2yb_2yc__bm5_1ye_1yf_2ga_mim3x_1gb__bumpp'
+
+p1278p3_0p9eroots="0p9e:${p1278p3_0p9eroot}"
+
+p1278p3_0p9eu1root='/nfs/site/disks/zsc9_fwr_sd_001/mnystroe/p1278_3x0p9eu1/2023ww43d5/models_core_hspice/m14_2x_1xa_1xb_6ya_2yb_2yc__bm5_1ye_1yf_2ga_mim3x_1gb__bumpp'
+
+
+stdcells="skip"
+sigmas="skip"
+hspicemodelroot=""
+caps="skip"
+
 if [ "$1" == "-aoitech" ]; then
     runmode="override"
     volts="0.30"
@@ -81,8 +100,133 @@ if [ "$1" == "-aoitech" ]; then
     step=4
     techs="1278p3 n3e n5"
     gates="aoi_z1_0p0sigma aoi_z2_0p0sigma"
-    fo="4"
+    fos="4"
     SETUP_ARGS="export SETUP_MC_FILE_ONLY=''"
+fi
+
+if [ "$1" == "-variation1278test" ]; then
+    runmode="override"
+    volts="0.30"
+    temps="25"
+    modes="dyn"
+    paras="true"
+    corners="tt"
+    step=1
+    techs="1278p3"
+    gates="xor_z1 xor_z2 xor_z3"
+    stdcells="i0m i0s"
+    sigmas="0.0 0.5 5.3"
+    fos="3"
+    SIM="xa"
+    hspicemodelroot=${p1278p3_0p9eu1root}
+fi
+
+if [ "$1" == "-variation1278" ]; then
+    runmode="override"
+    volts="0.10 0.12 0.14 0.16 0.18 0.20 0.22 0.24 0.26 0.28 0.30 0.32 0.34 0.36 0.38 0.40 0.45 0.50 0.55 0.60 0.65 0.75 0.80 0.90 1.00"
+    temps="0 25 50 65 70 75 85 100 125"
+    modes="dyn"
+    paras="true"
+    corners="tt"
+    step=4
+    techs="1278p3"
+    gates="xor_z1 xor_z2 xor_z3"
+    stdcells="i0m i0s"
+    sigmas="0.0 0.5 1.0 4.0 4.5 5.3 6.0"
+    fos="3"
+    SIM="xa"
+    hspicemodelroot=${p1278p3_0p9eu1root}
+fi
+
+if [ "$1" == "-variation1278cap" ]; then
+    runmode="override"
+    volts="0.20 0.22 0.24 0.26 0.28 0.30 0.32 0.34 0.36 0.38 0.40 0.45 0.50 0.60 0.70 0.80 0.90 1.00"
+    temps="0 25 50 65 70 75 85 100 125"
+    modes="dyn"
+    paras="true"
+    corners="tt"
+    step=4
+    techs="1278p3"
+    gates="xor_z1 xor_z2 xor_z3"
+    stdcells="i0m i0s"
+    sigmas="0.0 5.3"
+    fos="3"
+    SIM="xa"
+    hspicemodelroot=${p1278p3_0p9eu1root}
+    caps="0 0.5e-15 1e-15 1.5e-15"
+fi
+
+if [ "$1" == "-variation1278focap" ]; then
+    runmode="override"
+    volts="0.20 0.22 0.24 0.26 0.28 0.29 0.30 0.32 0.34 0.36 0.38 0.40 0.45 0.50"
+    temps="50 85"
+    modes="dyn"
+    paras="true"
+    corners="tt"
+    step=4
+    techs="1278p3"
+    gates="xor_z1 xor_z2 xor_z3"
+    stdcells="i0m i0s"
+    sigmas="0.0 5.3"
+    fos="1 2 3 4 5 6"
+    SIM="xa"
+    hspicemodelroot=${p1278p3_0p9eu1root}
+    caps="0 0.25e-15 0.5e-15 0.75e-15 1e-15 1.5e-15"
+fi
+
+if [ "$1" == "-variation1278hicap" ]; then
+    runmode="override"
+    volts="0.20 0.22 0.24 0.26 0.28 0.30 0.32 0.34 0.36 0.38 0.40 0.45 0.50 0.60 0.70 0.80 0.90 1.00"
+    temps="0 25 50 65 70 75 85 100 125"
+    modes="dyn"
+    paras="true"
+    corners="tt"
+    step=4
+    techs="1278p3"
+    gates="xor_z1 xor_z2 xor_z3"
+    stdcells="i0m i0s"
+    sigmas="0.0 5.3"
+    fos="3"
+    SIM="xa"
+    hspicemodelroot=${p1278p3_0p9eu1root}
+    caps="3e-15 6e-15 1.2e-14 2.4e-14 4.8e-14"
+fi
+
+if [ "$1" == "-variation1278hidrive" ]; then
+    runmode="override"
+    volts="0.20 0.22 0.24 0.26 0.28 0.30 0.32 0.34 0.36 0.38 0.40 0.45 0.50 0.60 0.70 0.80 0.90 1.00"
+    temps="0 25 50 65 70 75 85 100 125"
+    modes="dyn"
+    paras="true"
+    corners="tt"
+    step=4
+    techs="1278p3"
+    gates="xor_z6 xor_z9 xor_z12 xor_z18"
+    stdcells="i0m i0s"
+    sigmas="0.0 5.3"
+    fos="3"
+    SIM="xa"
+    hspicemodelroot=${p1278p3_0p9eu1root}
+    caps="0 1.5e-15 3e-15 6e-15 1.2e-14 2.4e-14 4.8e-14"
+fi
+
+######################################################################
+
+if [ "$1" == "-variation1278_0p9e" ]; then
+    runmode="override"
+    volts="0.10 0.12 0.14 0.16 0.18 0.20 0.22 0.24 0.26 0.28 0.30 0.32 0.34 0.36 0.38 0.40 0.45 0.50 0.55 0.60 0.65 0.75 0.80 0.90 1.00"
+    temps="0 25 50 65 70 75 85 100 125"
+    modes="dyn"
+    paras="true"
+    corners="tt"
+    step=4
+    techs="1278p3"
+    gates="xor_z1 xor_z2 xor_z3"
+    stdcells="i0m i0s"
+    sigmas="0.0 0.5 1.0 4.0 4.5 5.3 6.0"
+    fos="3"
+    SIM="xa"
+    hspicemodelroot=${p1278p3_0p9eroot}
 fi
 
 if [ "$1" == "-variationlow" ]; then
@@ -95,7 +239,7 @@ if [ "$1" == "-variationlow" ]; then
     step=4
     techs="1278p3"
     gates="xor_z1_0p0sigma xor_z1_5p3sigma"
-    fo="4"
+    fos="4"
 fi
 
 if [ "$1" == "-variation" ]; then
@@ -108,7 +252,23 @@ if [ "$1" == "-variation" ]; then
     step=4
     techs="1278p3"
     gates="xor_z1_0p0sigma xor_z1_5p3sigma xor_z2_0p0sigma xor_z2_5p3sigma"
-    fo="4"
+    fos="4"
+fi
+
+if [ "$1" == "-2024ww10" ]; then
+    runmode="override"
+    volts="0.14 0.16 0.18 0.20 0.22 0.24 0.26 0.28 0.30 0.34 0.38 0.42 0.45 0.50"
+    temps="0 25 50 75 85 105 125"
+    modes="dyn"
+    paras="true"
+    corners="tt sf fs ss ff"
+    step=4
+    techs="1278p3"
+    gates="xor_z2_0p0sigma xor_z2_5p3sigma"
+    fos="4"
+    step="1"
+    SIM="xa"
+    hspicemodelroot=${p1278p3_0p9u2root}
 fi
 
 if [ "$1" == "-variationpdk" ]; then
@@ -121,7 +281,7 @@ if [ "$1" == "-variationpdk" ]; then
     step=4
     techs="1278p3"
     gates="xor_z1_0p0sigma xor_z1_5p3sigma xor_z2_0p0sigma xor_z2_5p3sigma"
-    fo="4"
+    fos="4"
     roots=${p1278p3roots}
 fi
 
@@ -135,7 +295,7 @@ if [ "$1" == "-variationpdk0p8" ]; then
     step=4
     techs="1278p3"
     gates="xor_z1_0p0sigma xor_z1_5p3sigma xor_z2_0p0sigma xor_z2_5p3sigma"
-    fo="4"
+    fos="4"
     roots=${p1278p3_0p8roots}
 fi
 
@@ -177,6 +337,45 @@ fi
 if [ "$1" == "-1278p3" ]; then
     runmode="override"
     techs="1278p3"
+fi
+
+if [ "$1" == "-i0m_i0s" ]; then
+    runmode="override"
+    volts="0.20 0.22 0.24 0.26 0.28 0.30 0.32 0.34 0.36 0.38 0.40 0.45 0.50 0.55"
+    temps="0 25 50 75 85 105 125"
+    modes="dyn"
+    paras="true"
+    corners="tt"
+    step=4
+    techs="1278p3 1278p3_i0m"
+    gates="xor_z1 xor_z2 xor_z3"
+    roots=${p1278p3_0p9eroots}
+fi
+
+if [ "$1" == "-i0m_i0s_hv" ]; then
+    runmode="override"
+    volts="0.60 0.65 0.70 0.75 0.80 0.85 0.90 0.95 1.00 1.05 1.10 1.15 1.20"
+    temps="0 25 50 75 85 105 125"
+    modes="dyn"
+    paras="true"
+    corners="tt"
+    step=4
+    techs="1278p3 1278p3_i0m"
+    gates="xor_z1 xor_z2 xor_z3"
+    roots=${p1278p3_0p9eroots}
+fi
+
+if [ "$1" == "-i0m_i0s_hv_all" ]; then
+    runmode="override"
+    volts="0.20 0.22 0.24 0.26 0.28 0.30 0.32 0.34 0.36 0.38 0.40 0.45 0.50 0.55 0.60 0.65 0.70 0.75 0.80 0.85 0.90 0.95 1.00 1.05 1.10 1.15 1.20"
+    temps="0 25 50 75 85 105 125"
+    modes="dyn"
+    paras="true"
+    corners="tt"
+    step=4
+    techs="1278p3 1278p3_i0m"
+    gates="xor_z1 xor_z2 xor_z3"
+    roots=${p1278p3_0p9eroots}
 fi
 
 if [ "$1" == "-gates" ]; then
@@ -310,6 +509,7 @@ JobsTask {
 
   Queue ${nb_queue} {
     Qslot ${nb_qslot}
+    MaxJobs ${nb_maxjobs}
   } 
   Jobs {
 
@@ -332,14 +532,17 @@ for gate in ${gates}; do
             volts=${buf_volts}
         fi
     fi
-    
-for para in ${paras}; do
-for corn in ${corners}; do
-for mode in ${modes}; do
-for temp in ${temps}; do
-for volt in ${volts}; do
-for tech in ${techs}; do
-for root in ${roots}; do
+for fo   in ${fos};      do
+for sigm in ${sigmas};   do
+for stdc in ${stdcells}; do
+for para in ${paras};    do
+for corn in ${corners};  do
+for mode in ${modes};    do
+for temp in ${temps};    do
+for volt in ${volts};    do
+for tech in ${techs};    do
+for root in ${roots};    do
+for cap  in ${caps};     do
 
     if [ "${trantypes}" == "" ]; then
         if [ "${tech}" == "n5" ]; then
@@ -371,6 +574,35 @@ for root in ${roots}; do
         fi
     fi
 
+    forbidden=0
+
+    if [ "$gate" == "xor_z1" ] && [ "$tech" == "1278p3_i0m" ]; then
+        echo "skipping forbidden combo $gate $para $corn $mode $temp $volt $tech $root"
+        forbidden=1
+    fi
+
+    if [ "$gate" == "xor_z1" ] && [ "$stdc" == "i0m" ]; then
+        echo "skipping forbidden combo $gate $para $corn $mode $temp $volt $tech $root $stdc"
+        forbidden=1
+    fi
+
+    sigarg=""
+    
+    if [ "$sigm" != "skip" ]; then
+        sigarg="-sigma $sigm"
+    fi
+
+    if [ "$stdc" != "skip" ]; then
+        stdcarg="-stdcells $stdc"
+    fi
+
+    caparg=""
+    
+    if [ "$cap" != "skip" ]; then
+        caparg="-loadcap $cap"
+    fi
+
+    if [ "$forbidden" != "1" ]; then
     for tran in ${trantypes}; do
         runfile=${RUNDIR}/${tasknum}.sh
         echo "#!/bin/sh -x" > ${runfile}
@@ -379,12 +611,19 @@ for root in ${roots}; do
 
 	echo ${SETUP_ARGS} >> ${runfile}
 
+        if [ "${hspicemodelroot}" != "" ] ; then
+            hsmrarg="-hspicemodelroot ${hspicemodelroot}"
+        else
+            hsmrarg=""
+        fi
         torun="${PROG} \
+              ${hsmrarg} \
               -tech ${tech} -corn ${corn} -tran ${tran} \
-              -mode ${mode} -simu xa -T ${TEMPLATEDIR} \
+              -mode ${mode} -simu ${SIM} -T ${TEMPLATEDIR} \
               -volt ${volt} -temp ${temp} \
               -para ${para} \
               -gate ${gate} -fo ${fo} \
+              ${sigarg} ${stdcarg} ${caparg}\
               -d ${RUNDIR}/${tasknum}.run -C"
 
         if [ "${root}" != "default:default" ]; then
@@ -393,6 +632,11 @@ for root in ${roots}; do
 
             torun="${torun} -hspicemodelroot ${rootpath} ${shortroot}"
         fi
+
+        echo "if [ -f ${RUNDIR}/measure.dat ]; then" >> ${runfile}
+        echo "    exit 0"                            >> ${runfile}
+        echo "fi"                                    >> ${runfile}
+        echo ""                                      >> ${runfile}
         
         echo "${torun} -p setup -p simulate" \
              >> ${runfile}
@@ -407,7 +651,11 @@ for root in ${roots}; do
         
         tasknum=`expr $tasknum + 1`
     done
-    
+    fi
+done
+done
+done
+done
 done
 done
 done

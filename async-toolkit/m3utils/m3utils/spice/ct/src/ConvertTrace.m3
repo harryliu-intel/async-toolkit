@@ -44,6 +44,10 @@ IMPORT Env;
 IMPORT CtDocBundle;
 IMPORT Process;
 IMPORT BundleRep;
+IMPORT RepeatMe;
+IMPORT Conversion;
+IMPORT ConversionList;
+IMPORT Time;
 
 <*FATAL Thread.Alerted*>
 
@@ -56,7 +60,7 @@ VAR doDebug := Debug.DebugThis("CT");
 
 CONST DefMaxFiles = 1000;
 
-VAR maxFiles := DefMaxFiles;
+VAR maxFiles := LAST(CARDINAL);
     
 CONST 
   MaxMem = 16*1024*1024; (* fit at least one row *)
@@ -110,7 +114,8 @@ PROCEDURE CreateBuffers(tempReader     : TempReader.T;
     END
   END CreateBuffers;
   
-PROCEDURE WriteSources(tempReader   : TempReader.T;
+PROCEDURE WriteSources(ofn          : Pathname.T;
+                       tempReader   : TempReader.T;
                        fnr          : FileNamer.T) =
   (* read data from each file in temp directory and output
      as PWL voltage sources to be used as a stimulus(?) *)
@@ -174,7 +179,9 @@ PROCEDURE Unslash(fn : Pathname.T) : Pathname.T =
     RETURN TextUtils.Replace(fn, "/", "::")
   END Unslash;
 
-PROCEDURE WriteFiles(tempReader : TempReader.T; fnr : FileNamer.T) =
+PROCEDURE WriteFiles(ofn        : Pathname.T;
+                     tempReader : TempReader.T;
+                     fnr        : FileNamer.T) =
   (* read data from each file in temp directory and output
      in simple ASCII format, one file per signal *)
   VAR
@@ -230,25 +237,198 @@ PROCEDURE WriteFiles(tempReader : TempReader.T; fnr : FileNamer.T) =
     END
   END WriteFiles;
 
-PROCEDURE WriteTrace(fnr : FileNamer.T; fmt : TraceFile.Version) =
+PROCEDURE WriteTrace(ofn : Pathname.T;
+                     fnr : FileNamer.T;
+                     fmt : TraceFile.Version) : Pathname.T =
   BEGIN
     Debug.Out(F("ConvertTrace.WriteTrace : fmt %s",
                 TraceFile.VersionNames[fmt]));
     
     WITH tr = NEW(TraceFile.T).init(ofn, nFiles, names.size(), fnr) DO
       IF wthreads > 1 THEN
-        tr.writePll(wthreads, writeTraceCmdPath, fmt)
+        RETURN tr.writePll(wthreads, writeTraceCmdPath, fmt)
       ELSE
-        tr.write(fmt)
+        RETURN tr.write(fmt)
       END
     END
   END WriteTrace;
+
+PROCEDURE DoConversion(conv : Conversion.T) =
+  VAR
+    ifn := conv.ifn;
+    ofn := conv.ofn;
+    doBuild := TRUE;
+  BEGIN
+
+    (* check if all required traces are already built first *)
+    IF doTrace THEN
+      doBuild := FALSE;
+      FOR f := FIRST(TraceFile.Version) TO LAST(TraceFile.Version) DO
+        IF f IN formats THEN
+          WITH sfx      = TraceFile.VersionSuffixes[f],
+               ufn      = ofn & "." & sfx DO
+
+            Debug.Out(F("DoConversion checking existence of TraceFile version %s : %s",
+                        TraceFile.VersionNames[f],
+                        ufn));
+
+            TRY
+              WITH status = FS.Status(ufn) DO
+                Debug.Out(F("DoConversion checking modification time of %s : status.modificationTime = %s, ignoreTime = %s",
+                            ufn, LR(status.modificationTime), LR(ignoreTime)));
+                
+                IF status.modificationTime <= ignoreTime THEN
+                  (* file is old, rebuild it *)
+                  doBuild := TRUE;
+                  EXIT
+                END
+              END
+            EXCEPT
+              OSError.E(x) =>
+              Debug.Out(F("DoConversion caught OSError.E (%s) while looking for %s, continuing", AL.Format(x), ufn));
+              doBuild := TRUE;
+              EXIT
+            END            
+          END
+        END
+      END
+    END;
+
+    IF doBuild = FALSE THEN
+      Debug.Out(F("DoConversion : not building %s because we found a new version of every trace file", ofn));
+      RETURN
+    ELSE
+      Debug.Out(F("DoConversion : continuing .. building %s", ofn))
+    END;
+
+    (* at least one trace does not exist, continue ... *)
+              
+    TRY
+      IF doDebug THEN
+        Debug.Out(F("ConvertTrace parsing... ifn=%s ofn=%s", ifn, ofn));
+      END;
+      CASE parseFmt OF
+        ParseFmt.Tr0 =>
+
+        VAR
+          rd : Rd.T;
+        BEGIN
+          TRY
+            rd  := FileRd_Open(ifn)
+          EXCEPT
+            OSError.E(x) => Debug.Error("Trouble opening input file \"" & ifn & "\": OSError.E : " & AL.Format(x))
+          END;
+          
+          names.addhi(Tr0.Seq1("TIME"));
+          Tr0.Parse(wd,
+                    ofn,
+                    names,
+                    maxFiles,
+                    nFiles,
+                    MaxMem,
+                    timeScaleFactor,
+                    timeOffset,
+                    voltageScaleFactor,
+                    voltageOffset,
+                    dutName,
+                    rd,
+                    wait,
+                    restrictNodes,
+                    regExList,
+                    maxNodes,
+                    translate, noX);
+
+          TRY Rd.Close(rd) EXCEPT ELSE END
+        END
+      |
+        ParseFmt.Fsdb =>
+        Fsdb.Parse(wd,
+                   ofn,
+                   names,
+                   maxFiles,
+                   nFiles,
+                   timeScaleFactor,
+                   timeOffset,
+                   voltageScaleFactor,
+                   voltageOffset,
+                   dutName,
+                   ifn,
+                   wait,
+                   restrictNodes,
+                   regExList,
+                   maxNodes,
+                   translate, noX,
+                   scopesep,
+                   fsdbCmdPath,
+                   Fsdb.Compress {
+        compressCmdPath,
+        compressPrec,
+        compressQuick
+        },
+                   threads,
+                   interpolate,
+                   maxTime)
+      END;
+      IF doDebug THEN
+        Debug.Out("ConvertTrace parsing done.")
+      END
+      
+    EXCEPT
+      Tr0.SyntaxError(e) => Debug.Error("Syntax error on line " & Int(lNo) & " : " &
+        e)
+    |
+      Tr0.ShortRead => Debug.Warning("Tr0.ShortRead: Short read on final line, data may be corrupted")
+    |
+      Rd.Failure(x) => Debug.Error("Trouble reading input file : Rd.Failure : " & AL.Format(x))
+    END;
+
+    WITH fnr = NEW(FileNamer.T).init(wd, nFiles, names.size()) DO
+
+      VAR
+        tempReader := NEW(TempReader.T).init(fnr);
+      BEGIN
+        
+        IF doSources THEN
+          WriteSources(ofn, tempReader, fnr)
+        END;
+        
+        IF doFiles THEN
+          WriteFiles(ofn, tempReader, fnr)
+        END
+      END;
+
+      IF doTrace THEN
+        FOR f := FIRST(TraceFile.Version) TO LAST(TraceFile.Version) DO
+          IF f IN formats THEN
+            Debug.Out("Writing TraceFile version " & TraceFile.VersionNames[f]);
+            WITH temproot = wd & "/inprogress",
+                 tempfile = WriteTrace(temproot, fnr, f),
+                 sfx      = TraceFile.VersionSuffixes[f],
+                 ufn      = ofn & "." & sfx DO
+              TRY
+                Debug.Out(F("Done writing TraceFile version %s : moving %s -> %s",
+                            TraceFile.VersionNames[f],
+                            tempfile,
+                            ufn));
+                FS.Rename(tempfile, ufn)
+              EXCEPT
+                OSError.E(x) =>
+                Debug.Error(F("Couldnt rename %s -> %s : OSError.E : %s",
+                              tempfile, ufn, AL.Format(x)))
+              END
+            END
+          END
+        END
+      END;
+
+    END
+  END DoConversion;
   
 VAR
   names := NEW(TextSeqSeq.T).init();
-  ifn, ofn : Pathname.T;
+  convList : ConversionList.T := NIL;
 
-  wd      : Pathname.T      := NIL;
+  wd      : Pathname.T      := "ct.ctwork";
   dutName : TEXT            := NIL;
   pp                        := NEW(ParseParams.T).init(Stdio.stderr);
   timeScaleFactor,
@@ -288,7 +468,10 @@ VAR
   compressQuick       : BOOLEAN;
 
   scopesep            := ".";
+  copyRootName        := FALSE;
 
+  ignoreTime          : Time.T := LAST(Time.T);
+  (* dont rebuild files newer than this *)
   
 CONST
   DefFormats =
@@ -296,14 +479,42 @@ CONST
   
 TYPE
   ParseFmt = { Tr0, Fsdb };
+
+CONST
+  ImmediateQuit = 117;
+
+VAR
+  M3Utils := Env.Get("M3UTILS");
   
 BEGIN
+  Debug.SetOptions(SET OF Debug.Options {Debug.Options.PrintThreadID, Debug.Options.PrintPID });
+  
   TRY
+
+    IF NOT pp.keywordPresent("-execute") THEN
+      RepeatMe.Repeat("-execute",
+                      10,
+                      1.0d0,
+                      immediateQuit := ImmediateQuit,
+                      addArgs := ARRAY [0..1] OF TEXT { "-starttime",
+                                                        LR(Time.Now()) } )
+    END;
+
+    IF pp.keywordPresent("-starttime") THEN
+      ignoreTime := pp.getNextLongReal()
+    END;
+
+    IF pp.keywordPresent("-force") THEN
+      ignoreTime := LAST(Time.T)
+      (* set ignoreTime to the end of eternity, so all files are rebuilt *)
+    END;
 
     translate := pp.keywordPresent("-translate");
     noX       := pp.keywordPresent("-noX");
 
-    IF pp.keywordPresent("-help") THEN
+    copyRootName := pp.keywordPresent("-copyrootname") OR pp.keywordPresent("-C");
+
+    IF pp.keywordPresent("-help") OR pp.keywordPresent("--help") THEN
       <*FATAL Wr.Failure*>
       BEGIN
         Wr.PutText(Stdio.stderr, CtDocBundle.Get().get("../doc/ct.txt"));
@@ -323,6 +534,10 @@ BEGIN
 
     IF pp.keywordPresent("-maxtime") THEN
       maxTime := pp.getNextLongReal()
+    END;
+
+    IF pp.keywordPresent("-nochop") THEN
+      maxTime := FIRST(LONGREAL)
     END;
 
     IF pp.keywordPresent("-resample") OR pp.keywordPresent("-R") THEN
@@ -351,25 +566,42 @@ BEGIN
     END;
 
     IF pp.keywordPresent("-z") THEN
-      formats := formats + SET OF TraceFile.Version {
-                             TraceFile.Version.CompressedV1 };
+      formats :=  SET OF TraceFile.Version { TraceFile.Version.CompressedV1 };
     END;
 
+    compressQuick := pp.keywordPresent("-quick");
+
+    compressCmdPath := Env.Get("CT_COMPRESS_PATH");
+
+    IF TraceFile.Version.CompressedV1 IN formats AND M3Utils # NIL THEN
+      (* default compress setting *)
+      compressCmdPath := M3Utils & "/spice/spicecompress/spicestream/AMD64_LINUX/spicestream"
+    END;
+    
     fsdbCmdPath := Env.Get("CT_NANOSIMRD_PATH");
     IF fsdbCmdPath # NIL THEN
       parseFmt := ParseFmt.Fsdb
     END;
 
+    IF pp.keywordPresent("-F") THEN
+      IF M3Utils = NIL THEN Debug.Error("Must set M3UTILS") END;
+      fsdbCmdPath := M3Utils & "/spice/fsdb/src/nanosimrd";
+      parseFmt := ParseFmt.Fsdb;
+    END;
+
+    IF pp.keywordPresent("-Fnetbatch") THEN
+      IF M3Utils = NIL THEN Debug.Error("Must set M3UTILS") END;
+      fsdbCmdPath := M3Utils & "/spice/fsdb/src/nanosimrd.nb";
+      parseFmt := ParseFmt.Fsdb;
+    END;
+    
     IF pp.keywordPresent("-fsdb") THEN
       fsdbCmdPath := pp.getNext();
       parseFmt := ParseFmt.Fsdb;
     END;
 
-    compressCmdPath := Env.Get("CT_COMPRESS_PATH");
-    
     IF pp.keywordPresent("-compress") THEN
       compressCmdPath := pp.getNext();
-      compressQuick := pp.keywordPresent("-quick");
     END;
 
     IF pp.keywordPresent("-prec") THEN
@@ -442,20 +674,46 @@ BEGIN
     END;
 
     pp.skipParsed();
-    
-    ifn := pp.getNext();
 
-    ofn := pp.getNext();
-    wd  := ofn & ".ctwork";
+    VAR
+      ifn, ofn : Pathname.T;
+    BEGIN
+      WHILE pp.next < NUMBER(pp.arg^) DO
+
+        ifn := pp.getNext();
+
+        IF copyRootName THEN
+          WITH pos = Text.FindCharR(ifn, '.') DO
+            IF pos = -1 THEN
+              Debug.Error("-copyrootname and no . in input name")
+            ELSE
+              ofn := Text.Sub(ifn, 0, pos)
+            END
+          END
+        ELSE
+          ofn := pp.getNext()
+        END;
+
+        convList := ConversionList.Cons(Conversion.T { ifn, ofn }, convList)
+      END
+    END;
     
     pp.finish();
   EXCEPT
-    ParseParams.Error => Debug.Error("Can't parse command-line parameters\nUsage: " & Params.Get(0) & "\n" & CtDocBundle.Get().get("../doc/ct.txt"))
+    ParseParams.Error => Debug.Error("Can't parse command-line parameters\nUsage: " & Params.Get(0) & "\n" & CtDocBundle.Get().get("../doc/ct.txt"),
+                                     exitCode := ImmediateQuit)
   END;
 
   IF TraceFile.Version.CompressedV1 IN formats AND compressCmdPath = NIL THEN
-    Debug.Error("If format is CompressedV1, must also specify compress (command path)")
+    Debug.Error("If format is CompressedV1, must also specify compress (command path)", exitCode := ImmediateQuit)
   END;
+
+  IF maxFiles = LAST(CARDINAL) THEN
+    maxFiles := MIN(10 * threads, DefMaxFiles)
+  END;
+
+  maxFiles := MAX(2, maxFiles);
+  (* must have at least one TIME file and one data file *)
   
   IF wthreads # 1 THEN
     Debug.Warning("wthreads > 1 not recommended")
@@ -465,107 +723,12 @@ BEGIN
   
   TRY FS.CreateDirectory(wd) EXCEPT ELSE END;
 
-  TRY
-
-    IF doDebug THEN
-      Debug.Out("ConvertTrace parsing...");
-    END;
-    CASE parseFmt OF
-      ParseFmt.Tr0 =>
-
-      VAR
-        rd : Rd.T;
-      BEGIN
-        TRY
-          rd  := FileRd_Open(ifn)
-        EXCEPT
-          OSError.E(x) => Debug.Error("Trouble opening input file \"" & ifn & "\": OSError.E : " & AL.Format(x))
-        END;
-        
-        names.addhi(Tr0.Seq1("TIME"));
-        Tr0.Parse(wd,
-                  ofn,
-                  names,
-                  maxFiles,
-                  nFiles,
-                  MaxMem,
-                  timeScaleFactor,
-                  timeOffset,
-                  voltageScaleFactor,
-                  voltageOffset,
-                  dutName,
-                  rd,
-                  wait,
-                  restrictNodes,
-                  regExList,
-                  maxNodes,
-                  translate, noX);
-
-        TRY Rd.Close(rd) EXCEPT ELSE END
-      END
-    |
-      ParseFmt.Fsdb =>
-      Fsdb.Parse(wd,
-                 ofn,
-                 names,
-                 maxFiles,
-                 nFiles,
-                 timeScaleFactor,
-                 timeOffset,
-                 voltageScaleFactor,
-                 voltageOffset,
-                 dutName,
-                 ifn,
-                 wait,
-                 restrictNodes,
-                 regExList,
-                 maxNodes,
-                 translate, noX,
-                 scopesep,
-                 fsdbCmdPath,
-                 Fsdb.Compress {
-                                 compressCmdPath,
-                                 compressPrec,
-                                 compressQuick
-                               },
-                 threads,
-                 interpolate,
-                 maxTime)
-    END;
-    IF doDebug THEN
-      Debug.Out("ConvertTrace parsing done.")
-    END
-    
-  EXCEPT
-    Tr0.SyntaxError(e) => Debug.Error("Syntax error on line " & Int(lNo) & " : " &
-      e)
-  |
-    Tr0.ShortRead => Debug.Warning("Tr0.ShortRead: Short read on final line, data may be corrupted")
-  |
-    Rd.Failure(x) => Debug.Error("Trouble reading input file : Rd.Failure : " & AL.Format(x))
-  END;
-
-
-  WITH fnr = NEW(FileNamer.T).init(wd, nFiles, names.size()) DO
-    IF doTrace THEN
-      FOR f := FIRST(TraceFile.Version) TO LAST(TraceFile.Version) DO
-        IF f IN formats THEN
-          WriteTrace(fnr, f)
-        END
-      END
-    END;
-
-    VAR
-      tempReader := NEW(TempReader.T).init(fnr);
-    BEGIN
-    
-      IF doSources THEN
-        WriteSources(tempReader, fnr)
-      END;
-      
-      IF doFiles THEN
-        WriteFiles(tempReader, fnr)
-      END
+  VAR
+    p := convList;
+  BEGIN
+    WHILE p # NIL DO
+      DoConversion(Conversion.T { p.head.ifn, p.head.ofn });
+      p := p.tail
     END
   END
 

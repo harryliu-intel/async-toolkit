@@ -22,7 +22,6 @@ FROM Fmt IMPORT F, Int; IMPORT Fmt;
 IMPORT OSError;
 IMPORT AL;
 IMPORT Process;
-IMPORT Pathname;
 IMPORT Math;
 IMPORT FS;
 IMPORT Scan;
@@ -40,12 +39,17 @@ FROM TechConfig IMPORT TranNames, ModeNames, PhazNames, SimuNames, CornNames,
                        GateNames, TechNames;
 FROM TechConfig IMPORT SupportedFanouts;
 FROM TechTechs IMPORT Techs;
+FROM TechCleanup IMPORT DeleteMatching, DeleteRecursively, CompressFilesWithExtension;
 
 IMPORT TechConfig;
+IMPORT P1278p3TechProcess;
+IMPORT Text;
 
 TYPE Config = TechConfig.T;
 
 CONST ParasiticDeadlineMultiplier = 2.0d0;
+
+      TE = Text.Equal;
 
 
 CONST LR = Fmt.LongReal;
@@ -122,7 +126,7 @@ PROCEDURE DoCommonSetup(VAR c : Config) =
          cornDelayFactor = CornDelay[c.corn],
          delayFactor     = (1.0d0 + threshDelayFactor) * tempDelayFactor * cornDelayFactor,
          nanoseconds     = 10.0d0 +
-                           ParaNanoFactor[c.para] * 10.0d0 * (delayFactor + 1.5d0),
+                           ParaNanoFactor[c.para] * 40.0d0 * (delayFactor + 1.5d0),
          timestep        = MAX(DefaultTimeStep,
                                nanoseconds * 1.0d-9 / MaxTimeSteps)
      DO
@@ -146,35 +150,27 @@ PROCEDURE DoConvertPhaz(READONLY c : Config) =
 
 PROCEDURE DoClean(READONLY c : Config) =
   BEGIN
+    IF Verbose THEN
+      Debug.Out("DoClean()")
+    END;
     TRY
       WITH fsdbPath = TechConvert.FindFsdbInDir(c.workDir) DO
         IF fsdbPath # NIL THEN
+          IF Verbose THEN
+            Debug.Out("DoClean deleting " & fsdbPath)
+          END;
           FS.DeleteFile(fsdbPath) 
         END
       END
     EXCEPT ELSE END;
     
-    TRY
-      CONST
-        CtWorkDir = "ct.work";
-      VAR
-        iter := FS.Iterate(CtWorkDir);
-        fn : Pathname.T;
-      BEGIN
-        WHILE iter.next(fn) DO
-          WITH ffn = CtWorkDir & "/" & fn DO
-            IF Verbose THEN
-              Debug.Out("Attempting to delete "& ffn)
-            END;
-            TRY FS.DeleteFile(ffn) EXCEPT ELSE END
-          END
-        END
-      END;
-      IF Verbose THEN
-        Debug.Out("Attempting to delete "& "ct.work")
-      END;
-      FS.DeleteDirectory("ct.work")
-    EXCEPT ELSE END
+    DeleteRecursively(c.workDir, c.simRoot & ".ctwork");
+    DeleteRecursively(c.workDir, "progress.ctwork");
+    DeleteRecursively(c.workDir, "ct.work");
+    DeleteMatching   (c.workDir, c.simRoot & ".mc");
+    
+    CompressFilesWithExtension(c.workDir, ".lis");
+    CompressFilesWithExtension(c.workDir, ".ic0");
   END DoClean;
 
 PROCEDURE DoMeasurePhaz(READONLY c : Config) =
@@ -194,10 +190,35 @@ BEGIN
   TRY
     c.createWorkDir := pp.keywordPresent("-C");
     
+    IF pp.keywordPresent("-gate") THEN
+      c.gate := VAL(Lookup(pp.getNext(), GateNames), Gate)
+    END;
+
+    CASE c.gate OF
+      Gate.Xor_Z1, Gate.Xor_Z2, Gate.Xor_Z3,
+      Gate.Xor_Z6, Gate.Xor_Z9, Gate.Xor_Z12, Gate.Xor_Z18 =>
+      IF pp.keywordPresent("-stdcells") THEN
+        WITH sc = VAL(Lookup(pp.getNext(), P1278p3TechProcess.StdcellNames),
+                      P1278p3TechProcess.Stdcells) DO
+          c.stdcells := P1278p3TechProcess.StdcellNames[sc]
+        END
+      END
+    ELSE
+    END;
+
     IF pp.keywordPresent("-tech") THEN
       c.tech := VAL(Lookup(pp.getNext(), TechNames), Tech);
+
+      IF c.tech = Tech.P1278p3 AND TE(c.stdcells, "i0m") THEN
+        c.tech := Tech.P1278p3_i0m
+      END;
+
       c.hspiceModel := Techs[c.tech].hspiceModel;
       c.hspiceModelRoot := Techs[c.tech].hspiceModelRoot;
+    END;
+
+    IF pp.keywordPresent("-hspicemodelroot") THEN
+      c.hspiceModelRoot := pp.getNext()
     END;
 
     IF pp.keywordPresent("-fo") THEN
@@ -207,6 +228,10 @@ BEGIN
         END;
         c.fanout := arg
       END
+    END;
+
+    IF pp.keywordPresent("-sigma") THEN
+      c.sigma := pp.getNextLongReal()
     END;
     
     IF pp.keywordPresent("-para") THEN
@@ -237,6 +262,12 @@ BEGIN
       c.temp := pp.getNextLongReal()
     END;
 
+    IF pp.keywordPresent("-loadcap") THEN
+      c.loadCap := pp.getNextLongReal()
+    ELSE
+      c.loadCap := 0.0d0
+    END;
+
     IF pp.keywordPresent("-mode") THEN
       c.mode := VAL(Lookup(pp.getNext(), ModeNames), Mode)
     END;
@@ -249,9 +280,6 @@ BEGIN
       c.corn := VAL(Lookup(pp.getNext(), CornNames), Corn)
     END;
 
-    IF pp.keywordPresent("-gate") THEN
-      c.gate := VAL(Lookup(pp.getNext(), GateNames), Gate)
-    END;
 
     IF pp.keywordPresent("-d") THEN
       c.workDir := pp.getNext()

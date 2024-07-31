@@ -28,6 +28,7 @@ IMPORT TextSeq;
 PROCEDURE Replace(in, old, new : TEXT) : TEXT;
 PROCEDURE ReplaceChar(in : TEXT; old, new : CHAR) : TEXT;
 PROCEDURE CountCharOccurences(in: TEXT; c: CHAR): CARDINAL;
+PROCEDURE Tr(in : TEXT; READONLY old, new : ARRAY OF CHAR) : TEXT;
 
 PROCEDURE Filter(in: TEXT; keep: SET OF CHAR): TEXT;
 PROCEDURE FilterOut(in: TEXT; remove := SET OF CHAR{' ', '\t', '\n'}): TEXT;
@@ -50,8 +51,17 @@ PROCEDURE HaveSuffix(in, suffix: TEXT): BOOLEAN;
 PROCEDURE RemovePrefix(in, prefix: TEXT): TEXT;
   (* checked runtime error for prefix not to be as stated *)
 
+PROCEDURE ReplacePrefix(in, oprefix, nprefix: TEXT): TEXT;
+  (* checked runtime error for prefix not to be as stated *)
+
 PROCEDURE RemoveSuffix(in, suffix: TEXT): TEXT;
   (* checked runtime error for suffix not to be as stated *)
+
+PROCEDURE ReplaceSuffix(in, osuffix, nsuffix: TEXT): TEXT;
+  (* checked runtime error for suffix not to be as stated *)
+
+PROCEDURE CheckSuffix(in, suffix : TEXT) : TEXT;
+  (* remove suffix and return prefix, if suffix is there; else return NIL *)
 
 PROCEDURE RemoveSuffixes(in : TEXT; READONLY suffixes : ARRAY OF TEXT):TEXT;
   (* removes any matching suffix; do nothing if no match *)

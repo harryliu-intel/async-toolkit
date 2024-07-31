@@ -20,7 +20,7 @@ FROM TechConfig IMPORT TranNames, ModeNames, SimuNames, CornNames,
 
 CONST LR = LongReal;
 
-PROCEDURE DoMeasure(READONLY c : TechConfig.T;
+PROCEDURE DoMeasure(READONLY c                  : TechConfig.T;
                     traceRoot, outName, workDir : Pathname.T;
                     exitOnError := TRUE) : BOOLEAN =
   (* returns TRUE iff we measure a cycle time *)
@@ -82,8 +82,8 @@ PROCEDURE DoMeasure(READONLY c : TechConfig.T;
       StartTran = 1;
     VAR
       xIdx := GetIdx(trace, "x[0]");
-      iIdx := GetIdx(trace, "vissx");
-      yIdx := GetIdx(trace, "vissy");
+      iIdx := GetIdx(trace, "i1(Vvssx)");
+      yIdx := GetIdx(trace, "i1(Vvssy)");
       cycle, meancurrent, leakcurrent, latency : LONGREAL;
     BEGIN
       TRY
@@ -91,9 +91,15 @@ PROCEDURE DoMeasure(READONLY c : TechConfig.T;
       EXCEPT
         Rd.Failure, Rd.EndOfFile => Debug.Error("Trouble reading node data")
       END;
+
+      WITH nt      = 3,
+           EndTran = StartTran + nt DO
+        Debug.Out(F("StartTime %s StartTran %s EndTran %s",
+                    LR(StartTime), Int(StartTran), Int(EndTran)));
       
-      cycle := CycleTime(timeData^, nodeData^,
-                         c.volt / 2.0d0, StartTime, StartTran, StartTran + 1);
+        cycle   := CycleTime(timeData^, nodeData^,
+                             c.volt / 2.0d0, StartTime, StartTran, EndTran)
+      END;
 
       latency := HighTime(timeData^, nodeData^,
                           c.volt / 2.0d0, c.volt / 10.0d0,
@@ -108,7 +114,7 @@ PROCEDURE DoMeasure(READONLY c : TechConfig.T;
         Rd.Failure, Rd.EndOfFile => Debug.Error("Trouble reading node data")
       END;
 
-      meancurrent := -1.0d0 / 1.0d6 *
+      meancurrent := 1.0d0 *
           MeanValue(timeData^, nodeData^, StartTime);
       
       Debug.Out("Measured mean dyna current " & LR(meancurrent));
@@ -119,7 +125,7 @@ PROCEDURE DoMeasure(READONLY c : TechConfig.T;
         Rd.Failure, Rd.EndOfFile => Debug.Error("Trouble reading node data")
       END;
 
-      leakcurrent := -1.0d0 / 1.0d6 *
+      leakcurrent := 1.0d0 *
           MeanValue(timeData^, nodeData^, StartTime);
       
       Debug.Out("Measured mean leak current " & LR(leakcurrent));
@@ -146,7 +152,7 @@ PROCEDURE DoMeasure(READONLY c : TechConfig.T;
           END;
             
           Wr.PutText(wr,
-                     FN("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n",
+                     FN("%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n",
                         ARRAY OF TEXT {
                            TechNames[c.tech],
                            CornNames[c.corn],
@@ -154,9 +160,12 @@ PROCEDURE DoMeasure(READONLY c : TechConfig.T;
                            GateNames[c.gate],
                            ModeNames[c.mode],
                            SimuNames[c.simu],
+                           c.stdcells,
                            Int(c.fanout),
                            LR(c.volt),
                            LR(c.temp),
+                           LR(c.sigma),
+                           LR(c.loadCap),
                            LR(timeResult),
                            LR(meancurrent),
                            LR(leakcurrent),

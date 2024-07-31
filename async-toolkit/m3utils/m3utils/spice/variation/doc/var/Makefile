@@ -3,6 +3,7 @@ DOC=var
 
 MAXGRAPHICS=500000
 DVIPS=dvips
+FIG2DEV=/usr/intel/pkgs/xfig/3.2.8b/bin/fig2dev
 
 GENFIGURES=ringosc.eps invring.eps invring1.eps
 
@@ -28,11 +29,11 @@ $(DOC).dvi: $(GENFIGURES)
 	$(DVIPS) -tletter -f $*.dvi -o $*.ps
 
 .fig.eps:
-	fig2dev -L eps $*.fig $*.eps
-	fig2dev -L png $*.fig $*.png
+	$(FIG2DEV) -L eps $*.fig $*.eps
+	$(FIG2DEV) -L png $*.fig $*.png
 
 .fig.png:
-	fig2dev -L png $*.fig $*.png
+	$(FIG2DEV) -L png $*.fig $*.png
 
 clean::
 	rm -f $(DOC).ps $(DOC).pdf $(TARGETS) *.log *.aux *~ *.dvi *.toc $(GENFIGURES) $(DOC2).ps $(DOC2).pdf *.lof *.lot

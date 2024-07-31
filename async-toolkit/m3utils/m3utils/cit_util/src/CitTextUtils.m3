@@ -63,6 +63,30 @@ PROCEDURE ReplaceChar(in : TEXT; old, new : CHAR) : TEXT =
     RETURN Text.FromChars(res^)
   END ReplaceChar;
 
+PROCEDURE Tr(in : TEXT; READONLY old, new : ARRAY OF CHAR) : TEXT =
+  VAR
+    s   := SET OF CHAR {};
+    res := NEW(REF ARRAY OF CHAR, TL(in));
+  BEGIN
+    <*ASSERT NUMBER(old) = NUMBER(new)*>
+    FOR j := FIRST(old) TO LAST(old) DO
+      s := s + SET OF CHAR { old[j] }
+    END;
+    
+    FOR i := 0 TO TL(in) - 1 DO
+      WITH char = Text.GetChar(in,i) DO
+        IF char IN s THEN
+          FOR j := FIRST(old) TO LAST(old) DO
+            IF char = old[j] THEN res[i] := new[j] END
+          END
+        ELSE
+          res[i] := char
+        END
+      END
+    END;
+    RETURN Text.FromChars(res^)
+  END Tr;
+
 PROCEDURE Replace(in, old, new : TEXT) : TEXT =
   VAR
     s, p : CARDINAL := 0;
@@ -144,6 +168,15 @@ PROCEDURE RemoveSuffix(in, suffix: TEXT): TEXT =
     RETURN Text.Sub(in, 0, pos);
   END RemoveSuffix;
 
+PROCEDURE CheckSuffix(in, suffix : TEXT) : TEXT =
+  BEGIN
+    IF HaveSuffix(in, suffix) THEN
+      RETURN RemoveSuffix(in, suffix)
+    ELSE
+      RETURN NIL
+    END
+  END CheckSuffix;
+
 PROCEDURE RemoveSuffixes(fn : TEXT; READONLY exts : ARRAY OF TEXT) : TEXT =
   (* remove extension, if any from list *)
   BEGIN
@@ -158,6 +191,16 @@ PROCEDURE RemoveSuffixes(fn : TEXT; READONLY exts : ARRAY OF TEXT) : TEXT =
     END;
     RETURN fn
   END RemoveSuffixes;
+
+PROCEDURE ReplacePrefix(in, oprefix, nprefix: TEXT): TEXT =
+  BEGIN
+    RETURN nprefix & RemovePrefix(in, oprefix)
+  END ReplacePrefix;
+
+PROCEDURE ReplaceSuffix(in, osuffix, nsuffix: TEXT): TEXT =
+  BEGIN
+    RETURN RemoveSuffix(in, osuffix) & nsuffix
+  END ReplaceSuffix;
 
 PROCEDURE Pluralize(noun : TEXT; n : INTEGER; 
                     ending : TEXT; printNum : BOOLEAN) : TEXT =

@@ -94,7 +94,7 @@ PROCEDURE DoConvert(READONLY c : TechConfig.T;
     *)
     fsdbPath := Debug.UnNil(FindFsdbInDir(c.workDir));
     
-    cmd := FN("%s -fsdb %s -compress %s -threads 4 -wthreads 1 -format CompressedV1 -R %s %s %s",
+    cmd := FN("%s -nochop -fsdb %s -compress %s -threads 4 -wthreads 1 -format CompressedV1 -R %s %s %s",
              ARRAY OF TEXT {
     M3Utils & "/" & CtPath,
     M3Utils & "/" & NanosimrdPath,
@@ -109,7 +109,7 @@ PROCEDURE DoConvert(READONLY c : TechConfig.T;
     
     TRY
       CASE c.simu OF
-        Simu.Xa =>
+        Simu.Xa, Simu.Hspice =>
         Debug.Out("DoConvert: " & cmd);
         WITH wd = NEW(Watchdog.T).init(ProcDeadline),
              c  = ProcUtils.RunText(cmd,
@@ -137,8 +137,6 @@ PROCEDURE DoConvert(READONLY c : TechConfig.T;
                END;
                wd.kill()
              END
-      |
-        Simu.Hspice => <*ASSERT FALSE*>
       END;
       Debug.Out("DoConvert output :\n" & TextWr.ToText(wr));
     FINALLY

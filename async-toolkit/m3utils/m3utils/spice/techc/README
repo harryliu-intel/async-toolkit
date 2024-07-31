@@ -10,7 +10,13 @@ nbtask load latest.task
 nbstatus tasks
 cd nb.latest
 cat *.run/measure.dat > all.dat
+
+# basic version
 ../../digest/AMD64_LINUX/techdigest -f all.dat -o graphs -C -se 1e15
+
+# frequency density version
+../../digest/AMD64_LINUX/techdigest -f all.dat -o graphs -C -se 1e15 -A Cels i0s 4.48e-12 -A Cels i0m 5.04e-12
+
 cd graphs
 gnuplot
 set style data linespoints

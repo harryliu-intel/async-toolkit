@@ -1,4 +1,11 @@
 INTERFACE SpiceCircuit;
+
+(* 
+   definition of a spice
+
+   .SUBCKT
+*)
+
 IMPORT SpiceObjectSeq;
 IMPORT Refany;
 IMPORT TextSeq;

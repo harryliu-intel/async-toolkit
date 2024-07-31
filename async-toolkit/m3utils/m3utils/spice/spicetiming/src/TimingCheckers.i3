@@ -79,7 +79,7 @@ TYPE Checker = PROCEDURE(clkIdx   : CARDINAL;
      T       = Checker;
 
 CONST
-  Fail = LAST(LONGREAL);
+  Fail = LAST(LONGREAL); (* returned if measurement fails *)
 
 PROCEDURE MeasureSetup(clkIdx   : CARDINAL;
                        data     : TransitionSeq.T;

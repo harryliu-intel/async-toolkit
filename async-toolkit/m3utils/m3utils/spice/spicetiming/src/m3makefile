@@ -32,8 +32,9 @@ Module ("PrsNode")
 
 Interface ("PrsImpl")
 
-implementation ("Main")
+%implementation ("Main")
 
-program ("spicetiming")
+%program ("spicetiming")
+library ("spicetiming")
 
 

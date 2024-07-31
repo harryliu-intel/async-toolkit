@@ -1,0 +1,16 @@
+import ("libm3")
+import ("cit_util")
+import ("spicelib")
+import ("tracelib")
+import ("metalib")
+import ("techc")
+
+module ("SpeedSample")
+sequence ("SpeedSample", "SpeedSample")
+array_sort("SpeedSample", "SpeedSample")
+
+implementation ("RingOsc")
+
+program ("ringosc")
+
+
