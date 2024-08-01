@@ -139,7 +139,8 @@
                )
 
       ; trim path to fit inside bbox (optionally aligned ETE cuts)
-      (cond (n<=1
+      (cond ((dbGetPropByName path "no_trim")->value=="TRUE" nil) ; no_trim property prevents trimming
+            (n<=1
              (dbDeleteObject path)
              progress = progress+1
              )
