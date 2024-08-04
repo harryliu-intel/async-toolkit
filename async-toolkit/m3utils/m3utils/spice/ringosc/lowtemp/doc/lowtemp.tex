@@ -1,8 +1,8 @@
 \documentclass{article}
 \usepackage{graphicx}
-\usepackage{epsf}
+%\usepackage{epsf}
 
-\usepackage{floatflt}
+%\usepackage{floatflt}
 \usepackage{fancyhdr}
 \usepackage{array}
 \usepackage[fleqn]{amsmath}
@@ -10,6 +10,8 @@
 \usepackage{sectsty}
 %\allsectionsfont{\mdseries\sffamily}
 \allsectionsfont{\mdseries\sc}
+
+\usepackage{textcomp} % \textcent
 
 \usepackage{caption}
 \captionsetup{margin=2pc,font=small,labelfont=bf}
@@ -392,13 +394,18 @@ power).
 We should realize that we will {\em not\/} find that circuits with
 high activity factors (such as Bitcoin miners) will necessarily have
 low leakage power as a fraction of total power after optimization as
-implied above.  What we will find, however, is that if we were to attempt
-to operate a Bitcoin miner {\em at the same PVT\/}\footnote{PVT stands for ``process, voltage, temperature'' and represents both the physical realization of the manufacturing process and the specific physical conditions used to operate a device resulting from that manufacturing process.}  as a single-threaded
-micrprocessor, the leakage power in the Bitcoin miner would be insignificant
-because it would be dwarfed by unmanageably high switching power.  We
-lower the supply voltage on the Bitcoin miner to reduce operating energy
-until we hit the floor determined by the leakage power, below which we
-cannot reduce the overall energy.  (But see below.)
+implied above.  What we will find, however, is that if we were to
+attempt to operate a Bitcoin miner {\em at the same
+  PVT\/}\footnote{PVT stands for ``process, voltage, temperature'' and
+represents both the physical realization of the manufacturing process
+and the specific physical conditions used to operate a device
+resulting from that manufacturing process.}  as a single-threaded
+micrprocessor, the leakage power in the Bitcoin miner would be
+insignificant because it would be dwarfed by unmanageably high
+switching power.  We lower the supply voltage on the Bitcoin miner to
+reduce operating energy until we hit the floor determined by the
+leakage power, below which we cannot reduce the overall energy.  (But
+see below.)
 
 \subsection{The speed-energy tradeoff}\label{sec:fe}
 
@@ -455,7 +462,7 @@ frequency as the number of operations per unit area.
   implementations showing the Pareto frontier.}
 
 
-\subsection{Minimum-cost computing and the speed-energy tradeoff}
+\subsection{Minimum-cost computing and the speed-energy tradeoff}\label{sec:minimumcost}
 
 Even when we have the speed-energy Pareto curves for a particular function,
 we still need to decide where on the curve optimal operation lies.  This
@@ -474,34 +481,40 @@ since they are convertible to silicon cost, whose translation to cost
 per operation relies on a financial model for the expected
 time-in-service of the part.
 
-Given a chip lifetime of $\Lambda$, a cost per area of $\kappa_A$, and
-an electricity price of $\kappa_E$ per unit of energy,
+Given a chip lifetime of $\Lambda$, a price per area of $\pi_{Si}$, and
+an electricity price of $\pi_E$ per unit of energy, and a usage efficiency
+of silicon and electricity of $\eta_{Si}$ and $\eta_E$,
 the cost per operation that can be carried out at frequency $f$ in area $A$ with energy per operation $E$ becomes the sum of the energy cost $C_E$
 \begin{equation}
-  C_E = \kappa_E E
+  C_E = { \pi_E E  \over \eta_E }
 \end{equation}
 and the silicon cost $C_{Si}$
 \begin{equation}
-  C_{Si} = {\kappa_A A \over \Lambda f}
+  C_{Si} = {\pi_{Si} A \over \Lambda f \eta_{Si}}
 \end{equation}
 so that the total cost $C$ is
-\begin{equation}
-  C = C_E + C_{Si} = \kappa_E E + {\kappa_A A \over \Lambda f} \quad .
+\begin{equation}\label{eq:ctot}
+  C_{tot} = C_E + C_{Si} = {\pi_E E \over \eta_E } + {\pi_{Si} A \over \Lambda f \eta_{Si}} \quad .
 \end{equation}
-If we now consider the locus of a fixed overall cost per operation $C$,
+If we now consider the locus of a fixed overall cost per operation $C_{tot} = C_0$,
 we can write this expression for example as 
 \begin{equation}
-f = { \kappa_A A \over \Lambda (C - \kappa_E E) }
+f_{C_0}(E) = { \pi_{Si} A \eta_E \over \Lambda (C_0 - \pi_E E) \eta_{Si} }
 \end{equation}
-which we show drawn into the $f$-$E$ diagram in figure~\ref{fig:fe_cost}.
+which we show drawn into the $f$-$E$ diagram in figure~\ref{fig:fe_cost}; or we can rewrite it
+very simply for the frequency density as
+\begin{equation}
+\phi_{C_0}(E) = { \pi_{Si} \eta_E \over \Lambda (C_0 - \pi_E E) \eta_{Si} } \quad .
+\end{equation}
+
 \insepsfig{5in}{fe_cost}{Minimum-cost computing as expressed in the speed-energy tradeoff chart.}
 In the case of a continuous and smooth $f$-$E$ curve, the curve will be
 tangent to the local isocost line at its global optimum.
 
 While our model here is straightforward, the actual computation of
-$\Lambda$, $\kappa_A$, and $\kappa_E$ can be difficult. To start with,
-$\kappa_A$ can be expected to vary under a product's lifetime, as the
-fab gets tuned and depreciated.  $\kappa_E$ is even more difficult to
+$\Lambda$, $\pi_{Si}$, and $\pi_E$ can be difficult. To start with,
+$\pi_{Si}$ can be expected to vary under a product's lifetime, as the
+fab gets tuned and depreciated.  $\pi_E$ is even more difficult to
 fix at the architecture stage, as it varies depending on all sort of
 external factors including global politics, weather, etc., and will be
 unlikely to be constant for any given customer, let alone across
@@ -538,8 +551,9 @@ mobile applications generally put a very strong emphasis on aspects
 relating to human-machine interaction.  None of these factors are
 relevant to the minimum-cost-computing abstraction we are developing.
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\section{Example of minimum-cost computing: i0m vs.~i0s}
+\section{Example: i0m vs.~i0s}\label{sec:i0mi0s}
 
 As an example of a minimum-cost computing problem, let us consider a
 recent crypto mining design problem.  We are given a design already
@@ -565,7 +579,7 @@ circuit and across the various PVTs.  (This is of course a very
 resource-intensive simulation, requiring many thousands of fairly
 complex circuit simulations.)
 
-\subsection{Standard test circuit}
+\subsection{Standard test circuit}\label{sec:standardtestckt}
 
 The test circuit is shown in figure~\ref{fig:ringosc}.  This is a
 simple ring oscillator, each stage of which consists of an XOR gate
@@ -706,15 +720,146 @@ not be obvious from tabular data.
   performance-per-unit area advantage of the smaller cells is dramatic. 
 \end{itemize}
     
-\insepsfig{4in}{i0m_vs_i0s_raw}{Comparison of minimum frequency as a function of energy (supply voltage varying
+\rotinsepsfig{6in}{i0m_vs_i0s_raw}{270}{Comparison of minimum frequency as a function of energy (supply voltage varying
   parameterically) of i0m and i0s implementations of the same adder
   circuit.  The frequency is 5.3$\sigma$ slow of mean.}
 
-\insepsfig{4in}{i0m_vs_i0s}{Comparison of minimum frequency per unit
+\rotinsepsfig{6in}{i0m_vs_i0s}{270}{Comparison of minimum frequency per unit
   area as a function of energy (supply voltage varying
   parameterically) of i0m and i0s implementations of the same adder
   circuit.  The frequency is 5.3$\sigma$ slow of mean.}
 
+It is clear that we should choose the i0s library if our interest is minimum-cost
+computing.  If on the other hand maximum single-threaded performance is of interest,
+then the i0m library should be chosen.
+
+In this example, we did not have to refer to the tradeoff between speed and energy.
+
+\section{Example: threshold selection}\label{sec:threshselect}
+
+Given that we have chosen the i0s library as described in
+section~\ref{sec:i0mi0s}, there still remain many design decisions to
+be made.  Let us suppose that we use a methodology that relies on
+using a single transistor threshold (ULVT, LVT, SVT, or HVT) for our
+design.  Let us consider making the choice between two of these
+possibilities, namely ULVT and LVT.  The main difference between ULVT
+and LVT devices is simply the transistor threshold.  This means that
+if we start with all ULVT devices, to get the same drive current (and
+therefore, the same performance) out of an LVT transistor, we must
+raise the supply voltage by some amount (a few tens of millivolts, usually).
+The tradeoff is that in order to achieve higher speeds, a higher supply
+voltage will lead to more switching energy, whereas at lower speeds, the
+higher threshold will lead to less leakage power.  The design problem
+becomes: which threshold to choose, and which supply voltage to choose,
+in order to minimize the cost of computation.
+
+An example is shown in figure~\ref{fig:ulvtlvt}.  The $E$-$f$ curves
+for the two transistor types are shown, with the ULVT devices in green
+and the LVT devices in red.  We can see that the ULVT circuit requires
+about 70~millivolts less $V_{dd}$ for any given performance level, and
+at high speeds and concomitant high energy per operation, the ULVT
+design is superior.  The LVT circuit on the other hand wins at low
+speeds and low energy per operation.  Of course, this result holds for
+a specific circuit (in all other respects---the circuit is an XOR
+circuit chosen using the methodology of
+section~\ref{sec:standardtestckt}) and specific process and
+temperature (nominal, 50$^\circ$C).  In other words, what we see is
+that the ULVT devices are superior in some operating ranges and the
+LVT devices are superior in other operating ranges.  In other words,
+the Pareto frontier goes from LVT at low voltage to ULVT at high
+voltage.  In more complex scenarios, the choice can naturally be
+between many more alternatives than just two.
+
+\rotinsepsfig{6in}{ulvtlvt}{270}{Comparison of ULVT versus LVT threshold devices in a
+  ring oscillator.  The magenta curves are iso-cost curves.}
+
+The way we make the choice of where on the Pareto frontier to operate
+is using the methodology and nomenclature of section~\ref{sec:minimumcost}.  We assume specific
+financial conditions as follows:
+\begin{itemize}
+\item $\Lambda = 3$ years operating life
+\item $\pi_Si = \$360,000/{\mathrm m}^2$ silicon cost
+\item Overall silicon cost efficiency $\eta_{Si} = \eta_E = 1/3$
+\item All-in energy cost $\pi_E=15$\textcent/kWh
+\end{itemize}
+The various cost figures may sound somewhat high, but we want to
+capture all the costs that vary with energy (this includes cooling
+costs and other variable costs related to the energy usage) and the
+silicon (this includes testing, packaging, etc., to the extent that it
+scales with the silicon area).  What matters for technical
+decision-making is the ratio of silicon cost to energy cost.
+
+The magenta curves in the graph are the isocosts, from left at
+$\$7\cdot 10^{-22}$ per operation to the right at $\$12\cdot 10^{-22}$
+per operation.  We see that the point on the Pareto frontier that
+minimizes the total cost of computing is around $\$7.8\cdot 10^{-22}$
+and achieved by the ULVT circuit at a supply voltage of around 325~mV;
+the point is marked in the graph with a blue diamond.
+
+Normally, the exact optimal point is {\em not\/} very sensitive to the
+financial assumptions.  An example of being quite significantly off in
+financial projection is show in figure~\ref{fig:minimumcostwrong}.
+Here the range of cost ratios between silicon and energy range over
+9X, and the optimal operating voltage (on the red curve) varies by
+80~mV: from 300~mV for cheap silicon (1/3 price), to 335~mV for the
+baseline (using the same financials as above), to 380~mV for cheap
+energy (1/3 price).  As before, the optimal points are shown as blue
+diamonds.  It is likely that re-doing this problem in detail would
+show that a threshold swap to LVT transistors would make sense here.
+\rotinsepsfig{6in}{minimumcostwrong}{270}{Effect of changing
+  financial predictions.  Cyan: cheap silicon.  Magenta: baseline.
+  Green: cheap energy.  The blue curve shows a different UPF
+  (transistor model), which yields similar results.}
+
+\section{Cost allocation: market size for silicon}
+
+Given that there is a tradeoff between silicon usage and energy usage,
+we can also ask, as we change the operating point along the Pareto
+frontier, how much financial resources are allocated to silicon versus
+energy?  This can be important because of the significant one-time
+engineering charges involved in silicon development.  A vertically
+integrated company such as Intel may be willing to consider selling
+the chips at a slightly lower silicon price in order to increase the
+total spending on silicon.  Another way of looking at this is that
+given the circuit's Pareto frontier and an estimate of Intel's
+customer's costs as well as the total demand for computation, we can
+estimate the price elasticity of demand for the silicon.
+
+If we consider the total expenses to be $C_{tot}$ as in equation~\ref{eq:ctot},
+we can write the proportion of expense on silicon as
+\begin{align*}
+  \rho_{Si} &= {C_{Si}  \over C_{tot}} \\
+           &= {C_{Si} \over C_{Si} + C_E} \\
+           &= 1 - \rho_E \quad .
+\end{align*}
+Filling in the definitions of $C_{Si}$ and $C_E$, we obtain
+\begin{equation}
+  \rho_{Si} = {1 \over 1 + {\strut E \pi_E f \Lambda \eta_{Si} \over \strut \pi_{Si} A \eta_E}} \quad ,
+\end{equation}
+which is the parametric form, and some rearrangement gives us the chart-friendly, for
+$\rho_{Si} = \rho_0$,
+\begin{align*}
+  f_{\rho_0}(E) &= \left( {1 \over \rho_0} - 1 \right) {\pi_{Si} A \eta_E \over E \pi_E \Lambda A \eta_{Si}} \quad ; \\
+  \phi_{\rho_0}(E) &= \left( {1 \over \rho_0} - 1 \right) {\pi_{Si} \eta_E \over E \pi_E \Lambda A \eta_{Si}} \quad .
+\end{align*}
+An example of the cost-allocation model is shown in
+figure~\ref{fig:i0s_vt_compare}.  Here we are showing the decision
+between ULVT and LVT transistors for the same example as in
+section~\ref{sec:threshselect}.  We have added, in cyan, the curves
+for $\rho$ from $\rho=0.1$ (10\% of expenses silicon, 90\% energy) to
+$\rho=0.9$ (90\% of expenses silicon, 10\% energy).  The optimum
+operating point from the customer's point of view is shown by the
+black circle.  We can see that the optimum occurs for $\rho \approx
+0.29$, that is, 29\% of expenses allocated to silicon and 71\% of
+expenses allocated to energy cost.  We can see that if we were to
+convince the customer to operate at a slightly suboptimal point (from
+his point of view), in the slower direction, the demand for silicon
+would increase.  \rotinsepsfig{6in}{i0s_vt_compare}{270}{Threshold
+  selection with expense ratio $\rho_{Si}$ indicated in cyan (magenta
+  lines are the total cost per cycle, and the black circle marks the
+  cost-optimal operationg point).}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \section{Refrigeration technology for minimum-cost computing}
 
@@ -744,7 +889,7 @@ Lower temperature has three main benefits:
   for a reduction in $Vdd$ roughly linear with thermodynamic
   temperature.  This is because the transistor subthreshold equation
   \begin{equation}
-  i_D = K_0 (n - 1) \phi_T^2 e^{V_{gs} - V_T} / (n \phi_T) ( 1 - e^{-V_{ds} / \phi_T})
+  i_D = K_0 (n - 1) \phi_T^2 e^{{V_{gs} - V_T} \over (n \phi_T)} ( 1 - e^{-V_{ds} \over \phi_T})
   \end{equation}
   where $\phi_T$ represents the {\em thermal voltage\/} $\phi_T$
   \begin{equation}
@@ -828,7 +973,7 @@ hot to cold temperatures.
 Now we can see what all the fuss is about.
 
 Consider a CMOS circuit operating in an environment of temperature
-$T_H$ (ambient, lab, data center,$ldots$).
+$T_H$ (ambient, lab, data center,$\ldots$).
 
 By equation~\ref{eq:vpropt} we write
 \begin{equation}
@@ -889,24 +1034,23 @@ there are three issues that  we need to consider, namely the following:
   multiple of $\phi_T$ to turn on and off transistors fully, it may
   not be a large enough multiple of $\sigma_{V_T}$.  At any given
   manufacturing node, all else being equal, even if we have a
-  relatively large amount of freedom to change $V_T$, usually expressed
-  as a being afforded a choice of transistor thresholds such as
-  ``high $V_T$/HVT'',
-  ``standard $V_T$/SVT'',
-  ``low $V_T$/LVT'',
-  ``ultra low $V_T$ULVT'',
-  in this choice we only get to change the nominal value of $V_T$ and
-  the absolute spread of $V_T$ in millivolts does not change very much.
-  From a physical point of view, this is probably the ultimate limiter
-  of the performance of refrigerated CMOS.
+  relatively large amount of freedom to change $V_T$, usually
+  expressed as a being afforded a choice of transistor thresholds such
+  as ``high $V_T$/HVT'', ``standard $V_T$/SVT'', ``low $V_T$/LVT'',
+  ``ultra low $V_T$/ULVT'', in this choice we only get to change the
+  nominal value of $V_T$ and the absolute spread of $V_T$ in
+  millivolts does not change very much, so it becomes a larger
+  proportion of $V_{dd}$ at lower temperatures.  From a physical point
+  of view, this is probably the ultimate limiter of the performance of
+  refrigerated CMOS.
 
 \item $V_T$ control more generally: while $V_T$ is not limited in its
   value by any law of nature, it may be difficult or impractical to
   set it to any particular value.  There are also different effects in
   n-channel versus p-channel devices that have to be considered.  The
-  summary is that while $V_T$ control is not a fundamental issue, it
-  can be a severe practical limiter for any given manufacturing
-  technology.
+  summary is that while setting the correct $V_T$ level is not a
+  fundamental difficulty, it can be a severe practical limiter for any
+  given manufacturing technology.
 
 \item The non-ideality of cooling.  Real refrigeration plants do not, in fact, achieve the same level of $\beta$ as a Carnot-cycle cooler.
 \end{itemize}
@@ -916,6 +1060,7 @@ have to be made to optimize our circuits for operation at any given
 temperature, but determining how or whether it is reasonable to make
 such modifications to $V_T$ lies outside the scope of this work.
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
 \section{Refrigeration}
@@ -930,7 +1075,7 @@ system for a cold datacenter.
 
 While the Carnot cycle is a useful thought model, real refrigerators
 cannot achieve the performance of a Carnot refrigerator.  Lacking
-good data on how efficient real refrigeration cycles can be, we are
+pertinent data on how efficient real refrigeration cycles can be, we are
 left with no alternative but to develop a few illustrative examples and
 try to use them to generalize to a useful model for architectural studies.
 
@@ -939,13 +1084,14 @@ the plant is large (very large by refrigeration standards), which means
 that losses from issues such as low-quality motors, friction in machinery,
 etc., can be assumed to be small.  The losses that are experienced will
 be due mostly to the non-ideality of the refrigerant fluid and
-compressor inefficiencies.
+unavoidable compressor inefficiencies.
 
-We choose R717, that is, anhydrous ammonia, as the refrigerant.  This is
-a readily available refrigerant with few environmental problems, widely
-used for industrial refrigeration projects.  We consider a ``hot side'' of
-an ambient temperature of 313K or +40$^\circ$C and consider two different
-target temperatures for our datacenter: 233K (-40$^\circ$C) and 275K (+2$^\circ$C).
+For our study, we choose R717, that is, anhydrous ammonia, as the refrigerant.  This
+is a readily available and inexpensive refrigerant with few
+environmental problems, widely used for industrial refrigeration
+projects.  We consider a ``hot side'' of an ambient temperature of
+313K or +40$^\circ$C and consider two different target temperatures
+for our datacenter: 233K (-40$^\circ$C) and 275K (+2$^\circ$C).
 
 The refrigeration cycle is a standard vapor-compression or Rankine
 cycle.  This is the same thermodynamic cycle as a steam engine but in
@@ -955,18 +1101,24 @@ hot liquid and evaporate it at low temperature.
 
 Because of the assumed size of the plant (very large), we can assume that a
 fairly sophisticated refrigeration plant is to be constructed.  The
-schematic layout of the plant is shown in figure~\ref{fig:refrig}.
+schematic layout of the plant is shown in figure~\ref{fig:refrig}.  The
+design is a single-stage vapor compression chiller with an auxiliary cycle
+for subcooling.  Subcooling in such a configuration is always beneficial
+because the enthalpy carried away by the subcooler is completely transferred to
+the low-temperature side of the cycle, but since the subcooler operates at a
+higher temperature than the main evaporator, its $\beta$ is higher and overall
+$\beta$ is hence improved.
 
 The performance of vapor-compression refrigeration is worked out using
-a $\log P$-$T$ (log pressure/temperature) chart as in figures~\ref{fig:R717cycle1} and~\ref{fig:R717cycle2}.
+a $\log P$-$T$ (log pressure/temperature) chart as in
+figures~\ref{fig:R717cycle1} and~\ref{fig:R717cycle2}.
 
 \subsubsection{275K cold side}
-
-R717 (ammonia) refrigerator, 313K (+40$^\circ$C) hot
-  side, 275K (+2$^\circ$C) cold side, subcooling to 294K
-  (+19$^\circ$C), 5K superheat.  Raw COP of main cycle: 6.748; COP
-  including subcooling: 6.320; COP including 90\% compressor
-  efficiency: 5.686.
+Our first example is a R717 (ammonia) single-stage refrigerator, 313K
+(+40$^\circ$C) hot side, 275K (+2$^\circ$C) cold side, subcooling to
+294K (+19$^\circ$C), 5K superheat.  Raw $\beta$ (COP) of main cycle: 6.748; $\beta$
+including subcooling: 6.320; $\beta$ including 90\% compressor efficiency:
+5.686.
   
 
 \rotinsepsfig{6.5in}{R717cycle2}{270}{Second example refrigeration cycle studied
@@ -974,19 +1126,21 @@ R717 (ammonia) refrigerator, 313K (+40$^\circ$C) hot
 
 
 \subsubsection{233K cold side}
+Our second example is a 
  R717 (ammonia) refrigerator, 313K (+40$^\circ$C) hot
   side, 233K (-40$^\circ$C) cold side, subcooling to 275K
-  (+2$^\circ$C), 5K superheat.  Raw COP of main cycle: 2.275; COP
-  including subcooling: 2.206; COP including 90\% compressor
+  (+2$^\circ$C), 5K superheat.  Raw $\beta$ of main cycle: 2.275; $\beta$
+  including subcooling: 2.206; $\beta$ including 90\% compressor
   efficiency: 1.985.
   
 \rotinsepsfig{6.5in}{R717cycle1}{270}{First example refrigeration cycle studied
   in the text, 233K cold side.  Plot courtesy Danfoss A/S\cite{danfoss}.}
 
-We also tried a two-stage cascaded cycle for 233K, but the COP was lower than
+We also tried a two-stage cascaded cycle for 233K, but $\beta$ was lower than
 for the single-stage design explored here.  Furthermore, the two-stage
 cascaded cooler would use more refrigeration hardware than the single-stage
-cooler, so its cost would be higher.
+cooler, so its cost would be higher; we conclude that there is no reason to
+use a two-stage cascaded chiller.
 
 \subsubsection{Summary}
 
@@ -1022,7 +1176,23 @@ temperatures $T_C$ and $T_H$ as follows:
 \begin{align*}
   \hat{\beta}(T_C, T_H) &= \hat{\eta}_{\mathrm Carnot}(\Delta T) \, \beta_{\mathrm Carnot}(T_C,T_H) \\
                         &= (0.880 - 0.00248 (T_H-T_C)){T_C \over T_H - T_C}
-  \end{align*}
+\end{align*}
+
+Considering costs of the refrigeration plant, we already observed that
+the cost of a cascaded plant by necessity is greater than a
+single-stage plant, since the heat removal has to be duplicated in
+each stage of the cascaded plant.  The cost of the single-stage
+cooling plant will not be highly dependent on the temperature
+difference, since the heat of vaporization of the refrigerant only
+changes very little across the range of evaporator temperatures of
+interest.  In fact, two effects mitigate any cost increases from more
+aggressive cooling: at lower temperatures, the thermal power of the
+computational plant is lower (this is, after all, the reason we would
+cool it in the first place), and secondly, the heat of vaporization of
+the refrigerant is weakly increasing towards lower vaporization
+temperatures.  On the other hand, higher compression ratios in the
+compressor and of course more compressor power (as opposed to compute
+power) at lower temperatures will work in the opposite direction.
 
 \section{Acknowledgements}
 

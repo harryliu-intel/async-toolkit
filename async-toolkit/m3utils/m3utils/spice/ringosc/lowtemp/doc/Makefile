@@ -5,7 +5,10 @@ DOC2=vernier_has
 MAXGRAPHICS=5000000
 DVIPS=dvips
 
-GENFIGURES=dennard_tomb.eps R717cycle1.eps R717cycle2.eps fe.eps fe_compare.eps fe_density.eps fe_compare2.eps fe_cost.eps ringosc.eps i0m_vs_i0s.eps i0m_vs_i0s_raw.eps ms_swap.eps
+GENFIGURES=dennard_tomb.eps R717cycle1.eps R717cycle2.eps fe.eps\
+fe_compare.eps fe_density.eps fe_compare2.eps fe_cost.eps\
+ringosc.eps i0m_vs_i0s.eps i0m_vs_i0s_raw.eps ms_swap.eps\
+ulvtlvt.eps minimumcostwrong.eps i0s_vt_compare.eps
 
 all: $(DOC).ps $(DOC).pdf
 two: $(DOC2).ps $(DOC2).pdf 
@@ -16,10 +19,10 @@ vernier_has.dvi: meas_sync_ff.eps
 $(DOC).dvi: $(GENFIGURES)
 
 .png.eps:
-	pngtopnm $*.png | pamscale -pixels $(MAXGRAPHICS) |  pnmtops > $*.eps
+	pngtopnm $*.png | pnmscale -pixels $(MAXGRAPHICS) |  pnmtops > $*.eps
 
 .jpg.eps:
-	jpegtopnm $*.jpg | pamscale -pixels $(MAXGRAPHICS) |  pnmtops > $*.eps
+	jpegtopnm $*.jpg | pnmscale -pixels $(MAXGRAPHICS) |  pnmtops > $*.eps
 
 .tex.dvi:
 	latex $*.tex || true
