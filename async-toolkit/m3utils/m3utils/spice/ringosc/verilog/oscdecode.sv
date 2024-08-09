@@ -15,7 +15,7 @@ module oscdecode
    (input  logic [ W - 1 : 0 ]                            i_speed,
 
     output logic [ NSTAGES - 1 : 0]                       o_stage_en,
-    output logic [ NINTERP - 1 : 0][ NSETTINGS - 1 : 0 ] o_interp_ctrl
+    output logic [ NINTERP - 1 : 0][ NSETTINGS - 1 : 0 ]  o_interp_ctrl
     );
 
 
