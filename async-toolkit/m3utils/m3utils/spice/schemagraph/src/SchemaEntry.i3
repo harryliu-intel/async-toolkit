@@ -1,4 +1,4 @@
-INTERFACE Entry;
+INTERFACE SchemaEntry;
 IMPORT TextSeq;
 
 (* this is a point in a Sweep 
@@ -18,7 +18,7 @@ PROCEDURE CompareByX(READONLY a, b : T) : [-1..1];
 
 CONST Compare = CompareByX;
 
-CONST Brand = "Entry";
+CONST Brand = "SchemaEntry";
 
-END Entry.
+END SchemaEntry.
   

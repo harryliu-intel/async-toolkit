@@ -4,15 +4,19 @@ import ("parseparams")
 import ("tracelib")
 import ("mscheme")
 
-implementation ("SchemaGraph")
-interface ("Field")
-module ("FData")
+Module ("SchemaGraph")
+Interface ("Field")
+Module ("FData")
 
-sequence ("FData", "FData")
+Sequence ("FData", "FData")
 
-module ("Entry")
-sequence ("Entry", "Entry")
-table("TextEntrySeq", "Text", "EntrySeq")
-array_sort("Entry","Entry")
+Module ("SchemaEntry")
+Sequence ("SchemaEntry", "SchemaEntry")
+Table("TextSchemaEntrySeq", "Text", "SchemaEntrySeq")
+Array_sort("SchemaEntry","SchemaEntry")
+
+Interface("Schema")
+
+implementation ("Main")
 
 program ("graph")

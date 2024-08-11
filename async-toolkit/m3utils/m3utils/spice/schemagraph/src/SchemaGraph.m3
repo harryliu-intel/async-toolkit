@@ -1,10 +1,9 @@
-MODULE SchemaGraph EXPORTS Main;
+MODULE SchemaGraph;
 
 (* 
    Flexible graphing program 
 *)
 
-IMPORT ParseParams;
 IMPORT Debug; FROM Debug IMPORT UnNil;
 IMPORT Text;
 IMPORT CardSeq;
@@ -33,13 +32,13 @@ IMPORT SchemeSymbol;
 IMPORT SchemeString;
 IMPORT SchemeLongReal;
 IMPORT SchemeUtils;
-IMPORT Entry;
-IMPORT EntrySeq;
-IMPORT TextEntrySeqTbl;
-IMPORT EntryArraySort;
+IMPORT SchemaEntry;
+IMPORT SchemaEntrySeq;
+IMPORT TextSchemaEntrySeqTbl;
+IMPORT SchemaEntryArraySort;
 IMPORT FileWr;
-IMPORT FS;
 IMPORT Wr;
+IMPORT Schema;
 
 <*FATAL Thread.Alerted*>
 
@@ -80,18 +79,11 @@ PROCEDURE NextToken(VAR buff : TEXT) : TEXT =
     END
   END NextToken;
 
-TYPE
-  Schema = RECORD 
-    nfields : CARDINAL;           (* total # of fields *)
-    dfields : CARDINAL;           (* expected # of data fields *)
-    fdata   : FDataSeq.T;         (* specific info on a field *)
-  END;
-
-PROCEDURE ReadSchema(spn : Pathname.T) : Schema =
+PROCEDURE ReadSchema(spn : Pathname.T) : Schema.T =
   VAR
     rd           := FileRd.Open(spn);
     text         := "";
-    res : Schema;
+    res : Schema.T;
   BEGIN
     TRY
       LOOP
@@ -115,9 +107,9 @@ PROCEDURE ReadSchema(spn : Pathname.T) : Schema =
       types  := NEW(CardSeq.T).init();
       i      := 0;
     BEGIN
-      res := Schema { nfields := 0,
-                      dfields := 0,
-                      fdata   := NEW(FDataSeq.T).init() };
+      res := Schema.T { nfields := 0,
+                        dfields := 0,
+                        fdata   := NEW(FDataSeq.T).init() };
       
       WHILE p # NIL DO
         (* p.head points to a field *)
@@ -195,7 +187,7 @@ PROCEDURE ReadSchema(spn : Pathname.T) : Schema =
     RETURN res
   END ReadSchema;
 
-PROCEDURE ReadData(schema : Schema; files : TextSeq.T) : RefSeq.T =
+PROCEDURE ReadData(schema : Schema.T; files : TextSeq.T) : RefSeq.T =
   VAR
     res := NEW(RefSeq.T).init();
   BEGIN
@@ -229,7 +221,8 @@ PROCEDURE ReadData(schema : Schema; files : TextSeq.T) : RefSeq.T =
     RETURN res
   END ReadData;
 
-PROCEDURE EvalFormula(symtabN : TextLRTbl.T;
+PROCEDURE EvalFormula(scm     : Scheme.T;
+                      symtabN : TextLRTbl.T;
                       symtabS : TextTextTbl.T;
 
                       formula : TEXT) : TEXT =
@@ -272,7 +265,7 @@ PROCEDURE EvalFormula(symtabN : TextLRTbl.T;
     END
   END EvalFormula;
   
-PROCEDURE EvalFormulas(schema : Schema; data : RefSeq.T) =
+PROCEDURE EvalFormulas(scm : Scheme.T; schema : Schema.T; data : RefSeq.T) =
   TYPE
     FT = Field.T;
   VAR
@@ -292,7 +285,7 @@ PROCEDURE EvalFormulas(schema : Schema; data : RefSeq.T) =
 
             (* compute value of field, if a formula *)
             IF fd.type = FT.Formula THEN
-              val := EvalFormula(symtabN, symtabS, fd.formula)
+              val := EvalFormula(scm, symtabN, symtabS, fd.formula)
             END;
 
             (* store back *)
@@ -322,21 +315,23 @@ PROCEDURE EvalFormulas(schema : Schema; data : RefSeq.T) =
     END
   END EvalFormulas;
     
-PROCEDURE DoOneSweep(schema : Schema; data : RefSeq.T; idx : CARDINAL) =
+PROCEDURE DoOneSweep(targDir : Pathname.T;
+                     schema : Schema.T; data : RefSeq.T; idx : CARDINAL;
+                     doLabels : BOOLEAN) =
 
-  PROCEDURE AddEntry(label : TEXT; entry : Entry.T) =
+  PROCEDURE AddSchemaEntry(label : TEXT; entry : SchemaEntry.T) =
     VAR
-      seq : EntrySeq.T;
+      seq : SchemaEntrySeq.T;
     BEGIN
       IF NOT allData.get(label, seq) THEN
-        seq := NEW(EntrySeq.T).init();
+        seq := NEW(SchemaEntrySeq.T).init();
       END;
       seq.addhi(entry);
       EVAL allData.put(label,seq)
-    END AddEntry;
+    END AddSchemaEntry;
     
   VAR
-    allData := NEW(TextEntrySeqTbl.Default).init();
+    allData := NEW(TextSchemaEntrySeqTbl.Default).init();
     cols    := NEW(TextSeq.T).init();
   BEGIN
     
@@ -381,7 +376,7 @@ PROCEDURE DoOneSweep(schema : Schema; data : RefSeq.T; idx : CARDINAL) =
           CA = ARRAY OF CHAR;
         VAR
           row   := NARROW(data.get(i), TextSeq.T);
-          entry := Entry.T { x      := LAST(LONGREAL),
+          entry := SchemaEntry.T { x      := LAST(LONGREAL),
                              report := NEW(TextSeq.T).init() };
           label := "";
         BEGIN
@@ -412,7 +407,7 @@ PROCEDURE DoOneSweep(schema : Schema; data : RefSeq.T; idx : CARDINAL) =
             END(*FI*)
           END(*ROF*);
 
-          AddEntry(label, entry)
+          AddSchemaEntry(label, entry)
           
         END(*HTIW*)
       END
@@ -423,15 +418,15 @@ PROCEDURE DoOneSweep(schema : Schema; data : RefSeq.T; idx : CARDINAL) =
     VAR
       iter := allData.iterate();
       label : TEXT;
-      seq   : EntrySeq.T;
+      seq   : SchemaEntrySeq.T;
     BEGIN
       WHILE iter.next(label, seq) DO
         Debug.Out("Sweep label is \"" & label & "\"");
-        WITH arr = NEW(REF ARRAY OF Entry.T, seq.size()) DO
+        WITH arr = NEW(REF ARRAY OF SchemaEntry.T, seq.size()) DO
           FOR i := FIRST(arr^) TO LAST(arr^) DO
             arr[i] := seq.get(i)
           END;
-          EntryArraySort.Sort(arr^);
+          SchemaEntryArraySort.Sort(arr^);
 
           (* write main .dat file for this combo *)
           WITH root = CitTextUtils.RemoveSuffix(label, "_") DO
@@ -497,74 +492,15 @@ PROCEDURE DoOneSweep(schema : Schema; data : RefSeq.T; idx : CARDINAL) =
 
   END DoOneSweep;
   
-PROCEDURE DoSweeps(schema : Schema; data : RefSeq.T) =
+PROCEDURE DoSweeps(targDir : Pathname.T;schema : Schema.T; data : RefSeq.T; doLabels : BOOLEAN) =
   BEGIN
     FOR i := 0 TO schema.fdata.size() - 1 DO
       WITH fd = schema.fdata.get(i) DO
         IF fd.type = Field.T.Sweep THEN
-          DoOneSweep(schema, data, i)
+          DoOneSweep(targDir, schema, data, i, doLabels)
         END
       END
     END
   END DoSweeps;
   
-VAR
-  pp                        := NEW(ParseParams.T).init(Stdio.stderr);
-  schemaFn : Pathname.T     := NIL;
-  dataFiles                 := NEW(TextSeq.T).init();
-  scmFiles                  := NEW(TextSeq.T).init();
-  scm      : Scheme.T;
-  targDir                   := ".";
-  doLabels                  := TRUE;
-BEGIN
-  TRY
-    IF pp.keywordPresent("-schema") OR pp.keywordPresent("-s") THEN
-      schemaFn := pp.getNext()
-    ELSE
-      RAISE ParseParams.Error
-    END;
-
-    IF pp.keywordPresent("-nolabel") THEN
-      doLabels := FALSE
-    END;
-
-    IF pp.keywordPresent("-dir") THEN
-      targDir := pp.getNext();
-      TRY FS.CreateDirectory(targDir) EXCEPT ELSE END
-    END;
-
-    WHILE pp.keywordPresent("-scminit") OR pp.keywordPresent("-S") DO
-      scmFiles.addhi(pp.getNext())
-    END;
-    
-    pp.skipParsed();
-
-    WHILE pp.next < NUMBER(pp.arg^) DO
-      dataFiles.addhi(pp.getNext())
-    END
-    
-  EXCEPT
-    ParseParams.Error => Debug.Error("Can't parse command-line parameters\nUsage: " & Params.Get(0) & "\n" )
-  END;
-
-  WITH scmarr = NEW(REF ARRAY OF Pathname.T, scmFiles.size()) DO
-    FOR i := FIRST(scmarr^) TO LAST(scmarr^) DO
-      scmarr[i] := scmFiles.get(i)
-    END;
-    TRY
-      scm := NEW(Scheme.T).init(scmarr^)
-    EXCEPT
-      Scheme.E(x) =>
-      Debug.Error(F("EXCEPTION! Scheme.E \"%s\" when initializing interpreter", x))
-    END
-  END;
-
-  WITH schema = ReadSchema(schemaFn),
-       data   = ReadData(schema, dataFiles) DO
-    EvalFormulas(schema, data);
-    DoSweeps(schema, data)
-  END
-  
-
-  
-END SchemaGraph.
+BEGIN END SchemaGraph.

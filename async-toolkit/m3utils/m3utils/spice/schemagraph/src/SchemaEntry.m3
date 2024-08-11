@@ -1,4 +1,4 @@
-MODULE Entry;
+MODULE SchemaEntry;
 IMPORT LongrealType;
 
 PROCEDURE CompareByX(READONLY a, b : T) : [-1..1] =
@@ -6,4 +6,4 @@ PROCEDURE CompareByX(READONLY a, b : T) : [-1..1] =
     RETURN LongrealType.Compare(a.x, b.x)
   END CompareByX;
 
-BEGIN END Entry.
+BEGIN END SchemaEntry.
