@@ -178,6 +178,7 @@ override ("spicecompress", TOP & "/spice")
 override ("spicetiming", TOP & "/spice")
 override ("gds2cast", TOP & "/spice")
 override ("techc", TOP & "/spice")
+override ("schemagraph", TOP & "/spice")
 
 override ("varosc", TOP & "/spice/variation")
 

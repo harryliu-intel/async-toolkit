@@ -17,6 +17,6 @@ Array_sort("SchemaEntry","SchemaEntry")
 
 Interface("Schema")
 
-implementation ("Main")
+%implementation ("Main")
 
-program ("graph")
+library ("schemagraph")
