@@ -8,8 +8,8 @@ ignore  rsc,
 collate delnvth,
 collate delpvth,
 collate stages,
-collate modleaves,
-collate lib,
+ignore  modleaves,
+ignore  lib,
 collate tran,
 ignore,
 report  mean_cycle,
@@ -23,7 +23,8 @@ report  sdev_dynE,
 formula max_cycle  (+ mean_cycle (* Kcycle sdev_cycle)),
 formula min_freq   (/ 1 max_cycle),
 formula cop        (achievable-efficiency  temp *base-temp*),
-formula cooled_swE (cooled-energy mean_swE temp *base-temp*)
+formula cooled_swE (cooled-energy mean_swE temp *base-temp*),
+formula leak_ratio (/ mean_leaP mean_dynE min_freq)
 
 
 # ignore: ignore col

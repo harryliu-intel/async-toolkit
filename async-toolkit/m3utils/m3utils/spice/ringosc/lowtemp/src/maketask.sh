@@ -12,7 +12,7 @@ nb_queue=${NBPOOL}
 nb_qslot=${NBQSLOT}
 step=1
 
-sweeps="50"
+sweeps="20"
 
 stages="10 20 40 80 160"
 volts="0.16 0.18 0.21 0.24 0.27 0.30 0.34 0.39 0.44 0.52"
@@ -33,6 +33,26 @@ modleaves="true"
 delns="0.000 0.020 0.040 0.080 0.120"
 delps="0.000 0.010 0.020"
 temps="-80 -40 0 50 85 105"
+
+if [ "$1" == "-supplemental" ]; then
+    stages="2 5 80"
+fi
+
+if [ "$1" == "-base11" ]; then
+    stages="11"
+    delns="0.000"
+    delps="0.000"
+    temps="-80 -70 -60 -50 -40 -35 -30 -25 -20 -15 -10 -5 0 5 10 15 20 25 30 35 40 45 50 55 60 65 70 75 85 95 105 115 125 135"
+    trantypes="ulvt lvt"
+fi
+
+if [ "$1" == "-thresh11" ]; then
+    stages="11"
+    delns="0.000 0.020 0.040 0.080 0.120"
+    delps="0.000 0.010 0.020"
+    temps="-80 -40 -20 0 20 30 40 50 60 70 75 80 85 95 105 115 125 135"
+    trantypes="ulvt"
+fi
 
 # for testing:
 

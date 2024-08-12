@@ -14,13 +14,13 @@
 (define (achievable-efficiency TCc TCh) ;; temps in C
   (if (>= TCc TCh)
       1
-      (let ((eta (- 0.77 (* 0.0012 (- TCh TCc)))) ;; empirical R717 results
+      (let ((eta (- 0.880 (* 0.00248 (- TCh TCc)))) ;; empirical R717 results
             (Tc (+ 273.15 TCc))
             (Th (+ 273.15 TCh)))
         (* eta (Carnot-efficiency Tc Th)))))
 
 (define (cooled-energy E TCc TCh) ;; temps in Celsius
-  (* E (+ 1 (/ 1 (achievable-efficiency Tc Th)))))
+  (* E (+ 1 (/ 1 (achievable-efficiency TCc TCh)))))
 
 
 (define *base-temp* 50) ;; Celsius
