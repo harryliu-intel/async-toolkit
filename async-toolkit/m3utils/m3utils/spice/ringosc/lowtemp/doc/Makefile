@@ -8,7 +8,9 @@ DVIPS=dvips
 GENFIGURES=dennard_tomb.eps R717cycle1.eps R717cycle2.eps fe.eps\
 fe_compare.eps fe_density.eps fe_compare2.eps fe_cost.eps\
 ringosc.eps i0m_vs_i0s.eps i0m_vs_i0s_raw.eps ms_swap.eps\
-ulvtlvt.eps minimumcostwrong.eps i0s_vt_compare.eps
+ulvtlvt.eps minimumcostwrong.eps i0s_vt_compare.eps\
+leakfrac.eps vax11_780.eps alpha21264.eps\
+testleakfrac.eps rawtherm.eps rawthermlvt.eps rawthermulvtlvt.eps
 
 all: $(DOC).ps $(DOC).pdf
 two: $(DOC2).ps $(DOC2).pdf 

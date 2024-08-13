@@ -6,6 +6,7 @@
 \usepackage{fancyhdr}
 \usepackage{array}
 \usepackage[fleqn]{amsmath}
+\usepackage{amssymb}
 
 \usepackage{sectsty}
 %\allsectionsfont{\mdseries\sffamily}
@@ -96,7 +97,7 @@
 \listoffigures
 \listoftables
 
-\section{Introduction}
+\section{Introduction}\label{sec:intro}
 
 \subsection{Some things change only very slowly}
 There is a widespread misconception that computer technology changes
@@ -129,7 +130,7 @@ and what some of the implications are for hardware design of going
 down this path.  To some extent, the switch to minimum-cost computing
 has already been happening organically through the invisible hand of the
 market for computing hardware, computing software, and computing systems,
-so we will alternatively be able to put a new explanation to some of the
+so we will alternatively be able to put an explanation to some of the
 developments in our industry.
 
 \subsection{Amdahl's law}
@@ -165,37 +166,43 @@ Many of us that are now senior engineers in the industry came of age
 professionally in the 1990s, which was an age of incredibly fast-paced
 computer performance increases.  What we perhaps did not realize was
 that what was going on then was really very much out of the ordinary.
-While the death of Moore's Law has been reported many times, it would
-be wrong to say that Moore's Law is ended.  Computers are indeed
-getting denser and cheaper still today, and still exponentially
-so---we can argue about what the exponent of the time exponential is,
-but that is not the point.  It's a fair guess that human ingenuity and
-the still-unconceived-of techniques of the future will allow that
-scaling to continue, probably indefinitely.  What was special about
-the 1990s (in fact the period from the invention of the integrated
-circuit in 1958 through about the year 2000) was not Moore's Law as such, but
-{\em Dennard scaling.}  Under Dennard scaling, chips got not only
-denser (larger component counts) and cheaper (per transistor) at an
-exponential rate, but they also got {\em faster\/} at an exponential
-rate: in 1978 Digital Equipment's VAX~11/780 was a high-performance
-computer, capable of about half a million instructions per second from
-a cabinet the size of about four washing machines (imagine them
-stacked side by side and vertically in a 2X2 grid).  Twenty years
-later, a deskside Alpha 21264 from the same company was capable of two billion
-instructions per second, a 4,000X speedup, a compounded {\em
-  single-threaded\/} speedup of 51\% per year, every year, for 20
-years.
+While the death of Moore's Law has been prematurely reported many
+times, it seems Moore's Law is not yet ready to go.  Computers
+are getting denser and cheaper still today, and still
+exponentially so---we can argue about what the exponent of the time
+exponential is, but that is not the point.  It's a fair guess that
+human ingenuity and the still-unconceived-of techniques of the future
+will allow that scaling to continue, probably indefinitely.  What was
+special about the 1990s (in fact the period from the invention of the
+integrated circuit in 1958 through about the year 2000) was not
+Moore's Law as such, but {\em Dennard scaling.}  Under Dennard
+scaling, (MOS) chips got not only denser (larger component counts) and
+cheaper (per transistor) at an exponential rate, but they also got
+{\em faster\/} at an exponential rate: in 1978 Digital Equipment's
+VAX~11/780\cite{v11780} was a high-performance computer, capable of
+about half a million instructions per second from a CPU cabinet the size
+of about four washing machines (imagine them stacked side by side and
+vertically in a 2X2 grid).  Twenty years later, a deskside Alpha
+21264\cite{a21264} from the same company (acquired by Compaq) was
+capable of two billion instructions per second in its 314~mm$^2$ (0.5~in$^2$) CMOS CPU microprocessor, a 4,000X speedup over the VAX, that is, a
+compounded {\em single-threaded\/} speedup of 51\% per year, every
+year, for 20 years.  See figures~\ref{fig:vax11_780}
+and~\ref{fig:alpha21264}.  \rotinsepsfig{4in}{vax11_780}{270}{Digital
+  VAX 11/780 minicomputer system (1978).  The CPU comprises the two
+  cabinets on the far left.\cite{grantspencer}}
+\insepsfig{3in}{alpha21264}{Digital/Compaq Alpha 21264 microprocessor
+  (1999) die photo. Courtesy WikiChip.\cite{wikichip}}
 
-Dennard scaling has since come to a decisive end.  Some would say that
-Dennard scaling ended on the specific date November 20, 2000, the date
+Dennard scaling has since come to a decisive end.  We could say that
+Dennard scaling ended on November 20, 2000, the date
 that Intel released the Pentium~4 microprocessor.  The Pentium~4
 excelled at clock speed, but at the cost of changing the pipeline
 structure in such a way that the added circuit speed only sometimes
-increased software performance.  Dennard scaling was dead.
+increased software performance.  Dennard scaling was dead (figure~\ref{fig:dennard_tomb}).
 
 \insepsfig{3in}{dennard_tomb}{Dennard scaling.}
 
-The death of Dennard scaling was not really a surprise to anyone: it
+The death of Dennard scaling was not really a surprise: it
 had been widely reported from both academia and industry that the rate
 of single-threaded improvement was going to slow.  That there was a physical
 limit to how fast it was practical to run CMOS circuits was obvious as early
@@ -252,7 +259,7 @@ hand over fist.  What happened, how indeed is this possible?
 
 Already in 1988, Gustafson started to see the problem with Amdahl's
 law~\cite{gustafson}.  The issue is not that there is anything wrong
-with Amdahl's law as such.  It is indeed true that a normal
+with Amdahl's law as such.  It is absolutely true that a normal
 single-threaded Fortran program from say 1970 (such as a SPICE
 simulator) is not going to get much more than a 5--7X speedup from
 multithreading.\footnote{Try it!  Run {\tt hspice -mt 16} on your favorite large circuit and compare the speed to running it in single-threaded mode.}  On top of that speedup, compiler technology has
@@ -307,18 +314,19 @@ well-modeled by this framework.  For example, ``enterprise computing,''
 where software license costs or system adminstration costs are significant,
 are not examples of minimum-cost computing.  ``Embedded computing,'' where
 we desire to control a specific physical function, is also not an example.
-Nor are many or most other types of computing.
+Nor are many or maybe even most other types of computing.
 
-The purest form of minimum-cost computing ``in the wild'' today is 
+The purest form of minimum-cost computing ``in the wild'' today is
 Bitcoin mining: in Bitcoin mining, the computational problem is almost
-infinitely divisible, and payoffs are directly proportional to the amount
-of computing that is achieved.  But many other forms of computing do
-approach this ideal: distributed simulation problems (especially statistical
-ones), certain artificial intelligence algorithms (such as very large
-neural networks), and many others.  As discussed above, the computing world
-has gradually been moving more and more towards these sorts of problems, and
-we expect this trend to continue and the results we derive below to become
-more relevant with time.
+infinitely divisible, and payoffs are directly proportional to the
+amount of computing that is achieved.  But many other forms of
+computing do approach this ideal: distributed simulation problems
+(especially statistical ones involving large-scale sampling), certain
+artificial intelligence algorithms (such as very large neural
+networks), and many others.  As discussed above, the computing world
+has gradually been moving more and more towards these sorts of
+problems, and we expect this trend to continue and the results we
+derive below to become more relevant with time.
 
 Whenever someone says, apropos a datacenter
 application, that ``energy is everything''\cite{raja}, it is minimum-cost
@@ -341,7 +349,7 @@ per operation $E$ can be modeled quite accurately as
 \begin{equation}\label{eq:energy}
   \hat{E} = C_0 V^2 + t_{\mathrm cyc} I_0(T) V \quad 
 \end{equation}
-where $C_0$ represents the effective switched capacitance of the
+where $C_0$ represents the effective switched, or dynamic, capacitance of the
 circuit and $I_0$ represents the leakage current, which is a strong
 function of the temperature $T$.\footnote{In this document, when we
   mention temperature, we always mean {\em thermodynamic temperature,}
@@ -374,14 +382,42 @@ Note that it is instructive to think of the switching capacitance in
 terms of an energy {\em per operation\/} whereas leakage is in terms
 of power, that is, energy {\em per unit time.}
 
-It is immediately obvious that the ratio between switching energy and
+\subsubsection{Energy and power nomenclature}
+
+We will often have occasion to refer to the dynamic energy and leakage
+power of a circuit without necessarily referencing their detailed behavior
+and will want to introduce a shorthand for them, namely:
+\begin{equation}
+  E_{\mathrm dynamic} = C_0 V^2
+\end{equation}
+\begin{equation}
+  P_{\mathrm leak} = I_0(T) V
+\end{equation}
+so that the leakage power amortized over an operation can be written
+\begin{equation}
+  E_{\mathrm leak} = t_{\mathrm cyc} P_{\mathrm leak} = t_{\mathrm cyc} I_0(T) V
+\end{equation}
+and equation~\ref{eq:energy} can be written succintly as
+\begin{equation}\label{eq:energydef}
+  \hat{E} = E_{\mathrm dynamic} + E_{\mathrm leak} \quad .
+\end{equation}
+We will further assert that the total, actual energy of our circuit will
+be close to $\hat{E}$ and write that
+\begin{equation}
+  E_{\mathrm tot} = \hat{E} + \epsilon
+\end{equation}
+where $\epsilon$ is an error term that we will simply assert is $\approx 0$.
+  
+
+\subsection{Leakage fraction}\label{sec:leakagefraction}
+It is immediately obvious that the ratio between dynamic switching energy and
 leakage power at a particular operating condition is one of the most
 basic descriptors of a particular circuit's energy characteristics.
 This ratio is ultimately determined by the activity factor $f$ of the
 circuit, which can be very difficult to affect since it tends to be
 determined by the microarchitecture and really by the problem itself.
 A circuit with a high activity factor (Bitcoin mining is the
-quintessential example with $f > 0.5$) will tend to have low leakage
+quintessential example with $f \gtrsim 0.5$) will tend to have low leakage
 power compared to operating energy and will therefore tend to drive
 the economic mode of operation towards low speed and low switching
 energy.  Conversely, a circuit with a low activity factor (such as an
@@ -390,6 +426,87 @@ high leakage power compared to operating power and will therefore
 tend to drive the economic mode of operation towards high speed and
 high switching energy (over which to amortize the fixed leakage
 power).
+
+We define a metric for the leakage versus dynamic power of a circuit.  We define the {\em leakage fraction\/} $\theta_{\mathrm leak}$ as follows:
+\begin{equation}
+  \theta_{\mathrm leak} = {P_{\mathrm leak} \over E_{\mathrm dynamic} f_{\mathrm max}}
+\end{equation}
+where $P_{\mathrm leak}$ is the leakage power of the circuit,
+$E_{\mathrm dynamic}$ is the dynamic ($CV^2$) power, and $f_{\mathrm
+  max}$ is the maximum operating frequency of the circuit.  Of the
+three quantities involved, $P_{\mathrm leak}$ and $f_{\mathrm max}$
+are highly dependent on PVT, so $\theta_{\mathrm leak}$ is also
+dependent on PVT; however, $\theta_{\mathrm leak}$ measured at a particular,
+nominal PVT is an important performance parameter for a circuit. 
+
+\subsection{Example: leakage in Fort Independence 3}\label{sec:fin3leakfrac}
+
+
+The leakage fraction can be estimated in various ways.  The easiest,
+of course, is to measure the leakage power of a circuit that is not
+undergoing switching activity and then to allow the same circuit to
+run at its maximum speed and measure the total active power.
+Subtracting the leakage power from the total active power yields the
+dynamic power of the circuit, by equation~\ref{eq:energydef}.
+
+It is not always possible to measure the leakage power directly, and
+also, measuring it on a stopped circuit may not yield an accurate
+result, for example because of the particular state of the stopped
+circuit.  In the following, we shall introduce another method for
+measuring leakage power and the leakage fraction of the circuit.
+
+Fort Independence 3 is a Bitcoin mining chip designed by Intel Labs in
+1278.3 using all ULVT transistors.  Some selected performance data for
+the design (release 114c), derived from hspice simulations of the
+completed layout, are presented in table~\ref{tbl:fin3}.
+
+\begin{table}[htbp]
+  \centering
+  \begin{tabular}{|r|c|r|r|}
+    \hline
+    $T /[^\circ{}{\rm C}]$ & $V_{dd}/$[mV] & $E_{\mathrm tot}/$[pJ] & $f /$[MHz] \\
+    \hline
+     25 & 300 & 20.7 & 272 \\
+     50 & 300 & 22.5 & 312 \\
+     75 & 300 & 26.0 & 354 \\
+    100 & 300 & 31.5 & 400 \\
+    \hline
+    \end{tabular}
+  \caption{Performance of Fort Independence~3 from simulation.}\label{tbl:fin3}
+\end{table}
+
+From table~\ref{tbl:fin3}, we see that energy per operation increases
+with temperature, as expected.  Operating frequency also increases with
+temperature, and this is the result of a decreasing threshold voltage
+with temperature.  (The so-called ``inverse temperature depedence'' (ITD).)
+
+We model the energy per operation with equation~\ref{eq:energy}, using the
+functional dependence from equation~\ref{eq:leakagetemp} for the leakage
+current, that is, we write that
+\begin{equation}
+  E_{\mathrm tot} = C_0 V^2 + t_{\mathrm cyc} I_{00} e^{\iota T} V + \epsilon
+\end{equation}
+where $\epsilon$ is a (variable) error term that we minimize (in a
+least-squares sense).  There are three unknowns ($C_0$, $I_{00}$, and
+$\iota$), so our four data points are more than sufficient.
+
+The result of the minimization is that at 300~mV $V_{dd}$,
+\begin{align*}
+  E_{\mathrm dyn}             &= 17.8~{\rm pJ} \\
+  \iota                      &= 0.02597~{\rm K}^{-1} \\
+  \theta_{\mathrm leak}({\rm T} =75^\circ {\rm C}) &= 0.457 \\
+\end{align*}
+but as we have defined $\theta_{\mathrm leak} = E_{\mathrm leak}/E_{\mathrm dyn}$,
+the leakage as a fraction of total (rather than dynamic) energy at 75$^\circ$C is
+\begin{equation}
+  { \theta_{\mathrm leak} \over 1 + \theta_{\mathrm leak} } = 0.314 \quad .
+\end{equation}
+Figure~\ref{fig:leakfrac} shows the temperature dependence of $\theta_{\mathrm leak}$ for $V_{dd} = 300,500$~mV.
+\rotinsepsfig{6.5in}{leakfrac}{270}{Leakage fraction for FIN3 at two voltages (300~mV, 500~mV) and 25$^\circ$C--100$^\circ$C.}
+We note that at 300~mV $V_{dd}$ and 85$^\circ$C, FIN3's leakage fraction is around 0.59 according to this graph.  We will use this number in section~\ref{sec:fin3xorbaseline}.
+
+
+\subsection{Discussion}
 
 We should realize that we will {\em not\/} find that circuits with
 high activity factors (such as Bitcoin miners) will necessarily have
@@ -407,7 +524,7 @@ reduce operating energy until we hit the floor determined by the
 leakage power, below which we cannot reduce the overall energy.  (But
 see below.)
 
-\subsection{The speed-energy tradeoff}\label{sec:fe}
+\section{The speed-energy tradeoff}\label{sec:fe}
 
 We can illustrate the tradeoff between speed and energy for a given
 circuit by plotting them on the same graph, parametrically (this means
@@ -492,11 +609,11 @@ and the silicon cost $C_{Si}$
 \begin{equation}
   C_{Si} = {\pi_{Si} A \over \Lambda f \eta_{Si}}
 \end{equation}
-so that the total cost $C$ is
+so that the total cost $C_{\mathrm tot}$ is
 \begin{equation}\label{eq:ctot}
-  C_{tot} = C_E + C_{Si} = {\pi_E E \over \eta_E } + {\pi_{Si} A \over \Lambda f \eta_{Si}} \quad .
+  C_{\mathrm tot} = C_E + C_{Si} = {\pi_E E \over \eta_E } + {\pi_{Si} A \over \Lambda f \eta_{Si}} \quad .
 \end{equation}
-If we now consider the locus of a fixed overall cost per operation $C_{tot} = C_0$,
+If we now consider the locus of a fixed overall cost per operation $C_{\mathrm tot} = C_0$,
 we can write this expression for example as 
 \begin{equation}
 f_{C_0}(E) = { \pi_{Si} A \eta_E \over \Lambda (C_0 - \pi_E E) \eta_{Si} }
@@ -534,22 +651,23 @@ low-power technology with the ``killer app'' being wristwatches and
 similar applications.\cite{vittoz, seiko} As a result, many of the
 datacenter energy-saving technologies that are used today are
 outgrowths of ideas that originated with mobile devices, such as
-wriswatches, portable medical devices such as pacemakers, and more
+wristwatches, portable medical devices such as pacemakers, and more
 recently, of course, cellular telephones.
 
 We should remember, however, that mobile applications and datacenter
-applications (what we call minimum-cost computing applications) are
-not the same, even if they share a strong concern for energy savings.
-Specifically, mobile applications come with many peculiar requirements
-that are {\em not\/} relevant to the minimum-cost computing concept.
-To mention a few, mobile applications generally must take
-environmental conditions as given (mobile applications may be called
-on to perform in almost any environment where humans can survive, and
-occasionally in environments beyond those); mobile applications are
-generally subject to specific and peculiar packaging requirements;
-mobile applications generally put a very strong emphasis on aspects
-relating to human-machine interaction.  None of these factors are
-relevant to the minimum-cost-computing abstraction we are developing.
+applications (the latter we claim are trending towards minimum-cost
+computing applications) are not the same, even if they share a strong
+concern for energy savings.  Specifically, mobile applications come
+with many peculiar requirements that are {\em not\/} relevant to the
+minimum-cost computing concept.  To mention a few, mobile applications
+generally must take environmental conditions as given (mobile
+applications may be called on to perform in almost any environment
+where humans can survive, and occasionally in environments beyond
+those); mobile applications are generally subject to specific and
+peculiar packaging requirements; mobile applications generally put a
+very strong emphasis on aspects relating to human-machine interaction.
+None of these factors are relevant to the minimum-cost-computing
+abstraction we are developing.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -605,7 +723,7 @@ to match as closely as possible the type of logic that we interested
 in building for a product.  The matching to the target product is mostly
 self-evident (use similar gates with similar fanouts), but it is worth
 mentioning that we try to vary the number of stages to match the
-ratio of leakage to active power in the design.  Having matched all
+ratio of leakage to dynamic power in the design.  Having matched all
 these parameters between the target product and the ring oscillator
 allows us to draw conclusions for the product directly from the simulations
 of the oscillator.
@@ -707,9 +825,9 @@ figure~\ref{fig:ms_swap} and re-running the simulation.
 \insepsfig{4in}{ms_swap}{Swapping out the medium-height i0m cells for
   the short-height i0s cells.  The wiring is not touched.}
 
-The results of the study are shown in figures~\ref{fig:i0m_vs_i0s_raw} ($E$-$f$ diagram)
-and ~\ref{fig:i0m_vs_i0s} ($E$-$\phi$ diagram).
-The use of the $E$-$f$ and $E$-$\phi$ diagrams makes clear a few things that may
+The results of the study are shown in figures~\ref{fig:i0m_vs_i0s_raw} ($f$-$E$ diagram)
+and ~\ref{fig:i0m_vs_i0s} ($\phi$-$E$ diagram).
+The use of the $f$-$E$ and $\phi$-$E$ diagrams makes clear a few things that may
 not be obvious from tabular data.
 \begin{itemize}
 \item The short-height i0s cells are slower than the i0m cells at every
@@ -753,7 +871,7 @@ higher threshold will lead to less leakage power.  The design problem
 becomes: which threshold to choose, and which supply voltage to choose,
 in order to minimize the cost of computation.
 
-An example is shown in figure~\ref{fig:ulvtlvt}.  The $E$-$f$ curves
+An example is shown in figure~\ref{fig:ulvtlvt}.  The $f$-$E$ curves
 for the two transistor types are shown, with the ULVT devices in green
 and the LVT devices in red.  We can see that the ULVT circuit requires
 about 70~millivolts less $V_{dd}$ for any given performance level, and
@@ -778,8 +896,8 @@ is using the methodology and nomenclature of section~\ref{sec:minimumcost}.  We 
 financial conditions as follows:
 \begin{itemize}
 \item $\Lambda = 3$ years operating life
-\item $\pi_Si = \$360,000/{\mathrm m}^2$ silicon cost
-\item Overall silicon cost efficiency $\eta_{Si} = \eta_E = 1/3$
+\item $\pi_{Si} = \$360,000/{\mathrm m}^2$ silicon cost
+\item Overall silicon and energy cost efficiency $\eta_{Si} = \eta_E = 1/3$
 \item All-in energy cost $\pi_E=15$\textcent/kWh
 \end{itemize}
 The various cost figures may sound somewhat high, but we want to
@@ -825,10 +943,10 @@ given the circuit's Pareto frontier and an estimate of Intel's
 customer's costs as well as the total demand for computation, we can
 estimate the price elasticity of demand for the silicon.
 
-If we consider the total expenses to be $C_{tot}$ as in equation~\ref{eq:ctot},
+If we consider the total expenses to be $C_{\mathrm tot}$ as in equation~\ref{eq:ctot},
 we can write the proportion of expense on silicon as
 \begin{align*}
-  \rho_{Si} &= {C_{Si}  \over C_{tot}} \\
+  \rho_{Si} &= {C_{Si}  \over C_{\mathrm tot}} \\
            &= {C_{Si} \over C_{Si} + C_E} \\
            &= 1 - \rho_E \quad .
 \end{align*}
@@ -857,7 +975,7 @@ his point of view), in the slower direction, the demand for silicon
 would increase.  \rotinsepsfig{6in}{i0s_vt_compare}{270}{Threshold
   selection with expense ratio $\rho_{Si}$ indicated in cyan (magenta
   lines are the total cost per cycle, and the black circle marks the
-  cost-optimal operationg point).}
+  cost-optimal operating point).}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -889,11 +1007,11 @@ Lower temperature has three main benefits:
   for a reduction in $Vdd$ roughly linear with thermodynamic
   temperature.  This is because the transistor subthreshold equation
   \begin{equation}
-  i_D = K_0 (n - 1) \phi_T^2 e^{{V_{gs} - V_T} \over (n \phi_T)} ( 1 - e^{-V_{ds} \over \phi_T})
+  i_D = K_0 (n - 1) \Phi_T^2 e^{{V_{gs} - V_T} \over (n \Phi_T)} ( 1 - e^{-V_{ds} \over \Phi_T})
   \end{equation}
-  where $\phi_T$ represents the {\em thermal voltage\/} $\phi_T$
+  where $\Phi_T$ represents the {\em thermal voltage\/} $\Phi_T$
   \begin{equation}
-    \phi_T = {kT \over q} \quad .\cite{6012}
+    \Phi_T = {kT \over q} \quad .\cite{6012}
   \end{equation}
   is of the form $I \propto T^2 e^{-q V_{gs} \over kT}$---that
   is, transistor drive is a function of $V_{gs} / T$.  We say that the
@@ -913,16 +1031,27 @@ temperature decrease, that is, to set
   V_{dd} \propto T \quad .
 \end{equation}
 
-A bit of physical intuition can be helpful here.  At a given temperature $T$,
-physical processes are vibrating thermally with an energy of $kT$ per degree of freedom, giving this as a background noise level that digital signals must rise above.  This means that at temperature $T$, driving voltages must be large compared to the thermal voltage $\phi_T$ defined as
+A bit of physical intuition can be helpful here.  At a given
+temperature $T$, physical processes are vibrating thermally with an
+energy of $kT$ per degree of freedom, giving this as a background
+noise level that digital signals must rise above.  This means that at
+temperature $T$, driving voltages must be large compared to the
+thermal voltage $\Phi_T$ defined as
 \begin{equation}
-  \phi_T = {kT \over q}
+  \Phi_T = {kT \over q}
   \end{equation}
 where $k$ is Boltzmann's constant, $T$ is as usual the thermodynamic
 temperature, and $q$ is the charge-carrier charge (usually taken to be the
-elementary charge $e$).  At room temperature 300K, $\phi_T \approx
+elementary charge $e$).  At room temperature 300K, $\Phi_T \approx
 25$mV---but the key point here is that it is proportional to
-temperature and should really be expressed as $k/q \approx 86$$\mu$V/K.
+temperature and should really be expressed as
+\begin{equation}\label{eq:microvolts}
+  k/q \approx 86\mu {\rm V}/{\rm K} \quad .
+\end{equation}
+
+Effectively, at higher temperatures, $V_{dd}$ must be raised to
+overcome the thermal noise, which scales linearly with temperature.
+Device physicists refer to this effect as {\em Boltzmann tyranny.}
 
 
 \subsection{Carnot cycle and Carnot efficiency}
@@ -959,7 +1088,7 @@ $Q_C$ from $T_C$ and transport it to $T_H$ is
   W = {Q_C \over \beta} = {{T_H - T_C} \over T_C} Q_C \quad ,
 \end{equation}
 and the total heat that needs to be disposed of is (by the First Law)
-\begin{equation}
+\begin{equation}\label{eq:carnottempenergy}
   Q_H = Q_C + W = {T_H \over T_C} Q_C \quad .
 \end{equation}
 Note that the simple formula for $Q_H$ can also be thought of in a
@@ -983,7 +1112,7 @@ where $V_0$ is a constant.
 
 We write the energy for one operation as
 \begin{equation}
-  E_{\mathrm tot} = E_{\mathrm active}  + E_{\mathrm leakage}
+  E_{\mathrm tot} = E_{\mathrm dynamic}  + E_{\mathrm leakage}
 \end{equation}
 and we will now consider the energy dissipation at the operating temperature
 $E^C_{\mathrm tot}$ separately from the energy dissipation at ambient temperature
@@ -1005,23 +1134,23 @@ $t_{\mathrm cyc}$ constant or close to it.  Also,
 \end{equation}
 is {\em also\/} clearly a rapidly decreasing function of $T_C$.
 
-Secondly, active energy.
+Secondly, dynamic energy.
 
 \begin{equation}
-  E_{\mathrm active} = C_0 V^2
+  E_{\mathrm dynamic} = C_0 V^2
 \end{equation}
 where $C_0$ is only weakly dependent on temperature.  Therefore,
 \begin{equation}
-  E^C_{\mathrm active} = C_0 V_0^2 T_C^2
+  E^C_{\mathrm dynamic} = C_0 V_0^2 T_C^2
 \end{equation}
 and
 \begin{equation}
-  E^H_{\mathrm active} = {T_H \over T_C }E^C_{\mathrm active}= C_0 V_0^2 T_H T_C \quad ,
+  E^H_{\mathrm dynamic} = {T_H \over T_C }E^C_{\mathrm dynamic}= C_0 V_0^2 T_H T_C \quad ,
 \end{equation}
 which is linearly decreasing with $T_C$.
 
 \subsection{Discussion}
-The conclusion from the above is that both active energy and leakage
+The conclusion from the above is that both dynamic energy and leakage
 energy decrease with temperature, {\em even considering the cost of
   refrigeration.}
 
@@ -1031,7 +1160,7 @@ there are three issues that  we need to consider, namely the following:
 \item Parameter variation: a device-to-device variation in the
   threshold voltage will set a floor below which $V_{dd}$ cannot be
   reliably be lowered, because even if $V_{dd}$ is a large enough
-  multiple of $\phi_T$ to turn on and off transistors fully, it may
+  multiple of $\Phi_T$ to turn on and off transistors fully, it may
   not be a large enough multiple of $\sigma_{V_T}$.  At any given
   manufacturing node, all else being equal, even if we have a
   relatively large amount of freedom to change $V_T$, usually
@@ -1086,18 +1215,19 @@ etc., can be assumed to be small.  The losses that are experienced will
 be due mostly to the non-ideality of the refrigerant fluid and
 unavoidable compressor inefficiencies.
 
-For our study, we choose R717, that is, anhydrous ammonia, as the refrigerant.  This
-is a readily available and inexpensive refrigerant with few
-environmental problems, widely used for industrial refrigeration
-projects.  We consider a ``hot side'' of an ambient temperature of
-313K or +40$^\circ$C and consider two different target temperatures
-for our datacenter: 233K (-40$^\circ$C) and 275K (+2$^\circ$C).
+For our study, we choose R717, that is, anhydrous ammonia, as the
+refrigerant.  This is a readily available and inexpensive refrigerant
+with few environmental problems, widely used for industrial
+refrigeration projects.  We consider a ``hot side'' of an ambient
+temperature of 313K or +40$^\circ$C and consider two different target
+temperatures for our datacenter: 233K (-40$^\circ$C) and 275K
+(+2$^\circ$C).
 
 The refrigeration cycle is a standard vapor-compression or Rankine
-cycle.  This is the same thermodynamic cycle as a steam engine but in
-reverse---instead of having a boiler convert liquid to a high-pressure
-gas to propel a turbine, we use a compressor to condense the gas into
-hot liquid and evaporate it at low temperature.
+cycle~\cite{rankine}.  This is the same thermodynamic cycle as a steam
+engine but in reverse---instead of having a boiler convert liquid to a
+high-pressure gas to propel a turbine, we use a compressor to condense
+the gas into hot liquid and evaporate it at low temperature.
 
 Because of the assumed size of the plant (very large), we can assume that a
 fairly sophisticated refrigeration plant is to be constructed.  The
@@ -1116,9 +1246,9 @@ figures~\ref{fig:R717cycle1} and~\ref{fig:R717cycle2}.
 \subsubsection{275K cold side}
 Our first example is a R717 (ammonia) single-stage refrigerator, 313K
 (+40$^\circ$C) hot side, 275K (+2$^\circ$C) cold side, subcooling to
-294K (+19$^\circ$C), 5K superheat.  Raw $\beta$ (COP) of main cycle: 6.748; $\beta$
-including subcooling: 6.320; $\beta$ including 90\% compressor efficiency:
-5.686.
+294K (+19$^\circ$C), 5K superheat.  Raw $\beta$ (COP) of main cycle:
+6.748; $\beta$ including subcooling: 6.320; $\beta$ including 90\%
+compressor efficiency: 5.686.
   
 
 \rotinsepsfig{6.5in}{R717cycle2}{270}{Second example refrigeration cycle studied
@@ -1151,7 +1281,7 @@ Combining the data of the two example cycles we have the following:
 
   \begin{tabular}{|l|c|c|c|r|r|r|}
     \hline
-    \bf Type & $T_H\quad /[K]$     & $T_C\quad /[K]$ & $\Delta T$ & $\beta_{\mathrm Ideal}$ & $\beta_{\mathrm Carnot}$ & $\eta_{\mathrm Carnot}$ \\
+    \bf Type & $T_H\quad /[K]$     & $T_C\quad /[K]$ & $\Delta T /[K]$ & $\beta_{\mathrm Ideal}$ & $\beta_{\mathrm Carnot}$ & $\eta_{\mathrm Carnot}$ \\
     \hline
     Single   & 313 & 275 & 38 & 5.686 & 7.237 & 0.786 \\
     Single   & 313 & 233 & 80 & 1.985 & 2.913 & 0.682 \\
@@ -1159,7 +1289,7 @@ Combining the data of the two example cycles we have the following:
     \hline
   \end{tabular}
 
-  \caption{Performance parameters of the two refrigeration cycles.}
+  \caption{Performance parameters of the three refrigeration cycles.}
   \end{table}
 
 Using the data from this table, we can now model $\eta$ as a function
@@ -1192,42 +1322,242 @@ cool it in the first place), and secondly, the heat of vaporization of
 the refrigerant is weakly increasing towards lower vaporization
 temperatures.  On the other hand, higher compression ratios in the
 compressor and of course more compressor power (as opposed to compute
-power) at lower temperatures will work in the opposite direction.
+power) at lower temperatures will work in the opposite direction, to reduce
+plant efficiency.
+
+\section{Example: XOR ring oscillator over a temperature range}
+
+We revisit the standard test circuit of
+section~\ref{sec:standardtestckt} and consider refrigeration within
+this context.  Our work has shown that minimum-energy computing at
+50--75$^\circ$C temperature in P1278.3 is best performed with circuits
+that generally meet the following configuration: i0s (short library),
+Z2 (medium strength) transistors, ULVT threshold.  We now ask a simple
+question: can we do better at lower temperatures?
+
+Our test setup is as in section~\ref{sec:standardtestckt} but with the
+transistor type and threshold fixed; we also hold the fanout fixed as
+follows: fanout alternates between 1 and 4 for successive stages.  We
+continue to allow the number of stages in the ring oscillator to vary,
+to allow us to evaluate how the optimal temperature of operation
+varies versus the leakage fraction of the circuit.
+
+\subsection{Data setup}
+
+\subsection{Leakage fraction}\label{sec:fin3xorbaseline}
+
+To put us in the right range of leakage fraction, we start by calibrating
+our test setup against FIN~3's numbers from section~\ref{sec:fin3leakfrac}.
+At 85$^\circ$C, FIN~3 had a leakage fraction of 0.59.  Our test circuit's
+leakage fraction as a function of the number of (double) XOR stages
+in it is shown in figure~\ref{fig:testleakfrac}.
+
+\rotinsepsfig{6.5in}{testleakfrac}{270}{Leakage fraction for test XOR
+  ring oscillator as a function of the number of (double) XOR stages.
+  Measured at 85$^\circ$C.}
+
+We can see that the leakage fraction of the ring oscillator increases
+linearly with the number of stages in the oscillator. The FIN3 leakage
+fraction (at the same PVT) is achieved with approximately 11~stages.
+Since Bitcoin mining in general has the lowest leakage
+fraction/highest activity factor of any practical application (for
+fixed transistor thresholds), we will concentrate further study on
+ring oscillators of 11 stages and more.
+
+\subsection{Uncorrected temperature sweep}\label{sec:uncorrulvt}
+
+Let us first assume that we have an unlimited thermal sink at zero
+cost at any temperature of our choosing.  Our circuit is as described
+above, with only ULVT transistors.  What is the ideal operating
+temperature for minimum-cost computing?  If we refer to
+figure~\ref{fig:rawtherm}, we have plotted the $f$-$E$ curves for the
+circuit over a range of temperatures from -40$^\circ$C to
++125$^\circ$C.  We see that the optimum cost, at the black circle, is
+in an area where numerous temperature curves cross or nearly cross,
+which suggests that the optimal operating temperature for our circuit
+lies in the range -20$^\circ$C to +40$^\circ$C.  A simple analysis is
+that below -20$^\circ$C, we get very little further benefit of leakage
+reduction (since leakage is already near zero at -20$^\circ$C) but we
+have to turn up the supply voltage to compensate for ITD; conversely,
+above +40$^\circ$C, the benefit of increased speed is outweighed by
+rapidly increasing leakage currents.
+\rotinsepsfig{6.5in}{rawtherm}{270}{$f$-$E$ diagram for ULVT XOR ring oscillator
+  over a range of temperatures.}
+
+\subsection{Changing transistor threshold voltage}
+
+Circuit designers are familiar with the idea of using higher threshold
+voltages if leakage power is a problem for a circuit design.  The question
+we want to answer now is, how does this strategy fare given that we
+have the freedom to set the temperature?  We repeat the same exercise
+from section~\ref{sec:uncorrulvt} with LVT devices, see figure~\ref{fig:rawthermlvt}.
+\rotinsepsfig{6.5in}{rawthermlvt}{270}{$f$-$E$ diagram for LVT XOR ring oscillator
+  over a range of temperatures.}
+
+What we see is that when switching from ULVT to LVT devices, the optimal
+operating temperature rises, which is not surprising.  The ideal operating
+temperature seems to be around 75$^\circ$C with LVT devices.
+
+But let us analyze the situation more carefully.  Do we prefer operating at
+higher temperatures with LVT devices or at lower temperatures with ULVT
+devices?  Plotting both on the same chart in figure~\ref{fig:rawthermulvtlvt},
+we see that at 75$^\circ$C, ULVT and LVT are approximately the same total
+cost; whereas at lower temperatures, ULVT wins.  The gain in going from
+LVT 75$^\circ$C to ULVT 40$^\circ$C is substantial: roughly 10\% increase
+in speed {\em at the same time as\/} about a 15\% reduction in energy
+per operation.
+\rotinsepsfig{6.5in}{rawthermulvtlvt}{270}{$f$-$E$ comparison of LVT at 75$^\circ$C with ULVT at 40$^\circ$C and 75$^\circ$C.}
+
+The simple example of swapping between LVT and ULVT devices teaches several
+imporant lessons:
+\begin{itemize}
+\item High leakage does not mean high cost.
+
+\item High operating temperature means high cost.
+
+\item At least if using Intel P1278.3 process, use ULVT transistors and try to
+  operate as close to 40$^\circ$C as possible (or lower, if possible!)
+
+\item The benefit from reducing temperature from 75$^\circ$C to
+  40$^\circ$C (about 20\% less energy at fixed speed) is substantially
+  more than the Carnot cost (equation~\ref{eq:carnottempenergy}) of
+  refrigeration ($348/313 - 1 \approx 11\%$).
+  
+\end{itemize}
+
+
+\section{Fundamental limits}
+
+The fact that we can reduce energy consumption through temperature
+scaling comes from the property of MOS circuits that switching energy
+goes as $V^2$ and $V$ can be scaled down with temperature, since we
+need to keep $V \gg kT / q$ and hence switching energy scales faster
+(quadratically) with temperature than cooling power scales (linearly)
+with temperature.  The practical limit to this scaling comes from
+device variation.  There is, of course, also a fundamental limit.
+That limit is the quantization of charge.  At a low enough $V_{dd}$,
+the capacitance of the transistor will support only a single charge
+carrier (electron or hole).  If $C \approx 10^{-15}$F, then the
+absolute minimum $V_{dd}$ is given by
+\begin{equation}
+  V_{\mathrm absmin} \approx {e \over C} = {1.6\cdot 10^{-19} \over 10^{-15}} = 160 \mu{\rm V}
+\end{equation}
+and by equation~\ref{eq:microvolts} we find that in order to operate
+such a device we have that 
+\begin{equation}
+  T_{\mathrm absmin} \ll {V_{\mathrm absmin} \over {k / q}} = {e^2 \over kC} \approx 2 {\rm K}
+\end{equation}
+but this number will of course decrease at lower capacitances.  The single-electron
+transistor was described by Kastner in 1992\cite{kastner}.
+
+\section{Required technology changes: wider range of threshold voltages}
+
+\section{Objections to low-temperature CMOS}
+
+\subsection{SRAM $V_{\mathrm min}$ at low temperatures}
+
+In this document, we have studied the performance, in a minimum-cost
+context, of CMOS logic in a cutting-edge fabrication process.
+Designers will be aware that digital designs usually have two
+different minimum operating voltages ($V_{\mathrm min}$).  First,
+logic $V_{\mathrm min}$ tends to be stated at a given performance
+(speed), so it is really what we have been arguing the industry should
+abandon: in the long run, it is not the circuit performance ({\em
+  speed\/}) we care about, but how to operate the circuit at minimum
+overall (silicon + energy) {\em cost.}
+
+The other $V_{\mathrm min}$ is a different matter: this is the SRAM
+$V_{\mathrm min}$.  SRAM $V_{\mathrm min}$ tends also to be stated as
+a few different numbers: a retention $V_{\mathrm min}$ (the lowest
+supply voltage at which the SRAM is guaranteed to retain its state); a
+writing $V_{\mathrm min}$ (the lowest supply voltage at which the SRAM
+is guaranteed to be writeable); a reading $V_{\mathrm min}$ (the
+lowest supply voltage at which the SRAM is guaranteed to be readable).
+These voltages tend to be given as hard minimum voltages, and while they
+tend to be measured at relatively high $\sigma$ and otherwise specific
+conditions (e.g., low temperature), the implication is that the SRAMs
+simply do not work below a given voltage.  This is obviously a challenge
+for any approach (such as cryo-CMOS) that relies on lowering supply voltage
+to very low levels.
+
+The issues with SRAM $V_{\mathrm min}$ come from the use of relatively
+high threshold voltages in the SRAM transistors.  The reason high threshold
+voltages are used is not however intrinsic to how SRAMs work: they are used
+because of the high variability of leakage currents, and the necessity
+that, for example, a single readout transistor on a bit line in its ON state
+has to be able to overpower all the other transistors on that same bit line
+leaking in their OFF state, across all supported PVTs~\cite{andrew-sram}.
+
+The solution for the SRAMs is similar to what we discussed in
+section~\ref{sec:thresholdshift} for the logic transistors: low-temperature
+SRAMs simply need to use lower-threshold transistors.  The leakage currents
+that are of concern at elevated temperatures will simply vanish at cryogenic
+temperatures, which will allow the SRAM transistors to be voltage-scaled
+together with the logic transistors.  One alternative is to abandon the
+current methodology of having a process support all temperatures across
+the miilitary and industrial temperature ranges and instead narrow
+and specialize the range for cryogenic operation, which would allow
+valuable optimizations through lowering $V_{dd}$ without compromising
+specific capabilities such as reliable SRAM operation.
+
 
 \section{Acknowledgements}
 
-Thanks to Andrew Lines for insisting on the $E$-$f$ diagram and much data.
-Maria Vergara drew the tombstone cartoon.  Siva Mudanai provided much
-of the insight into P1278 models.  
+Thanks to Andrew Lines for insisting on the $f$-$E$ diagram and much
+data.  Maria Vergara drew the tombstone cartoon.  Siva Mudanai
+provided much of the insight into P1278 models.
 
 
 \begin{thebibliography}{99}
 
-\bibitem{intel-cryo}{C.~Augustine and M.~Khellah.  PNP of Cryo CMOS Under Parametric Variations.  Presentation dated 11/16/2021.}
+\bibitem{moores-law}{G.~E.~Moore.  Cramming more components onto
+  integrated circuits.  {\it Electronics,} 8({\bf 38}), April~19,
+  1965.}
 
-\bibitem{intel-cryo-2}{A.~Penumatcha, P.~Buragohain, S.~Dutta, Shiva~SR, T.~Ghani, U.~Avci.  Cold CMOS.  2023WW44 CR Tech Talk.}
+  \bibitem{kurzweil}{R.~Kurzweil.  {\it The Singularity is Near: When
+      Humans Transcend Biology.}  Viking, 2005.}
+  
+\bibitem{intel-cryo}{C.~Augustine and M.~Khellah.  PNP of Cryo CMOS
+  Under Parametric Variations.  Presentation dated 11/16/2021.  Intel
+  Corp., 2021.}
+
+\bibitem{intel-cryo-2}{A.~Penumatcha, P.~Buragohain, S.~Dutta,
+  Shiva~SR, T.~Ghani, U.~Avci.  Cold CMOS.  2023WW44 CR Tech Talk.
+  Intel Corp., 2023.}
 
 
-\bibitem{kryotech}{T.~Pabst.  The overclocker's dream: Kryotech's home of cool computing.  {\it Tom's Hardware,} December 5, 1997.}
+\bibitem{kryotech}{T.~Pabst.  The overclocker's dream: Kryotech's home
+  of cool computing.  {\it Tom's Hardware,} December 5, 1997.}
 
-\bibitem{vittoz}{E.~Vittoz, W.~Hammer, M.~Kiener, and D.~Chauvy. Logical circuit for the wristwatch. Eurocon 1971, Lausanne, paper F2-6.}
+\bibitem{vittoz}{E.~Vittoz, W.~Hammer, M.~Kiener, and
+  D.~Chauvy. Logical circuit for the wristwatch. Eurocon 1971,
+  Lausanne, paper F2-6.}
 
-\bibitem{vittoz2}{E.~A.~Vittoz.  The electronic watch and low-power circuits.  {\it IEEE SSCS News,} Summer 2008.}
+\bibitem{vittoz2}{E.~A.~Vittoz.  The electronic watch and low-power
+  circuits.  {\it IEEE SSCS News,} Summer 2008.}
 
 \bibitem{seiko}{{\tt https://corporate.epson/en/about/history/milestone-products/pdf/07\_cmos\_ic.pdf}}
 
-\bibitem{raja}{R.~Koduri.  Private communication, 2024.}
+\bibitem{raja}{R.~Koduri.  Personal communication, 2024.}
 
 \bibitem{sze}{S.~M.~Sze. {\it Physics of Semiconductor Devices,} third edition.  Wiley, 2007.}
   
-\bibitem{dennard}{R.~H.~Dennard, F.~H.~Gaensslen, H.-N.~Yu, V.~L.~Rideout, E.~Bassous, and A.~R.~LeBlanc. Design of ion-implanted MOSFETs with very small physical dimensions.  {\it JSSC}. {\bf SC-9} (5): 256–268, October 1974.}
+\bibitem{dennard}{R.~H.~Dennard, F.~H.~Gaensslen, H.-N.~Yu,
+  V.~L.~Rideout, E.~Bassous, and A.~R.~LeBlanc. Design of
+  ion-implanted MOSFETs with very small physical dimensions.  {\it
+    JSSC}. {\bf SC-9} (5): 256–268, October 1974.}
 
-\bibitem{amdahl}{G.~M.~Amdahl. Validity of the Single Processor Approach to Achieving Large-Scale Computing Capabilities. {\it AFIPS Conference Proceedings} ({30}): 483--485, 1967.}
+\bibitem{amdahl}{G.~M.~Amdahl. Validity of the Single Processor
+  Approach to Achieving Large-Scale Computing Capabilities. {\it AFIPS
+    Conference Proceedings} ({30}): 483--485, 1967.}
 
-\bibitem{gustafson}{J.~L.~Gustafson. Reevaluating Amdahl's Law. {\it Communications of the ACM.} {\bf 31} (5): 532--533.  ACM, 1988.}
+\bibitem{gustafson}{J.~L.~Gustafson. Reevaluating Amdahl's Law. {\it
+    Communications of the ACM.} {\bf 31} (5): 532--533.  ACM, 1988.}
 
-\bibitem{moore-keynote}{G.~E.~Moore.  Are We Really Ready for VLSI?  Keynote address.  {\it Proceedings of the Caltech Conference on VLSI.}  Pasadena, Calif.:\
-  California Institute of Technology, 1979.}
+\bibitem{moore-keynote}{G.~E.~Moore.  Are We Really Ready for VLSI?
+  Keynote address.  {\it Proceedings of the Caltech Conference on
+    VLSI.}  Pasadena, Calif.:\ California Institute of Technology,
+  1979.}
 
 \bibitem{my-sb}{M.~Nystr\"om.  Hybrid
     gyrokinetics-magnetohydrodynamics simulation on a massively
@@ -1236,47 +1566,107 @@ of the insight into P1278 models.
 
 \bibitem{danfoss}{Coolselector2 (software package).  Danfoss A/S, 2024.} 
 
-\bibitem{carnot}{S.~Carnot.  {\it R\'eflexions sur la puissance motrice du feu et sur les machines propres \`a developper cette puissance.} Paris: Bachelier, 1824}
+\bibitem{carnot}{S.~Carnot.  {\it R\'eflexions sur la puissance
+    motrice du feu et sur les machines propres \`a developper cette
+    puissance.} Paris: Bachelier, 1824}
 
-\bibitem{clausius}{R.~J.~E.~Clausius.  {\it  Abhandlungen \"uber die Mechanische W\"armetheorie.} Brunswick (Braunschweig): Vieweg, 1864.}  
+\bibitem{clausius}{R.~J.~E.~Clausius.  {\it Abhandlungen \"uber die
+    Mechanische W\"armetheorie.} Brunswick (Braunschweig): Vieweg,
+  1864.}
 
-\bibitem{6012}{C.~Fonstad.  {\it 6.012 Supplementary Notes.}  Department of Ellectrical Engineering and Computer Science (OpenCourseWare), Massachusetts Institute of Technology, 2009.}
+\bibitem{6012}{C.~Fonstad.  {\it 6.012 Supplementary Notes.}
+  Department of Electrical Engineering and Computer Science
+  (OpenCourseWare), Massachusetts Institute of Technology, 2009.}
 
-\bibitem{xu}{X.~Xu and D.~Clodic.  Exergy analysis on a vapor compression refrigerating system using R12, R134a, and R290 as refrigerants.  Paper 160, {\it International Refrigeration and Air Conditioning Conference,} 1992.}
+\bibitem{xu}{X.~Xu and D.~Clodic.  Exergy analysis on a vapor
+  compression refrigerating system using R12, R134a, and R290 as
+  refrigerants.  Paper 160, {\it International Refrigeration and Air
+    Conditioning Conference,} 1992.}
+
+\bibitem{grantspencer}{S.~Grant. "Digital Equipment Corporation VAX
+  11/780 mainframe computer, Maynard." Photograph. 1979. Digital
+  Commonwealth, {\tt
+    https://ark.digitalcommonwealth.org/ark:/50959/sn00b088z}
+  (accessed August 06, 2024).}
+
+\bibitem{wikichip}{{\tt https://en.wikichip.org/w/images/a/ab/alpha\_21264\_die\_shot.png}}
   
+\bibitem{v11780}{W.~D.~Strecker.  VAX-11/780---A Virtual Address
+  Extension to the DEC PDP-11 Family.  {\it AFIPS Proc. NCC,}
+  Chapter 42, pp.~967--980, 1978.}
+  
+\bibitem{a21264}{R.~E.~Kessler.  The Alpha 21264 microprocessor.
+  {\it IEEE Micro,\/} 2({\bf 19}), March--April 1999.}
+  
+\bibitem{sicp2}{H.~Abelson and G.~J.~Sussman with J.~Sussman.  {\it
+    Structure and Interpretation of Computer Programs,} second
+  edition.  Cambridge, Masss.:\ MIT Press, 1996.}
+  
+\bibitem{aim-349} {Gerald Jay Sussman and Guy Lewis Steele, Jr.
+  Scheme: an intepreter for extended lambda calculus.  MIT
+  Artificial Intelligence Memo 349.  Cambridge,
+  Mass.:\ Massachusetts Institute of Technology, December 1975.}
+  
+\bibitem{scheme} {W.~Clinger and J.~Rees, eds. {Revised$^4$ Report on
+    the Algorithmic Language Scheme.}  In {\it ACM Lisp Pointers IV},
+  July--September 1991.}
+  
+\bibitem{spwm3}{G.~Nelson, ed.  {\it Systems Programming with
+      Modula-3.} Englewood Cliffs, N.J.:\ Prentice Hall, 1991.}
+  
+\bibitem{meindl}{R.~M.~Swanson and J.~D.~Meindl.  Ion-implanted
+  complementary MOS transistors in low-voltage circuits.  {ISSCC,}
+  1972.}
+
+\bibitem{feynman}{R.~P.~Feynman.  {\it Feynman Lectures on
+    Computation.}  Edited by J.~G.~Hey and R.~W.~Allen.
+  Addison-Wesley, 1996.}
+  
+\bibitem{landauer}{R.~Landauer.  Irreversibility and heat generation
+  in the computing process.  {\it IBM Journal,} July 1961.}
+  
+\bibitem{kastner}{M.~A.~Kastner. The single-electron
+  transistor. {\it Rev.~Mod.~Phys.,} 64 ({\bf 3}): 849-–858, 1992.}
+
+\bibitem{rankine}{W.~Rankine. On the Mechanical Action of Heat,
+  especially in Gases and Vapours. {\it Transactions of the Royal
+    Society of Edinburgh.} 20: 147–-190, 1853.}
+  
+\bibitem{andrew-sram}{A.~M.~Lines.  Personal communication, 2024.}
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\bibitem{mallan}{D.~W.~Allan and J.~A.~Barnes.  A modified ``Allan
-  variance'' with increased oscillator characterization ability.  {\it
-    Thirty Fifth Annual Frequency Control Symposium.}  IEEE, 1981.}
-
-\bibitem{nbs}{B.~E.~Blair, ed.  {\it Time and Frequency: Theory and
-      Fundamentals.}  National Bureau of Standards Monograph 140.
-    Boulder, Colorado:\ United States Department of Commerce, National
-    Bureau of Standards, May 1974.}
-
-\bibitem{bresenham}{J.~E.~Bresenham.  Algorithm for computer control
-  of a digital plotter. {\it IBM Systems Journal,} vol.\ 4, issue~1,
-  1965.}
-
-\bibitem{whitenoise} {D.~C.~Chu.  Time Interval Averaging: Theory,
-  Problems, and Solutions.  {\it Hewlett-Packard Journal}, June 1974.}
-
-\bibitem{hppatent}{D.~C.~Chu.  Double vernier time interval
-  measurement using triggered phase-locked oscillators.
-  U.S.~Patent~4,164,648.  Published August 14, 1979.}
-      
-\bibitem{vernier} {D.~C.~Chu, M.~S.~Allen, and A.~S.~Foster.
-  Universal Counter Resolves Picoseconds in Time Interval
-  Measurements.  {\it Hewlett-Packard Journal}, August 1978.}
-
-\bibitem{euclid}{Euclid. {\it The Thirteen Books of the Elements,}
-  vol.~2, Book~VII.  Translated by Sir~Thomas Heath.  Second edition,
-  unabridged.  Dover Publications, 1956.  Reprint of edition by
-  Cambridge University Press, 1908.}
-  
-\bibitem{hardy}{G.~H.~Hardy and E.~M.~Wright.  {\it An Introduction to
-    the Theory of Numbers.}  Oxford:\ Clarendon Press, 1938.}
+%\bibitem{mallan}{D.~W.~Allan and J.~A.~Barnes.  A modified ``Allan
+%  variance'' with increased oscillator characterization ability.  {\it
+%    Thirty Fifth Annual Frequency Control Symposium.}  IEEE, 1981.}
+%
+%\bibitem{nbs}{B.~E.~Blair, ed.  {\it Time and Frequency: Theory and
+%      Fundamentals.}  National Bureau of Standards Monograph 140.
+%    Boulder, Colorado:\ United States Department of Commerce, National
+%    Bureau of Standards, May 1974.}
+%
+%\bibitem{bresenham}{J.~E.~Bresenham.  Algorithm for computer control
+%  of a digital plotter. {\it IBM Systems Journal,} vol.\ 4, issue~1,
+%  1965.}
+%
+%\bibitem{whitenoise} {D.~C.~Chu.  Time Interval Averaging: Theory,
+%  Problems, and Solutions.  {\it Hewlett-Packard Journal}, June 1974.}
+%
+%\bibitem{hppatent}{D.~C.~Chu.  Double vernier time interval
+%  measurement using triggered phase-locked oscillators.
+%  U.S.~Patent~4,164,648.  Published August 14, 1979.}
+%      
+%\bibitem{vernier} {D.~C.~Chu, M.~S.~Allen, and A.~S.~Foster.
+%  Universal Counter Resolves Picoseconds in Time Interval
+%  Measurements.  {\it Hewlett-Packard Journal}, August 1978.}
+%
+%\bibitem{euclid}{Euclid. {\it The Thirteen Books of the Elements,}
+%  vol.~2, Book~VII.  Translated by Sir~Thomas Heath.  Second edition,
+%  unabridged.  Dover Publications, 1956.  Reprint of edition by
+%  Cambridge University Press, 1908.}
+%  
+%\bibitem{hardy}{G.~H.~Hardy and E.~M.~Wright.  {\it An Introduction to
+%    the Theory of Numbers.}  Oxford:\ Clarendon Press, 1938.}
 
 \end{thebibliography}
 
