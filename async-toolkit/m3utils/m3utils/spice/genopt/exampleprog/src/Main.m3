@@ -7,6 +7,8 @@ IMPORT Math;
 IMPORT Debug;
 IMPORT Params;
 IMPORT Fmt;
+IMPORT FileWr;
+IMPORT Wr;
 
 CONST Usage = "exampleprog usage wrong!";
 
@@ -36,7 +38,13 @@ BEGIN
 
        euclid = dv * dv + dp * dp + dn * dn,
        val = Math.exp(euclid) DO
-    IO.Put(Fmt.LongReal(val) & "\n")
+    IO.Put(Fmt.LongReal(val) & "\n");
+
+    WITH wr = FileWr.Open("example.out") DO
+      Wr.PutText(wr, Fmt.LongReal(val) & "\n");
+      Wr.Close(wr)
+    END
+      
   END
 END Main.
     
