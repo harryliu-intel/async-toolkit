@@ -291,9 +291,25 @@ PROCEDURE EvalFormulas(scm : Scheme.T; schema : Schema.T; data : RefSeq.T) =
             (* store back *)
             row.put(fi, val);
 
-            (* bind in symbol table *)
+            (* bind in symbol table --
+
+               we had a little bug here.
+
+               Every formula got defined in the Scheme environment,
+               except the last one.  So we have to write the result not only into the
+               symtabs, but also into the Scheme interpreter.
+               
+               Question is whether we still need the symtabs!
+            *)
             IF fd.name # NIL THEN
-              EVAL symtabS.put(fd.name & ":string", val);
+              Debug.Out("Binding : " & fd.name);
+              WITH snm = fd.name & ":string",
+                   ssnm = SchemeSymbol.FromText(snm),
+                   sval = SchemeString.FromText(val) DO
+                EVAL symtabS.put(snm, val);
+                scm.defineInGlobalEnv(ssnm, sval)
+              END;
+              
               TRY
                 VAR dummy : LONGREAL;
                 BEGIN
@@ -301,8 +317,16 @@ PROCEDURE EvalFormulas(scm : Scheme.T; schema : Schema.T; data : RefSeq.T) =
                   EVAL symtabN.delete(fd.name  & ":real", dummy)
                 END;
                 WITH numval = Scan.LongReal(val) DO
-                  EVAL symtabN.put(fd.name, numval);
-                  EVAL symtabN.put(fd.name & ":real", numval)
+                  WITH nnm = fd.name & ":real",
+                       snnm = SchemeSymbol.FromText(nnm),
+                       nm = fd.name,
+                       snm = SchemeSymbol.FromText(nm),
+                       snumval = SchemeLongReal.FromLR(numval) DO
+                    EVAL symtabN.put(nm, numval);
+                    EVAL symtabN.put(nnm, numval);
+                    scm.defineInGlobalEnv(snnm, snumval);
+                    scm.defineInGlobalEnv(snm, snumval)
+                  END
                 END
               EXCEPT
                 Lex.Error, FloatMode.Trap => (* skip *)
@@ -487,9 +511,7 @@ PROCEDURE DoOneSweep(targDir : Pathname.T;
           END
         END    
       END
-    END;
-
-
+    END
   END DoOneSweep;
   
 PROCEDURE DoSweeps(targDir : Pathname.T;schema : Schema.T; data : RefSeq.T; doLabels : BOOLEAN) =
