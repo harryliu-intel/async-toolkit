@@ -9,56 +9,57 @@
 
 (dis "**********  Setting up genopt environment  **********" dnl)
 
+(GenOpt.OptInit)
+
 (define *param-vars* '())
 (define (def-paramvar nm val)
   (set! *param-vars* (cons (list nm val) *param-vars*)))
 
 (define *opt-vars* '())
+;; note that last variable gets to be first in the list
 (define (def-optvar nm defval defstep)
   (GenOpt.DefOptVar nm defval defstep)
   (set! *opt-vars* (cons (list nm defval defstep) *opt-vars*)))
 
-(define *rhobeg* 1.0)
-(define (def-rhobeg val)
-  (set! *rhobeg* val))
 
-(define *rhoend* 0.001)
+(define (def-rhobeg val)
+  (GenOpt.SetRhoBeg val))
+
 (define (def-rhoend val)
-  (set! *rhoend* val))
+  (GenOpt.SetRhoEnd val))
+
+(define (set-netbatch val)
+  (GenOpt.SetNetbatch val))
 
 (define *compute-command* #f)
 (define (def-compute-command proc)
   (set! *compute-command* proc))
 
-(define *schema-path* #f)
 (define (def-schema-path path)
-  (set! *schema-path* path))
+  (GenOpt.DefSchemaPath path))
 
-
-(define *load-scm* '())
 (define (def-load-scm scm-path)
-  (set! *load-scm* (cons scm-path *load-scm*)))
+  (GenOpt.DefLoadScm scm-path))
 
-(define *data-filename* #f)
 (define (def-data-filename fnm)
-  (set! *data-filename* fnm))
+  (GenOpt.DefDataFilename fnm))
 
-
-(define *eval-lisp* #f)
 (define (def-eval lisp-code)
-  (set! *eval-lisp* lisp-code))
+  (GenOpt.DefEval lisp-code))
 
-(define *x* #f)       ;; the abstract point
-(define *p* #f)       ;; the concrete point
-(define *factors* #f) 
+;; *p*[i] = *x*[i] / *factors*[i]
+;;(define *x* #f)       ;; the abstract point (problem variables)
+;;(define *p* #f)       ;; the concrete point (optimization variables)
+;;(define *factors* #f) 
 
-(define (do-setup!)
-  (set! *x* (map cadr *opt-vars*))
-  (set! *factors* (map caddr *opt-vars*))
-  (update-*p*!))
-
-(define (update-*p*!)
-  (set! *p* (map / *x* *factors*)))
+;;(define (do-setup!)
+;;  (set! *x* (map cadr *opt-vars*))
+;;  (set! *factors* (map caddr *opt-vars*))
+;;  (update-*p*!)
+;;  #t)
+;;
+;;(define (update-*p*!)
+;;  (set! *p* (map / *x* *factors*)))
 
 (define (expand-command)
   ;; this expands into the command that we need to run to perform
@@ -70,10 +71,35 @@
         (opt-defs
          (map (lambda(optvar pc)
                 (list 'define (car optvar) pc))
-              *opt-vars* *x*))
+              *opt-vars* (get-*x*)))
         (compute-defs (list *compute-command*)))
     (eval (append '(begin) param-defs opt-defs compute-defs))))
-  
+
+(define (run-once) (run-command (expand-command)))
+
+(define (make-cb-obj)
+  (let* ((func (lambda(*unused*)(expand-command)))
+         (cb-obj (new-modula-object 'OptCallback.T `(command . ,func))))
+    cb-obj))
+
+(GenOpt.SetCallback (make-cb-obj))
+
+(define (downrange n)
+  (if (= 0 n)
+      '()
+      (cons (- n 1) (downrange (- n 1)))))
+
+(define (uprange n)
+  (reverse (downrange n)))
+
+(define coords (obj-method-wrap (GenOpt.GetCoords) 'LongRealSeq.T))
+
+(define (get-*p*)
+  (map (lambda(i)(coords 'get i)) (uprange (coords 'size))))
+
+(define (get-*x*)
+  (let ((factors (map caddr *opt-vars*)))
+    (map * (get-*p*) factors)))
 
 (dis "**********  Done setting up genopt environment  **********" dnl)
 

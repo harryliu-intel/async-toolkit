@@ -15,7 +15,7 @@ IMPORT Thread;
 IMPORT OSError;
 IMPORT Scheme, SchemeM3;
 IMPORT FS;
-FROM SchemaGraph IMPORT ReadSchema, ReadData, EvalFormulas, DoSweeps;
+FROM SchemaGraph IMPORT ReadSchema, ReadData, EvalFormulas;
 IMPORT Wr;
 IMPORT SchemeString;
 IMPORT Env;
@@ -35,6 +35,14 @@ IMPORT TextRd;
 IMPORT OptVar;
 IMPORT OptVarSeq;
 IMPORT Wx;
+IMPORT SchemeSymbol;
+IMPORT LongRealSeq;
+IMPORT OptCallback;
+IMPORT Process;
+IMPORT AL;
+IMPORT SchemeObject;
+IMPORT SchemeUtils;
+IMPORT SchemeLongReal;
 
 VAR
   NbPool  := Env.Get("NBPOOL");
@@ -46,13 +54,49 @@ CONST
   MyM3UtilsSrcPath = "spice/genopt/src";
 
 VAR
-  vseq := NEW(OptVarSeq.T).init();
-  rhoBeg := FIRST(LONGREAL);
-  rhoEnd := LAST(LONGREAL);
+  vseq : OptVarSeq.T;
+  rhoBeg, rhoEnd : LONGREAL;
+  scmCb  : OptCallback.T;
+  schemaPath : Pathname.T;
+  schemaScmPaths : TextSeq.T;
+  schemaDataFn : Pathname.T;
+  schemaEval : SchemeObject.T;
   
-PROCEDURE DefOptVar(nm : TEXT; defval, defstep : LONGREAL) =
+VAR
+  pMu := NEW(MUTEX);
+  p : LongRealSeq.T;
+
+  
+PROCEDURE OptInit() =
   BEGIN
-    vseq.addhi(OptVar.T { nm, defval, defstep })
+    vseq   := NEW(OptVarSeq.T).init();
+    rhoBeg := FIRST(LONGREAL);
+    rhoEnd := LAST(LONGREAL);
+    p      := NEW(LongRealSeq.T).init();
+    schemaPath := NIL;
+    schemaScmPaths := NEW(TextSeq.T).init();
+    schemaDataFn := NIL;
+    schemaEval := NIL;
+  END OptInit;
+
+PROCEDURE DefSchemaPath(path : Pathname.T) =
+  BEGIN schemaPath := path END DefSchemaPath;
+
+PROCEDURE DefLoadScm(scmPath : Pathname.T) =
+  BEGIN
+    schemaScmPaths.addhi(scmPath)
+  END DefLoadScm;
+
+PROCEDURE DefDataFilename(fnm : Pathname.T) =
+  BEGIN schemaDataFn := fnm END DefDataFilename;
+
+PROCEDURE DefEval(obj : SchemeObject.T) =
+  BEGIN schemaEval := obj END DefEval;
+  
+PROCEDURE DefOptVar(nm : SchemeSymbol.T; defval, defstep : LONGREAL) =
+  BEGIN
+    vseq.addlo(OptVar.T { SchemeSymbol.ToText(nm), defval, defstep });
+    p.addlo(defval / defstep)
   END DefOptVar;
 
 PROCEDURE SetRhoBeg(to : LONGREAL) =
@@ -64,6 +108,21 @@ PROCEDURE SetRhoEnd(to : LONGREAL) =
   BEGIN
     rhoEnd := to
   END SetRhoEnd;
+
+PROCEDURE GetCoords() : LongRealSeq.T =
+  BEGIN
+    RETURN p
+  END GetCoords;
+
+PROCEDURE SetCallback(obj : OptCallback.T) =
+  BEGIN
+    scmCb := obj
+  END SetCallback;
+
+PROCEDURE SetNetbatch(to : BOOLEAN) =
+  BEGIN
+    doNetbatch := to
+  END SetNetbatch;
 
 TYPE
   BaseEvaluator = LRScalarField.T OBJECT
@@ -145,14 +204,43 @@ PROCEDURE AttemptEval(base : BaseEvaluator; q : LRVector.T) : LONGREAL
     ELSE
       nbopts := F("--target %s --class 4C --class SLES12", NbPool);
     END;
+
+    LOCK pMu DO
+      FOR i := FIRST(q^) TO LAST(q^) DO
+        p.put(i, q[i])
+      END;
+      cmd            := scmCb.command()
+    END;
+
+    TRY
+      FS.CreateDirectory(subdirPath);
+    EXCEPT
+      OSError.E(x) =>
+      Debug.Warning(F("creating directory \"%s\" : OSError.E : %s",
+                      subdirPath,
+                      AL.Format(x)))
+    END;
     
-    cmd            := "";
-
-    cm             := ProcUtils.RunText(cmd,
-                                        stdout := stdout,
-                                        stderr := stderr,
-                                        stdin  := NIL);
-
+    WITH nbCmd = F("nbjob run %s --mode interactive %s",
+                   nbopts,
+                   cmd) DO
+      VAR
+        runCmd : TEXT;
+      BEGIN
+        IF doNetbatch THEN
+          runCmd := nbCmd
+        ELSE
+          runCmd := cmd
+        END;
+        
+        cm             := ProcUtils.RunText(runCmd,
+                                            stdout := stdout,
+                                            stderr := stderr,
+                                            stdin  := NIL,
+                                            wd0    := subdirPath)
+      END
+    END;
+      
     TRY
 
       Debug.Out(F("BaseEval : q = %s\nrunning : %s", FmtP(q), cmd));
@@ -163,24 +251,18 @@ PROCEDURE AttemptEval(base : BaseEvaluator; q : LRVector.T) : LONGREAL
            rd     = TextRd.New(output) DO
         Debug.Out("Ran command output was " & output);
 
-        LOOP
-          TRY
-            WITH line = Rd.GetLine(rd) DO
-              WITH res = Scan.LongReal(line) DO
+      END;
 
-                WITH wr = FileWr.Open(subdirPath & "/compres.dat") DO
-                  Wr.PutText(wr, F("%s %s\n", LongReal(res), subdirPath));
-                  Wr.Close(wr)
-                END;
-                
-                RETURN res
-              END
-            END
-          EXCEPT
-            FloatMode.Trap, Lex.Error => (* skip *)
-          END
-        END
+      (* read the schema *)
+      WITH dataPath  = subdirPath & "/" & schemaDataFn,
+           schemaRes = SchemaReadResult(schemaPath,
+                                        dataPath,
+                                        schemaScmPaths,
+                                        schemaEval) DO
+        Debug.Out("Schema-processed result : " & LongReal(schemaRes));
+        RETURN schemaRes
       END
+      
     EXCEPT
       ProcUtils.ErrorExit(err) =>
       WITH msg = F("command \"%s\" with output\n====>\n%s\n<====\n\nraised ErrorExit : %s",
@@ -210,6 +292,9 @@ PROCEDURE DoIt() =
     FOR i := FIRST(pr^) TO LAST(pr^) DO
       pr[i] := 0.0d0
     END;
+
+    Debug.Out(F("Ready to call Minimize : pr=%s rhoBeg=%s rhoEnd=%s",
+                FmtP(pr), LongReal(rhoBeg), LongReal(rhoEnd)));
     
     WITH output = NewUOAs.Minimize(pr,
                                    evaluator,
@@ -239,16 +324,64 @@ PROCEDURE NextIdx() : CARDINAL =
       END
     END
   END NextIdx;
+  
+PROCEDURE SchemaReadResult(schemaPath ,
+                           dataPath : Pathname.T;
+                           scmFiles : TextSeq.T;
+                           schemaEval : SchemeObject.T) : LONGREAL =
+  (* code from the schemaeval program *)
+  VAR
+    dataFiles := NEW(TextSeq.T).init();
+    schemaScm : Scheme.T;
+    scm := 42;
+  BEGIN
+    Debug.Out(F("SchemaReadResult : schemaPath %s , dataPath %s , eval %s",
+                schemaPath, dataPath, SchemeUtils.Stringify(schemaEval)));
+    
+    dataFiles.addhi(dataPath);
+    
+    WITH scmarr = NEW(REF ARRAY OF Pathname.T, scmFiles.size()) DO
+      FOR i := FIRST(scmarr^) TO LAST(scmarr^) DO
+        scmarr[i] := scmFiles.get(i)
+      END;
+      TRY
+        schemaScm := NEW(SchemeM3.T).init(scmarr^)
+      EXCEPT
+        Scheme.E(x) =>
+        Debug.Error(F("EXCEPTION! Scheme.E \"%s\" when initializing interpreter", x))
+      END
+    END;
 
+    Debug.Out("SchemaReadResult : set up interpreter");
+    
+    TRY
+      WITH schema = ReadSchema(schemaPath),
+           data   = ReadData(schema, dataFiles) DO
+        Debug.Out("SchemaReadResult : schema and data loaded");
+
+        EvalFormulas(schemaScm, schema, data);
+
+        Debug.Out("SchemaReadResult : formulas evaluated");
+
+        WITH schemaRes = schemaScm.evalInGlobalEnv(schemaEval) DO
+          Debug.Out("schema eval returned " & SchemeUtils.Stringify(schemaRes));
+          RETURN SchemeLongReal.FromO(schemaRes)
+        END
+      END
+    EXCEPT
+      Scheme.E(x) =>
+      Debug.Error("?error in Scheme interpreter : " & x)
+    END
+  END SchemaReadResult;
+  
 VAR
   pp                        := NEW(ParseParams.T).init(Stdio.stderr);
-  schemaFn      : Pathname.T;
-  dataFiles                 := NEW(TextSeq.T).init();
-  scmFiles                  := NEW(TextSeq.T).init();
   scm           : Scheme.T;
-  toEval        : TEXT;
-  rundirPath                := ".";
+  rundirPath                := Process.GetWorkingDirectory();
   myFullSrcPath : Pathname.T;
+  doNetbatch := TRUE;
+  scmFiles := NEW(TextSeq.T).init();
+  
 BEGIN
   scmFiles.addhi("require");
   scmFiles.addhi("m3");
