@@ -4,6 +4,7 @@ DOC2=vernier_has
 
 MAXGRAPHICS=5000000
 DVIPS=dvips
+LATEX=xelatex
 
 GENFIGURES=dennard_tomb.eps R717cycle1.eps R717cycle2.eps fe.eps\
 fe_compare.eps fe_density.eps fe_compare2.eps fe_cost.eps\
@@ -27,9 +28,9 @@ $(DOC).dvi: $(GENFIGURES)
 	jpegtopnm $*.jpg | pnmscale -pixels $(MAXGRAPHICS) |  pnmtops > $*.eps
 
 .tex.dvi:
-	latex $*.tex || true
-	latex $*.tex || true
-	latex $*.tex
+	$(LATEX) $*.tex || true
+	$(LATEX) $*.tex || true
+	$(LATEX) $*.tex
 
 .ps.pdf:
 	ps2pdf $*.ps
