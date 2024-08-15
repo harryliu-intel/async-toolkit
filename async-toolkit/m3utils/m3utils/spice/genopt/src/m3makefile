@@ -1,0 +1,32 @@
+import ("libm3")
+import ("cit_util")
+import ("parseparams")
+import ("tracelib")
+import ("mscheme")
+import ("schemagraph")
+import ("modula3scheme")
+import ("sstubgen")
+import ("newuoa")
+import ("cobyla")
+
+Interface ("OptVar")
+Sequence ("OptVar", "OptVar")
+Interface ("GenOpt")
+
+SchemeStubs ("Math")
+SchemeStubs ("TextWr")
+SchemeStubs ("FileWr")
+SchemeStubs ("Wr")
+SchemeStubs ("FileRd")
+SchemeStubs ("Rd")
+SchemeStubs ("Env")
+SchemeStubs ("NewUOAs")
+SchemeStubs ("COBYLA_M3")
+SchemeStubs ("GenOpt")
+
+ExportSchemeStubs ("genopt")
+importSchemeStubs()
+
+implementation ("Main")
+
+program ("genopt")
