@@ -10,7 +10,7 @@
 
 (define *m3utils* (Env.Get "M3UTILS"))
 (define *bindir* "AMD64_LINUX")
-(define *srcdir* (string-append *m3utils* "/spice/geopt/exampleprog/src"))
+(define *srcdir* (string-append *m3utils* "/spice/genopt/exampleprog/src"))
 
 ;; the following are parameters that may be overridden
 ;; the default values are stated
@@ -59,7 +59,7 @@
 
 
 ;; name of the output file of the computation
-(def-data-filename "measure.dat.stat")
+(def-data-filename "example.out")
 
 ;; the schema of the output of the program (of the data file)
 (def-schema-path (string-append *srcdir* "/schema.dat"))
@@ -69,4 +69,6 @@
 
 ;; the function to minimize, based on the schema and input
 (def-eval '(* *secret-value* result))
+
+(set-netbatch #f)
 
