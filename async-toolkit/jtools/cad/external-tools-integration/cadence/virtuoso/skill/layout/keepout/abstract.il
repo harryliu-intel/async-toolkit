@@ -6,9 +6,9 @@
 ; choose automatically which type of abstract to make
 (defun MakeAbstract (@key (CV (geGetEditCellView))
                           (topMetal nil))
-  (when (IsLeafCell CV->cellName)
-    (MakeSimpleAbstract ?CV CV ?topMetal -1 ?leaf t)
-    (MakeSimpleAbstract ?CV CV ?cutaroundpins cutaroundpins ?topMetal topMetal)
+  (if (IsLeafCell CV->cellName)
+      (MakeSimpleAbstract ?CV CV ?topMetal -1 ?leaf t)
+      (MakeSimpleAbstract ?CV CV ?topMetal topMetal)
     )
   )
 
