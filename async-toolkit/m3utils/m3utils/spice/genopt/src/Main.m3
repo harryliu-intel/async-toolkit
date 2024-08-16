@@ -306,7 +306,27 @@ PROCEDURE DoIt() =
                   Int(output.funcCount),
                   LongReal(output.f),
                   output.message));
-      Wr.PutText(Stdio.stdout, FmtP(output.x))
+      Wr.PutText(Stdio.stdout, FmtP(output.x));
+      Wr.PutChar(Stdio.stdout, '\n');
+      
+      Wr.Flush(Stdio.stdout);
+      WITH wr = FileWr.Open("genopt.opt"),
+           cwr = FileWr.Open("genopt.cols") DO
+        FOR i := vseq.size() - 1 TO 0 BY -1 DO
+          WITH v = vseq.get(i),
+               xi = output.x[i],
+               pi = xi * v.defstep DO
+            Wr.PutText(wr, LongReal(pi));
+            Wr.PutText(cwr, v.nm);
+            VAR c : CHAR; BEGIN
+              IF i = 0 THEN c := '\n' ELSE c := ',' END;
+              Wr.PutChar(wr, c);
+              Wr.PutChar(cwr, c)
+            END
+          END
+        END;
+        Wr.Close(wr); Wr.Close(cwr)
+      END
     END
   END DoIt;
 
