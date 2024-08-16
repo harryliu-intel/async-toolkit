@@ -17,7 +17,6 @@ IMPORT Scheme, SchemeM3;
 IMPORT FS;
 FROM SchemaGraph IMPORT ReadSchema, ReadData, EvalFormulas;
 IMPORT Wr;
-IMPORT SchemeString;
 IMPORT Env;
 IMPORT SchemeStubs;
 IMPORT ReadLine, SchemeReadLine;
@@ -28,8 +27,6 @@ IMPORT LRVector;
 IMPORT ProcUtils;
 IMPORT Rd;
 IMPORT TextWr;
-IMPORT Lex, FloatMode;
-IMPORT Scan;
 IMPORT FileWr;
 IMPORT TextRd;
 IMPORT OptVar;
@@ -43,6 +40,9 @@ IMPORT AL;
 IMPORT SchemeObject;
 IMPORT SchemeUtils;
 IMPORT SchemeLongReal;
+IMPORT TextTextTbl;
+
+<*FATAL Thread.Alerted*>
 
 VAR
   NbPool  := Env.Get("NBPOOL");
@@ -53,6 +53,9 @@ VAR
 CONST
   MyM3UtilsSrcPath = "spice/genopt/src";
 
+VAR
+  params := NEW(TextTextTbl.Default).init();
+  
 VAR
   vseq : OptVarSeq.T;
   rhoBeg, rhoEnd : LONGREAL;
@@ -353,7 +356,6 @@ PROCEDURE SchemaReadResult(schemaPath ,
   VAR
     dataFiles := NEW(TextSeq.T).init();
     schemaScm : Scheme.T;
-    scm := 42;
   BEGIN
     Debug.Out(F("SchemaReadResult : schemaPath %s , dataPath %s , eval %s",
                 schemaPath, dataPath, SchemeUtils.Stringify(schemaEval)));
@@ -390,7 +392,8 @@ PROCEDURE SchemaReadResult(schemaPath ,
       END
     EXCEPT
       Scheme.E(x) =>
-      Debug.Error("?error in Scheme interpreter : " & x)
+      Debug.Error("?error in Scheme interpreter : " & x);
+      <*ASSERT FALSE*>
     END
   END SchemaReadResult;
   
@@ -401,11 +404,14 @@ VAR
   myFullSrcPath : Pathname.T;
   doNetbatch := TRUE;
   scmFiles := NEW(TextSeq.T).init();
+  interactive : BOOLEAN;
   
 BEGIN
   scmFiles.addhi("require");
   scmFiles.addhi("m3");
   TRY
+    interactive := pp.keywordPresent("-i") OR pp.keywordPresent("-interactive");
+    
     IF NbPool = NIL THEN
       Debug.Error("Must set NBPOOL env var.")
     END;
@@ -424,6 +430,14 @@ BEGIN
     
     WHILE pp.keywordPresent("-scminit") OR pp.keywordPresent("-S") OR pp.keywordPresent("-scm") DO
       scmFiles.addhi(pp.getNext())
+    END;
+
+    WHILE pp.keywordPresent("-setparam") DO
+      WITH pnm  = pp.getNext(),
+           pval = pp.getNext() DO
+        Debug.Out(F("Overriding param %s <- %s", pnm, pval));
+        EVAL params.put(pnm, pval)
+      END
     END;
 
     pp.skipParsed();
@@ -448,11 +462,10 @@ BEGIN
     END
   END;
 
-  TRY
+  IF interactive THEN
     SchemeReadLine.MainLoop(NEW(ReadLine.Default).init(), scm)
-  EXCEPT
-    Scheme.E(x) =>
-    Debug.Error("?error in Scheme interpreter : " & x)
+  ELSE
+    DoIt()
   END
   
 END Main.

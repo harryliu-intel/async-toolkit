@@ -78,6 +78,8 @@
 (define (run-once) (run-command (expand-command)))
 
 (define (make-cb-obj)
+  ;; this is the callback through which the Modula code gets the
+  ;; command to run to perform an evaluation
   (let* ((func (lambda(*unused*)(expand-command)))
          (cb-obj (new-modula-object 'OptCallback.T `(command . ,func))))
     cb-obj))
