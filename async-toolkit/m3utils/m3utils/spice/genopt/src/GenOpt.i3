@@ -17,7 +17,7 @@ PROCEDURE GetCoords() : LongRealSeq.T;
 
 PROCEDURE OptInit();
 
-PROCEDURE DoIt();
+PROCEDURE DoIt(optVars, paramVars : SchemeObject.T);
 
 PROCEDURE SetNetbatch(to : BOOLEAN);
 

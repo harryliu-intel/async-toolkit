@@ -41,6 +41,7 @@ IMPORT SchemeObject;
 IMPORT SchemeUtils;
 IMPORT SchemeLongReal;
 IMPORT TextTextTbl;
+IMPORT SchemeEnvironment;
 
 <*FATAL Thread.Alerted*>
 
@@ -129,6 +130,7 @@ PROCEDURE SetNetbatch(to : BOOLEAN) =
 
 TYPE
   BaseEvaluator = LRScalarField.T OBJECT
+    optVars, paramVars : SchemeObject.T;
   METHODS
     init()                      : LRScalarField.T := InitDummy;
   OVERRIDES
@@ -138,7 +140,7 @@ TYPE
 
   PllEvaluator = LRScalarFieldPll.T OBJECT
   METHODS
-    init() : LRScalarField.T := InitPll;
+    init(    optVars, paramVars : SchemeObject.T) : LRScalarField.T := InitPll;
   END;
 
 PROCEDURE InitDummy(base : BaseEvaluator) : LRScalarField.T =
@@ -146,9 +148,11 @@ PROCEDURE InitDummy(base : BaseEvaluator) : LRScalarField.T =
     RETURN base
   END InitDummy;
   
-PROCEDURE InitPll(pll : PllEvaluator) : LRScalarField.T =
+PROCEDURE InitPll(pll : PllEvaluator;    optVars, paramVars : SchemeObject.T) : LRScalarField.T =
   BEGIN
-    RETURN LRScalarFieldPll.T.init(pll, NEW(BaseEvaluator));
+    RETURN LRScalarFieldPll.T.init(pll, NEW(BaseEvaluator,
+                                            optVars := optVars,
+                                            paramVars := paramVars));
   END InitPll;
 
 PROCEDURE BaseEvalHint(base : BaseEvaluator; p : LRVector.T) =
@@ -260,8 +264,10 @@ PROCEDURE AttemptEval(base : BaseEvaluator; q : LRVector.T) : LONGREAL
       WITH dataPath  = subdirPath & "/" & schemaDataFn,
            schemaRes = SchemaReadResult(schemaPath,
                                         dataPath,
-                                        schemaScmPaths,
-                                        schemaEval) DO
+                                        scmFiles,
+                                        schemaEval,
+                                        base.optVars,
+                                        base.paramVars) DO
         Debug.Out("Schema-processed result : " & LongReal(schemaRes));
         RETURN schemaRes
       END
@@ -282,11 +288,11 @@ PROCEDURE AttemptEval(base : BaseEvaluator; q : LRVector.T) : LONGREAL
     END;
   END AttemptEval;
 
-PROCEDURE DoIt() =
+PROCEDURE DoIt(optVars, paramVars : SchemeObject.T) =
   VAR
     N               := vseq.size();
     pr : LRVector.T := NEW(LRVector.T, N);
-    evaluator       := NEW(PllEvaluator).init();
+    evaluator       := NEW(PllEvaluator).init(optVars, paramVars);
   BEGIN
     IF rhoEnd = LAST(LONGREAL) THEN
       rhoEnd := rhoBeg / 1.0d-6
@@ -351,7 +357,7 @@ PROCEDURE NextIdx() : CARDINAL =
 PROCEDURE SchemaReadResult(schemaPath ,
                            dataPath : Pathname.T;
                            scmFiles : TextSeq.T;
-                           schemaEval : SchemeObject.T) : LONGREAL =
+                           schemaEval, optVars, paramVars : SchemeObject.T) : LONGREAL =
   (* code from the schemaeval program *)
   VAR
     dataFiles := NEW(TextSeq.T).init();
@@ -364,7 +370,8 @@ PROCEDURE SchemaReadResult(schemaPath ,
     
     WITH scmarr = NEW(REF ARRAY OF Pathname.T, scmFiles.size()) DO
       FOR i := FIRST(scmarr^) TO LAST(scmarr^) DO
-        scmarr[i] := scmFiles.get(i)
+        scmarr[i] := scmFiles.get(i);
+        Debug.Out("SchemaReadResult: loading scheme file " & scmarr[i]);
       END;
       TRY
         schemaScm := NEW(SchemeM3.T).init(scmarr^)
@@ -372,6 +379,13 @@ PROCEDURE SchemaReadResult(schemaPath ,
         Scheme.E(x) =>
         Debug.Error(F("EXCEPTION! Scheme.E \"%s\" when initializing interpreter", x))
       END
+    END;
+
+    WITH T2S = SchemeSymbol.FromText,
+         optVarsNm = T2S("*opt-vars*"),
+         paramVarsNm = T2S("*param-vars*") DO
+      schemaScm.setInGlobalEnv(optVarsNm, optVars);
+      schemaScm.setInGlobalEnv(paramVarsNm, paramVars)
     END;
 
     Debug.Out("SchemaReadResult : set up interpreter");
@@ -385,7 +399,10 @@ PROCEDURE SchemaReadResult(schemaPath ,
 
         Debug.Out("SchemaReadResult : formulas evaluated");
 
-        WITH schemaRes = schemaScm.evalInGlobalEnv(schemaEval) DO
+        WITH scmCode = SchemeUtils.List2(
+                            SchemeSymbol.FromText("eval-in-env"),
+                            schemaEval),
+             schemaRes = schemaScm.evalInGlobalEnv(scmCode) DO
           Debug.Out("schema eval returned " & SchemeUtils.Stringify(schemaRes));
           RETURN SchemeLongReal.FromO(schemaRes)
         END
@@ -405,10 +422,13 @@ VAR
   doNetbatch := TRUE;
   scmFiles := NEW(TextSeq.T).init();
   interactive : BOOLEAN;
+  cfgFile : Pathname.T;
+  genOptScm : Pathname.T;
   
 BEGIN
   scmFiles.addhi("require");
   scmFiles.addhi("m3");
+
   TRY
     interactive := pp.keywordPresent("-i") OR pp.keywordPresent("-interactive");
     
@@ -426,7 +446,16 @@ BEGIN
     END;
 
     myFullSrcPath := M3Utils & "/" & MyM3UtilsSrcPath;
-    scmFiles.addhi(myFullSrcPath & "/genopt.scm");
+    WITH genOptDefsScm = myFullSrcPath & "/genoptdefs.scm" DO
+      scmFiles.addhi(genOptDefsScm)
+    END;
+
+    (* schemes up till here are added to both versions of the scheme
+       enviornment.  genOptScm is only added to the scheme environment
+       used to interpret the configuration file (and not to the schema
+       evaluator.) *)
+    
+    genOptScm := myFullSrcPath & "/genopt.scm";
     
     WHILE pp.keywordPresent("-scminit") OR pp.keywordPresent("-S") OR pp.keywordPresent("-scm") DO
       scmFiles.addhi(pp.getNext())
@@ -442,17 +471,19 @@ BEGIN
 
     pp.skipParsed();
 
-    scmFiles.addhi(pp.getNext());
+    cfgFile := pp.getNext();
 
     pp.finish()
   EXCEPT
     ParseParams.Error => Debug.Error("Can't parse command-line parameters\nUsage: " & Params.Get(0) & "\n" )
   END;
 
-  WITH scmarr = NEW(REF ARRAY OF Pathname.T, scmFiles.size()) DO
-    FOR i := FIRST(scmarr^) TO LAST(scmarr^) DO
+  WITH scmarr = NEW(REF ARRAY OF Pathname.T, scmFiles.size() + 2) DO
+    FOR i := FIRST(scmarr^) TO LAST(scmarr^) - 2 DO
       scmarr[i] := scmFiles.get(i)
     END;
+    scmarr[LAST(scmarr^) - 1] := genOptScm;
+    scmarr[LAST(scmarr^)] := cfgFile;
     SchemeStubs.RegisterStubs();
     TRY
       scm := NEW(SchemeM3.T).init(scmarr^)
@@ -465,7 +496,12 @@ BEGIN
   IF interactive THEN
     SchemeReadLine.MainLoop(NEW(ReadLine.Default).init(), scm)
   ELSE
-    DoIt()
+    WITH senv = NARROW(scm.getGlobalEnvironment(), SchemeEnvironment.T),
+         T2S = SchemeSymbol.FromText,
+         optVars = senv.lookup(T2S("*opt-vars*")),
+         paramVars = senv.lookup(T2S("*param-vars*")) DO
+      DoIt(optVars, paramVars)
+    END
   END
   
 END Main.
