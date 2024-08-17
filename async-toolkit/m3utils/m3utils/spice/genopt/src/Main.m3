@@ -399,9 +399,10 @@ PROCEDURE SchemaReadResult(schemaPath ,
 
         Debug.Out("SchemaReadResult : formulas evaluated");
 
-        WITH scmCode = SchemeUtils.List2(
-                            SchemeSymbol.FromText("eval-in-env"),
-                            schemaEval),
+        WITH T2S = SchemeSymbol.FromText,
+             scmCode = SchemeUtils.List2(
+                            T2S("eval-in-env"),
+                            SchemeUtils.List2(T2S("quote"), schemaEval)),
              schemaRes = schemaScm.evalInGlobalEnv(scmCode) DO
           Debug.Out("schema eval returned " & SchemeUtils.Stringify(schemaRes));
           RETURN SchemeLongReal.FromO(schemaRes)

@@ -74,7 +74,10 @@
 (define (eval-in-env cmd)
   ;; this expands into the command that we need to run to perform
   ;; the execution part of the evaluation
-  (eval (append '(begin) (print-defines) (list cmd))))
+  (let ((to-eval (append '(begin) (print-defines) (list cmd))))
+    (dis "eval-in-env : will eval : " to-eval dnl)
+    (eval to-eval)
+    ))
 
 (define (expand-command)
   ;; this expands into the command that we need to run to perform

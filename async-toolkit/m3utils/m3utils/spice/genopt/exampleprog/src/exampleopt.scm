@@ -68,7 +68,8 @@
 (def-load-scm (string-append *srcdir* "/defs.scm"))
 
 ;; the function to minimize, based on the schema and input
-(def-eval '(* *secret-value* result))
+(def-eval '(+ temp (* (/ vdd vdd) *secret-value* result)))
+;;(def-eval '(* *secret-value* result))
 
 (set-netbatch #f)
 
