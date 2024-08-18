@@ -42,6 +42,8 @@ IMPORT SchemeUtils;
 IMPORT SchemeLongReal;
 IMPORT TextTextTbl;
 IMPORT SchemeEnvironment;
+IMPORT SchemeString;
+IMPORT SchemeBoolean;
 
 <*FATAL Thread.Alerted*>
 
@@ -55,8 +57,26 @@ CONST
   MyM3UtilsSrcPath = "spice/genopt/src";
 
 VAR
-  params := NEW(TextTextTbl.Default).init();
-  
+  paramBindings := NEW(TextTextTbl.Default).init();
+
+PROCEDURE GetParamBindings() : TextTextTbl.T =
+  BEGIN RETURN paramBindings END GetParamBindings;
+
+PROCEDURE GetParam(named : SchemeSymbol.T) : SchemeObject.T =
+  (* returns #f if not defined; returns string if defined *)
+  VAR
+    val : TEXT;
+  BEGIN
+    WITH tnm    = SchemeSymbol.ToText(named),
+         haveIt = paramBindings.get(tnm, val) DO
+      IF haveIt THEN
+        RETURN SchemeString.FromText(val)
+      ELSE
+        RETURN SchemeBoolean.False()
+      END
+    END
+  END GetParam;
+
 VAR
   vseq : OptVarSeq.T;
   rhoBeg, rhoEnd : LONGREAL;
@@ -466,7 +486,7 @@ BEGIN
       WITH pnm  = pp.getNext(),
            pval = pp.getNext() DO
         Debug.Out(F("Overriding param %s <- %s", pnm, pval));
-        EVAL params.put(pnm, pval)
+        EVAL paramBindings.put(pnm, pval)
       END
     END;
 

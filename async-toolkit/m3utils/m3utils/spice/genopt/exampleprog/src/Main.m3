@@ -15,10 +15,13 @@ CONST Usage = "exampleprog usage wrong!";
 VAR
   pp                          := NEW(ParseParams.T).init(Stdio.stderr);
 
-  vdd, delp, deln : LONGREAL;
+  temp, vdd, delp, deln : LONGREAL;
 
 BEGIN
   TRY
+    IF pp.keywordPresent("-temp") THEN
+      temp := pp.getNextLongReal()
+    END; 
     IF pp.keywordPresent("-vdd") THEN
       vdd := pp.getNextLongReal()
     END; 
@@ -32,7 +35,7 @@ BEGIN
     ParseParams.Error => Debug.Error("Can't parse command-line parameters\nUsage: " & Params.Get(0) & " " & Usage)
   END;
 
-  WITH dv = vdd  - 1.0d0,
+  WITH dv = vdd  - temp,
        dp = delp - 2.0d0,
        dn = deln - 3.0d0,
 

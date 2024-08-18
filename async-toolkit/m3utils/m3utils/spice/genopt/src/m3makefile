@@ -26,6 +26,7 @@ SchemeStubs ("Env")
 SchemeStubs ("NewUOAs")
 SchemeStubs ("COBYLA_M3")
 SchemeStubs ("GenOpt")
+SchemeStubs ("TextTextTbl")
 
 ExportSchemeStubs ("genopt")
 importSchemeStubs()

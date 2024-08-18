@@ -7,14 +7,18 @@
 ;; August, 2024
 ;;
 
+;; these two are suspicious: why are they here?
 (define *param-vars* '())
+
+(define *opt-vars* '())
+
+
 (define (def-paramvar nm val)
   (set! *param-vars* (cons (list nm val) *param-vars*)))
 
 (define (set-param! param to-val)
   (set-cdr! (assoc param *param-vars*) (list to-val)))
 
-(define *opt-vars* '())
 ;; note that last variable gets to be first in the list
 (define (def-optvar nm defval defstep)
   (GenOpt.DefOptVar nm defval defstep)
@@ -60,10 +64,22 @@
 ;;(define (update-*p*!)
 ;;  (set! *p* (map / *x* *factors*)))
 
+(define (get-param-string-converter param)
+  (let ((av (cadr (assoc param *param-vars*))))
+    (cond ((string? av) (lambda(x) x))
+          ((number? av) string->number)
+          ((symbol? av) string->symbol)
+          (else "Unknown type of param " param " : " av))))
+        
+(define (get-param-val param)
+  (let ((av (cadr (assoc param *param-vars*)))
+        (mv (GenOpt.GetParam param)))
+    (if mv ((get-param-string-converter param) mv) av)))
+
 (define (print-defines)
   (let ((param-defs
          (map (lambda (param)
-                `(define ,(car param) ,(cadr param)))
+                `(define ,(car param) ,(get-param-val (car param))))
               *param-vars*))
         (opt-defs
          (map (lambda(optvar pc)

@@ -4,6 +4,7 @@ IMPORT OptCallback;
 IMPORT LongRealSeq;
 IMPORT SchemeObject;
 IMPORT Pathname;
+IMPORT TextTextTbl;
 
 PROCEDURE DefOptVar(nm : SchemeSymbol.T; defval, defstep : LONGREAL);
 
@@ -28,6 +29,10 @@ PROCEDURE DefLoadScm(scmPath : Pathname.T);
 PROCEDURE DefDataFilename(fnm : Pathname.T);
 
 PROCEDURE DefEval(obj : SchemeObject.T);
+
+PROCEDURE GetParamBindings() : TextTextTbl.T;
+
+PROCEDURE GetParam(named : SchemeSymbol.T) : SchemeObject.T;
 
 CONST Brand = "GenOpt";
   
