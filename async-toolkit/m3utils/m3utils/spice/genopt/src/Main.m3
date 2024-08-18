@@ -467,7 +467,9 @@ BEGIN
     END;
 
     myFullSrcPath := M3Utils & "/" & MyM3UtilsSrcPath;
-    WITH genOptDefsScm = myFullSrcPath & "/genoptdefs.scm" DO
+    WITH commonScm = myFullSrcPath & "/common.scm",
+         genOptDefsScm = myFullSrcPath & "/genoptdefs.scm" DO
+      scmFiles.addhi(commonScm);
       scmFiles.addhi(genOptDefsScm)
     END;
 

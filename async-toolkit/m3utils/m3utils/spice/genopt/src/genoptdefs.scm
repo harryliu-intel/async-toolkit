@@ -7,11 +7,6 @@
 ;; August, 2024
 ;;
 
-;; these two are suspicious: why are they here?
-(define *param-vars* '())
-
-(define *opt-vars* '())
-
 
 (define (def-paramvar nm val)
   (set! *param-vars* (cons (list nm val) *param-vars*)))
