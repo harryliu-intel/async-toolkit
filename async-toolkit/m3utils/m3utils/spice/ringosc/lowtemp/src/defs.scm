@@ -24,3 +24,7 @@
 
 
 (define *base-temp* 50) ;; Celsius
+
+(define *energy-cost-factor* 4.1677e-8)
+
+(define *silicon-cost-factor* 2.767e-14)

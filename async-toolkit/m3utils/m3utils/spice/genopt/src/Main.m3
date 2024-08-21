@@ -247,10 +247,30 @@ PROCEDURE AttemptEval(base : BaseEvaluator; q : LRVector.T) : LONGREAL
                       subdirPath,
                       AL.Format(x)))
     END;
+
+    WITH path = subdirPath & "/opt.values",
+         wr   = FileWr.Open(path) DO
+      FOR i := FIRST(q^) TO LAST(q^) DO
+        Wr.PutText(wr, LongReal(q[i]));
+        VAR c : CHAR; BEGIN
+          IF i = LAST(q^) THEN c := '\n' ELSE c := ',' END;
+          Wr.PutChar(wr, c);
+        END
+      END;
+      Wr.Close(wr);
+    END;
+
     
-    WITH nbCmd = F("nbjob run %s --mode interactive %s",
+    WITH cmdDbgPath = subdirPath & "/opt.cmd",
+         runCmdDbgPath = subdirPath & "/opt.runcmd",
+         
+         nbCmd = F("nbjob run %s --mode interactive %s",
                    nbopts,
-                   cmd) DO
+                   cmd),
+         
+         cmdDbgWr = FileWr.Open(cmdDbgPath),
+         runCmdDbgWr = FileWr.Open(runCmdDbgPath) DO
+        
       VAR
         runCmd : TEXT;
       BEGIN
@@ -259,6 +279,13 @@ PROCEDURE AttemptEval(base : BaseEvaluator; q : LRVector.T) : LONGREAL
         ELSE
           runCmd := cmd
         END;
+
+        Wr.PutText(cmdDbgWr, cmd);
+        Wr.PutChar(cmdDbgWr, '\n');
+        Wr.PutText(runCmdDbgWr, runCmd);
+        Wr.PutChar(runCmdDbgWr, '\n');
+        Wr.Close(cmdDbgWr); Wr.Close(runCmdDbgWr);
+        
         
         cm             := ProcUtils.RunText(runCmd,
                                             stdout := stdout,
@@ -319,7 +346,9 @@ PROCEDURE DoIt(optVars, paramVars : SchemeObject.T) =
     END;
 
     FOR i := FIRST(pr^) TO LAST(pr^) DO
-      pr[i] := 0.0d0
+      WITH v = vseq.get(i) DO
+        pr[i] := v.defval / v.defstep
+      END
     END;
 
     Debug.Out(F("Ready to call Minimize : pr=%s rhoBeg=%s rhoEnd=%s",
