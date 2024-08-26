@@ -27,7 +27,7 @@ PROCEDURE Get(rand : Random.T; mean, sdev : LONGREAL) : LONGREAL =
   END Get;
 
 PROCEDURE Get2(rand : Random.T; mean, sdev : LONGREAL; VAR d1, d2 : LONGREAL) =
-  (* this is called a Box-Muller transformation.
+  (* this is called a Box-Muller transform.
      Num. Recip. in Fortran 77, sec. 7-2 *)
   VAR
     v1, v2, rsq : LONGREAL;
