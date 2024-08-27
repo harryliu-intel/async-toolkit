@@ -1,7 +1,7 @@
 (* $Id: Compress.i3,v 1.5 2001/10/10 07:39:55 mika Exp $ *)
 
 INTERFACE Compress;
-IMPORT Matrix;
+IMPORT LRVector;
 IMPORT LRScalarField;
 
 (* Minimize a multivariate function func along the direction xi starting from
@@ -12,9 +12,10 @@ IMPORT LRScalarField;
    LinMin returns the minimum value found.
 *)
 
-PROCEDURE LinMin(VAR p : Matrix.Vector; (* initial and final point *)
-                 VAR xi : Matrix.Vector; (* search direction, 
+PROCEDURE LinMin(p : LRVector.T; (* initial and final point *)
+                 xi : LRVector.T; (* search direction, 
                                             replaced with change in p *)
-                 func : LRScalarField.T) : LONGREAL (* returns min. value *);
+                 func : LRScalarField.T;
+                 scale := 1.0d0) : LONGREAL (* returns min. value *);
 
 END Compress.

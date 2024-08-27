@@ -34,6 +34,15 @@ delns="0.000 0.020 0.040 0.080 0.120"
 delps="0.000 0.010 0.020"
 temps="-80 -40 0 50 85 105"
 
+if [ "$1" == "-Aug22.0" ]; then
+    stages="5 11 20"
+    trantypes="ulvt"
+    temps="-40 0"
+    volts="0.32"
+    delns="0.000 0.001 0.010 0.020"
+    delps="0.000 0.001 0.002 0.004 0.008"
+fi
+
 if [ "$1" == "-supplemental" ]; then
     stages="2 5 80"
 fi

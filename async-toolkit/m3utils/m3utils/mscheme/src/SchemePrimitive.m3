@@ -132,7 +132,7 @@ TYPE
         SetCar, SetCdr, TimeCall, MacroExpand,
         Error, ListStar,
         
-        Random, Normal, SetWarningsAreErrors, NumberToLONGREAL, NumberToREAL, StringHaveSub,
+        Random, Normal, SetWarningsAreErrors, NumberToLONGREAL, NumberToEXTENDED, NumberToREAL, StringHaveSub,
         EnableTracebacks, DisableTracebacks, RefRecordFormat, SetRTErrorMapping,
 
         DisplayNoFlush, WriteNoFlush,
@@ -475,6 +475,7 @@ PROCEDURE InstallDefaultExtendedPrimitives(dd : Definer;
     .defPrim("enable-tracebacks!",                ORD(P.EnableTracebacks), dd,      0, 0)
     .defPrim("disable-tracebacks!",                ORD(P.DisableTracebacks), dd,      0, 0)
     .defPrim("number->LONGREAL", ORD(P.NumberToLONGREAL), dd, 1, 1)
+    .defPrim("number->EXTENDED", ORD(P.NumberToEXTENDED), dd, 1, 1)
     .defPrim("number->REAL", ORD(P.NumberToREAL), dd, 1, 1)
     .defPrim("string-havesub?", ORD(P.StringHaveSub), dd, 2, 2)
     .defPrim("normal",                ORD(P.Normal), dd,      0, 2)
@@ -1109,6 +1110,8 @@ PROCEDURE Prims(t : T;
       |
         P.NumberToLONGREAL => RETURN NumberToLONGREAL(x)
       |
+        P.NumberToEXTENDED => RETURN NumberToEXTENDED(x)
+      |
         P.NumberToREAL => RETURN NumberToREAL(x)
       |
         P.RefRecordFormat => RETURN SchemeString.FromText(
@@ -1397,6 +1400,11 @@ PROCEDURE NumberToLONGREAL(x : Object) : Object RAISES { E } =
     RETURN SchemeString.FromText(Fmt_LongReal(FromO(x), literal := TRUE))
   END NumberToLONGREAL;
 
+PROCEDURE NumberToEXTENDED(x : Object) : Object RAISES { E } =
+  BEGIN
+    RETURN SchemeString.FromText(Fmt_Extended(FromO(x), literal := TRUE))
+  END NumberToEXTENDED;
+
 PROCEDURE NumberToREAL(x : Object) : Object RAISES { E } =
   BEGIN
     RETURN SchemeString.FromText(Fmt_Real(FromO(x), literal := TRUE))
@@ -1453,6 +1461,40 @@ PROCEDURE Fmt_LongReal(lr : LONGREAL; literal := FALSE) : TEXT RAISES { E } =
       Lex.Error, FloatMode.Trap => RAISE E("Cannot format that as LONGREAL")
     END 
   END Fmt_LongReal;
+
+PROCEDURE Fmt_Extended(lr : LONGREAL; literal := FALSE) : TEXT RAISES { E } =
+  (* this is a hack ? *)
+  BEGIN
+    TRY
+      IF FLOAT(ROUND(lr),LONGREAL) = lr THEN
+        RETURN Fmt.Int(ROUND(lr))
+      ELSIF FLOAT(LAST(CARDINAL),LONGREAL) = lr THEN
+        (* tricky special case for 64-bit machines.  Possible loss
+           of precision! *)
+        RETURN Fmt.Int(LAST(CARDINAL))
+      ELSIF ABS(lr) > 1.0d10 AND FLOAT(FIRST(INTEGER),LONGREAL) = lr THEN
+        (* this is actually wrong... but compiler problems *)
+        RETURN "-" & Fmt.Int(LAST(INTEGER))
+      ELSIF ABS(lr) > 1.0d10 AND 
+        lr >= FLOAT(FIRST(INTEGER), LONGREAL) AND  
+        lr <= FLOAT(LAST(INTEGER), LONGREAL) THEN
+        WITH o  = Fmt.LongReal(ABS(lr)),
+             s  = Scan.LongReal(o),
+             o1 = Fmt.LongReal(ABS(lr)-1.0d0),
+             s1 = Scan.LongReal(o1) DO
+          IF s = s1 THEN
+            RETURN Fmt.Int(ROUND(lr))
+          ELSE
+            RETURN Fmt.Extended(FLOAT(lr,EXTENDED),literal := literal)
+          END
+        END
+      ELSE
+        RETURN Fmt.Extended(FLOAT(lr,EXTENDED),literal := literal)
+      END
+    EXCEPT
+      Lex.Error, FloatMode.Trap => RAISE E("Cannot format that as LONGREAL")
+    END 
+  END Fmt_Extended;
 
 PROCEDURE Fmt_Real(lr : LONGREAL; literal := FALSE) : TEXT RAISES { E } =
   BEGIN

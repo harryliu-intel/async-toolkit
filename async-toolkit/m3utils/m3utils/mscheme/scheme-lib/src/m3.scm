@@ -17,8 +17,10 @@
 
 ;; basic support for wrapping objects, only to do methods
 (define (obj-method-wrap obj type)
-   (lambda args
-      (modula-type-op type 'call-method obj (car args) (cdr args))))
+  (lambda args
+    (if (eq? (car args) '*m3*)
+        obj
+        (modula-type-op type 'call-method obj (car args) (cdr args)))))
 
 ;; does this type have any type ops registered?
 (define (have-type-ops? tc) (not (null?  (list-modula-type-ops tc))))

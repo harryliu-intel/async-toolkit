@@ -64,6 +64,8 @@ TYPE
 
 PROCEDURE FormatM(READONLY m : M) : TEXT;
 PROCEDURE FormatV(READONLY v : V) : TEXT;
+  
+PROCEDURE Dot(READONLY a, b : V) : Elem.T;
 
 PROCEDURE IndexedDot(READONLY v : V; 
                      READONLY idx : ARRAY OF CARDINAL;

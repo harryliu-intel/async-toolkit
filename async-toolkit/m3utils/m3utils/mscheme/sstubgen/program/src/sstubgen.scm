@@ -647,6 +647,15 @@
       ")"
       ))
 
+    ((Extended)
+     (string-append
+      " FLOAT("
+      (number->EXTENDED (cdr value))
+      ", "
+      (type-formatter type env)
+      ")"
+      ))
+
     ((Proc) (stringify-qid (cleanup-qid (cdr value))
                            "."
                            env))

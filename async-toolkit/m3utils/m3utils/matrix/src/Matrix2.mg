@@ -30,6 +30,16 @@ PROCEDURE IndexedDot(READONLY v : V;
     END
   END IndexedDot;
 
+PROCEDURE Dot(READONLY a, b : V) : Elem.T =
+  VAR
+    res := FLOAT(0,Elem.T);
+  BEGIN
+    <*ASSERT NUMBER(a) = NUMBER(b)*>
+    FOR i := FIRST(a) TO LAST(a) DO
+      res := res + a[i] * b[i]
+    END;
+    RETURN res
+  END Dot;
 
 PROCEDURE Copy(READONLY a : M; VAR b : M) =
   BEGIN

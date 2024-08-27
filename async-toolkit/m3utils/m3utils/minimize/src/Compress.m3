@@ -26,34 +26,35 @@ PROCEDURE EvalF1(f : Func; x : LONGREAL) : LONGREAL =
     RETURN f.nrfunc.eval(xt);
   END EvalF1;
   
-PROCEDURE LinMin(VAR p : LRVector.T; (* initial and final point *)
-                 VAR xi : LRVector.T; (* search direction, 
+PROCEDURE LinMin(p : LRVector.T; (* initial and final point *)
+                 xi : LRVector.T; (* search direction, 
                                             replaced with change in p *)
-                 func : LRScalarField.T) : LONGREAL (* returns min. value *) =
+                                   func : LRScalarField.T;
+                                   scale : LONGREAL) : LONGREAL (* returns min. value *) =
 
     
   VAR
     xmin : LONGREAL;
-    bracket := Bracket.Trio { 0.0d0, 1.0d0, 2.0d0 };
+    bracket := Bracket.Trio { -scale, 0.0d0, +scale };
     fret : LONGREAL;
     pcom, xicom : LRVector.T;
     f : Func;
 
   BEGIN
-    pcom := NEW(LRVector.T, NUMBER(p^));
-    xicom := NEW(LRVector.T, NUMBER(p^));
+    <* ASSERT NUMBER(p^) = NUMBER(xi^) AND FIRST(p^) = 0 AND FIRST(xi^) = 0 *>
+
+    pcom  := LRVector.Copy(p);
+    xicom := LRVector.Copy(xi);
 
     f := NEW(Func, pcom := pcom, xicom := xicom, nrfunc := func);
     
-    <* ASSERT NUMBER(p^) = NUMBER(xi^) AND FIRST(p^) = 0 AND FIRST(xi^) = 0 *>
-    FOR j := FIRST(p^) TO LAST(p^) DO
-      pcom[j] := p[j]; xicom[j] := xi[j]
-    END;
     EVAL Bracket.Initial(bracket, f);
+    
     fret := Bracket.Brent(bracket, f, Tol, xmin);
+    
     FOR j := FIRST(p^) TO LAST(p^) DO
       xi[j] := xi[j] * xmin;
-      p[j] := p[j] + xi[j];
+      p[j]  := p[j] + xi[j];
     END;
     RETURN fret
   END LinMin;

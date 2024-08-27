@@ -34,6 +34,19 @@ PROCEDURE GetParamBindings() : TextTextTbl.T;
 
 PROCEDURE GetParam(named : SchemeSymbol.T) : SchemeObject.T;
 
+PROCEDURE SetOptFailureIsError();
+
+PROCEDURE SetOptFailureResult(res : LONGREAL);
+
+PROCEDURE GetOptFailureResult() : LONGREAL;
+
+TYPE
+  Method = { NewUOAs, Robust, NewUOA };
+
+PROCEDURE SetMethod(method : Method);
+
+PROCEDURE GetMethod() : Method;
+
 CONST Brand = "GenOpt";
   
 END GenOpt.

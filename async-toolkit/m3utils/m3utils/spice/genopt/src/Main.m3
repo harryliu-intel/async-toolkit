@@ -44,6 +44,7 @@ IMPORT TextTextTbl;
 IMPORT SchemeEnvironment;
 IMPORT SchemeString;
 IMPORT SchemeBoolean;
+IMPORT Robust;
 
 <*FATAL Thread.Alerted*>
 
@@ -85,11 +86,31 @@ VAR
   schemaScmPaths : TextSeq.T;
   schemaDataFn : Pathname.T;
   schemaEval : SchemeObject.T;
+  outOfDomainResult := FIRST(LONGREAL);
+  method := Method.NewUOAs;
+
+PROCEDURE SetMethod(m : Method) = BEGIN method := m END SetMethod;
+
+PROCEDURE GetMethod() : Method = BEGIN RETURN method END GetMethod;
   
 VAR
   pMu := NEW(MUTEX);
   p : LongRealSeq.T;
 
+PROCEDURE SetOptFailureIsError() =
+  BEGIN
+    outOfDomainResult := FIRST(LONGREAL)
+  END SetOptFailureIsError;
+
+PROCEDURE SetOptFailureResult(res : LONGREAL) =
+  BEGIN
+    outOfDomainResult := res
+  END SetOptFailureResult;
+
+PROCEDURE GetOptFailureResult() : LONGREAL =
+  BEGIN
+    RETURN outOfDomainResult
+  END GetOptFailureResult;
   
 PROCEDURE OptInit() =
   BEGIN
@@ -193,7 +214,7 @@ PROCEDURE FmtP(p : LRVector.T) : TEXT =
 
 PROCEDURE BaseEval(base : BaseEvaluator; p : LRVector.T) : LONGREAL =
   CONST
-    MaxAttempts = 3;
+    MaxAttempts = 1;
   BEGIN
     FOR i := 1 TO MaxAttempts DO
       TRY
@@ -201,7 +222,7 @@ PROCEDURE BaseEval(base : BaseEvaluator; p : LRVector.T) : LONGREAL =
       EXCEPT
         ProcUtils.ErrorExit, Rd.EndOfFile =>
         (* loop *)
-        Thread.Pause(10.0d0)
+        IF i # MaxAttempts THEN Thread.Pause(10.0d0) END
       END
     END;
     Debug.Error("BaseEval : Too many attempts p=" & FmtP(p));
@@ -326,7 +347,12 @@ PROCEDURE AttemptEval(base : BaseEvaluator; q : LRVector.T) : LONGREAL
                    TextWr.ToText(Ewr),
                    ProcUtils.FormatError(err)) DO
         Debug.Warning(msg);
-        RAISE ProcUtils.ErrorExit(err)
+        IF outOfDomainResult = FIRST(LONGREAL) THEN
+          RAISE ProcUtils.ErrorExit(err)
+        ELSE
+          Debug.Out("Returning outOfDomainResult : " & LongReal(outOfDomainResult));
+          RETURN outOfDomainResult
+        END
       END
     |
       Rd.EndOfFile =>
@@ -340,6 +366,7 @@ PROCEDURE DoIt(optVars, paramVars : SchemeObject.T) =
     N               := vseq.size();
     pr : LRVector.T := NEW(LRVector.T, N);
     evaluator       := NEW(PllEvaluator).init(optVars, paramVars);
+    output : NewUOAs.Output;
   BEGIN
     IF rhoEnd = LAST(LONGREAL) THEN
       rhoEnd := rhoBeg / 1.0d-6
@@ -353,38 +380,51 @@ PROCEDURE DoIt(optVars, paramVars : SchemeObject.T) =
 
     Debug.Out(F("Ready to call Minimize : pr=%s rhoBeg=%s rhoEnd=%s",
                 FmtP(pr), LongReal(rhoBeg), LongReal(rhoEnd)));
-    
-    WITH output = NewUOAs.Minimize(pr,
-                                   evaluator,
-                                   rhoBeg,
-                                   rhoEnd,
-                                   FIRST(LONGREAL)) DO
-      Debug.Out(F("Minimize : %s iters, %s funcc; f = %s; %s",
-                  Int(output.iterations),
-                  Int(output.funcCount),
-                  LongReal(output.f),
-                  output.message));
-      Wr.PutText(Stdio.stdout, FmtP(output.x));
-      Wr.PutChar(Stdio.stdout, '\n');
+
+    CASE method OF
+      Method.NewUOAs =>
+      output := NewUOAs.Minimize(pr,
+                                 evaluator,
+                                 rhoBeg,
+                                 rhoEnd,
+                                 FIRST(LONGREAL))
+    |
+      Method.Robust =>
+      output := Robust.Minimize(pr,
+                                evaluator,
+                                rhoBeg,
+                                rhoEnd,
+                                10,
+                                FIRST(LONGREAL))
+    |
+      Method.NewUOA =>
+    END;
       
-      Wr.Flush(Stdio.stdout);
-      WITH wr = FileWr.Open("genopt.opt"),
-           cwr = FileWr.Open("genopt.cols") DO
-        FOR i := vseq.size() - 1 TO 0 BY -1 DO
-          WITH v = vseq.get(i),
-               xi = output.x[i],
-               pi = xi * v.defstep DO
-            Wr.PutText(wr, LongReal(pi));
-            Wr.PutText(cwr, v.nm);
-            VAR c : CHAR; BEGIN
-              IF i = 0 THEN c := '\n' ELSE c := ',' END;
-              Wr.PutChar(wr, c);
-              Wr.PutChar(cwr, c)
-            END
+    Debug.Out(F("Minimize : %s iters, %s funcc; f = %s; %s",
+                Int(output.iterations),
+                Int(output.funcCount),
+                LongReal(output.f),
+                output.message));
+    Wr.PutText(Stdio.stdout, FmtP(output.x));
+    Wr.PutChar(Stdio.stdout, '\n');
+    
+    Wr.Flush(Stdio.stdout);
+    WITH wr = FileWr.Open("genopt.opt"),
+         cwr = FileWr.Open("genopt.cols") DO
+      FOR i := vseq.size() - 1 TO 0 BY -1 DO
+        WITH v = vseq.get(i),
+             xi = output.x[i],
+             pi = xi * v.defstep DO
+          Wr.PutText(wr, LongReal(pi));
+          Wr.PutText(cwr, v.nm);
+          VAR c : CHAR; BEGIN
+            IF i = 0 THEN c := '\n' ELSE c := ',' END;
+            Wr.PutChar(wr, c);
+            Wr.PutChar(cwr, c)
           END
-        END;
-        Wr.Close(wr); Wr.Close(cwr)
-      END
+        END
+      END;
+      Wr.Close(wr); Wr.Close(cwr)
     END
   END DoIt;
 

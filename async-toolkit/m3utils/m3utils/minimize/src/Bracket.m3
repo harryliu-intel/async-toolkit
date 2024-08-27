@@ -6,12 +6,12 @@ IMPORT Fmt;
 IMPORT LongReal AS LR;
 IMPORT LRFunction AS Function;
 
-CONST Gold = 1.618034d0;
+CONST Gold   = 1.618034d0;
 CONST GLimit = 100.0d0;
-CONST CGold = 0.3819660d0;
-CONST ZEps = 1.0d-10;
-CONST Tiny = 1.0d-20;
-CONST ItMax = 100;
+CONST CGold  = 0.3819660d0;
+CONST ZEps   = 1.0d-10;
+CONST Tiny   = 1.0d-20;
+CONST ItMax  = 100;
 
 PROCEDURE Sign(READONLY a, b : LONGREAL) : LONGREAL =
   BEGIN
@@ -37,7 +37,13 @@ PROCEDURE Initial(VAR bracket : Trio;
         BEGIN dum := a; a := b; b := dum END Swap;
         
       BEGIN
+        func.evalHint(ax);
         func.evalHint(bx);
+
+        (* aggressive parallelization ... *)
+        func.evalHint(bx + Gold * (bx - ax)); 
+        func.evalHint(ax + Gold * (ax - bx)); 
+        
         fa := func.eval(ax);
         fb := func.eval(bx);
         IF fb > fa THEN Swap(ax,bx); Swap(fb,fa) END;
@@ -49,24 +55,29 @@ PROCEDURE Initial(VAR bracket : Trio;
           q := (bx-cx) * (fb-fa);
           u := bx - ((bx-cx)*q - (bx-ax)*r)/(2.0d0*Sign(MAX(ABS(q-r),Tiny),q-r));
           ulim := bx+GLimit*(cx-bx);
+
+          func.evalHint(u);
+          func.evalHint(cx + Gold*(cx-bx));
           
           IF((bx-u)*(u-cx)>0.0d0) THEN
             fu := func.eval(u);
             IF fu < fc THEN 
-              ax := bx; bx := u; fa := fb; fb := fu; RETURN Trio { fa,fb,fc }
+              ax := bx; bx := u; fa := fb; fb := fu;
+              RETURN Trio { fa,fb,fc }
             ELSIF fu > fb THEN
-              cx := u; fc := fu; RETURN Trio { fa,fb,fc }
+              cx := u; fc := fu;
+              RETURN Trio { fa,fb,fc }
             END;
-            u := cx + Gold * (cx-bx);
+            u := cx + Gold * (cx - bx);
             fu := func.eval(u);
           ELSIF (cx-u)*(u-ulim) > 0.0d0 THEN
             fu := func.eval(u);
             IF fu < fc THEN
-              Shft(bx,cx,u,cx+Gold*(cx-bx));
-              Shft(fb,fc,fu,func.eval(u));
+              Shft(bx, cx, u, cx+Gold*(cx-bx));
+              Shft(fb, fc, fu, func.eval(u));
             END
           ELSIF (u-ulim)*(ulim-cx) >= 0.0d0 THEN
-            u := ulim; fu := func.eval(u)
+            u := ulim; fu := func.eval(u) (*this one does not have a hint*)
           ELSE
             u := cx + Gold*(cx-bx); fu := func.eval(u)
           END;
@@ -78,7 +89,9 @@ PROCEDURE Initial(VAR bracket : Trio;
     END
   END Initial;
 
-PROCEDURE Brent(bracket : Trio; f : Function.T; tol : LONGREAL; 
+PROCEDURE Brent(bracket  : Trio;
+                f        : Function.T;
+                tol      : LONGREAL; 
                 VAR xmin : LONGREAL) : LONGREAL =
 
   BEGIN
@@ -117,9 +130,10 @@ PROCEDURE Brent(bracket : Trio; f : Function.T; tol : LONGREAL;
               IF x >= xm THEN e := a-x ELSE e := b-x END;
               d := CGold*e;
             ELSE
-              d := p/q; u := x+d;
-              IF u-a < tol2 OR b-u < tol2 THEN
-                d := Sign(tol1,xm-x)
+              d := p/q;
+              u := x+d;
+              IF u - a < tol2 OR b - u < tol2 THEN
+                d := Sign(tol1, xm - x)
               END
             END
           ELSE

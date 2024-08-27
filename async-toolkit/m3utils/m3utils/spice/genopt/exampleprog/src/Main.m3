@@ -6,10 +6,12 @@ IMPORT IO;
 IMPORT Math;
 IMPORT Debug;
 IMPORT Params;
-IMPORT Fmt;
+IMPORT Fmt; FROM Fmt IMPORT LongReal, F;
 IMPORT FileWr;
 IMPORT Wr;
 
+CONST LR = LongReal;
+      
 CONST Usage = "exampleprog usage wrong!";
 
 VAR
@@ -17,6 +19,9 @@ VAR
 
   temp, vdd, delp, deln : LONGREAL;
 
+  val : LONGREAL;
+  method : [0..1] := 1;
+  
 BEGIN
   TRY
     IF pp.keywordPresent("-temp") THEN
@@ -35,20 +40,57 @@ BEGIN
     ParseParams.Error => Debug.Error("Can't parse command-line parameters\nUsage: " & Params.Get(0) & " " & Usage)
   END;
 
-  WITH dv = vdd  - temp,
-       dp = delp - 2.0d0,
-       dn = deln - 3.0d0,
 
-       euclid = dv * dv + dp * dp + dn * dn,
-       val = Math.exp(euclid) DO
-    IO.Put(Fmt.LongReal(val) & "\n");
+  
+  CASE method OF
+    
+    0 =>
+    WITH dv = vdd  - temp,
+         dp = delp - 2.0d0,
+         dn = deln - 3.0d0,
+         
+         euclid = dv * dv * dv * dv + dp * dp * dp * dp + dn * dn * dn * dn DO
+      val := euclid
+    END;
 
-    WITH wr = FileWr.Open("example.out") DO
-      Wr.PutText(wr, Fmt.LongReal(val) & "\n");
-      Wr.Close(wr)
+    IF vdd < 0.0d0 THEN
+      Debug.Error("vdd out of range")
     END
-      
+  |
+    1 =>
+    WITH r = 1.0d0,
+         k = 3.0d0,
+
+         rfactor = Math.pow(vdd - r,  2.0d0 * k) + 1.0d0,
+
+         zfactor = (delp * delp + 1.0d0),
+         
+         sqrt2 = Math.sqrt(2.0d0),
+
+         rosqrt2 = r / sqrt2,
+
+         dx = vdd - rosqrt2,
+
+         dy = deln - rosqrt2,
+
+         xyfactor = (dx * dx + dy * dy + 1.0d0),
+
+         func = rfactor * zfactor * xyfactor DO
+      val := func
+    END
+  END;
+
+  Debug.Out(F("exampleprog : vdd %s delp %s deln %s ; val %s",
+              LR(vdd), LR(delp), LR(deln), LR(val)));
+  
+  IO.Put(LR(val) & "\n");
+  
+  WITH wr = FileWr.Open("example.out") DO
+    Wr.PutText(wr, LR(val) & "\n");
+    Wr.Close(wr)
   END
+  
+
 END Main.
     
     
