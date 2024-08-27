@@ -17,6 +17,11 @@ Interface ("GenOpt")
 Interface ("OptCallback")
 Module ("Robust")
 
+Module ("LineProblem")
+
+Array_sort("LineProblem", "LineProblem")
+
+SchemeStubs ("LineProblem")
 SchemeStubs ("Random")
 SchemeStubs ("OptCallback")
 SchemeStubs ("LongRealSeq")

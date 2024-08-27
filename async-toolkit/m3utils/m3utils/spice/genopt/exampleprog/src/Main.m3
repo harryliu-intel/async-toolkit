@@ -9,7 +9,9 @@ IMPORT Params;
 IMPORT Fmt; FROM Fmt IMPORT LongReal, F;
 IMPORT FileWr;
 IMPORT Wr;
-
+IMPORT Random;
+IMPORT NormalDeviate;
+  
 CONST LR = LongReal;
       
 CONST Usage = "exampleprog usage wrong!";
@@ -75,8 +77,14 @@ BEGIN
 
          xyfactor = (dx * dx + dy * dy + 1.0d0),
 
-         func = rfactor * zfactor * xyfactor DO
-      val := func
+         func = rfactor * zfactor * xyfactor,
+
+         (* add some noise! *)
+         rand = NEW(Random.Default).init(),
+         err = NormalDeviate.Get(rand, 0.0d0, 0.1d0)
+
+     DO
+      val := func + err
     END
   END;
 

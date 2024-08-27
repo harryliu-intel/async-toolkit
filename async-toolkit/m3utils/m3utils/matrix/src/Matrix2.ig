@@ -108,5 +108,9 @@ PROCEDURE LinearCombinationV(aw : Elem.T; READONLY a : V;
                              VAR c : V);
   (* c <- aw * a + bw * b *)
 
+PROCEDURE Norm(READONLY v : V) : Base;
+    
+PROCEDURE Normalize(VAR v : V);
+
 END Matrix2.
 

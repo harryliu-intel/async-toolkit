@@ -8,6 +8,7 @@ import ("modula3scheme")
 import ("sstubgen")
 import ("newuoa")
 import ("cobyla")
+import ("normaldev")
 
 implementation ("Main")
 

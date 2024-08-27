@@ -1,0 +1,5 @@
+INTERFACE XMath;
+
+PROCEDURE sqrt(x : EXTENDED) : EXTENDED;
+
+END XMath.

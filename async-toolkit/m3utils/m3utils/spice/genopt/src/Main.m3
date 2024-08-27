@@ -394,7 +394,7 @@ PROCEDURE DoIt(optVars, paramVars : SchemeObject.T) =
                                 evaluator,
                                 rhoBeg,
                                 rhoEnd,
-                                10,
+                                20,
                                 FIRST(LONGREAL))
     |
       Method.NewUOA =>

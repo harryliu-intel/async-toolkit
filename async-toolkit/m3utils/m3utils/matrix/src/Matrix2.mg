@@ -1,4 +1,4 @@
-GENERIC MODULE Matrix2(Elem, M3, F);
+GENERIC MODULE Matrix2(Elem, M3, F, Math);
 IMPORT Env;
 
 PROCEDURE MulTransposeMM(READONLY a,b : M; VAR prod : M) =
@@ -478,5 +478,18 @@ PROCEDURE LinearCombinationV(aw : Elem.T; READONLY a : V;
     END
   END LinearCombinationV;
 
+PROCEDURE Norm(READONLY v : V) : Base =
+  BEGIN
+    RETURN Math.sqrt(Dot(v, v));
+  END Norm;
+  
+PROCEDURE Normalize(VAR v : V) =
+  VAR
+    norm := Math.sqrt(Dot(v, v));
+    mult := FLOAT(1, Base) / norm;
+  BEGIN
+    MulSV(mult, v, v)
+  END Normalize;
+  
 BEGIN END Matrix2.
 

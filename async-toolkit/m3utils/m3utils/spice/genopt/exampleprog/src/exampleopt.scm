@@ -25,9 +25,9 @@
 ;; the following are the optimization variables
 ;; the two fields are the initial value and what we may consider a
 ;; significant delta (an approximation, of course)
-(def-optvar 'vdd  0.00  0.01)
-(def-optvar 'delp 0.000 0.001)
-(def-optvar 'deln 0.000 0.001)
+(def-optvar 'vdd  0.000 1)
+(def-optvar 'delp 0.000 1)
+(def-optvar 'deln 0.000 1)
 
 ;; failure to eval result
 (GenOpt.SetOptFailureResult 1e200)
@@ -35,7 +35,7 @@
 (GenOpt.SetMethod 'Robust)
 
 ;; NewUOAs configuration variables
-(def-rhobeg 10)   ;; starting step size in terms of significant delta
+(def-rhobeg 1)    ;; starting step size in terms of significant delta
 (def-rhoend 1e-6) ;; ending step size for convergence
 
 ;; this is the experimental command to do an evaluation
