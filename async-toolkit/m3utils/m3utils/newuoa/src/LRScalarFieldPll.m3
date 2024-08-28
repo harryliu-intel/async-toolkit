@@ -14,11 +14,20 @@ REVEAL
     open : LRVectorRefTbl.T;
     
   OVERRIDES
-    init     := Init;
-    eval     := Eval;
-    evalHint := EvalHint;
+    init      := Init;
+    eval      := Eval;
+    evalHint  := EvalHint;
+    clearTbls := ClearTbls;
   END;
 
+PROCEDURE ClearTbls(t : T) =
+  BEGIN
+    LOCK t.mu DO
+      t.tbl  := NEW(LRVectorLRTbl.Default).init();
+      t.open := NEW(LRVectorRefTbl.Default).init()
+    END
+  END ClearTbls;
+  
 PROCEDURE Init(t : T; from : LRScalarField.T) : T =
   BEGIN
     t.base := from;

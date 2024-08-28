@@ -8,6 +8,7 @@ TYPE
 
   Public = LRScalarField.T OBJECT METHODS
     init(from : LRScalarField.T) : T;
+    clearTbls(); (* clear memoized data *)
   END;
 
 CONST Brand = "LRScalarFieldPll";

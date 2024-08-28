@@ -54,10 +54,24 @@ PROCEDURE Zero(VAR a : M) =
   BEGIN
     FOR r := FIRST(a) TO LAST(a) DO
       FOR c := FIRST(a[0]) TO LAST(a[0]) DO
-        a[r,0] := FLOAT(0,Base)
+        a[r,c] := FLOAT(0,Base)
       END
     END
   END Zero;
+
+PROCEDURE CopyV(READONLY a : V; VAR b : V) =
+  BEGIN
+    FOR r := FIRST(a) TO LAST(a) DO
+      b[r] := a[r]
+    END
+  END CopyV;
+
+PROCEDURE ZeroV(VAR a : V) =
+  BEGIN
+    FOR r := FIRST(a) TO LAST(a) DO
+      a[r] := FLOAT(0,Base)
+    END
+  END ZeroV;
 
 PROCEDURE MakeUnit(VAR a : M) =
   BEGIN

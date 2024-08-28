@@ -17,6 +17,9 @@ PROCEDURE Copy(READONLY a : M; VAR b : M);
 PROCEDURE Zero(VAR a : M);
 PROCEDURE MakeUnit(VAR a : M);
 
+PROCEDURE CopyV(READONLY a : V; VAR b : V);
+PROCEDURE ZeroV(VAR a : V);
+
 PROCEDURE MulSM(s : Base; READONLY a : M; VAR res : M);
 PROCEDURE MulSV(s : Base; READONLY a : V; VAR res : V);
 PROCEDURE AddSV(s : Base; READONLY a : V; VAR res : V); (* add s to each elem *)
