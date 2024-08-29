@@ -2,7 +2,7 @@
 
 MODULE Bracket;
 IMPORT Debug;
-IMPORT Fmt;
+IMPORT Fmt; FROM Fmt IMPORT F;
 IMPORT LongReal AS LR;
 IMPORT LRFunction AS Function;
 
@@ -37,13 +37,20 @@ PROCEDURE Initial(VAR bracket : Trio;
         BEGIN dum := a; a := b; b := dum END Swap;
         
       BEGIN
+        Debug.Out(F("Bracket.m3 : Initial { %s %s %s }",
+                    Fmt.LongReal(ax),
+                    Fmt.LongReal(bx),
+                    Fmt.LongReal(cx)));
+                  
         func.evalHint(ax);
         func.evalHint(bx);
 
         (* aggressive parallelization ... *)
         func.evalHint(bx + Gold * (bx - ax)); 
         func.evalHint(ax + Gold * (ax - bx)); 
-        
+
+        Debug.Out(F("Bracket.m3 : launched 4 hints"));
+
         fa := func.eval(ax);
         fb := func.eval(bx);
         IF fb > fa THEN Swap(ax,bx); Swap(fb,fa) END;
@@ -111,7 +118,7 @@ PROCEDURE Brent(bracket  : Trio;
           tol1 := tol * ABS(x) + ZEps;
           tol2 := 2.0d0 * tol1;
 
-          IF ABS(x-xm) <= tol2 - 0.5d0*(b-a) THEN
+          IF ABS(x - xm) <= tol2 - 0.5d0*(b-a) THEN
             xmin := x; RETURN fx
           END;
           

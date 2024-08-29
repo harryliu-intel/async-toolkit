@@ -10,7 +10,15 @@ PROCEDURE DefOptVar(nm : SchemeSymbol.T; defval, defstep : LONGREAL);
 
 PROCEDURE SetRhoBeg(to : LONGREAL);
 
+PROCEDURE GetRhoBeg() : LONGREAL;
+
 PROCEDURE SetRhoEnd(to : LONGREAL);
+
+PROCEDURE GetRhoEnd() : LONGREAL;
+
+PROCEDURE GetRho() : LONGREAL;
+
+PROCEDURE GetIter() : CARDINAL;
 
 PROCEDURE SetCallback(obj : OptCallback.T);
 
@@ -48,5 +56,8 @@ PROCEDURE SetMethod(method : Method);
 PROCEDURE GetMethod() : Method;
 
 CONST Brand = "GenOpt";
-  
+
+VAR rho  : LONGREAL;
+    iter : CARDINAL;
+    
 END GenOpt.

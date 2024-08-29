@@ -4,6 +4,8 @@ IMPORT LRVectorLRTbl;
 IMPORT LRVectorRefTbl;
 IMPORT LRVector;
 IMPORT Thread;
+IMPORT Debug;
+IMPORT LRMatrix2;
 
 REVEAL
   T = Public BRANDED Brand OBJECT
@@ -93,11 +95,12 @@ PROCEDURE Apply(cl : Closure) : REFANY =
   BEGIN
     WITH res = cl.t.base.eval(cl.p) DO
       LOCK cl.t.mu DO
-        WITH hadIt  = cl.t.open.delete(cl.p, ref),
-             hadIt2 = cl.t.tbl.put(cl.p, res) DO
-          <*ASSERT hadIt*>
-          <*ASSERT ref = cl*>
-          <*ASSERT NOT hadIt2*>
+        WITH hadIt  = cl.t.open.delete(cl.p, ref) DO
+          IF NOT hadIt THEN
+            Debug.Warning("LRScalarFieldPll.Apply : could not find " &
+              LRMatrix2.FormatV(cl.p^))
+          END;
+          EVAL cl.t.tbl.put(cl.p, res)
         END
       END;
       Thread.Broadcast(cl.c)

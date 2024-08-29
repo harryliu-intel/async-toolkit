@@ -10,11 +10,9 @@ IMPORT CardSeq;
 IMPORT Rd;
 IMPORT CitTextUtils;
 IMPORT Pathname;
-IMPORT Stdio;
 IMPORT FileRd;
 IMPORT TextReader;
 FROM Fmt IMPORT F, Int, LongReal;
-IMPORT Params;
 IMPORT TextSeq;
 IMPORT Thread;
 IMPORT OSError;
@@ -79,7 +77,8 @@ PROCEDURE NextToken(VAR buff : TEXT) : TEXT =
     END
   END NextToken;
 
-PROCEDURE ReadSchema(spn : Pathname.T) : Schema.T =
+PROCEDURE ReadSchema(spn : Pathname.T) : Schema.T
+  RAISES { OSError.E, Rd.Failure } =
   VAR
     rd           := FileRd.Open(spn);
     text         := "";
@@ -187,7 +186,8 @@ PROCEDURE ReadSchema(spn : Pathname.T) : Schema.T =
     RETURN res
   END ReadSchema;
 
-PROCEDURE ReadData(schema : Schema.T; files : TextSeq.T) : RefSeq.T =
+PROCEDURE ReadData(schema : Schema.T; files : TextSeq.T) : RefSeq.T
+  RAISES { OSError.E, Rd.Failure, Rd.EndOfFile } =
   VAR
     res := NEW(RefSeq.T).init();
   BEGIN
@@ -339,8 +339,10 @@ PROCEDURE EvalFormulas(scm : Scheme.T; schema : Schema.T; data : RefSeq.T) =
     END
   END EvalFormulas;
     
-PROCEDURE DoOneSweep(targDir : Pathname.T;
-                     schema : Schema.T; data : RefSeq.T; idx : CARDINAL;
+PROCEDURE DoOneSweep(targDir  : Pathname.T;
+                     schema   : Schema.T;
+                     data     : RefSeq.T;
+                     idx      : CARDINAL;
                      doLabels : BOOLEAN) =
 
   PROCEDURE AddSchemaEntry(label : TEXT; entry : SchemaEntry.T) =
@@ -401,7 +403,7 @@ PROCEDURE DoOneSweep(targDir : Pathname.T;
         VAR
           row   := NARROW(data.get(i), TextSeq.T);
           entry := SchemaEntry.T { x      := LAST(LONGREAL),
-                             report := NEW(TextSeq.T).init() };
+                                   report := NEW(TextSeq.T).init() };
           label := "";
         BEGIN
           (* now walk the fields *)

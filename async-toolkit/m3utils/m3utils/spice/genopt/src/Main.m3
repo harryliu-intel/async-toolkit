@@ -149,10 +149,30 @@ PROCEDURE SetRhoBeg(to : LONGREAL) =
     rhoBeg := to
   END SetRhoBeg;
 
+PROCEDURE GetRhoBeg() : LONGREAL =
+  BEGIN
+    RETURN rhoBeg
+  END GetRhoBeg;
+
 PROCEDURE SetRhoEnd(to : LONGREAL) =
   BEGIN
     rhoEnd := to
   END SetRhoEnd;
+
+PROCEDURE GetRhoEnd() : LONGREAL =
+  BEGIN
+    RETURN rhoEnd
+  END GetRhoEnd;
+
+PROCEDURE GetRho() : LONGREAL =
+  BEGIN
+    RETURN rho
+  END GetRho;
+
+PROCEDURE GetIter() : CARDINAL =
+  BEGIN
+    RETURN iter
+  END GetIter;
 
 PROCEDURE GetCoords() : LongRealSeq.T =
   BEGIN
@@ -513,9 +533,13 @@ PROCEDURE SchemaReadResult(schemaPath ,
         END
       END
     EXCEPT
+      OSError.E, Rd.Failure =>
+      Debug.Warning("Caught system error reading schema/data.  Returning failure.");
+      RETURN outOfDomainResult
+    |
       Scheme.E(x) =>
-      Debug.Error("?error in Scheme interpreter : " & x);
-      <*ASSERT FALSE*>
+      Debug.Warning("?error in Scheme interpreter : " & x);
+      RETURN outOfDomainResult (* hmm dunno if that is right *)
     END
   END SchemaReadResult;
   

@@ -76,11 +76,17 @@
          (map (lambda (param)
                 `(define ,(car param) ,(get-param-val (car param))))
               *param-vars*))
+        (env-defs `(
+                    (define *opt-iter*   ,(GenOpt.GetIter))
+                    (define *opt-rho*    ,(GenOpt.GetRho))
+                    (define *opt-rhobeg* ,(GenOpt.GetRhoBeg))
+                    (define *opt-rhoend* ,(GenOpt.GetRhoEnd))
+                    ))
         (opt-defs
          (map (lambda(optvar pc)
                 (list 'define (car optvar) pc))
               *opt-vars* (get-*x*))))
-    (append param-defs opt-defs)))
+    (append param-defs opt-defs env-defs)))
         
 (define (eval-in-env cmd)
   ;; this expands into the command that we need to run to perform
