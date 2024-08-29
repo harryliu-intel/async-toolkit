@@ -287,14 +287,29 @@ PROCEDURE AttemptEval(base : BaseEvaluator; q : LRVector.T) : LONGREAL
          
          nbCmd = F("nbjob run %s --mode interactive %s",
                    nbopts,
-                   cmd),
+                   cmd) DO
          
-         cmdDbgWr = FileWr.Open(cmdDbgPath),
-         runCmdDbgWr = FileWr.Open(runCmdDbgPath) DO
         
       VAR
+        cmdDbgWr, runCmdDbgWr : Wr.T;
         runCmd : TEXT;
       BEGIN
+        TRY
+          cmdDbgWr := FileWr.Open(cmdDbgPath)
+        EXCEPT
+          OSError.E(x) =>
+          Debug.Error(F("Couldnt open %s : OSError.E : %s",
+                        cmdDbgPath, AL.Format(x)))
+        END;
+
+        TRY
+          runCmdDbgWr := FileWr.Open(runCmdDbgPath)
+        EXCEPT
+          OSError.E(x) =>
+          Debug.Error(F("Couldnt open %s : OSError.E : %s",
+                        runCmdDbgPath, AL.Format(x)))
+        END;
+        
         IF doNetbatch THEN
           runCmd := nbCmd
         ELSE

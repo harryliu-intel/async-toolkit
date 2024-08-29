@@ -13,6 +13,7 @@ IMPORT LineProblemSeq;
 IMPORT LineProblemArraySort;
 IMPORT LRScalarFieldPll;
 IMPORT LongRealSeq AS LRSeq;
+IMPORT Thread;
 
 CONST LR = LongReal;
 
@@ -120,15 +121,71 @@ PROCEDURE FindBest(seq : LineProblemSeq.T;
       END
     END          
   END FindBest;
+
+VAR
+  mu := NEW(MUTEX);
+  running := 0;
+  
+TYPE
+  Closure = Thread.Closure OBJECT
+    c       : Thread.Condition;
+    
+    (* semaphore *)
+    done : BOOLEAN;
+    
+    (* input vars *)
+    pp   : LRVector.T;
+    dir  : LRVector.T;
+    func : LRScalarField.T;
+    rho  : LONGREAL;
+
+    (* output var *)
+    lps  : LineProblem.T;
+  OVERRIDES
+    apply := LinMinApply;
+  END;
+
+PROCEDURE LinMinApply(cl : Closure) : REFANY =
+  BEGIN
+    LOOP
+      LOCK mu DO
+        WHILE cl.done DO
+          Thread.Wait(mu, cl.c)
+        END
+      END;
+
+      IF FALSE THEN Debug.Out("Robust.m3 : LinMinApply : done FALSE.") END;
+      
+      (* NOT cl.done *)
+      LOCK mu DO INC(running) END;
+      
+      WITH minval = Compress.LinMin(cl.pp,
+                                    LRVector.Copy(cl.dir),
+                                    cl.func,
+                                    cl.rho,
+                                    cl.rho / 10.0d0) DO
+        Debug.Out("Robust.m3 : Line minimization returned " & LR(minval));
+        LOCK mu DO
+          cl.lps := LineProblem.T { cl.dir, cl.pp, minval };
+          cl.done := TRUE;
+          DEC(running);
+          Thread.Signal(cl.c)
+        END
+      END
+    END;
+    <*ASSERT FALSE*>
+  END LinMinApply;
   
 PROCEDURE Minimize(p              : LRVector.T;
                    func           : LRScalarField.T;
                    rhobeg, rhoend : LONGREAL;
                    extraDirs      : CARDINAL;
                    ftarget        := FIRST(LONGREAL)) : Output =
+  CONST
+    Multithread = TRUE;
   VAR
     n     := NUMBER(p^);
-    nv    := 2*n;
+    nv    := 2 * n;
     da    := NEW(REF ARRAY OF LRVector.T, nv);
     pp    := NEW(REF ARRAY OF LRVector.T, nv);
     lps   := NEW(REF ARRAY OF LineProblem.T, nv);
@@ -136,10 +193,20 @@ PROCEDURE Minimize(p              : LRVector.T;
     rho   := rhobeg;
     mins  := NEW(LineProblemSeq.T).init();
     iters := 0;
+    cl    := NEW(REF ARRAY OF Closure, nv);
     
     message : TEXT;
     
   BEGIN
+    IF Multithread THEN
+      FOR i := 0 TO 2 * n - 1 DO
+        cl[i] := NEW(Closure,
+                     c    := NEW(Thread.Condition),
+                     done := TRUE);
+        EVAL Thread.Fork(cl[i])
+      END
+    END;
+    
     (* allocate some random vectors *)
     FOR i := FIRST(da^) TO LAST(da^) DO
       da[i] := RandomVector.GetDirV(rand, n, 1.0d0)
@@ -152,18 +219,50 @@ PROCEDURE Minimize(p              : LRVector.T;
     
     FOR pass := 0 TO 100 * n - 1 DO
       Debug.Out(F("Robust.m3 : pass %s", Int(pass)));
-      
-      FOR i := FIRST(da^) TO LAST(da^) DO
-        (* minimize in direction of da[i], from p *)
-        (* this is the part that can be done in parallel *)
-        pp[i]  := LRVector.Copy(p);
-        VAR
-          dir := LRVector.Copy(da[i]);
-          minval : LONGREAL;
-        BEGIN
-          minval := Compress.LinMin(pp[i], dir, func, rho, rho/10.0d0);
-          Debug.Out("Robust.m3 : Line minimization returned " & LR(minval));
-          lps[i] := LineProblem.T { da[i], pp[i], minval }
+
+      IF Multithread THEN
+        (* all cl.done TRUE *)
+        LOCK mu DO <*ASSERT running = 0*> END;
+        
+        FOR i := FIRST(da^) TO LAST(da^) DO
+          pp[i]  := LRVector.Copy(p);
+          LOCK mu DO
+            cl[i].pp := pp[i];
+            cl[i].dir := LRVector.Copy(da[i]);
+            cl[i].func := func;
+            cl[i].rho := rho;
+            cl[i].done := FALSE;
+            Thread.Signal(cl[i].c)
+          END
+        END;
+
+        IF FALSE THEN
+          LOCK mu DO Debug.Out("Robust.m3 : running = " & Int(running)) END;
+        END;
+        
+        FOR i := FIRST(da^) TO LAST(da^) DO
+          LOCK mu DO
+            WHILE NOT cl[i].done DO
+              Thread.Wait(mu, cl[i].c);
+            END;
+            lps[i] := cl[i].lps
+          END
+        END;
+        (* all cl.done TRUE *)
+        LOCK mu DO <*ASSERT running = 0*> END
+      ELSE
+        FOR i := FIRST(da^) TO LAST(da^) DO
+          (* minimize in direction of da[i], from p *)
+          (* this is the part that can be done in parallel *)
+          pp[i]  := LRVector.Copy(p);
+          VAR
+            dir := LRVector.Copy(da[i]);
+            minval : LONGREAL;
+          BEGIN
+            minval := Compress.LinMin(pp[i], dir, func, rho, rho/10.0d0);
+            Debug.Out("Robust.m3 : Line minimization returned " & LR(minval));
+            lps[i] := LineProblem.T { da[i], pp[i], minval }
+          END
         END
       END;
       (* at this point we have the minima in all directions 
