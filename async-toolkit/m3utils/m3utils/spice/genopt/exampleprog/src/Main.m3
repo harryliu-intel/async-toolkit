@@ -84,7 +84,7 @@ BEGIN
          err = NormalDeviate.Get(rand, 0.0d0, 0.1d0)
 
      DO
-      val := func + err
+      val := func + 0.0d0 * err
     END
   END;
 

@@ -127,12 +127,11 @@ PROCEDURE Minimize(p              : LRVector.T;
           dir := LRVector.Copy(da[i]);
           minval : LONGREAL;
         BEGIN
-          minval := Compress.LinMin(pp[i], dir, func, rho);
+          minval := Compress.LinMin(pp[i], dir, func, rho, rho/10.0d0);
           Debug.Out("Robust.m3 : Line minimization returned " & LR(minval));
           lps[i] := LineProblem.T { da[i], pp[i], minval }
         END
       END;
-
       (* at this point we have the minima in all directions 
          in two orthonormal bases 0..n-1, and n..2*n-1 *)
 

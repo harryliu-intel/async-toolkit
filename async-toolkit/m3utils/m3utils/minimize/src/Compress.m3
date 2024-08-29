@@ -6,8 +6,6 @@ IMPORT LRScalarField;
 IMPORT LRVector;
 IMPORT LRFunction;
 
-CONST Tol = 2.0d-8;
-
 TYPE
   Func = LRFunction.Default OBJECT
     pcom, xicom : LRVector.T;
@@ -26,11 +24,12 @@ PROCEDURE EvalF1(f : Func; x : LONGREAL) : LONGREAL =
     RETURN f.nrfunc.eval(xt);
   END EvalF1;
   
-PROCEDURE LinMin(p : LRVector.T; (* initial and final point *)
-                 xi : LRVector.T; (* search direction, 
-                                            replaced with change in p *)
-                                   func : LRScalarField.T;
-                                   scale : LONGREAL) : LONGREAL (* returns min. value *) =
+PROCEDURE LinMin(p     : LRVector.T; (* initial and final point *)
+                 xi    : LRVector.T; (* search direction, 
+                                     replaced with change in p *)
+                 func  : LRScalarField.T;
+                 scale : LONGREAL;
+                 tol   : LONGREAL) : LONGREAL (* returns min. value *) =
 
     
   VAR
@@ -50,7 +49,7 @@ PROCEDURE LinMin(p : LRVector.T; (* initial and final point *)
     
     EVAL Bracket.Initial(bracket, f);
     
-    fret := Bracket.Brent(bracket, f, Tol, xmin);
+    fret := Bracket.Brent(bracket, f, tol, xmin);
     
     FOR j := FIRST(p^) TO LAST(p^) DO
       xi[j] := xi[j] * xmin;

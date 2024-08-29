@@ -22,7 +22,7 @@ PROCEDURE Shft(VAR a, b, c : LONGREAL; READONLY d : LONGREAL) =
   BEGIN a := b; b := c; c := d END Shft;
         
 PROCEDURE Initial(VAR bracket : Trio;
-                  func : Function.T) : Trio = 
+                  func        : Function.T) : Trio = 
   BEGIN
     WITH ax = bracket.a, bx = bracket.b, cx = bracket.c DO
 
@@ -127,7 +127,7 @@ PROCEDURE Brent(bracket  : Trio;
             IF ABS(p) >= ABS(0.5d0*q*etemp) OR 
                 p <= q*(a-x) OR 
                 p >= q*(b-x) THEN
-              IF x >= xm THEN e := a-x ELSE e := b-x END;
+              IF x >= xm THEN e := a - x ELSE e := b - x END;
               d := CGold*e;
             ELSE
               d := p/q;
@@ -137,7 +137,7 @@ PROCEDURE Brent(bracket  : Trio;
               END
             END
           ELSE
-            IF x >= xm THEN e := a-x ELSE e:= b-x END;
+            IF x >= xm THEN e := a - x ELSE e := b - x END;
             d := CGold * e;
           END;
           IF ABS(d) >= tol1 THEN u := x+d ELSE u := x + Sign(tol1,d) END;
@@ -160,9 +160,10 @@ PROCEDURE Brent(bracket  : Trio;
     END (* WITH ... *)
   END Brent;
 
-PROCEDURE Format(bracket : Trio ; style := Fmt.Style.Auto;
-                 prec: CARDINAL := LR.MaxSignifDigits - 1;
-                 literal := FALSE) : TEXT =
+PROCEDURE Format(bracket : Trio;
+                 style              := Fmt.Style.Auto;
+                 prec    : CARDINAL := LR.MaxSignifDigits - 1;
+                 literal            := FALSE) : TEXT =
   BEGIN
     RETURN "{ " & Fmt.LongReal(bracket.a,style,prec,literal) & ", " &
                   Fmt.LongReal(bracket.b,style,prec,literal) & ", " &

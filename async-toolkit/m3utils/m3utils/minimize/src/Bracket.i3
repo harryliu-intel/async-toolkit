@@ -22,12 +22,15 @@ TYPE Trio = RECORD a, b, c : LONGREAL END;
 PROCEDURE Initial(VAR bracket : Trio; func : Function.T) : Trio;
 
 
-PROCEDURE Brent(bracket : Trio; f : Function.T; tol : LONGREAL; 
+PROCEDURE Brent(bracket  : Trio;
+                f        : Function.T;
+                tol      : LONGREAL; 
                 VAR xmin : LONGREAL) : LONGREAL;
 
-PROCEDURE Format(bracket : Trio ; style := Fmt.Style.Auto;
-                 prec: CARDINAL := LR.MaxSignifDigits - 1;
-                 literal := FALSE) : TEXT;
+PROCEDURE Format(bracket : Trio;
+                 style              := Fmt.Style.Auto;
+                 prec    : CARDINAL := LR.MaxSignifDigits - 1;
+                 literal            := FALSE) : TEXT;
 
 (* the following are wrappers for Scheme programming, easier than
    dealing with VAR parameters *)
