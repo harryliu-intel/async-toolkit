@@ -18,6 +18,7 @@ Interface ("OptCallback")
 Module ("Robust")
 
 Module ("LineProblem")
+Sequence ("LineProblem", "LineProblem")
 
 Array_sort("LineProblem", "LineProblem")
 

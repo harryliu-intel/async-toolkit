@@ -9,8 +9,10 @@ IMPORT Compress;
 IMPORT Debug;
 FROM Fmt IMPORT LongReal, F, Int;
 IMPORT LineProblem;
+IMPORT LineProblemSeq;
 IMPORT LineProblemArraySort;
 IMPORT LRScalarFieldPll;
+IMPORT LongRealSeq AS LRSeq;
 
 CONST LR = LongReal;
 
@@ -91,6 +93,33 @@ PROCEDURE OldMinimize(p              : LRVector.T;
     
     END
   END OldMinimize;
+
+PROCEDURE GetFHist(seq : LineProblemSeq.T) : LRSeq.T =
+  VAR
+    res := NEW(LRSeq.T).init();
+  BEGIN
+    FOR i := 0 TO seq.size() - 1 DO
+      res.addhi(seq.get(i).minval)
+    END;
+    RETURN res
+  END GetFHist;
+  
+PROCEDURE FindBest(seq : LineProblemSeq.T;
+                   VAR bestval : LONGREAL;
+                   VAR bestp   : LRVector.T) =
+  VAR
+    min := LAST(LONGREAL);
+  BEGIN
+    FOR i := 0 TO seq.size() - 1 DO
+      WITH e = seq.get(i) DO
+        IF e.minval < min THEN
+          bestp := LRVector.Copy(e.minp);
+          bestval := e.minval;
+          min := e.minval
+        END
+      END
+    END          
+  END FindBest;
   
 PROCEDURE Minimize(p              : LRVector.T;
                    func           : LRScalarField.T;
@@ -98,13 +127,18 @@ PROCEDURE Minimize(p              : LRVector.T;
                    extraDirs      : CARDINAL;
                    ftarget        := FIRST(LONGREAL)) : Output =
   VAR
-    n    := NUMBER(p^);
-    nv   := 2*n;
-    da   := NEW(REF ARRAY OF LRVector.T, nv);
-    pp   := NEW(REF ARRAY OF LRVector.T, nv);
-    lps  := NEW(REF ARRAY OF LineProblem.T, nv);
-    rand := NEW(Random.Default).init();
-    rho  := rhobeg;
+    n     := NUMBER(p^);
+    nv    := 2*n;
+    da    := NEW(REF ARRAY OF LRVector.T, nv);
+    pp    := NEW(REF ARRAY OF LRVector.T, nv);
+    lps   := NEW(REF ARRAY OF LineProblem.T, nv);
+    rand  := NEW(Random.Default).init();
+    rho   := rhobeg;
+    mins  := NEW(LineProblemSeq.T).init();
+    iters := 0;
+    
+    message : TEXT;
+    
   BEGIN
     (* allocate some random vectors *)
     FOR i := FIRST(da^) TO LAST(da^) DO
@@ -115,8 +149,8 @@ PROCEDURE Minimize(p              : LRVector.T;
 
     Orthogonalize(SUBARRAY(da^, 0, n));  (* first ortho. block *)
     Orthogonalize(SUBARRAY(da^, n, n));  (* second ortho. block *)
-
-    FOR pass := 0 TO n * n - 1 DO
+    
+    FOR pass := 0 TO 100 * n - 1 DO
       Debug.Out(F("Robust.m3 : pass %s", Int(pass)));
       
       FOR i := FIRST(da^) TO LAST(da^) DO
@@ -155,7 +189,8 @@ PROCEDURE Minimize(p              : LRVector.T;
           rho := LRMatrix2.Norm(dp^);
           Debug.Out(F("Robust.m3 : new rho = %s", LR(rho)));
           IF rho < rhoend THEN
-            Debug.Out(F("Robust.m3 : stopping because rho < rhoend"))
+            message := "stopping becahse rho < rhoend";
+            EXIT
           END
         END;
 
@@ -168,20 +203,51 @@ PROCEDURE Minimize(p              : LRVector.T;
         LRMatrix2.SubV(opt0^, newp, da[0]^);
         LRMatrix2.SubV(opt1^, newp, da[n]^);
 
-        p^ := newp
+        p^ := newp;
+        mins.addhi(lps[0]);
+
+        WITH Lookback = 3 DO
+          IF mins.size() > Lookback THEN
+            WITH old = mins.get(mins.size() - Lookback) DO
+              IF old.minval <= lps[0].minval THEN
+                message := "stopping because no more improvement";
+                EXIT
+              END
+            END
+          END
+        END
       END;
       
       Orthogonalize(SUBARRAY(da^, 0, n));  (* first ortho. block *)
       Orthogonalize(SUBARRAY(da^, n, n));  (* second ortho. block *)
-          
+
+      (* clear cache so we don't get fooled by noise *)
       TYPECASE func OF
         LRScalarFieldPll.T(pll) =>
         pll.clearTbls()
       ELSE
-      END
+      END;
+
+      INC(iters);
+      message := "stopping because of out of iterations"
       
-    END      
-    
+    END      ;
+
+    VAR
+      bestval : LONGREAL;
+      bestv   : LRVector.T;
+    BEGIN
+      FindBest(mins, bestval, bestv);
+
+      Debug.Out("Robust.m3 : " & message);
+      
+      RETURN Output { iterations := iters,
+                      funcCount  := 0,
+                      fhist      := GetFHist(mins),
+                      message    := message,
+                      f          := bestval,
+                      x          := bestv }
+    END
   END Minimize;
 
 PROCEDURE Predict(s : LRVector.T;
