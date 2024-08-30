@@ -543,16 +543,19 @@ BEGIN
       traceRt := pp.getNext()
     END;
     IF pp.keywordPresent("-vdd") THEN
-      vdd := pp.getNextLongReal()
+      vdd := pp.getNextLongReal();
+      <*ASSERT vdd > 0.0d0*>
     END; 
     IF pp.keywordPresent("-temp") THEN
-      temp := pp.getNextLongReal()
+      temp := pp.getNextLongReal();
+      <*ASSERT temp > -274.0d0*>
     END; 
     IF pp.keywordPresent("-tag") THEN
       tag := pp.getNext()
     END; 
     IF pp.keywordPresent("-sweeps") THEN
-      sweeps := pp.getNextInt()
+      sweeps := pp.getNextInt();
+      <*ASSERT sweeps > 2*>
     END; 
     IF pp.keywordPresent("-step") THEN
       step := pp.getNextLongReal()
