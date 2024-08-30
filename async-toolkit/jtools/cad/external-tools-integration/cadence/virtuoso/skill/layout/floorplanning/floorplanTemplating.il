@@ -145,11 +145,13 @@ defun( flFloorplanTemplating ( dstCellView srcCellName
                           (libName nil) (cellName nil) (viewName "floorplan")
                           (mapFrom nil) ; optional mapping to instance name in source view
                           )
-  (let (fCV finst name)
+  (let (fCV finst name align)
     (unless libName libName=CV->libName)
     (unless cellName cellName=CV->cellName)
     fCV = (ReadCV libName cellName viewName)
     (when fCV
+      align=(GetCellAlignment ?CV fCV)
+      (SetCellAlignment (car align) (cadr align) ?CV CV ?overwrite t)
       (when fCV->prBoundary && !CV->prBoundary
             (dbCreatePRBoundary CV fCV->prBoundary->points)
             )
