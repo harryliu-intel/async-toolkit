@@ -343,6 +343,7 @@ PROCEDURE AttemptEval(base : BaseEvaluator; q : LRVector.T) : LONGREAL
     RAISES { ProcUtils.ErrorExit } =
     BEGIN
       Debug.Out(F("BaseEval : q = %s\nrunning : %s", FmtP(q), cmd));
+      Debug.Out("subdirPath = " & subdirPath);
       
       cm.wait();
       
@@ -494,7 +495,8 @@ PROCEDURE DoIt(optVars, paramVars : SchemeObject.T) =
     Wr.Flush(Stdio.stdout);
     
     WITH wr = FileWr.Open("genopt.opt"),
-         cwr = FileWr.Open("genopt.cols") DO
+         cwr = FileWr.Open("genopt.cols"),
+         rwr = FileWr.Open("genopt.result") DO
       FOR i := vseq.size() - 1 TO 0 BY -1 DO
         WITH v = vseq.get(i),
              xi = output.x[i],
@@ -508,11 +510,13 @@ PROCEDURE DoIt(optVars, paramVars : SchemeObject.T) =
           END
         END
       END;
-      Wr.Close(wr); Wr.Close(cwr)
+
+      Wr.PutText(rwr, LongReal(output.f) & "\n");
+      Wr.Close(wr); Wr.Close(cwr); Wr.Close(rwr)
     END
     EXCEPT
       Wr.Failure(x) =>
-        Debug.Error(F("I/O error : Wr.Failure : while optimization result : %s:",
+        Debug.Error(F("I/O error : Wr.Failure : while writing optimization result : %s:",
                       AL.Format(x)))
 
     END
