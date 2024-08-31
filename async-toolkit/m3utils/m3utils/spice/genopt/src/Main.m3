@@ -510,7 +510,11 @@ PROCEDURE DoIt(optVars, paramVars : SchemeObject.T) =
           Wr.PutText(awr, LongReal(pi));
           Wr.PutText(acwr, v.nm);
           VAR c : CHAR; BEGIN
-            IF i = 0 THEN c := '\n' ELSE c := ',' END;
+            IF i = 0 THEN c := '\n' ELSE
+              Wr.PutChar(awr, ',');
+              Wr.PutChar(acwr, ',');
+              c := ','
+            END;
             Wr.PutChar(wr, c);
             Wr.PutChar(cwr, c)
           END
@@ -531,7 +535,7 @@ PROCEDURE DoIt(optVars, paramVars : SchemeObject.T) =
 
       Wr.PutText(rwr, LongReal(output.f) & "\n");
       Wr.PutText(awr, "," & LongReal(output.f) & "\n");
-      Wr.PutText(acwr, ",RESULT");
+      Wr.PutText(acwr, ",RESULT\n");
       
       Wr.Close(wr); Wr.Close(cwr); Wr.Close(rwr);
       Wr.Close(awr); Wr.Close(acwr)
