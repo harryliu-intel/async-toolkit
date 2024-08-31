@@ -28,7 +28,6 @@ IMPORT ProcUtils;
 IMPORT Rd;
 IMPORT TextWr;
 IMPORT FileWr;
-IMPORT TextRd;
 IMPORT OptVar;
 IMPORT OptVarSeq;
 IMPORT Wx;
@@ -240,7 +239,7 @@ PROCEDURE BaseEval(base : BaseEvaluator; p : LRVector.T) : LONGREAL =
       TRY
         RETURN AttemptEval(base, p)
       EXCEPT
-        ProcUtils.ErrorExit, Rd.EndOfFile =>
+        ProcUtils.ErrorExit =>
         (* loop *)
         IF i # MaxAttempts THEN Thread.Pause(10.0d0) END
       END
@@ -248,121 +247,108 @@ PROCEDURE BaseEval(base : BaseEvaluator; p : LRVector.T) : LONGREAL =
     Debug.Error("BaseEval : Too many attempts p=" & FmtP(p));
     RETURN 0.0d0
   END BaseEval;
-  
-PROCEDURE AttemptEval(base : BaseEvaluator; q : LRVector.T) : LONGREAL
-  RAISES { Rd.EndOfFile, ProcUtils.ErrorExit } =
-  VAR
-    Owr            := NEW(TextWr.T).init();
-    Ewr            := NEW(TextWr.T).init();
-    stdout         := ProcUtils.WriteHere(Owr);
-    stderr         := ProcUtils.WriteHere(Ewr);
 
-    sdIdx          := NextIdx();
-    subdirPath     := F("%s/%s",
-                        rundirPath,
-                        Pad(Int(sdIdx), 6, padChar := '0'));
-
-    nbopts     : TEXT;
-    cmd        : TEXT;
-    cm         : ProcUtils.Completion;
+PROCEDURE MustOpenWr(pn : Pathname.T) : Wr.T =
   BEGIN
-
-    IF NbOpts # NIL THEN
-      nbopts := NbOpts
-    ELSE
-      nbopts := F("--target %s --class 4C --class SLES12", NbPool);
-    END;
-
-    LOCK pMu DO
-      FOR i := FIRST(q^) TO LAST(q^) DO
-        p.put(i, q[i])
-      END;
-      cmd            := scmCb.command()
-    END;
-
     TRY
-      FS.CreateDirectory(subdirPath);
+      RETURN FileWr.Open(pn)
     EXCEPT
       OSError.E(x) =>
-      Debug.Warning(F("creating directory \"%s\" : OSError.E : %s",
-                      subdirPath,
-                      AL.Format(x)))
-    END;
+      Debug.Error(F("Couldnt open %s : OSError.E : %s",
+                    pn, AL.Format(x)));
+      <*ASSERT FALSE*>
+    END
+  END MustOpenWr;
 
-    WITH path = subdirPath & "/opt.values",
-         wr   = FileWr.Open(path) DO
-      FOR i := FIRST(q^) TO LAST(q^) DO
-        Wr.PutText(wr, LongReal(q[i]));
-        VAR c : CHAR; BEGIN
-          IF i = LAST(q^) THEN c := '\n' ELSE c := ',' END;
-          Wr.PutChar(wr, c);
-        END
-      END;
-      Wr.Close(wr);
-    END;
+PROCEDURE AttemptEval(base : BaseEvaluator; q : LRVector.T) : LONGREAL
+  RAISES { ProcUtils.ErrorExit } =
 
-    
-    WITH cmdDbgPath = subdirPath & "/opt.cmd",
-         runCmdDbgPath = subdirPath & "/opt.runcmd",
-         
-         nbCmd = F("nbjob run %s --mode interactive %s",
-                   nbopts,
-                   cmd) DO
-         
-        
-      VAR
-        cmdDbgWr, runCmdDbgWr : Wr.T;
-        runCmd : TEXT;
-      BEGIN
-        TRY
-          cmdDbgWr := FileWr.Open(cmdDbgPath)
-        EXCEPT
-          OSError.E(x) =>
-          Debug.Error(F("Couldnt open %s : OSError.E : %s",
-                        cmdDbgPath, AL.Format(x)))
-        END;
-
-        TRY
-          runCmdDbgWr := FileWr.Open(runCmdDbgPath)
-        EXCEPT
-          OSError.E(x) =>
-          Debug.Error(F("Couldnt open %s : OSError.E : %s",
-                        runCmdDbgPath, AL.Format(x)))
-        END;
-        
-        IF doNetbatch THEN
-          runCmd := nbCmd
-        ELSE
-          runCmd := cmd
-        END;
-
-        Wr.PutText(cmdDbgWr, cmd);
-        Wr.PutChar(cmdDbgWr, '\n');
-        Wr.PutText(runCmdDbgWr, runCmd);
-        Wr.PutChar(runCmdDbgWr, '\n');
-        Wr.Close(cmdDbgWr); Wr.Close(runCmdDbgWr);
-        
-        
-        cm             := ProcUtils.RunText(runCmd,
-                                            stdout := stdout,
-                                            stderr := stderr,
-                                            stdin  := NIL,
-                                            wd0    := subdirPath)
+  PROCEDURE SetNbOpts() =
+    BEGIN
+      IF NbOpts # NIL THEN
+        nbopts := NbOpts
+      ELSE
+        nbopts := F("--target %s --class 4C --class SLES12", NbPool);
       END
-    END;
-      
-    TRY
+    END SetNbOpts;
 
+  PROCEDURE CopyVectorToScheme() =
+    BEGIN
+      LOCK pMu DO
+        FOR i := FIRST(q^) TO LAST(q^) DO
+          p.put(i, q[i])
+        END;
+        cmd            := scmCb.command()
+      END
+    END CopyVectorToScheme;
+
+  PROCEDURE SetupDirectory() =
+    BEGIN
+      TRY
+        TRY
+          FS.CreateDirectory(subdirPath);
+        EXCEPT
+          OSError.E(x) =>
+          Debug.Warning(F("creating directory \"%s\" : OSError.E : %s",
+                          subdirPath,
+                          AL.Format(x)))
+        END;
+        WITH wr   = MustOpenWr(subdirPath & "/opt.values") DO
+          FOR i := FIRST(q^) TO LAST(q^) DO
+            Wr.PutText(wr, LongReal(q[i]));
+            VAR c : CHAR; BEGIN
+              IF i = LAST(q^) THEN c := '\n' ELSE c := ',' END;
+              Wr.PutChar(wr, c);
+            END
+          END;
+          Wr.Close(wr);
+        END;
+        
+        WITH cmdDbgWr = MustOpenWr(subdirPath & "/opt.cmd"),
+             runCmdDbgWr = MustOpenWr(subdirPath & "/opt.runcmd"),
+             
+             nbCmd = F("nbjob run %s --mode interactive %s",
+                       nbopts,
+                       cmd) DO
+          VAR
+            runCmd : TEXT;
+          BEGIN
+            IF doNetbatch THEN
+              runCmd := nbCmd
+            ELSE
+              runCmd := cmd
+            END;
+            
+            Wr.PutText(cmdDbgWr, cmd);
+            Wr.PutChar(cmdDbgWr, '\n');
+            Wr.PutText(runCmdDbgWr, runCmd);
+            Wr.PutChar(runCmdDbgWr, '\n');
+            Wr.Close(cmdDbgWr); Wr.Close(runCmdDbgWr);
+            
+            cm             := ProcUtils.RunText(runCmd,
+                                                stdout := stdout,
+                                                stderr := stderr,
+                                                stdin  := NIL,
+                                                wd0    := subdirPath)
+          END
+        END
+      EXCEPT
+        Wr.Failure(x) =>
+        Debug.Error(F("I/O error : Wr.Failure : while setting up %s : %s:",
+                      subdirPath, AL.Format(x)))
+      END
+    END SetupDirectory;
+
+  PROCEDURE RunCommand() : LONGREAL
+    RAISES { ProcUtils.ErrorExit } =
+    BEGIN
       Debug.Out(F("BaseEval : q = %s\nrunning : %s", FmtP(q), cmd));
       
       cm.wait();
-
-      WITH output = TextWr.ToText(Owr),
-           rd     = TextRd.New(output) DO
-        Debug.Out("Ran command output was " & output);
-
-      END;
-
+      
+      Debug.Out("BaseEval : ran command");
+      
+      
       (* read the schema *)
       WITH dataPath  = subdirPath & "/" & schemaDataFn,
            schemaRes = SchemaReadResult(schemaPath,
@@ -374,26 +360,88 @@ PROCEDURE AttemptEval(base : BaseEvaluator; q : LRVector.T) : LONGREAL
         Debug.Out("Schema-processed result : " & LongReal(schemaRes));
         RETURN schemaRes
       END
-      
-    EXCEPT
-      ProcUtils.ErrorExit(err) =>
-      WITH msg = F("command \"%s\" with output\n====>\n%s\n<====\n\nraised ErrorExit : %s",
-                   cmd,
-                   TextWr.ToText(Ewr),
-                   ProcUtils.FormatError(err)) DO
-        Debug.Warning(msg);
-        IF outOfDomainResult = FIRST(LONGREAL) THEN
-          RAISE ProcUtils.ErrorExit(err)
-        ELSE
-          Debug.Out("Returning outOfDomainResult : " & LongReal(outOfDomainResult));
-          RETURN outOfDomainResult
+    END RunCommand;
+
+  VAR
+    Owr                  := NEW(TextWr.T).init();
+    Ewr                  := NEW(TextWr.T).init();
+    <*NOWARN*>stdout     := ProcUtils.WriteHere(Owr);
+    <*NOWARN*>stderr     := ProcUtils.WriteHere(Ewr);
+
+    sdIdx                := NextIdx();
+    subdirPath           := F("%s/%s",
+                              rundirPath,
+                              Pad(Int(sdIdx), 6, padChar := '0'));
+
+    nbopts     : TEXT;
+    cmd        : TEXT;
+    cm         : ProcUtils.Completion;
+
+    theResult  : LONGREAL;
+  BEGIN
+
+    SetNbOpts();
+    CopyVectorToScheme();
+    SetupDirectory();
+    
+    
+    TRY
+      TRY
+      TRY
+
+        theResult := RunCommand();
+        WITH wr = MustOpenWr(subdirPath & "/opt.ok") DO
+          Wr.Close(wr)
+        END
+      EXCEPT
+        ProcUtils.ErrorExit(err) =>
+        WITH msg = F("command \"%s\" \nraised ErrorExit : %s",
+                     cmd,
+                     
+                     ProcUtils.FormatError(err)) DO
+          
+          WITH wr = MustOpenWr(subdirPath & "/opt.error") DO
+            Wr.PutText(wr, ProcUtils.FormatError(err));
+            Wr.PutChar(wr, '\n');
+            Wr.Close(wr)
+          END;
+          
+          Debug.Warning(msg);
+          IF outOfDomainResult = FIRST(LONGREAL) THEN
+            RAISE ProcUtils.ErrorExit(err)
+          ELSE
+            Debug.Out("Returning outOfDomainResult : " & LongReal(outOfDomainResult));
+            theResult := outOfDomainResult
+          END
         END
       END
-    |
-      Rd.EndOfFile =>
-      Debug.Warning("Can't parse program output");
-      RAISE Rd.EndOfFile
-    END;
+      EXCEPT
+      Wr.Failure(x) =>
+        Debug.Error(F("I/O error : Wr.Failure : while running in %s : %s:",
+                      subdirPath, AL.Format(x)));
+        <*ASSERT FALSE*>
+      END
+    FINALLY
+      TRY
+      WITH errWr = MustOpenWr(subdirPath & "/opt.stderr"),
+           outWr = MustOpenWr(subdirPath & "/opt.stdout"),
+           resWr = MustOpenWr(subdirPath & "/opt.result") DO
+        Wr.PutText(errWr, TextWr.ToText(Ewr));
+        Wr.PutText(outWr, TextWr.ToText(Owr));
+        Wr.PutText(resWr, LongReal(theResult) & "\n");
+        Wr.Close(errWr);
+        Wr.Close(outWr);
+        Wr.Close(resWr)
+      END;
+      RETURN theResult
+    EXCEPT
+      Wr.Failure(x) =>
+        Debug.Error(F("I/O error : Wr.Failure : while writing output in %s : %s:",
+                      subdirPath, AL.Format(x)));
+        <*ASSERT FALSE*>
+
+    END
+    END
   END AttemptEval;
 
 PROCEDURE DoIt(optVars, paramVars : SchemeObject.T) =
@@ -434,7 +482,8 @@ PROCEDURE DoIt(optVars, paramVars : SchemeObject.T) =
     |
       Method.NewUOA =>
     END;
-      
+
+    TRY
     Debug.Out(F("Minimize : %s iters, %s funcc; f = %s; %s",
                 Int(output.iterations),
                 Int(output.funcCount),
@@ -442,8 +491,8 @@ PROCEDURE DoIt(optVars, paramVars : SchemeObject.T) =
                 output.message));
     Wr.PutText(Stdio.stdout, FmtP(output.x));
     Wr.PutChar(Stdio.stdout, '\n');
-    
     Wr.Flush(Stdio.stdout);
+    
     WITH wr = FileWr.Open("genopt.opt"),
          cwr = FileWr.Open("genopt.cols") DO
       FOR i := vseq.size() - 1 TO 0 BY -1 DO
@@ -460,6 +509,12 @@ PROCEDURE DoIt(optVars, paramVars : SchemeObject.T) =
         END
       END;
       Wr.Close(wr); Wr.Close(cwr)
+    END
+    EXCEPT
+      Wr.Failure(x) =>
+        Debug.Error(F("I/O error : Wr.Failure : while optimization result : %s:",
+                      AL.Format(x)))
+
     END
   END DoIt;
 
@@ -555,6 +610,7 @@ VAR
   genOptScm : Pathname.T;
   
 BEGIN
+  Debug.SetOptions(SET OF Debug.Options { Debug.Options.PrintThreadID } );
   scmFiles.addhi("require");
   scmFiles.addhi("m3");
 
