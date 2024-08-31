@@ -494,8 +494,12 @@ PROCEDURE DoIt(optVars, paramVars : SchemeObject.T) =
     Wr.PutChar(Stdio.stdout, '\n');
     Wr.Flush(Stdio.stdout);
     
-    WITH wr = FileWr.Open("genopt.opt"),
+    WITH wr  = FileWr.Open("genopt.opt"),
          cwr = FileWr.Open("genopt.cols"),
+         
+         awr = FileWr.Open("genopt.aopt"),
+         acwr = FileWr.Open("genopt.acols"),
+      
          rwr = FileWr.Open("genopt.result") DO
       FOR i := vseq.size() - 1 TO 0 BY -1 DO
         WITH v = vseq.get(i),
@@ -503,6 +507,8 @@ PROCEDURE DoIt(optVars, paramVars : SchemeObject.T) =
              pi = xi * v.defstep DO
           Wr.PutText(wr, LongReal(pi));
           Wr.PutText(cwr, v.nm);
+          Wr.PutText(awr, LongReal(pi));
+          Wr.PutText(acwr, v.nm);
           VAR c : CHAR; BEGIN
             IF i = 0 THEN c := '\n' ELSE c := ',' END;
             Wr.PutChar(wr, c);
@@ -511,8 +517,24 @@ PROCEDURE DoIt(optVars, paramVars : SchemeObject.T) =
         END
       END;
 
+      VAR
+        pIter := paramBindings.iterate();
+        p, v : TEXT;
+      BEGIN
+        WHILE pIter.next(p, v) DO
+          Wr.PutChar(awr, ',');
+          Wr.PutChar(acwr, ',');
+          Wr.PutText(awr, v);
+          Wr.PutText(acwr, p)
+        END
+      END;
+
       Wr.PutText(rwr, LongReal(output.f) & "\n");
-      Wr.Close(wr); Wr.Close(cwr); Wr.Close(rwr)
+      Wr.PutText(awr, "," & LongReal(output.f) & "\n");
+      Wr.PutText(acwr, ",RESULT");
+      
+      Wr.Close(wr); Wr.Close(cwr); Wr.Close(rwr);
+      Wr.Close(awr); Wr.Close(acwr)
     END
     EXCEPT
       Wr.Failure(x) =>

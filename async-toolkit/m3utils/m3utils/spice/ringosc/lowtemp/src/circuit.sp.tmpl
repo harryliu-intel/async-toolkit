@@ -90,4 +90,6 @@ Xdut _RESET out vcc vssx the_oscillator
 + trig V(out) val='vtrue*0.5' td='step' rise='skip_cycles'
 + targ V(out) val='vtrue*0.5' td='step' rise='skip_cycles+measure_cycles'
 
+.measure tran ActiveCurrent avg i(Vvcc) from '2.0*step' to '5.0*step'
+
 .END
