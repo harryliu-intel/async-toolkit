@@ -28,3 +28,23 @@
 (define *energy-cost-factor* 4.1677e-8)
 
 (define *silicon-cost-factor* 2.767e-14)
+
+(define (range-penalty-factor x0 delta-x)
+  (lambda(x)
+    (+ 1 (exp (/ (- x x0) delta-x)))))
+
+(define (range-penalizer x0 delta-x)
+  (lambda(value x)
+    (* value ((range-penalty-factor x0 delta-x) x))))
+
+(define (double-range-penalizer lo hi delta-x)
+  (let ((lo-p (range-penalizer lo (- delta-x)))
+        (hi-p (range-penalizer hi (+ delta-x))))
+    (lambda(value x)
+      (lo-p (hi-p value x) x))))
+
+(define *temp-penalizer* (double-range-penalizer -50 (- *base-temp* 1) 1))
+
+
+
+

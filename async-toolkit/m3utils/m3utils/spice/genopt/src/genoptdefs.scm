@@ -16,9 +16,9 @@
 
 ;; note that last variable gets to be first in the list
 (define (def-optvar nm defval defstep)
-  (GenOpt.DefOptVar nm defval defstep)
-  (set! *opt-vars* (cons (list nm defval defstep) *opt-vars*)))
-
+  (let ((defval-x (eval-in-env defval)))
+    (GenOpt.DefOptVar nm defval-x defstep)
+    (set! *opt-vars* (cons (list nm defval-x defstep) *opt-vars*))))
 
 (define (def-rhobeg val)
   (GenOpt.SetRhoBeg val))

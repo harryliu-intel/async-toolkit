@@ -34,7 +34,6 @@
 
 (GenOpt.SetMethod 'Robust)
 
-
 ;; NewUOAs configuration variables
 (def-rhobeg 10)   ;; starting step size in terms of significant delta
 (def-rhoend 1e-3) ;; ending step size for convergence
