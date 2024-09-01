@@ -4,7 +4,7 @@
 ;;
 
 (define *min-temp* -70)
-(define *max-temp* (- *base-temp 1))
+(define *max-temp* (- *base-temp* 1))
 (define *significant-temp-delta* 1)
 
 (define (range-penalty-factor x0 delta-x)
