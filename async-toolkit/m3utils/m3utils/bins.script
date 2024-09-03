@@ -78,6 +78,11 @@ ${ROOT}/nb/nbavail/${BINDIR}/nbavail
 ${ROOT}/rdl/rdlparse/${BINDIR}/parserdl
 ${ROOT}/spice/ct/${BINDIR}/ct
 ${ROOT}/spice/fsdb/src/nanosimrd
+${ROOT}/spice/genopt/${BINDIR}/genopt
+${ROOT}/spice/ringosc/lowtemp/${BINDIR}/lowtemp
+${ROOT}/spice/ringosc/${BINDIR}/ringosc
+${ROOT}/spice/schemagraph/program/${BINDIR}/schemagraph
+${ROOT}/spice/schemagraph/schemaeval/${BINDIR}/schemaeval
 "
 
 SCRIPTS="
