@@ -235,7 +235,8 @@
           viewName = CV->viewName
 
           ; recurse into master
-          master = (dbOpenCellViewByType libName cellName viewName "maskLayout" "r")
+          master = (ReadCV libName cellName viewName) ; prefer same viewName as parent
+          (unless master master = (ReadCV libName cellName "layout")) ; revert to layout viewName
           (when !master || recurse && !mastersVisited[master] && master->viewName==CV->viewName
                 master = (UpdateFloorplanOpenCV libName cellName CV->viewName)
                 (when master && (!update || master->mode=="a")
