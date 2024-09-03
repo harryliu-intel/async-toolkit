@@ -79,6 +79,7 @@ ${ROOT}/rdl/rdlparse/${BINDIR}/parserdl
 ${ROOT}/spice/ct/${BINDIR}/ct
 ${ROOT}/spice/fsdb/src/nanosimrd
 ${ROOT}/spice/genopt/${BINDIR}/genopt
+${ROOT}/spice/genopt/${BINDIR}/chopstix
 ${ROOT}/spice/ringosc/lowtemp/${BINDIR}/lowtemp
 ${ROOT}/spice/ringosc/${BINDIR}/ringosc
 ${ROOT}/spice/schemagraph/program/${BINDIR}/schemagraph

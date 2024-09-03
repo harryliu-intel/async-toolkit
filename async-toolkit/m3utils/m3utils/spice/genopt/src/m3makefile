@@ -53,4 +53,6 @@ importSchemeStubs()
 
 implementation ("Main")
 
-program ("genopt")
+%program ("genopt")
+program ("chopstix")
+
