@@ -125,7 +125,7 @@
         abstractCV
         Command (statusVerilog t) statusAlignment
         statusPins
-        lef_subcells GdsMapFile gds_name
+        lef_subcells GdsMapFile
         pout (statusGds t) (statusLef t)
         pinmap dirmap (statusDef t)
         SkipRoutingFileName inplacedPins
@@ -417,14 +417,15 @@
         (perfCorner "max")       ; primary perfCorner for performance
         (Mem (nrGetMaxHeapSize)) ; memory to use
         )
-  (let (CAST_PATH DFII_DIR TEMP WDIR file tcl)
+  (let (CAST_PATH CAST_DIR SPEC_DIR DFII_DIR SPAR_DIR VERI_DIR P4CLIENT TEMP WDIR file tcl)
     ; files and options
     CAST_PATH = (ConfigFileGetValue TheCDSConfigTable "CAST_PATH")
     CAST_DIR  = (ConfigFileGetValue TheCDSConfigTable "CAST_DIR")
     SPEC_DIR  = (ConfigFileGetValue TheCDSConfigTable "SPEC_DIR")
     DFII_DIR  = (ConfigFileGetValue TheCDSConfigTable "DFII_DIR")
     SPAR_DIR  = (ConfigFileGetValue TheCDSConfigTable "SPAR_DIR")
-    VERI_DIR  = (ConfigFileGetValue TheCDSConfigTable "VERI_DIR")
+    VERI_DIR  = (ConfigFileGetValue TheCDSConfigTable "VERI_DIR") 
+    P4CLIENT  = (ConfigFileGetValue TheCDSConfigTable "P4CLIENT")
     TEMP      = (ConfigFileGetValue TheCDSConfigTable "TEMP")
     WDIR      = (strcat TEMP "/route/" CV->cellName)
 
@@ -449,6 +450,7 @@
     (fprintf file "--rdt-run-fill=%d\n" (if metalFill 1 0))
     (fprintf file "--timing-driven-route=%d\n" (if softMacro || timingDriven 1 0))
     (fprintf file "--soft-macro=%d\n" (if softMacro 1 0))
+    (fprintf file "--spar-client=%s\n" P4CLIENT)
     (when tau (fprintf file "--tau=%g\n" tau))
     (fprintf file "--rdt-eco-iter=%d\n" ecoIter)
     (when rdtUseFlops (fprintf file "--rdt-use-flops=1\n"))
@@ -576,7 +578,7 @@
 	(topHalo t)
         )
   (let (TEMP WDIR Command status ImportCV layoutCV floorplanCV
-             win instmap CID fields short_name offset file origFile oas rename)
+             win instmap CID fields offset file origFile oas rename)
 
     ; choose libName and cellName
     (unless libName  libName  = CV->libName)
@@ -585,15 +587,10 @@
     (unless libName  libName = (GetCastLibName cellName))
     (unless baseCV baseCV=(dbOpenCellViewByType libName cellName "floorplan"))
 
-    ; map to icc cellname
-    fields = (parseString cellName ".")
-    (unless (length fields)>=3
-            (error "cellName must be module.type.subtype, try ?top_name")
-            )
-    short_name = (nth ((length fields)-2) fields)
+    ; map to gds cellname
     (unless top_name
       CID = (NameStartRename "cell" "cadence" "gds2")
-      top_name = (NameDoRename CID short_name)
+      top_name = (NameDoRename CID cellName)
       (NameStopRename CID)
       )
 
