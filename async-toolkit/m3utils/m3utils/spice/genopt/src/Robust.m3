@@ -1,4 +1,60 @@
 MODULE Robust;
+
+(* Robust parallel minimization.
+
+   We maintain a point p where we search.
+
+   On each iteration, we perform line searches in various directions.
+
+   The best result of the line searches is accepted at the next point.
+
+   So that we can handle noisy functions, we pick the best result even
+   if it is worse than our previous point.  (Mathematically, if the
+   function evaluations had no error, every line search would give an
+   answer no worse than the value at p.)
+
+   The line searches are performed in parallel in 2N directions (currently,
+   2N, but could be anything from N and higher.)
+
+   The directions are chosen as follows:
+   1. a special primary direction is chosen (see below)
+   2. k = 2N random vectors are chosen.
+   3. Each contiguous sequence of N vectors is orthogonalized using G-S
+   
+   The primary direction is what is inspired by Powell.
+
+   On the previous iteration, a point "opt" is implied by all the 
+   line minimizations: it is the point that results from adding all
+   the line-optimal displacements together.
+
+   When we update p, we set the primary direction as being from the
+   new p to opt.  
+
+   If the function is nicely quadratic, the primary direction will then
+   point to the optimum, and the next iteration of the line
+   search algorithm will find the optimum in one (major) step.
+
+   Unlike classic Powell, there is no vector-space collapse since the
+   search vectors are always randomly generated, except for the first
+   direction.  (They are always an orthonormal basis by construction.)
+
+   The random direction choice is performed using the Muller-Marsaglia
+   method, so it is uniformly distributed in space (not Cartesian
+   constrained).  Since the directions are uniformly distributed in
+   space, there is no reason that Gram-Schmidt would introduce 
+   Cartesian artefacts.
+
+   The line search algorithm called out to is expected to be Brent's
+   method, which is a dimensional lifting of the 
+   van Wijngaarden-Dekker-Brent root-finding algorithm.
+
+   Note that the line search algorithm is also slightly parallelized,
+   and performs up to four simultaneous evaluations.
+
+   Author : mika.nystroem@intel.com
+   August-September, 2024
+*)
+
 FROM NewUOAs IMPORT Output;
 IMPORT LRVector, LRScalarField;
 IMPORT RandomVector;
@@ -19,6 +75,7 @@ FROM GenOpt IMPORT rho, iter;
 CONST LR = LongReal;
 
 PROCEDURE GetFHist(seq : LineProblemSeq.T) : LRSeq.T =
+  (* type converter *)
   VAR
     res := NEW(LRSeq.T).init();
   BEGIN
@@ -28,9 +85,10 @@ PROCEDURE GetFHist(seq : LineProblemSeq.T) : LRSeq.T =
     RETURN res
   END GetFHist;
   
-PROCEDURE FindBest(seq : LineProblemSeq.T;
+PROCEDURE FindBest(seq         : LineProblemSeq.T;
                    VAR bestval : LONGREAL;
                    VAR bestp   : LRVector.T) =
+  (* find the best answer of all the evaluations *)
   VAR
     min := LAST(LONGREAL);
   BEGIN
@@ -45,6 +103,8 @@ PROCEDURE FindBest(seq : LineProblemSeq.T;
     END          
   END FindBest;
 
+(* parallel evaluation code follows *)
+  
 VAR
   mu := NEW(MUTEX);
   running := 0;
@@ -69,6 +129,7 @@ TYPE
   END;
 
 PROCEDURE LinMinApply(cl : Closure) : REFANY =
+  (* call out to Brent *)
   BEGIN
     LOOP
       LOCK mu DO
@@ -140,12 +201,17 @@ PROCEDURE Minimize(p              : LRVector.T;
 
     Orthogonalize(SUBARRAY(da^, 0, n));  (* first ortho. block *)
     Orthogonalize(SUBARRAY(da^, n, n));  (* second ortho. block *)
+
+    (* setup complete *)
     
     FOR pass := 0 TO 100 * n - 1 DO
+
+      (*******************  MAIN MINIMIZATION ITERATION  *******************)
+      
       Debug.Out(F("Robust.m3 : pass %s", Int(pass)));
 
       IF Multithread THEN
-        (* all cl.done TRUE *)
+        (* all cl.done TRUE -- assign the new tasks *)
         LOCK mu DO <*ASSERT running = 0*> END;
         
         FOR i := FIRST(da^) TO LAST(da^) DO
@@ -172,7 +238,7 @@ PROCEDURE Minimize(p              : LRVector.T;
             lps[i] := cl[i].lps
           END
         END;
-        (* all cl.done TRUE *)
+        (* all cl.done TRUE -- all tasks are done *)
         LOCK mu DO <*ASSERT running = 0*> END
       ELSE
         FOR i := FIRST(da^) TO LAST(da^) DO
@@ -189,12 +255,18 @@ PROCEDURE Minimize(p              : LRVector.T;
           END
         END
       END;
+      
       (* at this point we have the minima in all directions 
          in two orthonormal bases 0..n-1, and n..2*n-1 *)
 
       LineProblemArraySort.Sort(lps^);
 
-      (* next point should be the best of the line minimizations *)
+      (* next point should be the best of the line minimizations
+         
+         Because we are using two orthonormal bases, we get two
+         opt points.
+      *)
+      
       WITH newp = lps[0].minp^,
            opt0 = Predict(p, SUBARRAY(pp^, 0, n)),
            opt1 = Predict(p, SUBARRAY(pp^, n, n))
@@ -222,7 +294,12 @@ PROCEDURE Minimize(p              : LRVector.T;
           da[i] := RandomVector.GetDirV(rand, n, 1.0d0)
         END;
 
-        (* SET the two anchor vectors *)
+        (* 
+           set the two anchor vectors to point to the "opt point" 
+           Maybe we should try swapping the opt points between the
+           basis blocks?  Or average them?
+        *)
+        
         LRMatrix2.SubV(opt0^, newp, da[0]^);
         LRMatrix2.SubV(opt1^, newp, da[n]^);
 
@@ -230,6 +307,12 @@ PROCEDURE Minimize(p              : LRVector.T;
         mins.addhi(lps[0]);
 
         WITH Lookback = 3 DO
+
+          (* 
+             if we haven't improved in three straight iterations,
+             call it a day 
+          *)
+          
           IF mins.size() > Lookback THEN
             WITH old = mins.get(mins.size() - Lookback) DO
               IF old.minval <= lps[0].minval THEN
@@ -240,26 +323,50 @@ PROCEDURE Minimize(p              : LRVector.T;
           END
         END
       END;
-      
+
+      (* 
+         Finally, maintain the loop invariant that the search vectors are
+         ready on loop entry.
+
+         We do this here ... because... ?  Not sure, we could probably
+         do it at the top of the loop, but on the first iteration,
+         the primary directions are random, whereas here, they are pointing
+         to opt.
+      *)
       Orthogonalize(SUBARRAY(da^, 0, n));  (* first ortho. block *)
       Orthogonalize(SUBARRAY(da^, n, n));  (* second ortho. block *)
 
-      (* clear cache so we don't get fooled by noise *)
+      (* 
+         clear cache so we don't get fooled by noise 
+         Note that we expect the function evaluation to use memoization,
+         so this defeats memoization (that's the point!)
+      *)
       TYPECASE func OF
-        LRScalarFieldPll.T(pll) =>
-        pll.clearTbls()
+        LRScalarFieldPll.T(pll) => pll.clearTbls()
       ELSE
+        (* we don't know how it works so we don't know how to clear it *)
       END;
 
       INC(iter);
-      message := "stopping because of out of iterations"
-      
-    END      ;
 
+      message := "stopping because of out of iterations"
+      (* if we fall through, that's the last message we set! *)
+      
+    END;
+
+    (******************  SEARCH IS COMPLETE  ******************)
+    
     VAR
       bestval : LONGREAL;
       bestv   : LRVector.T;
     BEGIN
+      (* 
+         Report the best point we saw.  
+
+         Warning: this best point might not be entirely real! 
+         It could be noisy!  How do we fix this?
+      *)
+      
       FindBest(mins, bestval, bestv);
 
       Debug.Out("Robust.m3 : " & message);
