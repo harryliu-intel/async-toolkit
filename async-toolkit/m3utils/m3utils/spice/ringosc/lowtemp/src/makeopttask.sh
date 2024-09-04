@@ -6,7 +6,7 @@ RUNDIR=`pwd`/nb.run-${DATE}
 PARENT=${M3UTILS}/spice/ringosc/lowtemp
 SRCDIR=${PARENT}/src
 BINDIR=AMD64_LINUX
-GENOPT=${M3UTILS}/spice/genopt/${BINDIR}/genopt
+GENOPT=${M3UTILS}/spice/genopt/${BINDIR}/chopstix
 DEFS=${SRCDIR}/defs.scm
 OPTSCM=${SRCDIR}/lowtempopt.scm
 
