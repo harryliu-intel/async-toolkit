@@ -16,8 +16,8 @@
         (importView "layout")    ; view name to import wiring back to
         (Mem (nrGetMaxHeapSize)) ; memory to use
         (doVerilog nil)          ; create .v
-        (doGds t)                ; create gds for subcells (used for power hookups and maybe fill)
-        (doLef t)                ; create .lef
+        (doGds nil)              ; create gds for subcells (used for power hookups and maybe fill)
+        (doLef nil)              ; create .lef
         (doDef t)                ; create .def
         (doHierDef t)            ; create cellName.def with hierarchy separator
         (doNondefaultDef t)      ; create _nondefault.def
@@ -93,8 +93,8 @@
 	(midLevel nil)           ; APR custom mid-level flow
         (thresholds (list "c" "b")) ; transistor thresholds to use
         (doVerilog nil)          ; create cellName.v
-        (doGds t)                ; create gds for subcells (used for power hookups and maybe fill)
-        (doLef t)                ; create cellName.lef
+        (doGds nil)              ; create gds for subcells (used for power hookups and maybe fill)
+        (doLef nil)              ; create cellName.lef
         (doDef t)                ; create cellName.def
         (doHierDef t)            ; create cellName.def with hierarchy separator
         (doNondefaultDef nil)    ; create cellName_nondefault.def
