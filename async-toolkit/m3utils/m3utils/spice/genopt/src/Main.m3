@@ -47,6 +47,9 @@ IMPORT Robust;
 IMPORT LRVectorLRPair;
 IMPORT LRVectorLRPairTextTbl;
 IMPORT FileRd;
+IMPORT Scan;
+IMPORT FloatMode, Lex;
+IMPORT SchemePair;
 
 <*FATAL Thread.Alerted*>
 
@@ -522,7 +525,7 @@ PROCEDURE DoIt(optVars, paramVars : SchemeObject.T) =
       
          rwr = FileWr.Open("genopt.result") DO
       FOR i := vseq.size() - 1 TO 0 BY -1 DO
-        WITH v = vseq.get(i),
+        WITH v  = vseq.get(i),
              xi = output.x[i],
              pi = xi * v.defstep DO
           Wr.PutText(wr, LongReal(pi));
@@ -636,11 +639,61 @@ PROCEDURE SchemaReadResult(schemaPath ,
       END
     END;
 
+    TRY
     WITH T2S = SchemeSymbol.FromText,
+         L2S = SchemeLongReal.FromLR,
          optVarsNm = T2S("*opt-vars*"),
          paramVarsNm = T2S("*param-vars*") DO
+      FOR i := 0 TO vseq.size() - 1 DO
+        WITH v  = vseq.get(i),
+             nm = v.nm,
+             ss = T2S(nm),
+             pi = p.get(i),
+             vv = pi * v.defstep,
+             sx = L2S(vv) DO
+          schemaScm.bind(ss, sx)
+        END;
+
+        VAR
+          p : SchemePair.T := paramVars;
+        BEGIN
+          WHILE p # NIL DO
+            WITH q = NARROW(p.first, SchemePair.T),
+                 r = NARROW(q.rest , SchemePair.T) DO
+              schemaScm.bind(q.first, r.first)
+            END;
+            p := p.rest
+          END
+        END;
+
+        VAR
+          iter := paramBindings.iterate();
+          k, v : TEXT;
+        BEGIN
+          WHILE iter.next(k, v) DO
+            WITH ss = T2S(k) DO
+              TRY
+                WITH lr = Scan.LongReal(v),
+                     sx = L2S(lr) DO
+                  schemaScm.bind(ss, sx)
+                END
+              EXCEPT
+                Lex.Error, FloatMode.Trap =>
+                schemaScm.bind(ss, SchemeString.FromText(v))
+              END
+            END
+          END
+        END;
+        
+        schemaScm.bind(T2S("*opt-rho*"), L2S(rho))
+      END;
+      
       schemaScm.setInGlobalEnv(optVarsNm, optVars);
       schemaScm.setInGlobalEnv(paramVarsNm, paramVars)
+    END
+    EXCEPT
+      Scheme.E(x) =>
+      Debug.Error(F("EXCEPTION! Scheme.E \"%s\" when initializing interpreter variables", x))
     END;
 
     Debug.Out("SchemaReadResult : set up interpreter");
@@ -650,6 +703,8 @@ PROCEDURE SchemaReadResult(schemaPath ,
            data   = ReadData(schema, dataFiles) DO
         Debug.Out("SchemaReadResult : schema and data loaded");
 
+        (* there is where the schema formulas are evaluated
+           and we haven't yet loaded the parameters! *)
         EvalFormulas(schemaScm, schema, data);
 
         Debug.Out("SchemaReadResult : formulas evaluated");
@@ -759,9 +814,9 @@ BEGIN
   IF interactive THEN
     SchemeReadLine.MainLoop(NEW(ReadLine.Default).init(), scm)
   ELSE
-    WITH senv = NARROW(scm.getGlobalEnvironment(), SchemeEnvironment.T),
-         T2S = SchemeSymbol.FromText,
-         optVars = senv.lookup(T2S("*opt-vars*")),
+    WITH senv      = NARROW(scm.getGlobalEnvironment(), SchemeEnvironment.T),
+         T2S       = SchemeSymbol.FromText,
+         optVars   = senv.lookup(T2S("*opt-vars*")),
          paramVars = senv.lookup(T2S("*param-vars*")) DO
       DoIt(optVars, paramVars)
     END

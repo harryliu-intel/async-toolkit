@@ -2,5 +2,5 @@
 
 genopt=${M3UTILS}/spice/genopt/AMD64_LINUX/chopstix
 
-${genopt} -S defs.scm exampleopt.scm
+${genopt} -setparam silly 12 -S defs.scm exampleopt.scm
 

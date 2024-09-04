@@ -20,6 +20,7 @@
 (def-paramvar 'sweeps 30)     ;; make it large enough
 (def-paramvar 'stages 11)     ;; should sweep this
 (def-paramvar 'step   1e-9)   ;; this seems superfluous
+(def-paramvar 'Kcycle 5)      ;; K-factor for cycle time
 
 
 ;; the following are the optimization variables

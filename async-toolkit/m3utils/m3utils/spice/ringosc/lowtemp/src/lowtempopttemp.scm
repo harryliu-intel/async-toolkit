@@ -19,6 +19,7 @@
 (def-paramvar 'sweeps 30)     ;; make it large enough
 (def-paramvar 'stages 11)     ;; should sweep this
 (def-paramvar 'step   1e-9)   ;; this seems superfluous
+(def-paramvar 'Kcycle 5)      ;; K-factor for cycle time
 
 
 ;; the following are the optimization variables
@@ -58,7 +59,8 @@
                   " -temp "   temp
                   " -lib "    lib
                   " -thresh " thresh
-                  " -sweeps " (cond ((< *opt-iter*  2) 4)
+                  " -sweeps " (cond ((= Kcycle 0) 2)
+                                    ((< *opt-iter*  2) 4)
                                     ((< *opt-iter*  5) (round (/ sweeps 4)))
                                     ((< *opt-iter* 10) (round (/ sweeps 2)))
                                     (else sweeps))

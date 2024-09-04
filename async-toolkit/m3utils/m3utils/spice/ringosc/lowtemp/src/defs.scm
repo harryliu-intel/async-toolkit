@@ -4,7 +4,7 @@
 ;; call them from the scheme function evaluation code
 ;;
 
-(define Kcycle 5.0)
+;;(define Kcycle 5.0) ;; now a parameter
 
 (define (Carnot-efficiency Tc Th) ;; temps on thermodynamic scale (K or R)
   (if (>= Tc Th)

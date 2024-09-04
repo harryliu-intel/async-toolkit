@@ -488,6 +488,7 @@ PROCEDURE DoClean() =
     DeleteMatching(".", "\\.ic0$");
     DeleteMatching(".", "\\.mc0$");
     DeleteMatching(".", "\\.fsdb$");
+    DeleteMatching(".", "\\.ava\\.");
     WHILE iter.next(fn) DO
       IF CitTextUtils.HaveSuffix(fn, ".ctwork") THEN
         DeleteRecursively(".", fn)
@@ -495,7 +496,8 @@ PROCEDURE DoClean() =
     END;
     FOR f := FIRST(Files) TO LAST(Files) DO
       CompressFile(Files[f])
-    END
+    END;
+    CompressFile("the_scaled_dut.sp");
   END DoClean;
   
 TYPE
@@ -555,7 +557,7 @@ BEGIN
     END; 
     IF pp.keywordPresent("-sweeps") THEN
       sweeps := pp.getNextInt();
-      <*ASSERT sweeps > 2*>
+      <*ASSERT sweeps >= 2*>
     END; 
     IF pp.keywordPresent("-step") THEN
       step := pp.getNextLongReal()

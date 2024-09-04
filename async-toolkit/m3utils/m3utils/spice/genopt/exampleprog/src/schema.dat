@@ -1,1 +1,2 @@
-report result
+report result,
+formula x2 (* vdd result stages silly)

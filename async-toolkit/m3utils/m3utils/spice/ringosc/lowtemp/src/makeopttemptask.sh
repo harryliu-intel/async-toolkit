@@ -19,6 +19,8 @@ sweeps="20"
 
 stages="2 3 4 5 6 7 8 9 10 11 12 13 15 17 20 22 28 35 44 55 66 77 88"
 
+kcycles="0 1 2 4 5 8"
+
 #trantypes="lvt ulvt" # svt doesnt work yet
 trantypes="ulvt lvt" # svt doesnt work yet
 libs="i0s"
@@ -70,6 +72,7 @@ EOF
 
 tasknum=0
 
+for kcyc  in ${kcycles};   do
 for stpp  in ${steps};     do
 for stgs  in ${stages};    do
 for cscl  in ${cscales};   do
@@ -88,13 +91,14 @@ for tran  in ${trantypes}; do
             echo "pwd"                 >> ${runfile}
             echo "cd ${runsubdir}"     >> ${runfile}
 
-	    cmdargs="${GENOPT} -S ${DEFS}  -S ${DEFS1} -setparam thresh ${tran} -setparam sweeps ${sweep} -setparam cscale ${cscl} -setparam stages ${stgs} ${OPTSCM}"
+	    cmdargs="${GENOPT} -S ${DEFS}  -S ${DEFS1} -setparam thresh ${tran} -setparam sweeps ${sweep} -setparam cscale ${cscl} -setparam stages ${stgs} -setparam Kcycle ${kcyc} ${OPTSCM}"
 
             echo "${cmdargs}"   >> ${runfile}
             chmod +x ${runfile}
         
             tasknum=`expr $tasknum + 1`
             
+done
 done
 done
 done
