@@ -18,4 +18,8 @@ PROCEDURE Equal(a, b : T) : BOOLEAN;
 PROCEDURE Hash(a : T) : Word.T;
   (* slow hash.  a must not be NIL *)
 
+PROCEDURE Compare(a, b : T) : [-1..1];
+  (* compare two vectors by entries in order -- both must be non-NIL and 
+     same # of elements *)
+
 END LRVector.

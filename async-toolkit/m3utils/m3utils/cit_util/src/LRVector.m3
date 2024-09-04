@@ -37,5 +37,20 @@ PROCEDURE Hash(a : T) : Word.T =
     END;
     RETURN res
   END Hash;
-  
+
+PROCEDURE Compare(a, b : T) : [-1..1] =
+  BEGIN
+    <*ASSERT NUMBER(a^) = NUMBER(b^)*>
+    FOR i := FIRST(a^) TO LAST(a^) DO
+      IF a[i] < b[i] THEN
+        RETURN -1
+      ELSIF b[i] > a[i] THEN
+        RETURN +1
+      ELSIF a[i] # b[i] THEN
+        RETURN -1 (* NaN, Inf, etc. *)
+      END
+    END;
+    RETURN 0
+  END Compare;
+
 BEGIN END LRVector.

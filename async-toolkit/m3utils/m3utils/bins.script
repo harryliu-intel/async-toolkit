@@ -83,6 +83,7 @@ ${ROOT}/spice/genopt/${BINDIR}/chopstix
 ${ROOT}/spice/ringosc/lowtemp/${BINDIR}/lowtemp
 ${ROOT}/spice/ringosc/${BINDIR}/ringosc
 ${ROOT}/spice/schemagraph/program/${BINDIR}/schemagraph
+${ROOT}/spice/schemagraph/program/${BINDIR}/graph
 ${ROOT}/spice/schemagraph/schemaeval/${BINDIR}/schemaeval
 "
 

@@ -9,6 +9,7 @@ TYPE
   END;
 
 PROCEDURE Compare(READONLY a, b : T) : [-1 .. 1];
+  (* compare by minval *)
 
 CONST Brand = "LineProblem";
 

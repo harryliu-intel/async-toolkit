@@ -20,6 +20,10 @@ Module ("Robust")
 Module ("LineProblem")
 Sequence ("LineProblem", "LineProblem")
 
+KeyPair ("LRVectorLR", "LRVector", "LongrealType")
+
+Table ("LRVectorLRPairText", "LRVectorLRPair", "Text")
+
 Array_sort("LineProblem", "LineProblem")
 
 SchemeStubs ("LineProblem")

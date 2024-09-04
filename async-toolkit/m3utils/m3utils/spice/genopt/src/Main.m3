@@ -44,6 +44,9 @@ IMPORT SchemeEnvironment;
 IMPORT SchemeString;
 IMPORT SchemeBoolean;
 IMPORT Robust;
+IMPORT LRVectorLRPair;
+IMPORT LRVectorLRPairTextTbl;
+IMPORT FileRd;
 
 <*FATAL Thread.Alerted*>
 
@@ -78,15 +81,15 @@ PROCEDURE GetParam(named : SchemeSymbol.T) : SchemeObject.T =
   END GetParam;
 
 VAR
-  vseq : OptVarSeq.T;
+  vseq           : OptVarSeq.T;
   rhoBeg, rhoEnd : LONGREAL;
-  scmCb  : OptCallback.T;
-  schemaPath : Pathname.T;
+  scmCb          : OptCallback.T;
+  schemaPath     : Pathname.T;
   schemaScmPaths : TextSeq.T;
-  schemaDataFn : Pathname.T;
-  schemaEval : SchemeObject.T;
-  outOfDomainResult := FIRST(LONGREAL);
-  method := Method.NewUOAs;
+  schemaDataFn   : Pathname.T;
+  schemaEval     : SchemeObject.T;
+  outOfDomainResult        := FIRST(LONGREAL);
+  method                   := Method.NewUOAs;
 
 PROCEDURE SetMethod(m : Method) = BEGIN method := m END SetMethod;
 
@@ -191,6 +194,10 @@ PROCEDURE SetNetbatch(to : BOOLEAN) =
 TYPE
   BaseEvaluator = LRScalarField.T OBJECT
     optVars, paramVars : SchemeObject.T;
+
+    results            : LRVectorLRPairTextTbl.T;
+    resultsMu          : MUTEX;
+
   METHODS
     init()                      : LRScalarField.T := InitDummy;
   OVERRIDES
@@ -199,6 +206,7 @@ TYPE
   END;
 
   PllEvaluator = LRScalarFieldPll.T OBJECT
+    base : BaseEvaluator;
   METHODS
     init(    optVars, paramVars : SchemeObject.T) : LRScalarField.T := InitPll;
   END;
@@ -208,11 +216,18 @@ PROCEDURE InitDummy(base : BaseEvaluator) : LRScalarField.T =
     RETURN base
   END InitDummy;
   
-PROCEDURE InitPll(pll : PllEvaluator;    optVars, paramVars : SchemeObject.T) : LRScalarField.T =
+PROCEDURE InitPll(pll                : PllEvaluator;
+                  optVars, paramVars : SchemeObject.T) : LRScalarField.T =
   BEGIN
-    RETURN LRScalarFieldPll.T.init(pll, NEW(BaseEvaluator,
-                                            optVars := optVars,
-                                            paramVars := paramVars));
+    WITH base = NEW(BaseEvaluator,
+                    optVars   := optVars,
+                    paramVars := paramVars,
+                    results   := NEW(LRVectorLRPairTextTbl.Default).init(),
+                    resultsMu := NEW(MUTEX)) DO
+
+      pll.base := base;
+      RETURN LRScalarFieldPll.T.init(pll, base)
+    END
   END InitPll;
 
 PROCEDURE BaseEvalHint(base : BaseEvaluator; p : LRVector.T) =
@@ -359,6 +374,11 @@ PROCEDURE AttemptEval(base : BaseEvaluator; q : LRVector.T) : LONGREAL
                                         base.optVars,
                                         base.paramVars) DO
         Debug.Out("Schema-processed result : " & LongReal(schemaRes));
+        LOCK base.resultsMu DO
+          EVAL base.results.put(LRVectorLRPair.T { LRVector.Copy(q),
+                                                   schemaRes } ,
+                                                   subdirPath )
+        END;
         RETURN schemaRes
       END
     END RunCommand;
@@ -385,71 +405,71 @@ PROCEDURE AttemptEval(base : BaseEvaluator; q : LRVector.T) : LONGREAL
     CopyVectorToScheme();
     SetupDirectory();
     
-    
     TRY
       TRY
-      TRY
-
-        theResult := RunCommand();
+        TRY
+          
+          theResult := RunCommand();
         WITH wr = MustOpenWr(subdirPath & "/opt.ok") DO
           Wr.Close(wr)
         END
-      EXCEPT
-        ProcUtils.ErrorExit(err) =>
-        WITH msg = F("command \"%s\" \nraised ErrorExit : %s",
-                     cmd,
-                     
-                     ProcUtils.FormatError(err)) DO
-          
-          WITH wr = MustOpenWr(subdirPath & "/opt.error") DO
-            Wr.PutText(wr, ProcUtils.FormatError(err));
-            Wr.PutChar(wr, '\n');
-            Wr.Close(wr)
-          END;
-          
-          Debug.Warning(msg);
-          IF outOfDomainResult = FIRST(LONGREAL) THEN
-            RAISE ProcUtils.ErrorExit(err)
-          ELSE
-            Debug.Out("Returning outOfDomainResult : " & LongReal(outOfDomainResult));
-            theResult := outOfDomainResult
+        EXCEPT
+          ProcUtils.ErrorExit(err) =>
+          WITH msg = F("command \"%s\" \nraised ErrorExit : %s",
+                       cmd,
+                       
+                       ProcUtils.FormatError(err)) DO
+            
+            WITH wr = MustOpenWr(subdirPath & "/opt.error") DO
+              Wr.PutText(wr, ProcUtils.FormatError(err));
+              Wr.PutChar(wr, '\n');
+              Wr.Close(wr)
+            END;
+            
+            Debug.Warning(msg);
+            IF outOfDomainResult = FIRST(LONGREAL) THEN
+              RAISE ProcUtils.ErrorExit(err)
+            ELSE
+              Debug.Out("Returning outOfDomainResult : " & LongReal(outOfDomainResult));
+              theResult := outOfDomainResult
+            END
           END
         END
-      END
       EXCEPT
-      Wr.Failure(x) =>
+        Wr.Failure(x) =>
         Debug.Error(F("I/O error : Wr.Failure : while running in %s : %s:",
                       subdirPath, AL.Format(x)));
         <*ASSERT FALSE*>
       END
     FINALLY
       TRY
-      WITH errWr = MustOpenWr(subdirPath & "/opt.stderr"),
-           outWr = MustOpenWr(subdirPath & "/opt.stdout"),
-           resWr = MustOpenWr(subdirPath & "/opt.result") DO
-        Wr.PutText(errWr, TextWr.ToText(Ewr));
-        Wr.PutText(outWr, TextWr.ToText(Owr));
-        Wr.PutText(resWr, LongReal(theResult) & "\n");
-        Wr.Close(errWr);
-        Wr.Close(outWr);
-        Wr.Close(resWr)
-      END;
-      RETURN theResult
-    EXCEPT
-      Wr.Failure(x) =>
+        WITH errWr = MustOpenWr(subdirPath & "/opt.stderr"),
+             outWr = MustOpenWr(subdirPath & "/opt.stdout"),
+             resWr = MustOpenWr(subdirPath & "/opt.result") DO
+          Wr.PutText(errWr, TextWr.ToText(Ewr));
+          Wr.PutText(outWr, TextWr.ToText(Owr));
+          Wr.PutText(resWr, LongReal(theResult) & "\n");
+          Wr.Close(errWr);
+          Wr.Close(outWr);
+          Wr.Close(resWr)
+        END;
+        RETURN theResult
+      EXCEPT
+        Wr.Failure(x) =>
         Debug.Error(F("I/O error : Wr.Failure : while writing output in %s : %s:",
                       subdirPath, AL.Format(x)));
         <*ASSERT FALSE*>
-
-    END
+        
+      END
     END
   END AttemptEval;
-
+  
 PROCEDURE DoIt(optVars, paramVars : SchemeObject.T) =
   VAR
     N               := vseq.size();
     pr : LRVector.T := NEW(LRVector.T, N);
-    evaluator       := NEW(PllEvaluator).init(optVars, paramVars);
+    evaluator       : PllEvaluator
+                        := NEW(PllEvaluator).init(optVars, paramVars);
     output : NewUOAs.Output;
   BEGIN
     IF rhoEnd = LAST(LONGREAL) THEN
@@ -481,7 +501,7 @@ PROCEDURE DoIt(optVars, paramVars : SchemeObject.T) =
                                 20,
                                 FIRST(LONGREAL))
     |
-      Method.NewUOA =>
+      Method.NewUOA => <*ASSERT FALSE*>
     END;
 
     TRY
@@ -534,8 +554,34 @@ PROCEDURE DoIt(optVars, paramVars : SchemeObject.T) =
       END;
 
       Wr.PutText(rwr, LongReal(output.f) & "\n");
-      Wr.PutText(awr, "," & LongReal(output.f) & "\n");
+      Wr.PutText(awr, "," & LongReal(output.f));
       Wr.PutText(acwr, ",RESULT\n");
+
+      VAR
+        key := LRVectorLRPair.T { output.x, output.f };
+        subdir : TEXT;
+      BEGIN
+        IF evaluator.base.results.get(key, subdir) THEN
+          TRY
+            WITH rd = FileRd.Open(subdir & "/" & schemaDataFn),
+                 line = Rd.GetLine(rd) DO
+              Wr.PutChar(awr, ',');
+              Wr.PutText(awr, subdir);
+              Wr.PutChar(awr, ',');
+              Wr.PutText(awr, line);
+              Wr.PutChar(awr, '\n');
+              Rd.Close(rd)
+            END
+          EXCEPT
+            OSError.E, Rd.Failure =>
+            Debug.Warning("System error trying to read base result from " & subdir);
+            Wr.PutChar(awr, '\n')
+          END
+        ELSE
+          Debug.Warning("No base result for key.");
+          Wr.PutChar(awr, '\n')
+        END
+      END;
       
       Wr.Close(wr); Wr.Close(cwr); Wr.Close(rwr);
       Wr.Close(awr); Wr.Close(acwr)

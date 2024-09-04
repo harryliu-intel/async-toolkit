@@ -1,6 +1,6 @@
 #!/bin/sh
 
-GRAPH=${M3UTILS}/spice/schemagraph/program/AMD64_LINUX/graph
+GRAPH=${M3UTILS}/spice/schemagraph/program/AMD64_LINUX/schemagraph
 HOME=${M3UTILS}/spice/ringosc/lowtemp/src
 SCHEMA=${HOME}/schema.dat
 DEFS=${HOME}/defs.scm
