@@ -77,7 +77,7 @@
            ox=1.5*GridPolyPitch
            gx=GridPolyPitch
            gy=TrackPitch*(if h=="n" && CV->viewName=="floorplan" 1 2)
-           (cond (CopyExact && (substring CopyExact 1 5)=="i0szh" gx=GridPolyPitch ox=0) ; halo cells
+           (cond (CopyExact && (substring CopyExact 1 5)=="i0szh" gx=GridPolyPitch ox=0.5*GridPolyPitch) ; halo cells
                  (CopyExact && (substring CopyExact 1 3)=="i0m"
                             ox=0.5*GridPolyPitch
                             gy=0.18*(if h=="n" && CV->viewName=="floorplan" 1 2)
