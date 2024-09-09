@@ -39,7 +39,7 @@ if [ "${testing}" == "1" ]; then
     sweeps="4"
 fi
 
-repeat=1
+repeat=0
 
 if [ "${repeat}" == "1" ]; then
     stages="11"

@@ -21,12 +21,6 @@ kcycles="5 5 5 5 5 5 5 5"
 
 #trantypes="lvt ulvt" # svt doesnt work yet
 trantypes="ulvt" # svt doesnt work yet
-#libs="i0s i0m"
-libs="i0s"
-
-steps="1e-9"  # really just the reset time
-
-cscales="1.0"
 
 modleaves="true"
 
@@ -43,7 +37,6 @@ if [ "${testing}" == "1" ]; then
     temps="0"
     trantypes="lvt"
     sweeps="4"
-    cscales="1"
 fi
 
 
@@ -74,11 +67,8 @@ EOF
 tasknum=0
 
 for kcyc  in ${kcycles};   do
-for stpp  in ${steps};     do
 for stgs  in ${stages};    do
-for cscl  in ${cscales};   do
 for sweep in ${sweeps};    do
-for lib   in ${libs};      do
 for tran  in ${trantypes}; do
 for temp  in ${temps};     do
             
@@ -93,16 +83,13 @@ for temp  in ${temps};     do
             echo "pwd"                 >> ${runfile}
             echo "cd ${runsubdir}"     >> ${runfile}
 
-	    cmdargs="${GENOPT} -S ${DEFS} -setparam temp ${temp} -setparam thresh ${tran} -setparam sweeps ${sweep} -setparam cscale ${cscl} -setparam stages ${stgs}  -setparam Kcycle ${kcyc} ${OPTSCM}"
+	    cmdargs="${GENOPT} -S ${DEFS} -setparam temp ${temp} -setparam thresh ${tran} -setparam sweeps ${sweep} -setparam cscale 1 -setparam stages ${stgs}  -setparam Kcycle ${kcyc} ${OPTSCM}"
 
             echo "${cmdargs}"   >> ${runfile}
             chmod +x ${runfile}
         
             tasknum=`expr $tasknum + 1`
             
-done
-done
-done
 done
 done
 done
