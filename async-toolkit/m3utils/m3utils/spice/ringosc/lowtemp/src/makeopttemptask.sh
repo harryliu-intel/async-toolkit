@@ -18,18 +18,11 @@ step=1
 sweeps="20"
 
 stages="2 3 4 5 6 7 8 9 10 11 12 13 15 17 20 22 28 35 44 55 66 77 88"
-
 kcycles="0 1 2 4 5 8"
+
 
 #trantypes="lvt ulvt" # svt doesnt work yet
 trantypes="ulvt lvt" # svt doesnt work yet
-libs="i0s"
-
-steps="1e-9"  # really just the reset time
-
-cscales="1.0"
-
-modleaves="true"
 
 # efficiency only defined to 50C (since that's the assumed hot side)
 
@@ -37,12 +30,21 @@ modleaves="true"
 
 testing=0
 
+######################################################################
+
 if [ "${testing}" == "1" ]; then
     stages="10"
     temps="0"
     trantypes="lvt"
     sweeps="4"
-    cscales="1"
+fi
+
+repeat=1
+
+if [ "${repeat}" == "1" ]; then
+    stages="11"
+    trantypes="ulvt"
+    kcycles="5 5 5 5 5 5 5 5 5 5"
 fi
 
 
@@ -73,11 +75,8 @@ EOF
 tasknum=0
 
 for kcyc  in ${kcycles};   do
-for stpp  in ${steps};     do
 for stgs  in ${stages};    do
-for cscl  in ${cscales};   do
 for sweep in ${sweeps};    do
-for lib   in ${libs};      do
 for tran  in ${trantypes}; do
             
             runfile=${RUNDIR}/${tasknum}.sh
@@ -91,16 +90,13 @@ for tran  in ${trantypes}; do
             echo "pwd"                 >> ${runfile}
             echo "cd ${runsubdir}"     >> ${runfile}
 
-	    cmdargs="${GENOPT} -S ${DEFS}  -S ${DEFS1} -setparam thresh ${tran} -setparam sweeps ${sweep} -setparam cscale ${cscl} -setparam stages ${stgs} -setparam Kcycle ${kcyc} ${OPTSCM}"
+	    cmdargs="${GENOPT} -S ${DEFS}  -S ${DEFS1} -setparam thresh ${tran} -setparam sweeps ${sweep} -setparam cscale 1 -setparam stages ${stgs} -setparam Kcycle ${kcyc} ${OPTSCM}"
 
             echo "${cmdargs}"   >> ${runfile}
             chmod +x ${runfile}
         
             tasknum=`expr $tasknum + 1`
             
-done
-done
-done
 done
 done
 done
