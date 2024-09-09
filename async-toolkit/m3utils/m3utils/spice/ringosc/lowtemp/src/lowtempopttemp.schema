@@ -35,14 +35,14 @@ report  sdev_leaP,
 report  mean_dynE,
 report  sdev_dynE,
 
-formula max_cycle  (+ mean_cycle (* k_cycle sdev_cycle)),
-formula min_freq   (/ 1 max_cycle),
-formula cop        (achievable-efficiency  temp *base-temp*),
-formula cooled_swE (cooled-energy mean_swE temp *base-temp*),
-formula leak_ratio (/ mean_leaP mean_dynE min_freq),
-formula energy_cost (* *energy-cost-factor* cooled_swE),
+formula max_cycle    (+ mean_cycle (* k_cycle sdev_cycle)),
+formula min_freq     (/ 1 max_cycle),
+formula cop          (achievable-efficiency  temp *base-temp*),
+formula cooled_swE   (cooled-energy mean_swE temp *base-temp*),
+formula leak_ratio   (/ mean_leaP mean_dynE min_freq),
+formula energy_cost  (* *energy-cost-factor* cooled_swE),
 formula silicon_cost (* *silicon-cost-factor* max_cycle),
-formula total_cost (+ energy_cost silicon_cost)
+formula total_cost   (+ energy_cost silicon_cost)
 
 
 
