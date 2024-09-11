@@ -55,7 +55,7 @@
 
 (def-compute-command
   '(string-append *cmd-path*
-                  " -nb -externalsweep 4 "
+                  " -nb -externalsweep 10 "
                   " -vdd "    vdd
                   " -temp "   temp
                   " -lib "    lib

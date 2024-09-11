@@ -576,7 +576,7 @@ PROCEDURE LaunchConvert1(fsdbRoot : Pathname.T) =
                 TA { Ct, Nr, Sz, fsdbRoot, fsdbRoot, fsdbRoot });
     
   BEGIN
-    IF doNetbatch THEN
+    IF convNetbatch THEN
       cmd := F("nbjob run %s --mode interactive %s",
                        nbopts,
                        cmd)
@@ -712,6 +712,8 @@ VAR
   runDir                         := FS.GetAbsolutePathname(".");
 
   doNetbatch    : BOOLEAN;
+  convNetbatch  : BOOLEAN;
+  
   nbopts        : TEXT;
   
 BEGIN
@@ -720,7 +722,8 @@ BEGIN
   END;
   
   TRY
-    doNetbatch := pp.keywordPresent("-netbatch") OR pp.keywordPresent("-nb");
+    doNetbatch   := pp.keywordPresent("-netbatch") OR pp.keywordPresent("-nb");
+    convNetbatch := pp.keywordPresent("-convnetbatch") OR pp.keywordPresent("-cnb");
 
     IF doNetbatch THEN
       IF NbOpts = NIL AND NbPool = NIL THEN
