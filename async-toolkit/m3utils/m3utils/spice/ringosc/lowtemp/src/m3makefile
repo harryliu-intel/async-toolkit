@@ -7,6 +7,9 @@ import ("techc")
 
 implementation ("LowTemp")
 
+interface ("Simulation")
+sequence ("Simulation", "Simulation")
+
 program ("lowtemp")
 
 

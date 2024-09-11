@@ -322,7 +322,7 @@ PROCEDURE AttemptEval(base : BaseEvaluator; q : LRVector.T) : LONGREAL
           Wr.Close(wr);
         END;
         
-        WITH cmdDbgWr = MustOpenWr(subdirPath & "/opt.cmd"),
+        WITH cmdDbgWr    = MustOpenWr(subdirPath & "/opt.cmd"),
              runCmdDbgWr = MustOpenWr(subdirPath & "/opt.runcmd"),
              
              nbCmd = F("nbjob run %s --mode interactive %s",

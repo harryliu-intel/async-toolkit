@@ -30,8 +30,16 @@ IMPORT ProcUtils;
 FROM TechCleanup IMPORT DeleteMatching, DeleteRecursively,
                         CompressFilesWithExtension,  CompressFile;
 FROM TechConfig IMPORT Tran, TranNames;
+IMPORT Simulation;
+IMPORT SimulationSeq;
+IMPORT Process;
+IMPORT RefSeq;
 
 <*FATAL Thread.Alerted*>
+
+VAR
+  NbPool  := Env.Get("NBPOOL");
+  NbOpts  := Env.Get("NBRUNOPTIONS");
 
 CONST
   Usage = "";
@@ -58,8 +66,6 @@ CONST
   "i0mxnrc02aa1n03x5", "i0mxobna2aa1n03x5", "i0mxorc02aa1n03x5",
   "i0mxor002aa1n02x5"
   };
-
-  Strengths = ARRAY OF TEXT { "02x5", "02x6", "02x7", "03x4", "03x5", "03x6" };
 
   Pdk         = "pdk080_r4v2p0_efv";
   MetalCorner = "100c_tttt_cmax";
@@ -223,7 +229,8 @@ PROCEDURE DoTrace(traceRt : Pathname.T; mWr : Wr.T) : Result =
   END
 END DoTrace;
 
-PROCEDURE Concat(sep : TEXT; READONLY lst0, lst1, lst2, lst3, lst4 := TA {}) : TEXT =
+PROCEDURE Concat(sep : TEXT;
+                 READONLY lst0, lst1, lst2, lst3, lst4 := TA {}) : TEXT =
 
   PROCEDURE DoOne(READONLY lst : TA) =
     BEGIN
@@ -266,19 +273,29 @@ PROCEDURE DoPost() =
         Accumulate(this, n, sum, sumSq)
       END
     ELSE
-      CONST
-        extension = ".names";
-      VAR
-        iter := FS.Iterate(".");
-        fn   : Pathname.T;
-      BEGIN
-        WHILE iter.next(fn) DO
-          fn := CitTextUtils.CheckSuffix(fn, extension);
-          IF fn # NIL THEN
-            WITH this = DoTrace(fn, mWr) DO
-              Accumulate(this, n, sum, sumSq)
+
+      PROCEDURE DoOneDir(dir : Pathname.T) =
+        CONST
+          extension = ".names";
+        VAR
+          iter := FS.Iterate(dir);   
+          fn   : Pathname.T;
+        BEGIN
+          WHILE iter.next(fn) DO
+            fn := dir & "/" & fn;
+            
+            fn := CitTextUtils.CheckSuffix(fn, extension);
+            IF fn # NIL THEN
+              WITH this = DoTrace(fn, mWr) DO
+                Accumulate(this, n, sum, sumSq)
+              END
             END
           END
+        END DoOneDir;
+
+      BEGIN
+        FOR i := 0 TO MAX(0, batches - 1) DO
+          DoOneDir(Subdir(i))
         END
       END
     END;
@@ -356,7 +373,6 @@ PROCEDURE DoPre() =
     EVAL map.put("@PDK@", Pdk);
     EVAL map.put("@METALCORNER@", MetalCorner);
     EVAL map.put("@STDCELLDIR@", LibPaths[lib]);
-    EVAL map.put("@SWEEPS@", Int(sweeps));
 
     PROCEDURE FmtIdx(idx : CARDINAL) : TEXT =
       BEGIN
@@ -378,26 +394,62 @@ PROCEDURE DoPre() =
 
       EVAL map.put("@THE_STAGES@", Wx.ToText(wx))
     END;
-      
-    (* done setting up map *)
 
-    FOR i := FIRST(Files) TO LAST(Files) DO
-      WITH path = m3utils & "/" & SrcPath & "/" & Files[i] & ".tmpl",
-           tmpl = TechTemplate.LoadTemplate(path) DO
-        TechTemplate.ModifyTemplate(tmpl, map);
-        TechTemplate.WriteTemplate (tmpl, Files[i])
+    (* create directories if need be, else set sweeps *)
+
+    IF batches # 0 THEN
+      FOR i := 0 TO batches - 1 DO
+        FS.CreateDirectory(Subdir(i))
+      END
+    END;
+    
+    (* done setting up map -- write out the files *)
+
+    FOR d := 0 TO MAX(0, batches - 1) DO
+
+      Process.SetWorkingDirectory(Subdir(d));
+
+      IF batches = 0 THEN
+        EVAL map.put("@SWEEPS@", F("%s FIRSTRUN=2", Int(sweeps)))
+      ELSE
+        EVAL map.put("@SWEEPS@", F("%s FIRSTRUN=%s",
+                                   Int(externalSweep),
+                                   Int(2 + externalSweep * d)))
+      END;
+      
+      FOR i := FIRST(Files) TO LAST(Files) DO
+        WITH path = m3utils & "/" & SrcPath & "/" & Files[i] & ".tmpl",
+             tmpl = TechTemplate.LoadTemplate(path) DO
+          TechTemplate.ModifyTemplate(tmpl, map);
+          TechTemplate.WriteTemplate (tmpl, Files[i])
+        END
+      END;
+      
+      VAR
+        modRegEx : TEXT;
+      BEGIN
+        IF modLeaves = TRUE THEN
+          modRegEx := ""
+        END;
+        Scale1("the_dut.sp", "the_scaled_dut.sp", modRegEx)
       END
     END;
 
-    VAR
-      modRegEx : TEXT;
-    BEGIN
-      IF modLeaves = TRUE THEN
-        modRegEx := ""
-      END;
-      Scale1("the_dut.sp", "the_scaled_dut.sp", modRegEx)
-    END
+    Process.SetWorkingDirectory(runDir)
   END DoPre;
+
+PROCEDURE Subdir(n : CARDINAL) : Pathname.T =
+  BEGIN
+    IF batches = 0 THEN
+      <* ASSERT n = 0 *>
+      RETURN runDir
+    ELSE
+      <* ASSERT n < batches *>
+      RETURN F("%s/%s",
+               runDir,
+               Pad(Int(n), 6, padChar := '0'))
+    END
+  END Subdir;
 
 PROCEDURE MapCells(map : TextTextTbl.T) =
 
@@ -422,7 +474,7 @@ PROCEDURE MapCells(map : TextTextTbl.T) =
     END
   END MapCells;
 
-PROCEDURE DoSim() =
+PROCEDURE OldDoSim() =
   CONST
     SimPath = "/p/hdk/cad/hspice/U-2023.03-SP2/hspice/bin/hspice";
   VAR
@@ -439,9 +491,79 @@ PROCEDURE DoSim() =
       ProcUtils.ErrorExit(err) =>
       Debug.Error(F("Couldn't run simulator (%s) : %s", cmd, ProcUtils.FormatError(err)))
     END
+  END OldDoSim;
+
+VAR sims := NEW(SimulationSeq.T).init();
+  
+PROCEDURE DoSim() =
+  BEGIN
+    FOR i := 0 TO MAX(0, batches - 1) DO BuildOneSim(i)  END;
+    FOR i := 0 TO MAX(0, batches - 1) DO LaunchOneSim(i) END;
+    FOR i := 0 TO MAX(0, batches - 1) DO LandOneSim(i)   END;
+    Process.SetWorkingDirectory(runDir)
   END DoSim;
 
-PROCEDURE Convert1(fsdbRoot : Pathname.T) =
+PROCEDURE BuildOneSim(i : CARDINAL) =
+  CONST
+    SimPath = "/p/hdk/cad/hspice/U-2023.03-SP2/hspice/bin/hspice";
+  VAR
+    cmd : TEXT;
+  BEGIN
+    Debug.Out(F("BuildOneSim(%s)", Int(i)));
+    cmd    := F("%s -mt 4 -i %s", SimPath, "circuit.sp");
+
+    IF doNetbatch THEN
+      cmd := F("nbjob run %s --mode interactive %s",
+                       nbopts,
+                       cmd)
+    END;
+    
+    WITH theSim = Simulation.T { cmd, Subdir(i), NIL } DO
+      <*ASSERT sims.size() = i*>
+      sims.addhi(theSim)
+    END
+  END BuildOneSim;
+
+PROCEDURE LaunchOneSim(i : CARDINAL) =
+  VAR
+    theSim := sims.get(i);
+    stdout, stderr := ProcUtils.WriteHere(Stdio.stderr);
+  BEGIN
+    Debug.Out(F("LaunchOneSim(%s)", Int(i)));
+    Process.SetWorkingDirectory(Subdir(i));
+
+    WITH cmdWr = FileWr.Open("sim.cmd") DO
+      Wr.PutText(cmdWr,theSim.cmd);
+      Wr.PutChar(cmdWr, '\n');
+      Wr.Close(cmdWr)
+    END;
+    
+    theSim.cm := ProcUtils.RunText(theSim.cmd,
+                                   stdout := stdout,
+                                   stderr := stderr,
+                                   stdin  := NIL);
+    sims.put(i, theSim)
+  END LaunchOneSim;
+
+PROCEDURE LandOneSim(i : CARDINAL) =
+  VAR
+    theSim := sims.get(i);
+  BEGIN
+    Debug.Out(F("LandOneSim(%s)", Int(i)));
+    TRY
+      theSim.cm.wait()
+    EXCEPT
+      ProcUtils.ErrorExit(err) =>
+      Debug.Error(F("Couldn't run simulator (%s) : %s",
+                    theSim.cmd,
+                    ProcUtils.FormatError(err)))
+    END
+  END LandOneSim;
+
+
+VAR conversions := NEW(RefSeq.T).init();
+  
+PROCEDURE LaunchConvert1(fsdbRoot : Pathname.T) =
   CONST
     CtPath  = "spice/ct/AMD64_LINUX/ct";
     SzPath  = "spice/spicecompress/spicestream/AMD64_LINUX/spicestream";
@@ -453,52 +575,100 @@ PROCEDURE Convert1(fsdbRoot : Pathname.T) =
     cmd    := FN("%s -fsdb %s -threads 4 -R 5e-12 -compress %s -format CompressedV1 -translate -wd %s.ctwork %s.fsdb %s",
                 TA { Ct, Nr, Sz, fsdbRoot, fsdbRoot, fsdbRoot });
     
-    stdout, stderr := ProcUtils.WriteHere(Stdio.stderr);
-    cm             := ProcUtils.RunText(cmd,
+  BEGIN
+    IF doNetbatch THEN
+      cmd := F("nbjob run %s --mode interactive %s",
+                       nbopts,
+                       cmd)
+    END;
+    
+    WITH
+          stdout = ProcUtils.WriteHere(Stdio.stderr),
+          stderr = ProcUtils.WriteHere(Stdio.stderr),
+          cm     = ProcUtils.RunText(cmd,
                                         stdout := stdout,
                                         stderr := stderr,
-                                        stdin  := NIL);
-  BEGIN
-    TRY
-      cm.wait()
-    EXCEPT
-      ProcUtils.ErrorExit(err) =>
-      Debug.Error(F("Couldn't run convert1 (%s) : %s", cmd, ProcUtils.FormatError(err)))
+                                        stdin  := NIL)
+     DO
+      IF doNetbatch THEN
+        conversions.addhi(cm)
+      ELSE
+        TRY
+          cm.wait()
+        EXCEPT
+          ProcUtils.ErrorExit(err) =>
+          Debug.Error(F("Couldn't run convert1 (%s) : %s",
+                        cmd,
+                        ProcUtils.FormatError(err)))
+        END
+      END
     END
-  END Convert1;
+  END LaunchConvert1;
   
-PROCEDURE DoConv() =
+PROCEDURE ConvOne(dir : Pathname.T) =
   VAR
-    iter := FS.Iterate(".");
+    iter := FS.Iterate(dir);
     fn   : Pathname.T;
   BEGIN
     WHILE iter.next(fn) DO
-      fn := CitTextUtils.CheckSuffix(fn, ".fsdb");
+      fn := CitTextUtils.CheckSuffix(dir & "/" & fn, ".fsdb");
       IF fn # NIL THEN
-        Convert1(fn)
+        LaunchConvert1(fn)
+      END
+    END
+  END ConvOne;
+
+PROCEDURE DoConv() =
+  BEGIN
+    DoEverywhere(ConvOne);
+    WHILE conversions.size() # 0 DO
+      WITH cm = NARROW(conversions.remlo(), ProcUtils.Completion) DO
+        TRY
+          cm.wait()
+        EXCEPT
+          ProcUtils.ErrorExit(err) =>
+          Debug.Error(F("Couldn't run convert1 (UNKNOWN) : %s",
+                        ProcUtils.FormatError(err)))
+        END
       END
     END
   END DoConv;
+  
+TYPE Action = PROCEDURE(dir : Pathname.T);
+     
+PROCEDURE DoEverywhere(action : Action) =
+  BEGIN
+    IF batches = 0 THEN
+      action(runDir)
+    ELSE
+      FOR i := 0 TO batches - 1 DO
+        action(Subdir(i))
+      END;
+      action(runDir)
+    END
+  END DoEverywhere;
+  
+PROCEDURE DoClean() = BEGIN DoEverywhere(CleanOne) END DoClean;
 
-PROCEDURE DoClean() =
+PROCEDURE CleanOne(dir : Pathname.T) =
   VAR
-    iter := FS.Iterate(".");
+    iter := FS.Iterate(dir);
     fn   : Pathname.T;
   BEGIN
-    DeleteMatching(".", "\\.ic0$");
-    DeleteMatching(".", "\\.mc0$");
-    DeleteMatching(".", "\\.fsdb$");
-    DeleteMatching(".", "\\.ava\\.");
+    DeleteMatching(dir, "\\.ic0$");
+    DeleteMatching(dir, "\\.mc0$");
+    DeleteMatching(dir, "\\.fsdb$");
+    DeleteMatching(dir, "\\.ava\\.");
     WHILE iter.next(fn) DO
       IF CitTextUtils.HaveSuffix(fn, ".ctwork") THEN
-        DeleteRecursively(".", fn)
+        DeleteRecursively(dir, fn)
       END
     END;
     FOR f := FIRST(Files) TO LAST(Files) DO
-      CompressFile(Files[f])
+      CompressFile(dir & "/" & Files[f])
     END;
-    CompressFile("the_scaled_dut.sp");
-  END DoClean;
+    CompressFile(dir & "/" & "the_scaled_dut.sp");
+  END CleanOne;
   
 TYPE
   Phase = { Pre, Sim, Conv, Clean, Post };
@@ -517,23 +687,32 @@ CONST
   DefB       = 16_44110510;
    
 VAR
-  pp                          := NEW(ParseParams.T).init(Stdio.stderr);
-  vdd, temp                   := FIRST(LONGREAL);
-  traceRt    : TEXT;
-  step       : LONGREAL       := DefStep;
-  phases                      := SET OF Phase { FIRST(Phase) .. LAST(Phase) };
-  measureFn  : Pathname.T     := "measure.dat";
-  tag        : TEXT           := "";
-  aInput     : Word.T         := DefA;
-  bInput     : Word.T         := DefB;
-  lib        : Lib;
-  sweeps     : CARDINAL       := DefSweeps;
-  m3utils                     := Env.Get("M3UTILS");
-  tran       : Tran           := Tran.Ulvt;
-  cscale, rscale              := 1.0d0;
-  deln, delp                  := 0.0d0;
-  modLeaves                   := TRUE;
-  stages     : CARDINAL       := 0;
+  pp                             := NEW(ParseParams.T).init(Stdio.stderr);
+  vdd, temp                      := FIRST(LONGREAL);
+  traceRt       : TEXT;
+  step          : LONGREAL       := DefStep;
+  phases                         := SET OF Phase { FIRST(Phase) .. LAST(Phase) };
+  measureFn     : Pathname.T     := "measure.dat";
+  tag           : TEXT           := "";
+  aInput        : Word.T         := DefA;
+  bInput        : Word.T         := DefB;
+  lib           : Lib;
+  sweeps        : CARDINAL       := DefSweeps;
+  m3utils                        := Env.Get("M3UTILS");
+  tran          : Tran           := Tran.Ulvt;
+  cscale, rscale                 := 1.0d0;
+  deln, delp                     := 0.0d0;
+  modLeaves                      := TRUE;
+  stages        : CARDINAL       := 0;
+
+  externalSweep : CARDINAL       := 0; (* how big the steps are for external
+                                          sweeps *)
+
+  batches       : CARDINAL       := 0; (* 0 means sweep internally *)
+  runDir                         := FS.GetAbsolutePathname(".");
+
+  doNetbatch    : BOOLEAN;
+  nbopts        : TEXT;
   
 BEGIN
   IF m3utils = NIL THEN
@@ -541,6 +720,19 @@ BEGIN
   END;
   
   TRY
+    doNetbatch := pp.keywordPresent("-netbatch") OR pp.keywordPresent("-nb");
+
+    IF doNetbatch THEN
+      IF NbOpts = NIL AND NbPool = NIL THEN
+        Debug.Error("?when using netbatch, must set NBPOOL or NBRUNOPTIONS")
+      END;
+      IF NbOpts # NIL THEN
+        nbopts := NbOpts
+      ELSE
+        nbopts := F("--target %s --class 4C --class SLES12", NbPool);
+      END
+    END;
+    
     IF pp.keywordPresent("-t") THEN
       traceRt := pp.getNext()
     END;
@@ -555,10 +747,19 @@ BEGIN
     IF pp.keywordPresent("-tag") THEN
       tag := pp.getNext()
     END; 
+
     IF pp.keywordPresent("-sweeps") THEN
       sweeps := pp.getNextInt();
       <*ASSERT sweeps >= 2*>
-    END; 
+    END;
+    IF pp.keywordPresent("-externalsweep") THEN
+      externalSweep := pp.getNextInt()
+    END;
+
+    IF externalSweep # 0 THEN
+      batches := (sweeps - 1) DIV externalSweep + 1
+    END;
+    
     IF pp.keywordPresent("-step") THEN
       step := pp.getNextLongReal()
     END;

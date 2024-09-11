@@ -1,5 +1,7 @@
 #!/bin/sh 
 
+MYFILE=makeopttask.sh
+
 LAUNCHER=${M3UTILS}/spice/adder/src/launcher.sh
 DATE=`date -Is`
 RUNDIR=`pwd`/nb.run-${DATE}
@@ -9,6 +11,7 @@ BINDIR=AMD64_LINUX
 GENOPT=${M3UTILS}/spice/genopt/${BINDIR}/chopstix
 DEFS=${SRCDIR}/defs.scm
 OPTSCM=${SRCDIR}/lowtempopt.scm
+ME=${SRCDIR}/${MYFILE}
 
 nb_queue=${NBPOOL}
 nb_qslot=${NBQSLOT}
@@ -39,12 +42,20 @@ if [ "${testing}" == "1" ]; then
     sweeps="4"
 fi
 
+specialtemps=1
+
+if [ "${specialtemps}" == "1" ]; then
+    temps="15 20 30 35 40 45"
+fi
+
+
 
 ######################################################################
 
 taskfile=full-${DATE}.task
 
 mkdir ${RUNDIR}
+cp ${ME} ${RUNDIR}
 
 cat > ${taskfile} <<EOF
     

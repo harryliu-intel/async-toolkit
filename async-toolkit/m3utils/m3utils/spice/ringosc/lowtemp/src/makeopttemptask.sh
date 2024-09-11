@@ -1,5 +1,7 @@
 #!/bin/sh 
 
+MYFILE=makeopttemptask.sh
+
 LAUNCHER=${M3UTILS}/spice/adder/src/launcher.sh
 DATE=`date -Is`
 RUNDIR=`pwd`/nb.run-${DATE}
@@ -10,6 +12,7 @@ GENOPT=${M3UTILS}/spice/genopt/${BINDIR}/chopstix
 DEFS=${SRCDIR}/defs.scm
 DEFS1=${SRCDIR}/tempdefs.scm
 OPTSCM=${SRCDIR}/lowtempopttemp.scm
+ME=${SRCDIR}/${MYFILE}
 
 nb_queue=${NBPOOL}
 nb_qslot=${NBQSLOT}
@@ -53,6 +56,7 @@ fi
 taskfile=full-${DATE}.task
 
 mkdir ${RUNDIR}
+cp ${ME} ${RUNDIR}
 
 cat > ${taskfile} <<EOF
     
