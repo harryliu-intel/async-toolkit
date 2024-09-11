@@ -54,7 +54,8 @@
 ;; all the following assumed to run in a single directory
 
 (def-compute-command
-  '(string-append *cmd-path* 
+  '(string-append *cmd-path*
+                  " -nb -externalsweep 4 "
                   " -vdd "    vdd
                   " -temp "   temp
                   " -lib "    lib

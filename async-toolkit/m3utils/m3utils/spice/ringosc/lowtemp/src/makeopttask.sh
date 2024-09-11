@@ -17,10 +17,10 @@ nb_queue=${NBPOOL}
 nb_qslot=${NBQSLOT}
 step=1
 
-sweeps="20"
+sweeps="40"
 
-stages="11"
-kcycles="5 5 5 5 5 5 5 5"
+stages="5 11 22 44"
+kcycles="5 5 5"
 
 #trantypes="lvt ulvt" # svt doesnt work yet
 trantypes="ulvt" # svt doesnt work yet
@@ -28,7 +28,7 @@ trantypes="ulvt" # svt doesnt work yet
 modleaves="true"
 
 # efficiency only defined to 50C (since that's the assumed hot side)
-temps="-80 -70 -60 -50 -40 -30 -20 -10 0 10 25 50" 
+temps="-80 -70 -60 -50 -40 -30 -20 -10 0 10 20 30 40 49" 
 
 
 # for testing:
@@ -42,7 +42,7 @@ if [ "${testing}" == "1" ]; then
     sweeps="4"
 fi
 
-specialtemps=1
+specialtemps=0
 
 if [ "${specialtemps}" == "1" ]; then
     temps="15 20 30 35 40 45"
