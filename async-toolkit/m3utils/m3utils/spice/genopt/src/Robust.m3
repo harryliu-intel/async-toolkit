@@ -175,6 +175,7 @@ PROCEDURE Minimize(p              : LRVector.T;
     lps   := NEW(REF ARRAY OF LineProblem.T, nv);
     rand  := NEW(Random.Default).init();
     mins  := NEW(LineProblemSeq.T).init();
+    allMins  := NEW(LineProblemSeq.T).init();
     cl    := NEW(REF ARRAY OF Closure, nv);
     
     message : TEXT;
@@ -305,6 +306,7 @@ PROCEDURE Minimize(p              : LRVector.T;
 
         p^ := newp;
         mins.addhi(lps[0]);
+        allMins.addhi(lps[0]);
 
         WITH Lookback = 3 DO
 
@@ -324,6 +326,13 @@ PROCEDURE Minimize(p              : LRVector.T;
         END
       END;
 
+      (* forget really old (unreliable) values *)
+      WITH Lookback = 7 DO
+        IF mins.size() > Lookback THEN
+          EVAL mins.remlo()
+        END
+      END;
+      
       (* 
          Finally, maintain the loop invariant that the search vectors are
          ready on loop entry.
@@ -373,7 +382,7 @@ PROCEDURE Minimize(p              : LRVector.T;
       
       RETURN Output { iterations := iter,
                       funcCount  := 0,
-                      fhist      := GetFHist(mins),
+                      fhist      := GetFHist(allMins),
                       message    := message,
                       f          := bestval,
                       x          := bestv }
