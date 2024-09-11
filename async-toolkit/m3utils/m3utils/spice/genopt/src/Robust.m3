@@ -327,7 +327,7 @@ PROCEDURE Minimize(p              : LRVector.T;
       END;
 
       (* forget really old (unreliable) values *)
-      WITH Lookback = 7 DO
+      WITH Lookback = 5 DO
         IF mins.size() > Lookback THEN
           EVAL mins.remlo()
         END
