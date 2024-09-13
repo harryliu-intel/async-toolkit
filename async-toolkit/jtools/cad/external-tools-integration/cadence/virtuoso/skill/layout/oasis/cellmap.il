@@ -1,3 +1,16 @@
+; Get CopyExact or GDS2 cellName
+(defun GetCopyExact (@key (CV (geGetEditCellView)))
+  (let (CID copyexact)
+    copyexact = (dbGetPropByName CV "CopyExact")->value
+    (unless copyexact
+      CID = (NameStartRename "cell" "cadence" "gds2")
+      copyexact = (NameDoRename CID CV->cellName)
+      (NameStopRename CID)
+      )
+    copyexact
+    )
+  )
+
 ; Write cellmap to rename cells.  CopyExact cells get renamed to their
 ; original name as saved in the CopyExact property.  Other cells get
 ; GDS names.

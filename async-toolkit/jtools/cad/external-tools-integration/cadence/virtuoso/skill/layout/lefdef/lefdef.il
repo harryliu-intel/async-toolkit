@@ -1240,7 +1240,7 @@ t
       libName = (GetCastLibName cellName)
       srccv = (ReadCV libName cellName "layout")
       (unless srccv (error "No layout view for %s\n" cellName))
-      copyexact = (dbGetPropByName srccv "CopyExact")->value
+      copyexact = (GetCopyExact ?CV srccv)
       srccv = (ReadCV libName cellName "abstract")
       (unless srccv (error "No abstract view for %s\n" cellName))
       (cond (copyexact
