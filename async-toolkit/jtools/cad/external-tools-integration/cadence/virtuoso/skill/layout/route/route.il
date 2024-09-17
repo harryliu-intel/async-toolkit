@@ -39,6 +39,7 @@
         (scanMode nil)           ; optional scan mode string
         (useUPFTemplate nil)     ; optional upf template
         (perfCorner "max")       ; primary corner for performance
+        (proteusArgs nil)        ; extra proteus.config args
         )
   (let (TEMP WDIR)
     TEMP = (ConfigFileGetValue TheCDSConfigTable "TEMP")
@@ -59,7 +60,7 @@
                       ?noPowerFill noPowerFill ?timingDriven timingDriven ?colorGrid colorGrid
                       ?tau tau ?ecoIter ecoIter ?rdtUseFlops rdtUseFlops ?rdtUserTcl rdtUserTcl
                       ?scanMode scanMode ?Mem Mem ?useUPFTemplate useUPFTemplate
-                      ?thresholds thresholds ?perfCorner perfCorner)
+                      ?thresholds thresholds ?perfCorner perfCorner ?proteusArgs proteusArgs)
 
     ; copy CV to importView so in-place pins don't need to wait on router to finish
     (when Background (betterCopyCellView CV CV->libName CV->cellName importView nil nil t t))
@@ -119,6 +120,7 @@
         (scanMode nil)           ; optional scan mode string
         (useUPFTemplate nil)     ; optional upf template
         (perfCorner "max")       ; primary perfCorner for performance
+        (proteusArgs nil)        ; extra proteus.config args
         (Mem (nrGetMaxHeapSize)) ; memory to use
         )
   (let (TEMP WDIR LEFDEF_DIR MaxHeapSize CAST_PATH DFII_DIR SPAR_DIR PDK_DIR
@@ -175,7 +177,7 @@
                    ?abstractCellName abstractCellName ?targetCellName targetCellName
                    ?tau tau ?ecoIter ecoIter ?rdtUseFlops rdtUseFlops ?rdtUserTcl rdtUserTcl
                    ?scanMode scanMode ?Mem Mem ?doHierDef doHierDef ?useUPFTemplate useUPFTemplate
-                   ?thresholds thresholds ?perfCorner perfCorner)
+                   ?thresholds thresholds ?perfCorner perfCorner ?proteusArgs proteusArgs)
 
     ; export Verilog
     (when doVerilog
@@ -415,6 +417,7 @@
         (scanMode nil)           ; optional scan mode string
         (useUPFTemplate nil)     ; optional upf template
         (perfCorner "max")       ; primary perfCorner for performance
+        (proteusArgs nil)        ; extra proteus.config args
         (Mem (nrGetMaxHeapSize)) ; memory to use
         )
   (let (CAST_PATH CAST_DIR SPEC_DIR DFII_DIR SPAR_DIR VERI_DIR P4CLIENT TEMP WDIR file tcl)
@@ -481,6 +484,7 @@
            (fprintf file "--cell=%s\n" (GetCastCellName CV->cellName))
            (fprintf file "--task=route\n"))
           )
+    (when proteusArgs (fprintf file proteusArgs))
     (close file)
     )
   )
