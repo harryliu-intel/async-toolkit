@@ -23,6 +23,7 @@ Sequence ("LineProblem", "LineProblem")
 KeyPair ("LRVectorLR", "LRVector", "LongrealType")
 
 Table ("LRVectorLRPairText", "LRVectorLRPair", "Text")
+Module ("LineMinimizer")
 
 Array_sort("LineProblem", "LineProblem")
 

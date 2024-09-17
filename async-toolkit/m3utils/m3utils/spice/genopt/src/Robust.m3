@@ -162,11 +162,7 @@ PROCEDURE LinMinApply(cl : Closure) : REFANY =
   
 PROCEDURE Minimize(p              : LRVector.T;
                    func           : LRScalarField.T;
-                   rhobeg, rhoend : LONGREAL;
-                   extraDirs      : CARDINAL;
-                   ftarget        := FIRST(LONGREAL)) : Output =
-  CONST
-    Multithread = TRUE;
+                   rhobeg, rhoend : LONGREAL) : Output =
   VAR
     n     := NUMBER(p^);
     nv    := 2 * n;
@@ -184,13 +180,11 @@ PROCEDURE Minimize(p              : LRVector.T;
     rho   := rhobeg;
     iter  := 0;
     
-    IF Multithread THEN
       FOR i := 0 TO 2 * n - 1 DO
         cl[i] := NEW(Closure,
                      c    := NEW(Thread.Condition),
                      done := TRUE);
         EVAL Thread.Fork(cl[i])
-      END
     END;
     
     (* allocate some random vectors *)
@@ -211,7 +205,6 @@ PROCEDURE Minimize(p              : LRVector.T;
       
       Debug.Out(F("Robust.m3 : pass %s", Int(pass)));
 
-      IF Multithread THEN
         (* all cl.done TRUE -- assign the new tasks *)
         LOCK mu DO <*ASSERT running = 0*> END;
         
@@ -240,22 +233,7 @@ PROCEDURE Minimize(p              : LRVector.T;
           END
         END;
         (* all cl.done TRUE -- all tasks are done *)
-        LOCK mu DO <*ASSERT running = 0*> END
-      ELSE
-        FOR i := FIRST(da^) TO LAST(da^) DO
-          (* minimize in direction of da[i], from p *)
-          (* this is the part that can be done in parallel *)
-          pp[i]  := LRVector.Copy(p);
-          VAR
-            dir := LRVector.Copy(da[i]);
-            minval : LONGREAL;
-          BEGIN
-            minval := Compress.LinMin(pp[i], dir, func, rho, rho/10.0d0);
-            Debug.Out("Robust.m3 : Line minimization returned " & LR(minval));
-            lps[i] := LineProblem.T { da[i], pp[i], minval }
-          END
-        END
-      END;
+        LOCK mu DO <*ASSERT running = 0*> END;
       
       (* at this point we have the minima in all directions 
          in two orthonormal bases 0..n-1, and n..2*n-1 *)

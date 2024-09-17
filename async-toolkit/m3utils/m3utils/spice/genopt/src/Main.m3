@@ -500,9 +500,7 @@ PROCEDURE DoIt(optVars, paramVars : SchemeObject.T) =
       output := Robust.Minimize(pr,
                                 evaluator,
                                 rhoBeg,
-                                rhoEnd,
-                                20,
-                                FIRST(LONGREAL))
+                                rhoEnd)
     |
       Method.NewUOA => <*ASSERT FALSE*>
     END;

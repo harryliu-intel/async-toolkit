@@ -9,9 +9,7 @@ IMPORT LRVector, LRScalarField;
 
 PROCEDURE Minimize(p              : LRVector.T;
                    func           : LRScalarField.T;
-                   rhobeg, rhoend : LONGREAL; (* same as Powell *)
-                   extraDirs      : CARDINAL; (* UNUSED *)
-                   ftarget     := FIRST(LONGREAL)) : Output;
+                   rhobeg, rhoend : LONGREAL (* same as Powell *)) : Output;
 
 CONST Brand = "Robust";
 
