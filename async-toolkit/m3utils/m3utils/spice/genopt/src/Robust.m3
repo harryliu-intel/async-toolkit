@@ -34,6 +34,8 @@ MODULE Robust;
    point to the optimum, and the next iteration of the line
    search algorithm will find the optimum in one (major) step.
 
+   THIS DOESN'T ACTUALLY WORK!
+
    Unlike classic Powell, there is no vector-space collapse since the
    search vectors are always randomly generated, except for the first
    direction.  (They are always an orthonormal basis by construction.)
@@ -61,7 +63,6 @@ IMPORT RandomVector;
 IMPORT Random;
 IMPORT LRMatrix2;
 IMPORT Math;
-IMPORT Compress;
 IMPORT Debug;
 FROM Fmt IMPORT LongReal, F, Int;
 IMPORT LineProblem;
@@ -69,8 +70,8 @@ IMPORT LineProblemSeq;
 IMPORT LineProblemArraySort;
 IMPORT LRScalarFieldPll;
 IMPORT LongRealSeq AS LRSeq;
-IMPORT Thread;
 FROM GenOpt IMPORT rho, iter;
+IMPORT LineMinimizer;
 
 CONST LR = LongReal;
 
@@ -105,61 +106,6 @@ PROCEDURE FindBest(seq         : LineProblemSeq.T;
 
 (* parallel evaluation code follows *)
   
-VAR
-  mu := NEW(MUTEX);
-  running := 0;
-  
-TYPE
-  Closure = Thread.Closure OBJECT
-    c       : Thread.Condition;
-    
-    (* semaphore *)
-    done : BOOLEAN;
-    
-    (* input vars *)
-    pp   : LRVector.T;
-    dir  : LRVector.T;
-    func : LRScalarField.T;
-    rho  : LONGREAL;
-
-    (* output var *)
-    lps  : LineProblem.T;
-  OVERRIDES
-    apply := LinMinApply;
-  END;
-
-PROCEDURE LinMinApply(cl : Closure) : REFANY =
-  (* call out to Brent *)
-  BEGIN
-    LOOP
-      LOCK mu DO
-        WHILE cl.done DO
-          Thread.Wait(mu, cl.c)
-        END
-      END;
-
-      IF FALSE THEN Debug.Out("Robust.m3 : LinMinApply : done FALSE.") END;
-      
-      (* NOT cl.done *)
-      LOCK mu DO INC(running) END;
-      
-      WITH minval = Compress.LinMin(cl.pp,
-                                    LRVector.Copy(cl.dir),
-                                    cl.func,
-                                    cl.rho,
-                                    cl.rho / 10.0d0) DO
-        Debug.Out("Robust.m3 : Line minimization returned " & LR(minval));
-        LOCK mu DO
-          cl.lps := LineProblem.T { cl.dir, cl.pp, minval };
-          cl.done := TRUE;
-          DEC(running);
-          Thread.Signal(cl.c)
-        END
-      END
-    END;
-    <*ASSERT FALSE*>
-  END LinMinApply;
-  
 PROCEDURE Minimize(p              : LRVector.T;
                    func           : LRScalarField.T;
                    rhobeg, rhoend : LONGREAL) : Output =
@@ -172,7 +118,7 @@ PROCEDURE Minimize(p              : LRVector.T;
     rand  := NEW(Random.Default).init();
     mins  := NEW(LineProblemSeq.T).init();
     allMins  := NEW(LineProblemSeq.T).init();
-    cl    := NEW(REF ARRAY OF Closure, nv);
+    cl    := NEW(REF ARRAY OF LineMinimizer.T, nv);
     
     message : TEXT;
     
@@ -180,11 +126,8 @@ PROCEDURE Minimize(p              : LRVector.T;
     rho   := rhobeg;
     iter  := 0;
     
-      FOR i := 0 TO 2 * n - 1 DO
-        cl[i] := NEW(Closure,
-                     c    := NEW(Thread.Condition),
-                     done := TRUE);
-        EVAL Thread.Fork(cl[i])
+    FOR i := 0 TO 2 * n - 1 DO
+      cl[i] := NEW(LineMinimizer.T).init()
     END;
     
     (* allocate some random vectors *)
@@ -205,35 +148,26 @@ PROCEDURE Minimize(p              : LRVector.T;
       
       Debug.Out(F("Robust.m3 : pass %s", Int(pass)));
 
-        (* all cl.done TRUE -- assign the new tasks *)
-        LOCK mu DO <*ASSERT running = 0*> END;
+        <*ASSERT LineMinimizer.Running() = 0*>
         
         FOR i := FIRST(da^) TO LAST(da^) DO
-          pp[i]  := LRVector.Copy(p);
-          LOCK mu DO
-            cl[i].pp := pp[i];
-            cl[i].dir := LRVector.Copy(da[i]);
-            cl[i].func := func;
-            cl[i].rho := rho;
-            cl[i].done := FALSE;
-            Thread.Signal(cl[i].c)
-          END
+
+          pp[i] := LRVector.Copy(p);
+          cl[i].start(pp[i],
+                      LRVector.Copy(da[i]),
+                      func,
+                      rho)
         END;
 
         IF FALSE THEN
-          LOCK mu DO Debug.Out("Robust.m3 : running = " & Int(running)) END;
+          Debug.Out("Robust.m3 : running = " & Int(LineMinimizer.Running())) 
         END;
         
         FOR i := FIRST(da^) TO LAST(da^) DO
-          LOCK mu DO
-            WHILE NOT cl[i].done DO
-              Thread.Wait(mu, cl[i].c);
-            END;
-            lps[i] := cl[i].lps
-          END
+          lps[i] := cl[i].wait()
         END;
-        (* all cl.done TRUE -- all tasks are done *)
-        LOCK mu DO <*ASSERT running = 0*> END;
+        (* all tasks are done *)
+        <*ASSERT LineMinimizer.Running() = 0*>
       
       (* at this point we have the minima in all directions 
          in two orthonormal bases 0..n-1, and n..2*n-1 *)
@@ -367,7 +301,7 @@ PROCEDURE Minimize(p              : LRVector.T;
     END
   END Minimize;
 
-PROCEDURE Predict(s : LRVector.T;
+PROCEDURE Predict(s          : LRVector.T;
                   READONLY d : ARRAY OF LRVector.T) : LRVector.T =
   VAR
     n := NUMBER(s^);
@@ -376,6 +310,9 @@ PROCEDURE Predict(s : LRVector.T;
   BEGIN
     LRMatrix2.ZeroV(sum^);
     FOR i := FIRST(d) TO LAST(d) DO
+      <*ASSERT d[i] # NIL*>
+      <*ASSERT s    # NIL*>
+      <*ASSERT diff # NIL*>
       LRMatrix2.SubV(d[i]^, s^, diff^);
       LRMatrix2.AddV(diff^, sum^, sum^)
     END;
