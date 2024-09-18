@@ -24,6 +24,7 @@ KeyPair ("LRVectorLR", "LRVector", "LongrealType")
 
 Table ("LRVectorLRPairText", "LRVectorLRPair", "Text")
 Module ("LineMinimizer")
+Module ("PointEvaluator")
 
 Array_sort("LineProblem", "LineProblem")
 
