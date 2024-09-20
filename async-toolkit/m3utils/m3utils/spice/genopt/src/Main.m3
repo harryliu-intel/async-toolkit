@@ -197,45 +197,33 @@ PROCEDURE SetNetbatch(to : BOOLEAN) =
   END SetNetbatch;
 
 TYPE
-  BaseEvaluator = LRScalarField.T OBJECT
+  Evaluator = LRScalarFieldPll.T OBJECT
     optVars, paramVars : SchemeObject.T;
 
     results            : LRVectorLRPairTextTbl.T;
     resultsMu          : MUTEX;
 
   METHODS
-    init()                      : LRScalarField.T := InitDummy;
+    init(    optVars, paramVars : SchemeObject.T) : LRScalarField.T := InitPll;
+
+    multiEval(at : LRVector.T; samples : CARDINAL) : MultiEval.Result :=
+        BaseMultiEval;
   OVERRIDES
     eval     := BaseEval;
     evalHint := BaseEvalHint;
   END;
 
-  PllEvaluator = LRScalarFieldPll.T OBJECT
-    base : BaseEvaluator;
-  METHODS
-    init(    optVars, paramVars : SchemeObject.T) : LRScalarField.T := InitPll;
-  END;
-
-PROCEDURE InitDummy(base : BaseEvaluator) : LRScalarField.T =
-  BEGIN
-    RETURN base
-  END InitDummy;
-  
-PROCEDURE InitPll(pll                : PllEvaluator;
+PROCEDURE InitPll(pll                : Evaluator;
                   optVars, paramVars : SchemeObject.T) : LRScalarField.T =
   BEGIN
-    WITH base = NEW(BaseEvaluator,
-                    optVars   := optVars,
-                    paramVars := paramVars,
-                    results   := NEW(LRVectorLRPairTextTbl.Default).init(),
-                    resultsMu := NEW(MUTEX)) DO
-
-      pll.base := base;
-      RETURN LRScalarFieldPll.T.init(pll, base)
-    END
+    pll.optVars := optVars;
+    pll.paramVars := paramVars;
+    pll.results := NEW(LRVectorLRPairTextTbl.Default).init();
+    pll.resultsMu := NEW(MUTEX);
+    RETURN LRScalarFieldPll.T.init(pll, pll)
   END InitPll;
 
-PROCEDURE BaseEvalHint(base : BaseEvaluator; p : LRVector.T) =
+PROCEDURE BaseEvalHint(base : Evaluator; p : LRVector.T) =
   BEGIN
     EVAL base.eval(p)
   END BaseEvalHint;
@@ -251,22 +239,41 @@ PROCEDURE FmtP(p : LRVector.T) : TEXT =
     RETURN Wx.ToText(wx)
   END FmtP;
 
-PROCEDURE BaseEval(base : BaseEvaluator; p : LRVector.T) : LONGREAL =
-  CONST
-    MaxAttempts = 1;
+PROCEDURE BaseEval(base : Evaluator; p : LRVector.T) : LONGREAL =
   BEGIN
-    FOR i := 1 TO MaxAttempts DO
-      TRY
-        RETURN AttemptEval(base, p)
-      EXCEPT
-        ProcUtils.ErrorExit =>
-        (* loop *)
-        IF i # MaxAttempts THEN Thread.Pause(10.0d0) END
+    TRY
+      WITH res = AttemptEval(base, p, 0) DO
+        TYPECASE res OF
+          LRResult(lr) => RETURN lr.res
+        ELSE
+          <*ASSERT FALSE*>
+        END
       END
-    END;
-    Debug.Error("BaseEval : Too many attempts p=" & FmtP(p));
-    RETURN 0.0d0
+    EXCEPT
+    ProcUtils.ErrorExit =>
+      Debug.Error("BaseEval : Too many attempts p=" & FmtP(p));
+      <*ASSERT FALSE*>
+    END
   END BaseEval;
+
+PROCEDURE BaseMultiEval(base    : Evaluator;
+                        p       : LRVector.T;
+                        samples : CARDINAL) : MultiEval.Result =
+  BEGIN
+    TRY
+      WITH res = AttemptEval(base, p, samples) DO
+        TYPECASE res OF
+          StocResult(stoc) => RETURN stoc.res
+        ELSE
+          <*ASSERT FALSE*>
+        END
+      END
+    EXCEPT
+    ProcUtils.ErrorExit =>
+      Debug.Error("BaseMultiEval : Too many attempts p=" & FmtP(p));
+      <*ASSERT FALSE*>
+    END
+  END BaseMultiEval;
 
 PROCEDURE MustOpenWr(pn : Pathname.T) : Wr.T =
   BEGIN
@@ -280,7 +287,16 @@ PROCEDURE MustOpenWr(pn : Pathname.T) : Wr.T =
     END
   END MustOpenWr;
 
-PROCEDURE AttemptEval(base : BaseEvaluator; q : LRVector.T) : LONGREAL
+TYPE
+  EvalResult = BRANDED OBJECT END;
+
+  LRResult = EvalResult OBJECT res : LONGREAL END;
+
+  StocResult = EvalResult OBJECT res : MultiEval.Result END;
+  
+PROCEDURE AttemptEval(base    : Evaluator;
+                      q       : LRVector.T;
+                      samples : CARDINAL) : EvalResult
   RAISES { ProcUtils.ErrorExit } =
 
   PROCEDURE SetNbOpts() =
@@ -304,11 +320,7 @@ PROCEDURE AttemptEval(base : BaseEvaluator; q : LRVector.T) : LONGREAL
         FOR i := FIRST(q^) TO LAST(q^) DO
           p.put(i, q[i])
         END;
-        VAR
-          samples := 0;
-        BEGIN
-          cmd            := scmCb.command(samples)
-        END
+        cmd            := scmCb.command(samples)
       END
     END CopyVectorToScheme;
 
@@ -467,7 +479,7 @@ PROCEDURE AttemptEval(base : BaseEvaluator; q : LRVector.T) : LONGREAL
           Wr.Close(outWr);
           Wr.Close(resWr)
         END;
-        RETURN theResult
+        RETURN NEW(LRResult, res := theResult)
       EXCEPT
         Wr.Failure(x) =>
         Debug.Error(F("I/O error : Wr.Failure : while writing output in %s : %s:",
@@ -480,14 +492,23 @@ PROCEDURE AttemptEval(base : BaseEvaluator; q : LRVector.T) : LONGREAL
 
 TYPE
   MyMultiEval = MultiEval.T OBJECT
+    base : Evaluator;
+  OVERRIDES
+    multiEval := DoMultiEval;
   END;
+
+PROCEDURE DoMultiEval(mme : MyMultiEval;
+                      at  : LRVector.T; samples : CARDINAL) : MultiEval.Result =
+  BEGIN
+    RETURN mme.base.multiEval(at, samples)
+  END DoMultiEval;
   
 PROCEDURE DoIt(optVars, paramVars : SchemeObject.T) =
   VAR
     N               := vseq.size();
     pr : LRVector.T := NEW(LRVector.T, N);
-    evaluator       : PllEvaluator
-                        := NEW(PllEvaluator).init(optVars, paramVars);
+    evaluator       : Evaluator
+                        := NEW(Evaluator).init(optVars, paramVars);
     output : NewUOAs.Output;
   BEGIN
     IF rhoEnd = LAST(LONGREAL) THEN
@@ -519,7 +540,7 @@ PROCEDURE DoIt(optVars, paramVars : SchemeObject.T) =
     |
       Method.StocRobust =>
       output := StocRobust.Minimize(pr,
-                                    NEW(MyMultiEval).init(evaluator),
+                                    NEW(MyMultiEval, base := evaluator).init(evaluator),
                                     rhoBeg,
                                     rhoEnd)
     |
@@ -583,7 +604,7 @@ PROCEDURE DoIt(optVars, paramVars : SchemeObject.T) =
         key := LRVectorLRPair.T { output.x, output.f };
         subdir : TEXT;
       BEGIN
-        IF evaluator.base.results.get(key, subdir) THEN
+        IF evaluator.results.get(key, subdir) THEN
           TRY
             WITH rd = FileRd.Open(subdir & "/" & schemaDataFn),
                  line = Rd.GetLine(rd) DO

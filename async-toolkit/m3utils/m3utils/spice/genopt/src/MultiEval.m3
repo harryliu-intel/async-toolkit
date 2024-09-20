@@ -8,8 +8,9 @@ IMPORT LRScalarField;
 REVEAL
   T = Class.Private BRANDED Brand OBJECT
   OVERRIDES
-    eval := Eval;
+    eval     := Eval;
     evalHint := EvalHint;
+    init     := Init;
   END;
 
 PROCEDURE Init(t : T; base : LRScalarField.T) : T =
