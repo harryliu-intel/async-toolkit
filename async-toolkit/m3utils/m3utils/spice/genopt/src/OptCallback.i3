@@ -2,7 +2,7 @@ INTERFACE OptCallback;
 
 TYPE
   T = OBJECT METHODS
-    command() : TEXT;
+    command(samples : CARDINAL := 0) : TEXT;
   END;
 
 CONST Brand = "OptCallback";

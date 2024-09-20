@@ -5,6 +5,8 @@ IMPORT Thread;
 
 CONST Brand = "PointEvaluator";
 
+(* evaluate a function, in the background, at a specific point *)
+
 TYPE
   T <: Public;
 

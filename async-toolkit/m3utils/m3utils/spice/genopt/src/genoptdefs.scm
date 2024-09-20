@@ -16,7 +16,7 @@
 
 ;; note that last variable gets to be first in the list
 (define (def-optvar nm defval defstep)
-  (let ((defval-x (eval-in-env defval)))
+  (let ((defval-x (eval-in-env 0 defval)))
     (GenOpt.DefOptVar nm defval-x defstep)
     (set! *opt-vars* (cons (list nm defval-x defstep) *opt-vars*))))
 
@@ -88,25 +88,26 @@
               *opt-vars* (get-*x*))))
     (append param-defs opt-defs env-defs)))
         
-(define (eval-in-env cmd)
+(define (eval-in-env samples cmd)
   ;; this expands into the command that we need to run to perform
   ;; the execution part of the evaluation
-  (let ((to-eval (append '(begin) (print-defines) (list cmd))))
+  (let ((to-eval (append '(begin)
+                         `((define *stoc-samples* ,samples))
+                         (print-defines)
+                         (list cmd))))
     (dis "eval-in-env : will eval : " to-eval dnl)
     (eval to-eval)
     ))
 
-(define (expand-command)
+(define (expand-command samples)
   ;; this expands into the command that we need to run to perform
   ;; the execution part of the evaluation
-  (eval-in-env *compute-command*))
-
-(define (run-once) (run-command (expand-command)))
+  (eval-in-env samples *compute-command*))
 
 (define (make-cb-obj)
   ;; this is the callback through which the Modula code gets the
   ;; command to run to perform an evaluation
-  (let* ((func (lambda(*unused*)(expand-command)))
+  (let* ((func (lambda(*unused* samples)(expand-command samples)))
          (cb-obj (new-modula-object 'OptCallback.T `(command . ,func))))
     cb-obj))
 

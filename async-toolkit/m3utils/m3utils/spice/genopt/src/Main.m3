@@ -44,12 +44,14 @@ IMPORT SchemeEnvironment;
 IMPORT SchemeString;
 IMPORT SchemeBoolean;
 IMPORT Robust;
+IMPORT StocRobust;
 IMPORT LRVectorLRPair;
 IMPORT LRVectorLRPairTextTbl;
 IMPORT FileRd;
 IMPORT Scan;
 IMPORT FloatMode, Lex;
 IMPORT SchemePair;
+IMPORT MultiEval;
 
 <*FATAL Thread.Alerted*>
 
@@ -293,10 +295,20 @@ PROCEDURE AttemptEval(base : BaseEvaluator; q : LRVector.T) : LONGREAL
   PROCEDURE CopyVectorToScheme() =
     BEGIN
       LOCK pMu DO
+
+        (* 
+           only one copy can be in this section at any given time, since
+           pMu is global 
+        *)
+        
         FOR i := FIRST(q^) TO LAST(q^) DO
           p.put(i, q[i])
         END;
-        cmd            := scmCb.command()
+        VAR
+          samples := 0;
+        BEGIN
+          cmd            := scmCb.command(samples)
+        END
       END
     END CopyVectorToScheme;
 
@@ -411,7 +423,6 @@ PROCEDURE AttemptEval(base : BaseEvaluator; q : LRVector.T) : LONGREAL
     TRY
       TRY
         TRY
-          
           theResult := RunCommand();
         WITH wr = MustOpenWr(subdirPath & "/opt.ok") DO
           Wr.Close(wr)
@@ -466,6 +477,10 @@ PROCEDURE AttemptEval(base : BaseEvaluator; q : LRVector.T) : LONGREAL
       END
     END
   END AttemptEval;
+
+TYPE
+  MyMultiEval = MultiEval.T OBJECT
+  END;
   
 PROCEDURE DoIt(optVars, paramVars : SchemeObject.T) =
   VAR
@@ -501,6 +516,12 @@ PROCEDURE DoIt(optVars, paramVars : SchemeObject.T) =
                                 evaluator,
                                 rhoBeg,
                                 rhoEnd)
+    |
+      Method.StocRobust =>
+      output := StocRobust.Minimize(pr,
+                                    NEW(MyMultiEval).init(evaluator),
+                                    rhoBeg,
+                                    rhoEnd)
     |
       Method.NewUOA => <*ASSERT FALSE*>
     END;
@@ -708,9 +729,11 @@ PROCEDURE SchemaReadResult(schemaPath ,
         Debug.Out("SchemaReadResult : formulas evaluated");
 
         WITH T2S = SchemeSymbol.FromText,
-             scmCode = SchemeUtils.List2(
-                            T2S("eval-in-env"),
-                            SchemeUtils.List2(T2S("quote"), schemaEval)),
+             L2S = SchemeLongReal.FromLR,
+             scmCode = SchemeUtils.List3(
+                           T2S("eval-in-env"),
+                           L2S(0.0d0),
+                           SchemeUtils.List2(T2S("quote"), schemaEval)),
              schemaRes = schemaScm.evalInGlobalEnv(scmCode) DO
           Debug.Out("schema eval returned " & SchemeUtils.Stringify(schemaRes));
           RETURN SchemeLongReal.FromO(schemaRes)

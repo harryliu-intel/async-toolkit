@@ -49,7 +49,7 @@ PROCEDURE SetOptFailureResult(res : LONGREAL);
 PROCEDURE GetOptFailureResult() : LONGREAL;
 
 TYPE
-  Method = { NewUOAs, Robust, NewUOA };
+  Method = { NewUOAs, Robust, NewUOA, StocRobust };
 
 PROCEDURE SetMethod(method : Method);
 
