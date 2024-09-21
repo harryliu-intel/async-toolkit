@@ -25,9 +25,15 @@ IMPORT LineProblemSeq;
 IMPORT LineProblemArraySort;
 IMPORT LRScalarFieldPll;
 IMPORT LongRealSeq AS LRSeq;
-FROM GenOpt IMPORT rho, iter;
+FROM GenOpt IMPORT rho, iter, FmtP;
 IMPORT LineMinimizer;
 IMPORT MultiEval, MultiEvalClass;
+IMPORT LRVectorSet, LRVectorSetDef;
+IMPORT LRVectorMRTbl;
+IMPORT PointEvaluatorSeq;
+IMPORT PointMetric;
+IMPORT PointMetricArraySort;
+IMPORT Wx;
 
 CONST LR = LongReal;
 
@@ -49,7 +55,7 @@ PROCEDURE GetFHist(seq : LineProblemSeq.T) : LRSeq.T =
     END;
     RETURN res
   END GetFHist;
-  
+
 PROCEDURE FindBest(seq         : LineProblemSeq.T;
                    VAR bestval : LONGREAL;
                    VAR bestp   : LRVector.T) =
@@ -69,23 +75,117 @@ PROCEDURE FindBest(seq         : LineProblemSeq.T;
   END FindBest;
 
 (* parallel evaluation code follows *)
+
+TYPE
+  MultiEvaluator = LRScalarField.Default OBJECT
+    (* using Default instead of T turns on evalHint *)
+    base    : MultiEval.T;
+    samples : CARDINAL;
+    sigmaK  : LONGREAL;
+    values  : LRVectorMRTbl.T;
+    thisCyc : LRVectorSet.T;
+  OVERRIDES
+    eval     := MEEval;
+  END;
+
+PROCEDURE MEEval(me      : MultiEvaluator;
+                 p       : LRVector.T) : LONGREAL =
+  VAR
+    res := me.base.multiEval(p, me.samples);
+    oldres : MultiEval.Result;
+  BEGIN
+
+    WITH new     = NOT me.thisCyc.member(p),
+         haveOld = me.values.get(p, oldres) DO
+
+      IF new THEN
+        IF haveOld THEN
+          res := MultiEval.Combine(res, oldres)
+        END;
+        EVAL me.values.put(p, res)
+      ELSIF haveOld THEN
+        (* use the old data if it's got more samples *)
+        IF oldres.n > res.n THEN res := oldres END
+      END;
+    END;
+
+    (* here we have the best possible estimate in res , and we have updated
+       the database *)
+
+    WITH mean   = MultiEval.Mean(res),
+         sdev   = MultiEval.Sdev(res),
+         retval = mean + me.sigmaK * sdev DO
+      Debug.Out(F("StocRobust.MEEval : mean=%s sigmaK=%s sdev=%s -> retval=%s",
+                  LR(mean), LR(me.sigmaK), LR(sdev), LR(retval)));
+      RETURN retval
+    END
+  END MEEval;
+
+PROCEDURE ResMetric(READONLY r : MultiEval.Result; sigmaK : LONGREAL) : LONGREAL =
+  BEGIN
+    WITH mean   = MultiEval.Mean(r),
+         sdev   = MultiEval.Sdev(r),
+         retval = mean + sigmaK * sdev DO
+      RETURN retval
+    END
+  END ResMetric;
+  
+PROCEDURE MultiEvaluate(func    : MultiEval.T;
+                        samples : CARDINAL;
+                        sigmaK  : LONGREAL;
+                        values  : LRVectorMRTbl.T;
+                        thisCyc : LRVectorSet.T) : LRScalarField.T =
+  BEGIN
+    WITH me = NEW(MultiEvaluator,
+                  hintsByForking := TRUE,
+                  base           := func,
+                  samples        := samples,
+                  sigmaK         := sigmaK,
+                  values         := values,
+                  thisCyc        := thisCyc) DO
+      RETURN me
+    END
+  END MultiEvaluate;
+
+(* 
+   we maintain a database of evaluations, both of means and 
+   variances (so really of counts, sums, and sum-of-squares)
+
+   Since there is memoization within a single iteration (or "pass" as it
+   is named below) we only update this database ONCE for each point
+   per iteration. 
+
+   If a given point has been updated on an iteration, we in other words,
+   do not update that point again on this iteration.
+
+   When we ask for the value at a given point, we return the value
+   from the database, not from the most recent evaluation.
+*)
+
+PROCEDURE Vdist(a, b : LRVector.T) : LONGREAL =
+  BEGIN
+    RETURN Math.sqrt(LRMatrix2.SumDiffSqV(a^, b^))
+  END Vdist;
   
 PROCEDURE Minimize(p              : LRVector.T;
                    func           : MultiEval.T;
-                   rhobeg, rhoend : LONGREAL) : Output =
+                   rhobeg, rhoend : LONGREAL;
+                   sigmaK         : LONGREAL) : Output =
   VAR
-    n     := NUMBER(p^);
-    nv    := 2 * n;
-    da    := NEW(REF ARRAY OF LRVector.T, nv);
-    pp    := NEW(REF ARRAY OF LRVector.T, nv);
-    lps   := NEW(REF ARRAY OF LineProblem.T, nv);
-    rand  := NEW(Random.Default).init();
-    mins  := NEW(LineProblemSeq.T).init();
+    n        := NUMBER(p^);
+    nv       := 2 * n;
+    da       := NEW(REF ARRAY OF LRVector.T, nv);
+    pp       := NEW(REF ARRAY OF LRVector.T, nv);
+    lps      := NEW(REF ARRAY OF LineProblem.T, nv);
+    rand     := NEW(Random.Default).init();
+    mins     := NEW(LineProblemSeq.T).init();
     allMins  := NEW(LineProblemSeq.T).init();
-    cl    := NEW(REF ARRAY OF LineMinimizer.T, nv);
+    cl       := NEW(REF ARRAY OF LineMinimizer.T, nv);
     
-    message : TEXT;
-    
+    message  : TEXT;
+    thisCyc  : LRVectorSet.T;
+    values   := NEW(LRVectorMRTbl.Default).init();
+    peSeq    := NEW(PointEvaluatorSeq.T).init();
   BEGIN
     rho   := rhobeg;
     iter  := 0;
@@ -109,36 +209,40 @@ PROCEDURE Minimize(p              : LRVector.T;
     FOR pass := 0 TO 100 * n - 1 DO
 
       (*******************  MAIN MINIMIZATION ITERATION  *******************)
+
+      thisCyc := NEW(LRVectorSetDef.T).init();
       
-      Debug.Out(F("Robust.m3 : pass %s", Int(pass)));
+      Debug.Out(F("Robust.Minimize : pass %s; database has %s points",
+                  Int(pass), Int(values.size())));
+      Debug.Out(F("Robust.Minimize : rho=%s [rhoend=%s]", LR(rho), LR(rhoend)));
 
-        <*ASSERT LineMinimizer.Running() = 0*>
+      <*ASSERT LineMinimizer.Running() = 0*>
         
-        FOR i := FIRST(da^) TO LAST(da^) DO
-
-          pp[i] := LRVector.Copy(p);
-          cl[i].start(pp[i],
-                      LRVector.Copy(da[i]),
-                      
-                      func,
-
-                      (* how the HECK do we get the samples to Main? *)
-                      (* I think we need to expose extra fields in 
-                         PllEvaluator in Main and share it with this
-                         module, then we can pass samples that way ... *)
-                      
-                      rho)
-        END;
+      FOR i := FIRST(da^) TO LAST(da^) DO
         
-        IF FALSE THEN
-          Debug.Out("Robust.m3 : running = " & Int(LineMinimizer.Running())) 
-        END;
-        
-        FOR i := FIRST(da^) TO LAST(da^) DO
-          lps[i] := cl[i].wait()
-        END;
-        (* all tasks are done *)
-        <*ASSERT LineMinimizer.Running() = 0*>
+        pp[i] := LRVector.Copy(p);
+        cl[i].start(pp[i],
+                    LRVector.Copy(da[i]),
+                    
+                    MultiEvaluate(func, 10, sigmaK, values, thisCyc),
+                    
+                    (* how the HECK do we get the samples to Main? *)
+                    (* I think we need to expose extra fields in 
+                       PllEvaluator in Main and share it with this
+                       module, then we can pass samples that way ... *)
+                    
+                    rho)
+      END;
+      
+      IF FALSE THEN
+        Debug.Out("Robust.m3 : running = " & Int(LineMinimizer.Running())) 
+      END;
+      
+      FOR i := FIRST(da^) TO LAST(da^) DO
+        lps[i] := cl[i].wait()
+      END;
+      (* all tasks are done *)
+      <*ASSERT LineMinimizer.Running() = 0*>
       
       (* at this point we have the minima in all directions 
          in two orthonormal bases 0..n-1, and n..2*n-1 *)
@@ -150,6 +254,42 @@ PROCEDURE Minimize(p              : LRVector.T;
          Because we are using two orthonormal bases, we get two
          opt points.
       *)
+
+      VAR
+        parr := NEW(REF ARRAY OF PointMetric.T, values.size());
+        iter := values.iterate();
+        q : LRVector.T;
+        r : MultiEval.Result;
+        i := 0;
+      BEGIN
+        (* populate the array *)
+
+        WHILE iter.next(q, r) DO
+          WITH metric = ResMetric(r, sigmaK) DO
+            parr[i] := PointMetric.T { metric, q, r };
+            INC(i)
+          END
+        END;
+        PointMetricArraySort.Sort(parr^);
+
+        WITH wx = Wx.New() DO
+          Wx.PutText(wx, "==== StocRobust leaderboard ====\n");
+          Wx.PutText(wx, F("rho = %s ; p = %s\n", LR(rho), FmtP(p)));
+          FOR i := FIRST(parr^) TO LAST(parr^) DO
+            WITH rec  = parr[i],
+                 dist = Vdist(rec.p, p) DO
+              Wx.PutText(wx, F("metric %s ; dist %s; result %s ; rec.p %s\n",
+                               LR(rec.metric),
+                               LR(dist),
+                               MultiEval.Format(rec.result),
+                               FmtP(rec.p)))
+            END
+          END;
+          Debug.Out(Wx.ToText(wx))
+        END
+
+      END;
+      
       
       WITH newp = lps[0].minp^,
            opt0 = Predict(p, SUBARRAY(pp^, 0, n)),

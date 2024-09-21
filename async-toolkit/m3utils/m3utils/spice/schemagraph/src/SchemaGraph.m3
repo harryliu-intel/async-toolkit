@@ -192,32 +192,44 @@ PROCEDURE ReadData(schema : Schema.T; files : TextSeq.T) : RefSeq.T
     res := NEW(RefSeq.T).init();
   BEGIN
     FOR i := 0 TO files.size() - 1 DO
-      WITH nm = files.get(i) DO
-        WITH rd     = FileRd.Open(nm),
-             line   = Rd.GetLine(rd),
-             reader = NEW(TextReader.T).init(line),
-             data   = NEW(TextSeq.T).init() DO
+      WITH nm = files.get(i),
+           rd = FileRd.Open(nm) DO
 
-          VAR
-            p := reader.shatter(",", "", skipNulls := FALSE);
-          BEGIN
-            WHILE p # NIL DO
-              data.addhi(p.head);
-              p := p.tail
-            END;
-            IF data.size() # schema.dfields THEN
-              Debug.Warning(F("Schema has %s data fields, data in \"%s\" has %s",
-                              Int(schema.dfields),
-                              nm,
-                              Int(data.size())))
+        Debug.Out("SchemaGraph.ReadData: opening " & nm);
+        TRY
+          LOOP
+            WITH
+              line   = Rd.GetLine(rd),
+              reader = NEW(TextReader.T).init(line),
+              data   = NEW(TextSeq.T).init()
+             DO
+              
+              VAR
+                p := reader.shatter(",", "", skipNulls := FALSE);
+              BEGIN
+                WHILE p # NIL DO
+                  data.addhi(p.head);
+                  p := p.tail
+                END;
+                IF data.size() # schema.dfields THEN
+                  Debug.Warning(F("Schema has %s data fields, data in \"%s\" has %s",
+                                  Int(schema.dfields),
+                                  nm,
+                                  Int(data.size())))
+                END
+              END;
+              res.addhi(data)
             END
-          END;
-          res.addhi(data);
-          Rd.Close(rd)
-        END
-      END
-    END;
-    Debug.Out(F("Loaded data from %s files", Int(files.size())));
+          END
+        EXCEPT
+          Rd.EndOfFile => (* skip *)
+        END;
+        Rd.Close(rd)
+      END (* HTIW *)
+    END (* ROF *);
+    Debug.Out(F("SchemaGraph.ReadData: Loaded %s data from %s files",
+                Int(res.size()),
+                Int(files.size())));
     RETURN res
   END ReadData;
 
@@ -265,13 +277,16 @@ PROCEDURE EvalFormula(scm     : Scheme.T;
     END
   END EvalFormula;
   
-PROCEDURE EvalFormulas(scm : Scheme.T; schema : Schema.T; data : RefSeq.T) =
+PROCEDURE EvalFormulas(scm : Scheme.T; schema : Schema.T; data : RefSeq.T;
+                       postEval : Callback) =
   TYPE
     FT = Field.T;
   VAR
     val : TEXT;
   BEGIN
     FOR i := 0 TO data.size() - 1 DO
+      Debug.Out("SchemaGraph.EvalFormulas i=" & Int(i));
+      
       WITH row     = NARROW(data.get(i), TextSeq.T),
            symtabN = NEW(TextLRTbl.Default).init(),
            symtabS = NEW(TextTextTbl.Default).init() DO
@@ -332,11 +347,14 @@ PROCEDURE EvalFormulas(scm : Scheme.T; schema : Schema.T; data : RefSeq.T) =
                 Lex.Error, FloatMode.Trap => (* skip *)
               END
             END
-            
           END
         END
+      END;
+
+      IF postEval # NIL THEN
+        postEval.next()
       END
-    END
+    END(* ROF *)
   END EvalFormulas;
     
 PROCEDURE DoOneSweep(targDir  : Pathname.T;

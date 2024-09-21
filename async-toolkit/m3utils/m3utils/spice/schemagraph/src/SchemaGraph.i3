@@ -12,8 +12,18 @@ PROCEDURE ReadSchema(spn : Pathname.T) : Schema.T
 PROCEDURE ReadData(schema : Schema.T; files : TextSeq.T) : RefSeq.T
   RAISES { OSError.E, Rd.Failure, Rd.EndOfFile };
 
-PROCEDURE EvalFormulas(scm : Scheme.T; schema : Schema.T; data : RefSeq.T)
+PROCEDURE EvalFormulas(scm      : Scheme.T;
+                       schema   : Schema.T;
+                       data     : RefSeq.T;
+                       postEval : Callback := NIL)
   RAISES { Scheme.E };
+  (* if postEval is non-NIL, postEval.next() will be called after
+     each data line has been processed (and before the next) *)
+
+TYPE
+  Callback = OBJECT METHODS
+    next();
+  END;
 
 PROCEDURE DoSweeps(targDir : Pathname.T; schema : Schema.T; data : RefSeq.T; doLabels : BOOLEAN);
 

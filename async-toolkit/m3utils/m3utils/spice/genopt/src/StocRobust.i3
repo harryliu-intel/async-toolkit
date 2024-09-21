@@ -10,7 +10,8 @@ IMPORT MultiEval;
 
 PROCEDURE Minimize(p              : LRVector.T;
                    func           : MultiEval.T;
-                   rhobeg, rhoend : LONGREAL (* same as Powell *)) : Output;
+                   rhobeg, rhoend : LONGREAL (* same as Powell *);
+                   sigmaK         : LONGREAL) : Output;
 
 CONST Brand = "StocRobust";
 

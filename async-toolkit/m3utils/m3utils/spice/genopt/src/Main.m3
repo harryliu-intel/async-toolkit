@@ -16,6 +16,7 @@ IMPORT OSError;
 IMPORT Scheme, SchemeM3;
 IMPORT FS;
 FROM SchemaGraph IMPORT ReadSchema, ReadData, EvalFormulas;
+IMPORT SchemaGraph;
 IMPORT Wr;
 IMPORT Env;
 IMPORT SchemeStubs;
@@ -32,7 +33,7 @@ IMPORT OptVar;
 IMPORT OptVarSeq;
 IMPORT Wx;
 IMPORT SchemeSymbol;
-IMPORT LongRealSeq;
+IMPORT LongRealSeq AS LRSeq;
 IMPORT OptCallback;
 IMPORT Process;
 IMPORT AL;
@@ -102,7 +103,7 @@ PROCEDURE GetMethod() : Method = BEGIN RETURN method END GetMethod;
   
 VAR
   pMu := NEW(MUTEX);
-  p : LongRealSeq.T;
+  p : LRSeq.T;
 
 PROCEDURE SetOptFailureIsError() =
   BEGIN
@@ -124,7 +125,7 @@ PROCEDURE OptInit() =
     vseq   := NEW(OptVarSeq.T).init();
     rhoBeg := FIRST(LONGREAL);
     rhoEnd := LAST(LONGREAL);
-    p      := NEW(LongRealSeq.T).init();
+    p      := NEW(LRSeq.T).init();
     schemaPath := NIL;
     schemaScmPaths := NEW(TextSeq.T).init();
     schemaDataFn := NIL;
@@ -181,7 +182,7 @@ PROCEDURE GetIter() : CARDINAL =
     RETURN iter
   END GetIter;
 
-PROCEDURE GetCoords() : LongRealSeq.T =
+PROCEDURE GetCoords() : LRSeq.T =
   BEGIN
     RETURN p
   END GetCoords;
@@ -195,6 +196,16 @@ PROCEDURE SetNetbatch(to : BOOLEAN) =
   BEGIN
     doNetbatch := to
   END SetNetbatch;
+
+PROCEDURE SetSigmaK(to : LONGREAL) =
+  BEGIN
+    sigmaK := to
+  END SetSigmaK;
+
+PROCEDURE GetSigmaK() : LONGREAL =
+  BEGIN
+    RETURN sigmaK
+  END GetSigmaK;
 
 TYPE
   Evaluator = LRScalarFieldPll.T OBJECT
@@ -216,9 +227,9 @@ TYPE
 PROCEDURE InitPll(pll                : Evaluator;
                   optVars, paramVars : SchemeObject.T) : LRScalarField.T =
   BEGIN
-    pll.optVars := optVars;
+    pll.optVars   := optVars;
     pll.paramVars := paramVars;
-    pll.results := NEW(LRVectorLRPairTextTbl.Default).init();
+    pll.results   := NEW(LRVectorLRPairTextTbl.Default).init();
     pll.resultsMu := NEW(MUTEX);
     RETURN LRScalarFieldPll.T.init(pll, pll)
   END InitPll;
@@ -260,6 +271,8 @@ PROCEDURE BaseMultiEval(base    : Evaluator;
                         p       : LRVector.T;
                         samples : CARDINAL) : MultiEval.Result =
   BEGIN
+    Debug.Out("BaseMultiEval : samples " & Int(samples));
+    
     TRY
       WITH res = AttemptEval(base, p, samples) DO
         TYPECASE res OF
@@ -310,6 +323,10 @@ PROCEDURE AttemptEval(base    : Evaluator;
 
   PROCEDURE CopyVectorToScheme() =
     BEGIN
+      Debug.Out(F("CopyVectorToScheme : p=%s samples=%s",
+                  FmtP(q),
+                  Int(samples)));
+      
       LOCK pMu DO
 
         (* 
@@ -381,7 +398,7 @@ PROCEDURE AttemptEval(base    : Evaluator;
       END
     END SetupDirectory;
 
-  PROCEDURE RunCommand() : LONGREAL
+  PROCEDURE RunCommand() : LRSeq.T 
     RAISES { ProcUtils.ErrorExit } =
     BEGIN
       Debug.Out(F("BaseEval : q = %s\nrunning : %s", FmtP(q), cmd));
@@ -391,7 +408,6 @@ PROCEDURE AttemptEval(base    : Evaluator;
       
       Debug.Out("BaseEval : ran command");
       
-      
       (* read the schema *)
       WITH dataPath  = subdirPath & "/" & schemaDataFn,
            schemaRes = SchemaReadResult(schemaPath,
@@ -400,10 +416,11 @@ PROCEDURE AttemptEval(base    : Evaluator;
                                         schemaEval,
                                         base.optVars,
                                         base.paramVars) DO
-        Debug.Out("Schema-processed result : " & LongReal(schemaRes));
+        Debug.Out("Schema-processed result : " & FmtLRSeq(schemaRes));
         LOCK base.resultsMu DO
+          (* this will just get the first value......... *)
           EVAL base.results.put(LRVectorLRPair.T { LRVector.Copy(q),
-                                                   schemaRes } ,
+                                                   schemaRes.get(0)} ,
                                                    subdirPath )
         END;
         RETURN schemaRes
@@ -425,7 +442,7 @@ PROCEDURE AttemptEval(base    : Evaluator;
     cmd        : TEXT;
     cm         : ProcUtils.Completion;
 
-    theResult  : LONGREAL;
+    theResult  : LRSeq.T;
   BEGIN
 
     SetNbOpts();
@@ -457,7 +474,7 @@ PROCEDURE AttemptEval(base    : Evaluator;
               RAISE ProcUtils.ErrorExit(err)
             ELSE
               Debug.Out("Returning outOfDomainResult : " & LongReal(outOfDomainResult));
-              theResult := outOfDomainResult
+              theResult := LRSeq1(outOfDomainResult)
             END
           END
         END
@@ -474,12 +491,17 @@ PROCEDURE AttemptEval(base    : Evaluator;
              resWr = MustOpenWr(subdirPath & "/opt.result") DO
           Wr.PutText(errWr, TextWr.ToText(Ewr));
           Wr.PutText(outWr, TextWr.ToText(Owr));
-          Wr.PutText(resWr, LongReal(theResult) & "\n");
+          Wr.PutText(resWr, FmtLRSeq(theResult) & "\n");
           Wr.Close(errWr);
           Wr.Close(outWr);
           Wr.Close(resWr)
         END;
-        RETURN NEW(LRResult, res := theResult)
+        IF samples = 0 THEN
+          <*ASSERT theResult.size() = 1 *>
+          RETURN NEW(LRResult, res := theResult.get(0))
+        ELSE
+          RETURN NEW(StocResult, res := SeqToMulti(theResult))
+        END
       EXCEPT
         Wr.Failure(x) =>
         Debug.Error(F("I/O error : Wr.Failure : while writing output in %s : %s:",
@@ -490,6 +512,42 @@ PROCEDURE AttemptEval(base    : Evaluator;
     END
   END AttemptEval;
 
+PROCEDURE SeqToMulti(seq : LRSeq.T) : MultiEval.Result =
+  VAR
+    s, ss := 0.0d0;
+    n := seq.size();
+    nf := FLOAT(n, LONGREAL);
+  BEGIN
+    FOR i := 0 TO seq.size() - 1 DO
+      WITH x = seq.get(i) DO
+        s := s + x;
+        ss := ss + x * x
+      END
+    END;
+
+    RETURN MultiEval.Result { n    := n,
+                              sum := s,
+                              sumsq := ss }
+  END SeqToMulti;
+
+PROCEDURE LRSeq1(x : LONGREAL) : LRSeq.T =
+  BEGIN
+    WITH res = NEW(LRSeq.T).init() DO
+      res.addhi(x);
+      RETURN res
+    END
+  END LRSeq1;
+
+PROCEDURE FmtLRSeq(seq : LRSeq.T) : TEXT =
+  VAR
+    res := "";
+  BEGIN
+    FOR i := 0 TO seq.size() - 1 DO
+      res := res & LongReal(seq.get(i)) & " "
+    END;
+    RETURN res
+  END FmtLRSeq;
+  
 TYPE
   MyMultiEval = MultiEval.T OBJECT
     base : Evaluator;
@@ -497,8 +555,9 @@ TYPE
     multiEval := DoMultiEval;
   END;
 
-PROCEDURE DoMultiEval(mme : MyMultiEval;
-                      at  : LRVector.T; samples : CARDINAL) : MultiEval.Result =
+PROCEDURE DoMultiEval(mme     : MyMultiEval;
+                      at      : LRVector.T;
+                      samples : CARDINAL) : MultiEval.Result =
   BEGIN
     RETURN mme.base.multiEval(at, samples)
   END DoMultiEval;
@@ -542,7 +601,8 @@ PROCEDURE DoIt(optVars, paramVars : SchemeObject.T) =
       output := StocRobust.Minimize(pr,
                                     NEW(MyMultiEval, base := evaluator).init(evaluator),
                                     rhoBeg,
-                                    rhoEnd)
+                                    rhoEnd,
+                                    sigmaK)
     |
       Method.NewUOA => <*ASSERT FALSE*>
     END;
@@ -653,9 +713,9 @@ PROCEDURE NextIdx() : CARDINAL =
   END NextIdx;
   
 PROCEDURE SchemaReadResult(schemaPath ,
-                           dataPath : Pathname.T;
-                           scmFiles : TextSeq.T;
-                           schemaEval, optVars, paramVars : SchemeObject.T) : LONGREAL =
+                           dataPath                       : Pathname.T;
+                           scmFiles                       : TextSeq.T;
+                           schemaEval, optVars, paramVars : SchemeObject.T) : LRSeq.T =
   (* code from the schemaeval program *)
   VAR
     dataFiles := NEW(TextSeq.T).init();
@@ -680,9 +740,7 @@ PROCEDURE SchemaReadResult(schemaPath ,
     END;
 
     TRY
-    WITH T2S = SchemeSymbol.FromText,
-         L2S = SchemeLongReal.FromLR,
-         optVarsNm = T2S("*opt-vars*"),
+    WITH optVarsNm = T2S("*opt-vars*"),
          paramVarsNm = T2S("*param-vars*") DO
       FOR i := 0 TO vseq.size() - 1 DO
         WITH v  = vseq.get(i),
@@ -740,37 +798,55 @@ PROCEDURE SchemaReadResult(schemaPath ,
     
     TRY
       WITH schema = ReadSchema(schemaPath),
-           data   = ReadData(schema, dataFiles) DO
+           data   = ReadData(schema, dataFiles),
+           cb     = NEW(SGCallback,
+                        schemaScm := schemaScm,
+                        results := NEW(LRSeq.T).init()) DO
         Debug.Out("SchemaReadResult : schema and data loaded");
 
         (* there is where the schema formulas are evaluated
            and we haven't yet loaded the parameters! *)
-        EvalFormulas(schemaScm, schema, data);
+        EvalFormulas(schemaScm, schema, data, cb);
 
-        Debug.Out("SchemaReadResult : formulas evaluated");
+        Debug.Out("SchemaReadResult : formulas evaluated data.size()=" &
+          Int(data.size()));
 
-        WITH T2S = SchemeSymbol.FromText,
-             L2S = SchemeLongReal.FromLR,
-             scmCode = SchemeUtils.List3(
-                           T2S("eval-in-env"),
-                           L2S(0.0d0),
-                           SchemeUtils.List2(T2S("quote"), schemaEval)),
-             schemaRes = schemaScm.evalInGlobalEnv(scmCode) DO
-          Debug.Out("schema eval returned " & SchemeUtils.Stringify(schemaRes));
-          RETURN SchemeLongReal.FromO(schemaRes)
-        END
+        RETURN cb.results
       END
     EXCEPT
       OSError.E, Rd.Failure =>
       Debug.Warning("Caught system error reading schema/data.  Returning failure.");
-      RETURN outOfDomainResult
+      RETURN LRSeq1(outOfDomainResult)
     |
       Scheme.E(x) =>
       Debug.Warning("?error in Scheme interpreter : " & x);
-      RETURN outOfDomainResult (* hmm dunno if that is right *)
+      RETURN LRSeq1(outOfDomainResult) (* hmm dunno if that is right *)
     END
   END SchemaReadResult;
+
+TYPE
+  SGCallback = SchemaGraph.Callback OBJECT
+    schemaScm : Scheme.T;
+    results : LRSeq.T;
+  OVERRIDES
+    next := SGCNext;
+  END;
+
+PROCEDURE SGCNext(cb : SGCallback) =
+  BEGIN
+    WITH scmCode = SchemeUtils.List3(
+                       T2S("eval-in-env"),
+                       L2S(0.0d0),
+                       SchemeUtils.List2(T2S("quote"), schemaEval)),
+         schemaRes = cb.schemaScm.evalInGlobalEnv(scmCode) DO
+      Debug.Out("schema eval returned " & SchemeUtils.Stringify(schemaRes));
+      cb.results.addhi( SchemeLongReal.FromO(schemaRes) )
+    END
+  END SGCNext;
   
+CONST T2S = SchemeSymbol.FromText;
+      L2S = SchemeLongReal.FromLR;
+             
 VAR
   pp                        := NEW(ParseParams.T).init(Stdio.stderr);
   scm           : Scheme.T;
@@ -781,6 +857,7 @@ VAR
   interactive : BOOLEAN;
   cfgFile : Pathname.T;
   genOptScm : Pathname.T;
+  sigmaK := 0.0d0;
   
 BEGIN
   Debug.SetOptions(SET OF Debug.Options { Debug.Options.PrintThreadID } );
@@ -799,6 +876,11 @@ BEGIN
     IF pp.keywordPresent("-m3utils") THEN
       M3Utils                   := pp.getNext()
     END;
+
+    IF pp.keywordPresent("-sigmaK") THEN
+      sigmaK := pp.getNextLongReal()
+    END;
+    
     IF M3Utils = NIL THEN
       Debug.Error("? must specify M3UTILS---either on command line or in environment.")
     END;

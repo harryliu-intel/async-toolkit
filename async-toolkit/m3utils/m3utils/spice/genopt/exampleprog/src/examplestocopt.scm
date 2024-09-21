@@ -17,9 +17,10 @@
 (def-paramvar 'temp   0)
 (def-paramvar 'lib    "i0s")
 (def-paramvar 'thresh "ulvt")
-(def-paramvar 'sweeps 1)
+;;(def-paramvar 'sweeps 3)
 (def-paramvar 'stages 11)
 (def-paramvar 'step   1e-9)
+(def-paramvar 'sdev   0.1)
 
 
 ;; the following are the optimization variables
@@ -32,7 +33,9 @@
 ;; failure to eval result
 (GenOpt.SetOptFailureResult 1e200)
 
-(GenOpt.SetMethod 'Robust)
+(GenOpt.SetMethod 'StocRobust)
+
+(GenOpt.SetSigmaK 5.3)
 
 ;; NewUOAs configuration variables
 (def-rhobeg 1)    ;; starting step size in terms of significant delta
@@ -52,13 +55,14 @@
                   " -temp "   temp
                   " -lib "    lib
                   " -thresh " thresh
-                  " -sweeps " sweeps
+                  " -sweeps " *stoc-samples*
                   " -cscale 1.0"
                   " -delp "   delp
                   " -deln "   deln
                   " -modleaves true"
                   " -stages " stages
                   " -step "   step
+                  " -sdev "   sdev
                   " -p pre -p sim -p conv -p clean -p post"))
 
 

@@ -5,6 +5,7 @@ IMPORT LongRealSeq;
 IMPORT SchemeObject;
 IMPORT Pathname;
 IMPORT TextTextTbl;
+IMPORT LRVector;
 
 PROCEDURE DefOptVar(nm : SchemeSymbol.T; defval, defstep : LONGREAL);
 
@@ -48,6 +49,11 @@ PROCEDURE SetOptFailureResult(res : LONGREAL);
 
 PROCEDURE GetOptFailureResult() : LONGREAL;
 
+  (* sigmaK is for StocRobust minimization ... *)
+PROCEDURE SetSigmaK(to : LONGREAL);
+
+PROCEDURE GetSigmaK() : LONGREAL;
+  
 TYPE
   Method = { NewUOAs, Robust, NewUOA, StocRobust };
 
@@ -55,6 +61,8 @@ PROCEDURE SetMethod(method : Method);
 
 PROCEDURE GetMethod() : Method;
 
+PROCEDURE FmtP(p : LRVector.T) : TEXT;
+  
 CONST Brand = "GenOpt";
 
 VAR rho  : LONGREAL;

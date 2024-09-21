@@ -24,6 +24,10 @@ VAR
   val : LONGREAL;
   method : [0..1] := 1;
   
+  rand := NEW(Random.Default).init();
+  samples : CARDINAL;
+  sdev := 1.0d0;
+  
 BEGIN
   TRY
     IF pp.keywordPresent("-temp") THEN
@@ -37,7 +41,13 @@ BEGIN
     END; 
     IF pp.keywordPresent("-deln") THEN
       deln := pp.getNextLongReal()
-    END; 
+    END;
+    IF pp.keywordPresent("-sdev") THEN
+      sdev := pp.getNextLongReal()
+    END;
+    IF pp.keywordPresent("-sweeps") THEN
+      samples := MAX(1, pp.getNextInt())
+    END
   EXCEPT
     ParseParams.Error => Debug.Error("Can't parse command-line parameters\nUsage: " & Params.Get(0) & " " & Usage)
   END;
@@ -77,14 +87,8 @@ BEGIN
 
          xyfactor = (dx * dx + dy * dy + 1.0d0),
 
-         func = rfactor * zfactor * xyfactor,
-
-         (* add some noise! *)
-         rand = NEW(Random.Default).init(),
-         err = NormalDeviate.Get(rand, 0.0d0, 0.1d0)
-
-     DO
-      val := func + 0.0d0 * err
+         func = rfactor * zfactor * xyfactor DO
+      val := func
     END
   END;
 
@@ -94,7 +98,14 @@ BEGIN
   IO.Put(LR(val) & "\n");
   
   WITH wr = FileWr.Open("example.out") DO
-    Wr.PutText(wr, LR(val) & "\n");
+    FOR i := 0 TO samples - 1 DO
+      
+      (* add some noise! *)
+      WITH err = NormalDeviate.Get(rand, 0.0d0, 1.0d0),
+           res = val + sdev * err DO
+        Wr.PutText(wr, LR(res) & "\n")
+      END
+    END;
     Wr.Close(wr)
   END
   
