@@ -334,14 +334,15 @@ module testenv
     input logic             i_te_hi, // clock enable  (s.b. 1)
 
     // clock-phase rotation
-    input logic [ 1 : 0 ]   i_ck_rot_hi,
+    input logic [ 1 : 0 ]   i_ck_rot_hi, // phasing of multiphase clock
+                                         // w.r.t. reference clock
 
     // debug output
     output logic [ 3 : 0 ]  o_ck_hi,
     
-    wire             vcchi, // nominal (~650 mV)
-    wire             vcc, // low-voltage (~300mV)
-    wire             vssx);
+    wire                    vcchi, // nominal (~650 mV)
+    wire                    vcc, // low-voltage (~300mV)
+    wire                    vssx);
 
 
    // level-shift inputs
