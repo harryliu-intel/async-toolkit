@@ -19,7 +19,8 @@ PROCEDURE Run(x, y               : REF M.M;
               (* OUT *) VAR yHat : REF M.M;
               debug              : BOOLEAN;
               data               : T;
-              h := FLOAT(0, M.Base)) RAISES { Singular } ;
+              h := FLOAT(0, M.Base);
+              W                  : REF M.M := NIL) RAISES { Singular } ;
 
 
 PROCEDURE RunR(x, y   : REF M.M; 
@@ -27,7 +28,8 @@ PROCEDURE RunR(x, y   : REF M.M;
                debug  : BOOLEAN;
                data   : T;
                VAR r  : Recycler;
-               h := FLOAT(0, M.Base)) RAISES { Singular };
+               h := FLOAT(0, M.Base);
+               W      : REF M.M := NIL) RAISES { Singular };
   (* if you use this one, all the data structures will be shared via
      the recycler.  Must be careful to use it only for x and y of the
      same dimensions as the one that was used to allocate.  On the
@@ -42,7 +44,8 @@ PROCEDURE RunR1(READONLY x   : M.M;
                 debug        : BOOLEAN;
                 data         : T;
                 VAR recycler : Recycler;
-                h := FLOAT(0, M.Base)) RAISES { Singular };
+                h                      := FLOAT(0, M.Base);
+                W            : REF M.M := NIL) RAISES { Singular };
   (* same as above, but with Vector *)
 
 TYPE Recycler <: ROOT;
@@ -53,7 +56,7 @@ PROCEDURE RidgeRegress(READONLY x : M.M;
 
                        h          : M.Base;
 
-                       VAR res    : M.M (* OUT : ((xTx + h^2 I)^-1)(xT) *);
+                       VAR res    : M.M (* OUT : ((xT W x + h^2 I)^-1)(xT W) *);
 
                        indx       : REF ARRAY OF INTEGER;
                        (* scratch, cols of x *)
@@ -61,7 +64,8 @@ PROCEDURE RidgeRegress(READONLY x : M.M;
                        VAR xTx    : M.M;
                        (* size cols of x, square *)
                        
-                       debug := FALSE) RAISES { Singular };
+                       debug                := FALSE;
+                       W          : REF M.M := NIL) RAISES { Singular };
   
 
 END Regression.

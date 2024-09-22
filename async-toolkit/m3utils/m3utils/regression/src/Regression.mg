@@ -16,7 +16,8 @@ PROCEDURE Run(x, y : REF Matrix2.M;
               (* OUT *) VAR yHat : REF Matrix2.M; 
               debug : BOOLEAN;
               data : T;
-              h : Matrix2.Base) RAISES { Singular } =
+              h : Matrix2.Base;
+              W : REF Matrix2.M) RAISES { Singular } =
   VAR
     dim := Matrix2.GetDim(x^);
     dimT := Matrix2.Dim { dim.cols, dim.rows };
@@ -27,7 +28,7 @@ PROCEDURE Run(x, y : REF Matrix2.M;
     yHat_c := Matrix2.NewM(Matrix2.Dim { dim.rows, Matrix2.GetDim(y^).cols });
     rec := NEW(Recycler, indx := indx, q := q, b := b, temp := temp);
   BEGIN
-    RunR(x,y,yHat_c,debug,data, rec, h);
+    RunR(x,y,yHat_c,debug,data, rec, h, W);
     yHat := yHat_c;
   END Run;
 
@@ -36,7 +37,8 @@ PROCEDURE RunR(x, y         : REF Matrix2.M;
                debug        : BOOLEAN;
                data         : T;
                VAR recycler : Recycler;
-               h            : Matrix2.Base
+               h            : Matrix2.Base;
+               W            : REF Matrix2.M
   ) RAISES { Singular } =
   VAR
     n := NUMBER(x^);
@@ -68,7 +70,7 @@ PROCEDURE RunR(x, y         : REF Matrix2.M;
     (****************************************)
 
     RidgeRegress(x^, h,
-                 recycler.q^, recycler.indx, recycler.temp^, debug);
+                 recycler.q^, recycler.indx, recycler.temp^, debug, W);
 
     (****************************************)
 
@@ -117,7 +119,8 @@ PROCEDURE RunR1(READONLY x : Matrix2.M;
                 debug : BOOLEAN;
                 data : T;
                 VAR recycler : Recycler;
-                h : Matrix2.Base) RAISES { Singular } =
+                h : Matrix2.Base;
+                W            : REF Matrix2.M) RAISES { Singular } =
   VAR
     n := NUMBER(x);
     k := NUMBER(x[0]) - 1;
@@ -150,7 +153,7 @@ PROCEDURE RunR1(READONLY x : Matrix2.M;
     (****************************************)
 
     RidgeRegress(x, h,
-                 recycler.q^, recycler.indx, recycler.temp^, debug);
+                 recycler.q^, recycler.indx, recycler.temp^, debug, W);
 
     (****************************************)
     (* this flip-flopping between b and bC is annoying, should be 
@@ -209,17 +212,30 @@ PROCEDURE RunR1(READONLY x : Matrix2.M;
 
 PROCEDURE RidgeRegress(READONLY x : Matrix2.M; 
                        h          : Matrix2.Base;
-                       VAR res    : Matrix2.M (* OUT : ((xTx + h^2 I)^-1)(xT) *);
+                       VAR res    : Matrix2.M;
+                       (* OUT : ((xTx + h^2 I)^-1)(xT)  OR
+                                ((xT W x + h^2 I)^-1)(xT W) *)
                        indx       : REF ARRAY OF INTEGER;
                        VAR xTx    : Matrix2.M; (* size cols of x, square *)
-                       debug := FALSE)  RAISES { Singular }  =
+                       debug                      := FALSE;
+                       W          : REF Matrix2.M := NIL)  RAISES { Singular }  =
   CONST
     Zero = FLOAT(0, Matrix2.Base);
   VAR
     det_xTx : Matrix2.Base;
     d : Matrix2.Base;
+    
   BEGIN
-    Matrix2.MulTransposeMM(x, x, xTx);
+    IF W = NIL THEN
+      Matrix2.MulTransposeMM(x, x, xTx);
+    ELSE
+      VAR
+        temp := Matrix2.NewM(Matrix2.GetDim(x));
+      BEGIN
+        Matrix2.MulMM(W^, x, temp^);
+        Matrix2.MulTransposeMM(x, temp^, xTx);
+      END
+    END;
 
     IF h # Zero THEN
       det_xTx := Matrix2.Det(xTx);
@@ -237,7 +253,7 @@ PROCEDURE RidgeRegress(READONLY x : Matrix2.M;
     (* xTx_plus_hsqi is LU decomp here *)
 
     IF debug AND Debug.GetLevel() > 999 THEN
-      Debug.Out("\nLU(xTx + h^2 I) =\n" & Matrix2.FormatM(xTx));
+      Debug.Out("\nLU(xT W x + h^2 I) =\n" & Matrix2.FormatM(xTx));
     END;
 
     VAR
@@ -246,8 +262,17 @@ PROCEDURE RidgeRegress(READONLY x : Matrix2.M;
       RidgeRegressStep2(x, xTx, col^,res, indx)
     END;
 
+    IF W # NIL THEN
+      VAR
+        temp := Matrix2.NewM(Matrix2.GetDim(res));
+      BEGIN
+        Matrix2.MulMM(res, W^, temp^);
+        res := temp^
+      END
+    END;
+
     IF debug AND Debug.GetLevel() > 999 THEN
-      Debug.Out("\n((xTx + h^2 I)^-1)(xT) =\n" & Matrix2.FormatM(res))
+      Debug.Out("\n((xT W x + h^2 I)^-1)(xT W) =\n" & Matrix2.FormatM(res))
     END
   END RidgeRegress;
 
