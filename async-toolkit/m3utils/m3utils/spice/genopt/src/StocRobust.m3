@@ -14,12 +14,13 @@ MODULE StocRobust;
 
 FROM NewUOAs IMPORT Output;
 IMPORT LRVector, LRScalarField;
+IMPORT LRVectorField;
 IMPORT RandomVector;
 IMPORT Random;
-IMPORT LRMatrix2;
+IMPORT LRMatrix2 AS M;
 IMPORT Math;
 IMPORT Debug;
-FROM Fmt IMPORT LongReal, F, Int;
+FROM Fmt IMPORT LongReal, F, Int, Bool, FN;
 IMPORT LineProblem;
 IMPORT LineProblemSeq;
 IMPORT LineProblemArraySort;
@@ -34,8 +35,14 @@ IMPORT PointEvaluatorSeq;
 IMPORT PointMetric;
 IMPORT PointMetricArraySort;
 IMPORT Wx;
+IMPORT PointMetricSeq;
+IMPORT LRRegression AS Regression;
+IMPORT ConjGradient;
+IMPORT PointEvaluator;
 
 CONST LR = LongReal;
+
+TYPE TA = ARRAY OF TEXT;
 
 VAR sigmaK := 0.0d0;
     
@@ -88,6 +95,8 @@ TYPE
     eval     := MEEval;
   END;
 
+VAR valueMu := NEW(MUTEX);
+    
 PROCEDURE MEEval(me      : MultiEvaluator;
                  p       : LRVector.T) : LONGREAL =
   VAR
@@ -102,7 +111,10 @@ PROCEDURE MEEval(me      : MultiEvaluator;
         IF haveOld THEN
           res := MultiEval.Combine(res, oldres)
         END;
-        EVAL me.values.put(p, res)
+        Debug.Out("adding new entry to me.values");
+        LOCK valueMu DO
+          EVAL me.values.put(p, res)
+        END
       ELSIF haveOld THEN
         (* use the old data if it's got more samples *)
         IF oldres.n > res.n THEN res := oldres END
@@ -164,13 +176,331 @@ PROCEDURE MultiEvaluate(func    : MultiEval.T;
 
 PROCEDURE Vdist(a, b : LRVector.T) : LONGREAL =
   BEGIN
-    RETURN Math.sqrt(LRMatrix2.SumDiffSqV(a^, b^))
+    RETURN Math.sqrt(M.SumDiffSqV(a^, b^))
   END Vdist;
+
+PROCEDURE DoLeaderBoard(p             : LRVector.T; (* current [old] point *)
+                        newp          : LRVector.T; (* next [new] point *)
+                        values        : LRVectorMRTbl.T;
+                        newpts(*OUT*) : LRVectorSet.T) =
+  VAR
+    parr := NEW(REF ARRAY OF PointMetric.T, values.size());
+    iter := values.iterate();
+    q : LRVector.T;
+    r : MultiEval.Result;
+    i := 0;
+    n := NUMBER(p^);
+    dofs := (n * n + 3 * n + 2) DIV 2;
+  BEGIN
+    (* populate the array *)
+
+    Debug.Out("**** values.size() = " & Int(values.size()));
+
+    WHILE iter.next(q, r) DO
+      WITH metric = ResMetric(r, sigmaK) DO
+        IF i > LAST(parr^) THEN
+          Debug.Warning(F("i [%s] > LAST(parr^) [%s]",
+                          Int(i), Int(LAST(parr^))))
+        END;
+        parr[i] := PointMetric.T { metric, q, r };
+        INC(i)
+      END
+    END;
+    PointMetricArraySort.Sort(parr^);
+    
+    WITH wx = Wx.New() DO
+      Wx.PutText(wx, "==== StocRobust leaderboard ====\n");
+      Wx.PutText(wx, F("rho = %s ; p = %s\n", LR(rho), FmtP(p)));
+      FOR i := FIRST(parr^) TO LAST(parr^) DO
+        WITH rec  = parr[i],
+             dist = Vdist(rec.p, p) DO
+
+          IF newpts.size() < n * n THEN
+            (* insert first n^2 points in interesting set *)
+            Debug.Out("Adding to newpts : rec.p = " & FmtP(rec.p));
+            EVAL newpts.insert(rec.p)
+          END;
+          
+          Wx.PutText(wx, F("metric %s ; dist %s; result %s ; rec.p %s\n",
+                           LR(rec.metric),
+                           LR(dist),
+                           MultiEval.Format(rec.result),
+                           FmtP(rec.p)))
+        END
+      END;
+      Debug.Out(Wx.ToText(wx))
+    END;
+
+    IF NUMBER(parr^) >= dofs THEN
+      (* attempt a surface fit *)
+      Debug.Out(F("DoLeaderBoard: enough points (%s >= %s) to attempt a surface fit.", Int(NUMBER(parr^)), Int(dofs)));
+      
+      VAR
+        tryrho := rho;
+        seq : PointMetricSeq.T;
+        success := FALSE;
+      BEGIN
+        LOOP
+          seq := NEW(PointMetricSeq.T).init();
+          FOR i := FIRST(parr^) TO LAST(parr^) DO
+            WITH rec  = parr[i],
+                 dist = Vdist(rec.p, p) DO
+              IF dist < tryrho THEN
+                seq.addhi(rec)
+              END
+            END
+          END;
+          IF seq.size() >= dofs THEN
+            success := TRUE;
+            EXIT
+          ELSE
+            tryrho := tryrho * 2.0d0
+          END
+        END;
+
+        Debug.Out(F("DoLeaderBoard: tryrho=%s success=%s",
+                    LR(tryrho), Bool(success)));
+
+        IF success THEN
+          VAR
+            x := NEW(REF M.M, seq.size(), dofs);
+            ysigma := NEW(REF M.M, seq.size(), 1);
+            ymu    := NEW(REF M.M, seq.size(), 1);
+            w := NEW(REF M.M, seq.size(), seq.size());
+            ymuHat, ysigmaHat : REF M.M;
+            rmu := NEW(Regression.T);
+            rsigma := NEW(Regression.T);
+          BEGIN
+            M.Zero(w^);
+            FOR i := 0 TO seq.size() - 1 DO
+              WITH rec = seq.get(i) DO
+                ComputeIndeps(rec.p, i, x^);
+                ymu[i, 0]    := MultiEval.Mean(rec.result);
+                ysigma[i, 0] := MultiEval.Sdev(rec.result);
+                w[i, i] := FLOAT(rec.result.n, LONGREAL)
+              END
+            END(*ROF*);
+
+            Regression.Run(x, ymu   , ymuHat   , FALSE, rmu, h := ridgeCoeff, W := w);
+            Regression.Run(x, ysigma, ysigmaHat, FALSE, rsigma, h := ridgeCoeff, W := w);
+
+            WITH wx = Wx.New() DO
+              Wx.PutText(wx, "=====  QUADRATIC PREDICTION  =====\n");
+              FOR i := 0 TO seq.size() - 1 DO
+                WITH rec = seq.get(i),
+                     pred = ymuHat[i,0] + sigmaK * ysigmaHat[i,0],
+                     p2mu = ComputeQ(rec.p, rmu.b),
+                     p2sigma = ComputeQ(rec.p, rsigma.b),
+                     pred2 = p2mu + sigmaK * p2sigma DO
+                  
+                  Wx.PutText(wx, FN("metric %s : res %s, pred { mu %s ; sig %s } : predmetric %s =? %s\n", TA{
+                                   LR(rec.metric),
+                                   MultiEval.Format(rec.result),
+                                   LR(ymuHat[i,0]),
+                                   LR(ysigmaHat[i,0]),
+                                   LR(pred),
+                                   LR(pred2)}))
+                END
+              END(* ROF *);
+              Debug.Out( Wx.ToText(wx) )
+            END(*WITH*);
+
+            Debug.Out("sigma = " & FmtQ(p, rsigma.b));
+            Debug.Out("mu    = " & FmtQ(p, rmu.b));
+            
+            (* let's have some fun *)
+
+            VAR
+              tol := ysigmaHat[0, 0] / 10.0d0;
+              best : LONGREAL;
+              b := NEW(B, bmu := rmu.b, bsigma := rsigma.b);
+              qf := NEW(QuadraticF, b := b);
+              qg := NEW(QuadraticG, b := b);
+              mp := LRVector.Copy(p);
+            BEGIN
+              best := ConjGradient.Minimize(mp, tol, qf, qg);
+
+              Debug.Out(F("Minimized quadratic %s @ %s",
+                          LR(best), FmtP(mp)));
+
+              (* insert this point too *)
+
+              IF best = best THEN
+                EVAL newpts.insert(mp)
+              END
+
+            END
+          END
+        END
+      END
+      
+    END
+  END DoLeaderBoard;
+
+TYPE
+  B = OBJECT
+    bmu, bsigma : REF M.M;
+  END;
   
+  QuadraticF = LRScalarField.Default OBJECT (* quad function wrapper *)
+    b : B;
+  OVERRIDES
+    eval := EvalQF;
+  END;
+
+  QuadraticG = LRVectorField.Default OBJECT (* quad gradient wrapper *)
+    b : B;
+  OVERRIDES
+    eval := EvalQG;
+  END;
+
+PROCEDURE EvalQF(qf : QuadraticF; p : LRVector.T) : LONGREAL =
+  BEGIN
+    WITH mu    = ComputeQ(p, qf.b.bmu),
+         sigma = ComputeQ(p, qf.b.bsigma) DO
+      RETURN mu + sigmaK * sigma
+    END
+  END EvalQF;
+
+PROCEDURE EvalQG(qg : QuadraticG; p : LRVector.T) : LRVector.T =
+  BEGIN
+    WITH muG    = ComputeG(p, qg.b.bmu),
+         sigmaG = ComputeG(p, qg.b.bsigma),
+         res    = NEW(LRVector.T, NUMBER(p^)) DO
+      M.LinearCombinationV(1.0d0, muG^, sigmaK, sigmaG^, res^);
+      RETURN res
+    END
+  END EvalQG;
+  
+PROCEDURE ComputeIndeps(p : LRVector.T; row : CARDINAL; VAR x : M.M) =
+  VAR
+    k := 0;
+    q : LONGREAL;
+    f0, f1 : LONGREAL;
+  BEGIN
+    FOR i := 0 TO NUMBER(p^) DO
+      IF i = NUMBER(p^) THEN
+        f0 := 1.0d0
+      ELSE
+        f0 := p[i]
+      END;
+      FOR j := i TO NUMBER(p^) DO
+        IF j = NUMBER(p^) THEN
+          f1 := 1.0d0
+        ELSE
+          f1 := p[j]
+        END;
+        q := f0 * f1;
+        x[row, k] := q;
+        INC(k)
+      END
+    END
+  END ComputeIndeps;
+
+PROCEDURE ComputeQ(p : LRVector.T; b : REF M.M) : LONGREAL =
+  (* value of the quadratic *)
+  VAR
+    k := 0;
+    q : LONGREAL;
+    f0, f1 : LONGREAL;
+    term : LONGREAL;
+    sum := 0.0d0;
+  BEGIN
+    FOR i := 0 TO NUMBER(p^) DO
+      IF i = NUMBER(p^) THEN
+        f0 := 1.0d0
+      ELSE
+        f0 := p[i]
+      END;
+      FOR j := i TO NUMBER(p^) DO
+        IF j = NUMBER(p^) THEN
+          f1 := 1.0d0
+        ELSE
+          f1 := p[j]
+        END;
+        q := f0 * f1;
+        term := q * b[k, 0];
+        sum := sum + term;
+        INC(k)
+      END
+    END;
+    RETURN sum
+  END ComputeQ;
+
+PROCEDURE FmtQ(p : LRVector.T; b : REF M.M) : TEXT =
+  VAR
+    k := 0;
+    sum := "";
+    f0, f1 : TEXT;
+    q : TEXT;
+    term : TEXT;
+  BEGIN
+    FOR i := 0 TO NUMBER(p^) DO
+      IF i = NUMBER(p^) THEN
+        f0 := "1"
+      ELSE
+        f0 := F("p[%s]", Int(i))
+      END;
+      FOR j := i TO NUMBER(p^) DO
+        IF j = NUMBER(p^) THEN
+          f1 := "1"
+        ELSE
+          f1 := F("p[%s]", Int(j))
+        END;
+        q := f0 & " * " & f1;
+        term := LR(b[k, 0]) & " * " & q;
+        sum := sum & " + " &  term;
+        INC(k)
+      END
+    END;
+    RETURN sum
+  END FmtQ;
+  
+PROCEDURE ComputeG(p : LRVector.T; b : REF M.M) : LRVector.T =
+  (* gradient of the quadratic *)
+  VAR
+    res := NEW(LRVector.T, NUMBER(p^));
+    k := 0;
+  BEGIN
+    FOR i := FIRST(p^) TO LAST(p^) DO
+      res[i] := 0.0d0
+    END;
+    
+    FOR i := 0 TO NUMBER(p^) DO
+      FOR j := i TO NUMBER(p^) DO
+        IF    i = j AND i = NUMBER(p^) THEN
+          (* constant term *)
+          (* skip *)
+        ELSIF i = j THEN
+          (* squared term *)
+          WITH pi = 2.0d0 * p[i] * b[k, 0] DO
+            res[i] := res[i] + pi
+          END
+        ELSIF j = NUMBER(p^) THEN
+          (* linear term *)
+          WITH pi = b[k, 0] DO
+            res[i] := res[i] + pi
+          END
+        ELSE
+          (* cross term *)
+          WITH pi = p[j] * b[k, 0] DO
+            res[i] := res[i] + pi
+          END;
+          WITH pj = p[i] * b[k, 0] DO
+            res[j] := res[j] + pj
+          END
+        END;
+        INC(k)
+      END
+    END;
+    RETURN res
+  END ComputeG;
+  
+VAR ridgeCoeff := 0.0d0;
+    
 PROCEDURE Minimize(p              : LRVector.T;
                    func           : MultiEval.T;
-                   rhobeg, rhoend : LONGREAL;
-                   sigmaK         : LONGREAL) : Output =
+                   rhobeg, rhoend : LONGREAL) : Output =
   VAR
     n        := NUMBER(p^);
     nv       := 2 * n;
@@ -186,6 +516,11 @@ PROCEDURE Minimize(p              : LRVector.T;
     thisCyc  : LRVectorSet.T;
     values   := NEW(LRVectorMRTbl.Default).init();
     peSeq    := NEW(PointEvaluatorSeq.T).init();
+
+    newPts   := NEW(LRVectorSetDef.T).init(); (* interesting points to eval *)
+
+    samples : CARDINAL;
+    
   BEGIN
     rho   := rhobeg;
     iter  := 0;
@@ -210,6 +545,43 @@ PROCEDURE Minimize(p              : LRVector.T;
 
       (*******************  MAIN MINIMIZATION ITERATION  *******************)
 
+      IF pass = 0 THEN
+        samples := 5
+      ELSIF pass < 4 THEN
+        samples := 10
+      ELSIF pass < 8 THEN
+        samples := 20
+      ELSE
+        samples := 40
+      END;
+
+      (* spin up enough threads to handle newPts *)
+      WHILE peSeq.size() < newPts.size() DO
+        WITH newPe = NEW(PointEvaluator.T).init() DO
+          peSeq.addhi(newPe)
+        END
+      END;
+
+      (* launch evaluations *)
+      VAR
+        iter := newPts.iterate();
+        p : LRVector.T;
+        i := 0;
+      BEGIN
+        WHILE iter.next(p) DO
+          WITH q  = LRVector.Copy(p),
+               pe = peSeq.get(i),
+               func = MultiEvaluate(func,
+                                    2 * samples,
+                                    sigmaK,
+                                    values,
+                                    thisCyc) DO
+            pe.start(q, func);
+            INC(i)
+          END
+        END
+      END;
+
       thisCyc := NEW(LRVectorSetDef.T).init();
       
       Debug.Out(F("Robust.Minimize : pass %s; database has %s points",
@@ -224,7 +596,7 @@ PROCEDURE Minimize(p              : LRVector.T;
         cl[i].start(pp[i],
                     LRVector.Copy(da[i]),
                     
-                    MultiEvaluate(func, 10, sigmaK, values, thisCyc),
+                    MultiEvaluate(func, samples, sigmaK, values, thisCyc),
                     
                     (* how the HECK do we get the samples to Main? *)
                     (* I think we need to expose extra fields in 
@@ -237,10 +609,19 @@ PROCEDURE Minimize(p              : LRVector.T;
       IF FALSE THEN
         Debug.Out("Robust.m3 : running = " & Int(LineMinimizer.Running())) 
       END;
-      
+
+      Debug.Out("StocRobust : Waiting for points to evaluate ... ");
+      FOR i := 0 TO newPts.size() - 1 DO
+        EVAL peSeq.get(i).wait()
+      END;
+
+      newPts := NEW(LRVectorSetDef.T).init(); (* empty the set *)
+
+      Debug.Out("StocRobust : Waiting for line searches to evaluate ...");
       FOR i := FIRST(da^) TO LAST(da^) DO
         lps[i] := cl[i].wait()
       END;
+      Debug.Out("All tasks are done");
       (* all tasks are done *)
       <*ASSERT LineMinimizer.Running() = 0*>
       
@@ -255,57 +636,26 @@ PROCEDURE Minimize(p              : LRVector.T;
          opt points.
       *)
 
-      VAR
-        parr := NEW(REF ARRAY OF PointMetric.T, values.size());
-        iter := values.iterate();
-        q : LRVector.T;
-        r : MultiEval.Result;
-        i := 0;
-      BEGIN
-        (* populate the array *)
-
-        WHILE iter.next(q, r) DO
-          WITH metric = ResMetric(r, sigmaK) DO
-            parr[i] := PointMetric.T { metric, q, r };
-            INC(i)
-          END
-        END;
-        PointMetricArraySort.Sort(parr^);
-
-        WITH wx = Wx.New() DO
-          Wx.PutText(wx, "==== StocRobust leaderboard ====\n");
-          Wx.PutText(wx, F("rho = %s ; p = %s\n", LR(rho), FmtP(p)));
-          FOR i := FIRST(parr^) TO LAST(parr^) DO
-            WITH rec  = parr[i],
-                 dist = Vdist(rec.p, p) DO
-              Wx.PutText(wx, F("metric %s ; dist %s; result %s ; rec.p %s\n",
-                               LR(rec.metric),
-                               LR(dist),
-                               MultiEval.Format(rec.result),
-                               FmtP(rec.p)))
-            END
-          END;
-          Debug.Out(Wx.ToText(wx))
-        END
-
-      END;
-      
       
       WITH newp = lps[0].minp^,
            opt0 = Predict(p, SUBARRAY(pp^, 0, n)),
            opt1 = Predict(p, SUBARRAY(pp^, n, n))
        DO
+        Debug.Out("About to call DoLeaderBoard.  values.size() = " & Int(values.size()));
+        LOCK valueMu DO
+          DoLeaderBoard(p, lps[0].minp, values, newPts)
+        END;
         Debug.Out(F("Robust.m3 : opt0 (%s) ; opt1 (%s)",
-                    LRMatrix2.FormatV(opt0^),
-                    LRMatrix2.FormatV(opt1^)));
+                    M.FormatV(opt0^),
+                    M.FormatV(opt1^)));
         
         Debug.Out(F("Robust.m3 : updating p (%s) -> (%s)",
-                    LRMatrix2.FormatV(p^),
-                    LRMatrix2.FormatV(newp)));
+                    M.FormatV(p^),
+                    M.FormatV(newp)));
 
         WITH dp = LRVector.Copy(p) DO
-          LRMatrix2.SubV(newp, p^, dp^);
-          rho := LRMatrix2.Norm(dp^);
+          M.SubV(newp, p^, dp^);
+          rho := M.Norm(dp^);
           Debug.Out(F("Robust.m3 : new rho = %s", LR(rho)));
           IF rho < rhoend THEN
             message := "stopping because rho < rhoend";
@@ -324,8 +674,8 @@ PROCEDURE Minimize(p              : LRVector.T;
            basis blocks?  Or average them?
         *)
         
-        LRMatrix2.SubV(opt0^, newp, da[0]^);
-        LRMatrix2.SubV(opt1^, newp, da[n]^);
+        M.SubV(opt0^, newp, da[0]^);
+        M.SubV(opt1^, newp, da[n]^);
 
         p^ := newp;
         mins.addhi(lps[0]);
@@ -419,22 +769,22 @@ PROCEDURE Predict(s          : LRVector.T;
     diff, sum := NEW(LRVector.T, n);
 
   BEGIN
-    LRMatrix2.ZeroV(sum^);
+    M.ZeroV(sum^);
     FOR i := FIRST(d) TO LAST(d) DO
       <*ASSERT d[i] # NIL*>
       <*ASSERT s    # NIL*>
       <*ASSERT diff # NIL*>
-      LRMatrix2.SubV(d[i]^, s^, diff^);
-      LRMatrix2.AddV(diff^, sum^, sum^)
+      M.SubV(d[i]^, s^, diff^);
+      M.AddV(diff^, sum^, sum^)
     END;
-    LRMatrix2.AddV(s^, sum^, sum^);
+    M.AddV(s^, sum^, sum^);
     RETURN sum
   END Predict;
 
 PROCEDURE RemoveComponent(READONLY ik : LRVector.S; VAR v : LRVector.S) =
   BEGIN
-    WITH dot = LRMatrix2.Dot(ik, v) DO
-      LRMatrix2.LinearCombinationV(-dot, ik, 1.0d0, v, v)
+    WITH dot = M.Dot(ik, v) DO
+      M.LinearCombinationV(-dot, ik, 1.0d0, v, v)
     END
   END RemoveComponent;
 
@@ -448,9 +798,9 @@ PROCEDURE Orthogonalize(READONLY da : ARRAY OF LRVector.T) =
       FOR j := 0 TO i - 1 DO
         RemoveComponent(da[j]^, da[i]^) (* remove da[j] from da[i] *)
       END;
-      WITH inorm = Math.sqrt(LRMatrix2.Dot(da[i]^, da[i]^)),
+      WITH inorm = Math.sqrt(M.Dot(da[i]^, da[i]^)),
            mult  = 1.0d0 / inorm DO
-        LRMatrix2.MulSV(mult, da[i]^, da[i]^)
+        M.MulSV(mult, da[i]^, da[i]^)
       END
     END;
   END Orthogonalize;

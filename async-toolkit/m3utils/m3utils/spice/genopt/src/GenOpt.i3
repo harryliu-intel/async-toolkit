@@ -49,11 +49,6 @@ PROCEDURE SetOptFailureResult(res : LONGREAL);
 
 PROCEDURE GetOptFailureResult() : LONGREAL;
 
-  (* sigmaK is for StocRobust minimization ... *)
-PROCEDURE SetSigmaK(to : LONGREAL);
-
-PROCEDURE GetSigmaK() : LONGREAL;
-  
 TYPE
   Method = { NewUOAs, Robust, NewUOA, StocRobust };
 

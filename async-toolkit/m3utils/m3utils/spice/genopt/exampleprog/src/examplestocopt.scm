@@ -35,7 +35,7 @@
 
 (GenOpt.SetMethod 'StocRobust)
 
-(GenOpt.SetSigmaK 5.3)
+(StocRobust.SetSigmaK 5.3)
 
 ;; NewUOAs configuration variables
 (def-rhobeg 1)    ;; starting step size in terms of significant delta

@@ -39,6 +39,7 @@ Sequence("PointEvaluator", "PointEvaluator")
 
 Module ("PointMetric")
 Array_sort("PointMetric", "PointMetric")
+Sequence("PointMetric", "PointMetric")
 
 SchemeStubs ("LineProblem")
 SchemeStubs ("Random")

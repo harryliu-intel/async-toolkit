@@ -197,16 +197,6 @@ PROCEDURE SetNetbatch(to : BOOLEAN) =
     doNetbatch := to
   END SetNetbatch;
 
-PROCEDURE SetSigmaK(to : LONGREAL) =
-  BEGIN
-    sigmaK := to
-  END SetSigmaK;
-
-PROCEDURE GetSigmaK() : LONGREAL =
-  BEGIN
-    RETURN sigmaK
-  END GetSigmaK;
-
 TYPE
   Evaluator = LRScalarFieldPll.T OBJECT
     optVars, paramVars : SchemeObject.T;
@@ -516,7 +506,6 @@ PROCEDURE SeqToMulti(seq : LRSeq.T) : MultiEval.Result =
   VAR
     s, ss := 0.0d0;
     n := seq.size();
-    nf := FLOAT(n, LONGREAL);
   BEGIN
     FOR i := 0 TO seq.size() - 1 DO
       WITH x = seq.get(i) DO
@@ -525,8 +514,8 @@ PROCEDURE SeqToMulti(seq : LRSeq.T) : MultiEval.Result =
       END
     END;
 
-    RETURN MultiEval.Result { n    := n,
-                              sum := s,
+    RETURN MultiEval.Result { n     := n,
+                              sum   := s,
                               sumsq := ss }
   END SeqToMulti;
 
@@ -601,8 +590,7 @@ PROCEDURE DoIt(optVars, paramVars : SchemeObject.T) =
       output := StocRobust.Minimize(pr,
                                     NEW(MyMultiEval, base := evaluator).init(evaluator),
                                     rhoBeg,
-                                    rhoEnd,
-                                    sigmaK)
+                                    rhoEnd)
     |
       Method.NewUOA => <*ASSERT FALSE*>
     END;
@@ -857,7 +845,6 @@ VAR
   interactive : BOOLEAN;
   cfgFile : Pathname.T;
   genOptScm : Pathname.T;
-  sigmaK := 0.0d0;
   
 BEGIN
   Debug.SetOptions(SET OF Debug.Options { Debug.Options.PrintThreadID } );
@@ -878,7 +865,7 @@ BEGIN
     END;
 
     IF pp.keywordPresent("-sigmaK") THEN
-      sigmaK := pp.getNextLongReal()
+      StocRobust.SetSigmaK(pp.getNextLongReal())
     END;
     
     IF M3Utils = NIL THEN

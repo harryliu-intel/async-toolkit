@@ -14,10 +14,11 @@ IMPORT LRScalarField;
 
 CONST Tol = 2.0d-8;
 
-PROCEDURE LinMin(p : LRVector.T; (* initial and final point *)
-                 xi : LRVector.T; (* search direction, 
+PROCEDURE LinMin(p    : LRVector.T; (* initial and final point *)
+                 xi   : LRVector.T; (* search direction, 
                                             replaced with change in p *)
                  func : LRScalarField.T;
+                                     
                  scale := 1.0d0;
                  tol   := Tol) : LONGREAL (* returns min. value *);
 
