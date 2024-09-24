@@ -215,7 +215,7 @@ PROCEDURE DoLeaderBoard(p             : LRVector.T; (* current [old] point *)
         WITH rec  = parr[i],
              dist = Vdist(rec.p, p) DO
 
-          IF newpts.size() < n * n THEN
+          IF newpts.size() < 4 * n * n THEN
             (* insert first n^2 points in interesting set *)
             Debug.Out("Adding to newpts : rec.p = " & FmtP(rec.p));
             EVAL newpts.insert(rec.p)
@@ -258,8 +258,8 @@ PROCEDURE DoLeaderBoard(p             : LRVector.T; (* current [old] point *)
           END
         END;
 
-        Debug.Out(F("DoLeaderBoard: tryrho=%s success=%s",
-                    LR(tryrho), Bool(success)));
+        Debug.Out(F("DoLeaderBoard: seq.size()=%s rho=%s tryrho=%s success=%s",
+                    Int(seq.size()), LR(rho), LR(tryrho), Bool(success)));
 
         IF success THEN
           VAR
@@ -313,20 +313,56 @@ PROCEDURE DoLeaderBoard(p             : LRVector.T; (* current [old] point *)
             VAR
               tol := ysigmaHat[0, 0] / 10.0d0;
               best : LONGREAL;
-              b := NEW(B, bmu := rmu.b, bsigma := rsigma.b);
+              b := NEW(B,
+                       bmu := rmu.b,
+                       bsigma := rsigma.b,
+                       sigmaK := sigmaK,
+                       alpha := 0.0d0,
+                       p := p);
               qf := NEW(QuadraticF, b := b);
               qg := NEW(QuadraticG, b := b);
               mp := LRVector.Copy(p);
+
+              bdims := M.GetDim(rmu.b^);
+              bb := M.NewM(bdims);
+              mostNeg : LONGREAL;
+              beta := 0.0d0;
             BEGIN
-              best := ConjGradient.Minimize(mp, tol, qf, qg);
+              M.LinearCombination(1.0d0, rmu.b^, sigmaK, rsigma.b^, bb^);
+              Debug.Out("bb    = " & FmtQ(p, bb));
+              mostNeg := MostNegQuadratic(p, bb);
 
-              Debug.Out(F("Minimized quadratic %s @ %s",
-                          LR(best), FmtP(mp)));
+              (* here mostNeg is the most negative quadratic coefficient *)
+              Debug.Out("quadratic mostNeg = " & LR(mostNeg));
+              
+              LOOP
+                mp^ := p^;
+                
+                best := ConjGradient.Minimize(mp, tol, qf, qg);
+                
+                Debug.Out(F("Minimized quadratic %s @ %s",
+                            LR(best), FmtP(mp)));
+                
+                (* insert this point too *)
+                
+                IF best = best THEN
+                  Debug.Out(F("minimization succeeded beta=%s, inserting : %s ",
+                              LR(beta) , FmtP(mp)));
+                  EVAL newpts.insert(mp);
+                  EXIT
+                ELSIF beta > 4.0d0 THEN
+                  (* give up *)
+                  Debug.Out("minimization failed with beta exceeding 4, giving up!");
 
-              (* insert this point too *)
+                  EXIT
+                ELSE
+                  (* failed.. must be a saddle point *)
 
-              IF best = best THEN
-                EVAL newpts.insert(mp)
+                  beta := beta * 2.0d0 + 0.1d0;
+                  b.alpha := beta * ABS(mostNeg);
+
+                  Debug.Out(F("Minimization failed, adjusting : beta=%s alpha=%s", LR(beta), LR(b.alpha)))
+                END
               END
 
             END
@@ -337,9 +373,24 @@ PROCEDURE DoLeaderBoard(p             : LRVector.T; (* current [old] point *)
     END
   END DoLeaderBoard;
 
+  (* 
+     the problem here is that because of noise, the matrix we 
+     investigate may not be positive definite (we may generate a saddle
+     point).
+     
+     So we add a quadratic 
+     
+     alpha * (x - p) ^2 
+     
+     as "spice."
+  *)
+  
 TYPE
   B = OBJECT
     bmu, bsigma : REF M.M;
+    sigmaK      : LONGREAL;
+    p           : LRVector.T;
+    alpha       : LONGREAL;
   END;
   
   QuadraticF = LRScalarField.Default OBJECT (* quad function wrapper *)
@@ -357,8 +408,9 @@ TYPE
 PROCEDURE EvalQF(qf : QuadraticF; p : LRVector.T) : LONGREAL =
   BEGIN
     WITH mu    = ComputeQ(p, qf.b.bmu),
-         sigma = ComputeQ(p, qf.b.bsigma) DO
-      RETURN mu + sigmaK * sigma
+         sigma = ComputeQ(p, qf.b.bsigma),
+         spice = qf.b.alpha * M.SumDiffSqV(p^, qf.b.p^) DO
+      RETURN mu + qf.b.sigmaK * sigma + spice
     END
   END EvalQF;
 
@@ -367,7 +419,12 @@ PROCEDURE EvalQG(qg : QuadraticG; p : LRVector.T) : LRVector.T =
     WITH muG    = ComputeG(p, qg.b.bmu),
          sigmaG = ComputeG(p, qg.b.bsigma),
          res    = NEW(LRVector.T, NUMBER(p^)) DO
-      M.LinearCombinationV(1.0d0, muG^, sigmaK, sigmaG^, res^);
+      M.LinearCombinationV(1.0d0, muG^, qg.b.sigmaK, sigmaG^, res^);
+
+      FOR i := FIRST(res^) TO LAST(res^) DO
+        res[i] := res[i] + 2.0d0 * qg.b.alpha * (p[i] - qg.b.p[i])
+      END;
+      
       RETURN res
     END
   END EvalQG;
@@ -455,6 +512,38 @@ PROCEDURE FmtQ(p : LRVector.T; b : REF M.M) : TEXT =
     END;
     RETURN sum
   END FmtQ;
+
+PROCEDURE MostNegQuadratic(p : LRVector.T; b : REF M.M) : LONGREAL =
+  VAR
+    k := 0;
+    mostNeg := LAST(LONGREAL);
+  BEGIN
+    FOR i := 0 TO NUMBER(p^) DO
+      FOR j := i TO NUMBER(p^) DO
+        IF    i = j AND i = NUMBER(p^) THEN
+          (* constant term *)
+          (* skip *)
+        ELSIF i = j THEN
+          (* squared term *)
+          WITH pi = 2.0d0 * b[k, 0] DO
+            mostNeg := MIN(mostNeg, pi)
+          END
+        ELSIF j = NUMBER(p^) THEN
+          (* linear term *)
+        ELSE
+          (* cross term *)
+          WITH pi = b[k, 0] DO
+            mostNeg := MIN(mostNeg, pi)
+          END;
+          WITH pj = b[k, 0] DO
+            mostNeg := MIN(mostNeg, pj)
+          END
+        END;
+        INC(k)
+      END
+    END;
+    RETURN mostNeg
+  END MostNegQuadratic;
   
 PROCEDURE ComputeG(p : LRVector.T; b : REF M.M) : LRVector.T =
   (* gradient of the quadratic *)
