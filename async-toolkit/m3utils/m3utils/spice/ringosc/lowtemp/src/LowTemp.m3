@@ -34,6 +34,7 @@ IMPORT Simulation;
 IMPORT SimulationSeq;
 IMPORT Process;
 IMPORT RefSeq;
+IMPORT Random;
 
 <*FATAL Thread.Alerted*>
 
@@ -353,10 +354,11 @@ PROCEDURE Scale1(ifn, ofn : Pathname.T; modRegEx : TEXT) =
   
 CONST
   rise = 10.0d-12;
-  
+
 PROCEDURE DoPre() =
   VAR
     map := NEW(TextTextTbl.Default).init();
+    rand := NEW(Random.Default).init();
   BEGIN
     Debug.Out("DoPre()");
     
@@ -399,7 +401,15 @@ PROCEDURE DoPre() =
 
     IF batches # 0 THEN
       FOR i := 0 TO batches - 1 DO
-        FS.CreateDirectory(Subdir(i))
+        WITH subdir = Subdir(i) DO
+          TRY
+            FS.CreateDirectory(subdir)
+          EXCEPT
+            OSError.E(x) =>
+            Debug.Warning(F("couldn't create directory %s : OSError.E : %s",
+                            subdir, AL.Format(x)))
+          END
+        END
       END
     END;
     
@@ -409,12 +419,22 @@ PROCEDURE DoPre() =
 
       Process.SetWorkingDirectory(Subdir(d));
 
-      IF batches = 0 THEN
-        EVAL map.put("@SWEEPS@", F("%s FIRSTRUN=2", Int(sweeps)))
-      ELSE
-        EVAL map.put("@SWEEPS@", F("%s FIRSTRUN=%s",
-                                   Int(externalSweep),
-                                   Int(2 + externalSweep * d)))
+      VAR
+        offset : CARDINAL;
+      BEGIN
+        IF doNominal OR doDeterministic THEN
+          offset := 0
+        ELSE
+          offset := rand.integer(0, 2000 * 2000)
+        END;
+          
+        IF batches = 0 THEN
+          EVAL map.put("@SWEEPS@", F("%s FIRSTRUN=2", Int(sweeps + offset)))
+        ELSE
+          EVAL map.put("@SWEEPS@", F("%s FIRSTRUN=%s",
+                                     Int(externalSweep),
+                                     Int(2 + externalSweep * d + offset)))
+        END
       END;
       
       FOR i := FIRST(Files) TO LAST(Files) DO
@@ -715,6 +735,9 @@ VAR
   convNetbatch  : BOOLEAN;
   
   nbopts        : TEXT;
+
+  doNominal : BOOLEAN;
+  doDeterministic : BOOLEAN;
   
 BEGIN
   IF m3utils = NIL THEN
@@ -724,6 +747,9 @@ BEGIN
   TRY
     doNetbatch   := pp.keywordPresent("-netbatch") OR pp.keywordPresent("-nb");
     convNetbatch := pp.keywordPresent("-convnetbatch") OR pp.keywordPresent("-cnb");
+
+    doNominal := pp.keywordPresent("-nominal");
+    doDeterministic := pp.keywordPresent("-deterministic");
 
     IF doNetbatch THEN
       IF NbOpts = NIL AND NbPool = NIL THEN
@@ -753,8 +779,13 @@ BEGIN
 
     IF pp.keywordPresent("-sweeps") THEN
       sweeps := pp.getNextInt();
-      <*ASSERT sweeps >= 2*>
     END;
+    IF doNominal THEN
+      <*ASSERT sweeps=1*>
+    ELSE
+      <*ASSERT sweeps >= 2 *>
+    END;
+    
     IF pp.keywordPresent("-externalsweep") THEN
       externalSweep := pp.getNextInt()
     END;
