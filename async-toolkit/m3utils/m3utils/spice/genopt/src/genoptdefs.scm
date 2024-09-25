@@ -91,8 +91,12 @@
 (define (eval-in-env samples cmd)
   ;; this expands into the command that we need to run to perform
   ;; the execution part of the evaluation
+  ;;
+  ;; note that a samples count of -1 means we want a nominal run,
+  ;; not a monte carlo sample run
   (let ((to-eval (append '(begin)
-                         `((define *stoc-samples* ,samples))
+                         `((define *stoc-nominal* ,(= samples -1))
+                           (define *stoc-samples* ,(abs samples)))
                          (print-defines)
                          (list cmd))))
     ;;(dis "eval-in-env : will eval : " to-eval dnl)

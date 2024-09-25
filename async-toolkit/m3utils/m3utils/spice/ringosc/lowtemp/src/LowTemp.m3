@@ -420,9 +420,11 @@ PROCEDURE DoPre() =
       Process.SetWorkingDirectory(Subdir(d));
 
       VAR
-        offset : CARDINAL;
+        offset : [-1..LAST(CARDINAL)];
       BEGIN
-        IF doNominal OR doDeterministic THEN
+        IF doNominal THEN
+          offset := -1
+        ELSIF doDeterministic THEN
           offset := 0
         ELSE
           offset := rand.integer(0, 2000 * 2000)
@@ -431,9 +433,13 @@ PROCEDURE DoPre() =
         IF batches = 0 THEN
           EVAL map.put("@SWEEPS@", F("%s FIRSTRUN=2", Int(sweeps + offset)))
         ELSE
-          EVAL map.put("@SWEEPS@", F("%s FIRSTRUN=%s",
-                                     Int(externalSweep),
-                                     Int(2 + externalSweep * d + offset)))
+          WITH firstSweep = externalSweep * d,
+               remSweeps  = sweeps - firstSweep,
+               doSweeps   = MIN(externalSweep, remSweeps) DO
+            EVAL map.put("@SWEEPS@", F("%s FIRSTRUN=%s",
+                                       Int(doSweeps),
+                                       Int(2 + offset + externalSweep * d)))
+          END
         END
       END;
       
@@ -783,7 +789,10 @@ BEGIN
     IF doNominal THEN
       <*ASSERT sweeps=1*>
     ELSE
-      <*ASSERT sweeps >= 2 *>
+      IF sweeps < 2 THEN
+        Debug.Warning("Statistical work requested with few sweeps : " &
+          Int(sweeps))
+      END
     END;
     
     IF pp.keywordPresent("-externalsweep") THEN
