@@ -44,6 +44,8 @@ CONST LR = LongReal;
 
 TYPE TA = ARRAY OF TEXT;
 
+VAR doDebug := Debug.DebugThis("StocRobust");
+
 VAR sigmaK := 0.0d0;
     
 PROCEDURE SetSigmaK(k : LONGREAL) =
@@ -111,7 +113,9 @@ PROCEDURE MEEval(me      : MultiEvaluator;
         IF haveOld THEN
           res := MultiEval.Combine(res, oldres)
         END;
-        Debug.Out("adding new entry to me.values");
+        IF doDebug THEN
+          Debug.Out("adding new entry to me.values")
+        END;
         LOCK valueMu DO
           EVAL me.values.put(p, res)
         END
@@ -127,8 +131,10 @@ PROCEDURE MEEval(me      : MultiEvaluator;
     WITH mean   = MultiEval.Mean(res),
          sdev   = MultiEval.Sdev(res),
          retval = mean + me.sigmaK * sdev DO
-      Debug.Out(F("StocRobust.MEEval : mean=%s sigmaK=%s sdev=%s -> retval=%s",
-                  LR(mean), LR(me.sigmaK), LR(sdev), LR(retval)));
+      IF doDebug THEN
+        Debug.Out(F("StocRobust.MEEval : mean=%s sigmaK=%s sdev=%s -> retval=%s",
+                    LR(mean), LR(me.sigmaK), LR(sdev), LR(retval)))
+      END;
       RETURN retval
     END
   END MEEval;
@@ -182,7 +188,7 @@ PROCEDURE Vdist(a, b : LRVector.T) : LONGREAL =
 PROCEDURE DoLeaderBoard(p             : LRVector.T; (* current [old] point *)
                         newp          : LRVector.T; (* next [new] point *)
                         values        : LRVectorMRTbl.T;
-                        newpts(*OUT*) : LRVectorSet.T) =
+                        newpts(*OUT*) : LRVectorSet.T) : LRVector.T =
   VAR
     parr := NEW(REF ARRAY OF PointMetric.T, values.size());
     iter := values.iterate();
@@ -191,6 +197,7 @@ PROCEDURE DoLeaderBoard(p             : LRVector.T; (* current [old] point *)
     i := 0;
     n := NUMBER(p^);
     dofs := (n * n + 3 * n + 2) DIV 2;
+    bestQ : LRVector.T;
   BEGIN
     (* populate the array *)
 
@@ -284,7 +291,8 @@ PROCEDURE DoLeaderBoard(p             : LRVector.T; (* current [old] point *)
             Regression.Run(x, ymu   , ymuHat   , FALSE, rmu, h := ridgeCoeff, W := w);
             Regression.Run(x, ysigma, ysigmaHat, FALSE, rsigma, h := ridgeCoeff, W := w);
 
-            WITH wx = Wx.New() DO
+            WITH wx    = Wx.New(),
+                 pparr = NEW(REF ARRAY OF PointMetric.T, seq.size()) DO
               Wx.PutText(wx, "=====  QUADRATIC PREDICTION  =====\n");
               FOR i := 0 TO seq.size() - 1 DO
                 WITH rec = seq.get(i),
@@ -293,20 +301,48 @@ PROCEDURE DoLeaderBoard(p             : LRVector.T; (* current [old] point *)
                      p2sigma = ComputeQ(rec.p, rsigma.b),
                      pred2 = p2mu + sigmaK * p2sigma DO
                   
-                  Wx.PutText(wx, FN("metric %s : res %s, pred { mu %s ; sig %s } : predmetric %s =? %s\n", TA{
+                  Wx.PutText(wx, FN("metric %s : res %s, pred { mu %s ; sig %s } : predmetric %s =? %s; rec.p %s\n", TA{
                                    LR(rec.metric),
                                    MultiEval.Format(rec.result),
                                    LR(ymuHat[i,0]),
                                    LR(ysigmaHat[i,0]),
                                    LR(pred),
-                                   LR(pred2)}))
+                                   LR(pred2),
+                                   FmtP(rec.p)}));
+                  pparr[i] := PointMetric.T { pred, rec.p, rec.result }
                 END
               END(* ROF *);
-              Debug.Out( Wx.ToText(wx) )
+
+              (* pparr contains these points tagged by their predicted
+                 metric *)
+              PointMetricArraySort.Sort(pparr^);
+              Wx.PutText(wx, "=====  SORTED QUADRATIC PREDICTION  =====\n");
+
+              bestQ := LRVector.Copy(pparr[0].p);
+              
+              FOR i := FIRST(pparr^) TO LAST(pparr^) DO
+                WITH pm = pparr[i] DO
+                  Wx.PutText(wx, F("pred metric %s : %s : %s\n",
+                                   LR(pm.metric),
+                                   FmtP(pm.p),
+                                   MultiEval.Format(pm.result)))
+
+                END
+              END;
+
+              Debug.Out( Wx.ToText(wx) );
+
+              FOR i := 0 TO MIN(NUMBER(pparr^) - 1, 4 * n * n) DO
+                Debug.Out("Adding to newpts : rec.p = " & FmtP(pparr[i].p));
+                EVAL newpts.insert(pparr[i].p)
+              END
+              
             END(*WITH*);
 
             Debug.Out("sigma = " & FmtQ(p, rsigma.b));
             Debug.Out("mu    = " & FmtQ(p, rmu.b));
+
+
             
             (* let's have some fun *)
 
@@ -327,6 +363,7 @@ PROCEDURE DoLeaderBoard(p             : LRVector.T; (* current [old] point *)
               bb := M.NewM(bdims);
               mostNeg : LONGREAL;
               beta := 0.0d0;
+              success := FALSE;
             BEGIN
               M.LinearCombination(1.0d0, rmu.b^, sigmaK, rsigma.b^, bb^);
               Debug.Out("bb    = " & FmtQ(p, bb));
@@ -349,6 +386,7 @@ PROCEDURE DoLeaderBoard(p             : LRVector.T; (* current [old] point *)
                   Debug.Out(F("minimization succeeded beta=%s, inserting : %s ",
                               LR(beta) , FmtP(mp)));
                   EVAL newpts.insert(mp);
+                  success := TRUE;
                   EXIT
                 ELSIF beta > 4.0d0 THEN
                   (* give up *)
@@ -363,8 +401,44 @@ PROCEDURE DoLeaderBoard(p             : LRVector.T; (* current [old] point *)
 
                   Debug.Out(F("Minimization failed, adjusting : beta=%s alpha=%s", LR(beta), LR(b.alpha)))
                 END
-              END
+              END(* POOL *);
 
+              IF TRUE THEN
+                (* bestQ is the best point we know on the fitted curve *)
+                (* grab the nearest points from the seq and re-sample them *)
+
+                VAR
+                  darr := NEW(REF ARRAY OF PointMetric.T, NUMBER(parr^));
+                BEGIN
+                  FOR i := FIRST(parr^) TO LAST(parr^) DO
+                    WITH rec  = parr[i],
+                         dist = Vdist(rec.p, bestQ) DO
+                      darr[i] := PointMetric.T { dist, rec.p, rec.result }
+                    END
+                  END;
+
+                  PointMetricArraySort.Sort(darr^);
+
+                  WITH wx = Wx.New() DO
+                    Wx.PutText(wx, "==== Closest neighbors to quad. min. ====\n");
+                    FOR i := FIRST(darr^) TO LAST(darr^) DO
+                      WITH rec = darr[i] DO
+                        Wx.PutText(wx, F("dist %s ; result %s ; rec.p %s\n",
+                                         LR(rec.metric),
+                                         MultiEval.Format(rec.result),
+                                         FmtP(rec.p)));
+                      END
+                    END;
+
+                    Debug.Out(Wx.ToText(wx));
+                  END;
+                  FOR i := 0 TO MIN(NUMBER(darr^) - 1, 4 * n * n) DO
+                    Debug.Out("Adding to newpts : rec.p = " & FmtP(darr[i].p));
+                    EVAL newpts.insert(darr[i].p)
+                  END
+                END
+              END;
+              RETURN bestQ
             END
           END
         END
@@ -673,9 +747,9 @@ PROCEDURE Minimize(p              : LRVector.T;
 
       thisCyc := NEW(LRVectorSetDef.T).init();
       
-      Debug.Out(F("Robust.Minimize : pass %s; database has %s points",
+      Debug.Out(F("StocRobust.Minimize : pass %s; database has %s points",
                   Int(pass), Int(values.size())));
-      Debug.Out(F("Robust.Minimize : rho=%s [rhoend=%s]", LR(rho), LR(rhoend)));
+      Debug.Out(F("StocRobust.Minimize : rho=%s [rhoend=%s]", LR(rho), LR(rhoend)));
 
       <*ASSERT LineMinimizer.Running() = 0*>
         
@@ -726,13 +800,19 @@ PROCEDURE Minimize(p              : LRVector.T;
       *)
 
       
-      WITH newp = lps[0].minp^,
-           opt0 = Predict(p, SUBARRAY(pp^, 0, n)),
-           opt1 = Predict(p, SUBARRAY(pp^, n, n))
-       DO
+
+      VAR
+        newp := lps[0].minp; (* tentatively set to best line-search point *)
+        opt0 := Predict(p, SUBARRAY(pp^, 0, n));
+        opt1 := Predict(p, SUBARRAY(pp^, n, n));
+      BEGIN
         Debug.Out("About to call DoLeaderBoard.  values.size() = " & Int(values.size()));
         LOCK valueMu DO
-          DoLeaderBoard(p, lps[0].minp, values, newPts)
+          WITH bestq = DoLeaderBoard(p, lps[0].minp, values, newPts) DO
+            IF bestq # NIL THEN
+              newp := bestq
+            END
+          END
         END;
         Debug.Out(F("Robust.m3 : opt0 (%s) ; opt1 (%s)",
                     M.FormatV(opt0^),
@@ -740,10 +820,10 @@ PROCEDURE Minimize(p              : LRVector.T;
         
         Debug.Out(F("Robust.m3 : updating p (%s) -> (%s)",
                     M.FormatV(p^),
-                    M.FormatV(newp)));
+                    M.FormatV(newp^)));
 
         WITH dp = LRVector.Copy(p) DO
-          M.SubV(newp, p^, dp^);
+          M.SubV(newp^, p^, dp^);
           rho := M.Norm(dp^);
           Debug.Out(F("Robust.m3 : new rho = %s", LR(rho)));
           IF rho < rhoend THEN
@@ -763,17 +843,17 @@ PROCEDURE Minimize(p              : LRVector.T;
            basis blocks?  Or average them?
         *)
         
-        M.SubV(opt0^, newp, da[0]^);
-        M.SubV(opt1^, newp, da[n]^);
+        M.SubV(opt0^, newp^, da[0]^);
+        M.SubV(opt1^, newp^, da[n]^);
 
-        p^ := newp;
+        p^ := newp^;
         mins.addhi(lps[0]);
         allMins.addhi(lps[0]);
 
-        WITH Lookback = 3 DO
+        WITH Lookback = 5 DO
 
           (* 
-             if we haven't improved in three straight iterations,
+             if we haven't improved in five straight iterations,
              call it a day 
           *)
           
@@ -789,7 +869,7 @@ PROCEDURE Minimize(p              : LRVector.T;
       END;
 
       (* forget really old (unreliable) values *)
-      WITH Lookback = 5 DO
+      WITH Lookback = 7 DO
         IF mins.size() > Lookback THEN
           EVAL mins.remlo()
         END

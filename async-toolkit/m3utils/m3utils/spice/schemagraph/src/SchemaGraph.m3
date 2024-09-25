@@ -42,6 +42,8 @@ IMPORT Schema;
 
 CONST LR = LongReal;
 
+VAR doDebug := Debug.DebugThis("SchemaGraph");
+
 PROCEDURE RemoveLeadingSpaces(VAR field : TEXT) =
   BEGIN
     WHILE Text.Length(field) # 0 AND Text.GetChar(field, 0) = ' ' DO
@@ -53,7 +55,9 @@ PROCEDURE NextToken(VAR buff : TEXT) : TEXT =
   VAR
     idx : INTEGER;
   BEGIN
-    Debug.Out(F("NextToken(\"%s\")", buff));
+    IF doDebug THEN
+      Debug.Out(F("NextToken(\"%s\")", buff))
+    END;
     
     RemoveLeadingSpaces(buff);
     idx := Text.FindChar(buff, ' ');
@@ -119,8 +123,10 @@ PROCEDURE ReadSchema(spn : Pathname.T) : Schema.T
           formula : TEXT;
         BEGIN
           RemoveLeadingSpaces(field);
-          
-          Debug.Out(F("Parsing field \"%s\"", field));
+
+          IF doDebug THEN
+            Debug.Out(F("Parsing field \"%s\"", field))
+          END;
           
           IF Text.Length(field) = 0 THEN
             type := Field.T.Ignore
@@ -144,32 +150,42 @@ PROCEDURE ReadSchema(spn : Pathname.T) : Schema.T
           END;
           
           (* type is set *)
-          Debug.Out(F("Got field type %s", Field.Names[type]));
+          IF doDebug THEN
+            Debug.Out(F("Got field type %s", Field.Names[type]))
+          END;
           INC(count[type]);
           types.addhi(ORD(type));
           
           IF Text.Length(field) = 0 THEN
-            Debug.Out(F("Field is now empty"));
+            IF doDebug THEN
+              Debug.Out(F("Field is now empty"))
+            END;
             name := NIL;
             formula := NIL
           ELSIF Text.GetChar(field, 0) # '(' THEN
-            Debug.Out(F("Field not starting with paren, so this is a name: \"%s\"", field));
+            IF doDebug THEN
+              Debug.Out(F("Field not starting with paren, so this is a name: \"%s\"", field))
+            END;
             (* what we have is either empty or a name *)
             name := NextToken(field)
           END;
           
           IF Text.Length(field) # 0 AND Text.GetChar(field, 0) = '(' THEN
-            Debug.Out(F("Remainder must be formula: \"%s\"", field));
+            IF doDebug THEN
+              Debug.Out(F("Remainder must be formula: \"%s\"", field))
+            END;
             formula := field
           END;
           
           (* got a field *)
-          Debug.Out(F("Field %s name %s type %s (count %s) formula %s",
-                      Int(i),
-                      UnNil(name),
-                      Field.Names[type],
-                      Int(count[type]),
-                      UnNil(formula)));
+          IF doDebug THEN
+            Debug.Out(F("Field %s name %s type %s (count %s) formula %s",
+                        Int(i),
+                        UnNil(name),
+                        Field.Names[type],
+                        Int(count[type]),
+                        UnNil(formula)))
+          END;
           
           res.fdata.addhi( FData.T { type, name, formula });
           
@@ -195,7 +211,9 @@ PROCEDURE ReadData(schema : Schema.T; files : TextSeq.T) : RefSeq.T
       WITH nm = files.get(i),
            rd = FileRd.Open(nm) DO
 
-        Debug.Out("SchemaGraph.ReadData: opening " & nm);
+        IF doDebug THEN
+          Debug.Out("SchemaGraph.ReadData: opening " & nm)
+        END;
         TRY
           LOOP
             WITH
@@ -227,9 +245,11 @@ PROCEDURE ReadData(schema : Schema.T; files : TextSeq.T) : RefSeq.T
         Rd.Close(rd)
       END (* HTIW *)
     END (* ROF *);
-    Debug.Out(F("SchemaGraph.ReadData: Loaded %s data from %s files",
-                Int(res.size()),
-                Int(files.size())));
+    IF doDebug THEN
+      Debug.Out(F("SchemaGraph.ReadData: Loaded %s data from %s files",
+                  Int(res.size()),
+                  Int(files.size())))
+    END;
     RETURN res
   END ReadData;
 
@@ -247,7 +267,9 @@ PROCEDURE EvalFormula(scm     : Scheme.T;
       WHILE iter.next(sym, valS) DO
         WITH ssym = SchemeSymbol.FromText(sym),
              sval = SchemeString.FromText(valS) DO
-          Debug.Out(F("Defining %s <- \"%s\"", sym, valS));
+          IF doDebug THEN
+            Debug.Out(F("Defining %s <- \"%s\"", sym, valS))
+          END;
           scm.defineInGlobalEnv(ssym, sval)
         END
       END
@@ -257,7 +279,9 @@ PROCEDURE EvalFormula(scm     : Scheme.T;
       WHILE iter.next(sym, valN) DO
         WITH ssym = SchemeSymbol.FromText(sym),
              sval = SchemeLongReal.FromLR(valN) DO
-          Debug.Out(F("Defining %s <- %s", sym, LR(valN)));
+          IF doDebug THEN
+            Debug.Out(F("Defining %s <- %s", sym, LR(valN)))
+          END;
           scm.defineInGlobalEnv(ssym, sval)
         END
       END
@@ -266,7 +290,9 @@ PROCEDURE EvalFormula(scm     : Scheme.T;
     TRY
       WITH resultObj = scm.loadEvalText(formula),
            res       = SchemeUtils.Stringify(resultObj) DO
-        Debug.Out(F("Evaluating %s to %s", formula, res));
+        IF doDebug THEN
+          Debug.Out(F("Evaluating %s to %s", formula, res))
+        END;
         RETURN res
       END
     EXCEPT
@@ -285,7 +311,9 @@ PROCEDURE EvalFormulas(scm : Scheme.T; schema : Schema.T; data : RefSeq.T;
     val : TEXT;
   BEGIN
     FOR i := 0 TO data.size() - 1 DO
-      Debug.Out("SchemaGraph.EvalFormulas i=" & Int(i));
+      IF doDebug THEN
+        Debug.Out("SchemaGraph.EvalFormulas i=" & Int(i))
+      END;
       
       WITH row     = NARROW(data.get(i), TextSeq.T),
            symtabN = NEW(TextLRTbl.Default).init(),
@@ -317,7 +345,9 @@ PROCEDURE EvalFormulas(scm : Scheme.T; schema : Schema.T; data : RefSeq.T;
                Question is whether we still need the symtabs!
             *)
             IF fd.name # NIL THEN
-              Debug.Out("Binding : " & fd.name);
+              IF doDebug THEN
+                Debug.Out("Binding : " & fd.name)
+              END;
               WITH snm = fd.name & ":string",
                    ssnm = SchemeSymbol.FromText(snm),
                    sval = SchemeString.FromText(val) DO

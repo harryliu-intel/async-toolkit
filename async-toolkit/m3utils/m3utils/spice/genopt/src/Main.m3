@@ -61,6 +61,8 @@ VAR
   NbQslot := Env.Get("NBQSLOT");
   M3Utils := Env.Get("M3UTILS");
   NbOpts  := Env.Get("NBRUNOPTIONS");
+
+  doDebug := Debug.DebugThis("genopt");
   
 CONST
   MyM3UtilsSrcPath = "spice/genopt/src";
@@ -261,7 +263,9 @@ PROCEDURE BaseMultiEval(base    : Evaluator;
                         p       : LRVector.T;
                         samples : CARDINAL) : MultiEval.Result =
   BEGIN
-    Debug.Out("BaseMultiEval : samples " & Int(samples));
+    IF doDebug THEN
+      Debug.Out("BaseMultiEval : samples " & Int(samples))
+    END;
     
     TRY
       WITH res = AttemptEval(base, p, samples) DO
@@ -313,9 +317,11 @@ PROCEDURE AttemptEval(base    : Evaluator;
 
   PROCEDURE CopyVectorToScheme() =
     BEGIN
-      Debug.Out(F("CopyVectorToScheme : p=%s samples=%s",
-                  FmtP(q),
-                  Int(samples)));
+      IF doDebug THEN
+        Debug.Out(F("CopyVectorToScheme : p=%s samples=%s",
+                    FmtP(q),
+                    Int(samples)))
+      END;
       
       LOCK pMu DO
 
@@ -338,9 +344,11 @@ PROCEDURE AttemptEval(base    : Evaluator;
           FS.CreateDirectory(subdirPath);
         EXCEPT
           OSError.E(x) =>
-          Debug.Warning(F("creating directory \"%s\" : OSError.E : %s",
-                          subdirPath,
-                          AL.Format(x)))
+          IF doDirectoryWarning THEN
+            Debug.Warning(F("creating directory \"%s\" : OSError.E : %s",
+                            subdirPath,
+                            AL.Format(x)))
+          END
         END;
         WITH wr   = MustOpenWr(subdirPath & "/opt.values") DO
           FOR i := FIRST(q^) TO LAST(q^) DO
@@ -391,12 +399,16 @@ PROCEDURE AttemptEval(base    : Evaluator;
   PROCEDURE RunCommand() : LRSeq.T 
     RAISES { ProcUtils.ErrorExit } =
     BEGIN
-      Debug.Out(F("BaseEval : q = %s\nrunning : %s", FmtP(q), cmd));
-      Debug.Out("subdirPath = " & subdirPath);
+      IF doDebug THEN
+        Debug.Out(F("BaseEval : q = %s\nrunning : %s", FmtP(q), cmd));
+        Debug.Out("subdirPath = " & subdirPath)
+      END;
       
       cm.wait();
-      
-      Debug.Out("BaseEval : ran command");
+
+      IF doDebug THEN
+        Debug.Out("BaseEval : ran command")
+      END;
       
       (* read the schema *)
       WITH dataPath  = subdirPath & "/" & schemaDataFn,
@@ -406,7 +418,9 @@ PROCEDURE AttemptEval(base    : Evaluator;
                                         schemaEval,
                                         base.optVars,
                                         base.paramVars) DO
-        Debug.Out("Schema-processed result : " & FmtLRSeq(schemaRes));
+        IF doDebug THEN
+          Debug.Out("Schema-processed result : " & FmtLRSeq(schemaRes))
+        END;
         LOCK base.resultsMu DO
           (* this will just get the first value......... *)
           EVAL base.results.put(LRVectorLRPair.T { LRVector.Copy(q),
@@ -709,15 +723,19 @@ PROCEDURE SchemaReadResult(schemaPath ,
     dataFiles := NEW(TextSeq.T).init();
     schemaScm : Scheme.T;
   BEGIN
-    Debug.Out(F("SchemaReadResult : schemaPath %s , dataPath %s , eval %s",
-                schemaPath, dataPath, SchemeUtils.Stringify(schemaEval)));
+    IF doDebug THEN
+      Debug.Out(F("SchemaReadResult : schemaPath %s , dataPath %s , eval %s",
+                  schemaPath, dataPath, SchemeUtils.Stringify(schemaEval)))
+    END;
     
     dataFiles.addhi(dataPath);
     
     WITH scmarr = NEW(REF ARRAY OF Pathname.T, scmFiles.size()) DO
       FOR i := FIRST(scmarr^) TO LAST(scmarr^) DO
         scmarr[i] := scmFiles.get(i);
-        Debug.Out("SchemaReadResult: loading scheme file " & scmarr[i]);
+        IF doDebug THEN
+          Debug.Out("SchemaReadResult: loading scheme file " & scmarr[i])
+        END;
       END;
       TRY
         schemaScm := NEW(SchemeM3.T).init(scmarr^)
@@ -782,7 +800,9 @@ PROCEDURE SchemaReadResult(schemaPath ,
       Debug.Error(F("EXCEPTION! Scheme.E \"%s\" when initializing interpreter variables", x))
     END;
 
-    Debug.Out("SchemaReadResult : set up interpreter");
+    IF doDebug THEN
+      Debug.Out("SchemaReadResult : set up interpreter")
+    END;
     
     TRY
       WITH schema = ReadSchema(schemaPath),
@@ -790,14 +810,18 @@ PROCEDURE SchemaReadResult(schemaPath ,
            cb     = NEW(SGCallback,
                         schemaScm := schemaScm,
                         results := NEW(LRSeq.T).init()) DO
-        Debug.Out("SchemaReadResult : schema and data loaded");
+        IF doDebug THEN
+          Debug.Out("SchemaReadResult : schema and data loaded")
+        END;
 
         (* there is where the schema formulas are evaluated
            and we haven't yet loaded the parameters! *)
         EvalFormulas(schemaScm, schema, data, cb);
 
-        Debug.Out("SchemaReadResult : formulas evaluated data.size()=" &
-          Int(data.size()));
+        IF doDebug THEN
+          Debug.Out("SchemaReadResult : formulas evaluated data.size()=" &
+            Int(data.size()))
+        END;
 
         RETURN cb.results
       END
@@ -827,7 +851,9 @@ PROCEDURE SGCNext(cb : SGCallback) =
                        L2S(0.0d0),
                        SchemeUtils.List2(T2S("quote"), schemaEval)),
          schemaRes = cb.schemaScm.evalInGlobalEnv(scmCode) DO
-      Debug.Out("schema eval returned " & SchemeUtils.Stringify(schemaRes));
+      IF doDebug THEN
+        Debug.Out("schema eval returned " & SchemeUtils.Stringify(schemaRes))
+      END;
       cb.results.addhi( SchemeLongReal.FromO(schemaRes) )
     END
   END SGCNext;
@@ -837,14 +863,15 @@ CONST T2S = SchemeSymbol.FromText;
              
 VAR
   pp                        := NEW(ParseParams.T).init(Stdio.stderr);
-  scm           : Scheme.T;
+  scm                : Scheme.T;
   rundirPath                := Process.GetWorkingDirectory();
-  myFullSrcPath : Pathname.T;
-  doNetbatch := TRUE;
-  scmFiles := NEW(TextSeq.T).init();
-  interactive : BOOLEAN;
-  cfgFile : Pathname.T;
-  genOptScm : Pathname.T;
+  myFullSrcPath      : Pathname.T;
+  doNetbatch                := TRUE;
+  scmFiles                  := NEW(TextSeq.T).init();
+  interactive        : BOOLEAN;
+  cfgFile            : Pathname.T;
+  genOptScm          : Pathname.T;
+  doDirectoryWarning : BOOLEAN;
   
 BEGIN
   Debug.SetOptions(SET OF Debug.Options { Debug.Options.PrintThreadID } );
@@ -853,6 +880,8 @@ BEGIN
 
   TRY
     interactive := pp.keywordPresent("-i") OR pp.keywordPresent("-interactive");
+
+    doDirectoryWarning := pp.keywordPresent("-warndirexists");
     
     IF NbPool = NIL THEN
       Debug.Error("Must set NBPOOL env var.")

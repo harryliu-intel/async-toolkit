@@ -30,6 +30,9 @@ VAR
   
 BEGIN
   TRY
+    IF pp.keywordPresent("-method") THEN
+      method := pp.getNextInt()
+    END;
     IF pp.keywordPresent("-temp") THEN
       temp := pp.getNextLongReal()
     END; 

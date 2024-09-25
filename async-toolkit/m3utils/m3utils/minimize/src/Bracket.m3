@@ -13,6 +13,8 @@ CONST ZEps   = 1.0d-10;
 CONST Tiny   = 1.0d-20;
 CONST ItMax  = 100;
 
+VAR doDebug := Debug.DebugThis("Bracket");
+
 PROCEDURE Sign(READONLY a, b : LONGREAL) : LONGREAL =
   BEGIN
     IF b > 0.0d0 THEN RETURN ABS(a) ELSE RETURN -ABS(a) END
@@ -37,10 +39,12 @@ PROCEDURE Initial(VAR bracket : Trio;
         BEGIN dum := a; a := b; b := dum END Swap;
         
       BEGIN
-        Debug.Out(F("Bracket.m3 : Initial { %s %s %s }",
-                    Fmt.LongReal(ax),
-                    Fmt.LongReal(bx),
-                    Fmt.LongReal(cx)));
+        IF doDebug THEN
+          Debug.Out(F("Bracket.m3 : Initial { %s %s %s }",
+                      Fmt.LongReal(ax),
+                      Fmt.LongReal(bx),
+                      Fmt.LongReal(cx)))
+        END;
                   
         func.evalHint(ax);
         func.evalHint(bx);
@@ -49,7 +53,9 @@ PROCEDURE Initial(VAR bracket : Trio;
         func.evalHint(bx + Gold * (bx - ax)); 
         func.evalHint(ax + Gold * (ax - bx)); 
 
-        Debug.Out(F("Bracket.m3 : launched 4 hints"));
+        IF doDebug THEN
+          Debug.Out(F("Bracket.m3 : launched 4 hints"))
+        END;
 
         fa := func.eval(ax);
         fb := func.eval(bx);

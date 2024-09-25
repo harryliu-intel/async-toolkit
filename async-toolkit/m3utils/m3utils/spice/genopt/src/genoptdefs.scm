@@ -95,7 +95,7 @@
                          `((define *stoc-samples* ,samples))
                          (print-defines)
                          (list cmd))))
-    (dis "eval-in-env : will eval : " to-eval dnl)
+    ;;(dis "eval-in-env : will eval : " to-eval dnl)
     (eval to-eval)
     ))
 

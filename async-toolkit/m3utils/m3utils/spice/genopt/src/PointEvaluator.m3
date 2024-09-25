@@ -7,6 +7,8 @@ FROM Fmt IMPORT LongReal;
 
 CONST LR = LongReal;
 
+VAR doDebug := Debug.DebugThis("PointEvaluator");
+
 REVEAL
   T = Public BRANDED Brand OBJECT
     c       : Thread.Condition;
@@ -44,7 +46,7 @@ PROCEDURE Apply(cl : T) : REFANY =
         END
       END;
 
-      IF FALSE THEN Debug.Out("Robust.m3 : LinMinApply : done FALSE.") END;
+      IF doDebug THEN Debug.Out("Robust.m3 : LinMinApply : done FALSE.") END;
 
       (* NOT cl.done *)
       IF cl.doQuit THEN
@@ -54,7 +56,7 @@ PROCEDURE Apply(cl : T) : REFANY =
       LOCK mu DO INC(running) END;
       
       WITH result = cl.func.eval(cl.p) DO
-        Debug.Out("Result " & LR(result));
+        IF doDebug THEN Debug.Out("Result " & LR(result)) END;
         LOCK mu DO
           cl.res := result;
           cl.done := TRUE;
