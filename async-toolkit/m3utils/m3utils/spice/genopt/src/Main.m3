@@ -211,6 +211,9 @@ TYPE
 
     multiEval(at : LRVector.T; samples : CARDINAL) : MultiEval.Result :=
         BaseMultiEval;
+
+    nominalEval(at : LRVector.T) : LONGREAL :=
+        BaseNominalEval;
   OVERRIDES
     eval     := BaseEval;
     evalHint := BaseEvalHint;
@@ -245,7 +248,7 @@ PROCEDURE FmtP(p : LRVector.T) : TEXT =
 PROCEDURE BaseEval(base : Evaluator; p : LRVector.T) : LONGREAL =
   BEGIN
     TRY
-      WITH res = AttemptEval(base, p, 0) DO
+      WITH res = AttemptEval(base, p, 0, FALSE) DO
         TYPECASE res OF
           LRResult(lr) => RETURN lr.res
         ELSE
@@ -268,7 +271,7 @@ PROCEDURE BaseMultiEval(base    : Evaluator;
     END;
     
     TRY
-      WITH res = AttemptEval(base, p, samples) DO
+      WITH res = AttemptEval(base, p, samples, FALSE) DO
         TYPECASE res OF
           StocResult(stoc) => RETURN stoc.res
         ELSE
@@ -281,6 +284,28 @@ PROCEDURE BaseMultiEval(base    : Evaluator;
       <*ASSERT FALSE*>
     END
   END BaseMultiEval;
+
+PROCEDURE BaseNominalEval(base    : Evaluator;
+                        p       : LRVector.T) : LONGREAL = 
+  BEGIN
+    IF doDebug THEN
+      Debug.Out("BaseNominalEval : " & FmtP(p))
+    END;
+    
+    TRY
+      WITH res = AttemptEval(base, p, 1, nominal := TRUE) DO
+        TYPECASE res OF
+          LRResult(lr) => RETURN lr.res
+        ELSE
+          <*ASSERT FALSE*>
+        END
+      END
+    EXCEPT
+    ProcUtils.ErrorExit =>
+      Debug.Error("BaseMultiEval : Too many attempts p=" & FmtP(p));
+      <*ASSERT FALSE*>
+    END
+  END BaseNominalEval;
 
 PROCEDURE MustOpenWr(pn : Pathname.T) : Wr.T =
   BEGIN
@@ -303,7 +328,8 @@ TYPE
   
 PROCEDURE AttemptEval(base    : Evaluator;
                       q       : LRVector.T;
-                      samples : CARDINAL) : EvalResult
+                      samples : CARDINAL;
+                      nominal : BOOLEAN) : EvalResult
   RAISES { ProcUtils.ErrorExit } =
 
   PROCEDURE SetNbOpts() =
@@ -448,7 +474,8 @@ PROCEDURE AttemptEval(base    : Evaluator;
 
     theResult  : LRSeq.T;
   BEGIN
-
+    IF nominal THEN <*ASSERT samples=1*> END;
+    
     SetNbOpts();
     CopyVectorToScheme();
     SetupDirectory();

@@ -9,6 +9,7 @@ TYPE
   METHODS
     init(base : LRScalarField.T) : T;
     multiEval(at : LRVector.T; samples : CARDINAL) : Result;
+    nominalEval(at : LRVector.T) : LONGREAL;
   END;
 
 TYPE

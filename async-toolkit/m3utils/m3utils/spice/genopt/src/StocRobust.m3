@@ -186,7 +186,6 @@ PROCEDURE Vdist(a, b : LRVector.T) : LONGREAL =
   END Vdist;
 
 PROCEDURE DoLeaderBoard(p             : LRVector.T; (* current [old] point *)
-                        newp          : LRVector.T; (* next [new] point *)
                         values        : LRVectorMRTbl.T;
                         newpts(*OUT*) : LRVectorSet.T) : LRVector.T =
   VAR
@@ -196,8 +195,6 @@ PROCEDURE DoLeaderBoard(p             : LRVector.T; (* current [old] point *)
     r : MultiEval.Result;
     i := 0;
     n := NUMBER(p^);
-    dofs := (n * n + 3 * n + 2) DIV 2;
-    bestQ : LRVector.T;
   BEGIN
     (* populate the array *)
 
@@ -238,215 +235,251 @@ PROCEDURE DoLeaderBoard(p             : LRVector.T; (* current [old] point *)
       Debug.Out(Wx.ToText(wx))
     END;
 
-    IF NUMBER(parr^) >= dofs THEN
-      (* attempt a surface fit *)
-      Debug.Out(F("DoLeaderBoard: enough points (%s >= %s) to attempt a surface fit.", Int(NUMBER(parr^)), Int(dofs)));
-      
-      VAR
-        tryrho := rho;
-        seq : PointMetricSeq.T;
-        success := FALSE;
-      BEGIN
-        LOOP
-          seq := NEW(PointMetricSeq.T).init();
-          FOR i := FIRST(parr^) TO LAST(parr^) DO
-            WITH rec  = parr[i],
-                 dist = Vdist(rec.p, p) DO
-              IF dist < tryrho THEN
-                seq.addhi(rec)
-              END
-            END
-          END;
-          IF seq.size() >= dofs THEN
-            success := TRUE;
-            EXIT
-          ELSE
-            tryrho := tryrho * 2.0d0
-          END
-        END;
-
-        Debug.Out(F("DoLeaderBoard: seq.size()=%s rho=%s tryrho=%s success=%s",
-                    Int(seq.size()), LR(rho), LR(tryrho), Bool(success)));
-
-        IF success THEN
-          VAR
-            x := NEW(REF M.M, seq.size(), dofs);
-            ysigma := NEW(REF M.M, seq.size(), 1);
-            ymu    := NEW(REF M.M, seq.size(), 1);
-            w := NEW(REF M.M, seq.size(), seq.size());
-            ymuHat, ysigmaHat : REF M.M;
-            rmu := NEW(Regression.T);
-            rsigma := NEW(Regression.T);
-          BEGIN
-            M.Zero(w^);
-            FOR i := 0 TO seq.size() - 1 DO
-              WITH rec = seq.get(i) DO
-                ComputeIndeps(rec.p, i, x^);
-                ymu[i, 0]    := MultiEval.Mean(rec.result);
-                ysigma[i, 0] := MultiEval.Sdev(rec.result);
-                w[i, i] := FLOAT(rec.result.n, LONGREAL)
-              END
-            END(*ROF*);
-
-            Regression.Run(x, ymu   , ymuHat   , FALSE, rmu, h := ridgeCoeff, W := w);
-            Regression.Run(x, ysigma, ysigmaHat, FALSE, rsigma, h := ridgeCoeff, W := w);
-
-            WITH wx    = Wx.New(),
-                 pparr = NEW(REF ARRAY OF PointMetric.T, seq.size()) DO
-              Wx.PutText(wx, "=====  QUADRATIC PREDICTION  =====\n");
-              FOR i := 0 TO seq.size() - 1 DO
-                WITH rec = seq.get(i),
-                     pred = ymuHat[i,0] + sigmaK * ysigmaHat[i,0],
-                     p2mu = ComputeQ(rec.p, rmu.b),
-                     p2sigma = ComputeQ(rec.p, rsigma.b),
-                     pred2 = p2mu + sigmaK * p2sigma DO
-                  
-                  Wx.PutText(wx, FN("metric %s : res %s, pred { mu %s ; sig %s } : predmetric %s =? %s; rec.p %s\n", TA{
-                                   LR(rec.metric),
-                                   MultiEval.Format(rec.result),
-                                   LR(ymuHat[i,0]),
-                                   LR(ysigmaHat[i,0]),
-                                   LR(pred),
-                                   LR(pred2),
-                                   FmtP(rec.p)}));
-                  pparr[i] := PointMetric.T { pred, rec.p, rec.result }
-                END
-              END(* ROF *);
-
-              (* pparr contains these points tagged by their predicted
-                 metric *)
-              PointMetricArraySort.Sort(pparr^);
-              Wx.PutText(wx, "=====  SORTED QUADRATIC PREDICTION  =====\n");
-
-              bestQ := LRVector.Copy(pparr[0].p);
-              
-              FOR i := FIRST(pparr^) TO LAST(pparr^) DO
-                WITH pm = pparr[i] DO
-                  Wx.PutText(wx, F("pred metric %s : %s : %s\n",
-                                   LR(pm.metric),
-                                   FmtP(pm.p),
-                                   MultiEval.Format(pm.result)))
-
-                END
-              END;
-
-              Debug.Out( Wx.ToText(wx) );
-
-              FOR i := 0 TO MIN(NUMBER(pparr^) - 1, 4 * n * n) DO
-                Debug.Out("Adding to newpts : rec.p = " & FmtP(pparr[i].p));
-                EVAL newpts.insert(pparr[i].p)
-              END
-              
-            END(*WITH*);
-
-            Debug.Out("sigma = " & FmtQ(p, rsigma.b));
-            Debug.Out("mu    = " & FmtQ(p, rmu.b));
-
-
-            
-            (* let's have some fun *)
-
-            VAR
-              tol := ysigmaHat[0, 0] / 10.0d0;
-              best : LONGREAL;
-              b := NEW(B,
-                       bmu := rmu.b,
-                       bsigma := rsigma.b,
-                       sigmaK := sigmaK,
-                       alpha := 0.0d0,
-                       p := p);
-              qf := NEW(QuadraticF, b := b);
-              qg := NEW(QuadraticG, b := b);
-              mp := LRVector.Copy(p);
-
-              bdims := M.GetDim(rmu.b^);
-              bb := M.NewM(bdims);
-              mostNeg : LONGREAL;
-              beta := 0.0d0;
-              success := FALSE;
-            BEGIN
-              M.LinearCombination(1.0d0, rmu.b^, sigmaK, rsigma.b^, bb^);
-              Debug.Out("bb    = " & FmtQ(p, bb));
-              mostNeg := MostNegQuadratic(p, bb);
-
-              (* here mostNeg is the most negative quadratic coefficient *)
-              Debug.Out("quadratic mostNeg = " & LR(mostNeg));
-              
-              LOOP
-                mp^ := p^;
-                
-                best := ConjGradient.Minimize(mp, tol, qf, qg);
-                
-                Debug.Out(F("Minimized quadratic %s @ %s",
-                            LR(best), FmtP(mp)));
-                
-                (* insert this point too *)
-                
-                IF best = best THEN
-                  Debug.Out(F("minimization succeeded beta=%s, inserting : %s ",
-                              LR(beta) , FmtP(mp)));
-                  EVAL newpts.insert(mp);
-                  success := TRUE;
-                  EXIT
-                ELSIF beta > 4.0d0 THEN
-                  (* give up *)
-                  Debug.Out("minimization failed with beta exceeding 4, giving up!");
-
-                  EXIT
-                ELSE
-                  (* failed.. must be a saddle point *)
-
-                  beta := beta * 2.0d0 + 0.1d0;
-                  b.alpha := beta * ABS(mostNeg);
-
-                  Debug.Out(F("Minimization failed, adjusting : beta=%s alpha=%s", LR(beta), LR(b.alpha)))
-                END
-              END(* POOL *);
-
-              IF TRUE THEN
-                (* bestQ is the best point we know on the fitted curve *)
-                (* grab the nearest points from the seq and re-sample them *)
-
-                VAR
-                  darr := NEW(REF ARRAY OF PointMetric.T, NUMBER(parr^));
-                BEGIN
-                  FOR i := FIRST(parr^) TO LAST(parr^) DO
-                    WITH rec  = parr[i],
-                         dist = Vdist(rec.p, bestQ) DO
-                      darr[i] := PointMetric.T { dist, rec.p, rec.result }
-                    END
-                  END;
-
-                  PointMetricArraySort.Sort(darr^);
-
-                  WITH wx = Wx.New() DO
-                    Wx.PutText(wx, "==== Closest neighbors to quad. min. ====\n");
-                    FOR i := FIRST(darr^) TO LAST(darr^) DO
-                      WITH rec = darr[i] DO
-                        Wx.PutText(wx, F("dist %s ; result %s ; rec.p %s\n",
-                                         LR(rec.metric),
-                                         MultiEval.Format(rec.result),
-                                         FmtP(rec.p)));
-                      END
-                    END;
-
-                    Debug.Out(Wx.ToText(wx));
-                  END;
-                  FOR i := 0 TO MIN(NUMBER(darr^) - 1, 4 * n * n) DO
-                    Debug.Out("Adding to newpts : rec.p = " & FmtP(darr[i].p));
-                    EVAL newpts.insert(darr[i].p)
-                  END
-                END
-              END;
-              RETURN bestQ
-            END
-          END
-        END
+    WITH dofs = Qdofs(n) DO
+      IF NUMBER(parr^) >= dofs THEN
+        Debug.Out(F("DoLeaderBoard: enough points (%s >= %s) to attempt a surface fit.", Int(NUMBER(parr^)), Int(dofs)));
+        RETURN AttemptSurfaceFit(p, parr, newpts)
+      ELSE
+        Debug.Out(F("DoLeaderBoard: NOT enough points (%s < %s) to attempt a surface fit.", Int(NUMBER(parr^)), Int(dofs)));
+        RETURN NIL
       END
-      
     END
   END DoLeaderBoard;
 
+PROCEDURE Ldofs(n : CARDINAL) : CARDINAL =
+  BEGIN
+    RETURN n + 1
+  END Ldofs;
+  
+PROCEDURE Qdofs(n : CARDINAL) : CARDINAL =
+  BEGIN
+    RETURN (n * n + 3 * n + 2) DIV 2
+  END Qdofs;
+
+PROCEDURE AttemptSurfaceFit(p : LRVector.T;
+                            parr : REF ARRAY OF PointMetric.T;
+                            newpts(*OUT*) : LRVectorSet.T) : LRVector.T =
+  (* attempt a surface fit *)
+  
+  VAR
+    n       := NUMBER(p^);
+
+    tryrho  := rho;
+    success := FALSE;
+    qdofs   := Qdofs(n);
+    ldofs   := Ldofs(n);
+    
+    seq   : PointMetricSeq.T;
+    bestQ : LRVector.T;
+  BEGIN
+    LOOP
+      seq := NEW(PointMetricSeq.T).init();
+      FOR i := FIRST(parr^) TO LAST(parr^) DO
+        WITH rec  = parr[i],
+             dist = Vdist(rec.p, p) DO
+          IF dist < tryrho THEN
+            seq.addhi(rec)
+          END
+        END
+      END;
+      IF seq.size() >= qdofs THEN
+        success := TRUE;
+        EXIT
+      ELSE
+        tryrho := tryrho * 2.0d0
+      END
+    END;
+
+    Debug.Out(F("DoLeaderBoard: seq.size()=%s rho=%s tryrho=%s success=%s",
+                Int(seq.size()), LR(rho), LR(tryrho), Bool(success)));
+
+    VAR
+      xquad  := NEW(REF M.M, seq.size(), qdofs);
+      xlin   := NEW(REF M.M, seq.size(), ldofs);
+      ysigma := NEW(REF M.M, seq.size(), 1);
+      ymu    := NEW(REF M.M, seq.size(), 1);
+      w      := NEW(REF M.M, seq.size(), seq.size());
+      ymuHat, ysigmaHat : REF M.M;
+      rmu    := NEW(Regression.T);
+      rsigma := NEW(Regression.T);
+    BEGIN
+      M.Zero(w^);
+      FOR i := 0 TO seq.size() - 1 DO
+        WITH rec = seq.get(i) DO
+          (* 
+             compute two forms of independents:
+             xquad for quadratic fit
+             xlin  for linear fit 
+          *)
+          ComputeIndepsQ(rec.p, i, xquad^);
+          ComputeIndepsL(rec.p, i, xlin^);
+          
+          ymu   [i, 0] := MultiEval.Mean(rec.result);
+          ysigma[i, 0] := MultiEval.Sdev(rec.result);
+          w[i, i]      := FLOAT(rec.result.n, LONGREAL)
+        END
+      END(*ROF*);
+
+      Regression.Run(xquad,
+                     ymu   , ymuHat  , FALSE, rmu, h := ridgeCoeff, W := w);
+      
+      Regression.Run(xlin,
+                     ysigma, ysigmaHat, FALSE, rsigma, h := ridgeCoeff, W := w);
+
+      rsigma.b := L2Q(n, rsigma.b^);
+
+      WITH wx    = Wx.New(),
+           pparr = NEW(REF ARRAY OF PointMetric.T, seq.size()) DO
+        Wx.PutText(wx, "=====  QUADRATIC PREDICTION  =====\n");
+        FOR i := 0 TO seq.size() - 1 DO
+          WITH rec     = seq.get(i),
+               pred    = ymuHat[i,0] + sigmaK * ysigmaHat[i,0],
+               p2mu    = ComputeQ(rec.p, rmu.b),
+               p2sigma = ComputeQ(rec.p, rsigma.b),
+               pred2   = p2mu + sigmaK * p2sigma DO
+            
+            Wx.PutText(wx, FN("metric %s : res %s, pred { mu %s ; sig %s } : predmetric %s =? %s; rec.p %s\n", TA{
+            LR(rec.metric),
+            MultiEval.Format(rec.result),
+            LR(ymuHat[i,0]),
+            LR(ysigmaHat[i,0]),
+            LR(pred),
+            LR(pred2),
+            FmtP(rec.p)}));
+            pparr[i] := PointMetric.T { pred, rec.p, rec.result }
+          END
+        END(* ROF *);
+
+        (* pparr contains these points tagged by their predicted
+           metric *)
+        PointMetricArraySort.Sort(pparr^);
+        Wx.PutText(wx, "=====  SORTED QUADRATIC PREDICTION  =====\n");
+
+        bestQ := LRVector.Copy(pparr[0].p);
+        
+        FOR i := FIRST(pparr^) TO LAST(pparr^) DO
+          WITH pm = pparr[i] DO
+            Wx.PutText(wx, F("pred metric %s : %s : %s\n",
+                             LR(pm.metric),
+                             FmtP(pm.p),
+                             MultiEval.Format(pm.result)))
+
+          END
+        END;
+
+        Debug.Out( Wx.ToText(wx) );
+
+        FOR i := 0 TO MIN(NUMBER(pparr^) - 1, 4 * n * n) DO
+          Debug.Out("Adding to newpts : rec.p = " & FmtP(pparr[i].p));
+          EVAL newpts.insert(pparr[i].p)
+        END
+        
+      END(*WITH*);
+
+      Debug.Out("sigma = " & FmtQ(p, rsigma.b));
+      Debug.Out("mu    = " & FmtQ(p, rmu.b));
+
+
+      
+      (* let's have some fun *)
+
+      VAR
+        tol     := ysigmaHat[0, 0] / 10.0d0;
+        b       := NEW(B,
+                       bmu    := rmu.b,
+                       bsigma := rsigma.b,
+                       sigmaK := sigmaK,
+                       alpha  := 0.0d0,
+                       p      := p);
+        qf      := NEW(QuadraticF, b := b);
+        qg      := NEW(QuadraticG, b := b);
+        mp      := LRVector.Copy(p);
+
+        bdims   := M.GetDim(rmu.b^);
+        bb      := M.NewM(bdims);
+        beta    := 0.0d0;
+        success := FALSE;
+
+        best : LONGREAL;
+        biggest : LONGREAL;
+        
+      BEGIN
+        M.LinearCombination(1.0d0, rmu.b^, sigmaK, rsigma.b^, bb^);
+        Debug.Out("bb    = " & FmtQ(p, bb));
+        biggest := BiggestQuadratic(p, bb);
+
+        (* here biggest is the most negative quadratic coefficient *)
+        Debug.Out("quadratic biggest = " & LR(biggest));
+        
+        LOOP
+          mp^ := p^;
+          
+          best := ConjGradient.Minimize(mp, tol, qf, qg);
+          
+          Debug.Out(F("Minimized quadratic %s @ %s",
+                      LR(best), FmtP(mp)));
+          
+          (* insert this point too *)
+          
+          IF best = best THEN
+            Debug.Out(F("minimization succeeded beta=%s, inserting : %s ",
+                        LR(beta) , FmtP(mp)));
+            EVAL newpts.insert(mp);
+            success := TRUE;
+            EXIT
+          ELSIF beta > 4.0d0 THEN
+            (* give up *)
+            Debug.Out("minimization failed with beta exceeding 4, giving up!");
+
+            EXIT
+          ELSE
+            (* failed.. must be a saddle point *)
+
+            beta    := beta * 2.0d0 + 0.1d0;
+            b.alpha := beta * ABS(biggest);
+
+            Debug.Out(F("Minimization failed, adjusting : beta=%s alpha=%s", LR(beta), LR(b.alpha)))
+          END
+        END(* POOL *);
+
+        (* bestQ is the best point we know on the fitted curve *)
+        (* grab the nearest points from the seq and re-sample them *)
+
+        VAR
+          darr := NEW(REF ARRAY OF PointMetric.T, NUMBER(parr^));
+        BEGIN
+          FOR i := FIRST(parr^) TO LAST(parr^) DO
+            WITH rec  = parr[i],
+                 dist = Vdist(rec.p, bestQ) DO
+              darr[i] := PointMetric.T { dist, rec.p, rec.result }
+            END
+          END;
+          
+          PointMetricArraySort.Sort(darr^);
+          
+          WITH wx = Wx.New() DO
+            Wx.PutText(wx, "==== Closest neighbors to quad. min. ====\n");
+            FOR i := FIRST(darr^) TO LAST(darr^) DO
+              WITH rec = darr[i] DO
+                Wx.PutText(wx, F("dist %s ; result %s ; rec.p %s\n",
+                                 LR(rec.metric),
+                                 MultiEval.Format(rec.result),
+                                 FmtP(rec.p)));
+              END
+            END;
+            
+            Debug.Out(Wx.ToText(wx));
+          END;
+          FOR i := 0 TO MIN(NUMBER(darr^) - 1, 4 * n * n) DO
+            Debug.Out("Adding to newpts : rec.p = " & FmtP(darr[i].p));
+            EVAL newpts.insert(darr[i].p)
+          END
+        END
+        END;
+      RETURN bestQ
+    END
+  END AttemptSurfaceFit;
+  
   (* 
      the problem here is that because of noise, the matrix we 
      investigate may not be positive definite (we may generate a saddle
@@ -503,7 +536,9 @@ PROCEDURE EvalQG(qg : QuadraticG; p : LRVector.T) : LRVector.T =
     END
   END EvalQG;
   
-PROCEDURE ComputeIndeps(p : LRVector.T; row : CARDINAL; VAR x : M.M) =
+PROCEDURE ComputeIndepsQ(p      : LRVector.T;
+                         row    : CARDINAL;
+                         VAR x  : M.M) =
   VAR
     k := 0;
     q : LONGREAL;
@@ -521,12 +556,35 @@ PROCEDURE ComputeIndeps(p : LRVector.T; row : CARDINAL; VAR x : M.M) =
         ELSE
           f1 := p[j]
         END;
-        q := f0 * f1;
+        
+        q := f0 * f1; (* this is the value we want *)
+        
         x[row, k] := q;
+        
         INC(k)
       END
     END
-  END ComputeIndeps;
+  END ComputeIndepsQ;
+
+PROCEDURE ComputeIndepsL(p      : LRVector.T;
+                         row    : CARDINAL;
+                         VAR x  : M.M) =
+  VAR
+    k  := 0;
+    f0 : LONGREAL;
+  BEGIN
+    FOR i := 0 TO NUMBER(p^) DO
+      IF i = NUMBER(p^) THEN
+        f0 := 1.0d0
+      ELSE
+        f0 := p[i]
+      END;
+        
+      x[row, k] := f0;
+      
+      INC(k)
+    END
+  END ComputeIndepsL;
 
 PROCEDURE ComputeQ(p : LRVector.T; b : REF M.M) : LONGREAL =
   (* value of the quadratic *)
@@ -558,6 +616,43 @@ PROCEDURE ComputeQ(p : LRVector.T; b : REF M.M) : LONGREAL =
     RETURN sum
   END ComputeQ;
 
+PROCEDURE L2Q(n : CARDINAL; READONLY b : M.M) : REF M.M =
+  VAR
+    ldofs := Ldofs(n);
+    qdofs := Qdofs(n);
+    res := NEW(REF M.M, qdofs, 1);
+    f0, f1, q : LONGREAL;
+    k := 0;
+  BEGIN
+    <*ASSERT NUMBER(b) = ldofs*>
+    <*ASSERT NUMBER(b[0]) = 1*>
+    FOR i := 0 TO n DO
+      IF i = n THEN
+        f0 := 1.0d0
+      ELSE
+        f0 := b[ i, 0 ]
+      END;
+      FOR j := i TO n DO
+        IF j = n THEN
+          f1 := 1.0d0
+        ELSE
+          f1 := b[ j, 0 ]
+        END;
+        
+        q := f0 * f1; (* this is the value we want *)
+
+        IF i = n OR j = n THEN
+          res[ k, 0 ] := q
+        ELSE
+          res[ k, 0 ] := 0.0d0
+        END;
+        
+        INC(k)
+      END
+    END;
+    RETURN res
+  END L2Q;
+
 PROCEDURE FmtQ(p : LRVector.T; b : REF M.M) : TEXT =
   VAR
     k := 0;
@@ -587,11 +682,12 @@ PROCEDURE FmtQ(p : LRVector.T; b : REF M.M) : TEXT =
     RETURN sum
   END FmtQ;
 
-PROCEDURE MostNegQuadratic(p : LRVector.T; b : REF M.M) : LONGREAL =
+PROCEDURE BiggestQuadratic(p : LRVector.T; b : REF M.M) : LONGREAL =
   VAR
     k := 0;
     mostNeg := LAST(LONGREAL);
   BEGIN
+    (* we care about negative squared terms and any cross term *)
     FOR i := 0 TO NUMBER(p^) DO
       FOR j := i TO NUMBER(p^) DO
         IF    i = j AND i = NUMBER(p^) THEN
@@ -607,17 +703,17 @@ PROCEDURE MostNegQuadratic(p : LRVector.T; b : REF M.M) : LONGREAL =
         ELSE
           (* cross term *)
           WITH pi = b[k, 0] DO
-            mostNeg := MIN(mostNeg, pi)
+            mostNeg := MIN(-ABS(mostNeg), pi)
           END;
           WITH pj = b[k, 0] DO
-            mostNeg := MIN(mostNeg, pj)
+            mostNeg := MIN(-ABS(mostNeg), pj)
           END
         END;
         INC(k)
       END
     END;
-    RETURN mostNeg
-  END MostNegQuadratic;
+    RETURN -mostNeg
+  END BiggestQuadratic;
   
 PROCEDURE ComputeG(p : LRVector.T; b : REF M.M) : LRVector.T =
   (* gradient of the quadratic *)
@@ -808,7 +904,8 @@ PROCEDURE Minimize(p              : LRVector.T;
       BEGIN
         Debug.Out("About to call DoLeaderBoard.  values.size() = " & Int(values.size()));
         LOCK valueMu DO
-          WITH bestq = DoLeaderBoard(p, lps[0].minp, values, newPts) DO
+          WITH bestq = DoLeaderBoard(p, values, newPts) DO
+            (* XXX should fix this *)
             IF bestq # NIL THEN
               newp := bestq
             END
