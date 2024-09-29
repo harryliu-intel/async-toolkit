@@ -41,6 +41,10 @@ Module ("PointMetric")
 Array_sort("PointMetric", "PointMetric")
 Sequence("PointMetric", "PointMetric")
 
+Interface("WLRVector")
+Module("QuadraticFit")
+Sequence("WLRVector", "WLRVector")
+
 SchemeStubs ("LineProblem")
 SchemeStubs ("Random")
 SchemeStubs ("OptCallback")

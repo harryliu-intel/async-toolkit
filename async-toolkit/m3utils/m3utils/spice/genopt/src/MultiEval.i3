@@ -1,6 +1,7 @@
 INTERFACE MultiEval;
 IMPORT LRVector;
 IMPORT LRScalarField;
+IMPORT Word;
 
 TYPE
   T <: Public;
@@ -14,11 +15,15 @@ TYPE
 
 TYPE
   Result = RECORD
+    id         : Word.T;
+    nominal    : LONGREAL := 0.0d0;
     n          : CARDINAL;
     sum, sumsq : LONGREAL;
   END;
 
 CONST Brand = "MultiEval";
+
+PROCEDURE Nominal(READONLY a : Result) : LONGREAL;
 
 PROCEDURE Mean(READONLY a : Result) : LONGREAL;
 

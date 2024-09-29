@@ -26,10 +26,13 @@ VAR
   
   rand := NEW(Random.Default).init();
   samples : CARDINAL;
-  sdev := 1.0d0;
-  
+  mean := 1.0d0; (* mean of offset from nominal *)
+  sdev := 1.0d0; (* sdev of offset from nominal *)
+  nominal : BOOLEAN;
 BEGIN
   TRY
+    nominal := pp.keywordPresent("-nominal");
+    
     IF pp.keywordPresent("-method") THEN
       method := pp.getNextInt()
     END;
@@ -45,6 +48,9 @@ BEGIN
     IF pp.keywordPresent("-deln") THEN
       deln := pp.getNextLongReal()
     END;
+    IF pp.keywordPresent("-mean") THEN
+      sdev := pp.getNextLongReal()
+    END;
     IF pp.keywordPresent("-sdev") THEN
       sdev := pp.getNextLongReal()
     END;
@@ -54,8 +60,6 @@ BEGIN
   EXCEPT
     ParseParams.Error => Debug.Error("Can't parse command-line parameters\nUsage: " & Params.Get(0) & " " & Usage)
   END;
-
-
   
   CASE method OF
     
@@ -104,8 +108,8 @@ BEGIN
     FOR i := 0 TO samples - 1 DO
       
       (* add some noise! *)
-      WITH err = NormalDeviate.Get(rand, 0.0d0, 1.0d0),
-           res = val + sdev * err DO
+      WITH err = NormalDeviate.Get(rand, mean, sdev),
+           res = val + err DO
         Wr.PutText(wr, LR(res) & "\n")
       END
     END;

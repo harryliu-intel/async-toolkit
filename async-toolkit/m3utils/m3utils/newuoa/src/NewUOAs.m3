@@ -465,7 +465,7 @@ PROCEDURE Minimize(x0             : LRVector.T;
         ELSE
           newuoa_options.npt := 2*dim + 1
         END;
-        newuoa_options.maxfun := MIN(500*dim, maxfun-nf);
+        newuoa_options.maxfun := MIN(500*dim, MAX(maxfun - nf, 0));
         WITH min = MIN(rhoend,1.0d0/pow(2.0d0,FLOAT(iter,LR))) DO
           newuoa_options.rhoend := MAX(Eps, 
                                        MAX(min,

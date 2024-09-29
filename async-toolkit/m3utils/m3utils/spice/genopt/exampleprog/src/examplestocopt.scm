@@ -20,7 +20,7 @@
 ;;(def-paramvar 'sweeps 3)
 (def-paramvar 'stages 11)
 (def-paramvar 'step   1e-9)
-(def-paramvar 'sdev   0.01)
+(def-paramvar 'sdev   0.1)
 
 
 ;; the following are the optimization variables
@@ -36,6 +36,8 @@
 (GenOpt.SetMethod 'StocRobust)
 
 (StocRobust.SetSigmaK 5.3)
+
+(StocRobust.SetDoNominal #t)
 
 ;; NewUOAs configuration variables
 (def-rhobeg 1)    ;; starting step size in terms of significant delta
@@ -63,6 +65,7 @@
                   " -stages " stages
                   " -step "   step
                   " -sdev "   sdev
+                  (if *stoc-nominal* " -nominal " "")
                   " -p pre -p sim -p conv -p clean -p post"))
 
 

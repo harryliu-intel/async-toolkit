@@ -8,7 +8,7 @@ IMPORT ParseParams;
 IMPORT Debug;
 IMPORT Pathname;
 IMPORT Stdio;
-FROM Fmt IMPORT F, LongReal, Int, Pad;
+FROM Fmt IMPORT F, LongReal, Int, Pad, Bool;
 IMPORT Params;
 IMPORT TextSeq;
 IMPORT Thread;
@@ -53,6 +53,7 @@ IMPORT Scan;
 IMPORT FloatMode, Lex;
 IMPORT SchemePair;
 IMPORT MultiEval;
+IMPORT Word;
 
 <*FATAL Thread.Alerted*>
 
@@ -286,7 +287,7 @@ PROCEDURE BaseMultiEval(base    : Evaluator;
   END BaseMultiEval;
 
 PROCEDURE BaseNominalEval(base    : Evaluator;
-                        p       : LRVector.T) : LONGREAL = 
+                          p       : LRVector.T) : LONGREAL = 
   BEGIN
     IF doDebug THEN
       Debug.Out("BaseNominalEval : " & FmtP(p))
@@ -344,9 +345,10 @@ PROCEDURE AttemptEval(base    : Evaluator;
   PROCEDURE CopyVectorToScheme() =
     BEGIN
       IF doDebug THEN
-        Debug.Out(F("CopyVectorToScheme : p=%s samples=%s",
+        Debug.Out(F("CopyVectorToScheme : p=%s samples=%s nominal=%s",
                     FmtP(q),
-                    Int(samples)))
+                    Int(samples),
+                    Bool(nominal)))
       END;
       
       LOCK pMu DO
@@ -359,7 +361,11 @@ PROCEDURE AttemptEval(base    : Evaluator;
         FOR i := FIRST(q^) TO LAST(q^) DO
           p.put(i, q[i])
         END;
-        cmd            := scmCb.command(samples)
+        IF nominal THEN 
+          cmd            := scmCb.command(-1)
+        ELSE
+          cmd            := scmCb.command(samples)
+        END
       END
     END CopyVectorToScheme;
 
@@ -527,7 +533,7 @@ PROCEDURE AttemptEval(base    : Evaluator;
           Wr.Close(outWr);
           Wr.Close(resWr)
         END;
-        IF samples = 0 THEN
+        IF samples = 0 OR nominal THEN
           <*ASSERT theResult.size() = 1 *>
           RETURN NEW(LRResult, res := theResult.get(0))
         ELSE
@@ -543,6 +549,10 @@ PROCEDURE AttemptEval(base    : Evaluator;
     END
   END AttemptEval;
 
+VAR
+  idMu          := NEW(MUTEX);
+  idNx : Word.T := 0;
+
 PROCEDURE SeqToMulti(seq : LRSeq.T) : MultiEval.Result =
   VAR
     s, ss := 0.0d0;
@@ -555,9 +565,16 @@ PROCEDURE SeqToMulti(seq : LRSeq.T) : MultiEval.Result =
       END
     END;
 
-    RETURN MultiEval.Result { n     := n,
-                              sum   := s,
-                              sumsq := ss }
+    LOCK idMu DO
+      TRY
+        RETURN MultiEval.Result { id    := idNx,
+                                  n     := n,
+                                  sum   := s,
+                                  sumsq := ss }
+      FINALLY
+        INC(idNx)
+      END
+    END
   END SeqToMulti;
 
 PROCEDURE LRSeq1(x : LONGREAL) : LRSeq.T =
@@ -583,6 +600,7 @@ TYPE
     base : Evaluator;
   OVERRIDES
     multiEval := DoMultiEval;
+    nominalEval := DoNominalEval;
   END;
 
 PROCEDURE DoMultiEval(mme     : MyMultiEval;
@@ -591,6 +609,12 @@ PROCEDURE DoMultiEval(mme     : MyMultiEval;
   BEGIN
     RETURN mme.base.multiEval(at, samples)
   END DoMultiEval;
+
+PROCEDURE DoNominalEval(mme : MyMultiEval;
+                        at : LRVector.T) : LONGREAL =
+  BEGIN
+    RETURN mme.base.nominalEval(at)
+  END DoNominalEval;
   
 PROCEDURE DoIt(optVars, paramVars : SchemeObject.T) =
   VAR

@@ -39,6 +39,8 @@ IMPORT PointMetricSeq;
 IMPORT LRRegression AS Regression;
 IMPORT ConjGradient;
 IMPORT PointEvaluator;
+IMPORT Thread;
+IMPORT QuadraticFit;
 
 CONST LR = LongReal;
 
@@ -53,6 +55,14 @@ PROCEDURE SetSigmaK(k : LONGREAL) =
 
 PROCEDURE GetSigmaK() : LONGREAL =
   BEGIN RETURN sigmaK END GetSigmaK;
+
+VAR doNominal := FALSE;
+
+PROCEDURE SetDoNominal(to : BOOLEAN) =
+  BEGIN doNominal := to END SetDoNominal;
+
+PROCEDURE GetDoNominal() : BOOLEAN =
+  BEGIN RETURN doNominal END GetDoNominal;
 
 PROCEDURE GetFHist(seq : LineProblemSeq.T) : LRSeq.T =
   (* type converter *)
@@ -98,42 +108,99 @@ TYPE
   END;
 
 VAR valueMu := NEW(MUTEX);
+
+TYPE
+  NomClosure = Thread.Closure OBJECT
+    me  : MultiEval.T;
+    at  : LRVector.T;
+    res : LONGREAL;
+  OVERRIDES
+    apply := NCApply;
+  END;
+
+PROCEDURE NCApply(nc : NomClosure) : REFANY =
+  BEGIN
+    nc.res := nc.me.nominalEval(at := nc.at);
+    RETURN nc
+  END NCApply;
     
 PROCEDURE MEEval(me      : MultiEvaluator;
                  p       : LRVector.T) : LONGREAL =
+  CONST
+    Poison = FIRST(LONGREAL);
   VAR
-    res := me.base.multiEval(p, me.samples);
-    oldres : MultiEval.Result;
+    res, oldres : MultiEval.Result;
+    isNew, haveOld : BOOLEAN;
+
+    thr : Thread.T := NIL;
   BEGIN
 
-    WITH new     = NOT me.thisCyc.member(p),
-         haveOld = me.values.get(p, oldres) DO
+    (* 
+       this nominal business is tricky.
 
-      IF new THEN
-        IF haveOld THEN
-          res := MultiEval.Combine(res, oldres)
-        END;
-        IF doDebug THEN
-          Debug.Out("adding new entry to me.values")
-        END;
-        LOCK valueMu DO
-          EVAL me.values.put(p, res)
-        END
-      ELSIF haveOld THEN
-        (* use the old data if it's got more samples *)
-        IF oldres.n > res.n THEN res := oldres END
-      END;
+       The first eval at a point always includes a nominal eval IF
+       we are doing nominal evals at all.
+    *)
+
+    LOCK valueMu DO
+      isNew   := NOT me.thisCyc.insert(p);
+      haveOld := me.values.get(p, oldres);
     END;
+
+    IF doNominal AND NOT haveOld THEN
+      Debug.Out("Launching nominal eval at " & FmtP(p));
+      thr := Thread.Fork(NEW(NomClosure, me := me.base, at := p))
+    END;
+    
+    res := me.base.multiEval(p, me.samples);
+
+    IF thr # NIL THEN
+      VAR
+        nc : NomClosure := Thread.Join(thr);
+      BEGIN
+        res.nominal := nc.res;
+      END
+    ELSIF doNominal THEN
+      res.nominal := Poison (* poison it to look for bugs *)
+    END;
+    
+    IF isNew THEN
+      IF haveOld THEN
+         <*ASSERT oldres.nominal # Poison*>
+        res.nominal := oldres.nominal;
+        res := MultiEval.Combine(res, oldres);
+      END;
+      IF doDebug THEN
+        Debug.Out("adding new entry to me.values")
+      END;
+      LOCK valueMu DO
+        <*ASSERT res.nominal # Poison*>
+        EVAL me.values.put(p, res)
+      END
+    ELSIF haveOld THEN
+      (* use the old data if it's got more samples *)
+      <*ASSERT oldres.nominal # Poison*>
+      IF oldres.n > res.n THEN
+        res := oldres
+      ELSE
+        res.nominal := oldres.nominal
+      END;
+      <*ASSERT res.nominal # Poison*>
+    END;
+
+    <*ASSERT res.nominal # Poison*>
 
     (* here we have the best possible estimate in res , and we have updated
        the database *)
 
-    WITH mean   = MultiEval.Mean(res),
-         sdev   = MultiEval.Sdev(res),
-         retval = mean + me.sigmaK * sdev DO
+    WITH nominal = MultiEval.Nominal(res),
+         mean    = MultiEval.Mean(res),
+         sdev    = MultiEval.Sdev(res),
+         retval  = nominal + mean + me.sigmaK * sdev DO
+      <*ASSERT nominal # Poison*>
       IF doDebug THEN
-        Debug.Out(F("StocRobust.MEEval : mean=%s sigmaK=%s sdev=%s -> retval=%s",
-                    LR(mean), LR(me.sigmaK), LR(sdev), LR(retval)))
+        Debug.Out(F("StocRobust.MEEval : nominal=%s mean=%s sigmaK=%s sdev=%s -> retval=%s",
+                    LR(nominal), LR(mean), LR(me.sigmaK), LR(sdev), LR(retval)))
       END;
       RETURN retval
     END
@@ -141,9 +208,10 @@ PROCEDURE MEEval(me      : MultiEvaluator;
 
 PROCEDURE ResMetric(READONLY r : MultiEval.Result; sigmaK : LONGREAL) : LONGREAL =
   BEGIN
-    WITH mean   = MultiEval.Mean(r),
+    WITH nom    = MultiEval.Nominal(r),
+         mean   = MultiEval.Mean(r),
          sdev   = MultiEval.Sdev(r),
-         retval = mean + sigmaK * sdev DO
+         retval = nom + mean + sigmaK * sdev DO
       RETURN retval
     END
   END ResMetric;
@@ -210,6 +278,7 @@ PROCEDURE DoLeaderBoard(p             : LRVector.T; (* current [old] point *)
         INC(i)
       END
     END;
+
     PointMetricArraySort.Sort(parr^);
     
     WITH wx = Wx.New() DO
@@ -224,7 +293,7 @@ PROCEDURE DoLeaderBoard(p             : LRVector.T; (* current [old] point *)
             Debug.Out("Adding to newpts : rec.p = " & FmtP(rec.p));
             EVAL newpts.insert(rec.p)
           END;
-          
+          (*  *)
           Wx.PutText(wx, F("metric %s ; dist %s; result %s ; rec.p %s\n",
                            LR(rec.metric),
                            LR(dist),
@@ -256,8 +325,8 @@ PROCEDURE Qdofs(n : CARDINAL) : CARDINAL =
     RETURN (n * n + 3 * n + 2) DIV 2
   END Qdofs;
 
-PROCEDURE AttemptSurfaceFit(p : LRVector.T;
-                            parr : REF ARRAY OF PointMetric.T;
+PROCEDURE AttemptSurfaceFit(p             : LRVector.T;
+                            parr          : REF ARRAY OF PointMetric.T;
                             newpts(*OUT*) : LRVectorSet.T) : LRVector.T =
   (* attempt a surface fit *)
   
@@ -272,6 +341,7 @@ PROCEDURE AttemptSurfaceFit(p : LRVector.T;
     seq   : PointMetricSeq.T;
     bestQ : LRVector.T;
   BEGIN
+    (* first, pick enough points for the fit *)
     LOOP
       seq := NEW(PointMetricSeq.T).init();
       FOR i := FIRST(parr^) TO LAST(parr^) DO
@@ -290,9 +360,37 @@ PROCEDURE AttemptSurfaceFit(p : LRVector.T;
       END
     END;
 
+    (* we have chosen enough points to attempt a fit *)
+    
+    (***************************************************************)
+    
+    (* we implement two prediction methods:
+
+       1. mu + sigma  [doNominal = FALSE]
+         
+            we use a quadratic fit for mu
+            we use a linear fit for sigma
+
+       2. nominal + mu + sigma [doNominal = TRUE]
+         
+            we use a quadratic (forced concave) fit for nominal
+            we use a linear fit for mu
+            we use a linear fit for sigma
+      *)
+          
+
     Debug.Out(F("DoLeaderBoard: seq.size()=%s rho=%s tryrho=%s success=%s",
                 Int(seq.size()), LR(rho), LR(tryrho), Bool(success)));
 
+    PROCEDURE PredNominal(pp : LRVector.T) : LONGREAL =
+      BEGIN
+        IF doNominal THEN
+          RETURN qf.pred(pp)
+        ELSE
+          RETURN 0.0d0
+        END
+      END PredNominal;
+      
     VAR
       xquad  := NEW(REF M.M, seq.size(), qdofs);
       xlin   := NEW(REF M.M, seq.size(), ldofs);
@@ -302,7 +400,13 @@ PROCEDURE AttemptSurfaceFit(p : LRVector.T;
       ymuHat, ysigmaHat : REF M.M;
       rmu    := NEW(Regression.T);
       rsigma := NEW(Regression.T);
+
+      qf     : QuadraticFit.T;
     BEGIN
+      IF doNominal THEN
+        qf := NEW(QuadraticFit.T).init(n, rho);
+      END;
+      
       M.Zero(w^);
       FOR i := 0 TO seq.size() - 1 DO
         WITH rec = seq.get(i) DO
@@ -313,6 +417,12 @@ PROCEDURE AttemptSurfaceFit(p : LRVector.T;
           *)
           ComputeIndepsQ(rec.p, i, xquad^);
           ComputeIndepsL(rec.p, i, xlin^);
+
+          IF doNominal THEN
+            qf.addPoint(rec.p,
+                        MultiEval.Nominal(rec.result),
+                        1.0d0) (* nominal isnt weighted *)
+          END;
           
           ymu   [i, 0] := MultiEval.Mean(rec.result);
           ysigma[i, 0] := MultiEval.Sdev(rec.result);
@@ -320,8 +430,22 @@ PROCEDURE AttemptSurfaceFit(p : LRVector.T;
         END
       END(*ROF*);
 
-      Regression.Run(xquad,
-                     ymu   , ymuHat  , FALSE, rmu, h := ridgeCoeff, W := w);
+      IF doNominal THEN
+        Debug.Out("StocRobust.AttemptSurfaceFit : doNominal is true, attempting to do a nominal fit");
+        
+        WITH minNom    = qf.getMinimum(),
+             minNomVal = qf.pred(minNom) DO
+          Debug.Out(F("Nominal QuadraticFit min %s @ %s",
+                      LR(minNomVal), FmtP(minNom)))
+        END;
+        
+        Regression.Run(xlin,
+                       ymu   , ymuHat  , FALSE, rmu, h := ridgeCoeff, W := w);
+        rmu.b := L2Q(n, rmu.b^)
+      ELSE
+        Regression.Run(xquad,
+                       ymu   , ymuHat  , FALSE, rmu, h := ridgeCoeff, W := w);
+      END;
       
       Regression.Run(xlin,
                      ysigma, ysigmaHat, FALSE, rsigma, h := ridgeCoeff, W := w);
@@ -333,14 +457,16 @@ PROCEDURE AttemptSurfaceFit(p : LRVector.T;
         Wx.PutText(wx, "=====  QUADRATIC PREDICTION  =====\n");
         FOR i := 0 TO seq.size() - 1 DO
           WITH rec     = seq.get(i),
-               pred    = ymuHat[i,0] + sigmaK * ysigmaHat[i,0],
+               nom     = PredNominal(rec.p),
+               pred    = nom + ymuHat[i,0] + sigmaK * ysigmaHat[i,0],
                p2mu    = ComputeQ(rec.p, rmu.b),
                p2sigma = ComputeQ(rec.p, rsigma.b),
                pred2   = p2mu + sigmaK * p2sigma DO
             
-            Wx.PutText(wx, FN("metric %s : res %s, pred { mu %s ; sig %s } : predmetric %s =? %s; rec.p %s\n", TA{
+            Wx.PutText(wx, FN("metric %s : res %s, pred { nom %s; mu %s ; sig %s } : predmetric %s =? %s; rec.p %s\n", TA{
             LR(rec.metric),
             MultiEval.Format(rec.result),
+            LR(nom),
             LR(ymuHat[i,0]),
             LR(ysigmaHat[i,0]),
             LR(pred),
@@ -379,106 +505,126 @@ PROCEDURE AttemptSurfaceFit(p : LRVector.T;
       Debug.Out("sigma = " & FmtQ(p, rsigma.b));
       Debug.Out("mu    = " & FmtQ(p, rmu.b));
 
-
       
       (* let's have some fun *)
+      IF doNominal THEN
+      ELSE
+        DoSimpleFit(p,
+                    rmu,
+                    rsigma,
+                    tol    := ysigmaHat[0, 0] / 10.0d0,
+                    newpts := newpts)
+      END;
 
-      VAR
-        tol     := ysigmaHat[0, 0] / 10.0d0;
-        b       := NEW(B,
-                       bmu    := rmu.b,
-                       bsigma := rsigma.b,
-                       sigmaK := sigmaK,
-                       alpha  := 0.0d0,
-                       p      := p);
-        qf      := NEW(QuadraticF, b := b);
-        qg      := NEW(QuadraticG, b := b);
-        mp      := LRVector.Copy(p);
+      (* bestQ is the best point we know on the fitted curve *)
+      (* grab the nearest points from the seq and re-sample them *)
 
-        bdims   := M.GetDim(rmu.b^);
-        bb      := M.NewM(bdims);
-        beta    := 0.0d0;
-        success := FALSE;
-
-        best : LONGREAL;
-        biggest : LONGREAL;
-        
-      BEGIN
-        M.LinearCombination(1.0d0, rmu.b^, sigmaK, rsigma.b^, bb^);
-        Debug.Out("bb    = " & FmtQ(p, bb));
-        biggest := BiggestQuadratic(p, bb);
-
-        (* here biggest is the most negative quadratic coefficient *)
-        Debug.Out("quadratic biggest = " & LR(biggest));
-        
-        LOOP
-          mp^ := p^;
-          
-          best := ConjGradient.Minimize(mp, tol, qf, qg);
-          
-          Debug.Out(F("Minimized quadratic %s @ %s",
-                      LR(best), FmtP(mp)));
-          
-          (* insert this point too *)
-          
-          IF best = best THEN
-            Debug.Out(F("minimization succeeded beta=%s, inserting : %s ",
-                        LR(beta) , FmtP(mp)));
-            EVAL newpts.insert(mp);
-            success := TRUE;
-            EXIT
-          ELSIF beta > 4.0d0 THEN
-            (* give up *)
-            Debug.Out("minimization failed with beta exceeding 4, giving up!");
-
-            EXIT
-          ELSE
-            (* failed.. must be a saddle point *)
-
-            beta    := beta * 2.0d0 + 0.1d0;
-            b.alpha := beta * ABS(biggest);
-
-            Debug.Out(F("Minimization failed, adjusting : beta=%s alpha=%s", LR(beta), LR(b.alpha)))
-          END
-        END(* POOL *);
-
-        (* bestQ is the best point we know on the fitted curve *)
-        (* grab the nearest points from the seq and re-sample them *)
-
-        VAR
-          darr := NEW(REF ARRAY OF PointMetric.T, NUMBER(parr^));
-        BEGIN
-          FOR i := FIRST(parr^) TO LAST(parr^) DO
-            WITH rec  = parr[i],
-                 dist = Vdist(rec.p, bestQ) DO
-              darr[i] := PointMetric.T { dist, rec.p, rec.result }
-            END
-          END;
-          
-          PointMetricArraySort.Sort(darr^);
-          
-          WITH wx = Wx.New() DO
-            Wx.PutText(wx, "==== Closest neighbors to quad. min. ====\n");
-            FOR i := FIRST(darr^) TO LAST(darr^) DO
-              WITH rec = darr[i] DO
-                Wx.PutText(wx, F("dist %s ; result %s ; rec.p %s\n",
-                                 LR(rec.metric),
-                                 MultiEval.Format(rec.result),
-                                 FmtP(rec.p)));
-              END
-            END;
-            
-            Debug.Out(Wx.ToText(wx));
-          END;
-          FOR i := 0 TO MIN(NUMBER(darr^) - 1, 4 * n * n) DO
-            Debug.Out("Adding to newpts : rec.p = " & FmtP(darr[i].p));
-            EVAL newpts.insert(darr[i].p)
-          END
-        END
-        END;
+      InsertClosestPoints(n, bestQ, parr^, newpts);
+      
       RETURN bestQ
     END
   END AttemptSurfaceFit;
+
+
+PROCEDURE InsertClosestPoints(n             : CARDINAL;
+                              bestQ         : LRVector.T;
+                              READONLY parr : ARRAY OF PointMetric.T;
+                              newpts        : LRVectorSet.T) =
+  VAR
+    darr := NEW(REF ARRAY OF PointMetric.T, NUMBER(parr));
+  BEGIN
+    FOR i := FIRST(parr) TO LAST(parr) DO
+      WITH rec  = parr[i],
+           dist = Vdist(rec.p, bestQ) DO
+        darr[i] := PointMetric.T { dist, rec.p, rec.result }
+      END
+    END;
+    
+    PointMetricArraySort.Sort(darr^);
+    
+    WITH wx = Wx.New() DO
+      Wx.PutText(wx, "==== Closest neighbors to quad. min. ====\n");
+      FOR i := FIRST(darr^) TO LAST(darr^) DO
+        WITH rec = darr[i] DO
+          Wx.PutText(wx, F("dist %s ; result %s ; rec.p %s\n",
+                           LR(rec.metric),
+                           MultiEval.Format(rec.result),
+                           FmtP(rec.p)));
+        END
+      END;
+      
+      Debug.Out(Wx.ToText(wx));
+    END;
+    FOR i := 0 TO MIN(NUMBER(darr^) - 1, 4 * n * n) DO
+      Debug.Out("Adding to newpts : rec.p = " & FmtP(darr[i].p));
+      EVAL newpts.insert(darr[i].p)
+    END
+  END InsertClosestPoints;
+
+PROCEDURE DoSimpleFit(p           : LRVector.T;
+                      rmu, rsigma : Regression.T;
+                      tol         : LONGREAL;
+                      newpts      : LRVectorSet.T
+                      ) =
+  VAR
+    b := NEW(B,
+             bmu    := rmu.b,
+             bsigma := rsigma.b,
+             sigmaK := sigmaK,
+             alpha  := 0.0d0,
+             p      := p);
+    qf      := NEW(QuadraticF, b := b);
+    qg      := NEW(QuadraticG, b := b);
+    mp      := LRVector.Copy(p);
+    
+    bdims   := M.GetDim(rmu.b^);
+    bb      := M.NewM(bdims);
+    beta    := 0.0d0;
+    success := FALSE;
+    
+    best    : LONGREAL;
+    biggest : LONGREAL;
+  BEGIN
+    M.LinearCombination(1.0d0, rmu.b^, sigmaK, rsigma.b^, bb^);
+    Debug.Out("bb    = " & FmtQ(p, bb));
+    biggest := BiggestQuadratic(p, bb);
+    
+    (* here biggest is the most negative quadratic coefficient *)
+    Debug.Out("quadratic biggest = " & LR(biggest));
+    
+    LOOP
+      mp^ := p^;
+      
+      best := ConjGradient.Minimize(mp, tol, qf, qg);
+      
+      Debug.Out(F("Minimized quadratic %s @ %s",
+                  LR(best), FmtP(mp)));
+      
+      (* insert this point too *)
+      
+      IF best = best THEN
+        Debug.Out(F("minimization succeeded beta=%s, inserting : %s ",
+                    LR(beta) , FmtP(mp)));
+        EVAL newpts.insert(mp);
+        success := TRUE;
+        EXIT
+      ELSIF beta > 4.0d0 THEN
+        (* give up *)
+        Debug.Out("minimization failed with beta exceeding 4, giving up!");
+        
+        EXIT
+      ELSE
+        (* failed.. must be a saddle point *)
+        
+        beta    := beta * 2.0d0 + 0.1d0;
+        b.alpha := beta * ABS(biggest);
+        
+        Debug.Out(F("Minimization failed, adjusting : beta=%s alpha=%s", LR(beta), LR(b.alpha)))
+      END
+    END(* POOL *);
+  END DoSimpleFit;
+
+  
   
   (* 
      the problem here is that because of noise, the matrix we 
@@ -517,6 +663,7 @@ PROCEDURE EvalQF(qf : QuadraticF; p : LRVector.T) : LONGREAL =
     WITH mu    = ComputeQ(p, qf.b.bmu),
          sigma = ComputeQ(p, qf.b.bsigma),
          spice = qf.b.alpha * M.SumDiffSqV(p^, qf.b.p^) DO
+      <*ASSERT NOT doNominal*>
       RETURN mu + qf.b.sigmaK * sigma + spice
     END
   END EvalQF;
@@ -526,6 +673,7 @@ PROCEDURE EvalQG(qg : QuadraticG; p : LRVector.T) : LRVector.T =
     WITH muG    = ComputeG(p, qg.b.bmu),
          sigmaG = ComputeG(p, qg.b.bsigma),
          res    = NEW(LRVector.T, NUMBER(p^)) DO
+      <*ASSERT NOT doNominal*>
       M.LinearCombinationV(1.0d0, muG^, qg.b.sigmaK, sigmaG^, res^);
 
       FOR i := FIRST(res^) TO LAST(res^) DO
@@ -841,7 +989,9 @@ PROCEDURE Minimize(p              : LRVector.T;
         END
       END;
 
-      thisCyc := NEW(LRVectorSetDef.T).init();
+      LOCK valueMu DO
+        thisCyc := NEW(LRVectorSetDef.T).init()
+      END;
       
       Debug.Out(F("StocRobust.Minimize : pass %s; database has %s points",
                   Int(pass), Int(values.size())));
@@ -895,8 +1045,6 @@ PROCEDURE Minimize(p              : LRVector.T;
          opt points.
       *)
 
-      
-
       VAR
         newp := lps[0].minp; (* tentatively set to best line-search point *)
         opt0 := Predict(p, SUBARRAY(pp^, 0, n));
@@ -921,7 +1069,8 @@ PROCEDURE Minimize(p              : LRVector.T;
 
         WITH dp = LRVector.Copy(p) DO
           M.SubV(newp^, p^, dp^);
-          rho := M.Norm(dp^);
+          (* rho can only decrease by 4 *)
+          rho := 0.25d0 * rho + 0.75d0 * M.Norm(dp^);
           Debug.Out(F("Robust.m3 : new rho = %s", LR(rho)));
           IF rho < rhoend THEN
             message := "stopping because rho < rhoend";

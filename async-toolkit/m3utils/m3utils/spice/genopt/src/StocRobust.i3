@@ -20,4 +20,8 @@ PROCEDURE SetSigmaK(k : LONGREAL);
 PROCEDURE GetSigmaK() : LONGREAL;
   (* get sigma factor *)
 
+PROCEDURE SetDoNominal(to : BOOLEAN);
+
+PROCEDURE GetDoNominal() : BOOLEAN;
+  
 END StocRobust.
