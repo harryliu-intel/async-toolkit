@@ -43,8 +43,8 @@ PROCEDURE DoIt() =
       END
     END;
 
-    Debug.Out(F("TestQf : qf.getParams() = %s",
-                FmtP(qf.getParams())))
+    Debug.Out(F("TestQf : qf.getState() = %s",
+                FmtP(qf.getState())))
     
   END DoIt;
 

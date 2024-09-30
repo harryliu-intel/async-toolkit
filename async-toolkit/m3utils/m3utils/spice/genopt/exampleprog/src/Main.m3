@@ -110,7 +110,11 @@ BEGIN
       (* add some noise! *)
       WITH err = NormalDeviate.Get(rand, mean, sdev),
            res = val + err DO
-        Wr.PutText(wr, LR(res) & "\n")
+        IF nominal THEN
+          Wr.PutText(wr, LR(val) & "\n")
+        ELSE
+          Wr.PutText(wr, LR(res) & "\n")
+        END
       END
     END;
     Wr.Close(wr)

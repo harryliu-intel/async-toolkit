@@ -24,7 +24,6 @@ REVEAL
     LT     : REF M.M;
     Lambda : REF M.M; (* Lambda = L LT *)
     p0     : LRVector.T;
-    W      : REF M.M;
     C      : LONGREAL;
 
     x,xx   : REF M.V; (* scratch *)
@@ -34,12 +33,14 @@ REVEAL
     evalState(state : LRVector.T (* tentative new state *)) : LONGREAL
           := EvalState;
     evalPt(at : LRVector.T   (* point in space *)   ) : LONGREAL := EvalPt;
-    setState(to : LRVector.T) := SetState;
   OVERRIDES
     init       := Init;
     addPoint   := AddPoint;
     pred       := Pred;
-    getParams  := GetParams;
+
+    getState   := GetState;
+    setState   := SetState;
+
     getMinimum := GetMinimum;
   END;
 
@@ -61,10 +62,15 @@ PROCEDURE Init(t : T; n : CARDINAL; rho : LONGREAL) : T =
     
     t.clean   := FALSE;
 
+    (* allocate the persistent workspaces *)
+    t.LT      := NEW(REF M.M, t.n, t.n);
+    t.Lambda := NEW(REF M.M, t.n, t.n);
+    t.p0 := NEW(LRVector.T, t.n);
+
     (* allocate the scratch spaces *)
     t.x  := NEW(REF M.V, n);
     t.xx := NEW(REF M.V, n);
-    
+
     RETURN t
   END Init;
 
@@ -96,7 +102,8 @@ PROCEDURE SFEval(sf : StateField; state : LRVector.T) : LONGREAL =
     WITH res = sf.t.evalState(state) DO
       IF doDebug THEN
         Debug.Out(F("QuadraticFit.SFEval(%s) = %s",
-                    FmtP(state), LR(res)))
+                    FmtP(state), LR(res)),
+                  minLevel := 11)
       END;
       RETURN res
     END
@@ -108,18 +115,11 @@ PROCEDURE DoFit(t : T) =
 
   BEGIN
     IF doDebug THEN
-      Debug.Out("QuadraticFit.DoFit : t.points.size()=" & Int(np))
+      Debug.Out(F("QuadraticFit.DoFit : t.points.size()=%s t.rho=%s",
+                Int(np), LR(t.rho)))
     END;
     
-    t.LT      := NEW(REF M.M, t.n, t.n);
     M.Zero(t.LT^);
-    t.Lambda := NEW(REF M.M, t.n, t.n);
-    
-    (* build V *)
-    t.p0 := NEW(LRVector.T, t.n);
-
-    t.W := NEW(REF M.M, np, np);
-    M.Zero(t.W^);
 
     WITH sf   = NEW(StateField, t := t),
          best = NewUOA_M3.Minimize(t.state,
@@ -138,7 +138,9 @@ PROCEDURE DoFit(t : T) =
      DO
       IF doDebug THEN
         Debug.Out(F("QuadraticFit.DoFit : best = %s state = %s",
-                    LR(best), FmtP(t.state)))
+                    LR(best), FmtP(t.state)));
+        Debug.Out(F("QuadraticFit.DoFit : Lambda =\n%s",
+                    M.FormatM(t.Lambda^)))
       END;
 (*      t.setState(best.x) *)
     END;
@@ -150,10 +152,14 @@ PROCEDURE SetState(t : T; to : LRVector.T) =
   VAR
     j : CARDINAL;
   BEGIN
+    <*ASSERT to # NIL*>
     IF doDebug THEN
-      Debug.Out("QuadraticFit.SetState to=" & FmtP(to));
+      Debug.Out("QuadraticFit.SetState to=" & FmtP(to), minLevel := 11);
     END;
-    
+
+    <*ASSERT t.state # NIL*>
+    <*ASSERT t.p0 # NIL*>
+
     <*ASSERT NUMBER(t.state^) = NUMBER(to^)*>
     t.p0^ := SUBARRAY(to^, 0, t.n);
     j := t.n;
@@ -174,7 +180,7 @@ PROCEDURE SetState(t : T; to : LRVector.T) =
 
     M.MulTransposeMM(t.LT^, t.LT^, t.Lambda^);
 
-    IF doDebug THEN
+    IF doDebug AND Debug.GetLevel() >= 11 THEN
       Debug.Out("t.p0 = " & FmtP(t.p0));
       Debug.Out("t.C  = " & LR(t.C));
       Debug.Out("t.LT = \n" & M.FormatM(t.LT^));
@@ -200,7 +206,8 @@ PROCEDURE EvalState(t : T; at : LRVector.T) : LONGREAL =
            wsq   = rec.w * sq DO
         IF doDebug THEN
           Debug.Out(F("EvalState : v=%s y=%s yhat=%s wsq=%s",
-                      FmtP(rec.v), LR(rec.y), LR(yhat), LR(wsq)))
+                      FmtP(rec.v), LR(rec.y), LR(yhat), LR(wsq)),
+                    minLevel := 100)
         END;
         sumSq := sumSq + wsq
       END
@@ -227,7 +234,7 @@ PROCEDURE Pred(t : T; p : LRVector.T) : LONGREAL =
     RETURN t.evalPt(p)
   END Pred;
 
-PROCEDURE GetParams(t : T) : LRVector.T =
+PROCEDURE GetState(t : T) : LRVector.T =
   BEGIN
     IF doDebug THEN
       Debug.Out("QuadraticFit.GetParams : t.clean=" & Bool(t.clean))
@@ -236,7 +243,7 @@ PROCEDURE GetParams(t : T) : LRVector.T =
       t.doFit()
     END;
     RETURN LRVector.Copy(t.state)
-  END GetParams;
+  END GetState;
 
 PROCEDURE GetMinimum(t : T) : LRVector.T =
   VAR

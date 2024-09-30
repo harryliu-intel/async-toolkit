@@ -325,6 +325,8 @@ PROCEDURE Qdofs(n : CARDINAL) : CARDINAL =
     RETURN (n * n + 3 * n + 2) DIV 2
   END Qdofs;
 
+VAR qfState : LRVector.T := NIL;
+
 PROCEDURE AttemptSurfaceFit(p             : LRVector.T;
                             parr          : REF ARRAY OF PointMetric.T;
                             newpts(*OUT*) : LRVectorSet.T) : LRVector.T =
@@ -343,6 +345,9 @@ PROCEDURE AttemptSurfaceFit(p             : LRVector.T;
   BEGIN
     (* first, pick enough points for the fit *)
     LOOP
+      Debug.Out(F("AttemptSurfaceFit : tryrho=%s ; starting from %s",
+                  LR(tryrho), FmtP(p)));
+      
       seq := NEW(PointMetricSeq.T).init();
       FOR i := FIRST(parr^) TO LAST(parr^) DO
         WITH rec  = parr[i],
@@ -379,8 +384,8 @@ PROCEDURE AttemptSurfaceFit(p             : LRVector.T;
       *)
           
 
-    Debug.Out(F("DoLeaderBoard: seq.size()=%s rho=%s tryrho=%s success=%s",
-                Int(seq.size()), LR(rho), LR(tryrho), Bool(success)));
+    Debug.Out(F("DoLeaderBoard: seq.size()=%s rho=%s tryrho=%s success=%s p=%s",
+                Int(seq.size()), LR(rho), LR(tryrho), Bool(success), FmtP(p)));
 
     PROCEDURE PredNominal(pp : LRVector.T) : LONGREAL =
       BEGIN
@@ -404,7 +409,10 @@ PROCEDURE AttemptSurfaceFit(p             : LRVector.T;
       qf     : QuadraticFit.T;
     BEGIN
       IF doNominal THEN
-        qf := NEW(QuadraticFit.T).init(n, rho);
+        qf := NEW(QuadraticFit.T).init(n, 2.0d0 * rho);
+        IF qfState # NIL THEN
+          qf.setState(qfState)
+        END
       END;
       
       M.Zero(w^);
@@ -432,11 +440,20 @@ PROCEDURE AttemptSurfaceFit(p             : LRVector.T;
 
       IF doNominal THEN
         Debug.Out("StocRobust.AttemptSurfaceFit : doNominal is true, attempting to do a nominal fit");
-        
+
         WITH minNom    = qf.getMinimum(),
              minNomVal = qf.pred(minNom) DO
-          Debug.Out(F("Nominal QuadraticFit min %s @ %s",
-                      LR(minNomVal), FmtP(minNom)))
+
+          qfState := qf.getState();
+          Debug.Out(F("Nominal QuadraticFit min %s @ %s / state %s",
+                      LR(minNomVal), FmtP(minNom), FmtP(qfState)));
+          EVAL newpts.insert(minNom) (* add to list of interesting points *)
+
+          (* what we really want, though, is not minNom, but the minimum
+             of 
+
+             nom + mu + K * sig 
+          *)
         END;
         
         Regression.Run(xlin,
@@ -503,8 +520,6 @@ PROCEDURE AttemptSurfaceFit(p             : LRVector.T;
         PointMetricArraySort.Sort(pparr^);
         Wx.PutText(wx, "=====  SORTED QUADRATIC PREDICTION  =====\n");
 
-        bestQ := LRVector.Copy(pparr[0].p);
-        
         FOR i := FIRST(pparr^) TO LAST(pparr^) DO
           WITH pm = pparr[i] DO
             Wx.PutText(wx, F("pred metric %s : %s : %s\n",
@@ -520,13 +535,76 @@ PROCEDURE AttemptSurfaceFit(p             : LRVector.T;
         FOR i := 0 TO MIN(NUMBER(pparr^) - 1, 4 * n * n) DO
           Debug.Out("Adding to newpts : rec.p = " & FmtP(pparr[i].p));
           EVAL newpts.insert(pparr[i].p)
-        END
+        END;
+
+        (* 
+           at this point, 
+           
+           parr[0] is the best point we have evaluated.
+           
+           pparr[0] is the best point we have seen according to its
+           quadratic prediction
+        *)
+
+        Debug.Out("parr[0]  = " & PointMetric.Format( parr[0]));
+        Debug.Out("pparr[0] = " & PointMetric.Format(pparr[0]));
         
+
+        PROCEDURE SigVal(READONLY res : MultiEval.Result;
+                         k            : LONGREAL) : LONGREAL =
+          BEGIN
+            WITH pow    = Math.pow,
+
+                 nf     = FLOAT(res.n, LONGREAL),
+                 
+                 nom    = MultiEval.Nominal(res),
+                 mu     = MultiEval.Mean(res),
+                 sig    = MultiEval.Sdev(res),
+                 
+                 muStd  = sig / Math.sqrt(nf),
+                 (* std error of the mean *)
+
+                 sigStd = pow(2.0d0 * pow(sig, 4.0d0) / (nf - 1.0d0), 0.25d0), 
+                 (* estimator of std error of sdev *)
+
+                 totStd = muStd + sigStd,
+
+                 metric = nom + mu + sigmaK * sig,
+                 (* implied metric *)
+                 
+                 res = metric + k * totStd
+             DO
+              RETURN res
+            END
+          END SigVal;
+                 
+        BEGIN
+          WITH ppmet = pparr[0].metric,
+               ppmin = SigVal(pparr[0].result, -3.0d0),
+               ppmax = SigVal(pparr[0].result, +3.0d0),
+               pmax  = SigVal( parr[0].result, +6.0d0) DO
+            Debug.Out(F("pp %s ppmet %s ppmin %s ppmax %s",
+                        FmtP(pparr[0].p),
+                        LR(ppmet),
+                        LR(ppmin),
+                        LR(ppmax)));
+            Debug.Out(F("p  %s pmax %s",
+                        FmtP(parr[0].p),
+                        LR(pmax)));
+            IF ppmet < ppmin OR ppmet > ppmax THEN
+              Debug.Out("pparr[0] untrustworthy");
+              bestQ := LRVector.Copy(parr[0].p)
+            ELSIF ppmet > pmax THEN
+              Debug.Out("pparr[0] bad");
+              bestQ := LRVector.Copy(parr[0].p)
+            ELSE
+              bestQ := LRVector.Copy(pparr[0].p)
+            END
+          END
+        END
       END(*WITH*);
 
-      (* let's have some fun *)
-      IF doNominal THEN
-      ELSE
+      IF NOT doNominal THEN
         DoSimpleFit(p,
                     rmu,
                     rsigma,

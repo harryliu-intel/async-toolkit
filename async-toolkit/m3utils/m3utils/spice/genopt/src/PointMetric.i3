@@ -13,4 +13,6 @@ CONST Brand = "PointMetric";
 
 PROCEDURE Compare(READONLY a, b : T) : [-1..1];
 
+PROCEDURE Format(READONLY a : T) : TEXT;
+
 END PointMetric.

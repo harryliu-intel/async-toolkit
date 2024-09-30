@@ -16,9 +16,11 @@ TYPE
 
     pred(p : LRVector.T) : LONGREAL; (* predicted value at p *)
 
-    getParams() : LRVector.T;        (* the full set of params in the order
-                                        { x0, L, C } *)
+    getState() : LRVector.T;         (* the full set of params in the order
+                                         { x0, L, C } *)
 
+    setState(to : LRVector.T);       (* from prev. call of getState *)  
+    
     getMinimum() : LRVector.T;       (* get x0 *)
     
   END;
