@@ -450,7 +450,15 @@ PROCEDURE AttemptSurfaceFit(p             : LRVector.T;
       Regression.Run(xlin,
                      ysigma, ysigmaHat, FALSE, rsigma, h := ridgeCoeff, W := w);
 
+      FOR i := 0 TO n DO
+        Debug.Out(F("rsigma.b[%s,0] = %s",
+                    Int(i), LR(rsigma.b[i,0])))
+      END;
+      
       rsigma.b := L2Q(n, rsigma.b^);
+
+      Debug.Out("sigma = " & FmtQ(n, rsigma.b));
+      Debug.Out("mu    = " & FmtQ(n, rmu.b));
 
       WITH wx    = Wx.New(),
            pparr = NEW(REF ARRAY OF PointMetric.T, seq.size()) DO
@@ -461,9 +469,11 @@ PROCEDURE AttemptSurfaceFit(p             : LRVector.T;
                pred    = nom + ymuHat[i,0] + sigmaK * ysigmaHat[i,0],
                p2mu    = ComputeQ(rec.p, rmu.b),
                p2sigma = ComputeQ(rec.p, rsigma.b),
-               pred2   = p2mu + sigmaK * p2sigma DO
-            
-            Wx.PutText(wx, FN("metric %s : res %s, pred { nom %s; mu %s ; sig %s } : predmetric %s =? %s; rec.p %s\n", TA{
+               pred2   = nom + p2mu + sigmaK * p2sigma DO
+
+
+            IF FALSE THEN
+            Wx.PutText(wx, FN("metric %s : res %s, pred { nom %s; mu %s ; sig %s } : predmetric %s =? %s (= %s + %s + %s * %s); rec.p %s\n", TA{
             LR(rec.metric),
             MultiEval.Format(rec.result),
             LR(nom),
@@ -471,7 +481,19 @@ PROCEDURE AttemptSurfaceFit(p             : LRVector.T;
             LR(ysigmaHat[i,0]),
             LR(pred),
             LR(pred2),
+            LR(nom), LR(p2mu), LR(sigmaK), LR(p2sigma),
             FmtP(rec.p)}));
+            END;
+            
+            Wx.PutText(wx, FN("metric %s : res %s, pred { nom %s; mu %s ; sig %s } : predmetric %s; rec.p %s\n", TA{
+            LR(rec.metric),
+            MultiEval.Format(rec.result),
+            LR(nom),
+            LR(ymuHat[i,0]),
+            LR(ysigmaHat[i,0]),
+            LR(pred),
+            FmtP(rec.p)}));
+            
             pparr[i] := PointMetric.T { pred, rec.p, rec.result }
           END
         END(* ROF *);
@@ -502,10 +524,6 @@ PROCEDURE AttemptSurfaceFit(p             : LRVector.T;
         
       END(*WITH*);
 
-      Debug.Out("sigma = " & FmtQ(p, rsigma.b));
-      Debug.Out("mu    = " & FmtQ(p, rmu.b));
-
-      
       (* let's have some fun *)
       IF doNominal THEN
       ELSE
@@ -584,9 +602,10 @@ PROCEDURE DoSimpleFit(p           : LRVector.T;
     
     best    : LONGREAL;
     biggest : LONGREAL;
+    n := NUMBER(p^);
   BEGIN
     M.LinearCombination(1.0d0, rmu.b^, sigmaK, rsigma.b^, bb^);
-    Debug.Out("bb    = " & FmtQ(p, bb));
+    Debug.Out("bb    = " & FmtQ(n, bb));
     biggest := BiggestQuadratic(p, bb);
     
     (* here biggest is the most negative quadratic coefficient *)
@@ -769,28 +788,16 @@ PROCEDURE L2Q(n : CARDINAL; READONLY b : M.M) : REF M.M =
     ldofs := Ldofs(n);
     qdofs := Qdofs(n);
     res := NEW(REF M.M, qdofs, 1);
-    f0, f1, q : LONGREAL;
     k := 0;
   BEGIN
     <*ASSERT NUMBER(b) = ldofs*>
     <*ASSERT NUMBER(b[0]) = 1*>
     FOR i := 0 TO n DO
-      IF i = n THEN
-        f0 := 1.0d0
-      ELSE
-        f0 := b[ i, 0 ]
-      END;
       FOR j := i TO n DO
-        IF j = n THEN
-          f1 := 1.0d0
-        ELSE
-          f1 := b[ j, 0 ]
-        END;
-        
-        q := f0 * f1; (* this is the value we want *)
-
-        IF i = n OR j = n THEN
-          res[ k, 0 ] := q
+        IF    i = n THEN
+          res[ k, 0 ] := b[ j, 0 ]
+        ELSIF j = n THEN
+          res[ k, 0 ] := b[ i, 0 ]
         ELSE
           res[ k, 0 ] := 0.0d0
         END;
@@ -801,7 +808,7 @@ PROCEDURE L2Q(n : CARDINAL; READONLY b : M.M) : REF M.M =
     RETURN res
   END L2Q;
 
-PROCEDURE FmtQ(p : LRVector.T; b : REF M.M) : TEXT =
+PROCEDURE FmtQ(n : CARDINAL; b : REF M.M) : TEXT =
   VAR
     k := 0;
     sum := "";
@@ -809,14 +816,14 @@ PROCEDURE FmtQ(p : LRVector.T; b : REF M.M) : TEXT =
     q : TEXT;
     term : TEXT;
   BEGIN
-    FOR i := 0 TO NUMBER(p^) DO
-      IF i = NUMBER(p^) THEN
+    FOR i := 0 TO n DO
+      IF i = n THEN
         f0 := "1"
       ELSE
         f0 := F("p[%s]", Int(i))
       END;
-      FOR j := i TO NUMBER(p^) DO
-        IF j = NUMBER(p^) THEN
+      FOR j := i TO n DO
+        IF j = n THEN
           f1 := "1"
         ELSE
           f1 := F("p[%s]", Int(j))
