@@ -73,6 +73,13 @@ PROCEDURE ZeroV(VAR a : V) =
     END
   END ZeroV;
 
+PROCEDURE SetV(VAR a : V; to : Base) =
+  BEGIN
+    FOR r := FIRST(a) TO LAST(a) DO
+      a[r] := to
+    END
+  END SetV;
+
 PROCEDURE MakeUnit(VAR a : M) =
   BEGIN
     Zero(a);

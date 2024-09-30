@@ -19,6 +19,7 @@ PROCEDURE MakeUnit(VAR a : M);
 
 PROCEDURE CopyV(READONLY a : V; VAR b : V);
 PROCEDURE ZeroV(VAR a : V);
+PROCEDURE SetV(VAR a : V; to : Base);
 
 PROCEDURE MulSM(s : Base; READONLY a : M; VAR res : M);
 PROCEDURE MulSV(s : Base; READONLY a : V; VAR res : V);

@@ -10,4 +10,6 @@ TYPE
 
 CONST Brand = "WLRVector";
 
+PROCEDURE Format(READONLY a : T) : TEXT;
+      
 END WLRVector.

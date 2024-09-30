@@ -54,6 +54,7 @@ IMPORT FloatMode, Lex;
 IMPORT SchemePair;
 IMPORT MultiEval;
 IMPORT Word;
+IMPORT TestQf;
 
 <*FATAL Thread.Alerted*>
 
@@ -925,6 +926,13 @@ VAR
   doDirectoryWarning : BOOLEAN;
   
 BEGIN
+
+  IF FALSE THEN
+    TestQf.DoIt();
+    
+    Process.Exit(0)
+  END;
+  
   Debug.SetOptions(SET OF Debug.Options { Debug.Options.PrintThreadID } );
   scmFiles.addhi("require");
   scmFiles.addhi("m3");
