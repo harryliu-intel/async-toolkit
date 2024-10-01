@@ -52,7 +52,8 @@
 ;; all the following assumed to run in a single directory
 
 (def-compute-command
-  '(string-append *cmd-path* 
+  '(string-append *cmd-path*
+                  " -method " 3
                   " -vdd "    vdd
                   " -temp "   temp
                   " -lib "    lib

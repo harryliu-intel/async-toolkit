@@ -41,6 +41,8 @@ IMPORT ConjGradient;
 IMPORT PointEvaluator;
 IMPORT Thread;
 IMPORT QuadraticFit;
+IMPORT PointResult;
+IMPORT PointResultSeq;
 
 CONST LR = LongReal;
 
@@ -64,30 +66,33 @@ PROCEDURE SetDoNominal(to : BOOLEAN) =
 PROCEDURE GetDoNominal() : BOOLEAN =
   BEGIN RETURN doNominal END GetDoNominal;
 
-PROCEDURE GetFHist(seq : LineProblemSeq.T) : LRSeq.T =
+PROCEDURE GetFHist(seq : PointResultSeq.T) : LRSeq.T =
   (* type converter *)
   VAR
     res := NEW(LRSeq.T).init();
   BEGIN
     FOR i := 0 TO seq.size() - 1 DO
-      res.addhi(seq.get(i).minval)
+      res.addhi(seq.get(i).metric)
     END;
     RETURN res
   END GetFHist;
 
-PROCEDURE FindBest(seq         : LineProblemSeq.T;
+PROCEDURE FindBest(seq         : PointResultSeq.T;
                    VAR bestval : LONGREAL;
                    VAR bestp   : LRVector.T) =
   (* find the best answer of all the evaluations *)
   VAR
-    min := LAST(LONGREAL);
+    min  := LAST(LONGREAL);
+    minQ := FALSE;
   BEGIN
     FOR i := 0 TO seq.size() - 1 DO
       WITH e = seq.get(i) DO
-        IF e.minval < min THEN
-          bestp := LRVector.Copy(e.minp);
-          bestval := e.minval;
-          min := e.minval
+        (* quadratic beats non-quadratic *)
+        IF e.metric < min AND (e.quadratic OR NOT minQ) THEN
+          bestp   := LRVector.Copy(e.p);
+          bestval := e.metric;
+          min     := e.metric;
+          minQ    := e.quadratic
         END
       END
     END          
@@ -206,7 +211,9 @@ PROCEDURE MEEval(me      : MultiEvaluator;
     END
   END MEEval;
 
-PROCEDURE ResMetric(READONLY r : MultiEval.Result; sigmaK : LONGREAL) : LONGREAL =
+PROCEDURE ResMetric(READONLY r : MultiEval.Result;
+                    sigmaK     : LONGREAL) : LONGREAL =
+  (* metric as observed from direct observations *)
   BEGIN
     WITH nom    = MultiEval.Nominal(r),
          mean   = MultiEval.Mean(r),
@@ -253,16 +260,16 @@ PROCEDURE Vdist(a, b : LRVector.T) : LONGREAL =
     RETURN Math.sqrt(M.SumDiffSqV(a^, b^))
   END Vdist;
 
-PROCEDURE DoLeaderBoard(p             : LRVector.T; (* current [old] point *)
+PROCEDURE DoLeaderBoard(READONLY pr   : PointResult.T; (* current [old] point *)
                         values        : LRVectorMRTbl.T;
-                        newpts(*OUT*) : LRVectorSet.T) : LRVector.T =
+                        newpts(*OUT*) : LRVectorSet.T) : PointResult.T =
   VAR
     parr := NEW(REF ARRAY OF PointMetric.T, values.size());
     iter := values.iterate();
     q : LRVector.T;
     r : MultiEval.Result;
     i := 0;
-    n := NUMBER(p^);
+    n := NUMBER(pr.p^);
   BEGIN
     (* populate the array *)
 
@@ -283,10 +290,10 @@ PROCEDURE DoLeaderBoard(p             : LRVector.T; (* current [old] point *)
     
     WITH wx = Wx.New() DO
       Wx.PutText(wx, "==== StocRobust leaderboard ====\n");
-      Wx.PutText(wx, F("rho = %s ; p = %s\n", LR(rho), FmtP(p)));
+      Wx.PutText(wx, F("rho = %s ; p = %s\n", LR(rho), FmtP(pr.p)));
       FOR i := FIRST(parr^) TO LAST(parr^) DO
         WITH rec  = parr[i],
-             dist = Vdist(rec.p, p) DO
+             dist = Vdist(rec.p, pr.p) DO
 
           IF newpts.size() < 4 * n * n THEN
             (* insert first n^2 points in interesting set *)
@@ -307,10 +314,10 @@ PROCEDURE DoLeaderBoard(p             : LRVector.T; (* current [old] point *)
     WITH dofs = Qdofs(n) DO
       IF NUMBER(parr^) >= dofs THEN
         Debug.Out(F("DoLeaderBoard: enough points (%s >= %s) to attempt a surface fit.", Int(NUMBER(parr^)), Int(dofs)));
-        RETURN AttemptSurfaceFit(p, parr, newpts)
+        RETURN AttemptSurfaceFit(pr, parr, newpts)
       ELSE
         Debug.Out(F("DoLeaderBoard: NOT enough points (%s < %s) to attempt a surface fit.", Int(NUMBER(parr^)), Int(dofs)));
-        RETURN NIL
+        RETURN pr
       END
     END
   END DoLeaderBoard;
@@ -327,13 +334,13 @@ PROCEDURE Qdofs(n : CARDINAL) : CARDINAL =
 
 VAR qfState : LRVector.T := NIL;
 
-PROCEDURE AttemptSurfaceFit(p             : LRVector.T;
+PROCEDURE AttemptSurfaceFit(pr            : PointResult.T;
                             parr          : REF ARRAY OF PointMetric.T;
-                            newpts(*OUT*) : LRVectorSet.T) : LRVector.T =
+                            newpts(*OUT*) : LRVectorSet.T) : PointResult.T =
   (* attempt a surface fit *)
   
   VAR
-    n       := NUMBER(p^);
+    n       := NUMBER(pr.p^);
 
     tryrho  := rho;
     success := FALSE;
@@ -341,17 +348,17 @@ PROCEDURE AttemptSurfaceFit(p             : LRVector.T;
     ldofs   := Ldofs(n);
     
     seq   : PointMetricSeq.T;
-    bestQ : LRVector.T;
+    bestQ : PointResult.T;
   BEGIN
     (* first, pick enough points for the fit *)
     LOOP
       Debug.Out(F("AttemptSurfaceFit : tryrho=%s ; starting from %s",
-                  LR(tryrho), FmtP(p)));
+                  LR(tryrho), PointResult.Format(pr)));
       
       seq := NEW(PointMetricSeq.T).init();
       FOR i := FIRST(parr^) TO LAST(parr^) DO
         WITH rec  = parr[i],
-             dist = Vdist(rec.p, p) DO
+             dist = Vdist(rec.p, pr.p) DO
           IF dist < tryrho THEN
             seq.addhi(rec)
           END
@@ -384,8 +391,9 @@ PROCEDURE AttemptSurfaceFit(p             : LRVector.T;
       *)
           
 
-    Debug.Out(F("DoLeaderBoard: seq.size()=%s rho=%s tryrho=%s success=%s p=%s",
-                Int(seq.size()), LR(rho), LR(tryrho), Bool(success), FmtP(p)));
+    Debug.Out(F("AttemptSurfaceFit: seq.size()=%s rho=%s tryrho=%s success=%s p=%s",
+                Int(seq.size()), LR(rho), LR(tryrho), Bool(success),
+                PointResult.Format(pr)));
 
     PROCEDURE PredNominal(pp : LRVector.T) : LONGREAL =
       BEGIN
@@ -582,7 +590,9 @@ PROCEDURE AttemptSurfaceFit(p             : LRVector.T;
           WITH ppmet = pparr[0].metric,
                ppmin = SigVal(pparr[0].result, -3.0d0),
                ppmax = SigVal(pparr[0].result, +3.0d0),
-               pmax  = SigVal( parr[0].result, +6.0d0) DO
+               pmax  = SigVal( parr[0].result, +6.0d0),
+               pmet  = parr[0].metric
+           DO
             Debug.Out(F("pp %s ppmet %s ppmin %s ppmax %s",
                         FmtP(pparr[0].p),
                         LR(ppmet),
@@ -593,19 +603,22 @@ PROCEDURE AttemptSurfaceFit(p             : LRVector.T;
                         LR(pmax)));
             IF ppmet < ppmin OR ppmet > ppmax THEN
               Debug.Out("pparr[0] untrustworthy");
-              bestQ := LRVector.Copy(parr[0].p)
+              bestQ :=
+                  PointResult.T { LRVector.Copy(parr[0].p), pmet, FALSE, rho }
             ELSIF ppmet > pmax THEN
               Debug.Out("pparr[0] bad");
-              bestQ := LRVector.Copy(parr[0].p)
+              bestQ :=
+                  PointResult.T { LRVector.Copy(parr[0].p), pmet, FALSE, rho }
             ELSE
-              bestQ := LRVector.Copy(pparr[0].p)
+              bestQ :=
+                  PointResult.T { LRVector.Copy(pparr[0].p), ppmet, TRUE, rho }
             END
           END
         END
       END(*WITH*);
 
       IF NOT doNominal THEN
-        DoSimpleFit(p,
+        DoSimpleFit(pr.p,
                     rmu,
                     rsigma,
                     tol    := ysigmaHat[0, 0] / 10.0d0,
@@ -615,7 +628,7 @@ PROCEDURE AttemptSurfaceFit(p             : LRVector.T;
       (* bestQ is the best point we know on the fitted curve *)
       (* grab the nearest points from the seq and re-sample them *)
 
-      InsertClosestPoints(n, bestQ, parr^, newpts);
+      InsertClosestPoints(n, bestQ.p, parr^, newpts);
       
       RETURN bestQ
     END
@@ -990,18 +1003,18 @@ PROCEDURE ComputeG(p : LRVector.T; b : REF M.M) : LRVector.T =
   
 VAR ridgeCoeff := 0.0d0;
     
-PROCEDURE Minimize(p              : LRVector.T;
+PROCEDURE Minimize(pa             : LRVector.T;
                    func           : MultiEval.T;
                    rhobeg, rhoend : LONGREAL) : Output =
   VAR
-    n        := NUMBER(p^);
+    n        := NUMBER(pa^);
     nv       := 2 * n;
     da       := NEW(REF ARRAY OF LRVector.T, nv);
     pp       := NEW(REF ARRAY OF LRVector.T, nv);
     lps      := NEW(REF ARRAY OF LineProblem.T, nv);
     rand     := NEW(Random.Default).init();
-    mins     := NEW(LineProblemSeq.T).init();
-    allMins  := NEW(LineProblemSeq.T).init();
+    mins     := NEW(PointResultSeq.T).init();
+    allMins  := NEW(PointResultSeq.T).init();
     cl       := NEW(REF ARRAY OF LineMinimizer.T, nv);
     
     message  : TEXT;
@@ -1012,6 +1025,8 @@ PROCEDURE Minimize(p              : LRVector.T;
     newPts   := NEW(LRVectorSetDef.T).init(); (* interesting points to eval *)
 
     samples : CARDINAL;
+
+    pr       := PointResult.T { pa, LAST(LONGREAL), FALSE, LAST(LONGREAL) };
     
   BEGIN
     rho   := rhobeg;
@@ -1072,7 +1087,7 @@ PROCEDURE Minimize(p              : LRVector.T;
             INC(i)
           END
         END
-      END;
+      END(*RAV*);
 
       LOCK valueMu DO
         thisCyc := NEW(LRVectorSetDef.T).init()
@@ -1086,7 +1101,7 @@ PROCEDURE Minimize(p              : LRVector.T;
         
       FOR i := FIRST(da^) TO LAST(da^) DO
         
-        pp[i] := LRVector.Copy(p);
+        pp[i] := LRVector.Copy(pr.p);
         cl[i].start(pp[i],
                     LRVector.Copy(da[i]),
                     
@@ -1131,17 +1146,16 @@ PROCEDURE Minimize(p              : LRVector.T;
       *)
 
       VAR
-        newp := lps[0].minp; (* tentatively set to best line-search point *)
-        opt0 := Predict(p, SUBARRAY(pp^, 0, n));
-        opt1 := Predict(p, SUBARRAY(pp^, n, n));
+        newp := PointResult.T { lps[0].minp, lps[0].minval, FALSE, rho };
+        (* tentatively set to best line-search point *)
+        
+        opt0 := Predict(pr.p, SUBARRAY(pp^, 0, n));
+        opt1 := Predict(pr.p, SUBARRAY(pp^, n, n));
       BEGIN
         Debug.Out("About to call DoLeaderBoard.  values.size() = " & Int(values.size()));
         LOCK valueMu DO
-          WITH bestq = DoLeaderBoard(p, values, newPts) DO
-            (* XXX should fix this *)
-            IF bestq # NIL THEN
-              newp := bestq
-            END
+          WITH bestq = DoLeaderBoard(pr, values, newPts) DO
+            newp := bestq
           END
         END;
         Debug.Out(F("Robust.m3 : opt0 (%s) ; opt1 (%s)",
@@ -1149,11 +1163,11 @@ PROCEDURE Minimize(p              : LRVector.T;
                     M.FormatV(opt1^)));
         
         Debug.Out(F("Robust.m3 : updating p (%s) -> (%s)",
-                    M.FormatV(p^),
-                    M.FormatV(newp^)));
+                    PointResult.Format(pr),
+                    PointResult.Format(newp)));
 
-        WITH dp = LRVector.Copy(p) DO
-          M.SubV(newp^, p^, dp^);
+        WITH dp = LRVector.Copy(pr.p) DO
+          M.SubV(newp.p^, pr.p^, dp^);
           (* rho can only decrease by 4 *)
           rho := 0.25d0 * rho + 0.75d0 * M.Norm(dp^);
           Debug.Out(F("Robust.m3 : new rho = %s", LR(rho)));
@@ -1174,12 +1188,12 @@ PROCEDURE Minimize(p              : LRVector.T;
            basis blocks?  Or average them?
         *)
         
-        M.SubV(opt0^, newp^, da[0]^);
-        M.SubV(opt1^, newp^, da[n]^);
+        M.SubV(opt0^, newp.p^, da[0]^);
+        M.SubV(opt1^, newp.p^, da[n]^);
 
-        p^ := newp^;
-        mins.addhi(lps[0]);
-        allMins.addhi(lps[0]);
+        pr := newp;
+        mins.addhi   (newp);
+        allMins.addhi(newp);
 
         WITH Lookback = 5 DO
 
@@ -1190,7 +1204,7 @@ PROCEDURE Minimize(p              : LRVector.T;
           
           IF mins.size() > Lookback THEN
             WITH old = mins.get(mins.size() - Lookback) DO
-              IF old.minval <= lps[0].minval THEN
+              IF old.metric <= newp.metric AND (NOT newp.quadratic OR old.quadratic) AND old.rho <= newp.rho THEN
                 message := "stopping because no more improvement";
                 EXIT
               END

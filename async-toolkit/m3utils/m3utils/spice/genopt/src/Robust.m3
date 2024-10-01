@@ -188,13 +188,16 @@ PROCEDURE Minimize(p              : LRVector.T;
                     LRMatrix2.FormatV(opt0^),
                     LRMatrix2.FormatV(opt1^)));
         
-        Debug.Out(F("Robust.m3 : updating p (%s) -> (%s)",
+        Debug.Out(F("Robust.m3 : updating p (%s) -> (%s) [minval=%s]",
                     LRMatrix2.FormatV(p^),
-                    LRMatrix2.FormatV(newp)));
+                    LRMatrix2.FormatV(newp),
+                    LR(lps[0].minval)));
 
         WITH dp = LRVector.Copy(p) DO
           LRMatrix2.SubV(newp, p^, dp^);
-          rho := LRMatrix2.Norm(dp^);
+          WITH norm = LRMatrix2.Norm(dp^) DO
+            rho := 0.25d0 * rho + 0.75d0 * norm
+          END;
           Debug.Out(F("Robust.m3 : new rho = %s", LR(rho)));
           IF rho < rhoend THEN
             message := "stopping because rho < rhoend";

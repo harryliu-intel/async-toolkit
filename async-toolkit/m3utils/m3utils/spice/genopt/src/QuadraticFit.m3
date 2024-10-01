@@ -9,6 +9,7 @@ IMPORT NewUOA_M3;
 IMPORT NewUOAs;
 FROM GenOpt IMPORT FmtP;
 IMPORT LRScalarField;
+IMPORT Robust;
 
 CONST LR = LongReal;
 
@@ -30,10 +31,9 @@ REVEAL
     
   METHODS
     doFit() := DoFit;
-    evalState(state : LRVector.T (* tentative new state *)) : LONGREAL
-          := EvalState;
     evalPt(at : LRVector.T   (* point in space *)   ) : LONGREAL := EvalPt;
   OVERRIDES
+    evalState  := EvalState;
     init       := Init;
     addPoint   := AddPoint;
     pred       := Pred;
@@ -97,15 +97,20 @@ TYPE
     eval := SFEval;
   END;
 
+VAR
+  sMu := NEW(MUTEX);
+  
 PROCEDURE SFEval(sf : StateField; state : LRVector.T) : LONGREAL =
   BEGIN
-    WITH res = sf.t.evalState(state) DO
-      IF doDebug THEN
-        Debug.Out(F("QuadraticFit.SFEval(%s) = %s",
-                    FmtP(state), LR(res)),
-                  minLevel := 11)
-      END;
-      RETURN res
+    LOCK sMu DO
+      WITH res = sf.t.evalState(state) DO
+        IF doDebug THEN
+          Debug.Out(F("QuadraticFit.SFEval(%s) = %s",
+                      FmtP(state), LR(res)),
+                    minLevel := 11)
+        END;
+        RETURN res
+      END
     END
   END SFEval;
   
@@ -122,13 +127,22 @@ PROCEDURE DoFit(t : T) =
     M.Zero(t.LT^);
 
     WITH sf   = NEW(StateField, t := t),
+
+         best = Robust.Minimize(t.state,
+                                sf,
+                                rhobeg := 2.0d0   * t.rho,
+                                rhoend := 0.001d0 * t.rho).f
+         (*
          best = NewUOA_M3.Minimize(t.state,
                                    sf,
-                                   npt := NUMBER(t.state^) + 2,
+                                   npt := (NUMBER(t.state^) + 2) * (NUMBER(t.state^) + 1) DIV 2,
                                    rhobeg := 2.0d0   * t.rho,
                                    rhoend := 0.001d0 * t.rho,
-                                   maxfun := 1000)
+                                   maxfun := 10000)
+         *)
+         
 (*
+
          best = NewUOAs.Minimize(t.state,
                                  sf,
                                  rhobeg := 2.0d0   * t.rho,

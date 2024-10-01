@@ -22,7 +22,7 @@ VAR
   temp, vdd, delp, deln : LONGREAL;
 
   val : LONGREAL;
-  method : [0..1] := 1;
+  method : [ 0..3 ] := 1;
   
   rand := NEW(Random.Default).init();
   samples : CARDINAL;
@@ -63,7 +63,7 @@ BEGIN
   
   CASE method OF
     
-    0 =>
+    0, 2 =>
     WITH dv = vdd  - temp,
          dp = delp - 2.0d0,
          dn = deln - 3.0d0,
@@ -72,7 +72,7 @@ BEGIN
       val := euclid
     END;
 
-    IF vdd < 0.0d0 THEN
+    IF method = 0 AND vdd < 0.0d0 THEN
       Debug.Error("vdd out of range")
     END
   |
@@ -96,6 +96,11 @@ BEGIN
 
          func = rfactor * zfactor * xyfactor DO
       val := func
+    END
+  |
+    3 =>
+    WITH euclid = vdd * vdd + delp * delp + deln * deln DO
+      val := euclid
     END
   END;
 

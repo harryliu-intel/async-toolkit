@@ -5,7 +5,8 @@ IMPORT LineProblem;
 IMPORT Thread;
 IMPORT Debug;
 IMPORT Compress;
-FROM Fmt IMPORT LongReal;
+FROM Fmt IMPORT F, LongReal;
+FROM GenOpt IMPORT FmtP;
 
 CONST LR = LongReal;
 
@@ -36,8 +37,9 @@ REVEAL
   END;
 
 VAR
-  mu := NEW(MUTEX);
+  mu      := NEW(MUTEX);
   running := 0;
+  doDebug := TRUE;
 
 PROCEDURE LinMinApply(cl : T) : REFANY =
   (* call out to Brent *)
@@ -58,12 +60,17 @@ PROCEDURE LinMinApply(cl : T) : REFANY =
         
       LOCK mu DO INC(running) END;
       
-      WITH minval = Compress.LinMin(cl.pp,
+      WITH startp = LRVector.Copy(cl.pp),
+           minval = Compress.LinMin(cl.pp,
                                     LRVector.Copy(cl.dir),
                                     cl.func,
                                     cl.rho,
                                     cl.rho / 10.0d0) DO
-        Debug.Out("Robust.m3 : Line minimization returned " & LR(minval));
+        Debug.Out(F("Line minimization from %s [%s] dir %s : returned %s",
+                    FmtP(startp),
+                    LR(cl.func.eval(startp)),
+                    FmtP(cl.dir),
+                    LR(minval)));
         LOCK mu DO
           cl.lps := LineProblem.T { cl.dir, cl.pp, minval };
           cl.done := TRUE;
@@ -92,10 +99,10 @@ PROCEDURE Start(t    : T;
   BEGIN
     LOCK mu DO
       <*ASSERT t.done = TRUE*>
-      t.pp := pp;
-      t.dir := dir;
+      t.pp   := pp;
+      t.dir  := dir;
       t.func := func;
-      t.rho := rho;
+      t.rho  := rho;
       t.done := FALSE;
       Thread.Signal(t.c) 
     END

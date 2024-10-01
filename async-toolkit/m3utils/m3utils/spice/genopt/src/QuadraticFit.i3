@@ -22,7 +22,8 @@ TYPE
     setState(to : LRVector.T);       (* from prev. call of getState *)  
     
     getMinimum() : LRVector.T;       (* get x0 *)
-    
+
+    evalState(state : LRVector.T (* tentative new state *)) : LONGREAL;
   END;
 
 CONST Brand = "QuadraticFit";

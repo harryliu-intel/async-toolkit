@@ -46,6 +46,8 @@ Module("QuadraticFit")
 Sequence("WLRVector", "WLRVector")
 
 Module ("TestQf")
+Module ("PointResult")
+Sequence ("PointResult","PointResult")
 
 SchemeStubs ("LineProblem")
 SchemeStubs ("Random")
