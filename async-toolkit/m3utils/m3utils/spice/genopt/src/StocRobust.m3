@@ -407,10 +407,17 @@ PROCEDURE AttemptSurfaceFit(pr            : PointResult.T;
     VAR
       xquad  := NEW(REF M.M, seq.size(), qdofs);
       xlin   := NEW(REF M.M, seq.size(), ldofs);
-      ysigma := NEW(REF M.M, seq.size(), 1);
+
+      ynom   := NEW(REF M.M, seq.size(), 1);
       ymu    := NEW(REF M.M, seq.size(), 1);
+      ysigma := NEW(REF M.M, seq.size(), 1);
       w      := NEW(REF M.M, seq.size(), seq.size());
-      ymuHat, ysigmaHat : REF M.M;
+
+      ynomHat,
+      ymuHat,
+      ysigmaHat : REF M.M;
+
+      rnom   := NEW(Regression.T);
       rmu    := NEW(Regression.T);
       rsigma := NEW(Regression.T);
 
@@ -440,6 +447,7 @@ PROCEDURE AttemptSurfaceFit(pr            : PointResult.T;
                         1.0d0) (* nominal isnt weighted *)
           END;
           
+          ynom  [i, 0] := MultiEval.Nominal(rec.result);
           ymu   [i, 0] := MultiEval.Mean(rec.result);
           ysigma[i, 0] := MultiEval.Sdev(rec.result);
           w[i, i]      := FLOAT(rec.result.n, LONGREAL)
@@ -464,6 +472,8 @@ PROCEDURE AttemptSurfaceFit(pr            : PointResult.T;
           *)
         END;
         
+        Regression.Run(xquad,
+                       ynom  , ynomHat , FALSE, rnom, h := ridgeCoeff, W := w);
         Regression.Run(xlin,
                        ymu   , ymuHat  , FALSE, rmu, h := ridgeCoeff, W := w);
         rmu.b := L2Q(n, rmu.b^)
@@ -481,16 +491,21 @@ PROCEDURE AttemptSurfaceFit(pr            : PointResult.T;
       END;
       
       rsigma.b := L2Q(n, rsigma.b^);
-
-      Debug.Out("sigma = " & FmtQ(n, rsigma.b));
-      Debug.Out("mu    = " & FmtQ(n, rmu.b));
+      
+      IF doNominal THEN
+        Debug.Out("nom   = " & FmtQ(n, rnom.b));
+      END;
+      Debug.Out  ("mu    = " & FmtQ(n, rmu.b));
+      Debug.Out  ("sigma = " & FmtQ(n, rsigma.b));
 
       WITH wx    = Wx.New(),
            pparr = NEW(REF ARRAY OF PointMetric.T, seq.size()) DO
         Wx.PutText(wx, "=====  QUADRATIC PREDICTION  =====\n");
         FOR i := 0 TO seq.size() - 1 DO
           WITH rec     = seq.get(i),
-               nom     = PredNominal(rec.p),
+               nomX    = PredNominal(rec.p),
+
+               nom     = ynomHat[i,0],
                pred    = nom + ymuHat[i,0] + sigmaK * ysigmaHat[i,0],
                p2mu    = ComputeQ(rec.p, rmu.b),
                p2sigma = ComputeQ(rec.p, rsigma.b),

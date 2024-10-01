@@ -29,9 +29,11 @@ VAR
   mean := 1.0d0; (* mean of offset from nominal *)
   sdev := 1.0d0; (* sdev of offset from nominal *)
   nominal : BOOLEAN;
+  varstats : BOOLEAN;
 BEGIN
   TRY
     nominal := pp.keywordPresent("-nominal");
+    varstats := pp.keywordPresent("-varstats");
     
     IF pp.keywordPresent("-method") THEN
       method := pp.getNextInt()
@@ -113,8 +115,17 @@ BEGIN
     FOR i := 0 TO samples - 1 DO
       
       (* add some noise! *)
-      WITH err = NormalDeviate.Get(rand, mean, sdev),
-           res = val + err DO
+      VAR
+        err, res : LONGREAL;
+      BEGIN
+        IF varstats THEN
+          err := NormalDeviate.Get(rand, mean, sdev)
+        ELSE
+          err := NormalDeviate.Get(rand, vdd + mean, delp + sdev)
+        END;
+        
+        res := val + err;
+        
         IF nominal THEN
           Wr.PutText(wr, LR(val) & "\n")
         ELSE
