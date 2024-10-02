@@ -450,27 +450,6 @@ PROCEDURE AttemptSurfaceFit(pr            : PointResult.T;
       Debug.Out  ("mu    = " & FmtQ(n, rmu.b));
       Debug.Out  ("sigma = " & FmtQ(n, bestfits.bsigma));
 
-      IF doNominal THEN
-        PROCEDURE Do(pp : LRVector.T) =
-          BEGIN
-            WITH ppnorm  = LRVector.Norm(pp),
-                 ppnorm2 = ppnorm * ppnorm,
-                 q       = ComputeQ(pp, rnom.b) DO
-              Debug.Out(F("pp %s ; ppnorm2 %s ; q %s",
-                          FmtP(pp), LR(ppnorm2), LR(q)));
-            END
-          END Do;
-          
-        VAR
-          pp      := LRVector.Copy(pr.p);
-        BEGIN
-          Do(pp);   
-          M.ZeroV(pp^);
-          pp[0] := 1.0d0;
-          Do(pp)
-        END
-      END;
-
       WITH wx    = Wx.New(),
            pparr = NEW(REF ARRAY OF PointMetric.T, seq.size()) DO
         Wx.PutText(wx, "=====  QUADRATIC PREDICTION  =====\n");
@@ -534,7 +513,6 @@ PROCEDURE AttemptSurfaceFit(pr            : PointResult.T;
         Debug.Out("parr[0]  = " & PointMetric.Format( parr[0]));
         Debug.Out("pparr[0] = " & PointMetric.Format(pparr[0]));
         
-
         PROCEDURE SigVal(READONLY res : MultiEval.Result;
                          k            : LONGREAL) : LONGREAL =
           BEGIN
@@ -598,7 +576,7 @@ PROCEDURE AttemptSurfaceFit(pr            : PointResult.T;
                   rnom.b,
                   bestfits.bmu,
                   bestfits.bsigma,
-                  tol    := GetConstantTerm(bestfits.bsigma) / 10.0d0,
+                  tol    := GetConstantTerm(bestfits.bsigma) / 10.0d0 / Math.sqrt(FLOAT(bestfits.n,LONGREAL)),
                   newpts := newpts);
 
       (* bestQ is the best point we know on the fitted curve *)
@@ -699,6 +677,7 @@ TYPE
   StatFits = RECORD
     l           : LONGREAL; (* log likelihood of fit *)
     bmu, bsigma : REF M.M;  (* these are quadratic fits *)
+    n           : CARDINAL; (* sum total of points considered *)
   END;
   
 PROCEDURE AttemptStatFits2(parr : REF ARRAY OF PointMetric.T) : StatFits =
@@ -729,7 +708,7 @@ PROCEDURE AttemptStatFits2(parr : REF ARRAY OF PointMetric.T) : StatFits =
       rsigma := NEW(Regression.T);
 
       sumlMu, sumlSig := 0.0d0;
-
+      sump            := 0;
     BEGIN
       M.Zero(w^);
       FOR i := 0 TO m - 1 DO
@@ -766,25 +745,34 @@ PROCEDURE AttemptStatFits2(parr : REF ARRAY OF PointMetric.T) : StatFits =
                dmu  = MultiEval.Mean(varr[i].result), 
                dsig = MultiEval.Sdev(varr[i].result),
 
+               ns   = varr[i].result.n,
+               nsf  = FLOAT(ns, LONGREAL),
+               
                (* predicted *)
                pmu  = ComputeL(v.p, rmu.b),
                psig = ComputeL(v.p, rsigma.b),
 
                (* likelihoods *)
-               lmu  = LogLikelihood(dmu, pmu, sMu),
-               lsig = LogLikelihood(dsig, psig, sSig) DO
+               lmu  = nsf * LogLikelihood(dmu, pmu, sMu),
+               lsig = nsf * LogLikelihood(dsig, psig, sSig) DO
 
-            sumlMu := sumlMu + lmu;
-            sumlSig := sumlSig + lsig
+            sumlMu  := sumlMu + lmu;
+            sumlSig := sumlSig + lsig;
+            sump    := sump + ns
           END
         END;
 
-        WITH l = sumlMu + sumlSig DO
+        WITH l    = sumlMu + sumlSig,
+             best = l > bestl DO
           Debug.Out("log mu  likelihood = " & LR(sumlMu));
           Debug.Out("log sig likelihood = " & LR(sumlSig));
-          Debug.Out("log likelihood     = " & LR(l));
-          IF l > bestl THEN
-            bestfits := StatFits { l, L2Q(n, rmu.b^), L2Q(n, rsigma.b^) }
+          Debug.Out("log likelihood     = " & LR(l) & " best = " & Bool(best));
+          IF best THEN
+            bestl    := l;
+            bestfits := StatFits { l,
+                                   L2Q(n, rmu.b^),
+                                   L2Q(n, rsigma.b^),
+                                   sump }
           END
         END;
       END
@@ -921,8 +909,8 @@ PROCEDURE DoSimpleFit(p                          : LRVector.T;
       
       best := ConjGradient.Minimize(mp, tol, qf, qg);
       
-      Debug.Out(F("Minimized quadratic %s @ %s",
-                  LR(best), FmtP(mp)));
+      Debug.Out(F("Minimized quadratic %s @ %s [tol=%s]",
+                  LR(best), FmtP(mp), LR(tol)));
       
       (* insert this point too *)
       
@@ -1457,7 +1445,7 @@ PROCEDURE Minimize(pa             : LRVector.T;
         WITH dp = LRVector.Copy(pr.p) DO
           M.SubV(newp.p^, pr.p^, dp^);
           (* rho can only decrease by 4 *)
-          rho := 0.50d0 * rho + 0.50d0 * M.Norm(dp^);
+          rho := 0.75d0 * rho + 0.25d0 * M.Norm(dp^);
           Debug.Out(F("Robust.m3 : new rho = %s", LR(rho)));
           IF rho < rhoend THEN
             message := "stopping because rho < rhoend";
