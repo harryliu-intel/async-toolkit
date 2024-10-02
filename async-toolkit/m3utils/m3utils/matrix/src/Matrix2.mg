@@ -490,6 +490,18 @@ PROCEDURE LinearCombination(aw : Elem.T; READONLY a : M;
     END
   END LinearCombination;
 
+PROCEDURE LinearCombination3(aw : Elem.T; READONLY a : M;
+                             bw : Elem.T; READONLY b : M;
+                             cw : Elem.T; READONLY c : M;
+                             VAR z : M) =
+  BEGIN
+    FOR i := FIRST(z) TO LAST(z) DO
+      FOR j := FIRST(z[0]) TO LAST(z[0]) DO
+        z[i,j] := aw*a[i,j] + bw*b[i,j] + cw*c[i,j] 
+      END
+    END
+  END LinearCombination3;
+
 PROCEDURE LinearCombinationV(aw : Elem.T; READONLY a : V;
                              bw : Elem.T; READONLY b : V;
                              VAR c : V) =
@@ -498,6 +510,16 @@ PROCEDURE LinearCombinationV(aw : Elem.T; READONLY a : V;
       c[i] := aw*a[i] + bw*b[i] 
     END
   END LinearCombinationV;
+
+PROCEDURE LinearCombinationV3(aw : Elem.T; READONLY a : V;
+                              bw : Elem.T; READONLY b : V;
+                              cw : Elem.T; READONLY c : V;
+                              VAR z : V) =
+  BEGIN
+    FOR i := FIRST(z) TO LAST(z) DO
+      z[i] := aw*a[i] + bw*b[i] + cw*c[i] 
+    END
+  END LinearCombinationV3;
 
 PROCEDURE Norm(READONLY v : V) : Base =
   BEGIN

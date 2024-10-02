@@ -107,10 +107,22 @@ PROCEDURE LinearCombination(aw : Elem.T; READONLY a : M;
                             VAR c : M);
   (* c <- aw * a + bw * b *)
 
+PROCEDURE LinearCombination3(aw : Elem.T; READONLY a : M;
+                             bw : Elem.T; READONLY b : M;
+                             cw : Elem.T; READONLY c : M;
+                             VAR z : M);
+  (* z <- aw * a + bw * b + cw * c *)
+
 PROCEDURE LinearCombinationV(aw : Elem.T; READONLY a : V;
                              bw : Elem.T; READONLY b : V;
                              VAR c : V);
   (* c <- aw * a + bw * b *)
+
+PROCEDURE LinearCombinationV3(aw : Elem.T; READONLY a : V;
+                              bw : Elem.T; READONLY b : V;
+                              cw : Elem.T; READONLY c : V;
+                              VAR z : V);
+  (* z <- aw * a + bw * b + cw * c *)
 
 PROCEDURE Norm(READONLY v : V) : Base;
     

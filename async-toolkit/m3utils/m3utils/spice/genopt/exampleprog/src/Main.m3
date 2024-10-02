@@ -30,10 +30,12 @@ VAR
   sdev := 1.0d0; (* sdev of offset from nominal *)
   nominal : BOOLEAN;
   varstats : BOOLEAN;
+  quadstats : BOOLEAN;
 BEGIN
   TRY
     nominal := pp.keywordPresent("-nominal");
     varstats := pp.keywordPresent("-varstats");
+    quadstats := pp.keywordPresent("-quadstats");
     
     IF pp.keywordPresent("-method") THEN
       method := pp.getNextInt()
@@ -118,10 +120,12 @@ BEGIN
       VAR
         err, res : LONGREAL;
       BEGIN
-        IF varstats THEN
-          err := NormalDeviate.Get(rand, mean, sdev)
-        ELSE
+        IF quadstats THEN
+          err := NormalDeviate.Get(rand, vdd * vdd + mean, delp * delp + sdev)
+        ELSIF varstats THEN
           err := NormalDeviate.Get(rand, vdd + mean, delp + sdev)
+        ELSE
+          err := NormalDeviate.Get(rand, mean, sdev)
         END;
         
         res := val + err;

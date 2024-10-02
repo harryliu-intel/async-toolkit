@@ -22,7 +22,6 @@ IMPORT Math;
 IMPORT Debug;
 FROM Fmt IMPORT LongReal, F, Int, Bool, FN;
 IMPORT LineProblem;
-IMPORT LineProblemSeq;
 IMPORT LineProblemArraySort;
 IMPORT LRScalarFieldPll;
 IMPORT LongRealSeq AS LRSeq;
@@ -40,7 +39,6 @@ IMPORT LRRegression AS Regression;
 IMPORT ConjGradient;
 IMPORT PointEvaluator;
 IMPORT Thread;
-IMPORT QuadraticFit;
 IMPORT PointResult;
 IMPORT PointResultSeq;
 
@@ -332,8 +330,6 @@ PROCEDURE Qdofs(n : CARDINAL) : CARDINAL =
     RETURN (n * n + 3 * n + 2) DIV 2
   END Qdofs;
 
-VAR qfState : LRVector.T := NIL;
-
 PROCEDURE AttemptSurfaceFit(pr            : PointResult.T;
                             parr          : REF ARRAY OF PointMetric.T;
                             newpts(*OUT*) : LRVectorSet.T) : PointResult.T =
@@ -389,21 +385,14 @@ PROCEDURE AttemptSurfaceFit(pr            : PointResult.T;
             we use a linear fit for mu
             we use a linear fit for sigma
       *)
-          
+
+    AttemptStatFits (parr);
+    AttemptStatFits2(parr);
 
     Debug.Out(F("AttemptSurfaceFit: seq.size()=%s rho=%s tryrho=%s success=%s p=%s",
                 Int(seq.size()), LR(rho), LR(tryrho), Bool(success),
                 PointResult.Format(pr)));
 
-    PROCEDURE PredNominal(pp : LRVector.T) : LONGREAL =
-      BEGIN
-        IF doNominal THEN
-          RETURN qf.pred(pp)
-        ELSE
-          RETURN 0.0d0
-        END
-      END PredNominal;
-      
     VAR
       xquad  := NEW(REF M.M, seq.size(), qdofs);
       xlin   := NEW(REF M.M, seq.size(), ldofs);
@@ -420,16 +409,8 @@ PROCEDURE AttemptSurfaceFit(pr            : PointResult.T;
       rnom   := NEW(Regression.T);
       rmu    := NEW(Regression.T);
       rsigma := NEW(Regression.T);
-
-      qf     : QuadraticFit.T;
-    BEGIN
-      IF doNominal THEN
-        qf := NEW(QuadraticFit.T).init(n, 2.0d0 * rho);
-        IF qfState # NIL THEN
-          qf.setState(qfState)
-        END
-      END;
       
+    BEGIN
       M.Zero(w^);
       FOR i := 0 TO seq.size() - 1 DO
         WITH rec = seq.get(i) DO
@@ -441,15 +422,10 @@ PROCEDURE AttemptSurfaceFit(pr            : PointResult.T;
           ComputeIndepsQ(rec.p, i, xquad^);
           ComputeIndepsL(rec.p, i, xlin^);
 
-          IF doNominal THEN
-            qf.addPoint(rec.p,
-                        MultiEval.Nominal(rec.result),
-                        1.0d0) (* nominal isnt weighted *)
-          END;
-          
           ynom  [i, 0] := MultiEval.Nominal(rec.result);
-          ymu   [i, 0] := MultiEval.Mean(rec.result);
-          ysigma[i, 0] := MultiEval.Sdev(rec.result);
+          ymu   [i, 0] := MultiEval.Mean   (rec.result);
+          ysigma[i, 0] := MultiEval.Sdev   (rec.result);
+          
           w[i, i]      := FLOAT(rec.result.n, LONGREAL)
         END
       END(*ROF*);
@@ -457,23 +433,8 @@ PROCEDURE AttemptSurfaceFit(pr            : PointResult.T;
       IF doNominal THEN
         Debug.Out("StocRobust.AttemptSurfaceFit : doNominal is true, attempting to do a nominal fit");
 
-        WITH minNom    = qf.getMinimum(),
-             minNomVal = qf.pred(minNom) DO
-
-          qfState := qf.getState();
-          Debug.Out(F("Nominal QuadraticFit min %s @ %s / state %s",
-                      LR(minNomVal), FmtP(minNom), FmtP(qfState)));
-          EVAL newpts.insert(minNom) (* add to list of interesting points *)
-
-          (* what we really want, though, is not minNom, but the minimum
-             of 
-
-             nom + mu + K * sig 
-          *)
-        END;
-        
         Regression.Run(xquad,
-                       ynom  , ynomHat , FALSE, rnom, h := ridgeCoeff, W := w);
+                       ynom  , ynomHat , FALSE, rnom, h := ridgeCoeff);
         Regression.Run(xlin,
                        ymu   , ymuHat  , FALSE, rmu, h := ridgeCoeff, W := w);
         rmu.b := L2Q(n, rmu.b^)
@@ -493,20 +454,49 @@ PROCEDURE AttemptSurfaceFit(pr            : PointResult.T;
       rsigma.b := L2Q(n, rsigma.b^);
       
       IF doNominal THEN
+        FOR i := 0 TO Qdofs(n) - 1 DO
+          Debug.Out(F("rnom.b[%s,0] = %s",
+                      Int(i), LR(rnom.b[i,0])))
+        END;
+      
         Debug.Out("nom   = " & FmtQ(n, rnom.b));
       END;
       Debug.Out  ("mu    = " & FmtQ(n, rmu.b));
       Debug.Out  ("sigma = " & FmtQ(n, rsigma.b));
+
+      IF doNominal THEN
+        PROCEDURE Do(pp : LRVector.T) =
+          BEGIN
+            WITH ppnorm  = LRVector.Norm(pp),
+                 ppnorm2 = ppnorm * ppnorm,
+                 q       = ComputeQ(pp, rnom.b) DO
+              Debug.Out(F("pp %s ; ppnorm2 %s ; q %s",
+                          FmtP(pp), LR(ppnorm2), LR(q)));
+            END
+          END Do;
+          
+        VAR
+          pp      := LRVector.Copy(pr.p);
+        BEGIN
+          Do(pp);   
+          M.ZeroV(pp^);
+          pp[0] := 1.0d0;
+          Do(pp)
+        END
+      END;
 
       WITH wx    = Wx.New(),
            pparr = NEW(REF ARRAY OF PointMetric.T, seq.size()) DO
         Wx.PutText(wx, "=====  QUADRATIC PREDICTION  =====\n");
         FOR i := 0 TO seq.size() - 1 DO
           WITH rec     = seq.get(i),
-               nomX    = PredNominal(rec.p),
 
+               pnorm   = LRVector.Norm(rec.p),
+               pnorm2  = pnorm * pnorm,
+               
                nom     = ynomHat[i,0],
                pred    = nom + ymuHat[i,0] + sigmaK * ysigmaHat[i,0],
+               p2nom   = ComputeQ(rec.p, rnom.b (*, wx *) ),
                p2mu    = ComputeQ(rec.p, rmu.b),
                p2sigma = ComputeQ(rec.p, rsigma.b),
                pred2   = nom + p2mu + sigmaK * p2sigma DO
@@ -525,14 +515,16 @@ PROCEDURE AttemptSurfaceFit(pr            : PointResult.T;
             FmtP(rec.p)}));
             END;
             
-            Wx.PutText(wx, FN("metric %s : res %s, pred { nom %s; mu %s ; sig %s } : predmetric %s; rec.p %s\n", TA{
+            Wx.PutText(wx, FN("metric %s : res %s, pred { nom %s; mu %s ; sig %s } : predmetric %s; rec.p %s p2nom %s pnorm2 %s\n", TA{
             LR(rec.metric),
             MultiEval.Format(rec.result),
             LR(nom),
             LR(ymuHat[i,0]),
             LR(ysigmaHat[i,0]),
             LR(pred),
-            FmtP(rec.p)}));
+            FmtP(rec.p),
+            LR(p2nom),
+            LR(pnorm2)}));
             
             pparr[i] := PointMetric.T { pred, rec.p, rec.result }
           END
@@ -632,13 +624,12 @@ PROCEDURE AttemptSurfaceFit(pr            : PointResult.T;
         END
       END(*WITH*);
 
-      IF NOT doNominal THEN
-        DoSimpleFit(pr.p,
-                    rmu,
-                    rsigma,
-                    tol    := ysigmaHat[0, 0] / 10.0d0,
-                    newpts := newpts)
-      END;
+      DoSimpleFit(pr.p,
+                  rnom,
+                  rmu,
+                  rsigma,
+                  tol    := ysigmaHat[0, 0] / 10.0d0,
+                  newpts := newpts);
 
       (* bestQ is the best point we know on the fitted curve *)
       (* grab the nearest points from the seq and re-sample them *)
@@ -649,7 +640,207 @@ PROCEDURE AttemptSurfaceFit(pr            : PointResult.T;
     END
   END AttemptSurfaceFit;
 
+PROCEDURE Rss(a, b : REF M.M) : LONGREAL =
+  BEGIN
+    RETURN M.SumDiffSqM(a^, b^)
+  END Rss;
 
+PROCEDURE VarM(a : REF M.M) : LONGREAL =
+  BEGIN
+    RETURN M.DevSqM(a^)
+  END VarM;
+  
+PROCEDURE AttemptStatFits(parr : REF ARRAY OF PointMetric.T) =
+
+  PROCEDURE DoFit(READONLY parr : ARRAY OF PointMetric.T) =
+    VAR
+      m := NUMBER(parr);
+
+      n := NUMBER(parr[FIRST(parr)].p^);
+      
+      qdofs  := Qdofs(n);
+      ldofs  := Ldofs(n);
+      
+      xquad  := NEW(REF M.M, m, qdofs);
+      xlin   := NEW(REF M.M, m, ldofs);
+
+      ymu    := NEW(REF M.M, m, 1);
+      ysigma := NEW(REF M.M, m, 1);
+      w      := NEW(REF M.M, m, m);
+
+      ymuHat1,
+      ysigmaHat1 : REF M.M;
+
+      ymuHat2,
+      ysigmaHat2 : REF M.M;
+
+      rmu1    := NEW(Regression.T);
+      rsigma1 := NEW(Regression.T);
+      rmu2    := NEW(Regression.T);
+      rsigma2 := NEW(Regression.T);
+
+    BEGIN
+      M.Zero(w^);
+      FOR i := 0 TO m - 1 DO
+        WITH rec = parr[i] DO
+          ComputeIndepsQ(rec.p, i, xquad^);
+          ComputeIndepsL(rec.p, i, xlin^);
+
+          ymu   [i, 0] := MultiEval.Mean   (rec.result);
+          ysigma[i, 0] := MultiEval.Sdev   (rec.result);
+          
+          w[i, i]      := FLOAT(rec.result.n, LONGREAL)
+        END
+      END(*ROF*);
+ 
+      Regression.Run(xlin,
+                     ymu   , ymuHat1   , FALSE, rmu1   , 0.0d0, W := w);
+      Regression.Run(xlin,
+                     ysigma, ysigmaHat1, FALSE, rsigma1, 0.0d0, W := w);
+      Regression.Run(xquad,
+                     ymu   , ymuHat2   , FALSE, rmu2   , 0.0d0, W := w);
+      Regression.Run(xquad,
+                     ysigma, ysigmaHat2, FALSE, rsigma2, 0.0d0, W := w);
+
+      WITH rssMu0  = VarM(ymu),
+           rssMu1  = Rss(ymu   , ymuHat1),
+           rssMu2  = Rss(ymu   , ymuHat2),
+           rssSig0 = VarM(ysigma),
+           rssSig1 = Rss(ysigma, ysigmaHat1),
+           rssSig2 = Rss(ysigma, ysigmaHat2) DO
+        Debug.Out(FN("AttemptStatFits mu  : m=%s rss0=%s rss1=%s rss2=%s",
+                     TA{Int(m), LR(rssMu0), LR(rssMu1), LR(rssMu2) }));
+        Debug.Out(FN("AttemptStatFits sig : m=%s rss0=%s rss1=%s rss2=%s",
+                     TA{Int(m), LR(rssSig0), LR(rssSig1), LR(rssSig2) }));
+      END
+      
+    END DoFit;
+
+  VAR
+    m := 1;
+  BEGIN
+    REPEAT
+      DoFit(SUBARRAY(parr^, 0, m));
+      m := m * 2
+    UNTIL m > NUMBER(parr^);
+  END AttemptStatFits;
+
+PROCEDURE AttemptStatFits2(parr : REF ARRAY OF PointMetric.T) =
+
+  PROCEDURE DoFit(READONLY parr, varr : ARRAY OF PointMetric.T) =
+    VAR
+      m  := NUMBER(parr);
+      mf := FLOAT(m, LONGREAL);
+      
+
+      n := NUMBER(parr[FIRST(parr)].p^);
+      
+      qdofs  := Qdofs(n);
+      ldofs  := Ldofs(n);
+      
+      xquad  := NEW(REF M.M, m, qdofs);
+      xlin   := NEW(REF M.M, m, ldofs);
+
+      ymu    := NEW(REF M.M, m, 1);
+      ysigma := NEW(REF M.M, m, 1);
+      w      := NEW(REF M.M, m, m);
+
+      ymuHat,
+      ysigmaHat : REF M.M;
+
+
+      rmu    := NEW(Regression.T);
+      rsigma := NEW(Regression.T);
+
+      sumlMu, sumlSig := 0.0d0;
+    BEGIN
+      M.Zero(w^);
+      FOR i := 0 TO m - 1 DO
+        WITH rec = parr[i] DO
+          ComputeIndepsQ(rec.p, i, xquad^);
+          ComputeIndepsL(rec.p, i, xlin^);
+
+          ymu   [i, 0] := MultiEval.Mean   (rec.result);
+          ysigma[i, 0] := MultiEval.Sdev   (rec.result);
+          
+          w[i, i]      := FLOAT(rec.result.n, LONGREAL)
+        END
+      END(*ROF*);
+ 
+      Regression.Run(xlin,
+                     ymu   , ymuHat   , FALSE, rmu   , 0.0d0, W := w);
+      Regression.Run(xlin,
+                     ysigma, ysigmaHat, FALSE, rsigma, 0.0d0, W := w);
+
+      WITH rssMu  = Rss(ymu   , ymuHat),
+           sMu    = Math.sqrt(rssMu / mf),
+           rssSig = Rss(ysigma, ysigmaHat),
+           sSig   = Math.sqrt(rssSig / mf) DO
+        Debug.Out(FN("AttemptStatFits2 m=%s rssMu=%s rssSig=%s ; sMu=%s sSig=%s",
+                     TA{Int(m), LR(rssMu), LR(rssSig), LR(sMu), LR(sSig)}));
+        
+        Debug.Out  ("mu    = " & FmtL(n, rmu.b));
+        Debug.Out  ("sigma = " & FmtL(n, rsigma.b));
+
+        FOR i := FIRST(varr) TO LAST(varr) DO
+          WITH v    = varr[i],
+
+               (* data *)
+               dmu  = MultiEval.Mean(varr[i].result), 
+               dsig = MultiEval.Sdev(varr[i].result),
+
+               (* predicted *)
+               pmu  = ComputeL(v.p, rmu.b),
+               psig = ComputeL(v.p, rsigma.b),
+
+               (* likelihoods *)
+               lmu  = LogLikelihood(dmu, pmu, sMu),
+               lsig = LogLikelihood(dsig, psig, sSig) DO
+
+            sumlMu := sumlMu + lmu;
+            sumlSig := sumlSig + lsig
+          END
+        END;
+
+        Debug.Out("log mu  likelihood = " & LR(sumlMu));
+        Debug.Out("log sig likelihood = " & LR(sumlSig));
+        Debug.Out("log likelihood     = " & LR(sumlMu + sumlSig))
+      END
+      
+    END DoFit;
+
+  CONST
+    LeaveOut = 16;
+  VAR
+    m := 2;
+    max := NUMBER(parr^) - LeaveOut;
+  BEGIN
+    LOOP
+      DoFit(SUBARRAY(parr^,           0, MIN(max, m)),
+            SUBARRAY(parr^, MIN(max, m), LeaveOut));
+      IF m >= max THEN
+        EXIT
+      END;
+      m := m * 2
+    END
+  END AttemptStatFits2;
+
+VAR Pi     := 4.0d0 * Math.atan(1.0d0);
+    Log2Pi := Math.log(2.0d0 * Pi);
+    
+PROCEDURE LogLikelihood(x, mu, sigma : LONGREAL) : LONGREAL =
+  (* likelihood (density) of x given it is ~N(mu, sigma) *)
+  CONST
+    log = Math.log;
+  BEGIN
+    WITH t1 = -0.5d0 * Log2Pi,
+         t2 = -log(sigma),
+         dev = x - mu,
+         t3 = -0.5d0 / sigma / sigma * dev * dev DO
+      RETURN t1 + t2 + t3
+    END
+  END LogLikelihood;
+  
 PROCEDURE InsertClosestPoints(n             : CARDINAL;
                               bestQ         : LRVector.T;
                               READONLY parr : ARRAY OF PointMetric.T;
@@ -685,20 +876,21 @@ PROCEDURE InsertClosestPoints(n             : CARDINAL;
     END
   END InsertClosestPoints;
 
-PROCEDURE DoSimpleFit(p           : LRVector.T;
-                      rmu, rsigma : Regression.T;
-                      tol         : LONGREAL;
-                      newpts      : LRVectorSet.T
+PROCEDURE DoSimpleFit(p                 : LRVector.T;
+                      rnom, rmu, rsigma : Regression.T;
+                      tol               : LONGREAL;
+                      newpts            : LRVectorSet.T
                       ) =
   VAR
     b := NEW(B,
+             bnom   := rnom.b,
              bmu    := rmu.b,
              bsigma := rsigma.b,
              sigmaK := sigmaK,
              alpha  := 0.0d0,
              p      := p);
-    qf      := NEW(QuadraticF, b := b);
-    qg      := NEW(QuadraticG, b := b);
+    qf      : QuadraticF;
+    qg      : QuadraticG;
     mp      := LRVector.Copy(p);
     
     bdims   := M.GetDim(rmu.b^);
@@ -710,7 +902,21 @@ PROCEDURE DoSimpleFit(p           : LRVector.T;
     biggest : LONGREAL;
     n := NUMBER(p^);
   BEGIN
-    M.LinearCombination(1.0d0, rmu.b^, sigmaK, rsigma.b^, bb^);
+    IF doNominal THEN
+      qf := NEW(QuadraticF, b := b, eval := EvalQFN);
+      qg := NEW(QuadraticG, b := b, eval := EvalQGN);
+      M.LinearCombination3(1.0d0, rnom.b^,
+                           1.0d0, rmu.b^,
+                           sigmaK, rsigma.b^,
+                           bb^)
+    ELSE
+      qf := NEW(QuadraticF, b := b, eval := EvalQF);
+      qg := NEW(QuadraticG, b := b, eval := EvalQG);
+      M.LinearCombination(1.0d0, rmu.b^,
+                          sigmaK, rsigma.b^,
+                          bb^)
+    END;
+    
     Debug.Out("bb    = " & FmtQ(n, bb));
     biggest := BiggestQuadratic(p, bb);
     
@@ -765,10 +971,10 @@ PROCEDURE DoSimpleFit(p           : LRVector.T;
   
 TYPE
   B = OBJECT
-    bmu, bsigma : REF M.M;
-    sigmaK      : LONGREAL;
-    p           : LRVector.T;
-    alpha       : LONGREAL;
+    bnom, bmu, bsigma : REF M.M;
+    sigmaK            : LONGREAL;
+    p                 : LRVector.T;
+    alpha             : LONGREAL;
   END;
   
   QuadraticF = LRScalarField.Default OBJECT (* quad function wrapper *)
@@ -808,6 +1014,37 @@ PROCEDURE EvalQG(qg : QuadraticG; p : LRVector.T) : LRVector.T =
       RETURN res
     END
   END EvalQG;
+  
+PROCEDURE EvalQFN(qf : QuadraticF; p : LRVector.T) : LONGREAL =
+  BEGIN
+    WITH nom   = ComputeQ(p, qf.b.bnom),
+         mu    = ComputeQ(p, qf.b.bmu),
+         sigma = ComputeQ(p, qf.b.bsigma),
+         spice = qf.b.alpha * M.SumDiffSqV(p^, qf.b.p^) DO
+      <*ASSERT doNominal*>
+      RETURN nom + mu + qf.b.sigmaK * sigma + spice
+    END
+  END EvalQFN;
+
+PROCEDURE EvalQGN(qg : QuadraticG; p : LRVector.T) : LRVector.T =
+  BEGIN
+    WITH muG    = ComputeG(p, qg.b.bmu),
+         nomG   = ComputeG(p, qg.b.bnom),
+         sigmaG = ComputeG(p, qg.b.bsigma),
+         res    = NEW(LRVector.T, NUMBER(p^)) DO
+      <*ASSERT doNominal*>
+      M.LinearCombinationV3(1.0d0, nomG^,
+                            1.0d0, muG^,
+                            qg.b.sigmaK, sigmaG^,
+                            res^);
+
+      FOR i := FIRST(res^) TO LAST(res^) DO
+        res[i] := res[i] + 2.0d0 * qg.b.alpha * (p[i] - qg.b.p[i])
+      END;
+      
+      RETURN res
+    END
+  END EvalQGN;
   
 PROCEDURE ComputeIndepsQ(p      : LRVector.T;
                          row    : CARDINAL;
@@ -859,7 +1096,7 @@ PROCEDURE ComputeIndepsL(p      : LRVector.T;
     END
   END ComputeIndepsL;
 
-PROCEDURE ComputeQ(p : LRVector.T; b : REF M.M) : LONGREAL =
+PROCEDURE ComputeQ(p : LRVector.T; b : REF M.M; wx : Wx.T := NIL) : LONGREAL =
   (* value of the quadratic *)
   VAR
     k := 0;
@@ -883,11 +1120,37 @@ PROCEDURE ComputeQ(p : LRVector.T; b : REF M.M) : LONGREAL =
         q := f0 * f1;
         term := q * b[k, 0];
         sum := sum + term;
+        IF wx # NIL THEN
+          Wx.PutText(wx, FN("ComputeQ f0=%s f1=%s q=%s b[%s,0]=%s term=%s sum=%s\n",
+                            TA{LR(f0), LR(f1), LR(q), Int(k), LR(b[k,0]),
+                               LR(term), LR(sum)}))
+        END;
         INC(k)
       END
     END;
+    IF wx # NIL THEN
+      Wx.PutText(wx,"===\n")
+    END;
     RETURN sum
   END ComputeQ;
+
+PROCEDURE ComputeL(p : LRVector.T; b : REF M.M) : LONGREAL =
+  VAR
+    sum := 0.0d0;
+    f0 : LONGREAL;
+  BEGIN
+    FOR i := 0 TO NUMBER(p^) DO
+      IF i = NUMBER(p^) THEN
+        f0 := 1.0d0
+      ELSE
+        f0 := p[i]
+      END;
+      WITH term = f0 * b[i, 0] DO
+        sum := sum + term
+      END
+    END;
+    RETURN sum
+  END ComputeL;
 
 PROCEDURE L2Q(n : CARDINAL; READONLY b : M.M) : REF M.M =
   VAR
@@ -914,6 +1177,25 @@ PROCEDURE L2Q(n : CARDINAL; READONLY b : M.M) : REF M.M =
     RETURN res
   END L2Q;
 
+PROCEDURE FmtL(n : CARDINAL; b : REF M.M) : TEXT =
+  VAR
+    ldofs := Ldofs(n);
+    term : TEXT;
+    sum := "";
+  BEGIN
+    <*ASSERT NUMBER(b^) = ldofs*>
+    <*ASSERT NUMBER(b[0]) = 1*>
+    FOR i := 0 TO n DO
+      IF i = n THEN
+        term := LR(b[i, 0])
+      ELSE
+        term := LR(b[i, 0]) & F(" * p[%s]", Int(i))
+      END;
+      sum := sum & " + " & term
+    END;
+    RETURN sum
+  END FmtL;
+  
 PROCEDURE FmtQ(n : CARDINAL; b : REF M.M) : TEXT =
   VAR
     k := 0;
@@ -1184,7 +1466,7 @@ PROCEDURE Minimize(pa             : LRVector.T;
         WITH dp = LRVector.Copy(pr.p) DO
           M.SubV(newp.p^, pr.p^, dp^);
           (* rho can only decrease by 4 *)
-          rho := 0.25d0 * rho + 0.75d0 * M.Norm(dp^);
+          rho := 0.50d0 * rho + 0.50d0 * M.Norm(dp^);
           Debug.Out(F("Robust.m3 : new rho = %s", LR(rho)));
           IF rho < rhoend THEN
             message := "stopping because rho < rhoend";

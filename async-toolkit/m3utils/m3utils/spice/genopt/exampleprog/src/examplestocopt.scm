@@ -53,6 +53,7 @@
 
 (def-compute-command
   '(string-append *cmd-path*
+                  " -quadstats "
                   " -method " 3
                   " -vdd "    vdd
                   " -temp "   temp
