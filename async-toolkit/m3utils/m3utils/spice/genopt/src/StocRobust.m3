@@ -387,29 +387,28 @@ PROCEDURE AttemptSurfaceFit(pr            : PointResult.T;
       *)
 
     AttemptStatFits (parr);
-    AttemptStatFits2(parr);
 
     Debug.Out(F("AttemptSurfaceFit: seq.size()=%s rho=%s tryrho=%s success=%s p=%s",
                 Int(seq.size()), LR(rho), LR(tryrho), Bool(success),
                 PointResult.Format(pr)));
 
     VAR
-      xquad  := NEW(REF M.M, seq.size(), qdofs);
-      xlin   := NEW(REF M.M, seq.size(), ldofs);
+      xquad    := NEW(REF M.M, seq.size(), qdofs);
+      xlin     := NEW(REF M.M, seq.size(), ldofs);
 
-      ynom   := NEW(REF M.M, seq.size(), 1);
-      ymu    := NEW(REF M.M, seq.size(), 1);
-      ysigma := NEW(REF M.M, seq.size(), 1);
-      w      := NEW(REF M.M, seq.size(), seq.size());
+      ynom     := NEW(REF M.M, seq.size(), 1);
+      ymu      := NEW(REF M.M, seq.size(), 1);
+      w        := NEW(REF M.M, seq.size(), seq.size());
 
       ynomHat,
-      ymuHat,
-      ysigmaHat : REF M.M;
+      ymuHatXX   : REF M.M;
 
-      rnom   := NEW(Regression.T);
-      rmu    := NEW(Regression.T);
-      rsigma := NEW(Regression.T);
-      
+      rnom     := NEW(Regression.T);
+      rmu      := NEW(Regression.T);
+
+      bestfits := AttemptStatFits2(parr); (* linear fit, in quadratic format,
+                                             to sigma and mu *)
+
     BEGIN
       M.Zero(w^);
       FOR i := 0 TO seq.size() - 1 DO
@@ -424,7 +423,6 @@ PROCEDURE AttemptSurfaceFit(pr            : PointResult.T;
 
           ynom  [i, 0] := MultiEval.Nominal(rec.result);
           ymu   [i, 0] := MultiEval.Mean   (rec.result);
-          ysigma[i, 0] := MultiEval.Sdev   (rec.result);
           
           w[i, i]      := FLOAT(rec.result.n, LONGREAL)
         END
@@ -435,23 +433,11 @@ PROCEDURE AttemptSurfaceFit(pr            : PointResult.T;
 
         Regression.Run(xquad,
                        ynom  , ynomHat , FALSE, rnom, h := ridgeCoeff);
-        Regression.Run(xlin,
-                       ymu   , ymuHat  , FALSE, rmu, h := ridgeCoeff, W := w);
-        rmu.b := L2Q(n, rmu.b^)
+        rmu.b := bestfits.bmu;
       ELSE
         Regression.Run(xquad,
-                       ymu   , ymuHat  , FALSE, rmu, h := ridgeCoeff, W := w);
+                       ymu   , ymuHatXX, FALSE, rmu, h := ridgeCoeff, W := w);
       END;
-      
-      Regression.Run(xlin,
-                     ysigma, ysigmaHat, FALSE, rsigma, h := ridgeCoeff, W := w);
-
-      FOR i := 0 TO n DO
-        Debug.Out(F("rsigma.b[%s,0] = %s",
-                    Int(i), LR(rsigma.b[i,0])))
-      END;
-      
-      rsigma.b := L2Q(n, rsigma.b^);
       
       IF doNominal THEN
         FOR i := 0 TO Qdofs(n) - 1 DO
@@ -462,7 +448,7 @@ PROCEDURE AttemptSurfaceFit(pr            : PointResult.T;
         Debug.Out("nom   = " & FmtQ(n, rnom.b));
       END;
       Debug.Out  ("mu    = " & FmtQ(n, rmu.b));
-      Debug.Out  ("sigma = " & FmtQ(n, rsigma.b));
+      Debug.Out  ("sigma = " & FmtQ(n, bestfits.bsigma));
 
       IF doNominal THEN
         PROCEDURE Do(pp : LRVector.T) =
@@ -495,38 +481,22 @@ PROCEDURE AttemptSurfaceFit(pr            : PointResult.T;
                pnorm2  = pnorm * pnorm,
                
                nom     = ynomHat[i,0],
-               pred    = nom + ymuHat[i,0] + sigmaK * ysigmaHat[i,0],
+
                p2nom   = ComputeQ(rec.p, rnom.b (*, wx *) ),
                p2mu    = ComputeQ(rec.p, rmu.b),
-               p2sigma = ComputeQ(rec.p, rsigma.b),
+               p2sigma = ComputeQ(rec.p, bestfits.bsigma),
                pred2   = nom + p2mu + sigmaK * p2sigma DO
 
 
-            IF FALSE THEN
-            Wx.PutText(wx, FN("metric %s : res %s, pred { nom %s; mu %s ; sig %s } : predmetric %s =? %s (= %s + %s + %s * %s); rec.p %s\n", TA{
+            Wx.PutText(wx, FN("metric %s : res %s : predmetric (%s = %s + %s + %s * %s); rec.p %s ; pnorm2 %s\n", TA{
             LR(rec.metric),
             MultiEval.Format(rec.result),
-            LR(nom),
-            LR(ymuHat[i,0]),
-            LR(ysigmaHat[i,0]),
-            LR(pred),
             LR(pred2),
-            LR(nom), LR(p2mu), LR(sigmaK), LR(p2sigma),
-            FmtP(rec.p)}));
-            END;
-            
-            Wx.PutText(wx, FN("metric %s : res %s, pred { nom %s; mu %s ; sig %s } : predmetric %s; rec.p %s p2nom %s pnorm2 %s\n", TA{
-            LR(rec.metric),
-            MultiEval.Format(rec.result),
-            LR(nom),
-            LR(ymuHat[i,0]),
-            LR(ysigmaHat[i,0]),
-            LR(pred),
+            LR(p2nom), LR(p2mu), LR(sigmaK), LR(p2sigma),
             FmtP(rec.p),
-            LR(p2nom),
             LR(pnorm2)}));
-            
-            pparr[i] := PointMetric.T { pred, rec.p, rec.result }
+
+            pparr[i] := PointMetric.T { pred2, rec.p, rec.result }
           END
         END(* ROF *);
 
@@ -625,10 +595,10 @@ PROCEDURE AttemptSurfaceFit(pr            : PointResult.T;
       END(*WITH*);
 
       DoSimpleFit(pr.p,
-                  rnom,
-                  rmu,
-                  rsigma,
-                  tol    := ysigmaHat[0, 0] / 10.0d0,
+                  rnom.b,
+                  bestfits.bmu,
+                  bestfits.bsigma,
+                  tol    := GetConstantTerm(bestfits.bsigma) / 10.0d0,
                   newpts := newpts);
 
       (* bestQ is the best point we know on the fitted curve *)
@@ -725,7 +695,13 @@ PROCEDURE AttemptStatFits(parr : REF ARRAY OF PointMetric.T) =
     UNTIL m > NUMBER(parr^);
   END AttemptStatFits;
 
-PROCEDURE AttemptStatFits2(parr : REF ARRAY OF PointMetric.T) =
+TYPE
+  StatFits = RECORD
+    l           : LONGREAL; (* log likelihood of fit *)
+    bmu, bsigma : REF M.M;  (* these are quadratic fits *)
+  END;
+  
+PROCEDURE AttemptStatFits2(parr : REF ARRAY OF PointMetric.T) : StatFits =
 
   PROCEDURE DoFit(READONLY parr, varr : ARRAY OF PointMetric.T) =
     VAR
@@ -753,6 +729,7 @@ PROCEDURE AttemptStatFits2(parr : REF ARRAY OF PointMetric.T) =
       rsigma := NEW(Regression.T);
 
       sumlMu, sumlSig := 0.0d0;
+
     BEGIN
       M.Zero(w^);
       FOR i := 0 TO m - 1 DO
@@ -802,9 +779,14 @@ PROCEDURE AttemptStatFits2(parr : REF ARRAY OF PointMetric.T) =
           END
         END;
 
-        Debug.Out("log mu  likelihood = " & LR(sumlMu));
-        Debug.Out("log sig likelihood = " & LR(sumlSig));
-        Debug.Out("log likelihood     = " & LR(sumlMu + sumlSig))
+        WITH l = sumlMu + sumlSig DO
+          Debug.Out("log mu  likelihood = " & LR(sumlMu));
+          Debug.Out("log sig likelihood = " & LR(sumlSig));
+          Debug.Out("log likelihood     = " & LR(l));
+          IF l > bestl THEN
+            bestfits := StatFits { l, L2Q(n, rmu.b^), L2Q(n, rsigma.b^) }
+          END
+        END;
       END
       
     END DoFit;
@@ -814,6 +796,9 @@ PROCEDURE AttemptStatFits2(parr : REF ARRAY OF PointMetric.T) =
   VAR
     m := 2;
     max := NUMBER(parr^) - LeaveOut;
+
+    bestl  := FIRST(LONGREAL); (* best fit *)
+    bestfits : StatFits;
   BEGIN
     LOOP
       DoFit(SUBARRAY(parr^,           0, MIN(max, m)),
@@ -822,7 +807,8 @@ PROCEDURE AttemptStatFits2(parr : REF ARRAY OF PointMetric.T) =
         EXIT
       END;
       m := m * 2
-    END
+    END;
+    RETURN bestfits
   END AttemptStatFits2;
 
 VAR Pi     := 4.0d0 * Math.atan(1.0d0);
@@ -876,16 +862,23 @@ PROCEDURE InsertClosestPoints(n             : CARDINAL;
     END
   END InsertClosestPoints;
 
-PROCEDURE DoSimpleFit(p                 : LRVector.T;
-                      rnom, rmu, rsigma : Regression.T;
-                      tol               : LONGREAL;
-                      newpts            : LRVectorSet.T
+PROCEDURE GetConstantTerm(b : REF M.M) : LONGREAL =
+  BEGIN
+    WITH idx = LAST(b^) DO
+      RETURN b[idx, 0]
+    END
+  END GetConstantTerm;
+
+PROCEDURE DoSimpleFit(p                          : LRVector.T;
+                      bnom, bmu, bsigma          : REF M.M;
+                      tol                        : LONGREAL;
+                      newpts                     : LRVectorSet.T
                       ) =
   VAR
     b := NEW(B,
-             bnom   := rnom.b,
-             bmu    := rmu.b,
-             bsigma := rsigma.b,
+             bnom   := bnom,
+             bmu    := bmu,
+             bsigma := bsigma,
              sigmaK := sigmaK,
              alpha  := 0.0d0,
              p      := p);
@@ -893,7 +886,7 @@ PROCEDURE DoSimpleFit(p                 : LRVector.T;
     qg      : QuadraticG;
     mp      := LRVector.Copy(p);
     
-    bdims   := M.GetDim(rmu.b^);
+    bdims   := M.GetDim(bmu^);
     bb      := M.NewM(bdims);
     beta    := 0.0d0;
     success := FALSE;
@@ -905,15 +898,15 @@ PROCEDURE DoSimpleFit(p                 : LRVector.T;
     IF doNominal THEN
       qf := NEW(QuadraticF, b := b, eval := EvalQFN);
       qg := NEW(QuadraticG, b := b, eval := EvalQGN);
-      M.LinearCombination3(1.0d0, rnom.b^,
-                           1.0d0, rmu.b^,
-                           sigmaK, rsigma.b^,
+      M.LinearCombination3(1.0d0 , bnom^,
+                           1.0d0 , bmu^,
+                           sigmaK, bsigma^,
                            bb^)
     ELSE
       qf := NEW(QuadraticF, b := b, eval := EvalQF);
       qg := NEW(QuadraticG, b := b, eval := EvalQG);
-      M.LinearCombination(1.0d0, rmu.b^,
-                          sigmaK, rsigma.b^,
+      M.LinearCombination(1.0d0 , bmu^,
+                          sigmaK, bsigma^,
                           bb^)
     END;
     
@@ -954,8 +947,6 @@ PROCEDURE DoSimpleFit(p                 : LRVector.T;
       END
     END(* POOL *);
   END DoSimpleFit;
-
-  
   
   (* 
      the problem here is that because of noise, the matrix we 

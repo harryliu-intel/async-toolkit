@@ -20,7 +20,7 @@
 ;;(def-paramvar 'sweeps 3)
 (def-paramvar 'stages 11)
 (def-paramvar 'step   1e-9)
-(def-paramvar 'sdev   0.1)
+(def-paramvar 'sdev   1)
 
 
 ;; the following are the optimization variables
