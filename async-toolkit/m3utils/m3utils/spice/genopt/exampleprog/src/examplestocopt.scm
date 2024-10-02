@@ -21,7 +21,7 @@
 (def-paramvar 'stages 11)
 (def-paramvar 'step   1e-9)
 (def-paramvar 'mean   1)
-(def-paramvar 'sdev   0.00001)
+(def-paramvar 'sdev   1)
 
 
 ;; the following are the optimization variables
@@ -40,6 +40,9 @@
 
 (StocRobust.SetDoNominal #t)
 
+(StocRobust.SetSelectByAll #t)
+;; select mu/sigma fit by all likely data? (or by validation set otherwise)
+
 ;; NewUOAs configuration variables
 (def-rhobeg 1)    ;; starting step size in terms of significant delta
 (def-rhoend 1e-4) ;; ending step size for convergence
@@ -54,7 +57,7 @@
 
 (def-compute-command
   '(string-append *cmd-path*
-;;                  " -quadstats "
+                  " -quadstats "
                   " -method " 3
                   " -vdd "    vdd
                   " -temp "   temp

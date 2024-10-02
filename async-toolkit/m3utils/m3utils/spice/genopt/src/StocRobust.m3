@@ -41,6 +41,7 @@ IMPORT PointEvaluator;
 IMPORT Thread;
 IMPORT PointResult;
 IMPORT PointResultSeq;
+IMPORT LongrealPQ;
 
 CONST LR = LongReal;
 
@@ -48,8 +49,6 @@ TYPE TA = ARRAY OF TEXT;
 
 VAR doDebug := Debug.DebugThis("StocRobust");
 
-VAR sigmaK := 0.0d0;
-    
 PROCEDURE SetSigmaK(k : LONGREAL) =
   BEGIN sigmaK := k END SetSigmaK;
 
@@ -63,6 +62,14 @@ PROCEDURE SetDoNominal(to : BOOLEAN) =
 
 PROCEDURE GetDoNominal() : BOOLEAN =
   BEGIN RETURN doNominal END GetDoNominal;
+
+VAR selectByAll := FALSE;
+  
+PROCEDURE SetSelectByAll(to : BOOLEAN) =
+  BEGIN selectByAll := to END SetSelectByAll;
+
+PROCEDURE GetSelectByAll() : BOOLEAN =
+  BEGIN RETURN selectByAll END GetSelectByAll;
 
 PROCEDURE GetFHist(seq : PointResultSeq.T) : LRSeq.T =
   (* type converter *)
@@ -410,6 +417,33 @@ PROCEDURE AttemptSurfaceFit(pr            : PointResult.T;
                                              to sigma and mu *)
 
     BEGIN
+      WITH meanL = bestfits.ll / FLOAT(bestfits.pts.size(), LONGREAL) DO
+        Debug.Out(FN("bestfits : l = %s ; %s unique (%s evals); mean l=%s, minl=%s",
+                    TA{LR(bestfits.l),
+                       Int(bestfits.pts.size()),
+                       Int(bestfits.evals),
+                       LR(meanL),
+                       LR(bestfits.pts.min().priority)}
+        ));
+
+        FOR i := 0 TO MIN(bestfits.pts.size() - 1, 4 * n * n) DO
+          WITH z = NARROW(bestfits.pts.deleteMin(), PElt) DO
+            IF z.priority < meanL THEN
+              Debug.Out(FN("Adding to newpts (l=%s lmu=%s lsig=%s) : p = %s ; res = %s; pmu=%s; psig=%s",
+                           TA{LR(z.priority),
+                              LR(z.lmu),
+                              LR(z.lsig),
+                              FmtP(z.p),
+                              MultiEval.Format(z.result),
+                              LR(z.pmu),
+                              LR(z.psig)
+              }));
+              EVAL newpts.insert(z.p)
+            END
+          END
+        END
+      END;
+      
       M.Zero(w^);
       FOR i := 0 TO seq.size() - 1 DO
         WITH rec = seq.get(i) DO
@@ -576,7 +610,7 @@ PROCEDURE AttemptSurfaceFit(pr            : PointResult.T;
                   rnom.b,
                   bestfits.bmu,
                   bestfits.bsigma,
-                  tol    := GetConstantTerm(bestfits.bsigma) / 10.0d0 / Math.sqrt(FLOAT(bestfits.n,LONGREAL)),
+                  tol    := GetConstantTerm(bestfits.bsigma) / 10.0d0 / Math.sqrt(FLOAT(bestfits.evals,LONGREAL)),
                   newpts := newpts);
 
       (* bestQ is the best point we know on the fitted curve *)
@@ -675,18 +709,63 @@ PROCEDURE AttemptStatFits(parr : REF ARRAY OF PointMetric.T) =
 
 TYPE
   StatFits = RECORD
-    l           : LONGREAL; (* log likelihood of fit *)
-    bmu, bsigma : REF M.M;  (* these are quadratic fits *)
-    n           : CARDINAL; (* sum total of points considered *)
+    l           : LONGREAL;     (* log likelihood of fit on valid. set *)
+    bmu, bsigma : REF M.M;      (* these are quadratic fits *)
+
+    ll          : LONGREAL;     (* log likelihood of fit on full set *)
+    pts         : LongrealPQ.T; (* points keyed by likelihood *)
+    evals       : CARDINAL;     (* sum total of evaluations considered *)
+  END;
+
+  PElt = LongrealPQ.Elt OBJECT
+    p : LRVector.T;
+    result : MultiEval.Result;
+    pmu, psig, lmu, lsig : LONGREAL;
   END;
   
 PROCEDURE AttemptStatFits2(parr : REF ARRAY OF PointMetric.T) : StatFits =
 
+
   PROCEDURE DoFit(READONLY parr, varr : ARRAY OF PointMetric.T) =
+
+    PROCEDURE DoPoint(READONLY v : PointMetric.T; sMu, sSig : LONGREAL) =
+      BEGIN
+        WITH
+          (* data *)
+          dmu  = MultiEval.Mean(v.result), 
+          dsig = MultiEval.Sdev(v.result),
+          
+          ns   = v.result.n,
+          nsf  = FLOAT(ns, LONGREAL),
+          
+          (* predicted *)
+          pmu  = ComputeL(v.p, rmu.b),
+          psig = ComputeL(v.p, rsigma.b),
+          
+          (* likelihoods *)
+          lmu  = nsf * LogLikelihood(dmu , pmu,  sMu),
+          lsig = nsf * LogLikelihood(dsig, psig, sSig),
+          l    = lmu + lsig DO
+          
+          sumlMu  := sumlMu  + lmu;
+          sumlSig := sumlSig + lsig;
+          sump    := sump    + ns;
+
+          pq.insert(NEW(PElt,
+                        priority := l,
+                        p := v.p,
+                        result := v.result,
+                        pmu := pmu,
+                        psig := psig,
+                        lmu := lmu,
+                        lsig := lsig))
+        END
+      END DoPoint;
+    
+
     VAR
       m  := NUMBER(parr);
       mf := FLOAT(m, LONGREAL);
-      
 
       n := NUMBER(parr[FIRST(parr)].p^);
       
@@ -703,12 +782,13 @@ PROCEDURE AttemptStatFits2(parr : REF ARRAY OF PointMetric.T) : StatFits =
       ymuHat,
       ysigmaHat : REF M.M;
 
-
       rmu    := NEW(Regression.T);
       rsigma := NEW(Regression.T);
 
       sumlMu, sumlSig := 0.0d0;
       sump            := 0;
+      pq              := NEW(LongrealPQ.Default).init();
+
     BEGIN
       M.Zero(w^);
       FOR i := 0 TO m - 1 DO
@@ -738,41 +818,56 @@ PROCEDURE AttemptStatFits2(parr : REF ARRAY OF PointMetric.T) : StatFits =
         Debug.Out  ("mu    = " & FmtL(n, rmu.b));
         Debug.Out  ("sigma = " & FmtL(n, rsigma.b));
 
+        (* likelihood on the validation set *)
         FOR i := FIRST(varr) TO LAST(varr) DO
-          WITH v    = varr[i],
-
-               (* data *)
-               dmu  = MultiEval.Mean(varr[i].result), 
-               dsig = MultiEval.Sdev(varr[i].result),
-
-               ns   = varr[i].result.n,
-               nsf  = FLOAT(ns, LONGREAL),
-               
-               (* predicted *)
-               pmu  = ComputeL(v.p, rmu.b),
-               psig = ComputeL(v.p, rsigma.b),
-
-               (* likelihoods *)
-               lmu  = nsf * LogLikelihood(dmu, pmu, sMu),
-               lsig = nsf * LogLikelihood(dsig, psig, sSig) DO
-
-            sumlMu  := sumlMu + lmu;
-            sumlSig := sumlSig + lsig;
-            sump    := sump + ns
+          WITH v    = varr[i] DO
+            DoPoint(v, sMu, sSig)
           END
         END;
 
-        WITH l    = sumlMu + sumlSig,
-             best = l > bestl DO
-          Debug.Out("log mu  likelihood = " & LR(sumlMu));
-          Debug.Out("log sig likelihood = " & LR(sumlSig));
-          Debug.Out("log likelihood     = " & LR(l) & " best = " & Bool(best));
+        VAR
+          l    := sumlMu + sumlSig;
+
+          nlf   := FLOAT(sump, LONGREAL); (* measurements in l *)
+          nllf  : LONGREAL;
+          
+          best : BOOLEAN;
+
+          ll : LONGREAL;
+          compareL : LONGREAL;
+        BEGIN
+          (* do the main points too *)
+          FOR i := FIRST(parr) TO LAST(parr) DO
+            WITH v = parr[i] DO
+              DoPoint(v, sMu, sSig)
+            END
+          END;
+
+          ll := sumlMu + sumlSig;
+          nllf   := FLOAT(sump, LONGREAL);
+
+          IF selectByAll THEN
+            compareL := ll / nllf
+          ELSE
+            compareL := l / nlf
+          END;
+
+          best := compareL > bestl;
+          
+          Debug.Out(F("validation log mu  likelihood = %s",
+                      LR(sumlMu)));
+          Debug.Out("validation log sig likelihood = " & LR(sumlSig));
+          Debug.Out("validation log likelihood     = " & LR(l) & " best = " & Bool(best) & " nlf = " & LR(nlf));
+          Debug.Out("total log likelihood          = " & LR(ll) & " nllf = " & LR(nllf));
           IF best THEN
-            bestl    := l;
+            bestl    := compareL; 
             bestfits := StatFits { l,
                                    L2Q(n, rmu.b^),
                                    L2Q(n, rsigma.b^),
-                                   sump }
+                                   ll,
+                                   pts := pq,
+                                   evals := sump
+            }
           END
         END;
       END
@@ -1444,8 +1539,9 @@ PROCEDURE Minimize(pa             : LRVector.T;
 
         WITH dp = LRVector.Copy(pr.p) DO
           M.SubV(newp.p^, pr.p^, dp^);
-          (* rho can only decrease by 4 *)
+          (* we blend in new rho estimator *)
           rho := 0.75d0 * rho + 0.25d0 * M.Norm(dp^);
+          
           Debug.Out(F("Robust.m3 : new rho = %s", LR(rho)));
           IF rho < rhoend THEN
             message := "stopping because rho < rhoend";
