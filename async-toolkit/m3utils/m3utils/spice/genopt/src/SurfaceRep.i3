@@ -34,6 +34,11 @@ PROCEDURE Ldofs(n : CARDINAL) : CARDINAL;
 
 PROCEDURE Qdofs(n : CARDINAL) : CARDINAL;
 
+TYPE ByOrder = ARRAY [ 0 .. 2 ] OF LONGREAL;
+     
+PROCEDURE SumAbsCoeff(n : CARDINAL; q : REF M.M) : ByOrder;
+  (* sum of absolute coefficients by order *)
+
 CONST Brand = "SurfaceRep";
 
 END SurfaceRep.

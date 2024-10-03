@@ -50,6 +50,9 @@ Module ("PointResult")
 Sequence ("PointResult","PointResult")
 
 Module ("StatFits")
+implementation ("StatFitsCmp")
+Sequence("StatFits", "StatFits")
+Array_sort("StatFits", "StatFits")
 
 Module ("SurfaceRep")
 

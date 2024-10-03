@@ -10,9 +10,12 @@ IMPORT LRVector;
 IMPORT PointMetric;
 IMPORT Math;
 IMPORT PointMetricArraySort;
+IMPORT Wx;
+IMPORT StatFitsSeq;
+IMPORT StatFitsArraySort;
 
 FROM SurfaceRep IMPORT Qdofs, Ldofs, ComputeIndepsL, ComputeIndepsQ,
-                       ComputeL, L2Q, FmtL;
+                       ComputeL, L2Q, FmtL, FmtQ;
 
 CONST LR = LongReal;
 TYPE  TA = ARRAY OF TEXT;
@@ -30,6 +33,47 @@ PROCEDURE Vdist(a, b : LRVector.T) : LONGREAL =
 VAR Pi     := 4.0d0 * Math.atan(1.0d0);
     Log2Pi := Math.log(2.0d0 * Pi);
 
+PROCEDURE Format(READONLY t : T ) : TEXT =
+  VAR
+    wx := Wx.New();
+  BEGIN
+    Wx.PutText(wx, t.debug);
+    Wx.PutChar(wx, '\n');
+
+    Wx.PutText  (wx, "mu    = " & FmtQ(t.n, t.bmu));
+    Wx.PutChar(wx, '\n');
+
+    Wx.PutText  (wx, "sigma = " & FmtQ(t.n, t.bsigma));
+    Wx.PutChar(wx, '\n');
+    
+    Wx.PutText(wx, F("validation log mu  likelihood = %s",
+                     LR(t.lmu)));
+    Wx.PutChar(wx, '\n');
+    
+    Wx.PutText(wx, F("validation log sig likelihood = %s", LR(t.lsig)));
+    Wx.PutChar(wx, '\n');
+    
+    Wx.PutText(wx, F("validation log likelihood     = %s nlf=%s l/nlf=%s",
+                     LR(t.l), LR(t.nlf), LR(t.l/t.nlf)));
+    Wx.PutChar(wx, '\n');
+    
+    Wx.PutText(wx, F("total log likelihood          = %s        nllf=%s ll/nllf=%s", LR(t.ll), LR(t.nllf), LR(t.ll/t.nllf)));
+    Wx.PutChar(wx, '\n');
+
+    Wx.PutText(wx, "Ranking " & FmtRanking(t.rank));
+    Wx.PutChar(wx, '\n');
+
+    RETURN Wx.ToText(wx)
+  END Format;
+
+PROCEDURE FmtRanking(ra : ARRAY Ranking OF CARDINAL) : TEXT =
+  BEGIN
+    RETURN F("%s %s %s",
+             Int(ra[Ranking.MeanValL]),
+             Int(ra[Ranking.MeanAllL]),
+             Int(ra[Ranking.SumAbsLin]))
+  END FmtRanking;
+  
 PROCEDURE Attempt(p           : LRVector.T;
                   parr        : REF ARRAY OF PointMetric.T;
                   selectByAll : BOOLEAN ) : T =
@@ -123,13 +167,10 @@ PROCEDURE Attempt(p           : LRVector.T;
       WITH rssMu  = Rss(ymu   , ymuHat),
            sMu    = Math.sqrt(rssMu / mf),
            rssSig = Rss(ysigma, ysigmaHat),
-           sSig   = Math.sqrt(rssSig / mf) DO
-        Debug.Out(FN("AttemptStatFits2 m=%s radius=%s rssMu=%s rssSig=%s ; sMu=%s sSig=%s",
-                     TA{Int(m), LR(radius), LR(rssMu), LR(rssSig), LR(sMu), LR(sSig)}));
+           sSig   = Math.sqrt(rssSig / mf),
+           debug  =FN("AttemptStatFits2 m=%s radius=%s rssMu=%s rssSig=%s ; sMu=%s sSig=%s",
+                     TA{Int(m), LR(radius), LR(rssMu), LR(rssSig), LR(sMu), LR(sSig)}) DO
         
-        Debug.Out  ("mu    = " & FmtL(n, rmu.b));
-        Debug.Out  ("sigma = " & FmtL(n, rsigma.b));
-
         (* likelihood on the validation set *)
         FOR i := FIRST(varr) TO LAST(varr) DO
           WITH v    = varr[i] DO
@@ -138,15 +179,14 @@ PROCEDURE Attempt(p           : LRVector.T;
         END;
 
         VAR
-          l    := sumlMu + sumlSig;
-
+          l     := sumlMu + sumlSig;
           nlf   := FLOAT(sump, LONGREAL); (* measurements in l *)
-          nllf  : LONGREAL;
-          
-          best : BOOLEAN;
 
-          ll : LONGREAL;
-          compareL : LONGREAL;
+          lmu   := sumlMu;
+          lsig  := sumlSig;
+
+          ll    : LONGREAL;
+          nllf  : LONGREAL;
         BEGIN
           (* do the main points too *)
           FOR i := FIRST(parr) TO LAST(parr) DO
@@ -158,33 +198,21 @@ PROCEDURE Attempt(p           : LRVector.T;
           ll := sumlMu + sumlSig;
           nllf   := FLOAT(sump, LONGREAL);
 
-          IF selectByAll THEN
-            compareL := ll / nllf
-          ELSE
-            compareL := l / nlf
-          END;
-
-          best := compareL > bestl;
-          
-          Debug.Out(F("validation log mu  likelihood = %s",
-                      LR(sumlMu)));
-
-          Debug.Out(F("validation log sig likelihood = %s", LR(sumlSig)));
-
-          Debug.Out(F("validation log likelihood     = %s best=%s nlf=%s l/nlf=%s",
-                    LR(l), Bool(best), LR(nlf), LR(l/nlf)));
-          
-          Debug.Out(F("total log likelihood          = %s        nllf=%s ll/nllf=%s", LR(ll), LR(nllf), LR(ll/nllf)));
-          
-          IF best THEN
-            bestl    := compareL; 
-            bestfits := T { l,
-                            L2Q(n, rmu.b^),
-                            L2Q(n, rsigma.b^),
-                            ll,
-                            pts := pq,
-                            evals := sump
-            }
+          WITH fit =  T { debug,
+                          thefits.size(),
+                          n,
+                          l,
+                          lmu, lsig,
+                          nlf,
+                          L2Q(n, rmu.b^),
+                          L2Q(n, rsigma.b^),
+                          ll,
+                          nllf,
+                          pts := pq,
+                          evals := sump,
+                          rank := ARRAY Ranking OF CARDINAL { LAST(CARDINAL), .. }
+            } DO
+            thefits.addhi(fit)
           END
         END;
       END
@@ -201,12 +229,18 @@ PROCEDURE Attempt(p           : LRVector.T;
     
   CONST
     LeaveOut = 16;
+    Comparer = ARRAY Ranking OF CmpProc { CompareByMeanValLikelihood,
+                                          CompareByMeanAllLikelihood,
+                                          CompareBySumAbsLinCoeff };
   VAR
     m := 2;
     max := NUMBER(parr^) - LeaveOut;
 
-    bestl  := FIRST(LONGREAL); (* best fit *)
+    bestr  := LAST(CARDINAL);
     bestfits : T;
+    thefits := NEW(StatFitsSeq.T).init();
+
+    fa : REF ARRAY OF T;
   BEGIN
     PointMetricArraySort.Sort(parr^, cmp := ComparePMByDistance);
     LOOP
@@ -217,6 +251,44 @@ PROCEDURE Attempt(p           : LRVector.T;
       END;
       m := m * 2
     END;
+
+    (* we have all the fits in thefits *)
+    fa := NEW(REF ARRAY OF T, thefits.size());
+
+    FOR i := 0 TO thefits.size() - 1 DO
+      fa[i] := thefits.get(i)
+    END;
+
+    FOR r := FIRST(Ranking) TO LAST(Ranking) DO
+      StatFitsArraySort.Sort(fa^, Comparer[r]);
+      FOR i := FIRST(fa^) TO LAST(fa^) DO
+        fa[i].rank[r] := i;
+        thefits.put(fa[i].i, fa[i]) (* synchronize *)
+      END
+    END;
+
+    FOR i := 0 TO thefits.size() - 1 DO
+      VAR
+        f  := thefits.get(i);
+        sr : CARDINAL;
+      BEGIN
+        IF selectByAll THEN
+          sr := f.rank[Ranking.MeanAllL] + f.rank[Ranking.SumAbsLin]
+        ELSE
+          sr := f.rank[Ranking.MeanValL] + f.rank[Ranking.SumAbsLin]
+        END;
+        
+        Debug.Out(Format(f));
+        
+        IF sr < bestr THEN
+          bestfits := f;
+          bestr := sr
+        END
+      END
+    END;
+
+    Debug.Out("BEST RANKED FIT\n" & Format(bestfits));
+    
     RETURN bestfits
   END Attempt;
 

@@ -19,7 +19,6 @@ PROCEDURE Qdofs(n : CARDINAL) : CARDINAL =
   BEGIN
     RETURN (n * n + 3 * n + 2) DIV 2
   END Qdofs;
-
     
 PROCEDURE GetConstantTerm(b : REF M.M) : LONGREAL =
   BEGIN
@@ -207,6 +206,35 @@ PROCEDURE FmtQ(n : CARDINAL; b : REF M.M) : TEXT =
     END;
     RETURN sum
   END FmtQ;
+
+PROCEDURE SumAbsCoeff(n : CARDINAL; b : REF M.M) : ByOrder =
+  VAR
+    k := 0;
+    f0, f1 : [0..1];
+    res := ByOrder { 0.0d0, .. };
+    
+  BEGIN
+    FOR i := 0 TO n DO
+      IF i = n THEN
+        f0 := 0
+      ELSE
+        f0 := 1
+      END;
+      FOR j := i TO n DO
+        IF j = n THEN
+          f1 := 0
+        ELSE
+          f1 := 1
+        END;
+        WITH order = f0 + f1 DO
+          res[order] := res[order] + ABS(b[k,0])
+        END;
+        
+        INC(k)
+      END
+    END;
+    RETURN res
+  END SumAbsCoeff;
 
 PROCEDURE BiggestQuadratic(p : LRVector.T; b : REF M.M) : LONGREAL =
   VAR
