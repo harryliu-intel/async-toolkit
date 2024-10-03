@@ -42,6 +42,8 @@ IMPORT Thread;
 IMPORT PointResult;
 IMPORT PointResultSeq;
 IMPORT LongrealPQ;
+IMPORT NormalDeviate;
+IMPORT Process;
 
 CONST LR = LongReal;
 
@@ -1634,9 +1636,17 @@ PROCEDURE Minimize(pa             : LRVector.T;
          Warning: this best point might not be entirely real! 
          It could be noisy!  How do we fix this?
       *)
-      
-      FindBest(mins, bestval, bestv);
 
+      IF FALSE THEN
+        FindBest(mins, bestval, bestv)
+      ELSE
+        WITH e = mins.get(mins.size() - 1) DO
+          bestval := e.metric;
+          bestv   := LRVector.Copy(e.p)
+        END
+      END;
+
+      
       Debug.Out("Robust.m3 : " & message);
       
       RETURN Output { iterations := iter,
@@ -1691,4 +1701,27 @@ PROCEDURE Orthogonalize(READONLY da : ARRAY OF LRVector.T) =
     END;
   END Orthogonalize;
 
-BEGIN END StocRobust.
+CONST
+  TestCount = 0;
+VAR
+  rand := NEW(Random.Default).init();
+  res : MultiEval.Result;
+BEGIN
+  IF TestCount # 0 THEN
+    res.n := 0;
+    res.sum := 0.0d0;
+    res.sumsq := 0.0d0;
+    
+    FOR i := 0 TO TestCount - 1 DO
+      WITH dev = NormalDeviate.Get(rand, 1.0d0, 1.0d0) DO
+        INC(res.n);
+        res.sum := res.sum + dev;
+        res.sumsq := res.sumsq + dev * dev
+      END
+    END;
+    
+    Debug.Out("res = " & MultiEval.Format(res));
+    Process.Exit(99);
+  END
+
+END StocRobust.

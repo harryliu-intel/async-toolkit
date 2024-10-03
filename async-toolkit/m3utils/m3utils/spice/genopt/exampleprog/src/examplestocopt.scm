@@ -40,7 +40,7 @@
 
 (StocRobust.SetDoNominal #t)
 
-(StocRobust.SetSelectByAll #t)
+;;(StocRobust.SetSelectByAll #t)
 ;; select mu/sigma fit by all likely data? (or by validation set otherwise)
 
 ;; NewUOAs configuration variables
@@ -57,7 +57,7 @@
 
 (def-compute-command
   '(string-append *cmd-path*
-                  " -quadstats "
+;;                  " -quadstats "
                   " -method " 3
                   " -vdd "    vdd
                   " -temp "   temp
