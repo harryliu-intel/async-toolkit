@@ -49,6 +49,10 @@ Module ("TestQf")
 Module ("PointResult")
 Sequence ("PointResult","PointResult")
 
+Module ("StatFits")
+
+Module ("SurfaceRep")
+
 SchemeStubs ("LineProblem")
 SchemeStubs ("Random")
 SchemeStubs ("OptCallback")

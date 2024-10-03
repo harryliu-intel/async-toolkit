@@ -41,10 +41,12 @@ IMPORT PointEvaluator;
 IMPORT Thread;
 IMPORT PointResult;
 IMPORT PointResultSeq;
-IMPORT LongrealPQ;
 IMPORT NormalDeviate;
 IMPORT Process;
-IMPORT LongrealType;
+FROM SurfaceRep IMPORT Qdofs, Ldofs, ComputeIndepsL, ComputeIndepsQ,
+                       FmtQ, BiggestQuadratic, ComputeG,
+                       ComputeQ;
+IMPORT StatFits;
 
 CONST LR = LongReal;
 
@@ -330,16 +332,6 @@ PROCEDURE DoLeaderBoard(READONLY pr   : PointResult.T; (* current [old] point *)
     END
   END DoLeaderBoard;
 
-PROCEDURE Ldofs(n : CARDINAL) : CARDINAL =
-  BEGIN
-    RETURN n + 1
-  END Ldofs;
-  
-PROCEDURE Qdofs(n : CARDINAL) : CARDINAL =
-  BEGIN
-    RETURN (n * n + 3 * n + 2) DIV 2
-  END Qdofs;
-
 PROCEDURE AttemptSurfaceFit(pr            : PointResult.T;
                             parr          : REF ARRAY OF PointMetric.T;
                             newpts(*OUT*) : LRVectorSet.T) : PointResult.T =
@@ -416,7 +408,7 @@ PROCEDURE AttemptSurfaceFit(pr            : PointResult.T;
       rnom     := NEW(Regression.T);
       rmu      := NEW(Regression.T);
 
-      bestfits := AttemptStatFits2(pr.p, parr);
+      bestfits := StatFits.Attempt(pr.p, parr, selectByAll);
       (* linear fit, in quadratic format, to sigma and mu *)
 
     BEGIN
@@ -430,7 +422,7 @@ PROCEDURE AttemptSurfaceFit(pr            : PointResult.T;
         ));
 
         FOR i := 0 TO MIN(bestfits.pts.size() - 1, 4 * n * n) DO
-          WITH z = NARROW(bestfits.pts.deleteMin(), PElt) DO
+          WITH z = NARROW(bestfits.pts.deleteMin(), StatFits.PElt) DO
             IF z.priority < meanL THEN
               Debug.Out(FN("Adding to newpts (l=%s lmu=%s lsig=%s) : p = %s ; res = %s; pmu=%s; psig=%s",
                            TA{LR(z.priority),
@@ -504,7 +496,7 @@ PROCEDURE AttemptSurfaceFit(pr            : PointResult.T;
                pred2   = nom + p2mu + sigmaK * p2sigma DO
 
 
-            Wx.PutText(wx, FN("metric %s : res %s : predmetric (%s = %s + %s + %s * %s); rec.p %s ; pnorm2 %s\n", TA{
+            Wx.PutText(wx, FN("obs. metric %s : res %s : predmetric (%s = %s + %s + %s * %s); rec.p %s ; pnorm2 %s\n", TA{
             LR(rec.metric),
             MultiEval.Format(rec.result),
             LR(pred2),
@@ -523,7 +515,7 @@ PROCEDURE AttemptSurfaceFit(pr            : PointResult.T;
 
         FOR i := FIRST(pparr^) TO LAST(pparr^) DO
           WITH pm = pparr[i] DO
-            Wx.PutText(wx, F("pred metric %s : %s : %s\n",
+            Wx.PutText(wx, F("pred metric %s : %s : obs. result %s\n",
                              LR(pm.metric),
                              FmtP(pm.p),
                              MultiEval.Format(pm.result)))
@@ -547,8 +539,8 @@ PROCEDURE AttemptSurfaceFit(pr            : PointResult.T;
            quadratic prediction
         *)
 
-        Debug.Out("parr[0]  = " & PointMetric.Format( parr[0]));
-        Debug.Out("pparr[0] = " & PointMetric.Format(pparr[0]));
+        Debug.Out("parr[0]  [obs] = " & PointMetric.Format( parr[0]));
+        Debug.Out("pparr[0] [obs] = " & PointMetric.Format(pparr[0]));
         
         PROCEDURE SigVal(READONLY res : MultiEval.Result;
                          k            : LONGREAL) : LONGREAL =
@@ -710,227 +702,6 @@ PROCEDURE AttemptStatFits(parr : REF ARRAY OF PointMetric.T) =
     UNTIL m > NUMBER(parr^);
   END AttemptStatFits;
 
-TYPE
-  StatFits = RECORD
-    l           : LONGREAL;     (* log likelihood of fit on valid. set *)
-    bmu, bsigma : REF M.M;      (* these are quadratic fits *)
-
-    ll          : LONGREAL;     (* log likelihood of fit on full set *)
-    pts         : LongrealPQ.T; (* points keyed by likelihood *)
-    evals       : CARDINAL;     (* sum total of evaluations considered *)
-  END;
-
-  PElt = LongrealPQ.Elt OBJECT
-    p : LRVector.T;
-    result : MultiEval.Result;
-    pmu, psig, lmu, lsig : LONGREAL;
-  END;
-  
-PROCEDURE AttemptStatFits2(p    : LRVector.T;
-                           parr : REF ARRAY OF PointMetric.T) : StatFits =
-
-
-  PROCEDURE DoFit(READONLY parr, varr : ARRAY OF PointMetric.T) =
-
-    PROCEDURE DoPoint(READONLY v : PointMetric.T; sMu, sSig : LONGREAL) =
-      BEGIN
-        WITH
-          (* data *)
-          dmu  = MultiEval.Mean(v.result), 
-          dsig = MultiEval.Sdev(v.result),
-          
-          ns   = v.result.n,
-          nsf  = FLOAT(ns, LONGREAL),
-          
-          (* predicted *)
-          pmu  = ComputeL(v.p, rmu.b),
-          psig = ComputeL(v.p, rsigma.b),
-          
-          (* likelihoods *)
-          lmu  = nsf * LogLikelihood(dmu , pmu,  sMu),
-          lsig = nsf * LogLikelihood(dsig, psig, sSig),
-          l    = lmu + lsig DO
-          
-          sumlMu  := sumlMu  + lmu;
-          sumlSig := sumlSig + lsig;
-          sump    := sump    + ns;
-
-          pq.insert(NEW(PElt,
-                        priority := l,
-                        p := v.p,
-                        result := v.result,
-                        pmu := pmu,
-                        psig := psig,
-                        lmu := lmu,
-                        lsig := lsig))
-        END
-      END DoPoint;
-
-    VAR
-      m  := NUMBER(parr);
-      mf := FLOAT(m, LONGREAL);
-
-      n := NUMBER(parr[FIRST(parr)].p^);
-      
-      qdofs  := Qdofs(n);
-      ldofs  := Ldofs(n);
-      
-      xquad  := NEW(REF M.M, m, qdofs);
-      xlin   := NEW(REF M.M, m, ldofs);
-
-      ymu    := NEW(REF M.M, m, 1);
-      ysigma := NEW(REF M.M, m, 1);
-      w      := NEW(REF M.M, m, m);
-
-      ymuHat,
-      ysigmaHat : REF M.M;
-
-      rmu    := NEW(Regression.T);
-      rsigma := NEW(Regression.T);
-
-      sumlMu, sumlSig := 0.0d0;
-      sump            := 0;
-      pq              := NEW(LongrealPQ.Default).init();
-
-      mostDistant     := varr[LAST(varr)].p;
-      radius          := Vdist(p, mostDistant);
-      
-    BEGIN
-      
-      M.Zero(w^);
-      FOR i := 0 TO m - 1 DO
-        WITH rec = parr[i] DO
-          ComputeIndepsQ(rec.p, i, xquad^);
-          ComputeIndepsL(rec.p, i, xlin^);
-
-          ymu   [i, 0] := MultiEval.Mean   (rec.result);
-          ysigma[i, 0] := MultiEval.Sdev   (rec.result);
-          
-          w[i, i]      := FLOAT(rec.result.n, LONGREAL)
-        END
-      END(*ROF*);
- 
-      Regression.Run(xlin,
-                     ymu   , ymuHat   , FALSE, rmu   , 0.0d0, W := w);
-      Regression.Run(xlin,
-                     ysigma, ysigmaHat, FALSE, rsigma, 0.0d0, W := w);
-
-      WITH rssMu  = Rss(ymu   , ymuHat),
-           sMu    = Math.sqrt(rssMu / mf),
-           rssSig = Rss(ysigma, ysigmaHat),
-           sSig   = Math.sqrt(rssSig / mf) DO
-        Debug.Out(FN("AttemptStatFits2 m=%s radius=%s rssMu=%s rssSig=%s ; sMu=%s sSig=%s",
-                     TA{Int(m), LR(radius), LR(rssMu), LR(rssSig), LR(sMu), LR(sSig)}));
-        
-        Debug.Out  ("mu    = " & FmtL(n, rmu.b));
-        Debug.Out  ("sigma = " & FmtL(n, rsigma.b));
-
-        (* likelihood on the validation set *)
-        FOR i := FIRST(varr) TO LAST(varr) DO
-          WITH v    = varr[i] DO
-            DoPoint(v, sMu, sSig)
-          END
-        END;
-
-        VAR
-          l    := sumlMu + sumlSig;
-
-          nlf   := FLOAT(sump, LONGREAL); (* measurements in l *)
-          nllf  : LONGREAL;
-          
-          best : BOOLEAN;
-
-          ll : LONGREAL;
-          compareL : LONGREAL;
-        BEGIN
-          (* do the main points too *)
-          FOR i := FIRST(parr) TO LAST(parr) DO
-            WITH v = parr[i] DO
-              DoPoint(v, sMu, sSig)
-            END
-          END;
-
-          ll := sumlMu + sumlSig;
-          nllf   := FLOAT(sump, LONGREAL);
-
-          IF selectByAll THEN
-            compareL := ll / nllf
-          ELSE
-            compareL := l / nlf
-          END;
-
-          best := compareL > bestl;
-          
-          Debug.Out(F("validation log mu  likelihood = %s",
-                      LR(sumlMu)));
-
-          Debug.Out(F("validation log sig likelihood = %s", LR(sumlSig)));
-
-          Debug.Out(F("validation log likelihood     = %s best=%s nlf=%s l/nlf=%s",
-                    LR(l), Bool(best), LR(nlf), LR(l/nlf)));
-          
-          Debug.Out(F("total log likelihood          = %s        nllf=%s ll/nllf=%s", LR(ll), LR(nllf), LR(ll/nllf)));
-          
-          IF best THEN
-            bestl    := compareL; 
-            bestfits := StatFits { l,
-                                   L2Q(n, rmu.b^),
-                                   L2Q(n, rsigma.b^),
-                                   ll,
-                                   pts := pq,
-                                   evals := sump
-            }
-          END
-        END;
-      END
-      
-    END DoFit;
-
-  PROCEDURE ComparePMByDistance(READONLY a, b : PointMetric.T) : [-1 .. 1] =
-    BEGIN
-      WITH ad = Vdist(a.p, p),
-           bd = Vdist(b.p, p) DO
-        RETURN LongrealType.Compare(ad, bd)
-      END
-    END ComparePMByDistance;
-    
-  CONST
-    LeaveOut = 16;
-  VAR
-    m := 2;
-    max := NUMBER(parr^) - LeaveOut;
-
-    bestl  := FIRST(LONGREAL); (* best fit *)
-    bestfits : StatFits;
-  BEGIN
-    PointMetricArraySort.Sort(parr^, cmp := ComparePMByDistance);
-    LOOP
-      DoFit(SUBARRAY(parr^,           0, MIN(max, m)),
-            SUBARRAY(parr^, MIN(max, m), LeaveOut));
-      IF m >= max THEN
-        EXIT
-      END;
-      m := m * 2
-    END;
-    RETURN bestfits
-  END AttemptStatFits2;
-
-VAR Pi     := 4.0d0 * Math.atan(1.0d0);
-    Log2Pi := Math.log(2.0d0 * Pi);
-    
-PROCEDURE LogLikelihood(x, mu, sigma : LONGREAL) : LONGREAL =
-  (* likelihood (density) of x given it is ~N(mu, sigma) *)
-  CONST
-    log = Math.log;
-  BEGIN
-    WITH t1 = -0.5d0 * Log2Pi,
-         t2 = -log(sigma),
-         dev = x - mu,
-         t3 = -0.5d0 / sigma / sigma * dev * dev DO
-      RETURN t1 + t2 + t3
-    END
-  END LogLikelihood;
-  
 PROCEDURE InsertClosestPoints(n             : CARDINAL;
                               bestQ         : LRVector.T;
                               READONLY parr : ARRAY OF PointMetric.T;
@@ -1140,258 +911,6 @@ PROCEDURE EvalQGN(qg : QuadraticG; p : LRVector.T) : LRVector.T =
       RETURN res
     END
   END EvalQGN;
-  
-PROCEDURE ComputeIndepsQ(p      : LRVector.T;
-                         row    : CARDINAL;
-                         VAR x  : M.M) =
-  VAR
-    k := 0;
-    q : LONGREAL;
-    f0, f1 : LONGREAL;
-  BEGIN
-    FOR i := 0 TO NUMBER(p^) DO
-      IF i = NUMBER(p^) THEN
-        f0 := 1.0d0
-      ELSE
-        f0 := p[i]
-      END;
-      FOR j := i TO NUMBER(p^) DO
-        IF j = NUMBER(p^) THEN
-          f1 := 1.0d0
-        ELSE
-          f1 := p[j]
-        END;
-        
-        q := f0 * f1; (* this is the value we want *)
-        
-        x[row, k] := q;
-        
-        INC(k)
-      END
-    END
-  END ComputeIndepsQ;
-
-PROCEDURE ComputeIndepsL(p      : LRVector.T;
-                         row    : CARDINAL;
-                         VAR x  : M.M) =
-  VAR
-    k  := 0;
-    f0 : LONGREAL;
-  BEGIN
-    FOR i := 0 TO NUMBER(p^) DO
-      IF i = NUMBER(p^) THEN
-        f0 := 1.0d0
-      ELSE
-        f0 := p[i]
-      END;
-        
-      x[row, k] := f0;
-      
-      INC(k)
-    END
-  END ComputeIndepsL;
-
-PROCEDURE ComputeQ(p : LRVector.T; b : REF M.M; wx : Wx.T := NIL) : LONGREAL =
-  (* value of the quadratic *)
-  VAR
-    k := 0;
-    q : LONGREAL;
-    f0, f1 : LONGREAL;
-    term : LONGREAL;
-    sum := 0.0d0;
-  BEGIN
-    FOR i := 0 TO NUMBER(p^) DO
-      IF i = NUMBER(p^) THEN
-        f0 := 1.0d0
-      ELSE
-        f0 := p[i]
-      END;
-      FOR j := i TO NUMBER(p^) DO
-        IF j = NUMBER(p^) THEN
-          f1 := 1.0d0
-        ELSE
-          f1 := p[j]
-        END;
-        q := f0 * f1;
-        term := q * b[k, 0];
-        sum := sum + term;
-        IF wx # NIL THEN
-          Wx.PutText(wx, FN("ComputeQ f0=%s f1=%s q=%s b[%s,0]=%s term=%s sum=%s\n",
-                            TA{LR(f0), LR(f1), LR(q), Int(k), LR(b[k,0]),
-                               LR(term), LR(sum)}))
-        END;
-        INC(k)
-      END
-    END;
-    IF wx # NIL THEN
-      Wx.PutText(wx,"===\n")
-    END;
-    RETURN sum
-  END ComputeQ;
-
-PROCEDURE ComputeL(p : LRVector.T; b : REF M.M) : LONGREAL =
-  VAR
-    sum := 0.0d0;
-    f0 : LONGREAL;
-  BEGIN
-    FOR i := 0 TO NUMBER(p^) DO
-      IF i = NUMBER(p^) THEN
-        f0 := 1.0d0
-      ELSE
-        f0 := p[i]
-      END;
-      WITH term = f0 * b[i, 0] DO
-        sum := sum + term
-      END
-    END;
-    RETURN sum
-  END ComputeL;
-
-PROCEDURE L2Q(n : CARDINAL; READONLY b : M.M) : REF M.M =
-  VAR
-    ldofs := Ldofs(n);
-    qdofs := Qdofs(n);
-    res := NEW(REF M.M, qdofs, 1);
-    k := 0;
-  BEGIN
-    <*ASSERT NUMBER(b) = ldofs*>
-    <*ASSERT NUMBER(b[0]) = 1*>
-    FOR i := 0 TO n DO
-      FOR j := i TO n DO
-        IF    i = n THEN
-          res[ k, 0 ] := b[ j, 0 ]
-        ELSIF j = n THEN
-          res[ k, 0 ] := b[ i, 0 ]
-        ELSE
-          res[ k, 0 ] := 0.0d0
-        END;
-        
-        INC(k)
-      END
-    END;
-    RETURN res
-  END L2Q;
-
-PROCEDURE FmtL(n : CARDINAL; b : REF M.M) : TEXT =
-  VAR
-    ldofs := Ldofs(n);
-    term : TEXT;
-    sum := "";
-  BEGIN
-    <*ASSERT NUMBER(b^) = ldofs*>
-    <*ASSERT NUMBER(b[0]) = 1*>
-    FOR i := 0 TO n DO
-      IF i = n THEN
-        term := LR(b[i, 0])
-      ELSE
-        term := LR(b[i, 0]) & F(" * p[%s]", Int(i))
-      END;
-      sum := sum & " + " & term
-    END;
-    RETURN sum
-  END FmtL;
-  
-PROCEDURE FmtQ(n : CARDINAL; b : REF M.M) : TEXT =
-  VAR
-    k := 0;
-    sum := "";
-    f0, f1 : TEXT;
-    q : TEXT;
-    term : TEXT;
-  BEGIN
-    FOR i := 0 TO n DO
-      IF i = n THEN
-        f0 := "1"
-      ELSE
-        f0 := F("p[%s]", Int(i))
-      END;
-      FOR j := i TO n DO
-        IF j = n THEN
-          f1 := "1"
-        ELSE
-          f1 := F("p[%s]", Int(j))
-        END;
-        q := f0 & " * " & f1;
-        term := LR(b[k, 0]) & " * " & q;
-        sum := sum & " + " &  term;
-        INC(k)
-      END
-    END;
-    RETURN sum
-  END FmtQ;
-
-PROCEDURE BiggestQuadratic(p : LRVector.T; b : REF M.M) : LONGREAL =
-  VAR
-    k := 0;
-    mostNeg := LAST(LONGREAL);
-  BEGIN
-    (* we care about negative squared terms and any cross term *)
-    FOR i := 0 TO NUMBER(p^) DO
-      FOR j := i TO NUMBER(p^) DO
-        IF    i = j AND i = NUMBER(p^) THEN
-          (* constant term *)
-          (* skip *)
-        ELSIF i = j THEN
-          (* squared term *)
-          WITH pi = 2.0d0 * b[k, 0] DO
-            mostNeg := MIN(mostNeg, pi)
-          END
-        ELSIF j = NUMBER(p^) THEN
-          (* linear term *)
-        ELSE
-          (* cross term *)
-          WITH pi = b[k, 0] DO
-            mostNeg := MIN(-ABS(mostNeg), pi)
-          END;
-          WITH pj = b[k, 0] DO
-            mostNeg := MIN(-ABS(mostNeg), pj)
-          END
-        END;
-        INC(k)
-      END
-    END;
-    RETURN -mostNeg
-  END BiggestQuadratic;
-  
-PROCEDURE ComputeG(p : LRVector.T; b : REF M.M) : LRVector.T =
-  (* gradient of the quadratic *)
-  VAR
-    res := NEW(LRVector.T, NUMBER(p^));
-    k := 0;
-  BEGIN
-    FOR i := FIRST(p^) TO LAST(p^) DO
-      res[i] := 0.0d0
-    END;
-    
-    FOR i := 0 TO NUMBER(p^) DO
-      FOR j := i TO NUMBER(p^) DO
-        IF    i = j AND i = NUMBER(p^) THEN
-          (* constant term *)
-          (* skip *)
-        ELSIF i = j THEN
-          (* squared term *)
-          WITH pi = 2.0d0 * p[i] * b[k, 0] DO
-            res[i] := res[i] + pi
-          END
-        ELSIF j = NUMBER(p^) THEN
-          (* linear term *)
-          WITH pi = b[k, 0] DO
-            res[i] := res[i] + pi
-          END
-        ELSE
-          (* cross term *)
-          WITH pi = p[j] * b[k, 0] DO
-            res[i] := res[i] + pi
-          END;
-          WITH pj = p[i] * b[k, 0] DO
-            res[j] := res[j] + pj
-          END
-        END;
-        INC(k)
-      END
-    END;
-    RETURN res
-  END ComputeG;
   
 VAR ridgeCoeff := 0.0d0;
     
