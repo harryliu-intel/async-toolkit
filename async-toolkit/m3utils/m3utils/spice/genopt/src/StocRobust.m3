@@ -44,6 +44,7 @@ IMPORT PointResultSeq;
 IMPORT LongrealPQ;
 IMPORT NormalDeviate;
 IMPORT Process;
+IMPORT LongrealType;
 
 CONST LR = LongReal;
 
@@ -415,8 +416,8 @@ PROCEDURE AttemptSurfaceFit(pr            : PointResult.T;
       rnom     := NEW(Regression.T);
       rmu      := NEW(Regression.T);
 
-      bestfits := AttemptStatFits2(parr); (* linear fit, in quadratic format,
-                                             to sigma and mu *)
+      bestfits := AttemptStatFits2(pr.p, parr);
+      (* linear fit, in quadratic format, to sigma and mu *)
 
     BEGIN
       WITH meanL = bestfits.ll / FLOAT(bestfits.pts.size(), LONGREAL) DO
@@ -440,7 +441,7 @@ PROCEDURE AttemptSurfaceFit(pr            : PointResult.T;
                               LR(z.pmu),
                               LR(z.psig)
               }));
-              EVAL newpts.insert(z.p)
+              EVAL newpts.insert(z.p)    (*  *)
             END
           END
         END
@@ -725,7 +726,8 @@ TYPE
     pmu, psig, lmu, lsig : LONGREAL;
   END;
   
-PROCEDURE AttemptStatFits2(parr : REF ARRAY OF PointMetric.T) : StatFits =
+PROCEDURE AttemptStatFits2(p    : LRVector.T;
+                           parr : REF ARRAY OF PointMetric.T) : StatFits =
 
 
   PROCEDURE DoFit(READONLY parr, varr : ARRAY OF PointMetric.T) =
@@ -763,7 +765,6 @@ PROCEDURE AttemptStatFits2(parr : REF ARRAY OF PointMetric.T) : StatFits =
                         lsig := lsig))
         END
       END DoPoint;
-    
 
     VAR
       m  := NUMBER(parr);
@@ -791,7 +792,11 @@ PROCEDURE AttemptStatFits2(parr : REF ARRAY OF PointMetric.T) : StatFits =
       sump            := 0;
       pq              := NEW(LongrealPQ.Default).init();
 
+      mostDistant     := varr[LAST(varr)].p;
+      radius          := Vdist(p, mostDistant);
+      
     BEGIN
+      
       M.Zero(w^);
       FOR i := 0 TO m - 1 DO
         WITH rec = parr[i] DO
@@ -814,8 +819,8 @@ PROCEDURE AttemptStatFits2(parr : REF ARRAY OF PointMetric.T) : StatFits =
            sMu    = Math.sqrt(rssMu / mf),
            rssSig = Rss(ysigma, ysigmaHat),
            sSig   = Math.sqrt(rssSig / mf) DO
-        Debug.Out(FN("AttemptStatFits2 m=%s rssMu=%s rssSig=%s ; sMu=%s sSig=%s",
-                     TA{Int(m), LR(rssMu), LR(rssSig), LR(sMu), LR(sSig)}));
+        Debug.Out(FN("AttemptStatFits2 m=%s radius=%s rssMu=%s rssSig=%s ; sMu=%s sSig=%s",
+                     TA{Int(m), LR(radius), LR(rssMu), LR(rssSig), LR(sMu), LR(sSig)}));
         
         Debug.Out  ("mu    = " & FmtL(n, rmu.b));
         Debug.Out  ("sigma = " & FmtL(n, rsigma.b));
@@ -858,9 +863,14 @@ PROCEDURE AttemptStatFits2(parr : REF ARRAY OF PointMetric.T) : StatFits =
           
           Debug.Out(F("validation log mu  likelihood = %s",
                       LR(sumlMu)));
-          Debug.Out("validation log sig likelihood = " & LR(sumlSig));
-          Debug.Out("validation log likelihood     = " & LR(l) & " best = " & Bool(best) & " nlf = " & LR(nlf));
-          Debug.Out("total log likelihood          = " & LR(ll) & " nllf = " & LR(nllf));
+
+          Debug.Out(F("validation log sig likelihood = %s", LR(sumlSig)));
+
+          Debug.Out(F("validation log likelihood     = %s best=%s nlf=%s l/nlf=%s",
+                    LR(l), Bool(best), LR(nlf), LR(l/nlf)));
+          
+          Debug.Out(F("total log likelihood          = %s        nllf=%s ll/nllf=%s", LR(ll), LR(nllf), LR(ll/nllf)));
+          
           IF best THEN
             bestl    := compareL; 
             bestfits := StatFits { l,
@@ -876,6 +886,14 @@ PROCEDURE AttemptStatFits2(parr : REF ARRAY OF PointMetric.T) : StatFits =
       
     END DoFit;
 
+  PROCEDURE ComparePMByDistance(READONLY a, b : PointMetric.T) : [-1 .. 1] =
+    BEGIN
+      WITH ad = Vdist(a.p, p),
+           bd = Vdist(b.p, p) DO
+        RETURN LongrealType.Compare(ad, bd)
+      END
+    END ComparePMByDistance;
+    
   CONST
     LeaveOut = 16;
   VAR
@@ -885,6 +903,7 @@ PROCEDURE AttemptStatFits2(parr : REF ARRAY OF PointMetric.T) : StatFits =
     bestl  := FIRST(LONGREAL); (* best fit *)
     bestfits : StatFits;
   BEGIN
+    PointMetricArraySort.Sort(parr^, cmp := ComparePMByDistance);
     LOOP
       DoFit(SUBARRAY(parr^,           0, MIN(max, m)),
             SUBARRAY(parr^, MIN(max, m), LeaveOut));
@@ -1435,6 +1454,9 @@ PROCEDURE Minimize(pa             : LRVector.T;
         samples := 40
       END;
 
+      Debug.Out(F("StocRobust.Minimize : pass %s : newPts.size()=%s NUMBER(da^)=%s",
+                  Int(pass), Int(newPts.size()), Int(NUMBER(da^))));
+      
       (* spin up enough threads to handle newPts *)
       WHILE peSeq.size() < newPts.size() DO
         WITH newPe = NEW(PointEvaluator.T).init() DO
@@ -1479,11 +1501,6 @@ PROCEDURE Minimize(pa             : LRVector.T;
                     LRVector.Copy(da[i]),
                     
                     MultiEvaluate(func, samples, sigmaK, values, thisCyc),
-                    
-                    (* how the HECK do we get the samples to Main? *)
-                    (* I think we need to expose extra fields in 
-                       PllEvaluator in Main and share it with this
-                       module, then we can pass samples that way ... *)
                     
                     rho)
       END;
@@ -1712,7 +1729,7 @@ BEGIN
     res.sum := 0.0d0;
     res.sumsq := 0.0d0;
     
-    FOR i := 0 TO TestCount - 1 DO
+<*NOWARN*>    FOR i := 0 TO TestCount - 1 DO
       WITH dev = NormalDeviate.Get(rand, 1.0d0, 1.0d0) DO
         INC(res.n);
         res.sum := res.sum + dev;

@@ -57,7 +57,7 @@
 
 (def-compute-command
   '(string-append *cmd-path*
-;;                  " -quadstats "
+                  " -quadstats "
                   " -method " 3
                   " -vdd "    vdd
                   " -temp "   temp
