@@ -233,5 +233,85 @@ PROCEDURE LogLikelihood(x, mu, sigma : LONGREAL) : LONGREAL =
     END
   END LogLikelihood;
 
+PROCEDURE VarM(a : REF M.M) : LONGREAL =
+  BEGIN
+    RETURN M.DevSqM(a^)
+  END VarM;
+
+PROCEDURE Attempt1(parr : REF ARRAY OF PointMetric.T) =
+
+  PROCEDURE DoFit(READONLY parr : ARRAY OF PointMetric.T) =
+    VAR
+      m := NUMBER(parr);
+
+      n := NUMBER(parr[FIRST(parr)].p^);
+      
+      qdofs  := Qdofs(n);
+      ldofs  := Ldofs(n);
+      
+      xquad  := NEW(REF M.M, m, qdofs);
+      xlin   := NEW(REF M.M, m, ldofs);
+
+      ymu    := NEW(REF M.M, m, 1);
+      ysigma := NEW(REF M.M, m, 1);
+      w      := NEW(REF M.M, m, m);
+
+      ymuHat1,
+      ysigmaHat1 : REF M.M;
+
+      ymuHat2,
+      ysigmaHat2 : REF M.M;
+
+      rmu1    := NEW(Regression.T);
+      rsigma1 := NEW(Regression.T);
+      rmu2    := NEW(Regression.T);
+      rsigma2 := NEW(Regression.T);
+
+    BEGIN
+      M.Zero(w^);
+      FOR i := 0 TO m - 1 DO
+        WITH rec = parr[i] DO
+          ComputeIndepsQ(rec.p, i, xquad^);
+          ComputeIndepsL(rec.p, i, xlin^);
+
+          ymu   [i, 0] := MultiEval.Mean   (rec.result);
+          ysigma[i, 0] := MultiEval.Sdev   (rec.result);
+          
+          w[i, i]      := FLOAT(rec.result.n, LONGREAL)
+        END
+      END(*ROF*);
+ 
+      Regression.Run(xlin,
+                     ymu   , ymuHat1   , FALSE, rmu1   , 0.0d0, W := w);
+      Regression.Run(xlin,
+                     ysigma, ysigmaHat1, FALSE, rsigma1, 0.0d0, W := w);
+      Regression.Run(xquad,
+                     ymu   , ymuHat2   , FALSE, rmu2   , 0.0d0, W := w);
+      Regression.Run(xquad,
+                     ysigma, ysigmaHat2, FALSE, rsigma2, 0.0d0, W := w);
+
+      WITH rssMu0  = VarM(ymu),
+           rssMu1  = Rss(ymu   , ymuHat1),
+           rssMu2  = Rss(ymu   , ymuHat2),
+           rssSig0 = VarM(ysigma),
+           rssSig1 = Rss(ysigma, ysigmaHat1),
+           rssSig2 = Rss(ysigma, ysigmaHat2) DO
+        Debug.Out(FN("AttemptStatFits mu  : m=%s rss0=%s rss1=%s rss2=%s",
+                     TA{Int(m), LR(rssMu0), LR(rssMu1), LR(rssMu2) }));
+        Debug.Out(FN("AttemptStatFits sig : m=%s rss0=%s rss1=%s rss2=%s",
+                     TA{Int(m), LR(rssSig0), LR(rssSig1), LR(rssSig2) }));
+      END
+      
+    END DoFit;
+
+  VAR
+    m := 1;
+  BEGIN
+    REPEAT
+      DoFit(SUBARRAY(parr^, 0, m));
+      m := m * 2
+    UNTIL m > NUMBER(parr^);
+  END Attempt1;
+
 BEGIN END StatFits.
 

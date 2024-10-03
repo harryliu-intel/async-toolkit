@@ -26,4 +26,6 @@ PROCEDURE Attempt(p           : LRVector.T;
                   parr        : REF ARRAY OF PointMetric.T;
                   selectByAll : BOOLEAN ) : T;
   
+PROCEDURE Attempt1(parr : REF ARRAY OF PointMetric.T);
+
 END StatFits.
