@@ -38,16 +38,16 @@ testing=0
 if [ "${testing}" == "1" ]; then
     stages="10"
     temps="0"
-    trantypes="lvt"
+#    trantypes="lvt"
     sweeps="4"
 fi
 
 justtemps=1
 
 if [ "${justtemps}" == "1" ]; then
-    stages="10"
+#    stages="10"
     temps="-80 -70 -60 -50 -40 -30 -20 -10 0 10 15 20 30 35 40 45 49" 
-    trantypes="lvt"
+#    trantypes="lvt"
     sweeps="4"
 fi
 
