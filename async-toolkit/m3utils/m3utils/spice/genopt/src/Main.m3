@@ -705,7 +705,8 @@ PROCEDURE MRWWrite(mrw : MyResultWriter; output : NewUOAs.Output)
          awr  = FileWr.Open(mrw.root & ".aopt"),
          acwr = FileWr.Open(mrw.root & ".acols"),
          
-         rwr  = FileWr.Open(mrw.root & ".result") DO
+         rwr  = FileWr.Open(mrw.root & ".result"),
+         rhwr = FileWr.Open(mrw.root & ".rho") DO
       FOR i := vseq.size() - 1 TO 0 BY -1 DO
         WITH v  = vseq.get(i),
              xi = output.x[i],
@@ -742,6 +743,8 @@ PROCEDURE MRWWrite(mrw : MyResultWriter; output : NewUOAs.Output)
       Wr.PutText(awr, "," & LongReal(output.f));
       Wr.PutText(acwr, ",RESULT\n");
 
+      Wr.PutText(rhwr, LongReal(output.stoprho) & "\n");
+
       VAR
         key := LRVectorLRPair.T { output.x, output.f };
         subdir : TEXT;
@@ -772,7 +775,7 @@ PROCEDURE MRWWrite(mrw : MyResultWriter; output : NewUOAs.Output)
         END
       END;
       
-      Wr.Close(wr); Wr.Close(cwr); Wr.Close(rwr);
+      Wr.Close(wr); Wr.Close(cwr); Wr.Close(rwr); Wr.Close(rhwr);
       Wr.Close(awr); Wr.Close(acwr)
     END
   END MRWWrite;

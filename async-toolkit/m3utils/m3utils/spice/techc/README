@@ -1,6 +1,8 @@
 How to run this code, example:
 
-nbfeeder start --work-area /netbatch/mnystroe/mnystroe_`hostname`_feeder/ --name mnystroe_`hostname`_feeder
+nbfeeder start --work-area /netbatch/mnystroe/mnystroe_`hostname`_feeder/ --name mnystroe_`hostname`_feeder --server
+
+# --server for heavily loaded feeders, per Noam Ambar
 
 cd m3utils/spice/techc # this directory
 mkdir work 

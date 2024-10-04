@@ -1007,15 +1007,22 @@ PROCEDURE Minimize(pa             : LRVector.T;
                     PointResult.Format(pr),
                     PointResult.Format(newp)));
 
-        WITH dp = LRVector.Copy(pr.p) DO
-          M.SubV(newp.p^, pr.p^, dp^);
-          (* we blend in new rho estimator *)
-          rho := 0.50d0 * rho + 0.50d0 * M.Norm(dp^);
-          
-          Debug.Out(F("Robust.m3 : new rho = %s", LR(rho)));
-          IF rho < rhoend THEN
-            message := "stopping because rho < rhoend";
-            EXIT
+
+        IF newp.p^ = pr.p^ THEN
+          (* if we're not going anywhere, just tighten up a little bit *)
+          rho := 0.9d0 * rho
+        ELSE
+          WITH dp = LRVector.Copy(pr.p) DO
+            M.SubV(newp.p^, pr.p^, dp^);
+            (* we blend in new rho estimator *)
+            
+            rho := 0.50d0 * rho + 0.50d0 * M.Norm(dp^);
+            
+            Debug.Out(F("Robust.m3 : new rho = %s", LR(rho)));
+            IF rho < rhoend THEN
+              message := "stopping because rho < rhoend";
+              EXIT
+            END
           END
         END;
 
