@@ -5,7 +5,7 @@ IMPORT MultiEval;
 IMPORT LRRegression AS Regression;
 IMPORT LongrealType;
 IMPORT Debug;
-FROM Fmt IMPORT F, Int, Bool, LongReal, FN;
+FROM Fmt IMPORT F, Int, LongReal, FN;
 IMPORT LRVector;
 IMPORT PointMetric;
 IMPORT Math;
@@ -13,9 +13,10 @@ IMPORT PointMetricArraySort;
 IMPORT Wx;
 IMPORT StatFitsSeq;
 IMPORT StatFitsArraySort;
+IMPORT Matrix;
 
 FROM SurfaceRep IMPORT Qdofs, Ldofs, ComputeIndepsL, ComputeIndepsQ,
-                       ComputeL, L2Q, FmtL, FmtQ;
+                       ComputeL, L2Q, FmtQ;
 
 CONST LR = LongReal;
 TYPE  TA = ARRAY OF TEXT;
@@ -76,10 +77,12 @@ PROCEDURE FmtRanking(ra : ARRAY Ranking OF CARDINAL) : TEXT =
   
 PROCEDURE Attempt(p           : LRVector.T;
                   parr        : REF ARRAY OF PointMetric.T;
-                  selectByAll : BOOLEAN ) : T =
+                  selectByAll : BOOLEAN ) : T
+  RAISES { Matrix.Singular } =
 
 
-  PROCEDURE DoFit(READONLY parr, varr : ARRAY OF PointMetric.T) =
+  PROCEDURE DoFit(READONLY parr, varr : ARRAY OF PointMetric.T)
+    RAISES { Matrix.Singular } =
 
     PROCEDURE DoPoint(READONLY v : PointMetric.T; sMu, sSig : LONGREAL) =
       BEGIN
@@ -310,9 +313,11 @@ PROCEDURE VarM(a : REF M.M) : LONGREAL =
     RETURN M.DevSqM(a^)
   END VarM;
 
-PROCEDURE Attempt1(parr : REF ARRAY OF PointMetric.T) =
+PROCEDURE Attempt1(parr : REF ARRAY OF PointMetric.T)
+  RAISES { Matrix.Singular } =
 
-  PROCEDURE DoFit(READONLY parr : ARRAY OF PointMetric.T) =
+  PROCEDURE DoFit(READONLY parr : ARRAY OF PointMetric.T)
+    RAISES { Matrix.Singular } =
     VAR
       m := NUMBER(parr);
 

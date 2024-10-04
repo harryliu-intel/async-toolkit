@@ -217,9 +217,15 @@ PROCEDURE DoTrace(traceRt : Pathname.T; mWr : Wr.T) : Result =
           TranNames[tran],
           LR(vdd),
           LR(temp),
+          LR(deln),
+          LR(delp),
+          Int(stages),
           LR(cycleTime),
           LR(swiE),
-          LR(leaP)
+          LR(dynE),
+          LR(leaP),
+          LR(cscale),
+          LR(rscale)
           }));
           Wr.PutChar(mWr, '\n');
           

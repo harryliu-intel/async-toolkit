@@ -47,6 +47,8 @@ FROM SurfaceRep IMPORT Qdofs, Ldofs, ComputeIndepsL, ComputeIndepsQ,
                        FmtQ, BiggestQuadratic, ComputeG,
                        ComputeQ;
 IMPORT StatFits;
+IMPORT LongrealPQ;
+IMPORT Matrix;
 
 CONST LR = LongReal;
 
@@ -324,17 +326,23 @@ PROCEDURE DoLeaderBoard(READONLY pr   : PointResult.T; (* current [old] point *)
     WITH dofs = Qdofs(n) DO
       IF NUMBER(parr^) >= dofs THEN
         Debug.Out(F("DoLeaderBoard: enough points (%s >= %s) to attempt a surface fit.", Int(NUMBER(parr^)), Int(dofs)));
-        RETURN AttemptSurfaceFit(pr, parr, newpts)
+        TRY
+          RETURN AttemptSurfaceFit(pr, parr, newpts)
+        EXCEPT
+          Matrix.Singular =>
+          Debug.Warning("AttemptSurfaceFit raised Matrix.Singular!")
+        END
       ELSE
         Debug.Out(F("DoLeaderBoard: NOT enough points (%s < %s) to attempt a surface fit.", Int(NUMBER(parr^)), Int(dofs)));
-        RETURN pr
-      END
+      END;
+      RETURN pr (* on failure, just return the old point *)
     END
   END DoLeaderBoard;
 
 PROCEDURE AttemptSurfaceFit(pr            : PointResult.T;
                             parr          : REF ARRAY OF PointMetric.T;
-                            newpts(*OUT*) : LRVectorSet.T) : PointResult.T =
+                            newpts(*OUT*) : LRVectorSet.T) : PointResult.T
+  RAISES { Matrix.Singular } =
   (* attempt a surface fit *)
   
   VAR
@@ -394,6 +402,7 @@ PROCEDURE AttemptSurfaceFit(pr            : PointResult.T;
                 Int(seq.size()), LR(rho), LR(tryrho), Bool(success),
                 PointResult.Format(pr)));
 
+    <*FATAL LongrealPQ.Empty*>
     VAR
       xquad    := NEW(REF M.M, seq.size(), qdofs);
       xlin     := NEW(REF M.M, seq.size(), ldofs);
@@ -412,6 +421,7 @@ PROCEDURE AttemptSurfaceFit(pr            : PointResult.T;
       (* linear fit, in quadratic format, to sigma and mu *)
 
     BEGIN
+      <*ASSERT bestfits.pts.size() # 0*>
       WITH meanL = bestfits.ll / FLOAT(bestfits.pts.size(), LONGREAL) DO
         Debug.Out(FN("bestfits : l = %s ; %s unique (%s evals); mean l=%s, minl=%s",
                     TA{LR(bestfits.l),
@@ -708,8 +718,14 @@ PROCEDURE DoSimpleFit(p                          : LRVector.T;
     
     LOOP
       mp^ := p^;
-      
-      best := ConjGradient.Minimize(mp, tol, qf, qg);
+
+      TRY
+        best := ConjGradient.Minimize(mp, tol, qf, qg);
+      EXCEPT
+        ConjGradient.TooManyIterations =>
+        Debug.Warning("StocRobust.DoSimpleFit : caught ConjGradient.TooManyIterations");
+        RETURN
+      END;
       
       Debug.Out(F("Minimized quadratic %s @ %s [tol=%s]",
                   LR(best), FmtP(mp), LR(tol)));
@@ -993,7 +1009,7 @@ PROCEDURE Minimize(pa             : LRVector.T;
         WITH dp = LRVector.Copy(pr.p) DO
           M.SubV(newp.p^, pr.p^, dp^);
           (* we blend in new rho estimator *)
-          rho := 0.75d0 * rho + 0.25d0 * M.Norm(dp^);
+          rho := 0.50d0 * rho + 0.50d0 * M.Norm(dp^);
           
           Debug.Out(F("Robust.m3 : new rho = %s", LR(rho)));
           IF rho < rhoend THEN

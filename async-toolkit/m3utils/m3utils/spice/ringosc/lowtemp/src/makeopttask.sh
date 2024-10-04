@@ -33,7 +33,7 @@ temps="-80 -70 -60 -50 -40 -30 -20 -10 0 10 20 30 40 49"
 
 # for testing:
 
-testing=0
+testing=1
 
 if [ "${testing}" == "1" ]; then
     stages="10"

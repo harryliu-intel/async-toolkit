@@ -4,6 +4,7 @@ IMPORT LongrealPQ;
 IMPORT LRVector;
 IMPORT MultiEval;
 IMPORT PointMetric;
+IMPORT Matrix;
 
 TYPE
   T = RECORD
@@ -32,9 +33,11 @@ TYPE
   
 PROCEDURE Attempt(p           : LRVector.T;
                   parr        : REF ARRAY OF PointMetric.T;
-                  selectByAll : BOOLEAN ) : T;
+                  selectByAll : BOOLEAN ) : T
+  RAISES { Matrix.Singular } ;
   
-PROCEDURE Attempt1(parr : REF ARRAY OF PointMetric.T);
+PROCEDURE Attempt1(parr : REF ARRAY OF PointMetric.T)
+  RAISES { Matrix.Singular } ;
 
 CONST Brand = "StatFits";
 

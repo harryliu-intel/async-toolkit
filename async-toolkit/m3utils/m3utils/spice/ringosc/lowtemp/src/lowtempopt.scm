@@ -20,7 +20,7 @@
 (def-paramvar 'sweeps 30)     ;; make it large enough
 (def-paramvar 'stages 11)     ;; should sweep this
 (def-paramvar 'step   1e-9)   ;; this seems superfluous
-(def-paramvar 'Kcycle 5)      ;; K-factor for cycle time
+;;(def-paramvar 'Kcycle 5)      ;; K-factor for cycle time
 
 
 ;; the following are the optimization variables
@@ -33,7 +33,11 @@
 ;; failure to eval result
 (GenOpt.SetOptFailureResult 1e10)
 
-(GenOpt.SetMethod 'Robust)
+(GenOpt.SetMethod 'StocRobust)
+
+(StocRobust.SetSigmaK 5)
+(StocRobust.SetDoNominal #t)
+
 
 ;; NewUOAs configuration variables
 (def-rhobeg 10)   ;; starting step size in terms of significant delta
@@ -55,16 +59,14 @@
 
 (def-compute-command
   '(string-append *cmd-path*
+                  (if *stoc-nominal* " -nominal " "")
                   " -nb -externalsweep 10 "
                   " -vdd "    vdd
                   " -temp "   temp
                   " -lib "    lib
                   " -thresh " thresh
-                  " -sweeps " (cond ((< *opt-iter*  2) 4)
-                                    ((< *opt-iter*  5) (round (/ sweeps 4)))
-                                    ((< *opt-iter* 10) (round (/ sweeps 2)))
-                                    (else sweeps))
-                  " -cscale 1.0"
+                  " -sweeps " *stoc-samples*
+                  " -cscale 1.0 "
                   " -delp "   delp
                   " -deln "   deln
                   " -modleaves true"
@@ -74,10 +76,12 @@
 
 
 ;; name of the output file of the computation
-(def-data-filename "measure.dat.stat")
+;;(def-data-filename "measure.dat.stat")
+(def-data-filename "measure.dat")
 
 ;; the schema of the output of the program (of the data file)
-(def-schema-path (string-append *srcdir* "/schema.dat"))
+;;(def-schema-path (string-append *srcdir* "/schema.dat"))
+(def-schema-path (string-append *srcdir* "/lowtempopt_single.schema"))
 
 ;; Scheme code needed to understand the schema and/or the evaluation
 (def-load-scm (string-append *srcdir* "/defs.scm"))

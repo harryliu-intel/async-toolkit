@@ -55,6 +55,7 @@ IMPORT SchemePair;
 IMPORT MultiEval;
 IMPORT Word;
 IMPORT TestQf;
+IMPORT IP, NetObj, ReadLineError; (* for exceptions *)
 
 <*FATAL Thread.Alerted*>
 
@@ -1011,7 +1012,10 @@ BEGIN
   END;
 
   IF interactive THEN
-    SchemeReadLine.MainLoop(NEW(ReadLine.Default).init(), scm)
+    <*FATAL IP.Error, NetObj.Error, ReadLineError.E*>
+    BEGIN
+      SchemeReadLine.MainLoop(NEW(ReadLine.Default).init(), scm)
+    END
   ELSE
     WITH senv      = NARROW(scm.getGlobalEnvironment(), SchemeEnvironment.T),
          T2S       = SchemeSymbol.FromText,
