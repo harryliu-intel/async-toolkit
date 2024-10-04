@@ -7,10 +7,12 @@ INTERFACE StocRobust;
 FROM NewUOAs IMPORT Output;
 IMPORT LRVector;
 IMPORT MultiEval;
+IMPORT GenOpt;
 
 PROCEDURE Minimize(p              : LRVector.T;
                    func           : MultiEval.T;
-                   rhobeg, rhoend : LONGREAL (* same as Powell *)) : Output;
+                   rhobeg, rhoend : LONGREAL (* same as Powell *);
+                   progressWriter : GenOpt.ResultWriter := NIL) : Output;
 
 CONST Brand = "StocRobust";
 

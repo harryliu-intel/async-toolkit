@@ -24,6 +24,7 @@ TYPE
     message    : TEXT;
     f          : LONGREAL;   (* best value found *)
     x          : LRVector.T; (* coords of above *)
+    stoprho    : LONGREAL;
   END;
   
 END NewUOAs.

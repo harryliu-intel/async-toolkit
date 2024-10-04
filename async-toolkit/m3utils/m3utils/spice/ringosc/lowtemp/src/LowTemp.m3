@@ -215,6 +215,7 @@ PROCEDURE DoTrace(traceRt : Pathname.T; mWr : Wr.T) : Result =
           traceRt,
           LibNames[lib],
           TranNames[tran],
+          Bool(doNominal),
           LR(vdd),
           LR(temp),
           LR(deln),
@@ -315,7 +316,7 @@ PROCEDURE DoPost() =
       Wr.PutText(mWr, Concat(",",
                              FmtLRA(LRA { vdd, temp, cscale, rscale, deln, delp , FLOAT(stages,LONGREAL)})^,
                              TA { Bool(modLeaves) },
-                             TA { LibNames[lib], TranNames[tran] },
+                             TA { LibNames[lib], TranNames[tran], Bool(doNominal) },
                              FmtLRA(DoStats(n, sum, sumSq)^)^));
       Wr.PutChar(mWr, '\n');
       Wr.Close(mWr)

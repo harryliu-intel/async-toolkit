@@ -657,28 +657,55 @@ PROCEDURE DoIt(optVars, paramVars : SchemeObject.T) =
       output := StocRobust.Minimize(pr,
                                     NEW(MyMultiEval, base := evaluator).init(evaluator),
                                     rhoBeg,
-                                    rhoEnd)
+                                    rhoEnd,
+                                    NEW(MyResultWriter,
+                                        evaluator := evaluator,
+                                        root      := "progress"))
     |
       Method.NewUOA => <*ASSERT FALSE*>
     END;
 
     TRY
-    Debug.Out(F("Minimize : %s iters, %s funcc; f = %s; %s",
-                Int(output.iterations),
-                Int(output.funcCount),
-                LongReal(output.f),
-                output.message));
-    Wr.PutText(Stdio.stdout, FmtP(output.x));
-    Wr.PutChar(Stdio.stdout, '\n');
-    Wr.Flush(Stdio.stdout);
-    
-    WITH wr  = FileWr.Open("genopt.opt"),
-         cwr = FileWr.Open("genopt.cols"),
-         
-         awr = FileWr.Open("genopt.aopt"),
-         acwr = FileWr.Open("genopt.acols"),
+      Debug.Out(F("Minimize : %s iters, %s funcc; f = %s; %s",
+                  Int(output.iterations),
+                  Int(output.funcCount),
+                  LongReal(output.f),
+                  output.message));
+      Wr.PutText(Stdio.stdout, FmtP(output.x));
+      Wr.PutChar(Stdio.stdout, '\n');
+      Wr.Flush(Stdio.stdout);
       
-         rwr = FileWr.Open("genopt.result") DO
+      WITH writer = NEW(MyResultWriter,
+                        root        := "genopt",
+                        evaluator   := evaluator) DO
+        writer.write(output)
+      END
+    EXCEPT
+      Wr.Failure(x) =>
+        Debug.Error(F("I/O error : Wr.Failure : while writing optimization result : %s:",
+                      AL.Format(x)))
+
+    END
+  END DoIt;
+
+TYPE
+  MyResultWriter = ResultWriter OBJECT
+    root        : Pathname.T;
+    evaluator   : Evaluator;
+  OVERRIDES
+    write := MRWWrite;
+  END;
+  
+PROCEDURE MRWWrite(mrw : MyResultWriter; output : NewUOAs.Output)
+  RAISES { OSError.E, Wr.Failure } =
+  BEGIN
+    WITH wr   = FileWr.Open(mrw.root & ".opt"),
+         cwr  = FileWr.Open(mrw.root & ".cols"),
+         
+         awr  = FileWr.Open(mrw.root & ".aopt"),
+         acwr = FileWr.Open(mrw.root & ".acols"),
+         
+         rwr  = FileWr.Open(mrw.root & ".result") DO
       FOR i := vseq.size() - 1 TO 0 BY -1 DO
         WITH v  = vseq.get(i),
              xi = output.x[i],
@@ -718,8 +745,12 @@ PROCEDURE DoIt(optVars, paramVars : SchemeObject.T) =
       VAR
         key := LRVectorLRPair.T { output.x, output.f };
         subdir : TEXT;
+        haveIt : BOOLEAN;
       BEGIN
-        IF evaluator.results.get(key, subdir) THEN
+        LOCK mrw.evaluator.resultsMu DO
+          haveIt := mrw.evaluator.results.get(key, subdir)
+        END;
+        IF haveIt THEN
           TRY
             WITH rd = FileRd.Open(subdir & "/" & schemaDataFn),
                  line = Rd.GetLine(rd) DO
@@ -744,13 +775,7 @@ PROCEDURE DoIt(optVars, paramVars : SchemeObject.T) =
       Wr.Close(wr); Wr.Close(cwr); Wr.Close(rwr);
       Wr.Close(awr); Wr.Close(acwr)
     END
-    EXCEPT
-      Wr.Failure(x) =>
-        Debug.Error(F("I/O error : Wr.Failure : while writing optimization result : %s:",
-                      AL.Format(x)))
-
-    END
-  END DoIt;
+  END MRWWrite;
 
 VAR
   sdcnt        := 0;

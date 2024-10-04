@@ -25,7 +25,7 @@ IMPORT LineProblem;
 IMPORT LineProblemArraySort;
 IMPORT LRScalarFieldPll;
 IMPORT LongRealSeq AS LRSeq;
-FROM GenOpt IMPORT rho, iter, FmtP;
+FROM GenOpt IMPORT rho, iter, FmtP, ResultWriter;
 IMPORT LineMinimizer;
 IMPORT MultiEval, MultiEvalClass;
 IMPORT LRVectorSet, LRVectorSetDef;
@@ -847,7 +847,8 @@ VAR ridgeCoeff := 0.0d0;
     
 PROCEDURE Minimize(pa             : LRVector.T;
                    func           : MultiEval.T;
-                   rhobeg, rhoend : LONGREAL) : Output =
+                   rhobeg, rhoend : LONGREAL;
+                   progressWriter : ResultWriter) : Output =
   VAR
     n        := NUMBER(pa^);
     nv       := 2 * n;
@@ -1036,6 +1037,18 @@ PROCEDURE Minimize(pa             : LRVector.T;
         mins.addhi   (newp);
         allMins.addhi(newp);
 
+        IF progressWriter # NIL THEN
+          WITH output = Output { iterations := iter,
+                                 funcCount  := 0,
+                                 fhist      := GetFHist(allMins),
+                                 message    := message,
+                                 f          := pr.metric,
+                                 x          := LRVector.Copy(pr.p),
+                                 stoprho    := rho } DO
+            progressWriter.write(output)
+          END
+        END;
+            
         WITH Lookback = 5 DO
 
           (* 
@@ -1121,7 +1134,8 @@ PROCEDURE Minimize(pa             : LRVector.T;
                       fhist      := GetFHist(allMins),
                       message    := message,
                       f          := bestval,
-                      x          := bestv }
+                      x          := bestv,
+                      stoprho    := rho }
     END
   END Minimize;
 

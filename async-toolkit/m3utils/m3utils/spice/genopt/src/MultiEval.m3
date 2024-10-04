@@ -78,6 +78,11 @@ PROCEDURE Var(READONLY a : Result) : LONGREAL =
 
 PROCEDURE Sdev(READONLY a : Result) : LONGREAL =
   BEGIN
+    IF a.n = 1 THEN
+      (* just set the sdev to be 2x the mean *)
+      RETURN 2.0d0 * (ABS(Nominal(a)) + ABS(Mean(a)))
+    END;
+    
     WITH nf = FLOAT(a.n, LONGREAL) DO
       RETURN Math.sqrt(nf / (nf - 1.0d0) * Var(a))
     END

@@ -300,7 +300,8 @@ PROCEDURE Minimize(p              : LRVector.T;
                       fhist      := GetFHist(allMins),
                       message    := message,
                       f          := bestval,
-                      x          := bestv }
+                      x          := bestv,
+                      stoprho    := rho }
     END
   END Minimize;
 

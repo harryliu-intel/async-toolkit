@@ -6,6 +6,9 @@ IMPORT SchemeObject;
 IMPORT Pathname;
 IMPORT TextTextTbl;
 IMPORT LRVector;
+IMPORT Wr;
+IMPORT OSError;
+IMPORT NewUOAs;
 
 PROCEDURE DefOptVar(nm : SchemeSymbol.T; defval, defstep : LONGREAL);
 
@@ -62,5 +65,12 @@ CONST Brand = "GenOpt";
 
 VAR rho  : LONGREAL;
     iter : CARDINAL;
+
+TYPE
+  ResultWriter = OBJECT
+  METHODS
+    write(output : NewUOAs.Output) RAISES { Wr.Failure, OSError.E };
+  END;
+    
     
 END GenOpt.
