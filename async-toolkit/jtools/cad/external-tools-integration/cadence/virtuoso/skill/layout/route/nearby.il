@@ -3,7 +3,7 @@
 
 ; route nearby nets with short paths or vias only
 (defun RouteNearby (@key (CV (geGetEditCellView)) (nets nil) (topShapes t) (subShapes t) (offGrid t) (verbose nil)
-                         (protect nil) (distance nil))
+                         (protect nil) (distance nil) (checkEnclosure nil))
   (let (n c pct protect_map)
     n=0
     protect_map=(makeTable "protect_map" nil)
@@ -11,7 +11,7 @@
     (foreach net nets
              n+=(RouteNearbyNet net ?CV CV ?topShapes topShapes ?subShapes subShapes
                                 ?offGrid offGrid ?verbose verbose ?protect_map protect_map
-                                ?distance distance)
+                                ?distance distance ?checkEnclosure checkEnclosure)
              )
     (when protect (RouteNearbyProtect protect_map ?CV CV))
     (printf "Note that RouteNearby only connects abutting pins between locked instances.\n")
@@ -21,11 +21,11 @@
 
 ; connect subcells pins of a net with short paths or vias
 (defun RouteNearbyNet (net @key (CV (geGetEditCellView)) (topShapes t) (subShapes t) (offGrid t) (verbose nil)
-                           (protect_map nil) (distance nil))
+                           (protect_map nil) (distance nil) (checkEnclosure nil))
   (let (layerNames tech n MasterRectList layerName pinRectList layerNum space len
              e1 e2 inst1 inst2 net1 net2 rect1 rect2 overlap gap rect rects horz hrect vrect
              r1x0 r1x1 r1y0 r1y1 r2x0 r2x1 r2y0 r2y1
-             x0 y0 x1 y1 x y key pitch
+             x0 y0 x1 y1 x y key pitch transform r1 r2
              viaDef via list1 list2 xy wb wt viaName viaDef via)
     tech = (techGetTechFile CV)
     n=0
@@ -166,7 +166,6 @@
             vrect=(if horz rect2 rect1)
             hrect=(if horz rect1 rect2)
             xy = ((car (car vrect))+(car (cadr vrect)))/2 : ((cadr (car hrect))+(cadr (cadr hrect)))/2
-            ; (printf "%g:%g\n" (car xy) (cadr xy))
             wb = (if offGrid (GetWireWidth v rect1) (GetTrackWidth v xy))
             (unless wb (error "no track width for %d %g:%g\n" v (car xy) (cadr xy)))
             wt = (if offGrid (GetWireWidth v+1 rect2) (GetTrackWidth v+1 xy))
@@ -189,6 +188,21 @@
             via->routeStatus="locked"
             via->net = net
             (dbReplaceProp via "autogen" "string" "RouteNearby")
+            (when checkEnclosure
+              r1=nil
+              r2=nil
+              transform=(list via->origin via->orient)
+              (foreach s via->viaHeader->master->shapes
+                       (cond (s->lpp==(list Metal[v]   "drawing")
+                                      r1=(BBoxCombine r1 (BBoxToInteger (dbTransformBBox s->bBox transform))))
+                             (s->lpp==(list Metal[v+1] "drawing")
+                                      r2=(BBoxCombine r2 (BBoxToInteger (dbTransformBBox s->bBox transform))))
+                             )
+                       )
+              (unless (BBoxAnd (BBoxToInteger rect1) r1)==r1 && (BBoxAnd (BBoxToInteger rect2) r2)==r2
+                      (dbDeleteObject via)
+                      )
+              )
             (when verbose (printf "%s on %s\n" Via[v] net->name))
             n++
             )
