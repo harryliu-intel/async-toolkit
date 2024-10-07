@@ -158,9 +158,9 @@ importPostProcessAction =
     (foreach label (setof x CV->shapes x->objType=="label")
              overlaps = (dbGetOverlaps CV (list label->xy label->xy) label->lpp 0) 
              net = (dbMakeNet CV label->theLabel)
-             (foreach rect (setof x overlaps x->objType=="rect")
-                      rect->net=net
-                      (when label->purpose=="pin" (dbCreatePin net rect) n++)
+             (foreach s (setof x overlaps x->objType=="rect" || x->objType=="path")
+                      s->net=net
+                      (when label->purpose=="pin" (dbCreatePin net s) n++)
                       )
              )
     n
