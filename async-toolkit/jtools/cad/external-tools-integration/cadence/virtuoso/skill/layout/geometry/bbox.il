@@ -188,3 +188,10 @@
     (list x0:y0 x1:y0 x1:y1 x0:y1)
     )
   )
+
+; Convert to integer manufacturing grid for comparison purposes
+(defun BBoxToInteger (bbox @key (grid MfgGrid))
+  (list (round (car (car  bbox))/grid):(round (cadr (car  bbox))/grid)
+        (round (car (cadr bbox))/grid):(round (cadr (cadr bbox))/grid)
+        )
+  )
