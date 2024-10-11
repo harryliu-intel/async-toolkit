@@ -8,6 +8,8 @@ FROM NewUOAs IMPORT Output;
 IMPORT LRVector;
 IMPORT MultiEval;
 IMPORT GenOpt;
+IMPORT SchemeSymbol;
+IMPORT ResponseModel;
 
 PROCEDURE Minimize(p              : LRVector.T;
                    func           : MultiEval.T;
@@ -38,5 +40,8 @@ PROCEDURE SetSelectByAll(to : BOOLEAN);
      
 
 PROCEDURE GetSelectByAll() : BOOLEAN;
+
+PROCEDURE DoModel(varname : SchemeSymbol.T; model : ResponseModel.Type);
+  
 
 END StocRobust.

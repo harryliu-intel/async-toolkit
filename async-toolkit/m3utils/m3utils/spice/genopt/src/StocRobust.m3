@@ -49,6 +49,8 @@ FROM SurfaceRep IMPORT Qdofs, Ldofs, ComputeIndepsL, ComputeIndepsQ,
 IMPORT StatFits;
 IMPORT LongrealPQ;
 IMPORT Matrix;
+IMPORT SchemeSymbol;
+IMPORT ResponseModel;
 
 CONST LR = LongReal;
 
@@ -344,12 +346,42 @@ PROCEDURE AttemptSurfaceFit(pr            : PointResult.T;
                             newpts(*OUT*) : LRVectorSet.T) : PointResult.T
   RAISES { Matrix.Singular } =
   (* attempt a surface fit *)
-  
+
+  PROCEDURE PickClosestPoints() : PointMetricSeq.T =
+    VAR
+      success := FALSE;
+      tryrho  := rho;
+      seq   : PointMetricSeq.T;
+    BEGIN
+      LOOP
+        Debug.Out(F("AttemptSurfaceFit : tryrho=%s ; starting from %s",
+                    LR(tryrho), PointResult.Format(pr)));
+        
+        seq := NEW(PointMetricSeq.T).init();
+        FOR i := FIRST(parr^) TO LAST(parr^) DO
+          WITH rec  = parr[i],
+               dist = Vdist(rec.p, pr.p) DO
+            IF dist < tryrho THEN
+              seq.addhi(rec)
+            END
+          END
+        END;
+        IF seq.size() >= qdofs THEN
+          success := TRUE;
+          EXIT
+        ELSE
+          tryrho := tryrho * 2.0d0
+        END
+      END;
+      Debug.Out(F("AttemptSurfaceFit: seq.size()=%s rho=%s tryrho=%s success=%s p=%s",
+                Int(seq.size()), LR(rho), LR(tryrho), Bool(success),
+                PointResult.Format(pr)));
+      RETURN seq
+    END PickClosestPoints;
+    
   VAR
     n       := NUMBER(pr.p^);
 
-    tryrho  := rho;
-    success := FALSE;
     qdofs   := Qdofs(n);
     ldofs   := Ldofs(n);
     
@@ -357,27 +389,8 @@ PROCEDURE AttemptSurfaceFit(pr            : PointResult.T;
     bestQ : PointResult.T;
   BEGIN
     (* first, pick enough points for the fit *)
-    LOOP
-      Debug.Out(F("AttemptSurfaceFit : tryrho=%s ; starting from %s",
-                  LR(tryrho), PointResult.Format(pr)));
-      
-      seq := NEW(PointMetricSeq.T).init();
-      FOR i := FIRST(parr^) TO LAST(parr^) DO
-        WITH rec  = parr[i],
-             dist = Vdist(rec.p, pr.p) DO
-          IF dist < tryrho THEN
-            seq.addhi(rec)
-          END
-        END
-      END;
-      IF seq.size() >= qdofs THEN
-        success := TRUE;
-        EXIT
-      ELSE
-        tryrho := tryrho * 2.0d0
-      END
-    END;
-
+    seq := PickClosestPoints();
+    
     (* we have chosen enough points to attempt a fit *)
     
     (***************************************************************)
@@ -396,11 +409,7 @@ PROCEDURE AttemptSurfaceFit(pr            : PointResult.T;
             we use a linear fit for sigma
       *)
 
-    StatFits.Attempt1(parr);
-
-    Debug.Out(F("AttemptSurfaceFit: seq.size()=%s rho=%s tryrho=%s success=%s p=%s",
-                Int(seq.size()), LR(rho), LR(tryrho), Bool(success),
-                PointResult.Format(pr)));
+    StatFits.Attempt1(parr); (* does this do anything? *)
 
     <*FATAL LongrealPQ.Empty*>
     VAR
@@ -1188,6 +1197,10 @@ PROCEDURE Orthogonalize(READONLY da : ARRAY OF LRVector.T) =
       END
     END;
   END Orthogonalize;
+
+PROCEDURE DoModel(varname : SchemeSymbol.T; model : ResponseModel.Type) =
+  BEGIN
+  END DoModel;
 
 CONST
   TestCount = 0;

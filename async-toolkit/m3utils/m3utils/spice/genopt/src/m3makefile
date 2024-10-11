@@ -56,6 +56,9 @@ Array_sort("StatFits", "StatFits")
 
 Module ("SurfaceRep")
 
+Interface ("ResponseModel")
+Sequence ("ResponseModel", "ResponseModel")
+
 SchemeStubs ("LineProblem")
 SchemeStubs ("Random")
 SchemeStubs ("OptCallback")

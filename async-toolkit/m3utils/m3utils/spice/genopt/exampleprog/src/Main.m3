@@ -16,6 +16,23 @@ CONST LR = LongReal;
       
 CONST Usage = "exampleprog usage wrong!";
 
+PROCEDURE MakeNoise() : LONGREAL =
+      VAR
+        err : LONGREAL;
+      BEGIN
+        IF    nominal THEN
+          err := 0.0d0
+        ELSIF quadstats THEN
+          err := NormalDeviate.Get(rand, vdd * vdd + mean, delp * delp + sdev)
+        ELSIF varstats THEN
+          err := NormalDeviate.Get(rand, vdd + mean, delp + sdev)
+        ELSE
+          err := NormalDeviate.Get(rand, mean, sdev)
+        END;
+        RETURN err
+      END MakeNoise;
+    
+  
 VAR
   pp                          := NEW(ParseParams.T).init(Stdio.stderr);
 
@@ -31,6 +48,7 @@ VAR
   nominal : BOOLEAN;
   varstats : BOOLEAN;
   quadstats : BOOLEAN;
+  t := ARRAY [0..2] OF LONGREAL { 0.0d0, .. };
 BEGIN
   TRY
     nominal := pp.keywordPresent("-nominal");
@@ -70,10 +88,12 @@ BEGIN
     0, 2 =>
     WITH dv = vdd  - temp,
          dp = delp - 2.0d0,
-         dn = deln - 3.0d0,
+         dn = deln - 3.0d0 DO
          
-         euclid = dv * dv * dv * dv + dp * dp * dp * dp + dn * dn * dn * dn DO
-      val := euclid
+      t[0] := dv * dv * dv * dv;
+      t[1] := dp * dp * dp * dp;
+      t[2] := dn * dn * dn * dn
+
     END;
 
     IF method = 0 AND vdd < 0.0d0 THEN
@@ -96,46 +116,34 @@ BEGIN
 
          dy = deln - rosqrt2,
 
-         xyfactor = (dx * dx + dy * dy + 1.0d0),
-
-         func = rfactor * zfactor * xyfactor DO
-      val := func
+         xyfactor = (dx * dx + dy * dy + 1.0d0)
+     DO
+      t[0] :=  rfactor * zfactor * xyfactor 
     END
   |
     3 =>
-    WITH euclid = vdd * vdd + delp * delp + deln * deln DO
-      val := euclid
-    END
+    t[0] := vdd * vdd; t[1] := delp * delp; t[1] :=  deln * deln
   END;
 
   Debug.Out(F("exampleprog : vdd %s delp %s deln %s ; val %s",
               LR(vdd), LR(delp), LR(deln), LR(val)));
   
-  IO.Put(LR(val) & "\n");
-  
   WITH wr = FileWr.Open("example.out") DO
     FOR i := 0 TO samples - 1 DO
       
       (* add some noise! *)
-      VAR
-        err, res : LONGREAL;
-      BEGIN
-        IF quadstats THEN
-          err := NormalDeviate.Get(rand, vdd * vdd + mean, delp * delp + sdev)
-        ELSIF varstats THEN
-          err := NormalDeviate.Get(rand, vdd + mean, delp + sdev)
-        ELSE
-          err := NormalDeviate.Get(rand, mean, sdev)
-        END;
-        
-        res := val + err;
-        
-        IF nominal THEN
-          Wr.PutText(wr, LR(val) & "\n")
-        ELSE
-          Wr.PutText(wr, LR(res) & "\n")
+      WITH nf = FLOAT(NUMBER(t), LONGREAL) DO
+        FOR i := FIRST(t) TO LAST(t) DO
+          t[i] := t[i] + 1.0d0/nf * MakeNoise()
         END
-      END
+      END;
+      
+      val := t[0] + t[1] + t[2];
+      
+      IO.Put(LR(val) & "\n");
+      
+      Wr.PutText(wr, F("%s,%s,%s,%s\n",
+                       LR(val), LR(t[0]), LR(t[1]), LR(t[2])));
     END;
     Wr.Close(wr)
   END

@@ -1,2 +1,5 @@
 report result,
+report t0,
+report t1,
+report t2,
 formula x2 (* vdd result stages silly)
