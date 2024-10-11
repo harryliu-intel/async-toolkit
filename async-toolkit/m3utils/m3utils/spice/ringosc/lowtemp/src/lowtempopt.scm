@@ -40,8 +40,8 @@
 
 
 ;; NewUOAs configuration variables
-(def-rhobeg 10)   ;; starting step size in terms of significant delta
-(def-rhoend 1e-3) ;; ending step size for convergence
+(def-rhobeg 10  )   ;; starting step size in terms of significant delta
+(def-rhoend  0.1)   ;; ending step size for convergence
 
 ;; this is the command to do an evaluation
 (define *cmd-path* (string-append *m3utils*

@@ -45,9 +45,9 @@ fi
 justtemps=1
 
 if [ "${justtemps}" == "1" ]; then
-#    stages="10"
-    temps="-80 -70 -60 -50 -40 -30 -20 -10 0 10 15 20 30 35 40 45 49" 
-#    trantypes="lvt"
+    stages="11"
+    temps="-80 -60 -50 -40 -30 -20 -10 0 10 25 40 45 49" 
+    trantypes="ulvt"
     sweeps="4"
 fi
 
