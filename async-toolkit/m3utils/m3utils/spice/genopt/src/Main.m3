@@ -54,7 +54,6 @@ IMPORT FloatMode, Lex;
 IMPORT SchemePair;
 IMPORT MultiEval;
 IMPORT Word;
-IMPORT TestQf;
 IMPORT IP, NetObj, ReadLineError; (* for exceptions *)
 
 <*FATAL Thread.Alerted*>
@@ -957,7 +956,7 @@ VAR
 BEGIN
 
   IF FALSE THEN
-    TestQf.DoIt();
+    (*TestQf.DoIt();*)
     
     Process.Exit(0)
   END;

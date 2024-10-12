@@ -42,10 +42,10 @@ Array_sort("PointMetric", "PointMetric")
 Sequence("PointMetric", "PointMetric")
 
 Module("WLRVector")
-Module("QuadraticFit")
+%Module("QuadraticFit")
 Sequence("WLRVector", "WLRVector")
 
-Module ("TestQf")
+%Module ("TestQf")
 Module ("PointResult")
 Sequence ("PointResult","PointResult")
 
