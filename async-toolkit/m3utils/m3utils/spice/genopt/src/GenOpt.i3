@@ -59,8 +59,6 @@ PROCEDURE SetMethod(method : Method);
 
 PROCEDURE GetMethod() : Method;
 
-PROCEDURE FmtP(p : LRVector.T) : TEXT;
-  
 CONST Brand = "GenOpt";
 
 VAR rho  : LONGREAL;

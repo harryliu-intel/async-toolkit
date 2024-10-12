@@ -1,0 +1,60 @@
+import ("libm3")
+import ("cit_util")
+import ("parseparams")
+import ("tracelib")
+import ("mscheme")
+import ("schemagraph")
+import ("modula3scheme")
+import ("sstubgen")
+import ("newuoa")
+import ("cobyla")
+import ("minimize")
+import ("normaldev")
+
+Interface ("OptVar")
+Sequence ("OptVar", "OptVar")
+Interface ("OptCallback")
+
+Module ("LineProblem")
+Sequence ("LineProblem", "LineProblem")
+
+KeyPair ("LRVectorLR", "LRVector", "LongrealType")
+
+Table ("LRVectorLRPairText", "LRVectorLRPair", "Text")
+Module ("LineMinimizer")
+
+Array_sort("LineProblem", "LineProblem")
+
+Module ("StatFits")
+implementation ("StatFitsCmp")
+Sequence("StatFits", "StatFits")
+Array_sort("StatFits", "StatFits")
+
+Module("SurfaceRep")
+
+Module ("PointMetric")
+Array_sort("PointMetric", "PointMetric")
+Sequence("PointMetric", "PointMetric")
+
+Module ("GenOptUtils")
+
+Interface ("ResponseModel")
+Sequence ("ResponseModel", "ResponseModel")
+
+Module ("MultiEval")
+Interface ("MultiEvalResult")
+interface ("MultiEvalClass")
+
+Module ("PointEvaluator")
+Sequence("PointEvaluator", "PointEvaluator")
+
+Module ("PointResult")
+Sequence ("PointResult","PointResult")
+
+Module("WLRVector")
+Sequence("WLRVector", "WLRVector")
+
+Table("LRVectorMR", "LRVector", "MultiEvalResult")
+
+library ("genoptlib")
+

@@ -6,7 +6,7 @@ IMPORT Thread;
 IMPORT Debug;
 IMPORT Compress;
 FROM Fmt IMPORT F, LongReal;
-FROM GenOpt IMPORT FmtP;
+FROM GenOptUtils IMPORT FmtP;
 
 CONST LR = LongReal;
 

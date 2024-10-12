@@ -55,6 +55,7 @@ IMPORT SchemePair;
 IMPORT MultiEval;
 IMPORT Word;
 IMPORT IP, NetObj, ReadLineError; (* for exceptions *)
+FROM GenOptUtils IMPORT FmtP;
 
 <*FATAL Thread.Alerted*>
 
@@ -235,17 +236,6 @@ PROCEDURE BaseEvalHint(base : Evaluator; p : LRVector.T) =
   BEGIN
     EVAL base.eval(p)
   END BaseEvalHint;
-
-PROCEDURE FmtP(p : LRVector.T) : TEXT =
-  VAR
-    wx := Wx.New();
-  BEGIN
-    FOR i := FIRST(p^) TO LAST(p^) DO
-      Wx.PutText(wx, LongReal(p[i]));
-      Wx.PutChar(wx, ' ')
-    END;
-    RETURN Wx.ToText(wx)
-  END FmtP;
 
 PROCEDURE BaseEval(base : Evaluator; p : LRVector.T) : LONGREAL =
   BEGIN

@@ -1,8 +1,7 @@
 MODULE WLRVector;
 
 FROM Fmt IMPORT LongReal, F;
-IMPORT LRVector;
-FROM GenOpt IMPORT FmtP;
+FROM GenOptUtils IMPORT FmtP;
 
 PROCEDURE Format(READONLY a : T) : TEXT =
   BEGIN

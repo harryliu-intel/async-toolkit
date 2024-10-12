@@ -182,6 +182,8 @@ override ("schemagraph", TOP & "/spice")
 
 override ("varosc", TOP & "/spice/variation")
 
+override ("genoptlib", TOP & "/spice/genopt")
+
 override ("spicebuilderlib", TOP & "/tcam")
 override ("hbddops", TOP & "/btc")
 override ("rdlparse", TOP & "/rdl")

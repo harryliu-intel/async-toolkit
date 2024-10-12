@@ -10,54 +10,11 @@ import ("newuoa")
 import ("cobyla")
 import ("minimize")
 import ("normaldev")
+import ("genoptlib")
 
-Interface ("OptVar")
-Sequence ("OptVar", "OptVar")
 Interface ("GenOpt")
-Interface ("OptCallback")
 Module ("Robust")
 Module ("StocRobust")
-
-Module ("LineProblem")
-Sequence ("LineProblem", "LineProblem")
-
-KeyPair ("LRVectorLR", "LRVector", "LongrealType")
-
-Table ("LRVectorLRPairText", "LRVectorLRPair", "Text")
-Module ("LineMinimizer")
-Module ("PointEvaluator")
-
-Module ("MultiEval")
-Interface ("MultiEvalResult")
-interface ("MultiEvalClass")
-
-Array_sort("LineProblem", "LineProblem")
-
-Table("LRVectorMR", "LRVector", "MultiEvalResult")
-
-Sequence("PointEvaluator", "PointEvaluator")
-
-Module ("PointMetric")
-Array_sort("PointMetric", "PointMetric")
-Sequence("PointMetric", "PointMetric")
-
-Module("WLRVector")
-%Module("QuadraticFit")
-Sequence("WLRVector", "WLRVector")
-
-%Module ("TestQf")
-Module ("PointResult")
-Sequence ("PointResult","PointResult")
-
-Module ("StatFits")
-implementation ("StatFitsCmp")
-Sequence("StatFits", "StatFits")
-Array_sort("StatFits", "StatFits")
-
-Module ("SurfaceRep")
-
-Interface ("ResponseModel")
-Sequence ("ResponseModel", "ResponseModel")
 
 SchemeStubs ("LineProblem")
 SchemeStubs ("Random")

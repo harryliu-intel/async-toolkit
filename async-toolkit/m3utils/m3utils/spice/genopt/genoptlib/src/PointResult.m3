@@ -1,5 +1,5 @@
 MODULE PointResult;
-FROM GenOpt IMPORT FmtP;
+FROM GenOptUtils IMPORT FmtP;
 FROM Fmt IMPORT F, LongReal, Bool;
 
 PROCEDURE Format(READONLY a : T) : TEXT =

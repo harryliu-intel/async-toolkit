@@ -2,7 +2,7 @@ INTERFACE ResponseModel;
 IMPORT SchemeSymbol;
 
 TYPE
-  Type = { Linear, Quadratic, Pointwise };
+  Type = { Linear, Quadratic };
 
   T = RECORD
     symbol : SchemeSymbol.T;
