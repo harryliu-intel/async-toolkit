@@ -2639,16 +2639,8 @@ public class Cast2Verilog {
 
             // calculate the port connection for the subcell module
             // instantiation
-            final HashSet aliasedPorts = new HashSet();
-            final TreeSet<Triplet<PortTypeInterface,String,List<String>>> actualPorts =
-                new TreeSet<>(
-                    new Comparator<Triplet<PortTypeInterface,String,List<String>>>() {
-                        public int compare(Triplet<PortTypeInterface,String,List<String>> t1,
-                                           Triplet<PortTypeInterface,String,List<String>> t2) {
-                            return NaturalStringComparator.compareString(
-                                        t1.getSecond(), t2.getSecond());
-                        }
-                    });
+            final Map<String,Triplet<PortTypeInterface,List<String>,Integer>> actualPorts =
+                new TreeMap<>(NaturalStringComparator.getInstance());
 
             for (Iterator j = CellUtils.getPortChannels(wrapper,
                     getCadencize(true), verilog,
@@ -2697,11 +2689,12 @@ public class Cast2Verilog {
                     actuals.add(getActualName(portToLocalMap, chan));
                 }
 
-                // only output a connection for the first alias to a port,
-                // others are handled earlier in assign statements
-                if (portAliases != null && !aliasedPorts.add(formal)) continue;
-
-                actualPorts.add(new Triplet<>(subtype, formal, actuals));
+                actualPorts.merge(
+                    formal,
+                    new Triplet<>(subtype, actuals, subchan.getDirection()),
+                    (oldValue, newValue) ->
+                        oldValue.getThird() <= newValue.getThird() ? oldValue
+                                                                   : newValue);
             }
 
             // emit the subcell module instantiation
@@ -2709,10 +2702,12 @@ public class Cast2Verilog {
                         VerilogUtil.escapeIfNeeded(instanceName.toString()) +
                         " (");
             final Separator sout = new Separator(out);
-            for (Triplet<PortTypeInterface,String,List<String>> triple : actualPorts) {
-                final PortTypeInterface type = triple.getFirst();
-                final String formal = triple.getSecond();
-                final List<String> actuals = triple.getThird();
+            for (Map.Entry<String,Triplet<PortTypeInterface,
+                                          List<String>,
+                                          Integer>> actualPort : actualPorts.entrySet()) {
+                final PortTypeInterface type = actualPort.getValue().getFirst();
+                final String formal = actualPort.getKey();
+                final List<String> actuals = actualPort.getValue().getSecond();
                 if (type instanceof NodeType) {
                     emitNodeConnection(cell, instanceName, formal, actuals,
                                        sout);
