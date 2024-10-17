@@ -12,7 +12,7 @@ import ("minimize")
 import ("normaldev")
 import ("genoptlib")
 
-Interface ("GenOpt")
+%Interface ("GenOpt")
 Module ("Robust")
 Module ("StocRobust")
 

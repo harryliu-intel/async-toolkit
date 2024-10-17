@@ -5,7 +5,6 @@ IMPORT LongRealSeq;
 IMPORT SchemeObject;
 IMPORT Pathname;
 IMPORT TextTextTbl;
-IMPORT LRVector;
 IMPORT Wr;
 IMPORT OSError;
 IMPORT NewUOAs;

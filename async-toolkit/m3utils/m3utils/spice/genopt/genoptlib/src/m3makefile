@@ -56,5 +56,7 @@ Sequence("WLRVector", "WLRVector")
 
 Table("LRVectorMR", "LRVector", "MultiEvalResult")
 
+Interface ("GenOpt")
+
 library ("genoptlib")
 
