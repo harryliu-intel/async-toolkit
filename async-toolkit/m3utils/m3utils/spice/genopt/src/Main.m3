@@ -18,7 +18,6 @@ IMPORT FS;
 FROM SchemaGraph IMPORT ReadSchema, ReadData, EvalFormulas;
 IMPORT SchemaGraph;
 IMPORT Wr;
-IMPORT Env;
 IMPORT SchemeStubs;
 IMPORT ReadLine, SchemeReadLine;
 IMPORT NewUOAs;
@@ -54,15 +53,12 @@ FROM GenOpt IMPORT Method, ResultWriter, rho, scmCb, doNetbatch,
                    schemaDataFn, schemaPath, schemaEval, outOfDomainResult;
 FROM GenOpt IMPORT p, method, rhoEnd, rhoBeg, vseq, paramBindings;
 IMPORT GenOpt;
+FROM GenOptEnv IMPORT   NbPool, NbQslot, M3Utils, NbOpts;
+FROM GenOptUtils IMPORT MustOpenWr, LRSeq1, FmtLRSeq;
 
 <*FATAL Thread.Alerted*>
 
 VAR
-  NbPool  := Env.Get("NBPOOL");
-  NbQslot := Env.Get("NBQSLOT");
-  M3Utils := Env.Get("M3UTILS");
-  NbOpts  := Env.Get("NBRUNOPTIONS");
-
   doDebug := Debug.DebugThis("genopt");
   
 CONST
@@ -168,18 +164,6 @@ PROCEDURE BaseNominalEval(base    : Evaluator;
       <*ASSERT FALSE*>
     END
   END BaseNominalEval;
-
-PROCEDURE MustOpenWr(pn : Pathname.T) : Wr.T =
-  BEGIN
-    TRY
-      RETURN FileWr.Open(pn)
-    EXCEPT
-      OSError.E(x) =>
-      Debug.Error(F("Couldnt open %s : OSError.E : %s",
-                    pn, AL.Format(x)));
-      <*ASSERT FALSE*>
-    END
-  END MustOpenWr;
 
 TYPE
   EvalResult = BRANDED OBJECT END;
@@ -438,24 +422,6 @@ PROCEDURE SeqToMulti(seq : LRSeq.T) : MultiEval.Result =
     END
   END SeqToMulti;
 
-PROCEDURE LRSeq1(x : LONGREAL) : LRSeq.T =
-  BEGIN
-    WITH res = NEW(LRSeq.T).init() DO
-      res.addhi(x);
-      RETURN res
-    END
-  END LRSeq1;
-
-PROCEDURE FmtLRSeq(seq : LRSeq.T) : TEXT =
-  VAR
-    res := "";
-  BEGIN
-    FOR i := 0 TO seq.size() - 1 DO
-      res := res & LongReal(seq.get(i)) & " "
-    END;
-    RETURN res
-  END FmtLRSeq;
-  
 TYPE
   MyMultiEval = MultiEval.T OBJECT
     base : Evaluator;

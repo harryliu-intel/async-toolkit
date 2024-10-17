@@ -58,5 +58,7 @@ Table("LRVectorMR", "LRVector", "MultiEvalResult")
 
 Module ("GenOpt")
 
+Module("GenOptEnv")
+
 library ("genoptlib")
 
