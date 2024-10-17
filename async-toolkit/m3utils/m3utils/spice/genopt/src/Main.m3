@@ -1,4 +1,4 @@
-MODULE Main EXPORTS Main, GenOpt;
+MODULE Main;
 
 (* 
    Generic optimizer
@@ -29,21 +29,15 @@ IMPORT ProcUtils;
 IMPORT Rd;
 IMPORT TextWr;
 IMPORT FileWr;
-IMPORT OptVar;
-IMPORT OptVarSeq;
-IMPORT Wx;
 IMPORT SchemeSymbol;
 IMPORT LongRealSeq AS LRSeq;
-IMPORT OptCallback;
 IMPORT Process;
 IMPORT AL;
 IMPORT SchemeObject;
 IMPORT SchemeUtils;
 IMPORT SchemeLongReal;
-IMPORT TextTextTbl;
 IMPORT SchemeEnvironment;
 IMPORT SchemeString;
-IMPORT SchemeBoolean;
 IMPORT Robust;
 IMPORT StocRobust;
 IMPORT LRVectorLRPair;
@@ -56,6 +50,10 @@ IMPORT MultiEval;
 IMPORT Word;
 IMPORT IP, NetObj, ReadLineError; (* for exceptions *)
 FROM GenOptUtils IMPORT FmtP;
+FROM GenOpt IMPORT Method, ResultWriter, rho, scmCb, doNetbatch,
+                   schemaDataFn, schemaPath, schemaEval, outOfDomainResult;
+FROM GenOpt IMPORT p, method, rhoEnd, rhoBeg, vseq, paramBindings;
+IMPORT GenOpt;
 
 <*FATAL Thread.Alerted*>
 
@@ -70,137 +68,9 @@ VAR
 CONST
   MyM3UtilsSrcPath = "spice/genopt/src";
 
-VAR
-  paramBindings := NEW(TextTextTbl.Default).init();
 
-PROCEDURE GetParamBindings() : TextTextTbl.T =
-  BEGIN RETURN paramBindings END GetParamBindings;
-
-PROCEDURE GetParam(named : SchemeSymbol.T) : SchemeObject.T =
-  (* returns #f if not defined; returns string if defined *)
-  VAR
-    val : TEXT;
-  BEGIN
-    WITH tnm    = SchemeSymbol.ToText(named),
-         haveIt = paramBindings.get(tnm, val) DO
-      IF haveIt THEN
-        RETURN SchemeString.FromText(val)
-      ELSE
-        RETURN SchemeBoolean.False()
-      END
-    END
-  END GetParam;
-
-VAR
-  vseq           : OptVarSeq.T;
-  rhoBeg, rhoEnd : LONGREAL;
-  scmCb          : OptCallback.T;
-  schemaPath     : Pathname.T;
-  schemaScmPaths : TextSeq.T;
-  schemaDataFn   : Pathname.T;
-  schemaEval     : SchemeObject.T;
-  outOfDomainResult        := FIRST(LONGREAL);
-  method                   := Method.NewUOAs;
-
-PROCEDURE SetMethod(m : Method) = BEGIN method := m END SetMethod;
-
-PROCEDURE GetMethod() : Method = BEGIN RETURN method END GetMethod;
-  
 VAR
   pMu := NEW(MUTEX);
-  p : LRSeq.T;
-
-PROCEDURE SetOptFailureIsError() =
-  BEGIN
-    outOfDomainResult := FIRST(LONGREAL)
-  END SetOptFailureIsError;
-
-PROCEDURE SetOptFailureResult(res : LONGREAL) =
-  BEGIN
-    outOfDomainResult := res
-  END SetOptFailureResult;
-
-PROCEDURE GetOptFailureResult() : LONGREAL =
-  BEGIN
-    RETURN outOfDomainResult
-  END GetOptFailureResult;
-  
-PROCEDURE OptInit() =
-  BEGIN
-    vseq   := NEW(OptVarSeq.T).init();
-    rhoBeg := FIRST(LONGREAL);
-    rhoEnd := LAST(LONGREAL);
-    p      := NEW(LRSeq.T).init();
-    schemaPath := NIL;
-    schemaScmPaths := NEW(TextSeq.T).init();
-    schemaDataFn := NIL;
-    schemaEval := NIL;
-  END OptInit;
-
-PROCEDURE DefSchemaPath(path : Pathname.T) =
-  BEGIN schemaPath := path END DefSchemaPath;
-
-PROCEDURE DefLoadScm(scmPath : Pathname.T) =
-  BEGIN
-    schemaScmPaths.addhi(scmPath)
-  END DefLoadScm;
-
-PROCEDURE DefDataFilename(fnm : Pathname.T) =
-  BEGIN schemaDataFn := fnm END DefDataFilename;
-
-PROCEDURE DefEval(obj : SchemeObject.T) =
-  BEGIN schemaEval := obj END DefEval;
-  
-PROCEDURE DefOptVar(nm : SchemeSymbol.T; defval, defstep : LONGREAL) =
-  BEGIN
-    vseq.addlo(OptVar.T { SchemeSymbol.ToText(nm), defval, defstep });
-    p.addlo(defval / defstep)
-  END DefOptVar;
-
-PROCEDURE SetRhoBeg(to : LONGREAL) =
-  BEGIN
-    rhoBeg := to
-  END SetRhoBeg;
-
-PROCEDURE GetRhoBeg() : LONGREAL =
-  BEGIN
-    RETURN rhoBeg
-  END GetRhoBeg;
-
-PROCEDURE SetRhoEnd(to : LONGREAL) =
-  BEGIN
-    rhoEnd := to
-  END SetRhoEnd;
-
-PROCEDURE GetRhoEnd() : LONGREAL =
-  BEGIN
-    RETURN rhoEnd
-  END GetRhoEnd;
-
-PROCEDURE GetRho() : LONGREAL =
-  BEGIN
-    RETURN rho
-  END GetRho;
-
-PROCEDURE GetIter() : CARDINAL =
-  BEGIN
-    RETURN iter
-  END GetIter;
-
-PROCEDURE GetCoords() : LRSeq.T =
-  BEGIN
-    RETURN p
-  END GetCoords;
-
-PROCEDURE SetCallback(obj : OptCallback.T) =
-  BEGIN
-    scmCb := obj
-  END SetCallback;
-
-PROCEDURE SetNetbatch(to : BOOLEAN) =
-  BEGIN
-    doNetbatch := to
-  END SetNetbatch;
 
 TYPE
   Evaluator = LRScalarFieldPll.T OBJECT
@@ -936,7 +806,6 @@ VAR
   scm                : Scheme.T;
   rundirPath                := Process.GetWorkingDirectory();
   myFullSrcPath      : Pathname.T;
-  doNetbatch                := TRUE;
   scmFiles                  := NEW(TextSeq.T).init();
   interactive        : BOOLEAN;
   cfgFile            : Pathname.T;
@@ -944,6 +813,8 @@ VAR
   doDirectoryWarning : BOOLEAN;
   
 BEGIN
+
+  GenOpt.DoIt := DoIt;
 
   IF FALSE THEN
     (*TestQf.DoIt();*)
@@ -1041,5 +912,5 @@ BEGIN
       DoIt(optVars, paramVars)
     END
   END
-  
+
 END Main.

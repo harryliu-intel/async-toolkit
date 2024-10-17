@@ -8,6 +8,8 @@ IMPORT TextTextTbl;
 IMPORT Wr;
 IMPORT OSError;
 IMPORT NewUOAs;
+IMPORT TextSeq;
+IMPORT OptVarSeq;
 
 PROCEDURE DefOptVar(nm : SchemeSymbol.T; defval, defstep : LONGREAL);
 
@@ -29,7 +31,7 @@ PROCEDURE GetCoords() : LongRealSeq.T;
 
 PROCEDURE OptInit();
 
-PROCEDURE DoIt(optVars, paramVars : SchemeObject.T);
+VAR DoIt : PROCEDURE(optVars, paramVars : SchemeObject.T);
 
 PROCEDURE SetNetbatch(to : BOOLEAN);
 
@@ -62,12 +64,27 @@ CONST Brand = "GenOpt";
 
 VAR rho  : LONGREAL;
     iter : CARDINAL;
-
+    paramBindings : TextTextTbl.T;
+    
 TYPE
   ResultWriter = OBJECT
   METHODS
     write(output : NewUOAs.Output) RAISES { Wr.Failure, OSError.E };
   END;
+
+VAR
+  vseq           : OptVarSeq.T;
+  rhoBeg, rhoEnd : LONGREAL;
+  scmCb          : OptCallback.T;
+  schemaPath     : Pathname.T;
+  schemaScmPaths : TextSeq.T;
+  schemaDataFn   : Pathname.T;
+  schemaEval     : SchemeObject.T;
+  outOfDomainResult        := FIRST(LONGREAL);
+  method                   := Method.NewUOAs;
+  p : LongRealSeq.T; (* ugly! *)
+  doNetbatch                := TRUE;
+
     
     
 END GenOpt.
