@@ -72,7 +72,7 @@
 \title{A Note on Hardware Redundancy \\ Under \\ Non-Independent Yield Models}
 \author{Mika Nystr\"om \\ {\tt mika.nystroem@intel.com}}
 
-\date{\today}
+\date{February 4, 2021}
 
 \begin{document}
 
@@ -150,7 +150,7 @@ quite cumbersome to use and does not appear to be used for digital
 logic yield calculations.
 
 We shall derive expressions for the system yield in terms of process
-yield that do not depend on the assumption of independence by thtree
+yield that do not depend on the assumption of independence by three
 methods: first by direct computation, and then by showing how we can
 derive the same equations by a formal argument starting from the
 binomially computed yields, assuming independent subsystem yields, and finally by a numerical integration approach that lifts Murphy's model from die yield to system yield.  It
@@ -159,6 +159,14 @@ underlying distributions are quite simple in practice.  In an
 appendix, we provide a short Scheme program for computing the
 necessary formulas.
 
+The work we describe here was in most parts anticipated by Koren and
+Koren~25~years ago, but some of the derivations we present are
+different, and we present a working implementation that makes good on
+the promise in Koren and Koren that ``the extension to a larger number
+of module types is straightforward'' while demonstrating (we believe)
+that it is not quite as ``cumbersome'' as Koren and Koren
+may have believed.\cite{koren}  In any case, the Koren and Koren paper
+should be read as a companion to the current report.
 
 
 \section{Definitions}
@@ -768,7 +776,7 @@ number of subsystems---we can gain considerable insight by considering the conti
   \Pi_{N-k} = \sum_{j=0}^k {k \choose j} (-1)^j Y((N-j)A_u) \quad .
 \end{equation}
 
-First, we introduce the standard Euler differential operator $D_x$.  We write
+First, we introduce the standard Euler differential operator $D_x$.\cite{differentials}  We write
 \begin{equation}
   \begin{aligned}
     D_x f(x)   &= {df \over dx} = f'(x) \\
@@ -1126,7 +1134,9 @@ the yield of the next-generation Intel Barefoot switching chips.
 Hayden Helm provided invaluable feedback on the statistical framework.
 Kishore Maddi provided yield data and feedback on recently fabricated
 Intel products.  CherSian Chua took the time and effort to describe
-the currently used yield models at Intel.  Whatever errors remain are
+the currently used yield models at Intel.  Israel Koren graciously
+worked through his results with the author and provided up-to-date errata.
+Whatever errors remain are
 due to the author and nobody else.
 
 \appendix
@@ -1671,6 +1681,10 @@ We're actively trying to generalize these formulas.  (Work in progress.)
 
 \bibitem{small}{L.~v.~Bortkiewicz.  {\it Das Gesetz der kleinen Zahlen.}  Leipzig:\ Teubner, 1898.}
 
+\bibitem{koren}{I.~Koren and Z.~Koren.  Defect tolerance in VLSI circuits: techniques and yield analysis.  {\it Proc.\ IEEE.} 9({\bf 86}), 1998.}
+
+\bibitem{differentials}{L.~Euler.  {\it Institutiones Calculi Differentialis.} St.~Petersburg: Academiae Imperialis Scientiarum Petropolitanae, 1755.}
+  
 \end{thebibliography}
 
 
