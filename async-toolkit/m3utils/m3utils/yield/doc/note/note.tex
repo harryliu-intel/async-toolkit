@@ -1410,6 +1410,15 @@ Finally, we can evaluate the expected yield of the HAL9000 multiprocessor chip:
 0.641571044921875
 \end{verbatim}
 
+The full system also includes convenience functions for describing the
+yield of subsystems and showing how they contribute to the total yield.
+Example output is shown in figure~\ref{fig:Hal9000Screenshot.png}.  The output shows the effect of yield
+improvement from the redundancy in the design.  Finally, we also see
+the yield of the ``downbins'' HAL8000 and HAL7000, which allow 1 and 2
+of the HAL1000 subprocessors to be faulty, for less choosy customers.
+
+\insepsfig{6truein}{Hal9000Screenshot.png}{Output of yield calculator tool on HAL9000 example.}
+
 \subsection{Discussion of numerical issues}\label{sec:math-limitations}
 We will make some technical observations regarding the discussion in section~\ref{sec:extended-example} above:
 \begin{enumerate}
@@ -1569,6 +1578,19 @@ We end by developing a summation operator within the framework.
         (loop (+-term (f i) s) (+ i 1)))))
 \end{verbatim}
 With these definitions, the framework is complete.
+
+For completeness, the following is the (obvious) implementation of
+\verb+YieldModel.Stapper+, in the Modula-3 programming language.\cite{spwm3}
+\begin{verbatim}
+PROCEDURE Stapper(A, D0, n, alpha : LONGREAL) : LONGREAL =
+  CONST 
+    SqMmPerSqInch = 25.4d0 * 25.4d0;
+  VAR
+    Ai := A / SqMmPerSqInch;
+  BEGIN
+    RETURN Math.pow(1.0d0 + Ai * D0 / alpha, -n * alpha)
+  END Stapper;
+\end{verbatim}
 
 \section{Restrictions on the yield function $Y(A)$}\label{app:yieldrestrictions}
 

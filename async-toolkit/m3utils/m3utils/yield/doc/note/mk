@@ -6,7 +6,7 @@ BUILD=build
 rm -rf ${BUILD}
 mkdir -p ${BUILD}
 
-cp *.eps ${BUILD}
+cp *.png *.eps ${BUILD}
 git log . | grep commit | head -1 | awk '{printf("\\def\\hash{%s}\n",$2) }' > ${BUILD}/hash.tex
 ln -sf . ${BUILD}/${BUILD}
 
@@ -20,8 +20,8 @@ ln -sf . ${BUILD}/${BUILD}
 ln -sf ../${ROOT}.tex ${BUILD}
 
 cd ${BUILD}
-latex ${ROOT}.tex
-latex ${ROOT}.tex
-latex ${ROOT}.tex
-dvips -tletter -o ${ROOT}.ps ${ROOT}.dvi
-ps2pdf ${ROOT}.ps
+pdflatex ${ROOT}.tex
+pdflatex ${ROOT}.tex
+pdflatex ${ROOT}.tex
+#dvips -tletter -o ${ROOT}.ps ${ROOT}.dvi
+#ps2pdf ${ROOT}.ps
