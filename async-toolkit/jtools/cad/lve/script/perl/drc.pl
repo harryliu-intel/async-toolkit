@@ -23,7 +23,7 @@ my $icv_runset_path="$ENV{PDK_CPDK_PATH}/runsets/icvtdr";
 
 # map flows to runsets
 my %default_runset;
-$default_runset{""}="drcd";
+$default_runset{""}="drc";
 $default_runset{"lden"}="denall";
 $default_runset{"gden"}="denall";
 $default_runset{"cden"}="denall";
