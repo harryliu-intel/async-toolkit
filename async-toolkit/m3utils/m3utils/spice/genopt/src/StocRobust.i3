@@ -6,7 +6,7 @@ INTERFACE StocRobust;
 
 FROM NewUOAs IMPORT Output;
 IMPORT LRVector;
-IMPORT MultiEval;
+IMPORT MultiEvalLR AS MultiEval;
 IMPORT GenOpt;
 IMPORT SchemeSymbol;
 IMPORT ResponseModel;

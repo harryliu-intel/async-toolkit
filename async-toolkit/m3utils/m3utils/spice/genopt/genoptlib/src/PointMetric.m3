@@ -2,7 +2,7 @@ MODULE PointMetric;
 IMPORT LongrealType;
 FROM Fmt IMPORT F, LongReal;
 FROM GenOptUtils IMPORT FmtP;
-IMPORT MultiEval;
+IMPORT MultiEvalLR AS MultiEval;
 
 PROCEDURE Compare(READONLY a, b : T) : [-1..1] =
   BEGIN

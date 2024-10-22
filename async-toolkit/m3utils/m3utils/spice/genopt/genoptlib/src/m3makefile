@@ -19,8 +19,10 @@ Module ("LineProblem")
 Sequence ("LineProblem", "LineProblem")
 
 KeyPair ("LRVectorLR", "LRVector", "LongrealType")
+KeyPair ("LRVector", "LRVector", "LRVector")
 
 Table ("LRVectorLRPairText", "LRVectorLRPair", "Text")
+Table ("LRVectorPairText", "LRVectorPair", "Text")
 Module ("LineMinimizer")
 
 Array_sort("LineProblem", "LineProblem")
@@ -41,9 +43,20 @@ Module ("GenOptUtils")
 Interface ("ResponseModel")
 Sequence ("ResponseModel", "ResponseModel")
 
-Module ("MultiEval")
-Interface ("MultiEvalResult")
-interface ("MultiEvalClass")
+%Module ("MultiEval")
+%Interface ("MultiEvalResult")
+%Interface ("MultiEvalClass")
+
+Generic_interface("MultiEval")
+Generic_interface("MultiEvalResult")
+Generic_implementation("MultiEval")
+template("multieval")
+
+MultiEval("LR", "LRScalarField", "MELRType")
+MultiEval("LRVector", "LRVectorField", "MELRVectorType")
+
+Module ("MELRType")
+Module ("MELRVectorType")
 
 Module ("PointEvaluator")
 Sequence("PointEvaluator", "PointEvaluator")
@@ -54,11 +67,13 @@ Sequence ("PointResult","PointResult")
 Module("WLRVector")
 Sequence("WLRVector", "WLRVector")
 
-Table("LRVectorMR", "LRVector", "MultiEvalResult")
+Table("LRVectorMR", "LRVector", "MultiEvalResultLR")
 
 Module ("GenOpt")
 
 Module("GenOptEnv")
+
+Sequence ("LRVector", "LRVector")
 
 library ("genoptlib")
 

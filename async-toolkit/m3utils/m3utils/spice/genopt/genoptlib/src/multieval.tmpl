@@ -1,0 +1,13 @@
+readonly proc _multiEval(nm, field, type, vis) is
+         build_generic_intf("MultiEval" & nm, "MultiEval", [field, type], vis)
+         build_generic_impl("MultiEval" & nm, "MultiEval", [field, type])
+         build_generic_intf("MultiEvalResult" & nm, "MultiEvalResult", ["MultiEval" & nm], vis)
+end
+
+readonly proc multiEval(nm, field, type) is
+         _multiEval(nm, field, type, HIDDEN)
+end
+
+readonly proc MultiEval(nm, field, type) is
+         _multiEval(nm, field, type, VISIBLE)
+end            

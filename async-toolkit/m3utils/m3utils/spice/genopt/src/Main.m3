@@ -45,7 +45,7 @@ IMPORT FileRd;
 IMPORT Scan;
 IMPORT FloatMode, Lex;
 IMPORT SchemePair;
-IMPORT MultiEval;
+IMPORT MultiEvalLR AS MultiEval;
 IMPORT Word;
 IMPORT IP, NetObj, ReadLineError; (* for exceptions *)
 FROM GenOptUtils IMPORT FmtP;

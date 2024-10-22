@@ -1,4 +1,4 @@
-MODULE MultiEval EXPORTS MultiEval;
+MODULE MultiEval;
 
 IMPORT MultiEvalClass AS Class;
 

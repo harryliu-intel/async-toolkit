@@ -1,6 +1,4 @@
-MODULE LRScalarFieldPll;
-IMPORT LRScalarField;
-IMPORT LRVectorLRTbl;
+GENERIC MODULE LRScalarPll(Base, LRVectorBaseTbl);
 IMPORT LRVectorRefTbl;
 IMPORT LRVector;
 IMPORT Thread;
@@ -9,10 +7,10 @@ IMPORT LRMatrix2;
 
 REVEAL
   T = Public BRANDED Brand OBJECT
-    base : LRScalarField.T;
+    base : Base.T;
 
     mu   : MUTEX;
-    tbl  : LRVectorLRTbl.T;
+    tbl  : LRVectorBaseTbl.T;
     open : LRVectorRefTbl.T;
     
   OVERRIDES
@@ -25,15 +23,15 @@ REVEAL
 PROCEDURE ClearTbls(t : T) =
   BEGIN
     LOCK t.mu DO
-      t.tbl  := NEW(LRVectorLRTbl.Default).init();
+      t.tbl  := NEW(LRVectorBaseTbl.Default).init();
       t.open := NEW(LRVectorRefTbl.Default).init()
     END
   END ClearTbls;
   
-PROCEDURE Init(t : T; from : LRScalarField.T) : T =
+PROCEDURE Init(t : T; from : Base.T) : T =
   BEGIN
     t.base := from;
-    t.tbl  := NEW(LRVectorLRTbl.Default).init();
+    t.tbl  := NEW(LRVectorBaseTbl.Default).init();
     t.open := NEW(LRVectorRefTbl.Default).init();
     t.mu   := NEW(MUTEX);
     RETURN t
@@ -42,7 +40,7 @@ PROCEDURE Init(t : T; from : LRScalarField.T) : T =
 PROCEDURE EvalHint(t : T; pp : LRVector.T) =
   VAR
     dummyref : REFANY;
-    dummylr  : LONGREAL;
+    dummylr  : Base.Result;
     cl       : Closure;
     p        : LRVector.T;
   BEGIN
@@ -56,10 +54,10 @@ PROCEDURE EvalHint(t : T; pp : LRVector.T) =
     END
   END EvalHint;
 
-PROCEDURE Eval(t : T; pp : LRVector.T) : LONGREAL =
+PROCEDURE Eval(t : T; pp : LRVector.T) : Base.Result =
   VAR
     ref : REFANY;
-    res : LONGREAL;
+    res : Base.Result;
     p   : LRVector.T;
   BEGIN
     LOCK t.mu DO
@@ -97,7 +95,7 @@ PROCEDURE Apply(cl : Closure) : REFANY =
       LOCK cl.t.mu DO
         WITH hadIt  = cl.t.open.delete(cl.p, ref) DO
           IF NOT hadIt THEN
-            Debug.Warning("LRScalarFieldPll.Apply : could not find " &
+            Debug.Warning(Brand & ".Apply : could not find " &
               LRMatrix2.FormatV(cl.p^))
           END;
           EVAL cl.t.tbl.put(cl.p, res)
@@ -108,4 +106,4 @@ PROCEDURE Apply(cl : Closure) : REFANY =
     RETURN NIL
   END Apply;
   
-BEGIN END LRScalarFieldPll.
+BEGIN END LRScalarPll.

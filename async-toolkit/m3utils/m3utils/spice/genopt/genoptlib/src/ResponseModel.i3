@@ -9,6 +9,8 @@ TYPE
     type   : Type;
   END;
 
+CONST TypeNames = ARRAY Type OF TEXT { "Linear", "Quadratic" };
+
 CONST Brand = "ResponseModel";
 
 END ResponseModel.

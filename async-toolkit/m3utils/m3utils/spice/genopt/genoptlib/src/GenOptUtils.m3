@@ -9,6 +9,7 @@ IMPORT AL;
 IMPORT FileWr;
 FROM Fmt IMPORT F;
 IMPORT Debug;
+IMPORT LRVectorSeq;
 
 PROCEDURE FmtP(p : LRVector.T) : TEXT =
   VAR
@@ -51,4 +52,28 @@ PROCEDURE FmtLRSeq(seq : LRSeq.T) : TEXT =
     RETURN res
   END FmtLRSeq;
   
+PROCEDURE FmtLRVectorSeq(seq : LRVectorSeq.T) : TEXT =
+  VAR
+    res := "";
+  BEGIN
+    FOR i := 0 TO seq.size() - 1 DO
+      res := res & "{" & FmtP(seq.get(i)) & "} "
+    END;
+    RETURN res
+  END FmtLRVectorSeq;
+
+PROCEDURE LRVectorSeq1(x : LONGREAL; dims : CARDINAL) : LRVectorSeq.T =
+  VAR
+    v := NEW(LRVector.T, dims);
+  BEGIN
+    FOR i := FIRST(v^) TO LAST(v^) DO
+      v[i] := x
+    END;
+    
+    WITH res = NEW(LRVectorSeq.T).init() DO
+      res.addhi(v);
+      RETURN res
+    END
+  END LRVectorSeq1;
+
 BEGIN END GenOptUtils.

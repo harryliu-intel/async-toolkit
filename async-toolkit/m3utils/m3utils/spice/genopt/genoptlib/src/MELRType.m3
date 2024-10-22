@@ -1,0 +1,15 @@
+MODULE MELRType;
+FROM Fmt IMPORT LongReal;
+
+PROCEDURE Format(READONLY a : T) : TEXT =
+  BEGIN RETURN LongReal(a) END Format;
+
+PROCEDURE Plus(READONLY a, b : T) : T = BEGIN RETURN a + b END Plus;
+
+PROCEDURE Minus(READONLY a, b : T) : T = BEGIN RETURN a - b END Minus;
+
+PROCEDURE ScalarMul(READONLY a, b : T) : T = BEGIN RETURN a * b END ScalarMul;
+
+PROCEDURE Abs(READONLY a : T) : T = BEGIN RETURN ABS(a) END Abs;
+
+BEGIN END MELRType.

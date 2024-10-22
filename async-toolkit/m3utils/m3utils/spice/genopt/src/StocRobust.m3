@@ -28,7 +28,7 @@ IMPORT LongRealSeq AS LRSeq;
 FROM GenOpt IMPORT rho, iter, ResultWriter;
 FROM GenOptUtils IMPORT FmtP;
 IMPORT LineMinimizer;
-IMPORT MultiEval, MultiEvalClass;
+IMPORT MultiEvalLR AS MultiEval;
 IMPORT LRVectorSet, LRVectorSetDef;
 IMPORT LRVectorMRTbl;
 IMPORT PointEvaluatorSeq;

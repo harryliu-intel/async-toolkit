@@ -1,12 +1,12 @@
 INTERFACE PointMetric;
 IMPORT LRVector;
-IMPORT MultiEval;
+IMPORT MultiEvalLR;
 
 TYPE
   T = RECORD
     metric : LONGREAL;
     p      : LRVector.T;
-    result : MultiEval.Result;
+    result : MultiEvalLR.Result;
   END;
 
 CONST Brand = "PointMetric";

@@ -1,7 +1,7 @@
 MODULE StatFits;
 IMPORT LRMatrix2 AS M;
 IMPORT LongrealPQ;
-IMPORT MultiEval;
+IMPORT MultiEvalLR AS MultiEval;
 IMPORT LRRegression AS Regression;
 IMPORT LongrealType;
 IMPORT Debug;

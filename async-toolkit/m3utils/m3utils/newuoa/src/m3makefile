@@ -22,12 +22,18 @@ c_source ("update")
 
 interface ("NewUOA")
 
+Generic_module("LRScalarPll")
+template ("lrscalar")
 
+LrScalarPll("LRScalarFieldPll", "LRScalarField", "LRVectorLRTbl")
+LrScalarPll("LRVectorFieldPll", "LRVectorField", "LRVectorVectorTbl")
+
+Table("LRVectorVector", "LRVector", "LRVector")
 Table("LRVectorRef", "LRVector", "Refany")
 MkSet("LRVector", "LRVector")
 MkSetDef("LRVector", "LRVector")
 
-Module ("LRScalarFieldPll")
+%Module ("LRScalarFieldPll")
 
 Module ("NewUOA_M3")
 Module ("NewUOAs")
