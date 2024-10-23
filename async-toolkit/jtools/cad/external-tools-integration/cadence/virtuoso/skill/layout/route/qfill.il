@@ -89,3 +89,22 @@
     )
   t
   )
+
+
+; Block fill in parent cells
+(defun BlockFill (topMetal @key (CV (geGetEditCellView)))
+  (for n 0 topMetal   (dbCreateLayerBlockage CV Metal[n] "fill" CV->prBoundary->points))
+  (for n 0 topMetal-1 (dbCreateLayerBlockage CV Via[n]   "fill" CV->prBoundary->points))
+  t
+  )
+
+; Delete and redo fill
+(defun RedoFill (topMetal @key (CV (geGetEditCellView)))
+  (cdsp4edit ?CV CV)
+  (foreach s CV->blockages (dbDeleteObject s))
+  (foreach s CV->shapes (when s->purpose=="fill" || s->purpose=="floatFill" (dbDeleteObject s)))
+  (DoFill ?botLayer "m0" ?topLayer Metal[topMetal] ?CV CV)
+  (BlockFill topMetal ?CV CV)
+  (dbSave CV)
+  CV
+  )
