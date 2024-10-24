@@ -101,7 +101,7 @@
 ; Delete and redo fill
 (defun RedoFill (topMetal @key (CV (geGetEditCellView)))
   (cdsp4edit ?CV CV)
-  (foreach s CV->blockages (dbDeleteObject s))
+  (foreach s CV->blockages (when s->type=="fill" (dbDeleteObject s)))
   (foreach s CV->shapes (when s->purpose=="fill" || s->purpose=="floatFill" (dbDeleteObject s)))
   (DoFill ?botLayer "m0" ?topLayer Metal[topMetal] ?CV CV)
   (BlockFill topMetal ?CV CV)
