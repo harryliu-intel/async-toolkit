@@ -34,9 +34,11 @@ Array_sort("StatFits", "StatFits")
 
 Module("SurfaceRep")
 
-Module ("PointMetric")
-Array_sort("PointMetric", "PointMetric")
-Sequence("PointMetric", "PointMetric")
+%Module ("PointMetric")
+Array_sort("PointMetricLR", "PointMetricLR")
+Sequence("PointMetricLR", "PointMetricLR")
+Array_sort("PointMetricLRVector", "PointMetricLRVector")
+Sequence("PointMetricLRVector", "PointMetricLRVector")
 
 Module ("GenOptUtils")
 
@@ -50,16 +52,22 @@ Sequence ("ResponseModel", "ResponseModel")
 Generic_interface("MultiEval")
 Generic_interface("MultiEvalResult")
 Generic_implementation("MultiEval")
+
+Generic_interface("PointMetric")
+Generic_implementation("PointMetric")
+
+Generic_interface("PointEvaluator")
+Generic_implementation("PointEvaluator")
+
 template("multieval")
 
-MultiEval("LR", "LRScalarField", "MELRType")
+MultiEval("LR",       "LRScalarField", "MELRType")
 MultiEval("LRVector", "LRVectorField", "MELRVectorType")
 
 Module ("MELRType")
 Module ("MELRVectorType")
 
-Module ("PointEvaluator")
-Sequence("PointEvaluator", "PointEvaluator")
+%Module ("PointEvaluator")
 
 Module ("PointResult")
 Sequence ("PointResult","PointResult")
@@ -67,7 +75,8 @@ Sequence ("PointResult","PointResult")
 Module("WLRVector")
 Sequence("WLRVector", "WLRVector")
 
-Table("LRVectorMR", "LRVector", "MultiEvalResultLR")
+Table("LRVectorMR" , "LRVector", "MultiEvalResultLR")
+Table("LRVectorMRV", "LRVector", "MultiEvalResultLRVector")
 
 Module ("GenOpt")
 

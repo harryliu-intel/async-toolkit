@@ -2,6 +2,13 @@ readonly proc _multiEval(nm, field, type, vis) is
          build_generic_intf("MultiEval" & nm, "MultiEval", [field, type], vis)
          build_generic_impl("MultiEval" & nm, "MultiEval", [field, type])
          build_generic_intf("MultiEvalResult" & nm, "MultiEvalResult", ["MultiEval" & nm], vis)
+         build_generic_intf("PointMetric" & nm, "PointMetric", ["MultiEval" & nm], vis)
+         build_generic_impl("PointMetric" & nm, "PointMetric", ["MultiEval" & nm])
+         build_generic_intf("PointEvaluator" & nm, "PointEvaluator", [field], vis)
+         build_generic_impl("PointEvaluator" & nm, "PointEvaluator", [field, type])
+
+         Sequence("PointEvaluator" & nm, "PointEvaluator" & nm)
+
 end
 
 readonly proc multiEval(nm, field, type) is

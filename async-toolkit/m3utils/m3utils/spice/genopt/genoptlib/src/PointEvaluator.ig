@@ -1,11 +1,9 @@
-INTERFACE PointEvaluator;
+GENERIC INTERFACE PointEvaluator(Field);
 IMPORT LRVector;
-IMPORT LRScalarField;
 IMPORT Thread;
 
-CONST Brand = "PointEvaluator";
-
-(* evaluate a function, in the background, at a specific point *)
+(* evaluate a function (scalar or vector valued), in the background, 
+   at a specific point *)
 
 TYPE
   T <: Public;
@@ -13,11 +11,13 @@ TYPE
   Public = Thread.Closure OBJECT METHODS
     init() : T;
     start(p    : LRVector.T;
-          func : LRScalarField.T);
-    wait() : LONGREAL;
+          func : Field.T);
+    wait() : Field.Result;
     quit(); (* will not interrupt running task, can be waited for *)
   END;
 
 PROCEDURE Running() : CARDINAL;
+
+CONST Brand = "PointEvaluator(" & Field.Brand & ")";
   
 END PointEvaluator.

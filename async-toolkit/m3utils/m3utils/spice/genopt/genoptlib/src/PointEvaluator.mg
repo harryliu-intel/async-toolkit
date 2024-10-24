@@ -1,11 +1,7 @@
-MODULE PointEvaluator;
+GENERIC MODULE PointEvaluator(Field, Type);
 IMPORT LRVector;
-IMPORT LRScalarField;
 IMPORT Thread;
 IMPORT Debug;
-FROM Fmt IMPORT LongReal;
-
-CONST LR = LongReal;
 
 VAR doDebug := Debug.DebugThis("PointEvaluator");
 
@@ -18,13 +14,13 @@ REVEAL
     
     (* input vars *)
     p    : LRVector.T;
-    func : LRScalarField.T;
+    func : Field.T;
 
     (* quit var *)
     doQuit : BOOLEAN;
 
     (* output var *)
-    res    : LONGREAL;
+    res    : Field.Result;
   OVERRIDES
     init  := Init;
     apply := Apply;
@@ -54,11 +50,13 @@ PROCEDURE Apply(cl : T) : REFANY =
       END;
         
       LOCK mu DO INC(running) END;
-      
-      WITH result = cl.func.eval(cl.p) DO
-        IF doDebug THEN Debug.Out("Result " & LR(result)) END;
+
+      VAR
+        result : Field.Result := cl.func.eval(cl.p);
+      BEGIN
+        IF doDebug THEN Debug.Out("Result " & Type.Format(result)) END;
         LOCK mu DO
-          cl.res := result;
+          cl.res  := result;
           cl.done := TRUE;
           DEC(running);
           Thread.Signal(cl.c)
@@ -78,8 +76,8 @@ PROCEDURE Init(t : T) : T =
   END Init;
 
 PROCEDURE Start(t    : T;
-                p   : LRVector.T;
-                func : LRScalarField.T) =
+                p    : LRVector.T;
+                func : Field.T) =
   BEGIN
     LOCK mu DO
       <*ASSERT t.done = TRUE*>
@@ -90,7 +88,7 @@ PROCEDURE Start(t    : T;
     END
   END Start;
 
-PROCEDURE Wait(t : T) : LONGREAL =
+PROCEDURE Wait(t : T) : Field.Result =
   BEGIN
     LOCK mu DO
       WHILE NOT t.done DO

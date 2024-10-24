@@ -3,7 +3,7 @@ IMPORT LRMatrix2 AS M;
 IMPORT LongrealPQ;
 IMPORT LRVector;
 IMPORT MultiEvalLR;
-IMPORT PointMetric;
+IMPORT PointMetricLR AS PointMetric;
 IMPORT Matrix;
 
 TYPE

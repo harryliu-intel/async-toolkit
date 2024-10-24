@@ -1,15 +1,14 @@
-INTERFACE PointMetric;
+GENERIC INTERFACE PointMetric(MultiEval);
 IMPORT LRVector;
-IMPORT MultiEvalLR;
 
 TYPE
   T = RECORD
     metric : LONGREAL;
     p      : LRVector.T;
-    result : MultiEvalLR.Result;
+    result : MultiEval.Result;
   END;
 
-CONST Brand = "PointMetric";
+CONST Brand = "PointMetric(" & MultiEval.Brand & ")";
 
 PROCEDURE Compare(READONLY a, b : T) : [-1..1];
 
