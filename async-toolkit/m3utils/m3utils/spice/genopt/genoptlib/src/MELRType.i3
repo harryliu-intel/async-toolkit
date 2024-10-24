@@ -5,7 +5,7 @@ TYPE T = LONGREAL;
 
 CONST Brand = "MELRType";
 
-CONST Null = 0.0d0;
+CONST Null = FIRST(LONGREAL);
 
 PROCEDURE Format(READONLY a : T) : TEXT;
 

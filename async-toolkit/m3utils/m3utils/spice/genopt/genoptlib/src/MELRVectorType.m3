@@ -3,7 +3,14 @@ IMPORT Math;
 FROM GenOptUtils IMPORT FmtP;
 IMPORT LRMatrix2;
 
-PROCEDURE Format(READONLY a : T) : TEXT = BEGIN RETURN FmtP(a) END Format;
+PROCEDURE Format(READONLY a : T) : TEXT =
+  BEGIN
+    IF a = NIL THEN
+      RETURN "**NIL**"
+    ELSE
+      RETURN FmtP(a)
+    END
+  END Format;
 
 PROCEDURE Plus(READONLY a, b : T) : T =
   VAR
