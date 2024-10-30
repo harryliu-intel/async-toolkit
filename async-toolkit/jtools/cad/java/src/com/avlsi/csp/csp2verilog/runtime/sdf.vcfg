@@ -1,3 +1,4 @@
+-sv_net_ports
 -sdfretain
 +sdfverbose
 +transport_path_delays
