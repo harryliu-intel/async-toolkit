@@ -22,6 +22,7 @@
 (def-paramvar 'step   1e-9)
 (def-paramvar 'mean   1)
 (def-paramvar 'sdev   1)
+(def-paramvar 'sigmaK 5.3)
 
 
 ;; the following are the optimization variables
@@ -93,8 +94,8 @@
 (def-load-scm (string-append *srcdir* "/defs.scm"))
 
 ;; the function to minimize, based on the schema and input
-(def-eval '(* (+ (nom t1) (mu t1))
-              (+ (nom t0) (mu t0) (* sigmaK (sigma t0)))))
+(def-eval '(* (+ (nom 't1) (mu 't1))
+              (+ (nom 't0) (mu 't0) (* sigmaK (sigma 't0)))))
 
 ;;(def-eval '(* *secret-value* result))
 

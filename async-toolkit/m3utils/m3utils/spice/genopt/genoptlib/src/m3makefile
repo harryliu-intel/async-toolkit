@@ -84,5 +84,7 @@ Module("GenOptEnv")
 
 Sequence ("LRVector", "LRVector")
 
+Module ("VectorUtils")
+
 library ("genoptlib")
 

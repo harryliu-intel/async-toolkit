@@ -50,7 +50,8 @@ PROCEDURE Combine(READONLY a, b : Result) : Result =
                     nom,
                     a.n + b.n,
                     Type.Plus(a.sum, b.sum),
-                    Type.Plus(a.sumsq, b.sumsq) }
+                    Type.Plus(a.sumsq, b.sumsq),
+                    NIL }
   END Combine;
 
 PROCEDURE Nominal(READONLY a : Result) : Type.T =

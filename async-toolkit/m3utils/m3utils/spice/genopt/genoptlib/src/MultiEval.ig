@@ -19,6 +19,7 @@ TYPE
     nominal    : Type.T := Type.Null;
     n          : CARDINAL;
     sum, sumsq : Type.T;
+    extra      : REFANY;
   END;
 
 CONST Brand = "MultiEval(" & Field.Brand & "," & Type.Brand & ")";
