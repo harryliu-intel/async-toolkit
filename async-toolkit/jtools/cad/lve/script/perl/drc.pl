@@ -17,7 +17,7 @@ my @include_before=();
 my $threads=2;
 my $mem=1;
 my $jobs=0;
-my $flow="drcd";
+my $flow="drc";
 my $pdk_root="";
 my $icv_runset_path="$ENV{PDK_CPDK_PATH}/runsets/icvtdr";
 
