@@ -426,10 +426,16 @@ public abstract class AbstractConverter implements ConverterInterface {
     }
 
     // Return an identifier object that's not subject to renaming.
-    private VerilogObject dontRename(final String name, final boolean escape) {
+    public static VerilogObject dontRename(final VerilogFactoryInterface factory,
+                                           final String name,
+                                           final boolean escape) {
         // XXX: use of hierIdent is a temporary workaround
         return factory.hierIdent(
                 new VerilogObject[] { factory.ident(name, escape) });
+    }
+
+    private VerilogObject dontRename(final String name, final boolean escape) {
+        return dontRename(factory, name, escape);
     }
 
     private VerilogObject concat(final List<VerilogObject> objs,

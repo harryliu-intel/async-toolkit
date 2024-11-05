@@ -730,10 +730,11 @@ public class Prs2Verilog {
             String topName = theArgs.getArgValue("toplevel", null);
             boolean toplevel = true;
             public void processCellType(CellType c) {
-                final VerilogObject top = f.ident(
-                    topName == null ? CellUtils.hashMetaParameters(c.typeName)
-                                    : topName, alwaysEscape);
-
+                final VerilogObject top =
+                    topName == null
+                        ? f.ident(CellUtils.hashMetaParameters(c.typeName),
+                                  alwaysEscape)
+                        : AbstractConverter.dontRename(f, topName, alwaysEscape);
                 final VerilogVisitor visitor = vfact.getVisitor(c.typeName);
                 if (visitor == null) return;
 
