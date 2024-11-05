@@ -1,0 +1,10 @@
+*.ps
+*.pdf
+*.eps
+*.log
+*.aux
+*.dvi
+*.toc
+*.lof
+*.lot
+*.out
