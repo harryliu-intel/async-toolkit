@@ -1,0 +1,274 @@
+\documentclass{article}
+\input{env.tex}
+\graphicspath{{fig/}}
+
+\title{CM3 Development}
+\author{
+  Mika Nystr\"om \\ {\tt mika.nystroem@intel.com} \\ 
+  Kaixin Yang \\ {\tt kaixin.yang@intel.com} \\ 
+}
+%\date{January 22, 2018}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+\parindent=0pt
+\parskip=1.5ex
+
+\arraycolsep=1.4pt\def\arraystretch{1.5}
+
+% \begin{abstract}
+% \end{abstract}
+
+\tableofcontents
+\listoffigures
+\listoftables
+\newpage
+
+
+
+\section{Introduction}
+The target is to migrate features implemented in the m3-utils repository 
+to the public CM3 repository.
+
+%\subsection{Modula-3}
+%\subsection{CM3}
+
+
+
+\section{Environment Setup}
+
+
+\subsection{Compile Using Shell Scripts}
+
+Release version: d5.11.4
+
+Reference: 
+\href{https://github.com/modula3/cm3/wiki/Getting-Started}
+{GitHub Wiki - CM3 - Get Started}
+
+This environment setup is based on the CM3 release version d5.11.4. 
+The compiling steps introduced in the Wiki page, as shown above as the 
+reference, work well in my WSL, which operates on Ubuntu 22.04.4 LTS.
+However, I got many issues when compiling it on the Santa Clara EC 
+running on SUSE Linux Enterprise Server 12 SP5. Below are the issue 
+reports and solutions.
+
+The default Shell on the EC is csh. Any user specified Shell scripts 
+can be added to ``~/.cshrc.\{username\}''.
+
+\subsubsection{technical issue \#1: cmake version}
+The first issue I got is related to the version of cmake. 
+Most of the executable binary files on the EC are under the paths 
+/usr/bin/ and /usr/intel/bin/. CM3 cannot be compiled with the cmake 
+under those paths. The cmake version is 3.5.2, which might be out-of-date 
+for CM3. Therefore, I downloaded the source code of cmake-3.29.3, 
+and compiled it locally. The compiled cmake is under the path 
+/nfs/site/disks/zsc9_fwr_lib_char_010/kaixinya/local/cmake. 
+
+\subsubsection{technical issue \#2: gcc linker}
+I got an error during compilation: "collect2: fatal error: cannot find 'ld'".
+This issue is related to gcc, g++, and ld. The compilation script uses 
+the option ``-fuse-ld'' to specify the linker used during compilation. 
+However, the default gcc on the EC is either too old (gcc 4.7.2 under 
+the path ``/usr/intel/bin'') or broken and it does not support this option. 
+So I have to turn to use gcc and g++ to the ones under the path 
+``/usr/bin'' (version 4.8.5). There soft links are under a local folder 
+``/nfs/site/disks/zsc9_fwr_lib_char_010/kaixinya/local/bin''.
+The ``-fuse-ld'' option is set in the file 
+``\{CM3\_root\}/m3-sys/cminstall/src/config-no-install/LINUX.common''. 
+In the line 17, the ``LD_PREF'' is set as `` -fuse-ld=gold''.
+To make the compilation successful, line 17 should be commented out 
+and line 16 with an empty value should be enabled.
+
+\subsubsection{environment variables}
+Here is my personal cshrc configuration:
+
+\lstset{style=codeblock}
+\begin{lstlisting}
+sccc16341901> tail -n2 ~/.cshrc.kaixinya
+setenv PATH /nfs/site/disks/zsc9_fwr_lib_char_010/kaixinya/local/bin:$PATH
+setenv PATH /nfs/site/disks/zsc9_fwr_lib_char_010/kaixinya/local/cmake/bin:$PATH
+
+sccc16341901> ls -al /nfs/site/disks/zsc9_fwr_lib_char_010/kaixinya/local/bin
+total 8
+drwxr-s--- 2 kaixinya bzmi_fe 4096 Aug  5 16:48 .
+drwxr-s--- 5 kaixinya bzmi_fe 4096 Aug 12 15:22 ..
+lrwxrwxrwx 1 kaixinya bzmi_fe   12 Aug  5 16:20 g++ -> /usr/bin/g++
+lrwxrwxrwx 1 kaixinya bzmi_fe   12 Aug  5 15:54 gcc -> /usr/bin/gcc
+lrwxrwxrwx 1 kaixinya bzmi_fe   11 Aug  5 16:48 ld -> /usr/bin/ld
+
+sccc16341901> ls -al /nfs/site/disks/zsc9_fwr_lib_char_010/kaixinya/local/cmake/bin
+total 64044
+drwxr-s--- 2 kaixinya bzmi_fe     4096 Jun  5 08:46 .
+drwxr-s--- 5 kaixinya bzmi_fe     4096 Jun  5 08:46 ..
+-rwxr-xr-x 1 kaixinya bzmi_fe 15571744 Jun  4 15:34 ccmake
+-rwxr-xr-x 1 kaixinya bzmi_fe 15886960 Jun  4 15:34 cmake
+-rwxr-xr-x 1 kaixinya bzmi_fe 16340512 Jun  4 15:34 cpack
+-rwxr-xr-x 1 kaixinya bzmi_fe 17487912 Jun  4 15:34 ctest
+\end{lstlisting}
+
+When you run the installation command 
+``../cm3-dist-AMD64_LINUX-d5.11.4/scripts/concierge.py install 
+--prefix \{installation\_path\}'', it may remind you ``environment 
+variable CM3_INSTALL not set AND cm3 not found in PATH.'' 
+The reason is that the script finds both ``CM3_INSATLL'' and ``CM3'' are 
+empty or not working. If you already solve the issues above, 
+then you will find a binary file cm3 is already compiled under the path 
+``\{installation\_path\}/bin'' specified by your ``--prefix'' option.
+You can set the environment variables ``CM3_INSATLL'' and ``CM3'' 
+to the folder ``\{installation\_path\}'' and the the binary file
+``\{installation\_path\}/bin/cm3'' separately, and run the installation 
+command again.
+
+\lstset{style=codeblock}
+\begin{lstlisting}
+# set them in the command line or in the cshrc configuration file
+sccc16341901> setenv CM3 {installation_path}/bin/cm3
+sccc16341901> setenv CM3_INSTALL {installation_path}
+\end{lstlisting}
+
+
+\subsection{Compile Using Python Scripts}
+I followed the instruction on the following page and worked with 
+the version d5.11.4:
+\href{https://github.com/modula3/cm3/releases/tag/cm3-d5.11.0-20210608}
+{cm3 d5.11.0 release instructions}
+There are basically four steps:
+\lstset{style=codeblock}
+\begin{lstlisting}
+# Step 1: compile and generate a working cm3 copmiler
+# but g++ failed for me, so I used another locally compiled cm3 compiler
+wget https://github.com/modula3/cm3/releases/download/cm3-d5.11.0-20210608/cm3-boot-unix64le-d5.11.0-20210608.cpp.gz
+gunzip cm3-boot-unix64le-d5.11.0-20210608.cpp.gz
+g++ -g -pthread -c cm3-boot-unix64le-d5.11.0-20210608.cpp
+g++ -g -pthread -o cm3 cm3-boot-unix64le-d5.11.0-20210608.o
+
+# Step 2: optionally remove previous
+# this should be related to the environment cleanup and setup, and I didn't do this
+sudo rm -rf /cm3 
+sudo mkdir -p /cm3/bin
+sudo chown -R $USER /cm3
+mv cm3 /cm3/bin
+
+# Step 3: unzip the source code
+wget https://github.com/modula3/cm3/archive/refs/tags/cm3-d5.11.0-20210608.tar.gz 
+tar xf cm3-d5.11.0-20210608.tar.gz 
+cd cm3-cm3-d5.11.0-20210608
+rm -rf m3-sys/m3cc 
+rm -rf m3-sys/m3gdb 
+cd scripts/python
+sudo apt-get install python2
+export PATH=/cm3/bin:$PATH
+
+# Step 4: build cm3
+./boot2min.py c
+./do-cm3-all.py buildship c 
+\end{lstlisting}
+
+Mika used the following test script to check whether some mathematical
+functions defined as external functions from math.h, including 
+cabs, frexp, modf, signgam, have been compiled correctly or not.
+Here is the \href{https://github.com/modula3/cm3/issues/1178}
+{issue report in GitHub}. We got an error mainly saying 
+``undefined reference to `m3_modf' ''.
+
+\lstset{style=codeblock}
+\begin{lstlisting}
+MODULE Main;
+IMPORT IO;
+IMPORT Math;
+IMPORT Fmt;
+
+VAR
+  x, y : LONGREAL := 1.0d0;
+  z : LONGREAL := Math.modf(x, y);
+  t : LONGREAL := Math.cosh(x);
+
+BEGIN
+
+  IO.Put("Hello, World!\n");
+
+  IO.Put("x = " & Fmt.LongReal(x) & "\n");
+
+END Main.
+\end{lstlisting}
+
+Mika solved this issue by adding glue code into the 
+``m3-libs/libm3/src/arith/POSIX'' folder.
+
+
+
+\section{Feature Migration}
+
+I already compiled cm3 with packages in the headless, caltech-parser, 
+caltech-other categories.
+
+
+\subsection{Yield/diesplit}
+
+\subsubsection{Dependence}
+
+\lstset{style=codeblock}
+\begin{lstlisting}
+diesplit
+|-- mscheme (cm3/m3-scheme)
+|   |-- scheme-lib (cm3/m3-scheme)
+|-- modula3scheme (cm3/m3-scheme)
+|   |-- rdwr (cm3; headless)
+|-- sstubgen (m3utils)
+|   |-- schemereadline (cm3/m3-scheme)
+|   |   |-- schemesig (cm3/m3-scheme)
+|-- integrate (m3utils)
+|-- simpletoken (m3utils)
+|-- mpfr (m3utils)
+|-- minimize (m3utils)
+|   |-- matrix (cm3; caltech-other)
+\end{lstlisting}
+
+Installation order:
+\begin{enumerate}
+  \item	Migrate simpletoken, integrate, mpfr, minimize, yield to 
+        cm3/caltech-new.
+  \item Add simpletoken, integrate, mpfr, minimize, diesplit to 
+        pkginfo.txt.
+  \item mscheme(contains sstubgen) is already under m3-scheme folder, 
+        but sstubgen is not in the pkginfo.txt.
+  \item Upgrade cm3 with scheme-lib, schemesig, mscheme, modula3scheme, 
+        schemereadline, integrate, simpletoken, mpfr, minimize, sstubgen,
+        diesplit in this order. (I already have rdwr and matrix compiled. 
+        If not, please include them.)
+\end{enumerate}
+
+\subsubsection{Technical Issues}
+\begin{enumerate}
+  \item simpletoken: No .m3x and .M3WEB files. Solved by adding .m3 and 
+        .i3 placeholder files.
+  \item mpfr: Library mpfr is missing. Solved by removing the c file 
+        from m3makefile.
+  \item sstubgen: Missing schedulerwrap.tmpl. Solved by copying it from 
+        m3tuils.
+  \item sstubgen: Missing schemestubs_pll.tmpl and schemestubs_ser.tmpl 
+        in the lib folder. Only one file is required based on the value
+        of a environment variable CM3\_VERSION. Solved by adding 
+        schemestubs_ser.tmpl as another template in the m3makefile,
+        since currently CM3_VERSION is empty.
+  \item sstubgen: The paths defined in the template file does not 
+        match when compiling yield.
+\end{enumerate}
+
+% \section{Scripts}
+% \subsection{concierge.py}
+% \begin{itemize}
+%   \item Functions \texttt{_load_package_sets()} and \texttt{_load_package_index()} in 
+%   the \texttt{class PackageDatabase} are used to load package dependency and find 
+%   available packages.
+% \end{itemize}
+
+
+
+% \begin{thebibliography}{99}  
+% \end{thebibliography}
+
+\end{document}
