@@ -35,8 +35,6 @@
 ;; failure to eval result
 (GenOpt.SetOptFailureResult 1e200)
 
-;;(QuadRobust.SetSigmaK 5.3)
-
 (QuadRobust.SetDoNominal #t)
 
 ;; model the three aspects of any variable:

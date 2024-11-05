@@ -87,7 +87,7 @@ TYPE
   Evaluator = LRVectorFieldPll.T OBJECT
     optVars, paramVars : SchemeObject.T;
 
-    results            : LRVectorPairTextTbl.T;
+    results            : LRVectorLRPairTextTbl.T;
     resultsMu          : MUTEX;
 
   METHODS
@@ -108,13 +108,12 @@ PROCEDURE InitPll(pll                : Evaluator;
   BEGIN
     pll.optVars   := optVars;
     pll.paramVars := paramVars;
-    pll.results   := NEW(LRVectorPairTextTbl.Default).init();
+    pll.results   := NEW(LRVectorLRPairTextTbl.Default).init();
     pll.resultsMu := NEW(MUTEX);
     RETURN LRVectorFieldPll.T.init(pll, pll)
   END InitPll;
 
-VAR
-  toEval : SchemeObject.T := NIL;
+VAR toEval : SchemeObject.T := NIL;
   
 PROCEDURE DefEval(obj : SchemeObject.T) =
   BEGIN
@@ -329,29 +328,12 @@ PROCEDURE AttemptEval(base                 : Evaluator;
            schemaRes = SchemaReadResult(schemaPath,
                                         dataPath,
                                         scmFiles,
-                                        MakeToEval(),
+                                        MakeMultiEval(),
                                         base.optVars,
                                         base.paramVars,
                                         schemaScm) DO
         IF doDebug THEN
           Debug.Out("Schema-processed result : " & FmtLRVectorSeq(schemaRes))
-        END;
-        IF FALSE THEN
-        TRY
-          WITH objectiveRes = schemaScm.evalInGlobalEnv(toEval) DO
-            Debug.Out("objectiveRes : " & SchemeUtils.Stringify(objectiveRes))
-          END
-        EXCEPT
-          Scheme.E(x) =>
-          Debug.Error(F("EXCEPTION! Scheme.E \"%s\" when evaluating toEval", x))
-
-        END
-        END;
-        LOCK base.resultsMu DO
-          (* this will just get the first value......... *)
-          EVAL base.results.put(LRVectorPair.T { LRVector.Copy(q),
-                                                 schemaRes.get(0)} ,
-                                subdirPath )
         END;
         RETURN schemaRes
       END
@@ -449,65 +431,6 @@ PROCEDURE AttemptEval(base                 : Evaluator;
     END
   END AttemptEval;
 
-TYPE
-  PointStatObj = StatObject.T OBJECT
-    nomTbl, muTbl, sigmaTbl : SymbolLRTbl.T;
-  METHODS
-    init() : PointStatObj := PSOInit;
-    define(nm : SchemeSymbol.T; nom, mu, sigma : LONGREAL) := PSODefine;
-  OVERRIDES
-    nom := PSOnom;
-    mu := PSOmu;
-    sigma := PSOsigma;
-  END;
-
-PROCEDURE PSOnom(me : PointStatObj; nm : SchemeSymbol.T) : LONGREAL =
-  VAR
-    x : LONGREAL;
-  BEGIN
-    WITH hadIt = me.nomTbl.get(nm, x) DO
-      <*ASSERT hadIt*>
-      RETURN x
-    END
-  END PSOnom;
-
-PROCEDURE PSOmu(me : PointStatObj; nm : SchemeSymbol.T) : LONGREAL =
-  VAR
-    x : LONGREAL;
-  BEGIN
-    WITH hadIt = me.muTbl.get(nm, x) DO
-      <*ASSERT hadIt*>
-      RETURN x
-    END
-  END PSOmu;
-
-PROCEDURE PSOsigma(me : PointStatObj; nm : SchemeSymbol.T) : LONGREAL =
-  VAR
-    x : LONGREAL;
-  BEGIN
-    WITH hadIt = me.sigmaTbl.get(nm, x) DO
-      <*ASSERT hadIt*>
-      RETURN x
-    END
-  END PSOsigma;
-
-PROCEDURE PSOInit(me : PointStatObj) : PointStatObj =
-  BEGIN
-    me.nomTbl := NEW(SymbolLRTbl.Default).init();
-    me.muTbl := NEW(SymbolLRTbl.Default).init();
-    me.sigmaTbl := NEW(SymbolLRTbl.Default).init();
-    RETURN me
-  END PSOInit;
-
-PROCEDURE PSODefine(me : PointStatObj;
-                    nm : SchemeSymbol.T;
-                    nom, mu, sigma : LONGREAL) =
-  BEGIN
-    EVAL me.nomTbl.put  (nm, nom);
-    EVAL me.muTbl.put   (nm, mu);
-    EVAL me.sigmaTbl.put(nm, sigma);
-  END PSODefine;
-  
 VAR
   idMu          := NEW(MUTEX);
   idNx : Word.T := 0;
@@ -586,122 +509,7 @@ PROCEDURE DoNominalEval(mme : MyMultiEval;
     RETURN res
   END DoNominalEval;
   
-PROCEDURE DoStuff(p              : LRVector.T;
-                  func           : MultiEvalLRVector.T;
-                  rhobeg, rhoend : LONGREAL;
-                  progressWriter : GenOpt.ResultWriter := NIL) : Output =
-  VAR
-  BEGIN
-
-    WITH optvars = QuadRobust.GetOptVars() DO
-      FOR i := 0 TO optvars.size() - 1 DO
-        WITH v = optvars.get(i) DO
-          Debug.Out("DoStuff : modeling : " & ModelVar.Format(v))
-        END
-      END
-    END;
-
-    Debug.Out("DoStuff : toEval : " & SchemeUtils.Stringify(MakeToEval()));
-    
-    (* one evaluation *)
-
-    EVAL Do1(p, func);
-
-    (* some more evaluations *)
-    VAR
-      n        := NUMBER(p^);
-      nv       := 2 * n;
-      da       := NEW(REF ARRAY OF LRVector.T, nv);
-      lm       := NEW(REF ARRAY OF LineMinimizer.T, nv);
-    BEGIN
-      (* allocate some random vectors *)
-      FOR i := FIRST(da^) TO LAST(da^) DO
-        da[i] := RandomVector.GetDirV(rand, n, 1.0d0);
-        lm[i] := NEW(LineMinimizer.T).init();
-      END;
-      
-      (* orthogonalize the first n vectors with Gram-Schmidt *)
-      
-      Orthogonalize(SUBARRAY(da^, 0, n));  (* first ortho. block *)
-      Orthogonalize(SUBARRAY(da^, n, n));  (* second ortho. block *)
-
-      WITH rho = rhobeg,
-           rhoo2 = rho / 2.0d0,
-           msf = NEW(MyScalarField, func := func) DO
-        FOR i := FIRST(da^) TO LAST(da^) DO
-          lm[i].start(p, da[i], msf, rho);
-          LRMatrix2.LinearCombinationV(1.0d0, p^, rhoo2, da[i]^, da[i]^);
-          EVAL Do1(da[i], func)
-        END;
-        FOR i := FIRST(lm^) TO LAST(lm^) DO
-          EVAL lm[i].wait()
-        END
-      END
-    END;
-    
-    VAR o : Output; BEGIN RETURN o END
-  END DoStuff;
-
-TYPE
-  MyScalarField = LRScalarField.Default OBJECT
-    func : MultiEvalLRVector.T;
-  OVERRIDES
-    eval := MSFeval;
-  END;
-
-PROCEDURE MSFeval(me : MyScalarField; p : LRVector.T) : LONGREAL =
-  BEGIN
-    RETURN Do1(p, me.func)
-  END MSFeval;
-  
-PROCEDURE Do1(p : LRVector.T; func : MultiEvalLRVector.T) : LONGREAL =
-  VAR
-    res3 := func.multiEval  (p, 3);
-    resN := func.nominalEval(p);
-  BEGIN
-
-    res3.nominal := resN; (* complete res3 *)
-    
-    <*ASSERT res3.sum # NIL*>
-    <*ASSERT res3.sumsq # NIL*>
-    <*ASSERT resN # NIL*>
-    Debug.Out("Do1 : res3 = " & MultiEvalLRVector.Format(res3));
-    Debug.Out("Do1 : resN = " & FmtP(resN));
-
-    (* res3 contains all the data *)
-    WITH pso     = NEW(PointStatObj).init(),
-         optvars = QuadRobust.GetOptVars(),
-         nom     = MultiEvalLRVector.Nominal(res3),
-         mu      = MultiEvalLRVector.Mean   (res3),
-         sigma   = MultiEvalLRVector.Sdev   (res3)
-     DO
-      FOR i := 0 TO optvars.size() - 1  DO
-        WITH v = optvars.get(i) DO
-          pso.define(v.nm, nom[i], mu[i], sigma[i])
-        END
-      END;
-
-      WITH scm = NARROW(res3.extra,Scheme.T),
-           e = SchemeUtils.List3(T2S("eval-in-env"),
-                                 L2S(0.0d0),
-                                 SchemeUtils.List2(T2S("quote"), toEval)) DO
-        scm.bind(T2S("*the-stat-object*"), pso);
-        Debug.Out("Do1 : toEval = " & SchemeUtils.Stringify(e));
-
-        TRY
-          WITH res = scm.evalInGlobalEnv(e) DO
-            Debug.Out("Do1 : final res: " & SchemeUtils.Stringify(res));
-            RETURN SchemeLongReal.FromO(res)
-          END
-        EXCEPT
-          Scheme.E(x) =>
-          Debug.Error(F("EXCEPTION! Do1 : Scheme.E \"%s\" when evaluating toEval", x))
-        END
-      END
-    END
-  END Do1;
-
-PROCEDURE MakeToEval() : SchemeObject.T =
+PROCEDURE MakeMultiEval() : SchemeObject.T =
   VAR 
     res : SchemeObject.T := NIL;
   BEGIN
@@ -713,7 +521,7 @@ PROCEDURE MakeToEval() : SchemeObject.T =
       END
     END;
     RETURN SchemeUtils.Cons(SchemeSymbol.FromText("list"), res)
-   END MakeToEval;
+   END MakeMultiEval;
 
 PROCEDURE DoIt(optVars, paramVars : SchemeObject.T) =
   VAR
@@ -733,15 +541,6 @@ PROCEDURE DoIt(optVars, paramVars : SchemeObject.T) =
       END
     END;
 
-    EVAL DoStuff(pr,
-                 NEW(MyMultiEval, base := evaluator).init(evaluator),
-                 rhoBeg,
-                 rhoEnd,
-                 NEW(MyResultWriter,
-                     evaluator := evaluator,
-                     root      := "progress"));
-    RETURN;
-
     (**************************************************)
 
     Debug.Out(F("DoIt : Ready to call Minimize : pr=%s rhoBeg=%s rhoEnd=%s",
@@ -749,6 +548,7 @@ PROCEDURE DoIt(optVars, paramVars : SchemeObject.T) =
 
     output := QuadRobust.Minimize(pr,
                                   NEW(MyMultiEval, base := evaluator).init(evaluator),
+                                  toEval,
                                   rhoBeg,
                                   rhoEnd,
                                   NEW(MyResultWriter,
@@ -841,8 +641,7 @@ PROCEDURE MRWWrite(mrw : MyResultWriter; output : NewUOAs.Output)
         haveIt : BOOLEAN;
       BEGIN
         LOCK mrw.evaluator.resultsMu DO
-          <*ASSERT FALSE*>
-          (*haveIt := mrw.evaluator.results.get(key, subdir)*)
+          haveIt := mrw.evaluator.results.get(key, subdir)
         END;
         IF haveIt THEN
           TRY
@@ -1033,7 +832,7 @@ PROCEDURE SGCNext(cb : SGCallback) =
     WITH scmCode = SchemeUtils.List3(
                        T2S("eval-in-env"),
                        L2S(0.0d0),
-                       SchemeUtils.List2(T2S("quote"), MakeToEval())),
+                       SchemeUtils.List2(T2S("quote"), MakeMultiEval())),
          schemaRes = cb.schemaScm.evalInGlobalEnv(scmCode) DO
       IF doDebug THEN
         Debug.Out("schema eval returned " & SchemeUtils.Stringify(schemaRes))

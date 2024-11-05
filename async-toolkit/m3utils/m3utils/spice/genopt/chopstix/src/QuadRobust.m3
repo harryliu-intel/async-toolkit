@@ -33,8 +33,8 @@ IMPORT MultiEvalLRVector;
 IMPORT LRVectorSet, LRVectorSetDef;
 IMPORT LRVectorMRVTbl;
 
-IMPORT PointEvaluatorLRVector AS PointEvaluator;
-IMPORT PointEvaluatorLRVectorSeq AS PointEvaluatorSeq;
+IMPORT PointEvaluatorLR AS PointEvaluator;
+IMPORT PointEvaluatorLRSeq AS PointEvaluatorSeq;
 
 IMPORT PointMetricLRVector AS PointMetric;
 IMPORT PointMetricLRVectorArraySort AS PointMetricArraySort;
@@ -59,8 +59,15 @@ IMPORT ResponseModel;
 IMPORT QuadResponse;
 IMPORT ModelVar;
 IMPORT ModelVarSeq;
+IMPORT SchemeObject;
+IMPORT Scheme;
+IMPORT SchemeUtils;
+IMPORT SchemeLongReal;
+IMPORT StatObject;
 
-CONST LR = LongReal;
+CONST LR  = LongReal;
+      T2S = SchemeSymbol.FromText;
+      L2S = SchemeLongReal.FromLR;
 
 TYPE TA = ARRAY OF TEXT;
 
@@ -117,12 +124,19 @@ PROCEDURE FindBest(seq         : PointResultSeq.T;
 (* parallel evaluation code follows *)
 
 TYPE
-  MultiEvaluator = LRVectorField.Default OBJECT
+  MultiEvaluator = LRScalarField.Default OBJECT
     (* using Default instead of T turns on evalHint *)
     base    : MultiEvalLRVector.T;
     samples : CARDINAL;
     values  : LRVectorMRVTbl.T;
     thisCyc : LRVectorSet.T;
+    toEval  : SchemeObject.T;
+  METHODS
+    init(func    : MultiEvalLRVector.T;
+         samples : CARDINAL;
+         values  : LRVectorMRVTbl.T;
+         toEval  : SchemeObject.T;
+         thisCyc : LRVectorSet.T       ) : MultiEvaluator := InitME;
   OVERRIDES
     eval     := MEEval;
   END;
@@ -145,7 +159,7 @@ PROCEDURE NCApply(nc : NomClosure) : REFANY =
   END NCApply;
     
 PROCEDURE MEEval(me      : MultiEvaluator;
-                 p       : LRVector.T) : LRVector.T =
+                 p       : LRVector.T) : LONGREAL =
   CONST
     Poison : LRVector.T = NIL;
   VAR
@@ -168,7 +182,7 @@ PROCEDURE MEEval(me      : MultiEvaluator;
     END;
 
     IF doNominal AND NOT haveOld THEN
-      Debug.Out("Launching nominal eval at " & FmtP(p));
+      Debug.Out("QuadRobust.MEEval : Launching nominal eval at " & FmtP(p));
       thr := Thread.Fork(NEW(NomClosure, me := me.base, at := p))
     END;
     
@@ -191,7 +205,7 @@ PROCEDURE MEEval(me      : MultiEvaluator;
         res := MultiEvalLRVector.Combine(res, oldres);
       END;
       IF doDebug THEN
-        Debug.Out("adding new entry to me.values")
+        Debug.Out("QuadRobust.MEEval : adding new entry to me.values")
       END;
       LOCK valueMu DO
         <*ASSERT res.nominal # Poison*>
@@ -214,15 +228,21 @@ PROCEDURE MEEval(me      : MultiEvaluator;
        the database *)
 
     WITH nominal = MultiEvalLRVector.Nominal(res),
-         mean    = MultiEvalLRVector.Mean(res),
-         sdev    = MultiEvalLRVector.Sdev(res),
-         retval  = nominal (* hmm really not right *) DO 
+         mean    = MultiEvalLRVector.Mean   (res),
+         sdev    = MultiEvalLRVector.Sdev   (res) DO 
       <*ASSERT nominal # Poison*>
       IF doDebug THEN
         Debug.Out(F("QuadRobust.MEEval : nominal=%s mean=%s sdev=%s",
                     FmtP(nominal), FmtP(mean), FmtP(sdev)))
       END;
-      RETURN retval
+
+      WITH retval = SchemeFinish(res, me.toEval) DO
+        IF doDebug THEN
+          Debug.Out(F("QuadRobust.MEEval : reval=%s",
+                      LR(retval)))
+        END;
+        RETURN retval
+      END
     END
   END MEEval;
 
@@ -233,20 +253,21 @@ PROCEDURE ResMetric(READONLY r : MultiEvalLRVector.Result) : LONGREAL =
     RETURN 0.0d0
   END ResMetric;
   
-PROCEDURE MultiEvaluate(func    : MultiEvalLRVector.T;
-                        samples : CARDINAL;
-                        values  : LRVectorMRVTbl.T;
-                        thisCyc : LRVectorSet.T) : LRVectorField.T =
+PROCEDURE InitME(self    : MultiEvaluator;
+                 func    : MultiEvalLRVector.T;
+                 samples : CARDINAL;
+                 values  : LRVectorMRVTbl.T;
+                 toEval  : SchemeObject.T;
+                 thisCyc : LRVectorSet.T) : MultiEvaluator =
   BEGIN
-    WITH me = NEW(MultiEvaluator,
-                  hintsByForking := TRUE,
-                  base           := func,
-                  samples        := samples,
-                  values         := values,
-                  thisCyc        := thisCyc) DO
-      RETURN me
-    END
-  END MultiEvaluate;
+    self.hintsByForking := TRUE;
+    self.base           := func;
+    self.samples        := samples;
+    self.values         := values;
+    self.toEval         := toEval;
+    self.thisCyc        := thisCyc;
+    RETURN self
+  END InitME;
 
 (* 
    we maintain a database of evaluations, both of means and 
@@ -387,7 +408,6 @@ PROCEDURE DoSimpleFit(p                          : LRVector.T;
              bnom   := bnom,
              bmu    := bmu,
              bsigma := bsigma,
-             sigmaK := sigmaK,
              alpha  := 0.0d0,
              p      := p);
     qf      : QuadraticF;
@@ -408,13 +428,13 @@ PROCEDURE DoSimpleFit(p                          : LRVector.T;
       qg := NEW(QuadraticG, b := b, eval := EvalQGN);
       M.LinearCombination3(1.0d0 , bnom^,
                            1.0d0 , bmu^,
-                           sigmaK, bsigma^,
+                           0.0d0, bsigma^,
                            bb^)
     ELSE
       qf := NEW(QuadraticF, b := b, eval := EvalQF);
       qg := NEW(QuadraticG, b := b, eval := EvalQG);
       M.LinearCombination(1.0d0 , bmu^,
-                          sigmaK, bsigma^,
+                          0.0d0, bsigma^,
                           bb^)
     END;
     
@@ -477,7 +497,6 @@ PROCEDURE DoSimpleFit(p                          : LRVector.T;
 TYPE
   B = OBJECT
     bnom, bmu, bsigma : REF M.M;
-    sigmaK            : LONGREAL;
     p                 : LRVector.T;
     alpha             : LONGREAL;
   END;
@@ -494,13 +513,54 @@ TYPE
     eval := EvalQG;
   END;
 
+PROCEDURE SchemeFinish(resS    : MultiEvalLRVector.Result;
+                       toEval  : SchemeObject.T) : LONGREAL =
+  BEGIN    
+    <*ASSERT resS.sum # NIL*>
+    <*ASSERT resS.sumsq # NIL*>
+    Debug.Out("SchemeFinish : resS = " & MultiEvalLRVector.Format(resS));
+
+    (* resS contains all the data *)
+    WITH pso     = NEW(StatObject.DefaultPoint).init(),
+         optvars = GetOptVars(),
+         nom     = MultiEvalLRVector.Nominal(resS),
+         mu      = MultiEvalLRVector.Mean   (resS),
+         sigma   = MultiEvalLRVector.Sdev   (resS)
+     DO
+      FOR i := 0 TO optvars.size() - 1  DO
+        WITH v = optvars.get(i) DO
+          pso.define(v.nm, nom[i], mu[i], sigma[i])
+        END
+      END;
+
+      WITH scm = NARROW(resS.extra,Scheme.T),
+           e = SchemeUtils.List3(T2S("eval-in-env"),
+                                 L2S(0.0d0),
+                                 SchemeUtils.List2(T2S("quote"), toEval)) DO
+        scm.bind(T2S("*the-stat-object*"), pso);
+        Debug.Out("SchemeFinish : toEval = " & SchemeUtils.Stringify(e));
+
+        TRY
+          WITH res = scm.evalInGlobalEnv(e) DO
+            Debug.Out("SchemeFinish : final res = " & SchemeUtils.Stringify(res));
+            RETURN SchemeLongReal.FromO(res)
+          END
+        EXCEPT
+          Scheme.E(x) =>
+          Debug.Error(F("EXCEPTION! SchemeFinish : Scheme.E \"%s\" when evaluating toEval", x));
+          <*ASSERT FALSE*>
+        END
+      END
+    END
+  END SchemeFinish;
+
 PROCEDURE EvalQF(qf : QuadraticF; p : LRVector.T) : LONGREAL =
   BEGIN
     WITH mu    = ComputeQ(p, qf.b.bmu),
          sigma = ComputeQ(p, qf.b.bsigma),
          spice = qf.b.alpha * M.SumDiffSqV(p^, qf.b.p^) DO
       <*ASSERT NOT doNominal*>
-      RETURN mu + qf.b.sigmaK * sigma + spice
+      RETURN mu + 666.666d0 * sigma + spice
     END
   END EvalQF;
 
@@ -510,7 +570,7 @@ PROCEDURE EvalQG(qg : QuadraticG; p : LRVector.T) : LRVector.T =
          sigmaG = ComputeG(p, qg.b.bsigma),
          res    = NEW(LRVector.T, NUMBER(p^)) DO
       <*ASSERT NOT doNominal*>
-      M.LinearCombinationV(1.0d0, muG^, qg.b.sigmaK, sigmaG^, res^);
+      M.LinearCombinationV(1.0d0, muG^, 666.666d0, sigmaG^, res^);
 
       FOR i := FIRST(res^) TO LAST(res^) DO
         res[i] := res[i] + 2.0d0 * qg.b.alpha * (p[i] - qg.b.p[i])
@@ -527,7 +587,7 @@ PROCEDURE EvalQFN(qf : QuadraticF; p : LRVector.T) : LONGREAL =
          sigma = ComputeQ(p, qf.b.bsigma),
          spice = qf.b.alpha * M.SumDiffSqV(p^, qf.b.p^) DO
       <*ASSERT doNominal*>
-      RETURN nom + mu + qf.b.sigmaK * sigma + spice
+      RETURN nom + mu + 666.666d0 * sigma + spice
     END
   END EvalQFN;
 
@@ -540,7 +600,7 @@ PROCEDURE EvalQGN(qg : QuadraticG; p : LRVector.T) : LRVector.T =
       <*ASSERT doNominal*>
       M.LinearCombinationV3(1.0d0, nomG^,
                             1.0d0, muG^,
-                            qg.b.sigmaK, sigmaG^,
+                            666.666d0, sigmaG^,
                             res^);
 
       FOR i := FIRST(res^) TO LAST(res^) DO
@@ -555,6 +615,7 @@ VAR ridgeCoeff := 0.0d0;
     
 PROCEDURE Minimize(pa             : LRVector.T;
                    func           : MultiEvalLRVector.T;
+                   toEval         : SchemeObject.T;
                    rhobeg, rhoend : LONGREAL;
                    progressWriter : ResultWriter) : Output =
   VAR
@@ -566,7 +627,7 @@ PROCEDURE Minimize(pa             : LRVector.T;
     rand     := NEW(Random.Default).init();
     mins     := NEW(PointResultSeq.T).init();
     allMins  := NEW(PointResultSeq.T).init();
-    cl       := NEW(REF ARRAY OF LineMinimizer.T, nv);
+    lm       := NEW(REF ARRAY OF LineMinimizer.T, nv);
 
     message  : TEXT;
     thisCyc  : LRVectorSet.T;
@@ -578,13 +639,13 @@ PROCEDURE Minimize(pa             : LRVector.T;
     samples : CARDINAL;
 
     pr       := PointResult.T { pa, LAST(LONGREAL), FALSE, LAST(LONGREAL) };
-    
+
   BEGIN
     rho   := rhobeg;
     iter  := 0;
     
     FOR i := 0 TO 2 * n - 1 DO
-      cl[i] := NEW(LineMinimizer.T).init()
+      lm[i] := NEW(LineMinimizer.T).init()
     END;
     
     (* allocate some random vectors *)
@@ -630,13 +691,14 @@ PROCEDURE Minimize(pa             : LRVector.T;
         i := 0;
       BEGIN
         WHILE iter.next(p) DO
-          WITH q    = LRVector.Copy(p),
-               pe   = peSeq.get(i),
-               func = MultiEvaluate(func,
-                                    2 * samples,
-                                    values,
-                                    thisCyc) DO
-            pe.start(q, func);
+          WITH q  = LRVector.Copy(p),
+               pe = peSeq.get(i),
+               ff = NEW(MultiEvaluator).init(func,
+                                             2 * samples,
+                                             values,
+                                             toEval,
+                                             thisCyc) DO
+            pe.start(q, ff);
             INC(i)
           END
         END
@@ -655,12 +717,12 @@ PROCEDURE Minimize(pa             : LRVector.T;
       FOR i := FIRST(da^) TO LAST(da^) DO
         
         pp[i] := LRVector.Copy(pr.p);
-        cl[i].start(pp[i],
-                    LRVector.Copy(da[i]),
-                    
-                    NIL,
-                    
-                    rho)
+        WITH ff = NEW(MultiEvaluator).init(func, samples, values, toEval, thisCyc) DO
+          lm[i].start(pp[i],
+                      LRVector.Copy(da[i]),
+                      ff,
+                      rho)
+        END
       END;
       
       IF FALSE THEN
@@ -676,7 +738,7 @@ PROCEDURE Minimize(pa             : LRVector.T;
 
       Debug.Out("QuadRobust : Waiting for line searches to evaluate ...");
       FOR i := FIRST(da^) TO LAST(da^) DO
-        lps[i] := cl[i].wait()
+        lps[i] := lm[i].wait()
       END;
       Debug.Out("All tasks are done");
       (* all tasks are done *)

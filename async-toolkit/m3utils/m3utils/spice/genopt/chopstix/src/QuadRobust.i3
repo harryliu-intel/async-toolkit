@@ -12,15 +12,50 @@ IMPORT SchemeSymbol;
 IMPORT ResponseModel;
 IMPORT QuadResponse;
 IMPORT ModelVarSeq;
+IMPORT SchemeObject;
+IMPORT LRScalarField;
+
+(* 
+   note that there's a pile of static initialization that has to be run
+   before calling Minimize, and synchronization of the variables of
+   the parameters to Minimize and the setup variables.
+
+   Probably the variable list management should not be done by this module
+   but by some more generic module, but let's leave that for later.
+
+   The tricky part is that we also have to override the optvars when we 
+   interpolate the functions.
+*)
 
 PROCEDURE Minimize(p              : LRVector.T;
+
                    func           : MultiEvalLRVector.T;
-                   rhobeg, rhoend : LONGREAL (* same as Powell *);
-                   progressWriter : GenOpt.ResultWriter := NIL) : Output;
+                   (* this is a function for returning the values of the
+                      optimization variables, defined by DoModel and 
+                      indicated by GetOptVars, in the same sequence as the
+                      names returned by GetOptVars, at a given evaluation 
+                      point p;
+                   
+                      we expect func.eval to return a value that includes
+                      the Scheme interpreter, with its variables all 
+                      properly initialized, for func.eval().extra 
+                   *)
+
+                   toEval         : SchemeObject.T;
+                   (* this is a function of the optimization variables as
+                      well as of the input variables, which is the ultimate
+                      quantity that we wish to optimize (to the minimum
+                      achievable value) *)
+
+                   rhobeg, rhoend : LONGREAL;
+                   (* same as Powell *)
+                   
+                   progressWriter : GenOpt.ResultWriter := NIL;
+                   (* write progress *)
+                   
+                   ) : Output;
 
 CONST Brand = "QuadRobust";
-
-VAR sigmaK := 0.0d0;
 
 PROCEDURE SetDoNominal(to : BOOLEAN);
 

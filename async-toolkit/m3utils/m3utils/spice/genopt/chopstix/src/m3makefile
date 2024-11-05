@@ -17,7 +17,7 @@ Module ("QuadRobust")
 Interface ("QuadResponse")
 Module ("ModelVar")
 Sequence ("ModelVar", "ModelVar")
-Interface ("StatObject")
+Module ("StatObject")
 Table ("SymbolLR", "Atom", "LongrealType")
 
 SchemeStubs ("StatObject")

@@ -143,6 +143,14 @@
     )
   )
 
+(define (*n*)
+  (let* ((so   (obj-method-wrap *the-stat-object* 'StatObject.T))
+         (res  (so 'n)))
+    (dis "n " res dnl)
+    res
+    )
+  )
+
 (define (sigma symbol)
   (let* ((so   (obj-method-wrap *the-stat-object* 'StatObject.T))
          (res  (so 'sigma symbol)))
@@ -158,4 +166,5 @@
     res
     )
   )
+
 
