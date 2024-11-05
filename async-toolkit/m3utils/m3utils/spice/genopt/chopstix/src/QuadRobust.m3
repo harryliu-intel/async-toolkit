@@ -179,6 +179,9 @@ PROCEDURE MEEval(me      : MultiEvaluator;
     LOCK valueMu DO
       isNew   := NOT me.thisCyc.insert(p);
       haveOld := me.values.get(p, oldres);
+      IF haveOld THEN
+        <*ASSERT oldres.extra # NIL*>
+      END
     END;
 
     IF doNominal AND NOT haveOld THEN
@@ -187,6 +190,7 @@ PROCEDURE MEEval(me      : MultiEvaluator;
     END;
     
     res := me.base.multiEval(p, me.samples);
+    <*ASSERT res.extra # NIL*>
 
     IF thr # NIL THEN
       VAR
@@ -203,6 +207,7 @@ PROCEDURE MEEval(me      : MultiEvaluator;
          <*ASSERT oldres.nominal # Poison*>
         res.nominal := oldres.nominal;
         res := MultiEvalLRVector.Combine(res, oldres);
+        <*ASSERT res.extra # NIL*>
       END;
       IF doDebug THEN
         Debug.Out("QuadRobust.MEEval : adding new entry to me.values")
@@ -215,7 +220,8 @@ PROCEDURE MEEval(me      : MultiEvaluator;
       (* use the old data if it's got more samples *)
       <*ASSERT oldres.nominal # Poison*>
       IF oldres.n > res.n THEN
-        res := oldres
+        res := oldres;
+        <*ASSERT res.extra # NIL*>
       ELSE
         res.nominal := oldres.nominal
       END;
@@ -236,6 +242,8 @@ PROCEDURE MEEval(me      : MultiEvaluator;
                     FmtP(nominal), FmtP(mean), FmtP(sdev)))
       END;
 
+      <*ASSERT res.extra # NIL*>
+      <*ASSERT me.toEval # NIL*>
       WITH retval = SchemeFinish(res, me.toEval) DO
         IF doDebug THEN
           Debug.Out(F("QuadRobust.MEEval : reval=%s",
@@ -533,6 +541,7 @@ PROCEDURE SchemeFinish(resS    : MultiEvalLRVector.Result;
         END
       END;
 
+      <*ASSERT resS.extra # NIL*>
       WITH scm = NARROW(resS.extra,Scheme.T),
            e = SchemeUtils.List3(T2S("eval-in-env"),
                                  L2S(0.0d0),

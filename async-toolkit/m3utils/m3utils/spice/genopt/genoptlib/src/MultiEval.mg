@@ -51,7 +51,7 @@ PROCEDURE Combine(READONLY a, b : Result) : Result =
                     a.n + b.n,
                     Type.Plus(a.sum, b.sum),
                     Type.Plus(a.sumsq, b.sumsq),
-                    NIL }
+                    a.extra }
   END Combine;
 
 PROCEDURE Nominal(READONLY a : Result) : Type.T =
