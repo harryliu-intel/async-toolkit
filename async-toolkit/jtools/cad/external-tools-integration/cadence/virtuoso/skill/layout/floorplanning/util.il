@@ -91,7 +91,7 @@
 ; copy selected cells given an offset
 (defun CopySelected (xOffset yOffset)
   SelectedCellList = (geGetSelSet)
-  (foreach SelectedCell SelectedCellList 
+  (foreach SelectedCell SelectedCellList
            (dbCopyFig SelectedCell nil (list xOffset:yOffset "R0"))
            )
   t
@@ -132,6 +132,24 @@
              )
     n
     )
+  )
+
+; select instances filtering by placement status ("locked", "fixed", nil)
+(defun SelectPlacementStatus (status @key (CV (geGetEditCellView)))
+  (let ((len 0))
+    (foreach inst CV->instances
+             (when inst->status==status (geSelectObject inst) len++)
+             )
+    len
+    )
+  )
+
+; set placement status of select cells
+(defun SetPlacementStatus (status @key (CV (geGetEditCellView)))
+  (foreach inst (geGetSelSet)
+           inst->status=status
+           )
+  (length (geGetSelSet))
   )
 
 ; flip instance upside down
