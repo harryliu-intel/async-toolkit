@@ -280,6 +280,7 @@ share/skill/layout/leaf/LayoutGridPoly.il                                  skill
 share/skill/layout/leaf/property.il                                        skill/layout/leaf/property.il 					    664 p
 share/skill/layout/mid/mid.il                                              skill/layout/mid/mid.il                                                  664 p
 share/skill/layout/mid/compact.il                                          skill/layout/mid/compact.il                                              664 p
+share/skill/layout/svg/plot_svg.il                                         skill/layout/svg/plot_svg.il                                             664 p
 
 # cable
 #share/skill/layout/cable/GndShield.il                                      skill/layout/cable/GndShield.il                 664 p 
