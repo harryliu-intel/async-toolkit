@@ -1282,10 +1282,6 @@ sub query {
             }
         }
         elsif ($arg =~ /\.\d[^\.]*$/) {
-            if ($cell ne "") {
-                command_die($SS_r, 
-                    "Bad arguments to query.  See 'help query'.");
-            }
             $cell = $arg;
         }
         else {
