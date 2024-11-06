@@ -88,7 +88,7 @@
         (pins t)
         (wires t)
         (contacts t)
-        (subcells nil)
+        (subcells t)
         )
   (let (found)
     found = 0
