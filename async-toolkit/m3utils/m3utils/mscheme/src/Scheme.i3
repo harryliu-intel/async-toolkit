@@ -120,6 +120,8 @@ TYPE
     setRTErrorMapping(to : BOOLEAN);
     (* set the above (default TRUE) *)
 
+    copy() : T;
+    (* deep copy *)
   END;
 
 TYPE Interrupter = OBJECT METHODS interrupt() : BOOLEAN; END;

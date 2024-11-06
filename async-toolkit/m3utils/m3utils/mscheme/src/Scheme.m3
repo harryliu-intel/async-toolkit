@@ -25,6 +25,8 @@ IMPORT SchemeProfiler;
 IMPORT SchemeUnixDeps;
 IMPORT SchemeEnvironmentBinding;
 
+IMPORT Pickle, TextWr;
+
 TYPE Binding = SchemeEnvironmentBinding.T;
 
 TYPE Pair = SchemePair.T;
@@ -68,8 +70,19 @@ REVEAL
     getGlobalEnvironment := GetGlobalEnvironment;
     attemptToMapRuntimeErrors := AttemptToMapRuntimeErrors;
     setRTErrorMapping := SetRTErrorMapping;
+    copy              := Copy;
   END;
 
+PROCEDURE Copy(t : T) : T =
+  BEGIN
+    WITH wr = TextWr.New() DO
+      Pickle.Write(wr, t);
+      WITH rd = NEW(TextRd.T).init(TextWr.ToText(wr)) DO
+        RETURN Pickle.Read(rd)
+      END
+    END
+  END Copy;
+  
 PROCEDURE AttemptToMapRuntimeErrors(scm : T) : BOOLEAN = 
   BEGIN RETURN scm.mapRTErrors END AttemptToMapRuntimeErrors;
 
