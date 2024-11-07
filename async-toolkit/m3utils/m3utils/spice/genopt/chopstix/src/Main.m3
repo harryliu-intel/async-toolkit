@@ -309,7 +309,8 @@ PROCEDURE AttemptEval(base                 : Evaluator;
       END
     END SetupDirectory;
 
-  PROCEDURE RunCommand(VAR schemaScm : Scheme.T) : LRVectorSeq.T 
+  PROCEDURE RunCommand(VAR(*OUT*) schemaScm : Scheme.T) : LRVectorSeq.T 
+    (* schemaScm is newly allocated *)
     RAISES { ProcUtils.ErrorExit } =
     BEGIN
       IF doDebug THEN
@@ -751,7 +752,10 @@ PROCEDURE SchemaReadResult(schemaPath ,
                            scmFiles                       : TextSeq.T;
                            schemaEval, optVars, paramVars : SchemeObject.T;
                            VAR (*OUT*) schemaScm : Scheme.T) : LRVectorSeq.T =
-  (* code from the schemaeval program *)
+
+  (* schemaScm is newly allocated and in a state where the various
+     parameter and optimization variables have been set to the correct values *)
+
   VAR
     dataFiles := NEW(TextSeq.T).init();
   BEGIN
@@ -833,7 +837,9 @@ PROCEDURE SGCNext(cb : SGCallback) =
                        T2S("eval-in-env"),
                        L2S(0.0d0),
                        SchemeUtils.List2(T2S("quote"), MakeMultiEval())),
-         schemaRes = cb.schemaScm.evalInGlobalEnv(scmCode) DO
+         (* do we need to copy() the Scheme here? -- seems we don't 
+            actually modify it? *)
+         schemaRes = cb.schemaScm.copy().evalInGlobalEnv(scmCode) DO
       IF doDebug THEN
         Debug.Out("schema eval returned " & SchemeUtils.Stringify(schemaRes))
       END;
