@@ -75,6 +75,7 @@
           (t
            CV = (RouteImport ?libName (GetCastLibName targetCellName)
                              ?cellName targetCellName ?viewName importView
+                             ?nickname nickname
                              ?gdsFile (strcat WDIR "/" targetCellName ".gds")
                              ?baseCV CV
 			     ?topHalo topHalo
@@ -582,10 +583,10 @@
         (gdsFile nil)
         (colorize t) ; run ColorizeByOverlay
         (baseCV nil)
-        (top_name nil)
         (pinMap nil)
         (calibreOffset t)
 	(topHalo t)
+        (nickname nil)           ; rename top cell in Proteus
         )
   (let (TEMP WDIR Command status ImportCV layoutCV floorplanCV
              win instmap CID fields offset file origFile oas rename)
@@ -598,9 +599,9 @@
     (unless baseCV baseCV=(dbOpenCellViewByType libName cellName "floorplan"))
 
     ; map to gds cellname
-    (unless top_name
+    (unless nickname
       CID = (NameStartRename "cell" "cadence" "gds2")
-      top_name = (NameDoRename CID cellName)
+      nickname = (NameDoRename CID cellName)
       (NameStopRename CID)
       )
 
@@ -620,7 +621,7 @@
       origFile = file
       file = (sprintf nil "%s/offset_layout_%s.%s"
                           TEMP
-                          top_name
+                          nickname
                           (if oas "oas" "gds"))
       Command = (sprintf nil "offset_layout %f %f %s %s" (car offset)
                                                          (cadr offset)
@@ -631,9 +632,9 @@
 
     ; import cell
     rename = (RouteRemapCellTable)
-    rename[top_name] = cellName
+    rename[nickname] = cellName
     (when oas (error "?oasFile not supported at the moment because ImportOas lacks CopyToNewLib"))
-    ImportCV = (ImportGDS file libName top_name ?prefix "" ?suffix "" ?action nil ?recurse nil
+    ImportCV = (ImportGDS file libName nickname ?prefix "" ?suffix "" ?action nil ?recurse nil
                           ?mapCellName (lambda (cellName) (RouteRemapCellName cellName)))
     (unless ImportCV (error "Unsuccessful import\n"))
 
