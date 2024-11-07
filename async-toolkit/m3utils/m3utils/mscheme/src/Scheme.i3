@@ -122,6 +122,9 @@ TYPE
 
     copy() : T;
     (* deep copy *)
+
+    initCopy(t : T);
+    (* used to implement copy() -- implementers should provide this *)
   END;
 
 TYPE Interrupter = OBJECT METHODS interrupt() : BOOLEAN; END;

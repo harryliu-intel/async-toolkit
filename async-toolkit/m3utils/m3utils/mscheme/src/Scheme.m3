@@ -71,17 +71,26 @@ REVEAL
     attemptToMapRuntimeErrors := AttemptToMapRuntimeErrors;
     setRTErrorMapping := SetRTErrorMapping;
     copy              := Copy;
+    initCopy          := InitCopy;
   END;
 
 PROCEDURE Copy(t : T) : T =
   BEGIN
-    WITH wr = TextWr.New() DO
-      Pickle.Write(wr, t);
-      WITH rd = NEW(TextRd.T).init(TextWr.ToText(wr)) DO
-        RETURN Pickle.Read(rd)
-      END
+    WITH res = NEW(T) DO
+      res.initCopy(t);
+      RETURN res
     END
   END Copy;
+
+PROCEDURE InitCopy(t : T; new : T) =
+  BEGIN
+    new.input := t.input;
+    new.output := t.output;
+    new.globalEnvironment := t.globalEnvironment.copy();
+    new.interrupter := t.interrupter;
+    new.prims := t.prims;
+    new.mapRTErrors := t.mapRTErrors;
+  END InitCopy;
   
 PROCEDURE AttemptToMapRuntimeErrors(scm : T) : BOOLEAN = 
   BEGIN RETURN scm.mapRTErrors END AttemptToMapRuntimeErrors;

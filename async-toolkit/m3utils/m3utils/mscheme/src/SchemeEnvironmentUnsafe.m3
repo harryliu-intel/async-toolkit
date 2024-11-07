@@ -19,8 +19,22 @@ REVEAL
     get           := UnsafeGet;
     getLocalNames := GetLocalNames;
     bind          := GetBinding;
+    copy          := Copy;
+    initCopy      := InitCopy;
   END;
+  
+PROCEDURE Copy(t : T) : T =
+  BEGIN
+    WITH res = NEW(T) DO
+      res.initCopy(t);
+      RETURN res
+    END
+  END Copy;
 
+PROCEDURE InitCopy(t : T; new : T) =
+  BEGIN
+  END InitCopy;
+  
 PROCEDURE InitEmptyUnsafe(t : Unsafe; parent : T) : Instance =
   BEGIN 
     t.dictionary := NIL;
