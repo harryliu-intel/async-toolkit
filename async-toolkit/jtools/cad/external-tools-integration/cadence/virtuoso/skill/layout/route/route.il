@@ -399,7 +399,7 @@
     )
   )
 
-; write proteus.config
+; write proteus.config and import.il
 (defun ProteusConfig
   (@key (CV (geGetEditCellView)) ; specify CellView or use edit view
         (botMetal 0)             ; bottom metal layer
@@ -433,7 +433,7 @@
     SPEC_DIR  = (ConfigFileGetValue TheCDSConfigTable "SPEC_DIR")
     DFII_DIR  = (ConfigFileGetValue TheCDSConfigTable "DFII_DIR")
     SPAR_DIR  = (ConfigFileGetValue TheCDSConfigTable "SPAR_DIR")
-    VERI_DIR  = (ConfigFileGetValue TheCDSConfigTable "VERI_DIR") 
+    VERI_DIR  = (ConfigFileGetValue TheCDSConfigTable "VERI_DIR")
     P4CLIENT  = (ConfigFileGetValue TheCDSConfigTable "P4CLIENT")
     TEMP      = (ConfigFileGetValue TheCDSConfigTable "TEMP")
     WDIR      = (strcat TEMP "/route/" CV->cellName)
@@ -492,6 +492,16 @@
            (fprintf file "--task=route\n"))
           )
     (when proteusArgs (fprintf file proteusArgs))
+    (close file)
+
+    ; write import script suitable for virtuoso_replay
+    file = (outfile (sprintf nil "%s/%s.il" WDIR (if nickname nickname "import")))
+    (fprintf file "(RouteImport\n")
+    (fprintf file "  ?baseCV (ReadCV \"%s\" \"%s\" \"floorplan\")\n" CV->libName CV->cellName)
+    (fprintf file "  ?CV     (ReadCV \"%s\" \"%s\" \"layout\")\n" CV->libName targetCellName)
+    (fprintf file "  ?gdsFile \"%s/%s.gds\"\n" WDIR CV->cellName)
+    (when nickname (fprintf file "  ?nickname \"%s\"\n" nickname))
+    (fprintf file ")\n")
     (close file)
     )
   )
@@ -874,7 +884,6 @@ DumbLayers = (list (list "SRAM" "fill")
 (defun CheckPinsForExport (@key (CV (geGetEditCellView)) (include_supply nil) )
   (let ((status t) CellTerms)
     status = (setof fig CV->shapes fig->layerName=="mc0")==nil
-    
     CellTerms = (setof x CV->terminals include_supply || (member x->name PowerGroundNets)==nil)
     (foreach Term CellTerms
       ;(printf "checking pin for %s\n" Term->name)
