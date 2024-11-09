@@ -8,10 +8,13 @@ FROM Scheme IMPORT Object, Symbol, E;
 IMPORT AtomList;
 FROM SchemeUtils IMPORT Warn, StringifyT, Error, Stringify;
 IMPORT SchemeEnvironmentBinding;
+IMPORT Atom;
 
 TYPE Binding = SchemeEnvironmentBinding.T;
-
+     
 REVEAL
+  Instance <: SchemeEnvironmentInstanceRep.Rep;
+  
   Unsafe = Instance BRANDED Brand & " Unsafe" OBJECT OVERRIDES
     init          := Init;
     initEmpty     := InitEmptyUnsafe;
@@ -23,16 +26,35 @@ REVEAL
     initCopy      := InitCopy;
   END;
   
-PROCEDURE Copy(t : T) : T =
+PROCEDURE Copy(t : Unsafe) : T =
   BEGIN
-    WITH res = NEW(T) DO
+    WITH res = NEW(Unsafe) DO
       res.initCopy(t);
       RETURN res
     END
   END Copy;
 
-PROCEDURE InitCopy(t : T; new : T) =
+PROCEDURE CopyDictionary(dict : AtomRefTbl.T) : AtomRefTbl.T =
+  VAR
+    res := NEW(AtomRefTbl.Default).init();
+    k : Atom.T;
+    v : REFANY;
+    iter := dict.iterate();
   BEGIN
+    WHILE iter.next(k,v) DO
+      EVAL res.put(k,v)
+    END;
+    RETURN res
+  END CopyDictionary;
+  
+PROCEDURE InitCopy(t : Unsafe; newA : T) =
+  VAR
+    new : Unsafe := newA;
+  BEGIN
+    new.dictionary := CopyDictionary(t.dictionary);
+    new.quick      := t.quick;
+    new.parent     := t.parent;
+    new.dead       := t.dead
   END InitCopy;
   
 PROCEDURE InitEmptyUnsafe(t : Unsafe; parent : T) : Instance =

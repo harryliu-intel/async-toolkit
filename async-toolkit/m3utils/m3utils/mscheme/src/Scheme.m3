@@ -25,8 +25,6 @@ IMPORT SchemeProfiler;
 IMPORT SchemeUnixDeps;
 IMPORT SchemeEnvironmentBinding;
 
-IMPORT Pickle, TextWr;
-
 TYPE Binding = SchemeEnvironmentBinding.T;
 
 TYPE Pair = SchemePair.T;
@@ -84,12 +82,12 @@ PROCEDURE Copy(t : T) : T =
 
 PROCEDURE InitCopy(t : T; new : T) =
   BEGIN
-    new.input := t.input;
-    new.output := t.output;
+    new.input             := t.input;
+    new.output            := t.output;
     new.globalEnvironment := t.globalEnvironment.copy();
-    new.interrupter := t.interrupter;
-    new.prims := t.prims;
-    new.mapRTErrors := t.mapRTErrors;
+    new.interrupter       := t.interrupter;
+    new.prims             := t.prims;
+    new.mapRTErrors       := t.mapRTErrors;
   END InitCopy;
   
 PROCEDURE AttemptToMapRuntimeErrors(scm : T) : BOOLEAN = 

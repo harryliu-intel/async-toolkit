@@ -33,12 +33,32 @@ IMPORT SchemeCommandRunner;
 
 REVEAL
   T = Public BRANDED Brand OBJECT
-    jailBreak : SchemeJailBreak.T := NIL;
+    jailBreak  : SchemeJailBreak.T := NIL;
     m3TableOps : SchemeM3TableOps.T := NIL;
   OVERRIDES
-    init := Init;
+    init              := Init;
     setTableOps       :=  SetTableOps;
+    copy              := Copy;
+    initCopy          := InitCopy;
   END;
+
+PROCEDURE Copy(t : T) : Scheme.T =
+  BEGIN
+    WITH res = NEW(T) DO
+      res.initCopy(t);
+      RETURN res
+    END
+  END Copy;
+
+PROCEDURE InitCopy(t : T; newA : Scheme.T) =
+  VAR
+    new : T := newA;
+  BEGIN
+    Scheme.T.initCopy(t, new);
+    new.jailBreak := t.jailBreak;
+    new.m3TableOps := t.m3TableOps;
+  END InitCopy;
+
 
 PROCEDURE SetTableOps(t : T; to : SchemeM3TableOps.T) =
   BEGIN t.m3TableOps := to END SetTableOps;
