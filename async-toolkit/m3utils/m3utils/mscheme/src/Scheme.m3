@@ -36,10 +36,10 @@ CONST ProfileProcedures = TRUE;
 REVEAL
   T = SchemeClass.Private BRANDED Brand OBJECT
     globalEnvironment : SchemeEnvironment.T;
-    interrupter : Interrupter := NIL;
-    prims : SchemePrimitive.Definer := NIL;
+    interrupter       : Interrupter := NIL;
+    prims             : SchemePrimitive.Definer := NIL;
 
-    mapRTErrors := TRUE;
+    mapRTErrors                                 := TRUE;
 
   METHODS
     readInitialFiles(READONLY files : ARRAY OF Pathname.T) RAISES { E } := ReadInitialFiles;
@@ -74,9 +74,9 @@ REVEAL
 
 PROCEDURE Copy(t : T) : T =
   BEGIN
-    WITH res = NEW(T) DO
-      res.initCopy(t);
-      RETURN res
+    WITH new = NEW(T) DO
+      t.initCopy(new);
+      RETURN new
     END
   END Copy;
 
@@ -84,7 +84,11 @@ PROCEDURE InitCopy(t : T; new : T) =
   BEGIN
     new.input             := t.input;
     new.output            := t.output;
-    new.globalEnvironment := t.globalEnvironment.copy();
+    IF t.globalEnvironment = NIL THEN
+      new.globalEnvironment := NIL
+    ELSE
+      new.globalEnvironment := t.globalEnvironment.copy()
+    END;
     new.interrupter       := t.interrupter;
     new.prims             := t.prims;
     new.mapRTErrors       := t.mapRTErrors;
@@ -436,9 +440,9 @@ PROCEDURE EvalInternal(t   : T;
 
     savedEnv : SchemeEnvironment.Instance := NIL;
   BEGIN
+    <*ASSERT env # NIL*>
     LOOP
       IF DebugLevel >= 20 THEN Debug.Out("EVAL: " & Stringify(x)) END;
-
 
       IF t.interrupter # NIL AND t.interrupter.interrupt() THEN
         RAISE E("Command interrupted")

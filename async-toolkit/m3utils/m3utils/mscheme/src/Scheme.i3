@@ -120,10 +120,13 @@ TYPE
     setRTErrorMapping(to : BOOLEAN);
     (* set the above (default TRUE) *)
 
-    copy() : T;
+
+    (* XXX I don't think the copy() routines will work because they 
+           mess up existing closures!!!! *)
+    copy() : T; (* XXX *)
     (* deep copy *)
 
-    initCopy(t : T);
+    initCopy(t : T); (* XXX *)
     (* used to implement copy() -- implementers should provide this *)
   END;
 

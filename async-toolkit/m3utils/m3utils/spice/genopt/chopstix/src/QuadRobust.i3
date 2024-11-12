@@ -79,4 +79,6 @@ PROCEDURE OptInit();
 
 PROCEDURE GetOptVars() : ModelVarSeq.T;
 
+VAR schemeMu : MUTEX;
+
 END QuadRobust.

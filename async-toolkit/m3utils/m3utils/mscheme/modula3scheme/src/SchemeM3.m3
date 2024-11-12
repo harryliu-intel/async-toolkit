@@ -37,16 +37,16 @@ REVEAL
     m3TableOps : SchemeM3TableOps.T := NIL;
   OVERRIDES
     init              := Init;
-    setTableOps       :=  SetTableOps;
+    setTableOps       := SetTableOps;
     copy              := Copy;
     initCopy          := InitCopy;
   END;
 
 PROCEDURE Copy(t : T) : Scheme.T =
   BEGIN
-    WITH res = NEW(T) DO
-      res.initCopy(t);
-      RETURN res
+    WITH new = NEW(T) DO
+      t.initCopy(new);
+      RETURN new
     END
   END Copy;
 
@@ -58,7 +58,6 @@ PROCEDURE InitCopy(t : T; newA : Scheme.T) =
     new.jailBreak := t.jailBreak;
     new.m3TableOps := t.m3TableOps;
   END InitCopy;
-
 
 PROCEDURE SetTableOps(t : T; to : SchemeM3TableOps.T) =
   BEGIN t.m3TableOps := to END SetTableOps;

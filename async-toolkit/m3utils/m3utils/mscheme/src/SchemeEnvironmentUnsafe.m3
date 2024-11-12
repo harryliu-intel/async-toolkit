@@ -9,6 +9,8 @@ IMPORT AtomList;
 FROM SchemeUtils IMPORT Warn, StringifyT, Error, Stringify;
 IMPORT SchemeEnvironmentBinding;
 IMPORT Atom;
+IMPORT Debug;
+FROM Fmt IMPORT F, Int;
 
 TYPE Binding = SchemeEnvironmentBinding.T;
      
@@ -28,9 +30,9 @@ REVEAL
   
 PROCEDURE Copy(t : Unsafe) : T =
   BEGIN
-    WITH res = NEW(Unsafe) DO
-      res.initCopy(t);
-      RETURN res
+    WITH new = NEW(Unsafe) DO
+      t.initCopy(new);
+      RETURN new
     END
   END Copy;
 
@@ -46,13 +48,36 @@ PROCEDURE CopyDictionary(dict : AtomRefTbl.T) : AtomRefTbl.T =
     END;
     RETURN res
   END CopyDictionary;
+
+PROCEDURE QuickN(t : Unsafe) : CARDINAL =
+  VAR
+    res : CARDINAL := 0;
+  BEGIN
+    FOR i := FIRST(t.quick) TO LAST(t.quick) DO
+      IF t.quick[i].var # NIL THEN
+        INC(res)
+      END
+    END;
+    RETURN res
+  END QuickN;
   
 PROCEDURE InitCopy(t : Unsafe; newA : T) =
   VAR
     new : Unsafe := newA;
   BEGIN
-    new.dictionary := CopyDictionary(t.dictionary);
+    IF t.dictionary = NIL THEN
+      Debug.Out("SchemeEnvironmentUnsafe.InitCopy : t.dictionary = NIL");
+      new.dictionary := NIL
+    ELSE
+      new.dictionary := CopyDictionary(t.dictionary);
+
+      Debug.Out(F("SchemeEnvironmentUnsafe.InitCopy : t.dictionary.size() = %s ; new.dictionary.size() = %s",
+                  Int(t.dictionary.size()), Int(new.dictionary.size())));
+
+    END;
     new.quick      := t.quick;
+    Debug.Out(F("SchemeEnvironmentUnsafe.InitCopy : t.quick = %s ; new.quick = %s", Int(QuickN(t)), Int(QuickN(new))));
+
     new.parent     := t.parent;
     new.dead       := t.dead
   END InitCopy;

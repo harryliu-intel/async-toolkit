@@ -67,6 +67,7 @@ IMPORT SymbolLRTbl;
 IMPORT StatObject;
 IMPORT LRScalarField;
 IMPORT LineMinimizer;
+FROM QuadRobust IMPORT schemeMu;
 
 <*FATAL Thread.Alerted*>
 
@@ -325,6 +326,7 @@ PROCEDURE AttemptEval(base                 : Evaluator;
       END;
       
       (* read the schema *)
+      LOCK schemeMu DO
       WITH dataPath  = subdirPath & "/" & schemaDataFn,
            schemaRes = SchemaReadResult(schemaPath,
                                         dataPath,
@@ -337,6 +339,7 @@ PROCEDURE AttemptEval(base                 : Evaluator;
           Debug.Out("Schema-processed result : " & FmtLRVectorSeq(schemaRes))
         END;
         RETURN schemaRes
+      END
       END
     END RunCommand;
 
@@ -833,18 +836,29 @@ TYPE
 PROCEDURE SGCNext(cb : SGCallback) =
   BEGIN
     TRY
-    WITH scmCode = SchemeUtils.List3(
-                       T2S("eval-in-env"),
-                       L2S(0.0d0),
-                       SchemeUtils.List2(T2S("quote"), MakeMultiEval())),
-         (* do we need to copy() the Scheme here? -- seems we don't 
-            actually modify it? *)
-         schemaRes = cb.schemaScm.copy().evalInGlobalEnv(scmCode) DO
-      IF doDebug THEN
-        Debug.Out("schema eval returned " & SchemeUtils.Stringify(schemaRes))
+      WITH e = NARROW(cb.schemaScm.getGlobalEnvironment(), SchemeEnvironment.T) DO
+        <*ASSERT e # NIL*>
+        <*ASSERT e.lookup(T2S("eval-in-env")) # NIL *>
       END;
-      cb.results.addhi( LRVectorFromO(schemaRes) )
-    END
+      WITH scmCode = SchemeUtils.List3(
+                         T2S("eval-in-env"),
+                         L2S(0.0d0),
+                         SchemeUtils.List2(T2S("quote"), MakeMultiEval())),
+           (* do we need to copy() the Scheme here? -- seems we don't 
+              actually modify it? *)
+           scm = cb.schemaScm,
+           ee  = NARROW(scm.getGlobalEnvironment(), SchemeEnvironment.T) DO
+
+        <*ASSERT ee # NIL*>
+        <*ASSERT ee.lookup(T2S("eval-in-env")) # NIL *>
+       
+        WITH schemaRes = scm.evalInGlobalEnv(scmCode) DO
+          IF doDebug THEN
+            Debug.Out("schema eval returned " & SchemeUtils.Stringify(schemaRes))
+          END;
+          cb.results.addhi( LRVectorFromO(schemaRes) )
+        END
+      END
     EXCEPT
       Scheme.E(err) =>
       Debug.Error("SGCNext : caught Scheme.E : " & err)

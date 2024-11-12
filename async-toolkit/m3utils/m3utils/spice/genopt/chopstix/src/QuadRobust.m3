@@ -64,6 +64,7 @@ IMPORT Scheme;
 IMPORT SchemeUtils;
 IMPORT SchemeLongReal;
 IMPORT StatObject;
+IMPORT SchemeEnvironment;
 
 CONST LR  = LongReal;
       T2S = SchemeSymbol.FromText;
@@ -542,11 +543,19 @@ PROCEDURE SchemeFinish(resS    : MultiEvalLRVector.Result;
       END;
 
       <*ASSERT resS.extra # NIL*>
+      LOCK schemeMu DO
       WITH scm = NARROW(resS.extra,Scheme.T),
            e = SchemeUtils.List3(T2S("eval-in-env"),
                                  L2S(0.0d0),
-                                 SchemeUtils.List2(T2S("quote"), toEval)) DO
+                                 SchemeUtils.List2(T2S("quote"), toEval)),
+           ee = NARROW(scm.getGlobalEnvironment(), SchemeEnvironment.T) DO
         scm.bind(T2S("*the-stat-object*"), pso);
+        <*ASSERT ee.lookup(T2S("*the-stat-object*")) # NIL *>
+
+        WITH blah = scm.evalInGlobalEnv(T2S("*the-stat-object*")) DO
+          Debug.Out("SchemeFinish : blah = " & SchemeUtils.Stringify(blah));
+        END;
+        
         Debug.Out("SchemeFinish : toEval = " & SchemeUtils.Stringify(e));
 
         TRY
@@ -559,6 +568,7 @@ PROCEDURE SchemeFinish(resS    : MultiEvalLRVector.Result;
           Debug.Error(F("EXCEPTION! SchemeFinish : Scheme.E \"%s\" when evaluating toEval", x));
           <*ASSERT FALSE*>
         END
+      END
       END
     END
   END SchemeFinish;
@@ -983,5 +993,6 @@ PROCEDURE OptInit() =
 PROCEDURE GetOptVars() : ModelVarSeq.T = BEGIN RETURN optvars END GetOptVars;
   
 BEGIN
+  schemeMu := NEW(MUTEX);
   OptInit()
 END QuadRobust.
