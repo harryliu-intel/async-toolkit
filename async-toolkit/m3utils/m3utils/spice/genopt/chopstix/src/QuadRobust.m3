@@ -65,6 +65,7 @@ IMPORT SchemeUtils;
 IMPORT SchemeLongReal;
 IMPORT StatObject;
 IMPORT SchemeEnvironment;
+IMPORT LRVectorLRTbl;
 
 CONST LR  = LongReal;
       T2S = SchemeSymbol.FromText;
@@ -130,12 +131,14 @@ TYPE
     base    : MultiEvalLRVector.T;
     samples : CARDINAL;
     values  : LRVectorMRVTbl.T;
+    fvalues : LRVectorLRTbl.T;
     thisCyc : LRVectorSet.T;
     toEval  : SchemeObject.T;
   METHODS
     init(func    : MultiEvalLRVector.T;
          samples : CARDINAL;
          values  : LRVectorMRVTbl.T;
+         fvalues : LRVectorLRTbl.T;
          toEval  : SchemeObject.T;
          thisCyc : LRVectorSet.T       ) : MultiEvaluator := InitME;
   OVERRIDES
@@ -219,6 +222,7 @@ PROCEDURE MEEval(me      : MultiEvaluator;
       END
     ELSIF haveOld THEN
       (* use the old data if it's got more samples *)
+      (* is this really right? *)
       <*ASSERT oldres.nominal # Poison*>
       IF oldres.n > res.n THEN
         res := oldres;
@@ -250,22 +254,37 @@ PROCEDURE MEEval(me      : MultiEvaluator;
           Debug.Out(F("QuadRobust.MEEval : reval=%s",
                       LR(retval)))
         END;
+
+        (* at this point, I think retval contains THE MOST UP-TO-DATE 
+           estimate of the function value at the point p *)
+
+        (* so store it *)
+
+        LOCK valueMu DO
+          EVAL me.fvalues.put(p, retval)
+        END;
+        
         RETURN retval
       END
     END
   END MEEval;
 
-PROCEDURE ResMetric(READONLY r : MultiEvalLRVector.Result) : LONGREAL =
+PROCEDURE ResMetric(q : LRVector.T; fvalues : LRVectorLRTbl.T) : LONGREAL =
   (* metric as observed from direct observations *)
+  VAR
+    f : LONGREAL;
+    haveIt := fvalues.get(q, f);
   BEGIN
     (* FILL THIS IN *)
-    RETURN 0.0d0
+    <*ASSERT haveIt*>
+    RETURN f
   END ResMetric;
   
 PROCEDURE InitME(self    : MultiEvaluator;
                  func    : MultiEvalLRVector.T;
                  samples : CARDINAL;
                  values  : LRVectorMRVTbl.T;
+                 fvalues : LRVectorLRTbl.T;
                  toEval  : SchemeObject.T;
                  thisCyc : LRVectorSet.T) : MultiEvaluator =
   BEGIN
@@ -273,6 +292,7 @@ PROCEDURE InitME(self    : MultiEvaluator;
     self.base           := func;
     self.samples        := samples;
     self.values         := values;
+    self.fvalues        := fvalues;
     self.toEval         := toEval;
     self.thisCyc        := thisCyc;
     RETURN self
@@ -300,6 +320,7 @@ PROCEDURE Vdist(a, b : LRVector.T) : LONGREAL =
 
 PROCEDURE DoLeaderBoard(READONLY pr   : PointResult.T; (* current [old] point *)
                         values        : LRVectorMRVTbl.T;
+                        fvalues       : LRVectorLRTbl.T;
                         newpts(*OUT*) : LRVectorSet.T) : PointResult.T =
   VAR
     parr := NEW(REF ARRAY OF PointMetric.T, values.size());
@@ -314,7 +335,7 @@ PROCEDURE DoLeaderBoard(READONLY pr   : PointResult.T; (* current [old] point *)
     Debug.Out("**** values.size() = " & Int(values.size()));
 
     WHILE iter.next(q, r) DO
-      WITH metric = ResMetric(r) DO
+      WITH metric = ResMetric(q, fvalues) DO
         IF i > LAST(parr^) THEN
           Debug.Warning(F("i [%s] > LAST(parr^) [%s]",
                           Int(i), Int(LAST(parr^))))
@@ -544,31 +565,31 @@ PROCEDURE SchemeFinish(resS    : MultiEvalLRVector.Result;
 
       <*ASSERT resS.extra # NIL*>
       LOCK schemeMu DO
-      WITH scm = NARROW(resS.extra,Scheme.T),
-           e = SchemeUtils.List3(T2S("eval-in-env"),
-                                 L2S(0.0d0),
-                                 SchemeUtils.List2(T2S("quote"), toEval)),
-           ee = NARROW(scm.getGlobalEnvironment(), SchemeEnvironment.T) DO
-        scm.bind(T2S("*the-stat-object*"), pso);
-        <*ASSERT ee.lookup(T2S("*the-stat-object*")) # NIL *>
+        WITH scm = NARROW(resS.extra,Scheme.T),
+             e = SchemeUtils.List3(T2S("eval-in-env"),
+                                   L2S(0.0d0),
+                                   SchemeUtils.List2(T2S("quote"), toEval)),
+             ee = NARROW(scm.getGlobalEnvironment(), SchemeEnvironment.T) DO
+          scm.bind(T2S("*the-stat-object*"), pso);
+          <*ASSERT ee.lookup(T2S("*the-stat-object*")) # NIL *>
 
-        WITH blah = scm.evalInGlobalEnv(T2S("*the-stat-object*")) DO
-          Debug.Out("SchemeFinish : blah = " & SchemeUtils.Stringify(blah));
-        END;
-        
-        Debug.Out("SchemeFinish : toEval = " & SchemeUtils.Stringify(e));
+          WITH blah = scm.evalInGlobalEnv(T2S("*the-stat-object*")) DO
+            Debug.Out("SchemeFinish : blah = " & SchemeUtils.Stringify(blah));
+          END;
+          
+          Debug.Out("SchemeFinish : toEval = " & SchemeUtils.Stringify(e));
 
-        TRY
-          WITH res = scm.evalInGlobalEnv(e) DO
-            Debug.Out("SchemeFinish : final res = " & SchemeUtils.Stringify(res));
-            RETURN SchemeLongReal.FromO(res)
+          TRY
+            WITH res = scm.evalInGlobalEnv(e) DO
+              Debug.Out("SchemeFinish : final res = " & SchemeUtils.Stringify(res));
+              RETURN SchemeLongReal.FromO(res)
+            END
+          EXCEPT
+            Scheme.E(x) =>
+            Debug.Error(F("EXCEPTION! SchemeFinish : Scheme.E \"%s\" when evaluating toEval", x));
+            <*ASSERT FALSE*>
           END
-        EXCEPT
-          Scheme.E(x) =>
-          Debug.Error(F("EXCEPTION! SchemeFinish : Scheme.E \"%s\" when evaluating toEval", x));
-          <*ASSERT FALSE*>
         END
-      END
       END
     END
   END SchemeFinish;
@@ -650,7 +671,10 @@ PROCEDURE Minimize(pa             : LRVector.T;
 
     message  : TEXT;
     thisCyc  : LRVectorSet.T;
+
     values   := NEW(LRVectorMRVTbl.Default).init();
+    fvalues  := NEW(LRVectorLRTbl.Default).init();
+    
     peSeq    := NEW(PointEvaluatorSeq.T).init();
 
     newPts   := NEW(LRVectorSetDef.T).init(); (* interesting points to eval *)
@@ -715,6 +739,7 @@ PROCEDURE Minimize(pa             : LRVector.T;
                ff = NEW(MultiEvaluator).init(func,
                                              2 * samples,
                                              values,
+                                             fvalues,
                                              toEval,
                                              thisCyc) DO
             pe.start(q, ff);
@@ -736,7 +761,7 @@ PROCEDURE Minimize(pa             : LRVector.T;
       FOR i := FIRST(da^) TO LAST(da^) DO
         
         pp[i] := LRVector.Copy(pr.p);
-        WITH ff = NEW(MultiEvaluator).init(func, samples, values, toEval, thisCyc) DO
+        WITH ff = NEW(MultiEvaluator).init(func, samples, values, fvalues, toEval, thisCyc) DO
           lm[i].start(pp[i],
                       LRVector.Copy(da[i]),
                       ff,
@@ -744,8 +769,8 @@ PROCEDURE Minimize(pa             : LRVector.T;
         END
       END;
       
-      IF FALSE THEN
-        Debug.Out("Robust.m3 : running = " & Int(LineMinimizer.Running())) 
+      IF doDebug THEN
+        Debug.Out("QuadRobust.m3 : running = " & Int(LineMinimizer.Running())) 
       END;
 
       Debug.Out("QuadRobust : Waiting for points to evaluate ... ");
@@ -783,7 +808,7 @@ PROCEDURE Minimize(pa             : LRVector.T;
       BEGIN
         Debug.Out("About to call DoLeaderBoard.  values.size() = " & Int(values.size()));
         LOCK valueMu DO
-          WITH bestq = DoLeaderBoard(pr, values, newPts) DO
+          WITH bestq = DoLeaderBoard(pr, values, fvalues, newPts) DO
             newp := bestq
           END
         END;
