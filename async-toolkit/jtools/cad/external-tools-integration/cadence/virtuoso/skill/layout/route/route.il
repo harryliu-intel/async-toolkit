@@ -498,7 +498,8 @@
     file = (outfile (sprintf nil "%s/%s.il" WDIR (if nickname nickname "import")))
     (fprintf file "(RouteImport\n")
     (fprintf file "  ?baseCV (ReadCV \"%s\" \"%s\" \"floorplan\")\n" CV->libName CV->cellName)
-    (fprintf file "  ?CV     (ReadCV \"%s\" \"%s\" \"layout\")\n" CV->libName targetCellName)
+    (fprintf file "  ?CV     (ReadCV \"%s\" \"%s\" \"layout\")\n"
+             CV->libName (if targetCellName targetCellName CV->cellName))
     (fprintf file "  ?gdsFile \"../%s.gds\"\n" CV->cellName)
     (when nickname (fprintf file "  ?nickname \"%s\"\n" nickname))
     (fprintf file ")\n")
