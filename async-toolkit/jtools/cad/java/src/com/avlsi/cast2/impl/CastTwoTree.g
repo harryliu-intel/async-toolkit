@@ -37,6 +37,8 @@ header {
     import java.math.BigDecimal;
     import java.math.BigInteger;
     import java.util.*;
+    import java.util.stream.Collectors;
+    import java.util.stream.IntStream;
     import com.avlsi.cast.impl.AmbiguousLookupException;
     import com.avlsi.cast.impl.AlintFaninValue;
     import com.avlsi.cast.impl.ArrayValue;
@@ -1729,9 +1731,18 @@ options {
                     for (int i = 0; i < nVals; ++i) {
                         final int[] idx = spec.indexOf(i);
                         final Value v = av.accessArray(idx);
-                        stmt.addStatement
-                            (new AssignmentStatement
-                                (makeArrayLHS(name, idx), makeCSPValue(v)));
+                        try {
+                            stmt.addStatement
+                                (new AssignmentStatement
+                                    (makeArrayLHS(name, idx), makeCSPValue(v)));
+                        } catch (InvalidOperationException e) {
+                            throw new InvalidOperationException(
+                                IntStream.of(idx)
+                                         .mapToObj(Integer::toString)
+                                         .collect(Collectors.joining(
+                                                ",", name + "[", "]")),
+                                e);
+                        }
                     }
                 }
             }
