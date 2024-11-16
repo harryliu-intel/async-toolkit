@@ -39,7 +39,7 @@ REVEAL
 VAR
   mu      := NEW(MUTEX);
   running := 0;
-  doDebug := TRUE;
+  doDebug := Debug.DebugThis("LineMinimizer");
 
 PROCEDURE LinMinApply(cl : T) : REFANY =
   (* call out to Brent *)
@@ -51,7 +51,7 @@ PROCEDURE LinMinApply(cl : T) : REFANY =
         END
       END;
 
-      IF FALSE THEN Debug.Out("Robust.m3 : LinMinApply : done FALSE.") END;
+      IF doDebug THEN Debug.Out("LinMinApply : done FALSE.") END;
 
       (* NOT cl.done *)
       IF cl.doQuit THEN
@@ -66,11 +66,16 @@ PROCEDURE LinMinApply(cl : T) : REFANY =
                                     cl.func,
                                     cl.rho,
                                     cl.rho / 10.0d0) DO
-        Debug.Out(F("Line minimization from %s [%s] dir %s : returned %s",
-                    FmtP(startp),
-                    LR(cl.func.eval(startp)),
-                    FmtP(cl.dir),
-                    LR(minval)));
+        
+        IF doDebug THEN
+          Debug.Out(F("LinMinApply minimization from %s [%s] dir %s : returned %s @ %s",
+                      FmtP(startp),
+                      LR(cl.func.eval(startp)),
+                      FmtP(cl.dir),
+                      LR(minval),
+                      FmtP(cl.pp)))
+        END;
+        
         LOCK mu DO
           cl.lps := LineProblem.T { cl.dir, cl.pp, minval };
           cl.done := TRUE;

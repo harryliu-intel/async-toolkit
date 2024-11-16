@@ -374,7 +374,10 @@ PROCEDURE DoLeaderBoard(READONLY pr   : PointResult.T; (* current [old] point *)
       IF NUMBER(parr^) >= dofs THEN
         Debug.Out(F("DoLeaderBoard: enough points (%s >= %s) to attempt a surface fit.", Int(NUMBER(parr^)), Int(dofs)));
         TRY
-          RETURN pr (* junk *)
+          WITH pm = parr[0] DO
+            
+            RETURN PointResult.T { pm.p, pm.metric, FALSE, rho }
+          END
         EXCEPT
           Matrix.Singular =>
           Debug.Warning("AttemptSurfaceFit raised Matrix.Singular!")

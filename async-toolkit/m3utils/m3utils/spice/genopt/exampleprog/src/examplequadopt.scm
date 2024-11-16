@@ -63,7 +63,7 @@
 
 (def-compute-command
   '(string-append *cmd-path*
-                  " -quadstats "
+;;                  " -quadstats "
                   " -method " 3
                   " -vdd "    vdd
                   " -temp "   temp
@@ -94,6 +94,8 @@
 ;; the function to minimize, based on the schema and input
 (def-eval '(* (+ (nom 't1) (mu 't1))
               (+ (nom 't0) (mu 't0) (* sigmaK (sigma 't0)))))
+
+(def-eval 'result)
 
 ;;(def-eval '(* *secret-value* result))
 

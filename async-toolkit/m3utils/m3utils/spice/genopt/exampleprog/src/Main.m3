@@ -17,21 +17,20 @@ CONST LR = LongReal;
 CONST Usage = "exampleprog usage wrong!";
 
 PROCEDURE MakeNoise() : LONGREAL =
-      VAR
-        err : LONGREAL;
-      BEGIN
-        IF    nominal THEN
-          err := 0.0d0
-        ELSIF quadstats THEN
-          err := NormalDeviate.Get(rand, vdd * vdd + mean, delp * delp + sdev)
-        ELSIF varstats THEN
-          err := NormalDeviate.Get(rand, vdd + mean, delp + sdev)
-        ELSE
-          err := NormalDeviate.Get(rand, mean, sdev)
-        END;
-        RETURN err
-      END MakeNoise;
-    
+  VAR
+    err : LONGREAL;
+  BEGIN
+    IF    nominal THEN
+      err := 0.0d0
+    ELSIF quadstats THEN
+      err := NormalDeviate.Get(rand, vdd * vdd + mean, delp * delp + sdev)
+    ELSIF varstats THEN
+      err := NormalDeviate.Get(rand, vdd + mean, delp + sdev)
+    ELSE
+      err := NormalDeviate.Get(rand, mean, sdev)
+    END;
+    RETURN err
+  END MakeNoise;
   
 VAR
   pp                          := NEW(ParseParams.T).init(Stdio.stderr);
@@ -49,6 +48,7 @@ VAR
   varstats : BOOLEAN;
   quadstats : BOOLEAN;
   t := ARRAY [0..2] OF LONGREAL { 0.0d0, .. };
+  q := t;
 BEGIN
   TRY
     nominal := pp.keywordPresent("-nominal");
@@ -122,7 +122,7 @@ BEGIN
     END
   |
     3 =>
-    t[0] := vdd * vdd; t[1] := delp * delp; t[1] :=  deln * deln
+    t[0] := vdd * vdd; t[1] := delp * delp; t[2] :=  deln * deln
   END;
 
   Debug.Out(F("exampleprog : vdd %s delp %s deln %s ; val %s",
@@ -134,16 +134,16 @@ BEGIN
       (* add some noise! *)
       WITH nf = FLOAT(NUMBER(t), LONGREAL) DO
         FOR i := FIRST(t) TO LAST(t) DO
-          t[i] := t[i] + 1.0d0/nf * MakeNoise()
+          q[i] := t[i] + 1.0d0/nf * MakeNoise()
         END
       END;
       
-      val := t[0] + t[1] + t[2];
+      val := q[0] + q[1] + q[2];
       
       IO.Put(LR(val) & "\n");
       
       Wr.PutText(wr, F("%s,%s,%s,%s\n",
-                       LR(val), LR(t[0]), LR(t[1]), LR(t[2])));
+                       LR(val), LR(q[0]), LR(q[1]), LR(q[2])));
     END;
     Wr.Close(wr)
   END
