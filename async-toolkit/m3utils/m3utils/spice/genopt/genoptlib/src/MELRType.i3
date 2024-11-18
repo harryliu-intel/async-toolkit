@@ -21,5 +21,7 @@ PROCEDURE Abs(READONLY a : T) : T;
 
 CONST Sqrt = Math.sqrt;
       
+PROCEDURE ZeroLT(lim : LONGREAL; READONLY a : T) : T;
+  
 END MELRType.
   

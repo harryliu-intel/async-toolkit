@@ -1,9 +1,13 @@
 GENERIC MODULE MultiEval(Field, Type);
 
 IMPORT LRVector;
-FROM Fmt IMPORT Int, F;
+FROM Fmt IMPORT Int, F, LongReal, FN;
 IMPORT Debug;
 
+TYPE TA = ARRAY OF TEXT;
+     
+CONST LR = LongReal;
+      
 REVEAL
   T = Public BRANDED Brand OBJECT
   OVERRIDES
@@ -68,10 +72,18 @@ PROCEDURE Mean(READONLY a : Result) : Type.T =
 
 PROCEDURE Var(READONLY a : Result) : Type.T =
   BEGIN
+    <*ASSERT a.n # 0*>
     WITH fact   = 1.0d0 / FLOAT(a.n, LONGREAL),
          mean   = Type.ScalarMul(fact, a.sum),
-         meansq = Type.ScalarMul(fact, a.sumsq) DO
-      RETURN Type.Minus(meansq, Type.Times(mean, mean))
+         meansq = Type.ScalarMul(fact, a.sumsq),
+         var    = Type.Minus(meansq, Type.Times(mean, mean)),
+         tvar   = Type.ZeroLT(0.0d0, var) DO
+
+      Debug.Out(FN("MultiEval(%s) : fact %s ; mean %s ; meansq %s : var %s ; tvar %s",
+                  TA { Brand, LR(fact), Type.Format(mean), Type.Format(meansq),
+                  Type.Format(var), Type.Format(tvar) } ));
+      
+      RETURN tvar
     END
   END Var;
 
@@ -79,12 +91,17 @@ PROCEDURE Sdev(READONLY a : Result) : Type.T =
   BEGIN
     IF a.n = 1 THEN
       (* just set the sdev to be 2x the mean *)
-      RETURN Type.ScalarMul(2.0d0, Type.Plus(Type.Abs(Nominal(a)),
-                                             Type.Abs(Mean(a))))
+      WITH res = Type.ScalarMul(2.0d0, Type.Plus(Type.Abs(Nominal(a)),
+                                                 Type.Abs(Mean(a)))) DO
+        Debug.Out(F("Sdev : 2x path : res %s", Type.Format(res)));
+        RETURN res
+      END
     END;
     
-    WITH nf = FLOAT(a.n, LONGREAL) DO
-      RETURN Type.Sqrt(Type.ScalarMul(nf / (nf - 1.0d0), Var(a)))
+    WITH nf  = FLOAT(a.n, LONGREAL),
+         res = Type.Sqrt(Type.ScalarMul(nf / (nf - 1.0d0), Var(a))) DO
+      Debug.Out(F("Sdev : normal path : res %s", Type.Format(res)));
+      RETURN res
     END
   END Sdev;
 

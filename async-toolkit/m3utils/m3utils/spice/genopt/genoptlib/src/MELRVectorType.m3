@@ -66,6 +66,19 @@ PROCEDURE Sqrt(READONLY a : T) : T =
     END;
     RETURN res
   END Sqrt;
-
+  
+PROCEDURE ZeroLT(lim : LONGREAL; READONLY a : T) : T =
+  VAR
+    res := NEW(T, NUMBER(a^));
+  BEGIN
+    FOR i := FIRST(a^) TO LAST(a^) DO
+      IF a[i] < lim THEN
+        res[i] := 0.0d0
+      ELSE
+        res[i] := a[i]
+      END
+    END;
+    RETURN res
+  END ZeroLT;
 
 BEGIN END MELRVectorType.

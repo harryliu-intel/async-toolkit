@@ -21,5 +21,7 @@ PROCEDURE Abs(READONLY a : T) : T;
 
 PROCEDURE Sqrt(READONLY a : T) : T;
 
+PROCEDURE ZeroLT(lim : LONGREAL; READONLY a : T) : T;
+
 END MELRVectorType.
   

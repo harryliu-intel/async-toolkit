@@ -40,10 +40,10 @@ VAR
   val : LONGREAL;
   method : [ 0..3 ] := 1;
   
-  rand := NEW(Random.Default).init();
+  rand  := NEW(Random.Default).init();
   samples : CARDINAL;
-  mean := 1.0d0; (* mean of offset from nominal *)
-  sdev := 1.0d0; (* sdev of offset from nominal *)
+  mean  := 1.0d0; (* mean of offset from nominal *)
+  sdev  := 1.0d0; (* sdev of offset from nominal *)
   nominal : BOOLEAN;
   varstats : BOOLEAN;
   quadstats : BOOLEAN;
@@ -71,7 +71,7 @@ BEGIN
       deln := pp.getNextLongReal()
     END;
     IF pp.keywordPresent("-mean") THEN
-      sdev := pp.getNextLongReal()
+      mean := pp.getNextLongReal()
     END;
     IF pp.keywordPresent("-sdev") THEN
       sdev := pp.getNextLongReal()

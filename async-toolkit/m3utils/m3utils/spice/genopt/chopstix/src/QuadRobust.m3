@@ -243,8 +243,8 @@ PROCEDURE MEEval(me      : MultiEvaluator;
          sdev    = MultiEvalLRVector.Sdev   (res) DO 
       <*ASSERT nominal # Poison*>
       IF doDebug THEN
-        Debug.Out(F("QuadRobust.MEEval : nominal=%s mean=%s sdev=%s",
-                    FmtP(nominal), FmtP(mean), FmtP(sdev)))
+        Debug.Out(F("QuadRobust.MEEval : n=%s, nominal=%s mean=%s sdev=%s",
+                    Int(res.n), FmtP(nominal), FmtP(mean), FmtP(sdev)))
       END;
 
       <*ASSERT res.extra # NIL*>
