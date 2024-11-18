@@ -1,3 +1,5 @@
 run*vt
+allsigmas.out
+vardata.sp*
 run*vt_sigma
 *.[0-9]

@@ -4,6 +4,8 @@ chopstix.out*
 *.cols
 *.acols
 *.opt
+*.rho
 progress.*
 genopt.result
 *.save
+run.out

@@ -1,0 +1,129 @@
+\documentclass{article}
+\usepackage{graphicx}
+\usepackage{epsf}
+
+\usepackage{floatflt}
+\usepackage{fancyhdr}
+\usepackage{array}
+
+\usepackage{sectsty}
+%\allsectionsfont{\mdseries\sffamily}
+\allsectionsfont{\mdseries\sc}
+
+\usepackage{caption}
+\captionsetup{margin=2pc,font=small,labelfont=bf}
+
+%%%%%%%%%%%%%%Mika's figure macro%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\def\listcaption_ins_epsfig#1#2#3#4{
+  \begin{figure}[!tbph!]
+  \bigskip
+  \begin{center}
+  \includegraphics[width=#1]{#2}
+  \end{center}
+  \caption[#4]{#3}\label{fig:#2}
+  \bigskip
+  \end{figure}
+}
+
+\def\ins_epsfig#1#2#3{
+  \begin{figure}[!tbph!]
+  \bigskip
+  \begin{center}
+  \includegraphics[width=#1]{#2}
+  \end{center}
+  \caption{#3}\label{fig:#2}
+  \bigskip
+  \end{figure}
+}
+
+\def\rotins_epsfig_listcaption#1#2#3#4#5{
+  \begin{figure}[!tbph!]
+  \bigskip
+  \begin{center}
+  \includegraphics[angle=#4,width=#1]{#2}
+  \end{center}
+  \caption[#5]{#3}\label{fig:#2}
+  \bigskip
+  \end{figure}
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\oddsidemargin=0.15in
+\evensidemargin=0.15in
+\topmargin=0.2in
+\textwidth=6.2truein
+
+
+\pagestyle{fancy}
+\lhead{\scriptsize\bfseries\sffamily DRAFT---INTEL CONFIDENTIAL---DRAFT}
+\chead{}\rhead{\thepage}
+\lfoot{}\cfoot{}\rfoot{}
+\renewcommand{\headrulewidth}{0pt}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\title{How to Minimize the Total Cost of a Computation}
+\author{Mika Nystr\"om \\ {\tt mika.nystroem@intel.com}}
+%\date{January 22, 2018}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+\parindent=0pt
+\parskip=1.5ex
+
+\arraycolsep=1.4pt\def\arraystretch{1.5}
+
+\begin{abstract}
+Abstract.
+\end{abstract}
+
+\tableofcontents
+\listoffigures
+\listoftables
+
+\section{Introduction}
+
+Consider the following problem.  It is given that we are to start with
+a semiconductor fab, and electricity, and use these materials to
+perform some specific computation.  The computation is of sufficient
+importance that we are willing to design a custom semiconductor device
+for it, and as in almost every design problem, we are confronted with
+numerous design decisions that we must make before the computing equipment
+is ready to enter service.  This report examines the decision process
+that we ought to follow when making these decisions if we are to
+complete our task at minimum total cost.
+
+\section{The Cost of Computing}
+
+As engineers, we are all familiar with the tradeoff between
+performance and power consumption, often expressed in the terms ``good, fast,
+cheap: choose any two.''  In circuit design, we are generally trading off
+speed (frequency $f$) against energy consumption (energy per operation $E$).
+
+Let us for a moment assume that the implementation cost (i.e., silicon
+area, testing cost, packaging cost, etc.) for the alternative
+implementations is the same.  Then it is convenient to plot the
+relationship between a number of designs on a $E-f$ diagram as in
+figure~\ref{fig:ef}.  Generally, the $E-f$ curve for a set of
+alternative implementations of the same computation will slope up to
+the right as in the figure, although we can certainly imagine that a
+number of alternative designs are available as in
+figure~\ref{fig:nonpareto}, but in that case we observe that any
+design $A$ up and to the left of another design $B$ strictly dominates
+$B$, because $A$ is both producing the results faster and at lower
+energy cost.  If we are given a discrete set of continuous sets of
+designs (e.g., such as when we make a discrete design decision and after that can vary a physical parameter such as a voltage or
+temperature), we can follow the contour of the set of graphs up and to the left, calling that the {\em Pareto frontier.}
+
+
+
+
+\section{Conclusion}
+
+\begin{thebibliography}{99}
+
+
+\end{thebibliography}
+
+\end{document}
