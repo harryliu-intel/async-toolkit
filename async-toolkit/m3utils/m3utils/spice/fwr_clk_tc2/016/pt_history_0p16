@@ -1,0 +1,73 @@
+     1  echo $env(SSmin)
+     2  report_min_pulse_width -all_violators > /nfs/site/disks/zsc9_fwr_sd_008/mjamatan/fwr/soc/bzm/ww03p2/sta_pt_p16.${corner}.min.rpt
+     3  source ~/fwr/bin/pt_aliases.tcl
+     4  report_min_pulse_width [gp -hier -filter "full_name=~*/eng_clkcheckpin1"] > /nfs/site/disks/zsc9_fwr_sd_008/mjamatan/fwr/soc/bzm/ww03p2/minpw.0p16.eng_clkcheckpin1.${corner}.min.rp
+     5  report_timing -from [get_clock *pll1_eng_clk_div_4] -to [get_clock *_pll1_eng_divclk1] -delay max
+     6  report_timing -from [get_clock *pll1_eng_clk_div_4] -to [get_clock *_pll1_eng_divclk1] -delay max -exceptions all
+     7  RT -delay min -th right_stack_inst/mgtile_inst3/OCTA9_i_octa_wrapper_9/eng_clkcheckpin1 > /nfs/site/disks/zsc9_fwr_sd_008/mjamatan/fwr/soc/bzm/ww03p2/path_minpw_0p16.rpt
+     8  RT -delay min -fall_th right_stack_inst/mgtile_inst3/OCTA9_i_octa_wrapper_9/eng_clkcheckpin1 > /nfs/site/disks/zsc9_fwr_sd_008/mjamatan/fwr/soc/bzm/ww03p2/pathF_minpw_0p16.rpt
+     9  RT -delay min -rise_th right_stack_inst/mgtile_inst3/OCTA9_i_octa_wrapper_9/eng_clkcheckpin1 > /nfs/site/disks/zsc9_fwr_sd_008/mjamatan/fwr/soc/bzm/ww03p2/pathR_minpw_0p16.rpt
+    10  cd spice
+    11  pwd
+    12  RT -delay min -fall_th right_stack_inst/mgtile_inst3/OCTA9_i_octa_wrapper_9/eng_clkcheckpin1 > /pathF_minpw_0p16.rpt
+    13  RT -delay min -fall_th right_stack_inst/mgtile_inst3/OCTA9_i_octa_wrapper_9/eng_clkcheckpin1 > pathF_minpw_0p16.rpt
+    14  RT -delay min -rise_th right_stack_inst/mgtile_inst3/OCTA9_i_octa_wrapper_9/eng_clkcheckpin1 > pathR_minpw_0p16.rpt
+    15  source ~/fwr/bin/pt_aliases.tcl
+    16  ac bzmnotchwrap/bzmnotch/bzmpll_inst0/u_adpllg6_pll/oc_plldivoutclk2
+    17  disconnect_net bzmnotchwrap/bzmnotch/bzmpll_inst0/pll_fast_clk bzmnotchwrap/bzmnotch/bzmpll_inst0/u_adpllg6_pll/oc_plldivoutclk2
+    18  foreach cp [gp -of [gc -hier -filter "ref_name==common_sch_wrapper_top"] -filter "full_name=~ */*eng_clk"] {
+	        insert_buffer $cp i0scbf000aa1n12x5
+	        }
+    19  foreach cp [gp -of [gc -hier -filter "ref_name==tce_top_wrapper"] -filter "full_name=~ */eng_clk"] {
+	        insert_buffer $cp i0scbf000aa1n12x5
+	        }
+    20  foreach_in_collection P  $engclkpins {
+	                set ref [get_att [get_cell -of $P ] ref_name]
+	                if {[regexp {^tce_top_wrapper$} $ref] || [regexp {^common_sch_wrapper_top$} $ref]} {
+	                 set net [get_net  -of $P]
+	                 disconnect $net $P
+	                }
+	         }
+    21  set engclkpins [gp -hier -filter "full_name=~*/*eng_clk"]
+    22  foreach_in_collection P  $engclkpins {
+		                set ref [get_att [get_cell -of $P ] ref_name]
+		                if {[regexp {^tce_top_wrapper$} $ref] || [regexp {^common_sch_wrapper_top$} $ref]} {
+		                 set net [get_net  -of $P]
+		                 disconnect $net $P
+		                }
+		         }
+    23  create_clock -name ENG_CLK -period 1800 -waveform {600 1200}  bzmnotchwrap/bzmnotch/bzmpll_inst0/bzm_clkmux1_ctech_clk_mux/clkout
+    24  update_timing
+    25  create_cell right_stack_inst/mgtile_inst3/my_flop i0sfvn003aa1d03x5
+    26  connect_net right_stack_inst/mgtile_inst3/clk_net_3_rt_mgtile_6_9 right_stack_inst/mgtile_inst3/my_flop/clk
+    27  report_timing -th bzmnotchwrap/bzmnotch/bzmpll_inst0/bzm_clkmux1_ctech_clk_mux/clkout -th right_stack_inst/mgtile_inst3/my_flop/clk > postcut_path_0p16.rpt
+    28  report_timing -th bzmnotchwrap/bzmnotch/bzmpll_inst0/bzm_clkmux1_ctech_clk_mux/clkout -th right_stack_inst/mgtile_inst3/my_flop/clk
+    29  all_fanout -from bzmnotchwrap/bzmnotch/bzmpll_inst0/bzm_clkmux1_ctech_clk_mux/clkout -endpoints_only -flat
+    30  gc -hier -filter "full_name=~*my*flop*"
+    31  gp right_stack_inst/mgtile_inst3/my_flop/*
+    32  all_fanin -to right_stack_inst/mgtile_inst3/my_flop/clk -startpoints_only -flat
+    33  filter_collection [ all_fanout -from bzmnotchwrap/bzmnotch/bzmpll_inst0/bzm_clkmux1_ctech_clk_mux/clkout -endpoints_only -flat] "full_name=~*/clk"
+    34  report_timing -th bzmnotchwrap/bzmnotch/bzmpll_inst0/bzm_clkmux1_ctech_clk_mux/clkout -th right_stack_inst/mgtile_inst3/my_flop/clk -delay min
+    35  ac -leaf [ac bzmnotchwrap/bzmnotch/bzmpll_inst0/bzm_clkmux1_ctech_clk_mux/clkout]
+    36  report_timing -th bzmnotchwrap/bzmnotch/bzmpll_inst0/bzm_clkmux1_ctech_clk_mux/clkout -th bzmnotchwrap/bzmnotch/clock_opt_cts_ctosc_drc_inst_140569/clk -delay min
+    37  report_timing -from bzmnotchwrap/bzmnotch/bzmpll_inst0/bzm_clkmux1_ctech_clk_mux/clkout -th right_stack_inst/mgtile_inst3/my_flop/clk > postcut_path_0p16.rpt
+    38  set path [get_timing_path  -from bzmnotchwrap/bzmnotch/bzmpll_inst0/bzm_clkmux1_ctech_clk_mux/clkout -th right_stack_inst/mgtile_inst3/my_flop/clk]
+    39  pwd
+    40  save_session ./min0p16
+    41  sizeof $path
+    42  set_app_var ps_enable_analysis true
+    43  set simlink_enable_fast_monte_carlo true
+    44  set_app_var timing_keep_waveform_on_points true
+    45  write_spice_deck  $path   -output mypath.0p16.spo -header header.sp  -sub_circuit_file tc2.sp
+    46  save_session ./min0p16
+    47  help *_si*
+    48  set  si_enable_analysis  false
+    49  write_spice_deck  $path   -output mypath.0p16.spo -header header.sp  -sub_circuit_file tc2.sp
+    50  gp  left_stack_inst/mgtile_inst7/OCTA0_i_octa_wrapper_0/start_hash
+    51  report_timing -delay min -th  left_stack_inst/mgtile_inst7/OCTA0_i_octa_wrapper_0/start_hash
+    52  report_timing -delay min -th  left_stack_inst/mgtile_inst7/OCTA0_i_octa_wrapper_0/start_hash -to [get_clock *eng_divclk2]
+    53  ac -leaf [ac bzmnotchwrap/bzmnotch/bzmtap/cltapc/i_mtap_drreg/reset_pulse0_reg/d]
+    54  gp bzmnotchwrap/bzmnotch/eng0_clk_gate_ctech_clk_gate_mani/clkout
+    55  get_lib_pin -of [ gp bzmnotchwrap/bzmnotch/eng0_clk_gate_ctech_clk_gate_mani/clkout]
+    56  report_lib -timing_arcs lib783_i0s_160h_50pp_clk_ulvt_tttt_0p600v_m40c_tttt_cmin_ccslnt i0scilb05aa1n02x5
+    57  history > pt_history_0p16
