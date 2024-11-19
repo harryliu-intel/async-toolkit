@@ -21,7 +21,7 @@
 (def-paramvar 'stages 11)
 (def-paramvar 'step   1e-9)
 (def-paramvar 'mean   1)
-(def-paramvar 'sdev   0)
+(def-paramvar 'sdev   0.1)
 (def-paramvar 'sigmaK 5.3)
 
 

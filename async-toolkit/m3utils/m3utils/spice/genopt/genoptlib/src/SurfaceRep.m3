@@ -10,6 +10,11 @@ TYPE TA = ARRAY OF TEXT;
 
 VAR doDebug := Debug.DebugThis("SurfaceRep");
 
+PROCEDURE Cdofs(<*UNUSED*>n : CARDINAL) : CARDINAL =
+  BEGIN
+    RETURN 1
+  END Cdofs;
+  
 PROCEDURE Ldofs(n : CARDINAL) : CARDINAL =
   BEGIN
     RETURN n + 1
@@ -27,8 +32,7 @@ PROCEDURE GetConstantTerm(b : REF M.M) : LONGREAL =
     END
   END GetConstantTerm;
 
-
-  PROCEDURE ComputeIndepsQ(p      : LRVector.T;
+PROCEDURE ComputeIndepsQ(p      : LRVector.T;
                          row    : CARDINAL;
                          VAR x  : M.M) =
   VAR
@@ -77,6 +81,13 @@ PROCEDURE ComputeIndepsL(p      : LRVector.T;
       INC(k)
     END
   END ComputeIndepsL;
+
+PROCEDURE ComputeIndepsC(<*UNUSED*>p      : LRVector.T;
+                         row    : CARDINAL;
+                         VAR x  : M.M) =
+  BEGIN
+    x[row, 0] := 1.0d0
+  END ComputeIndepsC;
 
 PROCEDURE ComputeQ(p : LRVector.T; b : REF M.M; wx : Wx.T := NIL) : LONGREAL =
   (* value of the quadratic *)
@@ -134,6 +145,25 @@ PROCEDURE ComputeL(p : LRVector.T; b : REF M.M) : LONGREAL =
     RETURN sum
   END ComputeL;
 
+PROCEDURE ComputeC(<*UNUSED*>p : LRVector.T; b : REF M.M) : LONGREAL =
+  BEGIN
+    RETURN b[0, 0]
+  END ComputeC;
+
+PROCEDURE C2Q(n : CARDINAL; READONLY b : M.M) : REF M.M =
+  BEGIN
+    RETURN L2Q(n, C2L(n, b)^)
+  END C2Q;
+
+PROCEDURE Q2Q(n : CARDINAL; READONLY b : M.M) : REF M.M =
+  VAR
+    qdofs := Qdofs(n);
+    res := NEW(REF M.M, qdofs, 1);
+  BEGIN
+    res^ := b;
+    RETURN res
+  END Q2Q;
+
 PROCEDURE L2Q(n : CARDINAL; READONLY b : M.M) : REF M.M =
   VAR
     ldofs := Ldofs(n);
@@ -158,6 +188,27 @@ PROCEDURE L2Q(n : CARDINAL; READONLY b : M.M) : REF M.M =
     END;
     RETURN res
   END L2Q;
+
+PROCEDURE C2L(n : CARDINAL; READONLY b : M.M) : REF M.M =
+  VAR
+    ldofs := Ldofs(n);
+    res := NEW(REF M.M, ldofs, 1);
+  BEGIN
+    <*ASSERT NUMBER(b) = 1*>
+    <*ASSERT NUMBER(b[0]) = 1*>
+    FOR i := 0 TO ldofs - 2 DO
+      res[ i, 0 ] := 0.0d0
+    END;
+    res[ ldofs - 1, 0 ] := b[0, 0];
+    RETURN res
+  END C2L;
+
+PROCEDURE FmtC(<*UNUSED*>n : CARDINAL; b : REF M.M) : TEXT =
+  BEGIN
+    <*ASSERT NUMBER(b^) = 1*>
+    <*ASSERT NUMBER(b[0]) = 1*>
+    RETURN LR(b[0,0])
+  END FmtC;
 
 PROCEDURE FmtL(n : CARDINAL; b : REF M.M) : TEXT =
   VAR

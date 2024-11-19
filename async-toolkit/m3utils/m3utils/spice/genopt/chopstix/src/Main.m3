@@ -153,7 +153,7 @@ PROCEDURE BaseMultiEval(base    : Evaluator;
                         VAR schemaScm : Scheme.T) : MultiEvalLRVector.Result =
   BEGIN
     IF doDebug THEN
-      Debug.Out("BaseMultiEval : samples " & Int(samples))
+      Debug.Out("BaseMultiEval : samples " & Int(samples), 100)
     END;
     
     TRY
@@ -690,7 +690,7 @@ PROCEDURE NextIdx() : CARDINAL =
   END NextIdx;
 
 VAR
-  optVarsNm := T2S("*opt-vars*");
+  optVarsNm   := T2S("*opt-vars*");
   paramVarsNm := T2S("*param-vars*");
      
 

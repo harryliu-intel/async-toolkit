@@ -374,7 +374,10 @@ PROCEDURE DoLeaderBoard(READONLY pr   : PointResult.T; (* current [old] point *)
       IF NUMBER(parr^) >= dofs THEN
         Debug.Out(F("DoLeaderBoard: enough points (%s >= %s) to attempt a surface fit.", Int(NUMBER(parr^)), Int(dofs)));
         TRY
-          WITH pm = parr[0] DO
+
+                    
+          WITH pmm = AttemptSurfaceFit(pr, parr^, values, newpts),
+               pm  = parr[0] DO
             
             RETURN PointResult.T { pm.p, pm.metric, FALSE, rho }
           END
@@ -389,22 +392,112 @@ PROCEDURE DoLeaderBoard(READONLY pr   : PointResult.T; (* current [old] point *)
     END
   END DoLeaderBoard;
 
+PROCEDURE AttemptSurfaceFit(pr              : PointResult.T;
+                            READONLY parr   : ARRAY OF PointMetric.T;
+                            values          : LRVectorMRVTbl.T;
+                            newpts(*OUT*)   : LRVectorSet.T) : PointResult.T
+  RAISES { Matrix.Singular } =
+  (* attempt a surface fit *)
+
+  PROCEDURE PickClosestPoints() : PointMetricSeq.T =
+    VAR
+      success := FALSE;
+      tryrho  := rho;
+      seq   : PointMetricSeq.T;
+    BEGIN
+      LOOP
+        Debug.Out(F("AttemptSurfaceFit : tryrho=%s ; starting from %s",
+                    LR(tryrho), PointResult.Format(pr)));
+        
+        seq := NEW(PointMetricSeq.T).init();
+        FOR i := FIRST(parr) TO LAST(parr) DO
+          WITH rec  = parr[i],
+               dist = Vdist(rec.p, pr.p) DO
+            IF dist < tryrho THEN
+              seq.addhi(rec)
+            END
+          END
+        END;
+        IF seq.size() >= qdofs THEN
+          success := TRUE;
+          EXIT
+        ELSE
+          tryrho := tryrho * 2.0d0
+        END
+      END;
+      Debug.Out(F("AttemptSurfaceFit: seq.size()=%s rho=%s tryrho=%s success=%s p=%s",
+                Int(seq.size()), LR(rho), LR(tryrho), Bool(success),
+                PointResult.Format(pr)));
+      RETURN seq
+    END PickClosestPoints;
+
+  PROCEDURE GetResult(p : LRVector.T) : MultiEvalLRVector.Result =
+    VAR
+      v : MultiEvalLRVector.Result;
+      hadIt := values.get(p, v);
+    BEGIN
+      <*ASSERT hadIt*>
+      RETURN v
+    END GetResult;
+
+  VAR
+    n       := NUMBER(pr.p^);
+
+    qdofs   := Qdofs(n);
+    ldofs   := Ldofs(n);
+    
+    seq   : PointMetricSeq.T;
+    bestQ : PointResult.T;
+
+    points := SortByDistance(pr.p, parr);
+    v : MultiEvalLRVector.Result;
+
+    models := NEW(REF ARRAY OF ARRAY QuadResponse.T OF REF M.M, optvars.size());
+    
+  BEGIN
+    (* first, pick enough points for the fit *)
+    seq := PickClosestPoints();
+
+    FOR i := FIRST(points^) TO LAST(points^) DO
+      EVAL GetResult(points[i].p)
+    END;
+
+    (*
+      We need to model each variable.  We will model them separately.
+
+      For each computed variable, we need to model 
+      -- nominal
+      -- mu (mean shift)
+      -- sigma
+    *)
+    
+    FOR i := 0 TO optvars.size() - 1 DO
+      FOR j := FIRST(QuadResponse.T) TO LAST(QuadResponse.T) DO
+      END
+    END;
+
+    (* we have built the models for each variable 
+
+       Now we need to optimize the target function over the computed
+       models.
+    *)
+
+    (* we have optimized the modeled target function.
+
+       we add the optimum point as well as a selection of closest
+       actual points that we have already computed.
+    *)
+
+    RETURN pr
+  END AttemptSurfaceFit;
+
 PROCEDURE InsertClosestPoints(n             : CARDINAL;
                               bestQ         : LRVector.T;
                               READONLY parr : ARRAY OF PointMetric.T;
                               newpts        : LRVectorSet.T) =
   VAR
-    darr := NEW(REF ARRAY OF PointMetric.T, NUMBER(parr));
+    darr := SortByDistance(bestQ, parr);
   BEGIN
-    FOR i := FIRST(parr) TO LAST(parr) DO
-      WITH rec  = parr[i],
-           dist = Vdist(rec.p, bestQ) DO
-        darr[i] := PointMetric.T { dist, rec.p, rec.result }
-      END
-    END;
-    
-    PointMetricArraySort.Sort(darr^);
-    
     WITH wx = Wx.New() DO
       Wx.PutText(wx, "==== Closest neighbors to quad. min. ====\n");
       FOR i := FIRST(darr^) TO LAST(darr^) DO
@@ -423,6 +516,28 @@ PROCEDURE InsertClosestPoints(n             : CARDINAL;
       EVAL newpts.insert(darr[i].p)
     END
   END InsertClosestPoints;
+
+PROCEDURE SortByDistance(to            : LRVector.T;
+                         READONLY parr : ARRAY OF PointMetric.T)
+  : REF ARRAY OF PointMetric.T =
+
+  (* return copy of parr, where the metric has been replaced by
+     the distance to "to" and sorted accordingly *)
+  
+  VAR
+    darr := NEW(REF ARRAY OF PointMetric.T, NUMBER(parr));
+  BEGIN
+    FOR i := FIRST(parr) TO LAST(parr) DO
+      WITH rec  = parr[i],
+           dist = Vdist(rec.p, to) DO
+        darr[i] := PointMetric.T { dist, rec.p, rec.result }
+      END
+    END;
+    
+    PointMetricArraySort.Sort(darr^);
+
+    RETURN darr
+  END SortByDistance;
 
 PROCEDURE GetConstantTerm(b : REF M.M) : LONGREAL =
   BEGIN
