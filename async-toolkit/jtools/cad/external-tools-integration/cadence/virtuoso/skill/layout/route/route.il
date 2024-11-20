@@ -485,7 +485,7 @@
            )
           (timingDriven
            (fprintf file "--cell=%s\n" (GetCastCellName CV->cellName))
-           (fprintf file "--task=route,extract,pv\n")
+           (fprintf file "--task=route,extract,pv,etm,import-sdf,import-spar\n")
            )
           (t
            (fprintf file "--cell=%s\n" (GetCastCellName CV->cellName))
