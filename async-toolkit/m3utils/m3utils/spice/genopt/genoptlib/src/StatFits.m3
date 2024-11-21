@@ -14,6 +14,9 @@ IMPORT Wx;
 IMPORT StatFitsSeq;
 IMPORT StatFitsArraySort;
 IMPORT Matrix;
+FROM StatFitsCmp IMPORT CompareByMeanValLikelihood,
+                        CompareByMeanAllLikelihood,
+                        CompareBySumAbsLinCoeff;
 
 FROM SurfaceRep IMPORT Qdofs, Ldofs, ComputeIndepsL, ComputeIndepsQ,
                        ComputeL, L2Q, FmtQ;
@@ -79,7 +82,6 @@ PROCEDURE Attempt(p           : LRVector.T;
                   parr        : REF ARRAY OF PointMetric.T;
                   selectByAll : BOOLEAN ) : T
   RAISES { Matrix.Singular } =
-
 
   PROCEDURE DoFit(READONLY parr, varr : ARRAY OF PointMetric.T)
     RAISES { Matrix.Singular } =
@@ -285,7 +287,7 @@ PROCEDURE Attempt(p           : LRVector.T;
         
         IF sr < bestr THEN
           bestfits := f;
-          bestr := sr
+          bestr    := sr
         END
       END
     END;

@@ -6,6 +6,8 @@ IMPORT MultiEvalLR;
 IMPORT PointMetricLR AS PointMetric;
 IMPORT Matrix;
 
+(* A StatFits.T is a fit of a variable's mu and sigma on a set of points  *)
+
 TYPE
   T = RECORD
     debug       : TEXT;
@@ -23,7 +25,7 @@ TYPE
 
     rank        : ARRAY Ranking OF CARDINAL;
   END;
-  
+
 TYPE
   PElt = LongrealPQ.Elt OBJECT
     p                    : LRVector.T;
@@ -39,23 +41,17 @@ PROCEDURE Attempt(p           : LRVector.T;
 PROCEDURE Attempt1(parr : REF ARRAY OF PointMetric.T)
   RAISES { Matrix.Singular } ;
 
-CONST Brand = "StatFits";
-
 TYPE CmpResult = [-1 .. +1];
-      
-PROCEDURE CompareByMeanValLikelihood(READONLY a, b : T) : CmpResult;
-  (* HIGHER likelihood compares lower *)
 
-PROCEDURE CompareByMeanAllLikelihood(READONLY a, b : T) : CmpResult;
-  (* HIGHER likelihood compares lower *)
-
-PROCEDURE CompareBySumAbsLinCoeff(READONLY a, b : T) : CmpResult;
-  (* LOWER coefficient compares lower *)
-
-CONST Compare = CompareByMeanValLikelihood;
- 
 TYPE CmpProc = PROCEDURE(READONLY a, b : T) : CmpResult;
 
-TYPE Ranking = { MeanValL, MeanAllL, SumAbsLin };
+CONST Compare : CmpProc = NIL;
+
+CONST Brand = "StatFits";
+
+TYPE Ranking = { MeanValL,  (* likelihood on validation points set *)
+                 MeanAllL,  (* likelihood on complete points set *)
+                 SumAbsLin  (* sum of the absolute values of the linear terms *)
+  }; (* see StatFitsCmp for more details *)
       
 END StatFits.

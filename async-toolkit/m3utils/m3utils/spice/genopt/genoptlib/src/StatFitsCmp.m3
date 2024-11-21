@@ -1,4 +1,5 @@
-MODULE StatFitsCmp EXPORTS StatFits;
+MODULE StatFitsCmp;
+FROM StatFits IMPORT T, CmpResult;
 IMPORT LongrealType;
 IMPORT SurfaceRep;
 

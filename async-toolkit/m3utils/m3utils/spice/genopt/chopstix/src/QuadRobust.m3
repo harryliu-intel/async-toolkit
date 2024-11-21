@@ -491,6 +491,17 @@ PROCEDURE AttemptSurfaceFit(pr              : PointResult.T;
     RETURN pr
   END AttemptSurfaceFit;
 
+PROCEDURE ModelVar(vi              : CARDINAL; (* index of variable *)
+                   ctrl            : ARRAY QuadResponse.T OF ResponseModel.Type;
+                   READONLY points : ARRAY OF PointMetric.T) =
+  BEGIN
+    (* model a single variable *)
+
+    (* we pick a number of points that we use to model the variable *)
+
+       
+  END ModelVar;
+  
 PROCEDURE InsertClosestPoints(n             : CARDINAL;
                               bestQ         : LRVector.T;
                               READONLY parr : ARRAY OF PointMetric.T;

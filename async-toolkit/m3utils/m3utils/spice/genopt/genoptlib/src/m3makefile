@@ -28,7 +28,7 @@ Module ("LineMinimizer")
 Array_sort("LineProblem", "LineProblem")
 
 Module ("StatFits")
-implementation ("StatFitsCmp")
+Module ("StatFitsCmp")
 Sequence("StatFits", "StatFits")
 Array_sort("StatFits", "StatFits")
 

@@ -415,7 +415,8 @@ PROCEDURE SeqToMulti(seq : LRSeq.T) : MultiEval.Result =
         RETURN MultiEval.Result { id    := idNx,
                                   n     := n,
                                   sum   := s,
-                                  sumsq := ss }
+                                  sumsq := ss,
+                                  extra := NIL (*UNUSED*) }
       FINALLY
         INC(idNx)
       END
