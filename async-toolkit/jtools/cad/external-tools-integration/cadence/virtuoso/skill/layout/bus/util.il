@@ -588,17 +588,22 @@
   (from                           ; original   prefix
    to                             ; replacement prefix
    @key (CV (geGetEditCellView))) ; optional cell view
-  (let (paths prefix (n 0))
+  (let (paths prefix (n 0) fields)
     paths = (geGetSelSet)
     (unless paths paths=CV->shapes)
-    paths = (setof shape paths shape->objType=="path")    (foreach path paths
+    paths = (setof shape paths shape->objType=="path")
+    (foreach path paths
              prefix = (GetProp path "BusPrefix" nil)
-             (when (strncmp prefix from (strlen from))==0
-                   prefix = (substring prefix (strlen from)+1)
-                   prefix = (if prefix (strcat to prefix) to)
-                   (dbReplaceProp path "BusPrefix" "string" prefix)
-                   n=n+1
-                   )
+             fields = nil
+             (foreach field (parseString prefix " ")
+                      (when (strncmp field from (strlen from))==0
+                            field = (substring field (strlen from)+1)
+                            field = (if field (strcat to field) to)
+                            n=n+1
+                            )
+                      fields=(append fields (list field))
+                      )
+             (dbReplaceProp path "BusPrefix" "string" (buildString fields " "))
              )
     n
     )
