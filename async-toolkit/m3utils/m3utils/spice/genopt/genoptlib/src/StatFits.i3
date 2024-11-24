@@ -40,9 +40,14 @@ PROCEDURE Attempt(p           : LRVector.T;
 
                   (* orders of fits *)
                   muOrder := ResponseModel.Order.Quadratic;
-                  sgOrder := ResponseModel.Order.Linear
+                  sgOrder := ResponseModel.Order.Linear;
+
+                  nomRho  := 0.0d0
+                  (* how large a region to model for nom 
+                     (region sizes for mu, sigma are automatic and based
+                      on a likelihood calculation) *)
   
-  ) : T           (* returns best fit for mu, sigma *)
+  ) : T           (* returns best fit for nom, mu, sigma *)
   RAISES { Matrix.Singular } ;
 
 TYPE CmpResult = [-1 .. +1];

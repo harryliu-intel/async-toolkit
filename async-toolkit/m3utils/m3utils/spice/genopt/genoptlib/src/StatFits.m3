@@ -114,10 +114,11 @@ PROCEDURE DoNomFit(READONLY parr : ARRAY OF PointMetricLR.T;
     RETURN M2Q[type](n, rnom.b^);
   END DoNomFit;           
   
-PROCEDURE Attempt(p              : LRVector.T;
-                  parr           : REF ARRAY OF PointMetricLR.T;
-                  selectByAll    : BOOLEAN;
-                  muOrder, sgOrder : ResponseModel.Order) : T
+PROCEDURE Attempt(p                : LRVector.T;
+                  parr             : REF ARRAY OF PointMetricLR.T;
+                  selectByAll      : BOOLEAN;
+                  muOrder, sgOrder : ResponseModel.Order;
+                  nomRho           : LONGREAL) : T
   RAISES { Matrix.Singular } =
 
   PROCEDURE DoMuSigmaFit(READONLY parr, varr : ARRAY OF PointMetricLR.T)
