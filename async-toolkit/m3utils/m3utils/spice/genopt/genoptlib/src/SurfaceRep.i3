@@ -49,17 +49,17 @@ PROCEDURE ComputeIndepsC(p             : LRVector.T;
                          row           : CARDINAL;
                          VAR(*OUT*) x  : M.M);
   (* fill in x[row,0] with constant term 1 *)
-  
+
 PROCEDURE ComputeQ(p : LRVector.T; b : REF M.M; wx : Wx.T := NIL) : LONGREAL;
   (* compute sum of terms of ComputeIndepsQ ; if wx is given, add some
      debug output to it *)    
     
-PROCEDURE ComputeL(p : LRVector.T; b : REF M.M) : LONGREAL;
+PROCEDURE ComputeL(p : LRVector.T; b : REF M.M; wx : Wx.T := NIL) : LONGREAL;
   (* compute sum of terms of ComputeIndepsL *)    
 
-PROCEDURE ComputeC(p : LRVector.T; b : REF M.M) : LONGREAL;
+PROCEDURE ComputeC(p : LRVector.T; b : REF M.M; wx : Wx.T := NIL) : LONGREAL;
   (* b[0,0] *)
-  
+
 PROCEDURE L2Q(n : CARDINAL; READONLY b : M.M) : REF M.M;
   (* convert linear matrix in format of ComputeIndepsL to 
      quadratic matrix in format of ComputeIndepsQ.
@@ -69,7 +69,6 @@ PROCEDURE C2Q(n : CARDINAL; READONLY b : M.M) : REF M.M;
   
 PROCEDURE Q2Q(n : CARDINAL; READONLY b : M.M) : REF M.M;
 
-  
 PROCEDURE C2L(n : CARDINAL; READONLY b : M.M) : REF M.M;
 
 PROCEDURE FmtL(n : CARDINAL; b : REF M.M) : TEXT;
@@ -105,7 +104,7 @@ PROCEDURE Cdofs(n : CARDINAL) : CARDINAL;
 
 TYPE ByOrder = ARRAY [ 0 .. 2 ] OF LONGREAL;
      
-PROCEDURE SumAbsCoeff(n : CARDINAL; q : REF M.M) : ByOrder;
+PROCEDURE SumAbsCoeffQ(n : CARDINAL; q : REF M.M) : ByOrder;
   (* sum of absolute coefficients by order *)
 
 CONST Brand = "SurfaceRep";

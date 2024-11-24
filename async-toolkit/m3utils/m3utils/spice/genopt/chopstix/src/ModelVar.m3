@@ -9,7 +9,7 @@ PROCEDURE Format(READONLY t : T) : TEXT =
     str := " ";
   BEGIN
     FOR i := FIRST(QuadResponse.T) TO LAST(QuadResponse.T) DO
-      str := str & "[" & QuadResponse.Names[i] & " : " & ResponseModel.TypeNames[t.models[i]] & "] "
+      str := str & "[" & QuadResponse.Names[i] & " : " & ResponseModel.OrderNames[t.models[i]] & "] "
     END;
     RETURN F(" %s : {%s}", SchemeUtils.Stringify(t.nm), str)
   END Format;

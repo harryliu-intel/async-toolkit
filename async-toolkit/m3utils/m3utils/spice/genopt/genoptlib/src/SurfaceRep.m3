@@ -127,7 +127,7 @@ PROCEDURE ComputeQ(p : LRVector.T; b : REF M.M; wx : Wx.T := NIL) : LONGREAL =
     RETURN sum
   END ComputeQ;
 
-PROCEDURE ComputeL(p : LRVector.T; b : REF M.M) : LONGREAL =
+PROCEDURE ComputeL(p : LRVector.T; b : REF M.M; wx : Wx.T := NIL) : LONGREAL =
   VAR
     sum := 0.0d0;
     f0 : LONGREAL;
@@ -145,7 +145,7 @@ PROCEDURE ComputeL(p : LRVector.T; b : REF M.M) : LONGREAL =
     RETURN sum
   END ComputeL;
 
-PROCEDURE ComputeC(<*UNUSED*>p : LRVector.T; b : REF M.M) : LONGREAL =
+PROCEDURE ComputeC(<*UNUSED*>p : LRVector.T; b : REF M.M; wx : Wx.T := NIL) : LONGREAL =
   BEGIN
     RETURN b[0, 0]
   END ComputeC;
@@ -258,7 +258,7 @@ PROCEDURE FmtQ(n : CARDINAL; b : REF M.M) : TEXT =
     RETURN sum
   END FmtQ;
 
-PROCEDURE SumAbsCoeff(n : CARDINAL; b : REF M.M) : ByOrder =
+PROCEDURE SumAbsCoeffQ(n : CARDINAL; b : REF M.M) : ByOrder =
   VAR
     k := 0;
     f0, f1 : [0..1];
@@ -285,7 +285,7 @@ PROCEDURE SumAbsCoeff(n : CARDINAL; b : REF M.M) : ByOrder =
       END
     END;
     RETURN res
-  END SumAbsCoeff;
+  END SumAbsCoeffQ;
 
 PROCEDURE BiggestQuadratic(p : LRVector.T; b : REF M.M) : LONGREAL =
   VAR

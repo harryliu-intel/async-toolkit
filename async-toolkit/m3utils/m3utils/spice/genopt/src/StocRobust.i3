@@ -41,7 +41,7 @@ PROCEDURE SetSelectByAll(to : BOOLEAN);
 
 PROCEDURE GetSelectByAll() : BOOLEAN;
 
-PROCEDURE DoModel(varname : SchemeSymbol.T; model : ResponseModel.Type);
+PROCEDURE DoModel(varname : SchemeSymbol.T; model : ResponseModel.Order);
   
 
 END StocRobust.

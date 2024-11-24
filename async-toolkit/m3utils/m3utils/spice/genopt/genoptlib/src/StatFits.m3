@@ -7,7 +7,7 @@ IMPORT LongrealType;
 IMPORT Debug;
 FROM Fmt IMPORT F, Int, LongReal, FN;
 IMPORT LRVector;
-IMPORT PointMetricLR AS PointMetric;
+IMPORT PointMetricLR;
 IMPORT Math;
 IMPORT PointMetricLRArraySort AS PointMetricArraySort;
 IMPORT Wx;
@@ -17,9 +17,10 @@ IMPORT Matrix;
 FROM StatFitsCmp IMPORT CompareByMeanValLikelihood,
                         CompareByMeanAllLikelihood,
                         CompareBySumAbsLinCoeff;
+IMPORT ResponseModel;
+FROM ResponseModel IMPORT Dofs, Indeps, M2Q, Compute;
 
-FROM SurfaceRep IMPORT Qdofs, Ldofs, ComputeIndepsL, ComputeIndepsQ,
-                       ComputeL, L2Q, FmtQ;
+FROM SurfaceRep IMPORT FmtQ;
 
 CONST LR = LongReal;
 TYPE  TA = ARRAY OF TEXT;
@@ -77,28 +78,64 @@ PROCEDURE FmtRanking(ra : ARRAY Ranking OF CARDINAL) : TEXT =
              Int(ra[Ranking.MeanAllL]),
              Int(ra[Ranking.SumAbsLin]))
   END FmtRanking;
+
+PROCEDURE DoNomFit(READONLY parr : ARRAY OF PointMetricLR.T;
+                   type          : ResponseModel.Order) : REF M.M
+  RAISES { Matrix.Singular } =
+  VAR
+    m  := NUMBER(parr);
+    
+    n := NUMBER(parr[FIRST(parr)].p^);
+
+    dofs  := Dofs[type](n);
+
+    x     := NEW(REF M.M, m, dofs);
+
+    ynom   := NEW(REF M.M, m, 1);
+
+    ynomHat  : REF M.M;
+    
+    rnom   := NEW(Regression.T);
+
+  BEGIN
+    FOR i := 0 TO m - 1 DO
+      WITH rec = parr[i] DO
+        Indeps[type](rec.p, i, x^);
+
+        (* questionable whether we should use the same number of points
+           for nom as for mu, sigma *)
+        ynom   [i, 0] := MultiEval.Nominal   (rec.result);
+      END
+    END;
+
+    Regression.Run(x,
+                   ynom   , ynomHat   , FALSE, rnom   , 0.0d0);
+
+    RETURN M2Q[type](n, rnom.b^);
+  END DoNomFit;           
   
-PROCEDURE Attempt(p           : LRVector.T;
-                  parr        : REF ARRAY OF PointMetric.T;
-                  selectByAll : BOOLEAN ) : T
+PROCEDURE Attempt(p              : LRVector.T;
+                  parr           : REF ARRAY OF PointMetricLR.T;
+                  selectByAll    : BOOLEAN;
+                  muOrder, sgOrder : ResponseModel.Order) : T
   RAISES { Matrix.Singular } =
 
-  PROCEDURE DoFit(READONLY parr, varr : ARRAY OF PointMetric.T)
+  PROCEDURE DoMuSigmaFit(READONLY parr, varr : ARRAY OF PointMetricLR.T)
     RAISES { Matrix.Singular } =
 
-    PROCEDURE DoPoint(READONLY v : PointMetric.T; sMu, sSig : LONGREAL) =
+    PROCEDURE DoPoint(READONLY v : PointMetricLR.T; sMu, sSig : LONGREAL) =
       BEGIN
         WITH
           (* data *)
-          dmu  = MultiEval.Mean(v.result), 
-          dsig = MultiEval.Sdev(v.result),
+          dmu   = MultiEval.Mean   (v.result), 
+          dsig  = MultiEval.Sdev   (v.result),
           
           ns   = v.result.n,
           nsf  = FLOAT(ns, LONGREAL),
           
           (* predicted *)
-          pmu  = ComputeL(v.p, rmu.b),
-          psig = ComputeL(v.p, rsigma.b),
+          pmu  = Compute[muOrder](v.p, rmu.b),
+          psig = Compute[sgOrder](v.p, rsigma.b),
           
           (* likelihoods *)
           lmu  = nsf * LogLikelihood(dmu , pmu,  sMu),
@@ -126,12 +163,12 @@ PROCEDURE Attempt(p           : LRVector.T;
 
       n := NUMBER(parr[FIRST(parr)].p^);
       
-      qdofs  := Qdofs(n);
-      ldofs  := Ldofs(n);
+      muDofs  := Dofs[muOrder](n);
+      sgDofs  := Dofs[sgOrder](n);
       
-      xquad  := NEW(REF M.M, m, qdofs);
-      xlin   := NEW(REF M.M, m, ldofs);
-
+      xmu     := NEW(REF M.M, m, muDofs);
+      xsg     := NEW(REF M.M, m, sgDofs);
+      
       ymu    := NEW(REF M.M, m, 1);
       ysigma := NEW(REF M.M, m, 1);
       w      := NEW(REF M.M, m, m);
@@ -143,37 +180,39 @@ PROCEDURE Attempt(p           : LRVector.T;
       rsigma := NEW(Regression.T);
 
       sumlMu, sumlSig := 0.0d0;
-      sump            := 0;
-      pq              := NEW(LongrealPQ.Default).init();
+      sump                     := 0;
+      pq                       := NEW(LongrealPQ.Default).init();
 
-      mostDistant     := varr[LAST(varr)].p;
-      radius          := Vdist(p, mostDistant);
+      mostDistant              := varr[LAST(varr)].p;
+      radius                   := Vdist(p, mostDistant);
       
     BEGIN
       
       M.Zero(w^);
       FOR i := 0 TO m - 1 DO
         WITH rec = parr[i] DO
-          ComputeIndepsQ(rec.p, i, xquad^);
-          ComputeIndepsL(rec.p, i, xlin^);
+          Indeps[muOrder](rec.p, i, xmu^);
+          Indeps[sgOrder](rec.p, i, xsg^);
 
+          (* questionable whether we should use the same number of points
+             for nom as for mu, sigma *)
           ymu   [i, 0] := MultiEval.Mean   (rec.result);
           ysigma[i, 0] := MultiEval.Sdev   (rec.result);
           
           w[i, i]      := FLOAT(rec.result.n, LONGREAL)
         END
       END(*ROF*);
- 
-      Regression.Run(xlin,
+
+      Regression.Run(xmu,
                      ymu   , ymuHat   , FALSE, rmu   , 0.0d0, W := w);
-      Regression.Run(xlin,
+      Regression.Run(xsg,
                      ysigma, ysigmaHat, FALSE, rsigma, 0.0d0, W := w);
 
       WITH rssMu  = Rss(ymu   , ymuHat),
            sMu    = Math.sqrt(rssMu / mf),
            rssSig = Rss(ysigma, ysigmaHat),
            sSig   = Math.sqrt(rssSig / mf),
-           debug  =FN("AttemptStatFits2 m=%s radius=%s rssMu=%s rssSig=%s ; sMu=%s sSig=%s",
+           debug  = FN("AttemptStatFits2 m=%s radius=%s rssMu=%s rssSig=%s ; sMu=%s sSig=%s",
                      TA{Int(m), LR(radius), LR(rssMu), LR(rssSig), LR(sMu), LR(sSig)}) DO
         
         (* likelihood on the validation set *)
@@ -209,22 +248,22 @@ PROCEDURE Attempt(p           : LRVector.T;
                           l,
                           lmu, lsig,
                           nlf,
-                          L2Q(n, rmu.b^),
-                          L2Q(n, rsigma.b^),
+                          M2Q[muOrder](n, rmu.b^),
+                          M2Q[sgOrder](n, rsigma.b^),
                           ll,
                           nllf,
-                          pts := pq,
+                          pts   := pq,
                           evals := sump,
-                          rank := ARRAY Ranking OF CARDINAL { LAST(CARDINAL), .. }
+                          rank  := ARRAY Ranking OF CARDINAL { LAST(CARDINAL), .. }
             } DO
             thefits.addhi(fit)
           END
         END;
       END
       
-    END DoFit;
+    END DoMuSigmaFit;
 
-  PROCEDURE ComparePMByDistance(READONLY a, b : PointMetric.T) : [-1 .. 1] =
+  PROCEDURE ComparePMByDistance(READONLY a, b : PointMetricLR.T) : [-1 .. 1] =
     BEGIN
       WITH ad = Vdist(a.p, p),
            bd = Vdist(b.p, p) DO
@@ -249,8 +288,8 @@ PROCEDURE Attempt(p           : LRVector.T;
   BEGIN
     PointMetricArraySort.Sort(parr^, cmp := ComparePMByDistance);
     LOOP
-      DoFit(SUBARRAY(parr^,           0, MIN(max, m)),
-            SUBARRAY(parr^, MIN(max, m), LeaveOut));
+      DoMuSigmaFit(SUBARRAY(parr^,           0, MIN(max, m)),
+                   SUBARRAY(parr^, MIN(max, m), LeaveOut));
       IF m >= max THEN
         EXIT
       END;
@@ -314,83 +353,6 @@ PROCEDURE VarM(a : REF M.M) : LONGREAL =
   BEGIN
     RETURN M.DevSqM(a^)
   END VarM;
-
-PROCEDURE Attempt1(parr : REF ARRAY OF PointMetric.T)
-  RAISES { Matrix.Singular } =
-
-  PROCEDURE DoFit(READONLY parr : ARRAY OF PointMetric.T)
-    RAISES { Matrix.Singular } =
-    VAR
-      m := NUMBER(parr);
-
-      n := NUMBER(parr[FIRST(parr)].p^);
-      
-      qdofs  := Qdofs(n);
-      ldofs  := Ldofs(n);
-      
-      xquad  := NEW(REF M.M, m, qdofs);
-      xlin   := NEW(REF M.M, m, ldofs);
-
-      ymu    := NEW(REF M.M, m, 1);
-      ysigma := NEW(REF M.M, m, 1);
-      w      := NEW(REF M.M, m, m);
-
-      ymuHat1,
-      ysigmaHat1 : REF M.M;
-
-      ymuHat2,
-      ysigmaHat2 : REF M.M;
-
-      rmu1    := NEW(Regression.T);
-      rsigma1 := NEW(Regression.T);
-      rmu2    := NEW(Regression.T);
-      rsigma2 := NEW(Regression.T);
-
-    BEGIN
-      M.Zero(w^);
-      FOR i := 0 TO m - 1 DO
-        WITH rec = parr[i] DO
-          ComputeIndepsQ(rec.p, i, xquad^);
-          ComputeIndepsL(rec.p, i, xlin^);
-
-          ymu   [i, 0] := MultiEval.Mean   (rec.result);
-          ysigma[i, 0] := MultiEval.Sdev   (rec.result);
-          
-          w[i, i]      := FLOAT(rec.result.n, LONGREAL)
-        END
-      END(*ROF*);
- 
-      Regression.Run(xlin,
-                     ymu   , ymuHat1   , FALSE, rmu1   , 0.0d0, W := w);
-      Regression.Run(xlin,
-                     ysigma, ysigmaHat1, FALSE, rsigma1, 0.0d0, W := w);
-      Regression.Run(xquad,
-                     ymu   , ymuHat2   , FALSE, rmu2   , 0.0d0, W := w);
-      Regression.Run(xquad,
-                     ysigma, ysigmaHat2, FALSE, rsigma2, 0.0d0, W := w);
-
-      WITH rssMu0  = VarM(ymu),
-           rssMu1  = Rss(ymu   , ymuHat1),
-           rssMu2  = Rss(ymu   , ymuHat2),
-           rssSig0 = VarM(ysigma),
-           rssSig1 = Rss(ysigma, ysigmaHat1),
-           rssSig2 = Rss(ysigma, ysigmaHat2) DO
-        Debug.Out(FN("AttemptStatFits mu  : m=%s rss0=%s rss1=%s rss2=%s",
-                     TA{Int(m), LR(rssMu0), LR(rssMu1), LR(rssMu2) }));
-        Debug.Out(FN("AttemptStatFits sig : m=%s rss0=%s rss1=%s rss2=%s",
-                     TA{Int(m), LR(rssSig0), LR(rssSig1), LR(rssSig2) }));
-      END
-      
-    END DoFit;
-
-  VAR
-    m := 1;
-  BEGIN
-    REPEAT
-      DoFit(SUBARRAY(parr^, 0, m));
-      m := m * 2
-    UNTIL m > NUMBER(parr^);
-  END Attempt1;
 
 BEGIN END StatFits.
 

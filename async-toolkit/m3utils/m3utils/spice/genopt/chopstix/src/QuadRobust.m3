@@ -40,6 +40,8 @@ IMPORT PointMetricLRVector AS PointMetric;
 IMPORT PointMetricLRVectorArraySort AS PointMetricArraySort;
 IMPORT PointMetricLRVectorSeq AS PointMetricSeq;
 
+IMPORT PointMetricLR; (* for StatFits *)
+
 IMPORT Wx;
 IMPORT LRRegression AS Regression;
 IMPORT ConjGradient;
@@ -491,16 +493,16 @@ PROCEDURE AttemptSurfaceFit(pr              : PointResult.T;
     RETURN pr
   END AttemptSurfaceFit;
 
-PROCEDURE ModelVar(vi              : CARDINAL; (* index of variable *)
-                   ctrl            : ARRAY QuadResponse.T OF ResponseModel.Type;
-                   READONLY points : ARRAY OF PointMetric.T) =
+PROCEDURE Do1Var(vi              : CARDINAL; (* index of variable *)
+                 ctrl            : ARRAY QuadResponse.T OF ResponseModel.Order;
+                 READONLY points : ARRAY OF PointMetric.T) =
   BEGIN
     (* model a single variable *)
 
     (* we pick a number of points that we use to model the variable *)
 
        
-  END ModelVar;
+  END Do1Var;
   
 PROCEDURE InsertClosestPoints(n             : CARDINAL;
                               bestQ         : LRVector.T;
@@ -1132,7 +1134,7 @@ PROCEDURE Orthogonalize(READONLY da : ARRAY OF LRVector.T) =
   END Orthogonalize;
 
 PROCEDURE DoModel(varname : SchemeSymbol.T;
-                  models  : ARRAY QuadResponse.T OF ResponseModel.Type) =
+                  models  : ARRAY QuadResponse.T OF ResponseModel.Order) =
   BEGIN
     optvars.addhi(ModelVar.T { varname, models })
   END DoModel;

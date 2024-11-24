@@ -411,8 +411,6 @@ PROCEDURE AttemptSurfaceFit(pr            : PointResult.T;
             we use a linear fit for sigma
       *)
 
-    StatFits.Attempt1(parr); (* does this do anything? *)
-
     <*FATAL LongrealPQ.Empty*>
     VAR
       xquad    := NEW(REF M.M, seq.size(), qdofs);
@@ -1176,7 +1174,7 @@ PROCEDURE Predict(s          : LRVector.T;
     RETURN sum
   END Predict;
 
-PROCEDURE DoModel(varname : SchemeSymbol.T; model : ResponseModel.Type) =
+PROCEDURE DoModel(varname : SchemeSymbol.T; model : ResponseModel.Order) =
   BEGIN
   END DoModel;
 

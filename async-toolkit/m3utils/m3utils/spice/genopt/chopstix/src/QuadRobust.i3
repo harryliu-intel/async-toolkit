@@ -73,7 +73,7 @@ PROCEDURE SetSelectByAll(to : BOOLEAN);
 PROCEDURE GetSelectByAll() : BOOLEAN;
 
 PROCEDURE DoModel(varname : SchemeSymbol.T;
-                  models  : ARRAY QuadResponse.T OF ResponseModel.Type);
+                  models  : ARRAY QuadResponse.T OF ResponseModel.Order);
 
 PROCEDURE OptInit();
 

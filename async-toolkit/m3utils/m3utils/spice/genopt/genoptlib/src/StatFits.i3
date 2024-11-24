@@ -2,9 +2,10 @@ INTERFACE StatFits;
 IMPORT LRMatrix2 AS M;
 IMPORT LongrealPQ;
 IMPORT LRVector;
-IMPORT MultiEvalLR;
-IMPORT PointMetricLR AS PointMetric;
+IMPORT PointMetricLR;
 IMPORT Matrix;
+IMPORT MultiEvalLR;
+IMPORT ResponseModel;
 
 (* A StatFits.T is a fit of a variable's mu and sigma on a set of points  *)
 
@@ -16,7 +17,7 @@ TYPE
     l           : LONGREAL;     (* log likelihood of fit on valid. set *)
     lmu, lsig   : LONGREAL;
     nlf         : LONGREAL;     (* measurements in l *)
-    bmu, bsigma : REF M.M;      (* these are quadratic fits *)
+    bmu, bsigma : REF M.M;      (* these are expressed as quadratic fits *)
 
     ll          : LONGREAL;     (* log likelihood of fit on full set *)
     nllf        : LONGREAL;     (* measurements in ll *)
@@ -26,19 +27,22 @@ TYPE
     rank        : ARRAY Ranking OF CARDINAL;
   END;
 
-TYPE
-  PElt = LongrealPQ.Elt OBJECT
-    p                    : LRVector.T;
-    result               : MultiEvalLR.Result;
-    pmu, psig, lmu, lsig : LONGREAL;
-  END;
-  
 PROCEDURE Attempt(p           : LRVector.T;
-                  parr        : REF ARRAY OF PointMetric.T;
-                  selectByAll : BOOLEAN ) : T
-  RAISES { Matrix.Singular } ;
+                  (* point in whose neighborhood to fit *)
+                  
+                  parr        : REF ARRAY OF PointMetricLR.T;
+                  (* input data -- parr[i].result is what is fit by *)
+                  
+                  selectByAll : BOOLEAN;
+                  (* if TRUE, select fit by sum of rank of MeanAllL and
+                     SumAbsLin; else select by sum of rank of MeanValL and
+                     SumAbsLin *)
+
+                  (* orders of fits *)
+                  muOrder := ResponseModel.Order.Quadratic;
+                  sgOrder := ResponseModel.Order.Linear
   
-PROCEDURE Attempt1(parr : REF ARRAY OF PointMetric.T)
+  ) : T           (* returns best fit for mu, sigma *)
   RAISES { Matrix.Singular } ;
 
 TYPE CmpResult = [-1 .. +1];
@@ -54,4 +58,11 @@ TYPE Ranking = { MeanValL,  (* likelihood on validation points set *)
                  SumAbsLin  (* sum of the absolute values of the linear terms *)
   }; (* see StatFitsCmp for more details *)
       
+TYPE (* for sorting by ... whatever ... usually likelihood *)
+  PElt = LongrealPQ.Elt OBJECT
+    p                    : LRVector.T;
+    result               : MultiEvalLR.Result;
+    pmu, psig, lmu, lsig : LONGREAL;
+  END;
+  
 END StatFits.
