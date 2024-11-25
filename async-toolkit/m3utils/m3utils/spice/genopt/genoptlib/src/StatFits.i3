@@ -17,7 +17,9 @@ TYPE
     l           : LONGREAL;     (* log likelihood of fit on valid. set *)
     lmu, lsig   : LONGREAL;
     nlf         : LONGREAL;     (* measurements in l *)
-    bmu, bsigma : REF M.M;      (* these are expressed as quadratic fits *)
+
+    bnom, bmu, bsigma : REF M.M;
+                                (* these are expressed as quadratic fits *)
 
     ll          : LONGREAL;     (* log likelihood of fit on full set *)
     nllf        : LONGREAL;     (* measurements in ll *)
@@ -39,6 +41,7 @@ PROCEDURE Attempt(p           : LRVector.T;
                      SumAbsLin *)
 
                   (* orders of fits *)
+                  nmOrder := ResponseModel.Order.Quadratic;
                   muOrder := ResponseModel.Order.Quadratic;
                   sgOrder := ResponseModel.Order.Linear;
 

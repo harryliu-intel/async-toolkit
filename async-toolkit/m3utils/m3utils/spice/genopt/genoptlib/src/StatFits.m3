@@ -117,7 +117,7 @@ PROCEDURE DoNomFit(READONLY parr : ARRAY OF PointMetricLR.T;
 PROCEDURE Attempt(p                : LRVector.T;
                   parr             : REF ARRAY OF PointMetricLR.T;
                   selectByAll      : BOOLEAN;
-                  muOrder, sgOrder : ResponseModel.Order;
+                  nmOrder, muOrder, sgOrder : ResponseModel.Order;
                   nomRho           : LONGREAL) : T
   RAISES { Matrix.Singular } =
 
@@ -249,6 +249,7 @@ PROCEDURE Attempt(p                : LRVector.T;
                           l,
                           lmu, lsig,
                           nlf,
+                          NIL,
                           M2Q[muOrder](n, rmu.b^),
                           M2Q[sgOrder](n, rsigma.b^),
                           ll,
@@ -278,16 +279,38 @@ PROCEDURE Attempt(p                : LRVector.T;
                                           CompareByMeanAllLikelihood,
                                           CompareBySumAbsLinCoeff };
   VAR
-    m := 2;
-    max := NUMBER(parr^) - LeaveOut;
+    m                  := 2;
+    max                := NUMBER(parr^) - LeaveOut;
 
-    bestr  := LAST(CARDINAL);
+    bestr              := LAST(CARDINAL);
+    thefits            := NEW(StatFitsSeq.T).init();
+
+    bnom     : REF M.M := NIL;
+
     bestfits : T;
-    thefits := NEW(StatFitsSeq.T).init();
+    fa       : REF ARRAY OF T;
 
-    fa : REF ARRAY OF T;
+    
   BEGIN
     PointMetricArraySort.Sort(parr^, cmp := ComparePMByDistance);
+
+    (* we can immediately do the Nom fit here, parr are sorted in distance
+       from p *)
+
+    IF nomRho # 0.0d0 THEN
+      VAR
+        lim := NUMBER(parr^);
+      BEGIN
+        FOR i := FIRST(parr^) TO LAST(parr^) DO
+          IF Vdist(parr[i].p, p) > nomRho THEN
+            lim := i;
+            EXIT
+          END
+        END;
+        bnom := DoNomFit(SUBARRAY(parr^, 0, lim), nmOrder)
+      END
+    END;
+    
     LOOP
       DoMuSigmaFit(SUBARRAY(parr^,           0, MIN(max, m)),
                    SUBARRAY(parr^, MIN(max, m), LeaveOut));
@@ -333,6 +356,8 @@ PROCEDURE Attempt(p                : LRVector.T;
     END;
 
     Debug.Out("BEST RANKED FIT\n" & Format(bestfits));
+
+    bestfits.bnom := bnom;
     
     RETURN bestfits
   END Attempt;
@@ -349,11 +374,6 @@ PROCEDURE LogLikelihood(x, mu, sigma : LONGREAL) : LONGREAL =
       RETURN t1 + t2 + t3
     END
   END LogLikelihood;
-
-PROCEDURE VarM(a : REF M.M) : LONGREAL =
-  BEGIN
-    RETURN M.DevSqM(a^)
-  END VarM;
 
 BEGIN END StatFits.
 
