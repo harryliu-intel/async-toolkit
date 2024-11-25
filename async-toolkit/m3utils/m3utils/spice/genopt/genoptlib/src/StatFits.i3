@@ -7,19 +7,49 @@ IMPORT Matrix;
 IMPORT MultiEvalLR;
 IMPORT ResponseModel;
 
-(* A StatFits.T is a fit of a variable's mu and sigma on a set of points  *)
+(* A StatFits.T is a fit of a variable's nom, mu, and sigma 
+   on a set of points  
+
+   parr in Attempt() is the input data set, and the output fits 
+   are T.bnom, T.bmu, and T.bsigma
+
+   The size of the n-ball in which the fit is performed is different
+   for nom vs mu/sigma fits.
+
+   The points used for the nom fit are determined by "nomRho", passed
+   in as an argument for Attempt().
+
+   The points used for the mu/sigma fit are determined by a likelihood
+   analysis (sum of log likelihoods) such that the likelihood of the
+   fit is roughly maximized for the size of the ball.  Generally 
+   speaking, a small ball will have a low likelihood, and a larger ball
+   will have a larger likelihood simply because there are more 
+   points in the larger ball.  But once the ball gets too large, the
+   fit will be poor owing to higher-order behaviors in the data set
+   than in the model, and the likelihood will again fall.  The ball
+   is thus increased in size until the likelihood of the points of the fit
+   within the ball reaches a (rough) maximum.
+*)
 
 TYPE
   T = RECORD
     debug       : TEXT;
-    i           : CARDINAL;     (* index *)
-    n           : CARDINAL;
+    i           : CARDINAL;     (* index (of the mu/sigma fit) *)
+    n           : CARDINAL;     (* dimensionality of the system *)
+
+    (* 
+       likelihood metric applies only to mu and sigma part of fit
+       nom is fit according to rho 
+    *)
+    
     l           : LONGREAL;     (* log likelihood of fit on valid. set *)
     lmu, lsig   : LONGREAL;
     nlf         : LONGREAL;     (* measurements in l *)
 
     bnom, bmu, bsigma : REF M.M;
-                                (* these are expressed as quadratic fits *)
+                                (* these are expressed as quadratic fits 
+                                   -- regardless of order performed
+                                *)
 
     ll          : LONGREAL;     (* log likelihood of fit on full set *)
     nllf        : LONGREAL;     (* measurements in ll *)
@@ -27,6 +57,10 @@ TYPE
     evals       : CARDINAL;     (* sum total of evaluations considered *)
 
     rank        : ARRAY Ranking OF CARDINAL;
+
+    nmOrder, muOrder, sgOrder
+                : ResponseModel.Order;
+    nomRho      : LONGREAL;
   END;
 
 PROCEDURE Attempt(p           : LRVector.T;
@@ -46,7 +80,8 @@ PROCEDURE Attempt(p           : LRVector.T;
                   sgOrder := ResponseModel.Order.Linear;
 
                   nomRho  := 0.0d0
-                  (* how large a region to model for nom 
+                  (* how large a region to model for nom; 0.0d0 means
+                     do not perform a nom fit at all.
                      (region sizes for mu, sigma are automatic and based
                       on a likelihood calculation) *)
   

@@ -170,17 +170,17 @@ PROCEDURE Attempt(p                : LRVector.T;
       xmu     := NEW(REF M.M, m, muDofs);
       xsg     := NEW(REF M.M, m, sgDofs);
       
-      ymu    := NEW(REF M.M, m, 1);
-      ysigma := NEW(REF M.M, m, 1);
-      w      := NEW(REF M.M, m, m);
+      ymu     := NEW(REF M.M, m, 1);
+      ysigma  := NEW(REF M.M, m, 1);
+      w       := NEW(REF M.M, m, m);
 
       ymuHat,
       ysigmaHat : REF M.M;
 
-      rmu    := NEW(Regression.T);
-      rsigma := NEW(Regression.T);
+      rmu                      := NEW(Regression.T);
+      rsigma                   := NEW(Regression.T);
 
-      sumlMu, sumlSig := 0.0d0;
+      sumlMu, sumlSig          := 0.0d0;
       sump                     := 0;
       pq                       := NEW(LongrealPQ.Default).init();
 
@@ -240,7 +240,7 @@ PROCEDURE Attempt(p                : LRVector.T;
             END
           END;
 
-          ll := sumlMu + sumlSig;
+          ll     := sumlMu + sumlSig;
           nllf   := FLOAT(sump, LONGREAL);
 
           WITH fit =  T { debug,
@@ -256,7 +256,11 @@ PROCEDURE Attempt(p                : LRVector.T;
                           nllf,
                           pts   := pq,
                           evals := sump,
-                          rank  := ARRAY Ranking OF CARDINAL { LAST(CARDINAL), .. }
+                          rank  := ARRAY Ranking OF CARDINAL { LAST(CARDINAL), .. },
+                          nmOrder := nmOrder,
+                          muOrder := muOrder,
+                          sgOrder := sgOrder,
+                          nomRho  := nomRho
             } DO
             thefits.addhi(fit)
           END
