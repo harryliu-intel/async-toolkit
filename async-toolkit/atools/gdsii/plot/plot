@@ -6,7 +6,6 @@
 # files for gds2plot.conf and exclude.in.
 
 # defaults
-my $name = "";
 my $JOBS = 1;
 my $MEM  = 4;      # memory argument for netbatch (GB)
 my $GRID = 1;      # manufacturing grid in GDS units
@@ -15,7 +14,7 @@ my $MAX  = 13200;  # pixels, 22 inches @ 600 DPI, use 25200 for 42 inches @ 600 
 my $BLACK = 95;    # black point for gamma correction
 my $WHITE = 255;   # white point for gamma correction
 my $GAMMA = 0.75;  # gamma for gamma correction
-my $gds = "";
+my $gds;
 my $pdk_dir = ".";
 $pdk_dir = "$ENV{FULCRUM_PDK_ROOT}/share/Fulcrum/plot" if (defined($ENV{FULCRUM_PDK_ROOT}));
 my $conf_file    = "$pdk_dir/gds2plot.conf";
@@ -28,7 +27,6 @@ my $monitor = 10; # 10 minutes default monitor period
 # parse arguments
 while (@ARGV) {
     if    ($ARGV[0] =~ /^--jobs=(.*)/)  { $JOBS  = $1; }
-    elsif ($ARGV[0] =~ /^--gds=(.*)/)   { $gds = $1; }
     elsif ($ARGV[0] =~ /^--mem=(.*)/)   { $MEM   = $1; }
     elsif ($ARGV[0] =~ /^--max=(.*)/)   { $MAX   = $1; }
     elsif ($ARGV[0] =~ /^--grid=(.*)/)  { $GRID  = $1; }
@@ -42,20 +40,20 @@ while (@ARGV) {
     elsif ($ARGV[0] =~ /^--exclude-file=(.*)/) { $exclude_file = $1; }
     elsif ($ARGV[0] =~ /^--cell=(.*)/) { $cell = $1; }
     elsif ($ARGV[0] =~ /^--monitor=(.*)/) { $monitor = $1; }
-    else { $name = $ARGV[0]; }
+    else { $gds = $ARGV[0]; }
     shift @ARGV;
 }
-if ($gds eq "" && !($name eq "")) { $gds = "$name.gds"; }
-if (!(-e $gds)) { usage(); }
+defined($gds) || usage();
+my $name = $gds;
+$name =~ s/\.gds$//;
 
 # usage banner
 sub usage {
-    die "USAGE: plot basename\n" .
+    die "USAGE: plot [options] file.gds\n" .
         " --max=[$MAX] # maximum x or y pixel dimensions\n" .
         " --jobs=[$JOBS] # number of parallel jobs to launch with netbatch\n" .
         " --mem=[$MEM] # memory to request for netbatch jobs (GB)\n" .
         " # rarely used options\n" .
-        " --gds=[$gds] # GDS file name\n" .
         " --grid=[$GRID] # manufacturing grid in GDS units\n" .
         " --tile=[$TILE] # x/y dimension of tiles to rendor\n" .
         " --black=[$BLACK] # black level for gamma correction (0-255)\n" .
