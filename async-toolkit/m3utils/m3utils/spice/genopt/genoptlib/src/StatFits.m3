@@ -21,6 +21,7 @@ IMPORT ResponseModel;
 FROM ResponseModel IMPORT Dofs, Indeps, M2Q, Compute;
 
 FROM SurfaceRep IMPORT FmtQ;
+IMPORT StatComponent;
 
 CONST LR = LongReal;
 TYPE  TA = ARRAY OF TEXT;
@@ -117,9 +118,14 @@ PROCEDURE DoNomFit(READONLY parr : ARRAY OF PointMetricLR.T;
 PROCEDURE Attempt(p                : LRVector.T;
                   parr             : REF ARRAY OF PointMetricLR.T;
                   selectByAll      : BOOLEAN;
-                  nmOrder, muOrder, sgOrder : ResponseModel.Order;
+                  orders           : ARRAY StatComponent.T OF ResponseModel.Order;
                   nomRho           : LONGREAL) : T
   RAISES { Matrix.Singular } =
+
+  VAR
+    nmOrder := orders[StatComponent.T.Nom];
+    muOrder := orders[StatComponent.T.Mu];
+    sgOrder := orders[StatComponent.T.Sigma];
 
   PROCEDURE DoMuSigmaFit(READONLY parr, varr : ARRAY OF PointMetricLR.T)
     RAISES { Matrix.Singular } =

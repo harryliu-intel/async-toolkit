@@ -14,7 +14,7 @@ import ("genoptlib")
 
 Interface ("QuadOpt")
 Module ("QuadRobust")
-Interface ("QuadResponse")
+%Interface ("QuadResponse")
 Module ("ModelVar")
 Sequence ("ModelVar", "ModelVar")
 Module ("StatObject")

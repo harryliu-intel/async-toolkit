@@ -58,7 +58,7 @@ IMPORT LongrealPQ;
 IMPORT Matrix;
 IMPORT SchemeSymbol;
 IMPORT ResponseModel;
-IMPORT QuadResponse;
+IMPORT StatComponent;
 IMPORT ModelVar;
 IMPORT ModelVarSeq;
 IMPORT SchemeObject;
@@ -68,6 +68,7 @@ IMPORT SchemeLongReal;
 IMPORT StatObject;
 IMPORT SchemeEnvironment;
 IMPORT LRVectorLRTbl;
+IMPORT Scatter;
 
 CONST LR  = LongReal;
       T2S = SchemeSymbol.FromText;
@@ -454,7 +455,10 @@ PROCEDURE AttemptSurfaceFit(pr              : PointResult.T;
     points := SortByDistance(pr.p, parr);
     v : MultiEvalLRVector.Result;
 
-    models := NEW(REF ARRAY OF ARRAY QuadResponse.T OF REF M.M, optvars.size());
+    nv := optvars.size();
+
+    models := NEW(REF ARRAY OF StatFits.T, nv);
+    pvarr := NEW(REF ARRAY OF REF ARRAY OF PointMetricLR.T, nv);
     
   BEGIN
     (* first, pick enough points for the fit *)
@@ -464,6 +468,18 @@ PROCEDURE AttemptSurfaceFit(pr              : PointResult.T;
       EVAL GetResult(points[i].p)
     END;
 
+    FOR j := 0 TO nv - 1 DO
+      pvarr[j] := NEW(REF ARRAY OF PointMetricLR.T, NUMBER(parr))
+    END;
+        
+    FOR i := FIRST(parr) TO LAST(parr) DO
+      WITH vv = Scatter.PointMetric(parr[i]) DO
+        FOR j := 0 TO nv - 1 DO
+          pvarr[j, i] := vv[j]
+        END
+      END
+    END;
+    
     (*
       We need to model each variable.  We will model them separately.
 
@@ -474,7 +490,13 @@ PROCEDURE AttemptSurfaceFit(pr              : PointResult.T;
     *)
     
     FOR i := 0 TO optvars.size() - 1 DO
-      FOR j := FIRST(QuadResponse.T) TO LAST(QuadResponse.T) DO
+      WITH mv = optvars.get(i) DO
+        EVAL StatFits.Attempt(pr.p,
+                              pvarr[i],
+                              selectByAll,
+                              orders := mv.orders,
+                              nomRho := rho
+                 )
       END
     END;
 
@@ -494,7 +516,7 @@ PROCEDURE AttemptSurfaceFit(pr              : PointResult.T;
   END AttemptSurfaceFit;
 
 PROCEDURE Do1Var(vi              : CARDINAL; (* index of variable *)
-                 ctrl            : ARRAY QuadResponse.T OF ResponseModel.Order;
+                 ctrl            : ARRAY StatComponent.T OF ResponseModel.Order;
                  READONLY points : ARRAY OF PointMetric.T) =
   BEGIN
     (* model a single variable *)
@@ -1134,7 +1156,7 @@ PROCEDURE Orthogonalize(READONLY da : ARRAY OF LRVector.T) =
   END Orthogonalize;
 
 PROCEDURE DoModel(varname : SchemeSymbol.T;
-                  models  : ARRAY QuadResponse.T OF ResponseModel.Order) =
+                  models  : ARRAY StatComponent.T OF ResponseModel.Order) =
   BEGIN
     optvars.addhi(ModelVar.T { varname, models })
   END DoModel;

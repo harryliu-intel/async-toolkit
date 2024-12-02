@@ -1,12 +1,12 @@
 INTERFACE ModelVar;
 IMPORT SchemeSymbol;
-IMPORT QuadResponse;
+IMPORT StatComponent;
 IMPORT ResponseModel;
 
 TYPE
   T = RECORD
     nm      : SchemeSymbol.T;
-    models  : ARRAY QuadResponse.T OF ResponseModel.Order;
+    orders  : ARRAY StatComponent.T OF ResponseModel.Order;
   END;
 
 PROCEDURE Format(READONLY t : T) : TEXT;

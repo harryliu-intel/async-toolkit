@@ -1,4 +1,4 @@
-INTERFACE QuadResponse;
+INTERFACE StatComponent;
 
 TYPE
   T = { Nom, Mu, Sigma };
@@ -6,6 +6,6 @@ TYPE
 CONST
   Names = ARRAY T OF TEXT { "Nom", "Mu", "Sigma" };
   
-CONST Brand = "QuadResponse";
+CONST Brand = "StatComponent";
 
-END QuadResponse.
+END StatComponent.

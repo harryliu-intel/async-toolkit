@@ -10,10 +10,9 @@ IMPORT MultiEvalLRVector;
 IMPORT GenOpt;
 IMPORT SchemeSymbol;
 IMPORT ResponseModel;
-IMPORT QuadResponse;
+IMPORT StatComponent;
 IMPORT ModelVarSeq;
 IMPORT SchemeObject;
-IMPORT LRScalarField;
 
 (* 
    note that there's a pile of static initialization that has to be run
@@ -73,7 +72,7 @@ PROCEDURE SetSelectByAll(to : BOOLEAN);
 PROCEDURE GetSelectByAll() : BOOLEAN;
 
 PROCEDURE DoModel(varname : SchemeSymbol.T;
-                  models  : ARRAY QuadResponse.T OF ResponseModel.Order);
+                  models  : ARRAY StatComponent.T OF ResponseModel.Order);
 
 PROCEDURE OptInit();
 

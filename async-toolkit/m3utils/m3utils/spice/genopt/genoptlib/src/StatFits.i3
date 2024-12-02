@@ -6,6 +6,7 @@ IMPORT PointMetricLR;
 IMPORT Matrix;
 IMPORT MultiEvalLR;
 IMPORT ResponseModel;
+IMPORT StatComponent;
 
 (* A StatFits.T is a fit of a variable's nom, mu, and sigma 
    on a set of points  
@@ -58,11 +59,18 @@ TYPE
 
     rank        : ARRAY Ranking OF CARDINAL;
 
+    (* the final fields are the settings that were used to build the model *)
     nmOrder, muOrder, sgOrder
-                : ResponseModel.Order;
+                : ResponseModel.Order; 
     nomRho      : LONGREAL;
   END;
 
+CONST DefaultOrders = ARRAY StatComponent.T OF ResponseModel.Order {
+  ResponseModel.Order.Quadratic,
+  ResponseModel.Order.Quadratic,
+  ResponseModel.Order.Linear
+  };
+  
 PROCEDURE Attempt(p           : LRVector.T;
                   (* point in whose neighborhood to fit *)
                   
@@ -75,9 +83,7 @@ PROCEDURE Attempt(p           : LRVector.T;
                      SumAbsLin *)
 
                   (* orders of fits *)
-                  nmOrder := ResponseModel.Order.Quadratic;
-                  muOrder := ResponseModel.Order.Quadratic;
-                  sgOrder := ResponseModel.Order.Linear;
+                  orders := DefaultOrders;
 
                   nomRho  := 0.0d0
                   (* how large a region to model for nom; 0.0d0 means
