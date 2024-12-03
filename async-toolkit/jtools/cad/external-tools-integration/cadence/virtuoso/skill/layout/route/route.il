@@ -593,7 +593,7 @@
         (viewName "layout")
         (oasFile nil)
         (gdsFile nil)
-        (colorize t) ; run ColorizeByOverlay
+        (colorize nil) ; run ColorizeByOverlay
         (baseCV nil)
         (pinMap nil)
         (calibreOffset t)
@@ -663,15 +663,15 @@
     (when colorize (ColorizeByOverlay ?CV ImportCV))
 
     ; fixup pins and connectivity
-    (LabelsToPins ?CV ImportCV)
     (when pinMap
       (foreach term ImportCV->terminals
         newName = pinMap[term->name]
         (when (and newName newName!=term->name)
           term->name = newName
-          (dbRenameNet term->net newName))))
-    (DeleteLabels ?CV ImportCV)
-    (LabelPins ?CV ImportCV)
+          (dbRenameNet term->net newName)
+          )
+        )
+      )
     (dbSave ImportCV)
 
     ; copy ImportCV to correct lib and change window

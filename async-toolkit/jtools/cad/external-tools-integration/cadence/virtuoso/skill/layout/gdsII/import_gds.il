@@ -11,7 +11,7 @@
                               (prefix nil)
                               (suffix ".0")
                               (mapCellName nil) ; lambda on cellName to choose libName/cellName
-                              (action importPostProcessAction)
+                              (action nil)
                               (recurse t)
                               (setCopyExact nil) ; lamda on CV to decide when to set CopyExact property
                               )
@@ -64,33 +64,6 @@
     CV
     )
   )
-
-; FindSubcells postprocessing action suitable for WPRD SRAM's
-importPostProcessAction =
-  (lambda (CV)
-    (let (text pcre1 pcre2 pcre3 pcre4)
-      pcre1 = (pcreCompile "<")
-      pcre2 = (pcreCompile ">")
-      pcre3 = (pcreCompile "/")
-      (foreach label (setof x CV->shapes x->objType=="label")
-               text = label->theLabel
-               text = (car (parseString text ":"))   ; delete :* suffix
-               text = (pcreReplace pcre1 text "[" 0) ; replace < with [
-               text = (pcreReplace pcre2 text "]" 0) ; replace > with ]
-               text = (pcreReplace pcre3 text "." 0) ; replace / with .
-               label->theLabel = text
-               )
-      (foreach inst CV->instances
-               text = (pcreReplace pcre3 inst->name "." 0) ; replace / with .
-               (when text!=inst->name inst->name=text)
-               )
-      (when (setof x CV->shapes x->layerName=="ndiff")!=nil
-            (LaygenLabelPwell ?CV CV ?netName VssNetName)
-            )
-      (dbSave CV)
-      )
-    t
-    )
 
 ; Recursively copy a cell hierarchy to a new library.  Recurses only
 ; to instances mapped to the same libName as the target to avoid
@@ -155,105 +128,18 @@ importPostProcessAction =
 (defun LabelsToPins (@key (CV (geGetEditCellView)))
   (let (n net overlaps)
     n=0
-    (foreach label (setof x CV->shapes x->objType=="label")
-             overlaps = (dbGetOverlaps CV (list label->xy label->xy) label->lpp 0) 
-             net = (dbMakeNet CV label->theLabel)
-             (foreach s (setof x overlaps x->objType=="rect" || x->objType=="path")
-                      s->net=net
-                      (when label->purpose=="pin" (dbCreatePin net s) n++)
-                      )
+    (foreach label CV->shapes
+             (when label->objType=="label"
+                   overlaps = (dbGetOverlaps CV (list label->xy label->xy) label->lpp 0)
+                   net = (dbMakeNet CV label->theLabel)
+                   (foreach s overlaps
+                            (when s->objType=="rect" || s->objType=="path"
+                                  s->net=net
+                                  (when label->purpose=="pin" (dbCreatePin net s) n++)
+                                  )
+                            )
+                   )
              )
     n
     )
   )
-
-; replace d04 cells with vendor.intel.d04 versions
-(defun ReplaceD04Cells (libName)
-  (let (lib CV prop redo found newCellName subCV)
-    found = (makeTable "found" nil)
-    lib = (ddGetObj libName)
-    (foreach cell lib->cells
-             CV = (dbOpenCellViewByType libName cell->name "layout")
-             redo = nil
-             (foreach inst CV->instances
-                      prop = (dbGetPropByName inst->master "CopyExact")->value
-                      redo = redo || prop && (strncmp prop "d04" 3)==0
-                      )
-             (when redo
-               (cdsp4edit ?CV CV)
-               (printf "Replacing D04 cells in %s\n" CV->cellName)
-               (foreach inst CV->instances
-                        prop = (dbGetPropByName inst->master "CopyExact")->value
-                        newCellName = (RenameD04 prop)
-                        (when newCellName
-                          subCV = (dbOpenCellViewByType "vendor.intel.d04" newCellName "layout")
-                          (cond (subCV inst->master=subCV)
-                                (!found[newCellName]
-                                 (printf "WARNING: %s not found in library vendor.intel.d04\n" newCellName)
-                                 )
-                                )
-                          found[newCellname]=t
-                          )
-                        )
-               (dbSave CV)
-               )
-             )
-    )
-  t
-  )
-
-; Map a D04 cell to its new name, or nil if its not a D04 cell
-(defun RenameD04 (cellName)
-  (let (len newCellName lib_length subtype_length)
-    newCellname = nil
-    lib_length = 3
-    subtype_length = 3
-    len = (strlen cellName)
-    (when (strncmp cellName "d04" 3)==0 && len==13
-          newCellName = (strcat "vendor.intel.d04."
-                                (substring cellName lib_length+1 len-lib_length-subtype_length) "."
-                                (substring cellName len-subtype_length+1 subtype_length)
-                                )
-          )
-    newCellName
-    )
-  )
-
-; replace d8 cells with vendor.intel.fill versions
-(defun ReplaceD8Cells (libName)
-  (let (lib CV prop redo found newCellName subCV)
-    found = (makeTable "found" nil)
-    lib = (ddGetObj libName)
-    (foreach cell lib->cells
-             CV = (dbOpenCellViewByType libName cell->name "layout")
-             redo = nil
-             (foreach inst CV->instances
-                      prop = (dbGetPropByName inst->master "CopyExact")->value
-                      redo = redo || prop && (strncmp prop "d8" 2)==0
-                      )
-             (when redo
-               (cdsp4edit ?CV CV)
-               (printf "Replacing D8 cells in %s\n" CV->cellName)
-               (foreach inst CV->instances
-                        prop = (dbGetPropByName inst->master "CopyExact")->value
-                        newCellName = (strcat "vendor.intel.fill." prop ".0")
-                        (when newCellName
-                          subCV = (dbOpenCellViewByType "vendor.intel.fill" newCellName "layout")
-                          (when subCV
-			     (printf "     %s -> %s\n" inst->master->cellName subCV->cellName)
-                             (cond (subCV inst->master=subCV)
-                                (!found[newCellName]
-                                 (printf "WARNING: %s not found in library vendor.intel.fill\n" newCellName)
-                                 )
-                                )
-			     )
-                          found[newCellname]=t
-                          )
-                        )
-               (dbSave CV)
-               )
-             )
-    )
-  t
-  )
-
