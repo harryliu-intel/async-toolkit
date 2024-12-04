@@ -20,11 +20,15 @@ FROM StatFitsCmp IMPORT CompareByMeanValLikelihood,
 IMPORT ResponseModel;
 FROM ResponseModel IMPORT Dofs, Indeps, M2Q, Compute;
 
+FROM GenOptUtils IMPORT FmtP;
+
 FROM SurfaceRep IMPORT FmtQ;
 IMPORT StatComponent;
 
 CONST LR = LongReal;
 TYPE  TA = ARRAY OF TEXT;
+
+VAR doDebug := Debug.DebugThis("StatFits");
       
 PROCEDURE Rss(a, b : REF M.M) : LONGREAL =
   BEGIN
@@ -46,10 +50,23 @@ PROCEDURE Format(READONLY t : T ) : TEXT =
     Wx.PutText(wx, t.debug);
     Wx.PutChar(wx, '\n');
 
-    Wx.PutText  (wx, "mu    = " & FmtQ(t.n, t.bmu));
+    Wx.PutText  (wx, "p0     = " & FmtP(t.p0));
     Wx.PutChar(wx, '\n');
 
-    Wx.PutText  (wx, "sigma = " & FmtQ(t.n, t.bsigma));
+    Wx.PutText  (wx, "nomRho = " & LR(t.nomRho));
+    Wx.PutChar(wx, '\n');
+    
+    Wx.PutText  (wx, "orders = ");
+    WxOrderNames(wx, t.orders);
+    Wx.PutChar(wx, '\n');
+
+    Wx.PutText  (wx, "nom    = " & FmtQ(t.n, t.bnom));
+    Wx.PutChar(wx, '\n');
+
+    Wx.PutText  (wx, "mu     = " & FmtQ(t.n, t.bmu));
+    Wx.PutChar(wx, '\n');
+
+    Wx.PutText  (wx, "sigma  = " & FmtQ(t.n, t.bsigma));
     Wx.PutChar(wx, '\n');
     
     Wx.PutText(wx, F("validation log mu  likelihood = %s",
@@ -250,12 +267,13 @@ PROCEDURE Attempt(p                : LRVector.T;
           nllf   := FLOAT(sump, LONGREAL);
 
           WITH fit =  T { debug,
+                          LRVector.Copy(p),
                           thefits.size(),
                           n,
                           l,
                           lmu, lsig,
                           nlf,
-                          NIL,
+                          bnom,
                           M2Q[muOrder](n, rmu.b^),
                           M2Q[sgOrder](n, rsigma.b^),
                           ll,
@@ -263,9 +281,7 @@ PROCEDURE Attempt(p                : LRVector.T;
                           pts   := pq,
                           evals := sump,
                           rank  := ARRAY Ranking OF CARDINAL { LAST(CARDINAL), .. },
-                          nmOrder := nmOrder,
-                          muOrder := muOrder,
-                          sgOrder := sgOrder,
+                          orders  := orders,
                           nomRho  := nomRho
             } DO
             thefits.addhi(fit)
@@ -356,7 +372,7 @@ PROCEDURE Attempt(p                : LRVector.T;
           sr := f.rank[Ranking.MeanValL] + f.rank[Ranking.SumAbsLin]
         END;
         
-        Debug.Out(Format(f));
+        IF doDebug THEN Debug.Out(Format(f)) END;
         
         IF sr < bestr THEN
           bestfits := f;
@@ -364,11 +380,9 @@ PROCEDURE Attempt(p                : LRVector.T;
         END
       END
     END;
-
-    Debug.Out("BEST RANKED FIT\n" & Format(bestfits));
-
-    bestfits.bnom := bnom;
     
+    IF doDebug THEN Debug.Out("BEST RANKED FIT\n" & Format(bestfits)) END;
+
     RETURN bestfits
   END Attempt;
 
@@ -385,5 +399,15 @@ PROCEDURE LogLikelihood(x, mu, sigma : LONGREAL) : LONGREAL =
     END
   END LogLikelihood;
 
+PROCEDURE WxOrderNames(wx : Wx.T; READONLY a : ARRAY OF ResponseModel.Order) =
+  BEGIN
+    Wx.PutText(wx, "{ ");
+    FOR i := FIRST(a) TO LAST(a) DO
+      Wx.PutText(wx, ResponseModel.OrderNames[a[i]]);
+      Wx.PutChar(wx, ' ')
+    END;
+    Wx.PutText(wx, "}")
+  END WxOrderNames;
+  
 BEGIN END StatFits.
 

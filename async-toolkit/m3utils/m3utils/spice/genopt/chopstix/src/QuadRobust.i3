@@ -76,7 +76,7 @@ PROCEDURE DoModel(varname : SchemeSymbol.T;
 
 PROCEDURE OptInit();
 
-PROCEDURE GetOptVars() : ModelVarSeq.T;
+PROCEDURE GetModelVars() : ModelVarSeq.T;
 
 VAR schemeMu : MUTEX;
 

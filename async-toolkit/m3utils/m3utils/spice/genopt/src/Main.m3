@@ -70,13 +70,11 @@ VAR
 
 TYPE
   Evaluator = LRScalarFieldPll.T OBJECT
-    optVars, paramVars : SchemeObject.T;
-
     results            : LRVectorLRPairTextTbl.T;
     resultsMu          : MUTEX;
 
   METHODS
-    init(    optVars, paramVars : SchemeObject.T) : LRScalarField.T := InitPll;
+    init() : LRScalarField.T := InitPll;
 
     multiEval(at : LRVector.T; samples : CARDINAL) : MultiEval.Result :=
         BaseMultiEval;
@@ -88,11 +86,8 @@ TYPE
     evalHint := BaseEvalHint;
   END;
 
-PROCEDURE InitPll(pll                : Evaluator;
-                  optVars, paramVars : SchemeObject.T) : LRScalarField.T =
+PROCEDURE InitPll(pll                : Evaluator) : LRScalarField.T =
   BEGIN
-    pll.optVars   := optVars;
-    pll.paramVars := paramVars;
     pll.results   := NEW(LRVectorLRPairTextTbl.Default).init();
     pll.resultsMu := NEW(MUTEX);
     RETURN LRScalarFieldPll.T.init(pll, pll)
@@ -292,9 +287,7 @@ PROCEDURE AttemptEval(base    : Evaluator;
            schemaRes = SchemaReadResult(schemaPath,
                                         dataPath,
                                         scmFiles,
-                                        schemaEval,
-                                        base.optVars,
-                                        base.paramVars) DO
+                                        schemaEval) DO
         IF doDebug THEN
           Debug.Out("Schema-processed result : " & FmtLRSeq(schemaRes))
         END;
@@ -443,13 +436,15 @@ PROCEDURE DoNominalEval(mme : MyMultiEval;
   BEGIN
     RETURN mme.base.nominalEval(at)
   END DoNominalEval;
-  
-PROCEDURE DoIt(optVars, paramVars : SchemeObject.T) =
+
+VAR optVars, paramVars : SchemeObject.T;
+
+PROCEDURE DoIt() =
   VAR
     N               := vseq.size();
     pr : LRVector.T := NEW(LRVector.T, N);
     evaluator       : Evaluator
-                        := NEW(Evaluator).init(optVars, paramVars);
+                        := NEW(Evaluator).init();
     output : NewUOAs.Output;
   BEGIN
     IF rhoEnd = LAST(LONGREAL) THEN
@@ -622,9 +617,9 @@ PROCEDURE NextIdx() : CARDINAL =
   END NextIdx;
   
 PROCEDURE SchemaReadResult(schemaPath ,
-                           dataPath                       : Pathname.T;
-                           scmFiles                       : TextSeq.T;
-                           schemaEval, optVars, paramVars : SchemeObject.T) : LRSeq.T =
+                           dataPath     : Pathname.T;
+                           scmFiles     : TextSeq.T;
+                           schemaEval   : SchemeObject.T) : LRSeq.T =
   (* code from the schemaeval program *)
   VAR
     dataFiles := NEW(TextSeq.T).init();
@@ -873,10 +868,10 @@ BEGIN
     END
   ELSE
     WITH senv      = NARROW(scm.getGlobalEnvironment(), SchemeEnvironment.T),
-         T2S       = SchemeSymbol.FromText,
-         optVars   = senv.lookup(T2S("*opt-vars*")),
-         paramVars = senv.lookup(T2S("*param-vars*")) DO
-      DoIt(optVars, paramVars)
+         T2S       = SchemeSymbol.FromText DO
+         optVars   := senv.lookup(T2S("*opt-vars*"));
+         paramVars := senv.lookup(T2S("*param-vars*"));
+      DoIt()
     END
   END
 

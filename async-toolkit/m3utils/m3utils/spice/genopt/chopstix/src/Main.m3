@@ -77,22 +77,40 @@ VAR
 CONST
   MyM3UtilsSrcPath = "spice/genopt/chopstix/src";
 
+(* nomenclature:
+
+   paramvars : are (once-settable) constants for a given optimization
+   optvars   : the domain that we optimize over
+   modelvars : the various responses that occur over the domain of optvars
+               (broken up as nominal, mean, and sigma)
+
+   toEval    : a Scheme expression defined over the preceding three sets
+               of variables, which computes a scalar, which is what we
+               are interested in optimizing
+
+   chopstix works through varying the optvars to seek an optimum point in
+   this space.  To accomplish this, it models modelvars with analytic
+   surfaces of a configurable order (0-, 1-, or 2- degree polynominal
+   surfaces at present), and seeks to optimize over these surfaces in order
+   to approach the minimum in the underlying space of modelvars.
+
+   The modeling of nominal, mean, and sigma of the modelvars allows the
+   optimization function to be expressed in terms of extremal statistics
+   over the modelvars (as needed).
+*)
+
   
-
 VAR
-  pMu := NEW(MUTEX);
-
+  pMu  := NEW(MUTEX);
   rand := NEW(Random.Default).init();
 
 TYPE
   Evaluator = LRVectorFieldPll.T OBJECT
-    optVars, paramVars : SchemeObject.T;
-
     results            : LRVectorLRPairTextTbl.T;
     resultsMu          : MUTEX;
 
   METHODS
-    init(    optVars, paramVars : SchemeObject.T) : LRVectorField.T := InitPll;
+    init() : LRVectorField.T := InitPll;
 
     multiEval(at : LRVector.T; samples : CARDINAL; VAR schemaScm : Scheme.T) : MultiEvalLRVector.Result :=
         BaseMultiEval;
@@ -104,11 +122,8 @@ TYPE
     evalHint := BaseEvalHint;
   END;
 
-PROCEDURE InitPll(pll                : Evaluator;
-                  optVars, paramVars : SchemeObject.T) : LRVectorField.T =
+PROCEDURE InitPll(pll                : Evaluator) : LRVectorField.T =
   BEGIN
-    pll.optVars   := optVars;
-    pll.paramVars := paramVars;
     pll.results   := NEW(LRVectorLRPairTextTbl.Default).init();
     pll.resultsMu := NEW(MUTEX);
     RETURN LRVectorFieldPll.T.init(pll, pll)
@@ -175,8 +190,8 @@ PROCEDURE BaseMultiEval(base    : Evaluator;
     END
   END BaseMultiEval;
 
-PROCEDURE BaseNominalEval(base    : Evaluator;
-                          p       : LRVector.T;
+PROCEDURE BaseNominalEval(base          : Evaluator;
+                          p             : LRVector.T;
                           VAR schemaScm : Scheme.T) : LRVector.T = 
   BEGIN
     IF doDebug THEN
@@ -327,19 +342,16 @@ PROCEDURE AttemptEval(base                 : Evaluator;
       
       (* read the schema *)
       LOCK schemeMu DO
-      WITH dataPath  = subdirPath & "/" & schemaDataFn,
-           schemaRes = SchemaReadResult(schemaPath,
-                                        dataPath,
-                                        scmFiles,
-                                        MakeMultiEval(),
-                                        base.optVars,
-                                        base.paramVars,
-                                        schemaScm) DO
-        IF doDebug THEN
-          Debug.Out("Schema-processed result : " & FmtLRVectorSeq(schemaRes))
-        END;
-        RETURN schemaRes
-      END
+        WITH dataPath  = subdirPath & "/" & schemaDataFn,
+             schemaRes = SchemaReadResult(schemaPath,
+                                          dataPath,
+                                          MakeMultiEval(),
+                                          schemaScm) DO
+          IF doDebug THEN
+            Debug.Out("Schema-processed result : " & FmtLRVectorSeq(schemaRes))
+          END;
+          RETURN schemaRes
+        END
       END
     END RunCommand;
 
@@ -393,7 +405,7 @@ PROCEDURE AttemptEval(base                 : Evaluator;
             ELSE
               Debug.Out("Returning outOfDomainResult : " & LongReal(outOfDomainResult));
               theResult := LRVectorSeq1(outOfDomainResult,
-                                        QuadRobust.GetOptVars().size())
+                                        QuadRobust.GetModelVars().size())
             END
           END
         END
@@ -514,12 +526,14 @@ PROCEDURE DoNominalEval(mme : MyMultiEval;
   END DoNominalEval;
   
 PROCEDURE MakeMultiEval() : SchemeObject.T =
+  (* return (list <nm0> .. <nmN-1>)
+     where <nm0> etc. is the name of the nth optimization variabile *)
   VAR 
     res : SchemeObject.T := NIL;
   BEGIN
-    WITH optvars = QuadRobust.GetOptVars() DO
-      FOR i := optvars.size() - 1 TO 0 BY -1 DO
-        WITH v = optvars.get(i) DO
+    WITH modelvars = QuadRobust.GetModelVars() DO
+      FOR i := modelvars.size() - 1 TO 0 BY -1 DO
+        WITH v = modelvars.get(i) DO
           res := SchemeUtils.Cons(v.nm, res)
         END
       END
@@ -527,12 +541,14 @@ PROCEDURE MakeMultiEval() : SchemeObject.T =
     RETURN SchemeUtils.Cons(SchemeSymbol.FromText("list"), res)
    END MakeMultiEval;
 
-PROCEDURE DoIt(optVars, paramVars : SchemeObject.T) =
+VAR optVars, paramVars : SchemeObject.T;
+    
+PROCEDURE DoIt() =
   VAR
     N               := vseq.size();
     pr : LRVector.T := NEW(LRVector.T, N);
     evaluator       : Evaluator
-                        := NEW(Evaluator).init(optVars, paramVars);
+                        := NEW(Evaluator).init();
     output : NewUOAs.Output;
   BEGIN
     IF rhoEnd = LAST(LONGREAL) THEN
@@ -693,7 +709,6 @@ VAR
   optVarsNm   := T2S("*opt-vars*");
   paramVarsNm := T2S("*param-vars*");
      
-
 PROCEDURE BindParams(schemaScm : Scheme.T;
                      optVars, paramVars : SchemeObject.T) =
   BEGIN
@@ -749,11 +764,34 @@ PROCEDURE BindParams(schemaScm : Scheme.T;
       Debug.Error(F("EXCEPTION! Scheme.E \"%s\" when initializing interpreter variables", x))
     END;
   END BindParams;
+
+PROCEDURE NewScheme() : Scheme.T =
+  VAR
+    scm : Scheme.T;
+  BEGIN
+    WITH scmarr = NEW(REF ARRAY OF Pathname.T, scmFiles.size()) DO
+      FOR i := FIRST(scmarr^) TO LAST(scmarr^) DO
+        scmarr[i] := scmFiles.get(i);
+        IF doDebug THEN
+          Debug.Out("SchemaReadResult: loading scheme file " & scmarr[i])
+        END;
+      END;
+      TRY
+        scm := NEW(SchemeM3.T).init(scmarr^)
+      EXCEPT
+        Scheme.E(x) =>
+        Debug.Error(F("EXCEPTION! Scheme.E \"%s\" when initializing interpreter", x))
+      END
+    END;
+
+    BindParams(scm, optVars, paramVars);
+
+    RETURN scm
+  END NewScheme;
   
 PROCEDURE SchemaReadResult(schemaPath ,
-                           dataPath                       : Pathname.T;
-                           scmFiles                       : TextSeq.T;
-                           schemaEval, optVars, paramVars : SchemeObject.T;
+                           dataPath              : Pathname.T;
+                           schemaEval            : SchemeObject.T;
                            VAR (*OUT*) schemaScm : Scheme.T) : LRVectorSeq.T =
 
   (* schemaScm is newly allocated and in a state where the various
@@ -768,24 +806,9 @@ PROCEDURE SchemaReadResult(schemaPath ,
     END;
     
     dataFiles.addhi(dataPath);
+
+    schemaScm := NewScheme();
     
-    WITH scmarr = NEW(REF ARRAY OF Pathname.T, scmFiles.size()) DO
-      FOR i := FIRST(scmarr^) TO LAST(scmarr^) DO
-        scmarr[i] := scmFiles.get(i);
-        IF doDebug THEN
-          Debug.Out("SchemaReadResult: loading scheme file " & scmarr[i])
-        END;
-      END;
-      TRY
-        schemaScm := NEW(SchemeM3.T).init(scmarr^)
-      EXCEPT
-        Scheme.E(x) =>
-        Debug.Error(F("EXCEPTION! Scheme.E \"%s\" when initializing interpreter", x))
-      END
-    END;
-
-    BindParams(schemaScm, optVars, paramVars);
-
     IF doDebug THEN
       Debug.Out("SchemaReadResult : set up interpreter")
     END;
@@ -815,12 +838,12 @@ PROCEDURE SchemaReadResult(schemaPath ,
       OSError.E, Rd.Failure =>
       Debug.Warning("Caught system error reading schema/data.  Returning failure.");
       RETURN LRVectorSeq1(outOfDomainResult,
-                                        QuadRobust.GetOptVars().size())
+                                        QuadRobust.GetModelVars().size())
     |
       Scheme.E(x) =>
       Debug.Warning("?error in Scheme interpreter : " & x);
       RETURN LRVectorSeq1(outOfDomainResult,
-                          QuadRobust.GetOptVars().size())
+                          QuadRobust.GetModelVars().size())
       (* is this right? *)
     END
   END SchemaReadResult;
@@ -984,10 +1007,13 @@ BEGIN
     END
   ELSE
     WITH senv      = NARROW(scm.getGlobalEnvironment(), SchemeEnvironment.T),
-         T2S       = SchemeSymbol.FromText,
-         optVars   = senv.lookup(T2S("*opt-vars*")),
-         paramVars = senv.lookup(T2S("*param-vars*")) DO
-      DoIt(optVars, paramVars)
+         T2S       = SchemeSymbol.FromText DO
+
+      optVars   := senv.lookup(T2S("*opt-vars*"));
+      paramVars := senv.lookup(T2S("*param-vars*"));
+      
+      DoIt()
+      
     END
   END
 

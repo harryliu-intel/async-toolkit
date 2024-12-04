@@ -35,6 +35,7 @@ IMPORT StatComponent;
 TYPE
   T = RECORD
     debug       : TEXT;
+    p0          : LRVector.T;   (* center of fit *)
     i           : CARDINAL;     (* index (of the mu/sigma fit) *)
     n           : CARDINAL;     (* dimensionality of the system *)
 
@@ -60,10 +61,11 @@ TYPE
     rank        : ARRAY Ranking OF CARDINAL;
 
     (* the final fields are the settings that were used to build the model *)
-    nmOrder, muOrder, sgOrder
-                : ResponseModel.Order; 
+    orders      : ARRAY StatComponent.T OF ResponseModel.Order;
     nomRho      : LONGREAL;
   END;
+
+PROCEDURE Format(READONLY t : T ) : TEXT;
 
 CONST DefaultOrders = ARRAY StatComponent.T OF ResponseModel.Order {
   ResponseModel.Order.Quadratic,

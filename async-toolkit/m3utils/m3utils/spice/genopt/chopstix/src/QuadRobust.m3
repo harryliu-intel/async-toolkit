@@ -455,7 +455,7 @@ PROCEDURE AttemptSurfaceFit(pr              : PointResult.T;
     points := SortByDistance(pr.p, parr);
     v : MultiEvalLRVector.Result;
 
-    nv := optvars.size();
+    nv := modelvars.size();
 
     models := NEW(REF ARRAY OF StatFits.T, nv);
     pvarr := NEW(REF ARRAY OF REF ARRAY OF PointMetricLR.T, nv);
@@ -489,14 +489,19 @@ PROCEDURE AttemptSurfaceFit(pr              : PointResult.T;
       -- sigma
     *)
     
-    FOR i := 0 TO optvars.size() - 1 DO
-      WITH mv = optvars.get(i) DO
-        EVAL StatFits.Attempt(pr.p,
-                              pvarr[i],
-                              selectByAll,
-                              orders := mv.orders,
-                              nomRho := rho
-                 )
+    FOR i := 0 TO modelvars.size() - 1 DO
+      WITH mv  = modelvars.get(i),
+           fit = StatFits.Attempt(pr.p,
+                                  pvarr[i],
+                                  selectByAll,
+                                  orders := mv.orders,
+                                  nomRho := rho
+          ) DO
+        Debug.Out(F("AttemptSurfaceFit : fitting response \"%s\"",
+                    SchemeSymbol.ToText(mv.nm)));
+        Debug.Out(F("AttemptSurfaceFit : fit result " & StatFits.Format(fit)));
+
+        models[i] := fit
       END
     END;
 
@@ -705,13 +710,13 @@ PROCEDURE SchemeFinish(resS    : MultiEvalLRVector.Result;
 
     (* resS contains all the data *)
     WITH pso     = NEW(StatObject.DefaultPoint).init(),
-         optvars = GetOptVars(),
+         modelvars = GetModelVars(),
          nom     = MultiEvalLRVector.Nominal(resS),
          mu      = MultiEvalLRVector.Mean   (resS),
          sigma   = MultiEvalLRVector.Sdev   (resS)
      DO
-      FOR i := 0 TO optvars.size() - 1  DO
-        WITH v = optvars.get(i) DO
+      FOR i := 0 TO modelvars.size() - 1  DO
+        WITH v = modelvars.get(i) DO
           pso.define(v.nm, nom[i], mu[i], sigma[i])
         END
       END;
@@ -1158,17 +1163,18 @@ PROCEDURE Orthogonalize(READONLY da : ARRAY OF LRVector.T) =
 PROCEDURE DoModel(varname : SchemeSymbol.T;
                   models  : ARRAY StatComponent.T OF ResponseModel.Order) =
   BEGIN
-    optvars.addhi(ModelVar.T { varname, models })
+    modelvars.addhi(ModelVar.T { varname, models })
   END DoModel;
 
-VAR optvars : ModelVarSeq.T;
+VAR modelvars : ModelVarSeq.T;
   
 PROCEDURE OptInit() =
   BEGIN
-    optvars := NEW(ModelVarSeq.T).init();
+    modelvars := NEW(ModelVarSeq.T).init();
   END OptInit;
 
-PROCEDURE GetOptVars() : ModelVarSeq.T = BEGIN RETURN optvars END GetOptVars;
+PROCEDURE GetModelVars() : ModelVarSeq.T =
+  BEGIN RETURN modelvars END GetModelVars;
   
 BEGIN
   schemeMu := NEW(MUTEX);

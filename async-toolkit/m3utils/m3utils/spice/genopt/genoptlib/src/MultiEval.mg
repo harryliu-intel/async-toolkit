@@ -7,7 +7,9 @@ IMPORT Debug;
 TYPE TA = ARRAY OF TEXT;
      
 CONST LR = LongReal;
-      
+
+VAR doDebug := Debug.DebugThis("MultiEval");
+    
 REVEAL
   T = Public BRANDED Brand OBJECT
   OVERRIDES
@@ -79,9 +81,11 @@ PROCEDURE Var(READONLY a : Result) : Type.T =
          var    = Type.Minus(meansq, Type.Times(mean, mean)),
          tvar   = Type.ZeroLT(0.0d0, var) DO
 
-      Debug.Out(FN("MultiEval(%s) : fact %s ; mean %s ; meansq %s : var %s ; tvar %s",
-                  TA { Brand, LR(fact), Type.Format(mean), Type.Format(meansq),
-                  Type.Format(var), Type.Format(tvar) } ));
+      IF doDebug THEN
+        Debug.Out(FN("MultiEval(%s) : fact %s ; mean %s ; meansq %s : var %s ; tvar %s",
+                     TA { Brand, LR(fact), Type.Format(mean), Type.Format(meansq),
+                          Type.Format(var), Type.Format(tvar) } ))
+      END;
       
       RETURN tvar
     END
@@ -93,14 +97,18 @@ PROCEDURE Sdev(READONLY a : Result) : Type.T =
       (* just set the sdev to be 2x the mean *)
       WITH res = Type.ScalarMul(2.0d0, Type.Plus(Type.Abs(Nominal(a)),
                                                  Type.Abs(Mean(a)))) DO
-        Debug.Out(F("Sdev : 2x path : res %s", Type.Format(res)));
+        IF doDebug THEN
+          Debug.Out(F("Sdev : 2x path : res %s", Type.Format(res)))
+        END;
         RETURN res
       END
     END;
     
     WITH nf  = FLOAT(a.n, LONGREAL),
          res = Type.Sqrt(Type.ScalarMul(nf / (nf - 1.0d0), Var(a))) DO
-      Debug.Out(F("Sdev : normal path : res %s", Type.Format(res)));
+      IF doDebug THEN
+        Debug.Out(F("Sdev : normal path : res %s", Type.Format(res)))
+      END;
       RETURN res
     END
   END Sdev;
