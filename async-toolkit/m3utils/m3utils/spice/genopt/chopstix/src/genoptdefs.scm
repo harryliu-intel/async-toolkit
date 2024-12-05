@@ -123,14 +123,15 @@
 (define (uprange n)
   (reverse (downrange n)))
 
+(define *p-override* '()) ;; used to override p for a given interpreter
+
 (define (get-*p*)
-  (let ((coords (obj-method-wrap (GenOpt.GetCoords) 'LongRealSeq.T)))
+  (let ((coords (obj-method-wrap (GenOpt.GetCoords *p-override*) 'LongRealSeq.T)))
     (map (lambda(i)(coords 'get i)) (uprange (coords 'size)))))
 
 (define (get-*x*)
   (let ((factors (map caddr *opt-vars*)))
     (map * (get-*p*) factors)))
-
 
 (define (quad-model var modes)
   (QuadRobust.DoModel var modes))

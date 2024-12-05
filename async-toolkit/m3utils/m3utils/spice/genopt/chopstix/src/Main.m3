@@ -48,7 +48,7 @@ IMPORT IP, NetObj, ReadLineError; (* for exceptions *)
 FROM GenOptUtils IMPORT FmtP;
 FROM GenOpt IMPORT ResultWriter, rho, scmCb, doNetbatch,
                    schemaDataFn, schemaPath, outOfDomainResult;
-FROM GenOpt IMPORT p, rhoEnd, rhoBeg, vseq, paramBindings;
+FROM GenOpt IMPORT rhoEnd, rhoBeg, vseq, paramBindings;
 IMPORT GenOpt;
 FROM GenOptEnv IMPORT   NbPool, NbQslot, M3Utils, NbOpts;
 FROM GenOptUtils IMPORT MustOpenWr, LRVectorSeq1, FmtLRVectorSeq;
@@ -77,7 +77,7 @@ VAR
 CONST
   MyM3UtilsSrcPath = "spice/genopt/chopstix/src";
 
-(* nomenclature:
+(* variable nomenclature:
 
    paramvars : are (once-settable) constants for a given optimization
    optvars   : the domain that we optimize over
@@ -148,7 +148,7 @@ PROCEDURE BaseEvalHint(base : Evaluator; p : LRVector.T) =
 PROCEDURE BaseEval(base : Evaluator; p : LRVector.T) : LRVector.T =
   BEGIN
     TRY
-      WITH res = AttemptEval(base, p, 0, FALSE) DO
+      WITH res = AttemptEval(p, 0, FALSE) DO
         TYPECASE res OF
           LRVectorResult(lrv) => RETURN lrv.res
         ELSE
@@ -172,7 +172,7 @@ PROCEDURE BaseMultiEval(base    : Evaluator;
     END;
     
     TRY
-      WITH res = AttemptEval(base, p, samples, FALSE) DO
+      WITH res = AttemptEval(p, samples, FALSE) DO
         TYPECASE res OF
           QuadResult(quad) =>
           <*ASSERT quad.res.sum # NIL*>
@@ -199,7 +199,7 @@ PROCEDURE BaseNominalEval(base          : Evaluator;
     END;
     
     TRY
-      WITH res = AttemptEval(base, p, 1, nominal := TRUE) DO
+      WITH res = AttemptEval(p, 1, nominal := TRUE) DO
         TYPECASE res OF
           LRVectorResult(lrv) =>
           schemaScm := res.schemaScm;
@@ -224,8 +224,7 @@ TYPE
 
   QuadResult     = EvalResult OBJECT res : MultiEvalLRVector.Result END;
   
-PROCEDURE AttemptEval(base                 : Evaluator;
-                      q                    : LRVector.T;
+PROCEDURE AttemptEval(q                    : LRVector.T;
                       samples              : CARDINAL;
                       nominal              : BOOLEAN) : EvalResult
   RAISES { ProcUtils.ErrorExit } =
@@ -256,7 +255,7 @@ PROCEDURE AttemptEval(base                 : Evaluator;
         *)
         
         FOR i := FIRST(q^) TO LAST(q^) DO
-          p.put(i, q[i])
+          GenOpt.SetCoord(i, q[i])
         END;
         IF nominal THEN 
           cmd            := scmCb.command(-1)
@@ -345,7 +344,7 @@ PROCEDURE AttemptEval(base                 : Evaluator;
         WITH dataPath  = subdirPath & "/" & schemaDataFn,
              schemaRes = SchemaReadResult(schemaPath,
                                           dataPath,
-                                          MakeMultiEval(),
+                                          MakeModelVarList(),
                                           schemaScm) DO
           IF doDebug THEN
             Debug.Out("Schema-processed result : " & FmtLRVectorSeq(schemaRes))
@@ -525,7 +524,7 @@ PROCEDURE DoNominalEval(mme : MyMultiEval;
     RETURN res
   END DoNominalEval;
   
-PROCEDURE MakeMultiEval() : SchemeObject.T =
+PROCEDURE MakeModelVarList() : SchemeObject.T =
   (* return (list <nm0> .. <nmN-1>)
      where <nm0> etc. is the name of the nth optimization variabile *)
   VAR 
@@ -539,7 +538,7 @@ PROCEDURE MakeMultiEval() : SchemeObject.T =
       END
     END;
     RETURN SchemeUtils.Cons(SchemeSymbol.FromText("list"), res)
-   END MakeMultiEval;
+   END MakeModelVarList;
 
 VAR optVars, paramVars : SchemeObject.T;
     
@@ -709,15 +708,28 @@ VAR
   optVarsNm   := T2S("*opt-vars*");
   paramVarsNm := T2S("*param-vars*");
      
-PROCEDURE BindParams(schemaScm : Scheme.T;
+PROCEDURE BindParams(schemaScm          : Scheme.T;
                      optVars, paramVars : SchemeObject.T) =
+  (* 
+     this routine binds the values of 
+
+     -- each of the optvars, properly named and scaled (using vseq)
+
+     -- each of the params
+
+     -- *opt-rho*
+
+     -- the lists of param var names and opt var names
+  *)
+  
   BEGIN
     TRY
+      (* bind parameters *)
       FOR i := 0 TO vseq.size() - 1 DO
         WITH v  = vseq.get(i),
              nm = v.nm,
              ss = T2S(nm),
-             pi = p.get(i),
+             pi = GenOpt.GetCoords().get(i),
              vv = pi * v.defstep,
              sx = L2S(vv) DO
           schemaScm.bind(ss, sx)
@@ -765,7 +777,21 @@ PROCEDURE BindParams(schemaScm : Scheme.T;
     END;
   END BindParams;
 
-PROCEDURE NewScheme() : Scheme.T =
+PROCEDURE NewScheme(p : LRVector.T (* OK to be NIL *)) : Scheme.T =
+  (* 
+     p controls the value of *p-override* in the Scheme interpreter.
+
+     If p is NIL, then *p-override* is left to its default value, which is
+     set in genoptdefs.scm (usually NIL, and this causes the interpreter to
+     use the global p for calculations).
+
+     If p is non-NIL, then this is used to initialize *p-override* in this
+     specific interpreter, allowing this interpreter to have a private copy
+     of p, for exploratory purposes...
+
+     Maybe we can get rid of the global p...???
+  *)
+     
   VAR
     scm : Scheme.T;
   BEGIN
@@ -784,6 +810,14 @@ PROCEDURE NewScheme() : Scheme.T =
       END
     END;
 
+    IF p # NIL THEN
+      WITH pOverrideNm = T2S("*p-override*"),
+           pOverride   = GenOpt.NewCoords() DO
+        GenOpt.SetCoords(p, pOverride);
+        scm.setInGlobalEnv(pOverrideNm, pOverride)
+      END
+    END;
+    
     BindParams(scm, optVars, paramVars);
 
     RETURN scm
@@ -807,7 +841,7 @@ PROCEDURE SchemaReadResult(schemaPath ,
     
     dataFiles.addhi(dataPath);
 
-    schemaScm := NewScheme();
+    schemaScm := NewScheme(NIL);
     
     IF doDebug THEN
       Debug.Out("SchemaReadResult : set up interpreter")
@@ -866,7 +900,7 @@ PROCEDURE SGCNext(cb : SGCallback) =
       WITH scmCode = SchemeUtils.List3(
                          T2S("eval-in-env"),
                          L2S(0.0d0),
-                         SchemeUtils.List2(T2S("quote"), MakeMultiEval())),
+                         SchemeUtils.List2(T2S("quote"), MakeModelVarList())),
            (* do we need to copy() the Scheme here? -- seems we don't 
               actually modify it? *)
            scm = cb.schemaScm,

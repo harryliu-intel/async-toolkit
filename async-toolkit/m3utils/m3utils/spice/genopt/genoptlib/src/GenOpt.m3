@@ -1,4 +1,5 @@
 MODULE GenOpt;
+
 IMPORT TextTextTbl;
 IMPORT SchemeSymbol;
 IMPORT SchemeObject;
@@ -10,7 +11,7 @@ IMPORT OptVar;
 IMPORT OptVarSeq;
 IMPORT SchemeString;
 IMPORT SchemeBoolean;
-
+IMPORT LRVector;
 
 PROCEDURE GetParamBindings() : TextTextTbl.T =
   BEGIN RETURN paramBindings END GetParamBindings;
@@ -111,10 +112,42 @@ PROCEDURE GetIter() : CARDINAL =
     RETURN iter
   END GetIter;
 
-PROCEDURE GetCoords() : LRSeq.T =
+VAR p : LRSeq.T; (* ugly! *)
+
+PROCEDURE SetCoord(i : CARDINAL; to : LONGREAL; override : LRSeq.T) =
   BEGIN
-    RETURN p
+    IF override # NIL THEN
+      override.put(i, to)
+    ELSE
+      p.put(i, to)
+    END
+  END SetCoord;
+
+PROCEDURE SetCoords(to : LRVector.T; override : LRSeq.T) =
+  BEGIN
+    FOR i := FIRST(to^) TO LAST(to^) DO
+      SetCoord(i, to[i], override)
+    END
+  END SetCoords;
+  
+PROCEDURE GetCoords(override : LRSeq.T) : LRSeq.T =
+  BEGIN
+    IF override # NIL THEN
+      RETURN override
+    ELSE
+      RETURN p
+    END
   END GetCoords;
+
+PROCEDURE NewCoords() : LRSeq.T =
+  BEGIN
+    WITH new = NEW(LRSeq.T).init() DO
+      FOR i := 0 TO p.size() - 1 DO
+        new.addhi(p.get(i))
+      END;
+      RETURN new
+    END
+  END NewCoords;
 
 PROCEDURE SetCallback(obj : OptCallback.T) =
   BEGIN

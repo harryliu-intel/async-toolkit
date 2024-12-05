@@ -1,4 +1,5 @@
 INTERFACE GenOpt;
+
 IMPORT SchemeSymbol;
 IMPORT OptCallback;
 IMPORT LongRealSeq;
@@ -10,6 +11,7 @@ IMPORT OSError;
 IMPORT NewUOAs;
 IMPORT TextSeq;
 IMPORT OptVarSeq;
+IMPORT LRVector;
 
 PROCEDURE DefOptVar(nm : SchemeSymbol.T; defval, defstep : LONGREAL);
 
@@ -27,7 +29,32 @@ PROCEDURE GetIter() : CARDINAL;
 
 PROCEDURE SetCallback(obj : OptCallback.T);
 
-PROCEDURE GetCoords() : LongRealSeq.T;
+(**********************************************************************)
+
+(* 
+   in the following, if override is NIL, we use the global/static 
+
+   p 
+
+   if we want to override the p for a particular interpreter,
+   allocate a new one using NewCoords(), and pass it in
+
+   The idea is that a default NIL setting can be used, and if we want
+   to override it for a given interpreter, simply set! the default
+   to a NewCoords() and set it as desired.
+*)
+
+PROCEDURE GetCoords(override : LongRealSeq.T := NIL) : LongRealSeq.T;
+
+PROCEDURE SetCoord(i        : CARDINAL;
+                   to       : LONGREAL;
+                   override : LongRealSeq.T := NIL);
+  
+PROCEDURE SetCoords(to : LRVector.T; override : LongRealSeq.T := NIL);
+
+PROCEDURE NewCoords() : LongRealSeq.T;
+  
+(**********************************************************************)
 
 PROCEDURE OptInit();
 
@@ -82,9 +109,6 @@ VAR
   schemaEval     : SchemeObject.T;
   outOfDomainResult        := FIRST(LONGREAL);
   method                   := Method.NewUOAs;
-  p : LongRealSeq.T; (* ugly! *)
   doNetbatch                := TRUE;
 
-    
-    
 END GenOpt.

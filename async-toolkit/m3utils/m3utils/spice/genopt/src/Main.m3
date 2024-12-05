@@ -51,7 +51,7 @@ IMPORT IP, NetObj, ReadLineError; (* for exceptions *)
 FROM GenOptUtils IMPORT FmtP;
 FROM GenOpt IMPORT Method, ResultWriter, rho, scmCb, doNetbatch,
                    schemaDataFn, schemaPath, schemaEval, outOfDomainResult;
-FROM GenOpt IMPORT p, method, rhoEnd, rhoBeg, vseq, paramBindings;
+FROM GenOpt IMPORT method, rhoEnd, rhoBeg, vseq, paramBindings;
 IMPORT GenOpt;
 FROM GenOptEnv IMPORT   NbPool, NbQslot, M3Utils, NbOpts;
 FROM GenOptUtils IMPORT MustOpenWr, LRSeq1, FmtLRSeq;
@@ -199,7 +199,7 @@ PROCEDURE AttemptEval(base    : Evaluator;
         *)
         
         FOR i := FIRST(q^) TO LAST(q^) DO
-          p.put(i, q[i])
+          GenOpt.SetCoords(q)
         END;
         IF nominal THEN 
           cmd            := scmCb.command(-1)
@@ -648,13 +648,13 @@ PROCEDURE SchemaReadResult(schemaPath ,
     END;
 
     TRY
-    WITH optVarsNm = T2S("*opt-vars*"),
+    WITH optVarsNm   = T2S("*opt-vars*"),
          paramVarsNm = T2S("*param-vars*") DO
       FOR i := 0 TO vseq.size() - 1 DO
         WITH v  = vseq.get(i),
              nm = v.nm,
              ss = T2S(nm),
-             pi = p.get(i),
+             pi = GenOpt.GetCoords().get(i),
              vv = pi * v.defstep,
              sx = L2S(vv) DO
           schemaScm.bind(ss, sx)
