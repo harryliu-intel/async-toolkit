@@ -3,9 +3,11 @@
 my %count;
 my %rules;
 my $rule;
+my $ready=1;
 while (my $line = <STDIN> ){
-    if ($line =~ /^ (\S+):/) { $rule = $1; }
+    if ($ready && $line =~ /^ (\S+):/) { $rule = $1; $ready=0; }
     if ($line =~ /(\d+) violation[s]* found.$/) {
+        $ready=1;
         my $c=$1;
         my $class;
         if ($rule =~ /NODATA/) { $class="nodata"; }
