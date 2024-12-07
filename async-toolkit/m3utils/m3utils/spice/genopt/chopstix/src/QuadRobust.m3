@@ -69,6 +69,7 @@ IMPORT StatObject;
 IMPORT SchemeEnvironment;
 IMPORT LRVectorLRTbl;
 IMPORT Scatter;
+IMPORT LRVectorLRPair;
 
 CONST LR  = LongReal;
       T2S = SchemeSymbol.FromText;
@@ -137,13 +138,15 @@ TYPE
     fvalues : LRVectorLRTbl.T;
     thisCyc : LRVectorSet.T;
     toEval  : SchemeObject.T;
+    recorder : ResultRecorder;
   METHODS
     init(func    : MultiEvalLRVector.T;
          samples : CARDINAL;
          values  : LRVectorMRVTbl.T;
          fvalues : LRVectorLRTbl.T;
          toEval  : SchemeObject.T;
-         thisCyc : LRVectorSet.T       ) : MultiEvaluator := InitME;
+         thisCyc : LRVectorSet.T;
+         recorder : ResultRecorder) : MultiEvaluator := InitME;
   OVERRIDES
     eval     := MEEval;
   END;
@@ -213,7 +216,12 @@ PROCEDURE MEEval(me      : MultiEvaluator;
       IF haveOld THEN
          <*ASSERT oldres.nominal # Poison*>
         res.nominal := oldres.nominal;
-        res := MultiEvalLRVector.Combine(res, oldres);
+        VAR
+          newres := MultiEvalLRVector.Combine(res, oldres);
+        BEGIN
+          newres.subdirPath := res.subdirPath;
+          res := newres
+        END;
         <*ASSERT res.extra # NIL*>
       END;
       IF doDebug THEN
@@ -266,6 +274,15 @@ PROCEDURE MEEval(me      : MultiEvaluator;
         LOCK valueMu DO
           EVAL me.fvalues.put(p, retval)
         END;
+
+        (* and memorize it *)
+
+        LOCK me.recorder.resultsMu DO
+          EVAL me.recorder.results.put(LRVectorLRPair.T { LRVector.Copy(p),
+                                                       retval } ,
+                                    res.subdirPath )
+  
+        END;
         
         RETURN retval
       END
@@ -289,7 +306,8 @@ PROCEDURE InitME(self    : MultiEvaluator;
                  values  : LRVectorMRVTbl.T;
                  fvalues : LRVectorLRTbl.T;
                  toEval  : SchemeObject.T;
-                 thisCyc : LRVectorSet.T) : MultiEvaluator =
+                 thisCyc : LRVectorSet.T;
+                 recorder : ResultRecorder) : MultiEvaluator =
   BEGIN
     self.hintsByForking := TRUE;
     self.base           := func;
@@ -298,6 +316,7 @@ PROCEDURE InitME(self    : MultiEvaluator;
     self.fvalues        := fvalues;
     self.toEval         := toEval;
     self.thisCyc        := thisCyc;
+    self.recorder       := recorder;
     RETURN self
   END InitME;
 
@@ -815,6 +834,7 @@ PROCEDURE Minimize(pa             : LRVector.T;
                    func           : MultiEvalLRVector.T;
                    toEval         : SchemeObject.T;
                    rhobeg, rhoend : LONGREAL;
+                   recorder       : ResultRecorder;
                    progressWriter : ResultWriter) : Output =
   VAR
     n        := NUMBER(pa^);
@@ -899,7 +919,8 @@ PROCEDURE Minimize(pa             : LRVector.T;
                                              values,
                                              fvalues,
                                              toEval,
-                                             thisCyc) DO
+                                             thisCyc,
+                                             recorder) DO
             pe.start(q, ff);
             INC(i)
           END
@@ -919,7 +940,7 @@ PROCEDURE Minimize(pa             : LRVector.T;
       FOR i := FIRST(da^) TO LAST(da^) DO
         
         pp[i] := LRVector.Copy(pr.p);
-        WITH ff = NEW(MultiEvaluator).init(func, samples, values, fvalues, toEval, thisCyc) DO
+        WITH ff = NEW(MultiEvaluator).init(func, samples, values, fvalues, toEval, thisCyc, recorder) DO
           lm[i].start(pp[i],
                       LRVector.Copy(da[i]),
                       ff,

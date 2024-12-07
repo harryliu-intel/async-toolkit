@@ -13,6 +13,8 @@ IMPORT ResponseModel;
 IMPORT StatComponent;
 IMPORT ModelVarSeq;
 IMPORT SchemeObject;
+IMPORT LRVectorFieldPll;
+IMPORT LRVectorLRPairTextTbl;
 
 (* 
    note that there's a pile of static initialization that has to be run
@@ -48,6 +50,9 @@ PROCEDURE Minimize(p              : LRVector.T;
 
                    rhobeg, rhoend : LONGREAL;
                    (* same as Powell *)
+
+                   recorder       : ResultRecorder;
+                   (* after an evaluation, will record the result here *)
                    
                    progressWriter : GenOpt.ResultWriter := NIL;
                    (* write progress *)
@@ -79,5 +84,11 @@ PROCEDURE OptInit();
 PROCEDURE GetModelVars() : ModelVarSeq.T;
 
 VAR schemeMu : MUTEX;
+
+TYPE
+  ResultRecorder = LRVectorFieldPll.T OBJECT
+    results            : LRVectorLRPairTextTbl.T;
+    resultsMu          : MUTEX;
+  END;
 
 END QuadRobust.

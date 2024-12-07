@@ -19,6 +19,7 @@ PROCEDURE MultiEvalResult(READONLY in : MultiEvalLRVector.Result)
           nominal := in.nominal[i]
         END;
         res[i] := MultiEvalLR.Result {
+        subdirPath := in.subdirPath,
         id      := in.id,
         nominal := nominal,
         n       := in.n,
@@ -40,9 +41,9 @@ PROCEDURE PointMetric(READONLY in : PointMetricLRVector.T)
   BEGIN
     FOR i := 0 TO n - 1 DO
       res[i] := PointMetricLR.T {
-      metric := in.metric,
-      p      := in.p,
-      result := result[i]
+      metric     := in.metric,
+      p          := in.p,
+      result     := result[i]
       }
     END;
     RETURN res

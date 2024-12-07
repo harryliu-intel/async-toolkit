@@ -3,6 +3,8 @@ GENERIC MODULE MultiEval(Field, Type);
 IMPORT LRVector;
 FROM Fmt IMPORT Int, F, LongReal, FN;
 IMPORT Debug;
+IMPORT Text;
+IMPORT Pathname;
 
 TYPE TA = ARRAY OF TEXT;
      
@@ -57,8 +59,22 @@ PROCEDURE Combine(READONLY a, b : Result) : Result =
                     a.n + b.n,
                     Type.Plus(a.sum, b.sum),
                     Type.Plus(a.sumsq, b.sumsq),
-                    a.extra }
+                    a.extra,
+                    PathnameMax(a.subdirPath, b.subdirPath) }
   END Combine;
+
+PROCEDURE PathnameMax(a, b : Pathname.T) : Pathname.T =
+  BEGIN
+    IF    a = NIL THEN
+      RETURN b
+    ELSIF b = NIL THEN
+      RETURN a
+    ELSIF Text.Compare(a, b) = 1 THEN
+      RETURN a
+    ELSE
+      RETURN b
+    END
+  END PathnameMax;
 
 PROCEDURE Nominal(READONLY a : Result) : Type.T =
   BEGIN

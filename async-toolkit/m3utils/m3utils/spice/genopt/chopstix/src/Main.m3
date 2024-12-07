@@ -60,9 +60,7 @@ IMPORT LRVectorField;
 IMPORT LRVectorFieldPll;
 IMPORT MELRVectorType;
 IMPORT LRMatrix2;
-IMPORT RandomVector;
 FROM VectorUtils IMPORT Orthogonalize;
-IMPORT Random;
 IMPORT SymbolLRTbl;
 IMPORT StatObject;
 IMPORT LRScalarField;
@@ -102,13 +100,9 @@ CONST
   
 VAR
   pMu  := NEW(MUTEX);
-  rand := NEW(Random.Default).init();
 
 TYPE
-  Evaluator = LRVectorFieldPll.T OBJECT
-    results            : LRVectorLRPairTextTbl.T;
-    resultsMu          : MUTEX;
-
+  Evaluator = QuadRobust.ResultRecorder OBJECT
   METHODS
     init() : LRVectorField.T := InitPll;
 
@@ -217,7 +211,7 @@ PROCEDURE BaseNominalEval(base          : Evaluator;
 
 TYPE
   EvalResult     = BRANDED OBJECT
-    schemaScm : Scheme.T;
+    schemaScm  : Scheme.T;
   END;
 
   LRVectorResult = EvalResult OBJECT res : LRVector.T END;
@@ -429,12 +423,12 @@ PROCEDURE AttemptEval(q                    : LRVector.T;
         IF samples = 0 OR nominal THEN
           <*ASSERT theResult.size() = 1 *>
           RETURN NEW(LRVectorResult,
-                     res       := theResult.get(0),
-                     schemaScm := schemaScm)
+                     res        := theResult.get(0),
+                     schemaScm  := schemaScm)
         ELSE
           RETURN NEW(QuadResult,
-                     res       := VectorSeqToMulti(theResult),
-                     schemaScm := schemaScm)
+                     res        := VectorSeqToMulti(theResult, subdirPath),
+                     schemaScm  := schemaScm)
         END
       EXCEPT
         Wr.Failure(x) =>
@@ -460,13 +454,15 @@ PROCEDURE NewZeroV(n : CARDINAL) : LRVector.T =
     RETURN z
   END NewZeroV;
   
-PROCEDURE VectorSeqToMulti(seq : LRVectorSeq.T) : MultiEvalLRVector.Result =
+PROCEDURE VectorSeqToMulti(seq        : LRVectorSeq.T;
+                           subdirPath : Pathname.T) : MultiEvalLRVector.Result =
   VAR
     dims := NUMBER(seq.get(0)^); 
     s, ss : LRVector.T;
     n    := seq.size();
     res : MultiEvalLRVector.Result;
   BEGIN
+    res.subdirPath := subdirPath;
     FOR d := 0 TO dims - 1 DO
       s  := NewZeroV(dims);
       ss := NewZeroV(dims);
@@ -483,11 +479,12 @@ PROCEDURE VectorSeqToMulti(seq : LRVectorSeq.T) : MultiEvalLRVector.Result =
       TRY
         <*ASSERT s # NIL*>
         <*ASSERT ss # NIL*>
-        res :=  MultiEvalLRVector.Result { id    := idNx,
-                                           n     := n,
-                                           sum   := s,
-                                           sumsq := ss,
-                                           extra := NIL }
+        res :=  MultiEvalLRVector.Result { id         := idNx,
+                                           n          := n,
+                                           sum        := s,
+                                           sumsq      := ss,
+                                           extra      := NIL,
+                                           subdirPath := subdirPath }
       FINALLY
         INC(idNx)
       END
@@ -570,6 +567,7 @@ PROCEDURE DoIt() =
                                   toEval,
                                   rhoBeg,
                                   rhoEnd,
+                                  evaluator,
                                   NEW(MyResultWriter,
                                       evaluator := evaluator,
                                       root      := "progress"));
@@ -893,7 +891,8 @@ TYPE
 PROCEDURE SGCNext(cb : SGCallback) =
   BEGIN
     TRY
-      WITH e = NARROW(cb.schemaScm.getGlobalEnvironment(), SchemeEnvironment.T) DO
+      WITH e = NARROW(cb.schemaScm.getGlobalEnvironment(),
+                      SchemeEnvironment.T) DO
         <*ASSERT e # NIL*>
         <*ASSERT e.lookup(T2S("eval-in-env")) # NIL *>
       END;

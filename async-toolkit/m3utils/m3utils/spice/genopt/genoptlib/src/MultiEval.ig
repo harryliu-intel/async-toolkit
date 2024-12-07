@@ -1,6 +1,7 @@
 GENERIC INTERFACE MultiEval(Field, Type);
 IMPORT LRVector;
 IMPORT Word;
+IMPORT Pathname;
 
 TYPE
   T <: Public;
@@ -20,6 +21,7 @@ TYPE
     n          : CARDINAL;
     sum, sumsq : Type.T;
     extra      : REFANY;
+    subdirPath : Pathname.T;
   END;
 
 CONST Brand = "MultiEval(" & Field.Brand & "," & Type.Brand & ")";
