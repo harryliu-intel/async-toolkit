@@ -459,7 +459,7 @@
     (fprintf file "--rdt-run-fill=%d\n" (if metalFill 1 0))
     (fprintf file "--timing-driven-route=%d\n" (if softMacro || timingDriven 1 0))
     (fprintf file "--soft-macro=%d\n" (if softMacro 1 0))
-    (fprintf file "--spar-client=%s\n" P4CLIENT)
+    (fprintf file "--p4-client=%s\n" P4CLIENT)
     (when tau (fprintf file "--tau=%g\n" tau))
     (fprintf file "--rdt-eco-iter=%d\n" ecoIter)
     (when rdtUseFlops (fprintf file "--rdt-use-flops=1\n"))
