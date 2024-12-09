@@ -829,75 +829,98 @@ PROCEDURE EvalQGN(qg : QuadraticG; p : LRVector.T) : LRVector.T =
   END EvalQGN;
   
 VAR ridgeCoeff := 0.0d0;
+
+PROCEDURE OrthoRandom(VAR a : ARRAY OF LRVector.T) =
+  VAR
+    n        := NUMBER(a);
+    rand     := NEW(Random.Default).init();
+  BEGIN
+    FOR i := FIRST(a) TO LAST(a) DO
+      a[i] := RandomVector.GetDirV(rand, n, 1.0d0)
+    END;
+    (* orthogonalize the first n vectors with Gram-Schmidt *)
+    Orthogonalize(a)
+  END OrthoRandom;
+
+PROCEDURE PickRandomPoints(s            : LRVectorSet.T;
+                           p            : LRVector.T;
+                           rho          : LONGREAL;
+                           subdivide    : [1..LAST(CARDINAL)]) =
+  TYPE
+    LR = LONGREAL;
+  VAR
+    dp       := NEW(REF ARRAY OF LRVector.T, NUMBER(p^));
+    pp       := NEW(LRVector.T, NUMBER(p^));
     
+  BEGIN
+    OrthoRandom(dp^);
+
+    FOR i := 1 TO subdivide DO
+      WITH scale = FLOAT(i, LR) / FLOAT(subdivide, LR) * rho DO
+        FOR j := FIRST(dp^) TO LAST(dp^) DO
+          M.LinearCombinationV(1.0d0, p^, scale, dp[j]^, pp^);
+          EVAL s.insert(pp)
+        END
+      END
+    END
+  END PickRandomPoints;
+  
 PROCEDURE Minimize(pa             : LRVector.T;
                    func           : MultiEvalLRVector.T;
                    toEval         : SchemeObject.T;
                    rhobeg, rhoend : LONGREAL;
                    recorder       : ResultRecorder;
                    progressWriter : ResultWriter) : Output =
-  VAR
-    n        := NUMBER(pa^);
-    nv       := 2 * n;
-    da       := NEW(REF ARRAY OF LRVector.T, nv);
-    pp       := NEW(REF ARRAY OF LRVector.T, nv);
-    lps      := NEW(REF ARRAY OF LineProblem.T, nv);
-    rand     := NEW(Random.Default).init();
-    mins     := NEW(PointResultSeq.T).init();
-    allMins  := NEW(PointResultSeq.T).init();
-    lm       := NEW(REF ARRAY OF LineMinimizer.T, nv);
 
-    message  : TEXT;
-    thisCyc  : LRVectorSet.T;
-
-    values   := NEW(LRVectorMRVTbl.Default).init();
-    fvalues  := NEW(LRVectorLRTbl.Default).init();
-    
-    peSeq    := NEW(PointEvaluatorSeq.T).init();
-
-    newPts   := NEW(LRVectorSetDef.T).init(); (* interesting points to eval *)
-
-    samples : CARDINAL;
-
-    pr       := PointResult.T { pa, LAST(LONGREAL), FALSE, LAST(LONGREAL) };
-
-  BEGIN
-    rho   := rhobeg;
-    iter  := 0;
-    
-    FOR i := 0 TO 2 * n - 1 DO
-      lm[i] := NEW(LineMinimizer.T).init()
-    END;
-    
-    (* allocate some random vectors *)
-    FOR i := FIRST(da^) TO LAST(da^) DO
-      da[i] := RandomVector.GetDirV(rand, n, 1.0d0)
-    END;
-
-    (* orthogonalize the first n vectors with Gram-Schmidt *)
-
-    Orthogonalize(SUBARRAY(da^, 0, n));  (* first ortho. block *)
-    Orthogonalize(SUBARRAY(da^, n, n));  (* second ortho. block *)
-
-    (* setup complete *)
-    
-    FOR pass := 0 TO 100 * n - 1 DO
-
-      (*******************  MAIN MINIMIZATION ITERATION  *******************)
-
-      IF pass = 0 THEN
-        samples := 5
-      ELSIF pass < 4 THEN
-        samples := 10
-      ELSIF pass < 8 THEN
-        samples := 20
-      ELSE
-        samples := 40
+  PROCEDURE LineMinimizationsDone() : BOOLEAN =
+    BEGIN
+      FOR i := FIRST(lm^) TO LAST(lm^) DO
+        IF NOT lm[i].isDone() THEN RETURN FALSE END
       END;
+      RETURN TRUE
+    END LineMinimizationsDone;
 
-      Debug.Out(F("QuadRobust.Minimize : pass %s : newPts.size()=%s NUMBER(da^)=%s",
-                  Int(pass), Int(newPts.size()), Int(NUMBER(da^))));
+  PROCEDURE LaunchLineMinimizations() =
+    VAR
+      da       := NEW(REF ARRAY OF LRVector.T, nv);
+      pp       := NEW(REF ARRAY OF LRVector.T, nv);
+
+    BEGIN
+      OrthoRandom(da^);
       
+      FOR i := FIRST(da^) TO LAST(da^) DO
+        
+        pp[i] := LRVector.Copy(pr.p);
+        WITH ff = NEW(MultiEvaluator).init(func,
+                                           samples,
+                                           values,
+                                           fvalues,
+                                           toEval,
+                                           thisCyc,
+                                           recorder) DO
+          lm[i].start(pp[i],
+                      LRVector.Copy(da[i]),
+                      ff,
+                      rho)
+        END
+      END
+    END LaunchLineMinimizations;
+
+    <*UNUSED*>
+  PROCEDURE AwaitLineMinimizationsDone() =
+    BEGIN
+      Debug.Out("QuadRobust : Waiting for line searches to evaluate ...");
+      FOR i := FIRST(lm^) TO LAST(lm^) DO
+        lps[i] := lm[i].wait()
+      END;
+      Debug.Out("All tasks are done");
+      (* all tasks are done *)
+      <*ASSERT LineMinimizer.Running() = 0*>
+    END AwaitLineMinimizationsDone;
+    
+    
+  PROCEDURE LaunchPointEvals() =
+    BEGIN
       (* spin up enough threads to handle newPts *)
       WHILE peSeq.size() < newPts.size() DO
         WITH newPe = NEW(PointEvaluator.T).init() DO
@@ -927,63 +950,105 @@ PROCEDURE Minimize(pa             : LRVector.T;
         END
       END(*RAV*);
 
-      LOCK valueMu DO
-        thisCyc := NEW(LRVectorSetDef.T).init()
-      END;
-      
-      Debug.Out(F("QuadRobust.Minimize : pass %s; database has %s points",
-                  Int(pass), Int(values.size())));
-      Debug.Out(F("QuadRobust.Minimize : rho=%s [rhoend=%s]", LR(rho), LR(rhoend)));
+    END LaunchPointEvals;
 
-      <*ASSERT LineMinimizer.Running() = 0*>
-        
-      FOR i := FIRST(da^) TO LAST(da^) DO
-        
-        pp[i] := LRVector.Copy(pr.p);
-        WITH ff = NEW(MultiEvaluator).init(func, samples, values, fvalues, toEval, thisCyc, recorder) DO
-          lm[i].start(pp[i],
-                      LRVector.Copy(da[i]),
-                      ff,
-                      rho)
-        END
-      END;
-      
-      IF doDebug THEN
-        Debug.Out("QuadRobust.m3 : running = " & Int(LineMinimizer.Running())) 
-      END;
-
+  PROCEDURE AwaitPointEvals() =
+    BEGIN
       Debug.Out("QuadRobust : Waiting for points to evaluate ... ");
       FOR i := 0 TO newPts.size() - 1 DO
         EVAL peSeq.get(i).wait()
       END;
+    END AwaitPointEvals;
+    
+  VAR
+    n        := NUMBER(pa^);
+
+    (* line minimizations *)
+    nv       := n;
+    lps      := NEW(REF ARRAY OF LineProblem.T, nv);
+
+    
+    mins     := NEW(PointResultSeq.T).init();
+    allMins  := NEW(PointResultSeq.T).init();
+    lm       := NEW(REF ARRAY OF LineMinimizer.T, nv);
+
+    message  : TEXT;
+    thisCyc  : LRVectorSet.T;
+
+    values   := NEW(LRVectorMRVTbl.Default).init();
+    fvalues  := NEW(LRVectorLRTbl.Default).init();
+    
+    peSeq    := NEW(PointEvaluatorSeq.T).init();
+
+    newPts   := NEW(LRVectorSetDef.T).init(); (* interesting points to eval *)
+
+    samples : CARDINAL;
+
+    pr       := PointResult.T { pa, LAST(LONGREAL), FALSE, LAST(LONGREAL) };
+
+  BEGIN
+    rho   := rhobeg;
+    iter  := 0;
+    
+    FOR i := 0 TO nv - 1 DO
+      lm[i] := NEW(LineMinimizer.T).init()
+    END;
+    
+    (* setup complete *)
+    
+    FOR pass := 0 TO 100 * n - 1 DO
+
+      (*******************  MAIN MINIMIZATION ITERATION  *******************)
+
+      (* track evaluations on this pass *)
+      LOCK valueMu DO
+        thisCyc := NEW(LRVectorSetDef.T).init()
+      END;
+
+      (* sampling schedule *)
+      IF pass = 0 THEN
+        samples := 5
+      ELSIF pass < 4 THEN
+        samples := 10
+      ELSIF pass < 8 THEN
+        samples := 20
+      ELSE
+        samples := 40
+      END;
+
+      Debug.Out(F("QuadRobust.Minimize : rho=%s [rhoend=%s]",
+                  LR(rho),
+                  LR(rhoend)));
+
+      (* add some random points in the rho-ball *)
+      PickRandomPoints(newPts, pr.p, rho, 2);
+
+      Debug.Out(F("QuadRobust.Minimize : pass %s : newPts.size()=%s",
+                  Int(pass), Int(newPts.size())));
+      Debug.Out(F("QuadRobust.Minimize : pass %s; database has %s points",
+                  Int(pass), Int(values.size())));
+
+      LaunchPointEvals();
+
+            
+      IF LineMinimizationsDone() THEN
+        LaunchLineMinimizations()
+      END;
+      
+      
+      IF doDebug THEN
+        Debug.Out("QuadRobust.m3 : line minimizers running = " & Int(LineMinimizer.Running())) 
+      END;
+
+      AwaitPointEvals();
 
       newPts := NEW(LRVectorSetDef.T).init(); (* empty the set *)
 
-      Debug.Out("QuadRobust : Waiting for line searches to evaluate ...");
-      FOR i := FIRST(da^) TO LAST(da^) DO
-        lps[i] := lm[i].wait()
-      END;
-      Debug.Out("All tasks are done");
-      (* all tasks are done *)
-      <*ASSERT LineMinimizer.Running() = 0*>
-      
       (* at this point we have the minima in all directions 
          in two orthonormal bases 0..n-1, and n..2*n-1 *)
 
-      LineProblemArraySort.Sort(lps^);
-
-      (* next point should be the best of the line minimizations
-         
-         Because we are using two orthonormal bases, we get two
-         opt points.
-      *)
-
       VAR
-        newp := PointResult.T { lps[0].minp, lps[0].minval, FALSE, rho };
-        (* tentatively set to best line-search point *)
-        
-        opt0 := Predict(pr.p, SUBARRAY(pp^, 0, n));
-        opt1 := Predict(pr.p, SUBARRAY(pp^, n, n));
+        newp : PointResult.T;
       BEGIN
         Debug.Out("About to call DoLeaderBoard.  values.size() = " & Int(values.size()));
         LOCK valueMu DO
@@ -991,9 +1056,6 @@ PROCEDURE Minimize(pa             : LRVector.T;
             newp := bestq
           END
         END;
-        Debug.Out(F("Robust.m3 : opt0 (%s) ; opt1 (%s)",
-                    M.FormatV(opt0^),
-                    M.FormatV(opt1^)));
         
         Debug.Out(F("Robust.m3 : updating p (%s) -> (%s)",
                     PointResult.Format(pr),
@@ -1018,19 +1080,6 @@ PROCEDURE Minimize(pa             : LRVector.T;
           END
         END;
 
-
-        FOR i := FIRST(da^) TO LAST(da^) DO
-          da[i] := RandomVector.GetDirV(rand, n, 1.0d0)
-        END;
-
-        (* 
-           set the two anchor vectors to point to the "opt point" 
-           Maybe we should try swapping the opt points between the
-           basis blocks?  Or average them?
-        *)
-        
-        M.SubV(opt0^, newp.p^, da[0]^);
-        M.SubV(opt1^, newp.p^, da[n]^);
 
         pr := newp;
         mins.addhi   (newp);
@@ -1073,18 +1122,6 @@ PROCEDURE Minimize(pa             : LRVector.T;
         END
       END;
       
-      (* 
-         Finally, maintain the loop invariant that the search vectors are
-         ready on loop entry.
-
-         We do this here ... because... ?  Not sure, we could probably
-         do it at the top of the loop, but on the first iteration,
-         the primary directions are random, whereas here, they are pointing
-         to opt.
-      *)
-      Orthogonalize(SUBARRAY(da^, 0, n));  (* first ortho. block *)
-      Orthogonalize(SUBARRAY(da^, n, n));  (* second ortho. block *)
-
       (* 
          clear cache so we don't get fooled by noise 
          Note that we expect the function evaluation to use memoization,

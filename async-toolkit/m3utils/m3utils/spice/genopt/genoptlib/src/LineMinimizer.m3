@@ -32,6 +32,7 @@ REVEAL
     init  := Init;
     apply := LinMinApply;
     start := Start;
+    isDone:= IsDone;
     wait  := Wait;
     quit  := Quit;
   END;
@@ -41,6 +42,13 @@ VAR
   running := 0;
   doDebug := Debug.DebugThis("LineMinimizer");
 
+PROCEDURE IsDone(cl : T) : BOOLEAN =
+  BEGIN
+    LOCK mu DO
+      RETURN cl.done
+    END
+  END IsDone;
+  
 PROCEDURE LinMinApply(cl : T) : REFANY =
   (* call out to Brent *)
   BEGIN

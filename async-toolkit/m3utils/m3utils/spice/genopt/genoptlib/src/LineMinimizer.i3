@@ -15,6 +15,7 @@ TYPE
           dir  : LRVector.T;
           func : LRScalarField.T;
           rho  : LONGREAL);
+    isDone() : BOOLEAN;
     wait() : LineProblem.T;
     quit(); (* will not interrupt running task, can be waited for *)
   END;
