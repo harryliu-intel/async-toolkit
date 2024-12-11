@@ -58,6 +58,9 @@ $arch/bin/lve_summarize.pl    script/perl/lve_summarize        755 p
 $arch/bin/lve_sram.pl          script/perl/lve_sram            755 p
 $arch/bin/pathalyze_HitChan.pl script/perl/pathalyze_HitChan   755 p
 
+# Used for checking correctness in SPICE simulation
+$arch/bin/print_sample.pl      script/perl/print_sample        755 p
+
 # Used for timing characterization of TCAMs
 $arch/bin/tcam_lib.pl          script/perl/wwc_tcam/tcam_lib        755 p
 $arch/bin/run_tcam.pl          script/perl/wwc_tcam/run_tcam        755 p
