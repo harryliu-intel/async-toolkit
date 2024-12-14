@@ -300,7 +300,6 @@ PROCEDURE Attempt(p                : LRVector.T;
     END ComparePMByDistance;
     
   CONST
-    LeaveOut = 16;
     Comparer = ARRAY Ranking OF CmpProc { CompareByMeanValLikelihood,
                                           CompareByMeanAllLikelihood,
                                           CompareBySumAbsLinCoeff };
@@ -338,6 +337,12 @@ PROCEDURE Attempt(p                : LRVector.T;
     END;
     
     LOOP
+      Debug.Out(F("StatFits.Attempt NUMBER(parr^)=%s LeaveOut=%s max=%s m=%s",
+                  Int(NUMBER(parr^)),
+                  Int(LeaveOut),
+                  Int(max),
+                  Int(m)));
+      
       DoMuSigmaFit(SUBARRAY(parr^,           0, MIN(max, m)),
                    SUBARRAY(parr^, MIN(max, m), LeaveOut));
       IF m >= max THEN

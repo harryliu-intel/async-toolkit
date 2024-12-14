@@ -77,7 +77,11 @@ PROCEDURE Attempt(p           : LRVector.T;
                   (* point in whose neighborhood to fit *)
                   
                   parr        : REF ARRAY OF PointMetricLR.T;
-                  (* input data -- parr[i].result is what is fit by *)
+                  (* input data -- parr[i].result is what is fit by 
+                     this array neds to be at least 
+                     Ldofs(NUMBER(p^)) + LeaveOut
+                     in size
+                  *)
                   
                   selectByAll : BOOLEAN;
                   (* if TRUE, select fit by sum of rank of MeanAllL and
@@ -96,6 +100,8 @@ PROCEDURE Attempt(p           : LRVector.T;
   ) : T           (* returns best fit for nom, mu, sigma *)
   RAISES { Matrix.Singular } ;
 
+CONST LeaveOut = 16;
+      
 TYPE CmpResult = [-1 .. +1];
 
 TYPE CmpProc = PROCEDURE(READONLY a, b : T) : CmpResult;

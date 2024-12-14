@@ -177,6 +177,7 @@ PROCEDURE MEEval(me      : MultiEvaluator;
     isNew, haveOld : BOOLEAN;
 
     thr : Thread.T := NIL;
+    doPut := FALSE;
   BEGIN
 
     (* 
@@ -227,10 +228,8 @@ PROCEDURE MEEval(me      : MultiEvaluator;
       IF doDebug THEN
         Debug.Out("QuadRobust.MEEval : adding new entry to me.values")
       END;
-      LOCK valueMu DO
-        <*ASSERT res.nominal # Poison*>
-        EVAL me.values.put(p, res)
-      END
+      doPut := TRUE;
+      <*ASSERT res.nominal # Poison*>
     ELSIF haveOld THEN
       (* use the old data if it's got more samples *)
       (* is this really right? *)
@@ -272,6 +271,9 @@ PROCEDURE MEEval(me      : MultiEvaluator;
         (* so store it *)
 
         LOCK valueMu DO
+          IF doPut THEN
+            EVAL me.values.put(p, res)
+          END;
           EVAL me.fvalues.put(p, retval)
         END;
 
@@ -393,8 +395,11 @@ PROCEDURE DoLeaderBoard(READONLY pr   : PointResult.T; (* current [old] point *)
     END;
 
     WITH dofs = Qdofs(n) DO
-      IF NUMBER(parr^) >= dofs THEN
-        Debug.Out(F("DoLeaderBoard: enough points (%s >= %s) to attempt a surface fit.", Int(NUMBER(parr^)), Int(dofs)));
+      IF NUMBER(parr^) >= dofs + StatFits.LeaveOut THEN
+        Debug.Out(F("DoLeaderBoard: enough points (%s >= %s + %s) to attempt a surface fit.",
+                    Int(NUMBER(parr^)),
+                    Int(dofs),
+                    Int(StatFits.LeaveOut)));
         TRY
 
                     
@@ -408,8 +413,10 @@ PROCEDURE DoLeaderBoard(READONLY pr   : PointResult.T; (* current [old] point *)
           Debug.Warning("AttemptSurfaceFit raised Matrix.Singular!")
         END
       ELSE
-        Debug.Out(F("DoLeaderBoard: NOT enough points (%s < %s) to attempt a surface fit.", Int(NUMBER(parr^)), Int(dofs)));
+        Debug.Out(F("DoLeaderBoard: NOT enough points (%s < %s + %s) to attempt a surface fit.", Int(NUMBER(parr^)), Int(dofs),
+                    Int(StatFits.LeaveOut)));
       END;
+      Debug.Out(F("DoLeaderBoard: returning old point."));
       RETURN pr (* on failure, just return the old point *)
     END
   END DoLeaderBoard;
