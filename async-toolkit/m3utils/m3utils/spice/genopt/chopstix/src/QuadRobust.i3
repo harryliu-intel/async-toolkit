@@ -15,6 +15,7 @@ IMPORT ModelVarSeq;
 IMPORT SchemeObject;
 IMPORT LRVectorFieldPll;
 IMPORT LRVectorLRPairTextTbl;
+IMPORT Scheme;
 
 (* 
    note that there's a pile of static initialization that has to be run
@@ -51,6 +52,9 @@ PROCEDURE Minimize(p              : LRVector.T;
                    rhobeg, rhoend : LONGREAL;
                    (* same as Powell *)
 
+                   newScheme      : SchemeMaker;
+                   (* callback to make new Scheme interpreter *)
+
                    recorder       : ResultRecorder;
                    (* after an evaluation, will record the result here *)
                    
@@ -58,6 +62,8 @@ PROCEDURE Minimize(p              : LRVector.T;
                    (* write progress *)
                    
                    ) : Output;
+
+TYPE SchemeMaker = PROCEDURE(p : LRVector.T) : Scheme.T;
 
 CONST Brand = "QuadRobust";
 

@@ -297,7 +297,6 @@ PROCEDURE ResMetric(q : LRVector.T; fvalues : LRVectorLRTbl.T) : LONGREAL =
     f : LONGREAL;
     haveIt := fvalues.get(q, f);
   BEGIN
-    (* FILL THIS IN *)
     <*ASSERT haveIt*>
     RETURN f
   END ResMetric;
@@ -345,7 +344,40 @@ PROCEDURE Vdist(a, b : LRVector.T) : LONGREAL =
 PROCEDURE DoLeaderBoard(READONLY pr   : PointResult.T; (* current [old] point *)
                         values        : LRVectorMRVTbl.T;
                         fvalues       : LRVectorLRTbl.T;
-                        newpts(*OUT*) : LRVectorSet.T) : PointResult.T =
+                        newScheme     : SchemeMaker;
+                        toEval        : SchemeObject.T;
+                        newpts(*OUT*) : LRVectorSet.T;
+                        VAR newPr     : PointResult.T) : BOOLEAN =
+  (* call with valueMu LOCKed *)
+
+  PROCEDURE WalkParr(tag : TEXT) =
+    BEGIN
+          
+    WITH wx = Wx.New() DO
+      Wx.PutText(wx, F("==== QuadRobust (%s) leaderboard ====\n", tag));
+      Wx.PutText(wx, F("rho = %s ; p = %s\n", LR(rho), FmtP(pr.p)));
+      FOR i := FIRST(parr^) TO LAST(parr^) DO
+        WITH rec  = parr[i],
+             dist = Vdist(rec.p, pr.p) DO
+
+          IF newpts.size() < 4 * n * n THEN
+            (* insert first n^2 points in interesting set *)
+            Debug.Out("Adding to newpts : rec.p = " & FmtP(rec.p));
+            EVAL newpts.insert(rec.p)
+          END;
+          (*  *)
+          Wx.PutText(wx, F("%s metric %s ; dist %s; result %s ; rec.p %s\n",
+                           tag,
+                           LR(rec.metric),
+                           LR(dist),
+                           MultiEvalLRVector.Format(rec.result),
+                           FmtP(rec.p)))
+        END
+      END;
+      Debug.Out(Wx.ToText(wx))
+    END;
+    END WalkParr;
+    
   VAR
     parr := NEW(REF ARRAY OF PointMetric.T, values.size());
     iter := values.iterate();
@@ -370,29 +402,8 @@ PROCEDURE DoLeaderBoard(READONLY pr   : PointResult.T; (* current [old] point *)
     END;
 
     PointMetricArraySort.Sort(parr^);
-    
-    WITH wx = Wx.New() DO
-      Wx.PutText(wx, "==== QuadRobust leaderboard ====\n");
-      Wx.PutText(wx, F("rho = %s ; p = %s\n", LR(rho), FmtP(pr.p)));
-      FOR i := FIRST(parr^) TO LAST(parr^) DO
-        WITH rec  = parr[i],
-             dist = Vdist(rec.p, pr.p) DO
 
-          IF newpts.size() < 4 * n * n THEN
-            (* insert first n^2 points in interesting set *)
-            Debug.Out("Adding to newpts : rec.p = " & FmtP(rec.p));
-            EVAL newpts.insert(rec.p)
-          END;
-          (*  *)
-          Wx.PutText(wx, F("metric %s ; dist %s; result %s ; rec.p %s\n",
-                           LR(rec.metric),
-                           LR(dist),
-                           MultiEvalLRVector.Format(rec.result),
-                           FmtP(rec.p)))
-        END
-      END;
-      Debug.Out(Wx.ToText(wx))
-    END;
+    WalkParr("measured");
 
     WITH dofs = Qdofs(n) DO
       IF NUMBER(parr^) >= dofs + StatFits.LeaveOut THEN
@@ -404,9 +415,31 @@ PROCEDURE DoLeaderBoard(READONLY pr   : PointResult.T; (* current [old] point *)
 
                     
           WITH pmm = AttemptSurfaceFit(pr, parr^, values, newpts),
+               me  = NEW(ModelEvaluator,
+                         models    := pmm,
+                         newScheme := newScheme,
+                         toEval    := toEval),
                pm  = parr[0] DO
+
+            (* walk through values one more time, this time rank 
+               against fitted function *)
+
+            iter := values.iterate();
+
+            i := 0;
+            WHILE iter.next(q, r) DO
+              WITH metric = me.eval(q) DO
+                parr[i] := PointMetric.T { metric, q, r };
+                INC(i)
+              END
+            END;
+
+            PointMetricArraySort.Sort(parr^);
+
+            WalkParr("fitted");
             
-            RETURN PointResult.T { pm.p, pm.metric, FALSE, rho }
+            newPr := PointResult.T { pm.p, pm.metric, FALSE, rho };
+            RETURN TRUE (* new point chosen *)
           END
         EXCEPT
           Matrix.Singular =>
@@ -417,14 +450,74 @@ PROCEDURE DoLeaderBoard(READONLY pr   : PointResult.T; (* current [old] point *)
                     Int(StatFits.LeaveOut)));
       END;
       Debug.Out(F("DoLeaderBoard: returning old point."));
-      RETURN pr (* on failure, just return the old point *)
+      
+      RETURN FALSE (* failed to choose new point *)
     END
   END DoLeaderBoard;
+
+TYPE
+  (* a powerful model evaluator based on fitted models *)
+  
+  ModelEvaluator = LRScalarField.T OBJECT
+    models    : REF ARRAY OF StatFits.T;
+    newScheme : SchemeMaker;
+    toEval    : SchemeObject.T;
+  OVERRIDES
+    eval := ModelEval;
+  END;
+
+PROCEDURE ModelEval(me : ModelEvaluator; p : LRVector.T) : LONGREAL =
+  VAR
+    scm := me.newScheme(p);
+    pso := NEW(StatObject.DefaultPoint).init();
+  BEGIN
+    (* compare to SchemeFinish code *)
+    
+    FOR i := FIRST(me.models^) TO LAST(me.models^) DO
+      WITH nom = ComputeQ(p, me.models[i].bnom  ),
+           mu  = ComputeQ(p, me.models[i].bmu   ),
+           sig = ComputeQ(p, me.models[i].bsigma),
+           v   = modelvars.get(i) DO
+
+        Debug.Out(F("ModelEval : defining %s(%s) : nom=%s mu=%s sig=%s",
+                    SchemeSymbol.ToText(v.nm),
+                    FmtP(p),
+                    LR(nom), LR(mu), LR(sig)));
+        
+        pso.define(v.nm, nom, mu, sig)
+      END
+    END;
+    WITH e = SchemeUtils.List3(T2S("eval-in-env"),
+                               L2S(0.0d0),
+                               SchemeUtils.List2(T2S("quote"), me.toEval)),
+         ee = NARROW(scm.getGlobalEnvironment(), SchemeEnvironment.T) DO
+
+      scm.bind(T2S("*the-stat-object*"), pso);
+      <*ASSERT ee.lookup(T2S("*the-stat-object*")) # NIL *>
+
+      WITH blah = scm.evalInGlobalEnv(T2S("*the-stat-object*")) DO
+        Debug.Out("ModelEval : blah = " & SchemeUtils.Stringify(blah));
+      END;
+      
+      Debug.Out("ModelEval : toEval = " & SchemeUtils.Stringify(e));
+      
+      TRY
+        WITH res = scm.evalInGlobalEnv(e) DO
+          Debug.Out("ModelEval : final res = " & SchemeUtils.Stringify(res));
+          RETURN SchemeLongReal.FromO(res)
+        END
+      EXCEPT
+        Scheme.E(x) =>
+        Debug.Error(F("EXCEPTION! ModelEval : Scheme.E \"%s\" when evaluating toEval", x));
+        <*ASSERT FALSE*>
+      END
+    END
+  END ModelEval;
 
 PROCEDURE AttemptSurfaceFit(pr              : PointResult.T;
                             READONLY parr   : ARRAY OF PointMetric.T;
                             values          : LRVectorMRVTbl.T;
-                            newpts(*OUT*)   : LRVectorSet.T) : PointResult.T
+                            newpts(*OUT*)   : LRVectorSet.T) : REF ARRAY OF StatFits.T
   RAISES { Matrix.Singular } =
   (* attempt a surface fit *)
 
@@ -484,7 +577,7 @@ PROCEDURE AttemptSurfaceFit(pr              : PointResult.T;
     nv := modelvars.size();
 
     models := NEW(REF ARRAY OF StatFits.T, nv);
-    pvarr := NEW(REF ARRAY OF REF ARRAY OF PointMetricLR.T, nv);
+    pvarr  := NEW(REF ARRAY OF REF ARRAY OF PointMetricLR.T, nv);
     
   BEGIN
     (* first, pick enough points for the fit *)
@@ -543,7 +636,7 @@ PROCEDURE AttemptSurfaceFit(pr              : PointResult.T;
        actual points that we have already computed.
     *)
 
-    RETURN pr
+    RETURN models
   END AttemptSurfaceFit;
 
 PROCEDURE Do1Var(vi              : CARDINAL; (* index of variable *)
@@ -876,6 +969,7 @@ PROCEDURE Minimize(pa             : LRVector.T;
                    func           : MultiEvalLRVector.T;
                    toEval         : SchemeObject.T;
                    rhobeg, rhoend : LONGREAL;
+                   newScheme      : SchemeMaker;
                    recorder       : ResultRecorder;
                    progressWriter : ResultWriter) : Output =
 
@@ -1036,9 +1130,9 @@ PROCEDURE Minimize(pa             : LRVector.T;
                   Int(pass), Int(values.size())));
 
       LaunchPointEvals();
-
             
       IF LineMinimizationsDone() THEN
+        Debug.Out("QuadRobust.Minimize : line minimizations done, launching anew");
         LaunchLineMinimizations()
       END;
       
@@ -1055,52 +1149,61 @@ PROCEDURE Minimize(pa             : LRVector.T;
          in two orthonormal bases 0..n-1, and n..2*n-1 *)
 
       VAR
-        newp : PointResult.T;
+        gotNew      : BOOLEAN;
+        bestq, newp : PointResult.T;
       BEGIN
         Debug.Out("About to call DoLeaderBoard.  values.size() = " & Int(values.size()));
         LOCK valueMu DO
-          WITH bestq = DoLeaderBoard(pr, values, fvalues, newPts) DO
+          gotNew := DoLeaderBoard(pr, values, fvalues,
+                                  newScheme, toEval,
+                                  newPts, bestq);
+          IF gotNew THEN
+            (* we should really have a better update method, right? *)
             newp := bestq
           END
         END;
-        
-        Debug.Out(F("Robust.m3 : updating p (%s) -> (%s)",
-                    PointResult.Format(pr),
-                    PointResult.Format(newp)));
+
+        (* can we loop here, with gotNew always false? *)
+
+        IF gotNew THEN
+          Debug.Out(F("Robust.m3 : updating p (%s) -> (%s)",
+                      PointResult.Format(pr),
+                      PointResult.Format(newp)));
 
 
-        IF newp.p^ = pr.p^ THEN
-          (* if we're not going anywhere, just tighten up a little bit *)
-          rho := 0.9d0 * rho
-        ELSE
-          WITH dp = LRVector.Copy(pr.p) DO
-            M.SubV(newp.p^, pr.p^, dp^);
-            (* we blend in new rho estimator *)
-            
-            rho := 0.50d0 * rho + 0.50d0 * M.Norm(dp^);
-            
-            Debug.Out(F("Robust.m3 : new rho = %s", LR(rho)));
-            IF rho < rhoend THEN
-              message := "stopping because rho < rhoend";
-              EXIT
+          IF newp.p^ = pr.p^ THEN
+            (* if we're not going anywhere, just tighten up a little bit *)
+            rho := 0.9d0 * rho
+          ELSE
+            WITH dp = LRVector.Copy(pr.p) DO
+              M.SubV(newp.p^, pr.p^, dp^);
+              (* we blend in new rho estimator *)
+              
+              rho := 0.50d0 * rho + 0.50d0 * M.Norm(dp^);
+              
+              Debug.Out(F("Robust.m3 : new rho = %s", LR(rho)));
+              IF rho < rhoend THEN
+                message := "stopping because rho < rhoend";
+                EXIT
+              END
             END
-          END
-        END;
+          END;
 
 
-        pr := newp;
-        mins.addhi   (newp);
-        allMins.addhi(newp);
+          pr := newp;
+          mins.addhi   (newp);
+          allMins.addhi(newp);
 
-        IF progressWriter # NIL THEN
-          WITH output = Output { iterations := iter,
-                                 funcCount  := 0,
-                                 fhist      := GetFHist(allMins),
-                                 message    := message,
-                                 f          := pr.metric,
-                                 x          := LRVector.Copy(pr.p),
-                                 stoprho    := rho } DO
-            progressWriter.write(output)
+          IF progressWriter # NIL THEN
+            WITH output = Output { iterations := iter,
+                                   funcCount  := 0,
+                                   fhist      := GetFHist(allMins),
+                                   message    := message,
+                                   f          := pr.metric,
+                                   x          := LRVector.Copy(pr.p),
+                                   stoprho    := rho } DO
+              progressWriter.write(output)
+            END
           END
         END;
             

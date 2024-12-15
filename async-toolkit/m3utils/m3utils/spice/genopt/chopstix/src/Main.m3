@@ -567,6 +567,7 @@ PROCEDURE DoIt() =
                                   toEval,
                                   rhoBeg,
                                   rhoEnd,
+                                  NewScheme,
                                   evaluator,
                                   NEW(MyResultWriter,
                                       evaluator := evaluator,

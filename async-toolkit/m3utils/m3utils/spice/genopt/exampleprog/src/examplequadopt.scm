@@ -43,7 +43,7 @@
 (QuadRobust.DoModel 't0     '(Quadratic Linear    Linear))
 (QuadRobust.DoModel 't1     '(Linear    Linear    Linear))
 (QuadRobust.DoModel 't2     '(Linear    Linear    Linear))
-(QuadRobust.DoModel 'x2     '(Quadratic Quadratic Linear))
+(QuadRobust.DoModel 'x2     '(Quadratic Linear    Linear))
 
 
 ;;(QuadRobust.SetSelectByAll #t)
@@ -95,7 +95,7 @@
 (def-eval '(* (+ (nom 't1) (mu 't1))
               (+ (nom 't0) (mu 't0) (* sigmaK (sigma 't0)))))
 
-(def-eval 'result)
+;;(def-eval 'result)
 
 ;;(def-eval '(* *secret-value* result))
 
