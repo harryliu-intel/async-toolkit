@@ -70,6 +70,7 @@ IMPORT SchemeEnvironment;
 IMPORT LRVectorLRTbl;
 IMPORT Scatter;
 IMPORT LRVectorLRPair;
+IMPORT NewUOA_M3;
 
 CONST LR  = LongReal;
       T2S = SchemeSymbol.FromText;
@@ -352,58 +353,99 @@ PROCEDURE DoLeaderBoard(READONLY pr   : PointResult.T; (* current [old] point *)
 
   PROCEDURE WalkParr(tag : TEXT) =
     BEGIN
-          
-    WITH wx = Wx.New() DO
-      Wx.PutText(wx, F("==== QuadRobust (%s) leaderboard ====\n", tag));
-      Wx.PutText(wx, F("rho = %s ; p = %s\n", LR(rho), FmtP(pr.p)));
-      FOR i := FIRST(parr^) TO LAST(parr^) DO
-        WITH rec  = parr[i],
-             dist = Vdist(rec.p, pr.p) DO
+      
+      WITH wx = Wx.New() DO
+        Wx.PutText(wx, F("==== QuadRobust (%s) leaderboard ====\n", tag));
+        Wx.PutText(wx, F("rho = %s ; p = %s\n", LR(rho), FmtP(pr.p)));
+        FOR i := FIRST(parr^) TO LAST(parr^) DO
+          WITH rec  = parr[i],
+               dist = Vdist(rec.p, pr.p) DO
 
-          IF newpts.size() < 4 * n * n THEN
-            (* insert first n^2 points in interesting set *)
-            Debug.Out("Adding to newpts : rec.p = " & FmtP(rec.p));
-            EVAL newpts.insert(rec.p)
+            IF newpts.size() < 4 * n * n THEN
+              (* insert first n^2 points in interesting set *)
+              Debug.Out("Adding to newpts : rec.p = " & FmtP(rec.p));
+              EVAL newpts.insert(rec.p)
+            END;
+            (*  *)
+            Wx.PutText(wx, FN("%s metric %s (meas. %s); dist %s; result %s ; rec.p %s\n",
+                              TA {tag,
+                                  LR(rec.metric),
+                                  LR(ResMetric(rec.p, fvalues)),
+                                  LR(dist),
+                                  MultiEvalLRVector.Format(rec.result),
+                                  FmtP(rec.p)}))
+          END
+        END;
+        Debug.Out(Wx.ToText(wx))
+      END
+    END WalkParr;
+
+  PROCEDURE InitMeasured() =
+    VAR
+      iter := values.iterate();
+      i    := 0;
+      q : LRVector.T;
+      r : MultiEvalLRVector.Result;
+    BEGIN
+      WHILE iter.next(q, r) DO
+        WITH metric = ResMetric(q, fvalues) DO
+          IF i > LAST(parr^) THEN
+            Debug.Warning(F("i [%s] > LAST(parr^) [%s]",
+                            Int(i), Int(LAST(parr^))))
           END;
-          (*  *)
-          Wx.PutText(wx, F("%s metric %s ; dist %s; result %s ; rec.p %s\n",
-                           tag,
-                           LR(rec.metric),
-                           LR(dist),
-                           MultiEvalLRVector.Format(rec.result),
-                           FmtP(rec.p)))
+          parr[i] := PointMetric.T { metric, q, r };
+          INC(i)
+        END
+      END
+    END InitMeasured;
+
+  PROCEDURE InitFitted(me : LRScalarField.T) =
+    VAR
+      iter := values.iterate();
+      i    := 0;
+      q : LRVector.T;
+      r : MultiEvalLRVector.Result;
+    BEGIN
+      WHILE iter.next(q, r) DO
+        WITH metric = me.eval(q) DO
+          parr[i] := PointMetric.T { metric, q, r };
+          INC(i)
         END
       END;
-      Debug.Out(Wx.ToText(wx))
-    END;
-    END WalkParr;
+    END InitFitted;
+
+  PROCEDURE AttemptMinimize(p : LRVector.T; me : LRScalarField.T) =
+    VAR
+      pp := LRVector.Copy(p);
+    BEGIN
+      Debug.Out("QuadRobust.DoLeaderBoard.AttemptMinimize");
+      WITH min = NewUOA_M3.Minimize(pp,
+                                    me,
+                                    n*(n - 1),
+                                    rho,
+                                    rho * 0.001d0,
+                                    200) DO
+        Debug.Out(F("QuadRobust.DoLeaderBoard.AttemptMinimize min %s @ %s",
+                    LR(min), FmtP(pp)));
+        EVAL newpts.insert(pp)
+      END
+    END AttemptMinimize;
     
   VAR
     parr := NEW(REF ARRAY OF PointMetric.T, values.size());
-    iter := values.iterate();
-    q : LRVector.T;
-    r : MultiEvalLRVector.Result;
-    i := 0;
     n := NUMBER(pr.p^);
   BEGIN
     (* populate the array *)
 
     Debug.Out("**** values.size() = " & Int(values.size()));
 
-    WHILE iter.next(q, r) DO
-      WITH metric = ResMetric(q, fvalues) DO
-        IF i > LAST(parr^) THEN
-          Debug.Warning(F("i [%s] > LAST(parr^) [%s]",
-                          Int(i), Int(LAST(parr^))))
-        END;
-        parr[i] := PointMetric.T { metric, q, r };
-        INC(i)
-      END
-    END;
+    InitMeasured();
 
     PointMetricArraySort.Sort(parr^);
 
     WalkParr("measured");
+
+    Debug.Out(F("DoLeaderBoard : parr[0].p = %s", FmtP(parr[0].p)));
 
     WITH dofs = Qdofs(n) DO
       IF NUMBER(parr^) >= dofs + StatFits.LeaveOut THEN
@@ -414,29 +456,26 @@ PROCEDURE DoLeaderBoard(READONLY pr   : PointResult.T; (* current [old] point *)
         TRY
 
                     
-          WITH pmm = AttemptSurfaceFit(pr, parr^, values, newpts),
-               me  = NEW(ModelEvaluator,
-                         models    := pmm,
-                         newScheme := newScheme,
-                         toEval    := toEval),
-               pm  = parr[0] DO
+          VAR
+            pmm := AttemptSurfaceFit(pr, parr^, values, newpts);
+            me  := NEW(ModelEvaluator,
+                       models    := pmm,
+                       newScheme := newScheme,
+                       toEval    := toEval);
+            pm  := parr[0];
+          BEGIN
 
+           
             (* walk through values one more time, this time rank 
                against fitted function *)
 
-            iter := values.iterate();
-
-            i := 0;
-            WHILE iter.next(q, r) DO
-              WITH metric = me.eval(q) DO
-                parr[i] := PointMetric.T { metric, q, r };
-                INC(i)
-              END
-            END;
+            InitFitted(me);
 
             PointMetricArraySort.Sort(parr^);
 
             WalkParr("fitted");
+
+            AttemptMinimize(pr.p, me);
             
             newPr := PointResult.T { pm.p, pm.metric, FALSE, rho };
             RETURN TRUE (* new point chosen *)
