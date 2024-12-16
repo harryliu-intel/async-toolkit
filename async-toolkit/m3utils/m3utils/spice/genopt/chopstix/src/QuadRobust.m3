@@ -21,7 +21,7 @@ IMPORT Random;
 IMPORT LRMatrix2 AS M;
 IMPORT Math;
 IMPORT Debug;
-FROM Fmt IMPORT LongReal, F, Int, Bool, FN;
+FROM Fmt IMPORT LongReal, F, Int, Bool, FN, Pad;
 IMPORT LineProblem;
 IMPORT LineProblemArraySort;
 IMPORT LRScalarFieldPll;
@@ -71,6 +71,13 @@ IMPORT LRVectorLRTbl;
 IMPORT Scatter;
 IMPORT LRVectorLRPair;
 IMPORT NewUOA_M3;
+IMPORT Pickle AS Pickle;
+IMPORT FileWr;
+IMPORT Wr;
+IMPORT QuadCheckpoint;
+IMPORT FS;
+IMPORT MultiEvalResultLRVector;
+IMPORT Rd;
 
 CONST LR  = LongReal;
       T2S = SchemeSymbol.FromText;
@@ -192,7 +199,7 @@ PROCEDURE MEEval(me      : MultiEvaluator;
       isNew   := NOT me.thisCyc.insert(p);
       haveOld := me.values.get(p, oldres);
       IF haveOld THEN
-        <*ASSERT oldres.extra # NIL*>
+       (* <*ASSERT oldres.extra # NIL*> *)
       END
     END;
 
@@ -235,6 +242,9 @@ PROCEDURE MEEval(me      : MultiEvaluator;
       (* use the old data if it's got more samples *)
       (* is this really right? *)
       <*ASSERT oldres.nominal # Poison*>
+
+      oldres.extra := res.extra;
+      
       IF oldres.n > res.n THEN
         res := oldres;
         <*ASSERT res.extra # NIL*>
@@ -1010,6 +1020,7 @@ PROCEDURE Minimize(pa             : LRVector.T;
                    rhobeg, rhoend : LONGREAL;
                    newScheme      : SchemeMaker;
                    recorder       : ResultRecorder;
+                   checkRd        : Rd.T;
                    progressWriter : ResultWriter) : Output =
 
   PROCEDURE LineMinimizationsDone() : BOOLEAN =
@@ -1057,7 +1068,6 @@ PROCEDURE Minimize(pa             : LRVector.T;
       (* all tasks are done *)
       <*ASSERT LineMinimizer.Running() = 0*>
     END AwaitLineMinimizationsDone;
-    
     
   PROCEDURE LaunchPointEvals() =
     BEGIN
@@ -1126,9 +1136,9 @@ PROCEDURE Minimize(pa             : LRVector.T;
 
     pr       := PointResult.T { pa, LAST(LONGREAL), FALSE, LAST(LONGREAL) };
 
+    startIter := 0;
   BEGIN
     rho   := rhobeg;
-    iter  := 0;
     
     FOR i := 0 TO nv - 1 DO
       lm[i] := NEW(LineMinimizer.T).init()
@@ -1136,21 +1146,21 @@ PROCEDURE Minimize(pa             : LRVector.T;
     
     (* setup complete *)
     
-    FOR pass := 0 TO 100 * n - 1 DO
+    FOR iter := startIter TO 100 * n - 1 DO
 
       (*******************  MAIN MINIMIZATION ITERATION  *******************)
 
-      (* track evaluations on this pass *)
+      (* track evaluations on this iter *)
       LOCK valueMu DO
         thisCyc := NEW(LRVectorSetDef.T).init()
       END;
 
       (* sampling schedule *)
-      IF pass = 0 THEN
+      IF iter = 0 THEN
         samples := 5
-      ELSIF pass < 4 THEN
+      ELSIF iter < 4 THEN
         samples := 10
-      ELSIF pass < 8 THEN
+      ELSIF iter < 8 THEN
         samples := 20
       ELSE
         samples := 40
@@ -1163,10 +1173,10 @@ PROCEDURE Minimize(pa             : LRVector.T;
       (* add some random points in the rho-ball *)
       PickRandomPoints(newPts, pr.p, rho, 2);
 
-      Debug.Out(F("QuadRobust.Minimize : pass %s : newPts.size()=%s",
-                  Int(pass), Int(newPts.size())));
-      Debug.Out(F("QuadRobust.Minimize : pass %s; database has %s points",
-                  Int(pass), Int(values.size())));
+      Debug.Out(F("QuadRobust.Minimize : iter %s : newPts.size()=%s",
+                  Int(iter), Int(newPts.size())));
+      Debug.Out(F("QuadRobust.Minimize : iter %s; database has %s points",
+                  Int(iter), Int(values.size())));
 
       LaunchPointEvals();
             
@@ -1282,8 +1292,35 @@ PROCEDURE Minimize(pa             : LRVector.T;
         (* we don't know how it works so we don't know how to clear it *)
       END;
 
-      INC(iter);
-
+      LOCK valueMu DO
+      (* clear out the scheme interpreter links *)
+        VAR
+          newvalues := NEW(LRVectorMRVTbl.Default).init();
+          iter := values.iterate();
+          v : LRVector.T;
+          m : MultiEvalResultLRVector.T;
+        BEGIN
+          WHILE iter.next(v, m) DO
+            m.extra := NIL;
+            EVAL newvalues.put(v, m)
+          END;
+          values := newvalues
+        END;
+      
+        WITH checkpoint = NEW(QuadCheckpoint.T,
+                              iter    := iter,
+                              values  := values,
+                              fvalues := fvalues),
+             pi         = Pad(Int(iter), 6, padChar := '0'),
+             fn         = F("quadcheckpoint.%s.chk", pi),
+             tfn        = fn & "_temp",
+             wr         = FileWr.Open(tfn) DO
+          Pickle.Write(wr, checkpoint);
+          Wr.Close(wr);
+          FS.Rename(tfn, fn)
+        END
+      END;
+      
       message := "stopping because of out of iterations"
       (* if we fall through, that's the last message we set! *)
       

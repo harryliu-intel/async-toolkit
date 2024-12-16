@@ -19,6 +19,7 @@ Module ("ModelVar")
 Sequence ("ModelVar", "ModelVar")
 Module ("StatObject")
 Table ("SymbolLR", "Atom", "LongrealType")
+Interface ("QuadCheckpoint")
 
 SchemeStubs ("StatObject")
 SchemeStubs ("LineProblem")

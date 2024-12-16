@@ -12,6 +12,7 @@ IMPORT NewUOAs;
 IMPORT TextSeq;
 IMPORT OptVarSeq;
 IMPORT LRVector;
+IMPORT Rd;
 
 PROCEDURE DefOptVar(nm : SchemeSymbol.T; defval, defstep : LONGREAL);
 
@@ -58,7 +59,7 @@ PROCEDURE NewCoords() : LongRealSeq.T;
 
 PROCEDURE OptInit();
 
-VAR DoIt : PROCEDURE();
+VAR DoIt : PROCEDURE(checkRd : Rd.T);
 
 PROCEDURE SetNetbatch(to : BOOLEAN);
 

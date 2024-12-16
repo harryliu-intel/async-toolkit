@@ -539,7 +539,7 @@ PROCEDURE MakeModelVarList() : SchemeObject.T =
 
 VAR optVars, paramVars : SchemeObject.T;
     
-PROCEDURE DoIt() =
+PROCEDURE DoIt(checkRd : Rd.T) =
   VAR
     N               := vseq.size();
     pr : LRVector.T := NEW(LRVector.T, N);
@@ -569,6 +569,7 @@ PROCEDURE DoIt() =
                                   rhoEnd,
                                   NewScheme,
                                   evaluator,
+                                  checkRd,
                                   NEW(MyResultWriter,
                                       evaluator := evaluator,
                                       root      := "progress"));
@@ -950,6 +951,7 @@ VAR
   cfgFile            : Pathname.T;
   genOptScm          : Pathname.T;
   doDirectoryWarning : BOOLEAN;
+  checkRd            : Rd.T := NIL;
   
 BEGIN
 
@@ -1046,7 +1048,7 @@ BEGIN
       optVars   := senv.lookup(T2S("*opt-vars*"));
       paramVars := senv.lookup(T2S("*param-vars*"));
       
-      DoIt()
+      DoIt(checkRd)
       
     END
   END

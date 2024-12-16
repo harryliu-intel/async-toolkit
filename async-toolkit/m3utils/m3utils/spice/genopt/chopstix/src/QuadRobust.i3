@@ -16,6 +16,7 @@ IMPORT SchemeObject;
 IMPORT LRVectorFieldPll;
 IMPORT LRVectorLRPairTextTbl;
 IMPORT Scheme;
+IMPORT Rd;
 
 (* 
    note that there's a pile of static initialization that has to be run
@@ -57,6 +58,9 @@ PROCEDURE Minimize(p              : LRVector.T;
 
                    recorder       : ResultRecorder;
                    (* after an evaluation, will record the result here *)
+
+                   checkRd        : Rd.T                := NIL;
+                   (* reader pointing to an existing checkpoint *)
                    
                    progressWriter : GenOpt.ResultWriter := NIL;
                    (* write progress *)
