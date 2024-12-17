@@ -69,8 +69,13 @@ cell_list=
 no_sync=
 p4_user=
 p4_passwd=
-p4_server_host=ssl:p4proxy17.devtools.intel.com
-p4_server_port=2510
+if [ -n "$P4PORT" ]; then
+  p4_server_host=`echo $P4PORT | $gawkcmd -F':' '{print $1":"$2}'`
+  p4_server_port=`echo $P4PORT | $gawkcmd -F':' '{print $3}'`
+else
+  p4_server_host=ssl:p4proxy07.devtools.intel.com
+  p4_server_port=2510
+fi
 argname=
 
 for arg in $@ ; do
