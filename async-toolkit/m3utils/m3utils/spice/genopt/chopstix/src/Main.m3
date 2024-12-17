@@ -986,6 +986,19 @@ BEGIN
       Debug.Error("? must specify M3UTILS---either on command line or in environment.")
     END;
 
+    IF pp.keywordPresent("-checkpoint") THEN
+      WITH cfn = pp.getNext() DO
+        TRY
+          checkRd := FileRd.Open(cfn)
+        EXCEPT
+          OSError.E(x) =>
+          Debug.Error(F("reading checkpoint file \"%s\" : OSError.E : %s",
+                        cfn,
+                        AL.Format(x)))
+        END
+      END
+    END;
+
     myFullSrcPath := M3Utils & "/" & MyM3UtilsSrcPath;
     WITH commonScm = myFullSrcPath & "/common.scm",
          genOptDefsScm = myFullSrcPath & "/genoptdefs.scm" DO

@@ -1137,6 +1137,9 @@ PROCEDURE Minimize(pa             : LRVector.T;
     pr       := PointResult.T { pa, LAST(LONGREAL), FALSE, LAST(LONGREAL) };
 
     startIter := 0;
+
+    checkPoint : QuadCheckpoint.T := NIL;
+    
   BEGIN
     rho   := rhobeg;
     
@@ -1145,6 +1148,16 @@ PROCEDURE Minimize(pa             : LRVector.T;
     END;
     
     (* setup complete *)
+
+    IF checkRd # NIL THEN
+      checkPoint := Pickle.Read(checkRd);
+      values     := checkPoint.values;
+      fvalues    := checkPoint.fvalues;
+      startIter  := checkPoint.iter + 1;
+
+      Debug.Out("QuadRobust : restarting from checkpoint : startIter = " &
+        Int(startIter))
+    END;
     
     FOR iter := startIter TO 100 * n - 1 DO
 
