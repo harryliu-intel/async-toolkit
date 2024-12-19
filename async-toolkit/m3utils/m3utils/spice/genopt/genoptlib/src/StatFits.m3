@@ -98,7 +98,8 @@ PROCEDURE FmtRanking(ra : ARRAY Ranking OF CARDINAL) : TEXT =
   END FmtRanking;
 
 PROCEDURE DoNomFit(READONLY parr : ARRAY OF PointMetricLR.T;
-                   type          : ResponseModel.Order) : REF M.M
+                   type          : ResponseModel.Order;
+                   lambdaMult    : LONGREAL) : REF M.M
   RAISES { Matrix.Singular } =
   VAR
     m  := NUMBER(parr);
@@ -127,16 +128,27 @@ PROCEDURE DoNomFit(READONLY parr : ARRAY OF PointMetricLR.T;
     END;
 
     Regression.Run(x,
-                   ynom   , ynomHat   , FALSE, rnom   , 0.0d0);
+                   ynom   , ynomHat   , FALSE, rnom   ,
+                   LambdaFunc(lambdaMult, x));
 
     RETURN M2Q[type](n, rnom.b^);
-  END DoNomFit;           
+  END DoNomFit;
+
+PROCEDURE LambdaFunc(lm : LONGREAL;  m : REF M.M) : LONGREAL =
+  BEGIN
+    IF lm = 0.0d0 THEN
+      RETURN 0.0d0
+    ELSE
+      RETURN lm * Math.sqrt(M.MeanSqM(m^))
+    END
+  END LambdaFunc;
   
 PROCEDURE Attempt(p                : LRVector.T;
                   parr             : REF ARRAY OF PointMetricLR.T;
                   selectByAll      : BOOLEAN;
                   orders           : ARRAY StatComponent.T OF ResponseModel.Order;
-                  nomRho           : LONGREAL) : T
+                  nomRho           : LONGREAL;
+                  lambdaMult       : LONGREAL) : T
   RAISES { Matrix.Singular } =
 
   VAR
@@ -228,9 +240,13 @@ PROCEDURE Attempt(p                : LRVector.T;
       END(*ROF*);
 
       Regression.Run(xmu,
-                     ymu   , ymuHat   , FALSE, rmu   , 0.0d0, W := w);
+                     ymu   , ymuHat   , FALSE, rmu   ,
+                     LambdaFunc(lambdaMult, xmu),
+                     W := w);
       Regression.Run(xsg,
-                     ysigma, ysigmaHat, FALSE, rsigma, 0.0d0, W := w);
+                     ysigma, ysigmaHat, FALSE, rsigma,
+                     LambdaFunc(lambdaMult, xmu),
+                     W := w);
 
       WITH rssMu  = Rss(ymu   , ymuHat),
            sMu    = Math.sqrt(rssMu / mf),
@@ -288,7 +304,6 @@ PROCEDURE Attempt(p                : LRVector.T;
           END
         END;
       END
-      
     END DoMuSigmaFit;
 
   PROCEDURE ComparePMByDistance(READONLY a, b : PointMetricLR.T) : [-1 .. 1] =
@@ -332,7 +347,7 @@ PROCEDURE Attempt(p                : LRVector.T;
             EXIT
           END
         END;
-        bnom := DoNomFit(SUBARRAY(parr^, 0, lim), nmOrder)
+        bnom := DoNomFit(SUBARRAY(parr^, 0, lim), nmOrder, lambdaMult)
       END
     END;
     

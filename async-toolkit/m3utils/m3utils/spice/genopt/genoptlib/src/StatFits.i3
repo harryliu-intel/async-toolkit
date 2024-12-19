@@ -91,12 +91,15 @@ PROCEDURE Attempt(p           : LRVector.T;
                   (* orders of fits *)
                   orders := DefaultOrders;
 
-                  nomRho  := 0.0d0
+                  nomRho  := 0.0d0;
                   (* how large a region to model for nom; 0.0d0 means
                      do not perform a nom fit at all.
                      (region sizes for mu, sigma are automatic and based
                       on a likelihood calculation) *)
-  
+
+                  lambdaMult := 0.0d0;
+                  (* ridge regression multiplier *)
+                  
   ) : T           (* returns best fit for nom, mu, sigma *)
   RAISES { Matrix.Singular } ;
 

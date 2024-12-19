@@ -107,6 +107,16 @@ PROCEDURE GetRho() : LONGREAL =
     RETURN rho
   END GetRho;
 
+PROCEDURE SetLambdaMult(to : LONGREAL) =
+  BEGIN
+    lambdaMult := to
+  END SetLambdaMult;
+
+PROCEDURE GetLambdaMult() : LONGREAL =
+  BEGIN
+    RETURN lambdaMult
+  END GetLambdaMult;
+
 PROCEDURE GetIter() : CARDINAL =
   BEGIN
     RETURN iter

@@ -48,7 +48,7 @@ IMPORT IP, NetObj, ReadLineError; (* for exceptions *)
 FROM GenOptUtils IMPORT FmtP;
 FROM GenOpt IMPORT ResultWriter, rho, scmCb, doNetbatch,
                    schemaDataFn, schemaPath, outOfDomainResult;
-FROM GenOpt IMPORT rhoEnd, rhoBeg, vseq, paramBindings;
+FROM GenOpt IMPORT rhoEnd, rhoBeg, vseq, paramBindings, lambdaMult;
 IMPORT GenOpt;
 FROM GenOptEnv IMPORT   NbPool, NbQslot, M3Utils, NbOpts;
 FROM GenOptUtils IMPORT MustOpenWr, LRVectorSeq1, FmtLRVectorSeq;
@@ -508,7 +508,9 @@ PROCEDURE DoMultiEval(mme     : MyMultiEval;
     scm : Scheme.T;
     res := mme.base.multiEval(at, samples, scm);
   BEGIN
+    <*ASSERT scm # NIL*>
     res.extra := scm;
+    <*ASSERT res.extra # NIL*>
     RETURN res
   END DoMultiEval;
 
@@ -567,6 +569,7 @@ PROCEDURE DoIt(checkRd : Rd.T) =
                                   toEval,
                                   rhoBeg,
                                   rhoEnd,
+                                  lambdaMult,
                                   NewScheme,
                                   evaluator,
                                   checkRd,

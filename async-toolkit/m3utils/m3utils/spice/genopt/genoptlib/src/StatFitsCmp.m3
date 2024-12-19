@@ -6,6 +6,12 @@ IMPORT SurfaceRep;
 PROCEDURE CompareByMeanValLikelihood(READONLY a, b : T) : CmpResult =
   BEGIN
     WITH av = a.l / a.nlf, bv = b.l / b.nlf DO
+      IF    NOT av = av THEN
+        RETURN +1
+      ELSIF NOT bv = bv THEN
+        RETURN -1
+      END;
+      
       RETURN -LongrealType.Compare(av, bv)
     END
   END CompareByMeanValLikelihood;
@@ -13,6 +19,12 @@ PROCEDURE CompareByMeanValLikelihood(READONLY a, b : T) : CmpResult =
 PROCEDURE CompareByMeanAllLikelihood(READONLY a, b : T) : CmpResult =
   BEGIN
     WITH av = a.ll / a.nllf, bv = b.ll / b.nllf DO
+      IF    NOT av = av THEN
+        RETURN +1
+      ELSIF NOT bv = bv THEN
+        RETURN -1
+      END;
+      
       RETURN -LongrealType.Compare(av, bv)
     END
   END CompareByMeanAllLikelihood;
@@ -23,6 +35,7 @@ PROCEDURE CompareBySumAbsLinCoeff(READONLY a, b : T) : CmpResult =
          asigmac = SurfaceRep.SumAbsCoeffQ(a.n, a.bsigma),
          bmuc    = SurfaceRep.SumAbsCoeffQ(b.n, b.bmu),
          bsigmac = SurfaceRep.SumAbsCoeffQ(b.n, b.bsigma) DO
+
       RETURN LongrealType.Compare(amuc[1] + asigmac[1],
                                   bmuc[1] + bsigmac[1])
     END

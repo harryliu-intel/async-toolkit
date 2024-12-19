@@ -8,4 +8,5 @@ chopstix.out*
 progress.*
 genopt.result
 *.save
-run.out
+run*.out
+

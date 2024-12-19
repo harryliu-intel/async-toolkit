@@ -26,6 +26,10 @@ PROCEDURE GetRhoEnd() : LONGREAL;
 
 PROCEDURE GetRho() : LONGREAL;
 
+PROCEDURE SetLambdaMult(to : LONGREAL);
+
+PROCEDURE GetLambdaMult() : LONGREAL;
+    
 PROCEDURE GetIter() : CARDINAL;
 
 PROCEDURE SetCallback(obj : OptCallback.T);
@@ -111,5 +115,6 @@ VAR
   outOfDomainResult        := FIRST(LONGREAL);
   method                   := Method.NewUOAs;
   doNetbatch                := TRUE;
+  lambdaMult               := 0.0d0;
 
 END GenOpt.

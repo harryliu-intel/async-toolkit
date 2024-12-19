@@ -53,6 +53,9 @@ PROCEDURE Minimize(p              : LRVector.T;
                    rhobeg, rhoend : LONGREAL;
                    (* same as Powell *)
 
+                   lambdaMult     : LONGREAL;
+                   (* ridge-regression coefficient *)
+
                    newScheme      : SchemeMaker;
                    (* callback to make new Scheme interpreter *)
 

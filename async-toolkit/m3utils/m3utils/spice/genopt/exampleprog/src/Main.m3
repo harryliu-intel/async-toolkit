@@ -38,7 +38,7 @@ VAR
   temp, vdd, delp, deln : LONGREAL;
 
   val : LONGREAL;
-  method : [ 0..3 ] := 1;
+  method : [ 0..4 ] := 1;
   
   rand  := NEW(Random.Default).init();
   samples : CARDINAL;
@@ -49,6 +49,7 @@ VAR
   quadstats : BOOLEAN;
   t := ARRAY [0..2] OF LONGREAL { 0.0d0, .. };
   q := t;
+  center := 0.0d0;
 BEGIN
   TRY
     nominal := pp.keywordPresent("-nominal");
@@ -60,6 +61,9 @@ BEGIN
     END;
     IF pp.keywordPresent("-temp") THEN
       temp := pp.getNextLongReal()
+    END; 
+    IF pp.keywordPresent("-center") THEN
+      center := pp.getNextLongReal()
     END; 
     IF pp.keywordPresent("-vdd") THEN
       vdd := pp.getNextLongReal()
@@ -123,6 +127,9 @@ BEGIN
   |
     3 =>
     t[0] := vdd * vdd; t[1] := delp * delp; t[2] :=  deln * deln
+  |
+    4 =>
+    t[0] := (vdd - center) * (vdd - center)
   END;
 
   Debug.Out(F("exampleprog : vdd %s delp %s deln %s ; val %s",
@@ -134,11 +141,12 @@ BEGIN
       (* add some noise! *)
       WITH nf = FLOAT(NUMBER(t), LONGREAL) DO
         FOR i := FIRST(t) TO LAST(t) DO
-          q[i] := t[i] + 1.0d0/nf * MakeNoise()
+          q[i] := t[i] + 1.0d0/Math.sqrt(nf) * MakeNoise()
         END
       END;
       
       val := q[0] + q[1] + q[2];
+      (* expect the sigma to be sqrt(3) times "sdev", right? *)
       
       IO.Put(LR(val) & "\n");
       
