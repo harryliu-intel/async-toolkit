@@ -38,7 +38,7 @@ VAR
   temp, vdd, delp, deln : LONGREAL;
 
   val : LONGREAL;
-  method : [ 0..4 ] := 1;
+  method : [ 0..5 ] := 1;
   
   rand  := NEW(Random.Default).init();
   samples : CARDINAL;
@@ -130,6 +130,10 @@ BEGIN
   |
     4 =>
     t[0] := (vdd - center) * (vdd - center)
+  |
+    5 =>
+    t[0] := (vdd - center) * (vdd - center) +
+                (delp - 2.0d0 * center) * (delp - 2.0d0 * center) 
   END;
 
   Debug.Out(F("exampleprog : vdd %s delp %s deln %s ; val %s",
