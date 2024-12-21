@@ -101,8 +101,10 @@ PROCEDURE Attempt(p           : LRVector.T;
                   (* ridge regression multiplier *)
                   
   ) : T           (* returns best fit for nom, mu, sigma *)
-  RAISES { Matrix.Singular } ;
+  RAISES { Matrix.Singular, NotEnoughPoints } ;
 
+EXCEPTION NotEnoughPoints;
+          
 CONST LeaveOut = 16;
       
 TYPE CmpResult = [-1 .. +1];

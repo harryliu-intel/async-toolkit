@@ -149,7 +149,7 @@ PROCEDURE Attempt(p                : LRVector.T;
                   orders           : ARRAY StatComponent.T OF ResponseModel.Order;
                   nomRho           : LONGREAL;
                   lambdaMult       : LONGREAL) : T
-  RAISES { Matrix.Singular } =
+  RAISES { Matrix.Singular, NotEnoughPoints } =
 
   VAR
     nmOrder := orders[StatComponent.T.Nom];
@@ -197,11 +197,6 @@ PROCEDURE Attempt(p                : LRVector.T;
       m  := NUMBER(parr);
       mf := FLOAT(m, LONGREAL);
 
-      n := NUMBER(parr[FIRST(parr)].p^);
-      
-      muDofs  := Dofs[muOrder](n);
-      sgDofs  := Dofs[sgOrder](n);
-      
       xmu     := NEW(REF M.M, m, muDofs);
       xsg     := NEW(REF M.M, m, sgDofs);
       
@@ -329,14 +324,23 @@ PROCEDURE Attempt(p                : LRVector.T;
 
     bestfits : T;
     fa       : REF ARRAY OF T;
-
-    
+      n := NUMBER(parr[FIRST(parr^)].p^);
+      
+      nmDofs  := Dofs[nmOrder](n);
+      muDofs  := Dofs[muOrder](n);
+      sgDofs  := Dofs[sgOrder](n);
+      
+      didfit := FALSE;
   BEGIN
     PointMetricArraySort.Sort(parr^, cmp := ComparePMByDistance);
 
     (* we can immediately do the Nom fit here, parr are sorted in distance
        from p *)
 
+    Debug.Out(F("StatFits.Attempt NUMBER(parr^)=%s LeaveOut=%s",
+                Int(NUMBER(parr^)),
+                Int(LeaveOut)));
+              
     IF nomRho # 0.0d0 THEN
       VAR
         lim := NUMBER(parr^);
@@ -346,6 +350,11 @@ PROCEDURE Attempt(p                : LRVector.T;
             lim := i;
             EXIT
           END
+        END;
+        Debug.Out(F("StatFits.Attempt lim=%s", Int(lim)));
+
+        IF lim < nmDofs + LeaveOut THEN
+          RAISE NotEnoughPoints
         END;
         bnom := DoNomFit(SUBARRAY(parr^, 0, lim), nmOrder, lambdaMult)
       END
@@ -357,15 +366,22 @@ PROCEDURE Attempt(p                : LRVector.T;
                   Int(LeaveOut),
                   Int(max),
                   Int(m)));
-      
-      DoMuSigmaFit(SUBARRAY(parr^,           0, MIN(max, m)),
-                   SUBARRAY(parr^, MIN(max, m), LeaveOut));
+
+      WITH lim = MIN(max,m) DO
+        IF lim >= muDofs + LeaveOut AND lim >= sgDofs + LeaveOut THEN
+          DoMuSigmaFit(SUBARRAY(parr^,   0, lim),
+                       SUBARRAY(parr^, lim, LeaveOut));
+          didfit := TRUE
+        END
+      END;
       IF m >= max THEN
         EXIT
       END;
       m := m * 2
     END;
 
+    IF NOT didfit THEN RAISE NotEnoughPoints END;
+    
     (* we have all the fits in thefits *)
     fa := NEW(REF ARRAY OF T, thefits.size());
 

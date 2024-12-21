@@ -504,6 +504,11 @@ PROCEDURE DoLeaderBoard(READONLY pr   : PointResult.T; (* current [old] point *)
         EXCEPT
           Matrix.Singular =>
           Debug.Warning("AttemptSurfaceFit raised Matrix.Singular!")
+        |
+          StatFits.NotEnoughPoints =>
+          Debug.Out(F("DoLeaderBoard: StatFits raised NotEnoughPoints (%s <? %s + %s) to attempt a surface fit.", Int(NUMBER(parr^)), Int(dofs),
+                      Int(StatFits.LeaveOut)));
+          RETURN FALSE
         END
       ELSE
         Debug.Out(F("DoLeaderBoard: NOT enough points (%s < %s + %s) to attempt a surface fit.", Int(NUMBER(parr^)), Int(dofs),
@@ -579,7 +584,7 @@ PROCEDURE AttemptSurfaceFit(pr              : PointResult.T;
                             values          : LRVectorMRVTbl.T;
                             lambdaMult      : LONGREAL;
                             newpts(*OUT*)   : LRVectorSet.T) : REF ARRAY OF StatFits.T
-  RAISES { Matrix.Singular } =
+  RAISES { Matrix.Singular, StatFits.NotEnoughPoints } =
   (* attempt a surface fit *)
 
   PROCEDURE PickClosestPoints() : PointMetricSeq.T =

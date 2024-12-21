@@ -393,6 +393,10 @@ PROCEDURE AttemptEval(q                    : LRVector.T;
             END;
             
             Debug.Warning(msg);
+
+            schemaScm := NewScheme(NIL);
+            (* normally created in running command, but not on a failure *)
+            
             IF outOfDomainResult = FIRST(LONGREAL) THEN
               RAISE ProcUtils.ErrorExit(err)
             ELSE
