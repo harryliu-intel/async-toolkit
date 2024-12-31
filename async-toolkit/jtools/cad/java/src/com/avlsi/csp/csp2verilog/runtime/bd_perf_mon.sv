@@ -1,6 +1,13 @@
 
 `timescale 1ps/1fs
 
+`define MAX2(t1, t2) ((t1) > (t2) ? (t1) : (t2))
+`define MAX3(t1, t2, t3) `MAX2((t1), `MAX2((t2), (t3)))
+
+`define MIN2(t1, t2) ((t1) < (t2) ? (t1) : (t2))
+`define MIN3(t1, t2, t3) `MIN2((t1), `MIN2((t2), (t3)))
+
+
 module bd_ctrl_perf_mon (
   input logic CLK,
   input logic DLY,
@@ -108,8 +115,8 @@ final begin
   //open a new file
   file = $fopen("bd_perf.rpt", "a");
   if (t_Rq_Ra > 0) begin
-    $fdisplay(file, "%m: Avg R.q->R.a=%0t, Max R.q->R.a: %0t @ %0t", tot_Rq_Ra/n_Rq,  max_Rq_Ra,  t_Rq_Ra);
-    $fdisplay(file, "%m: Avg L.q->Clk=%0t, Max L.q->Clk: %0t @ %0t", tot_Lq_Clk/n_Lq, max_Lq_Clk, t_Lq_Clk);
+    $fdisplay(file, "%m: Avg R.q->R.a=%0t (%0d), Max R.q->R.a: %0t (%0.2f%%) @ %0t", tot_Rq_Ra/n_Rq, n_Rq, max_Rq_Ra, 100.0*(max_Rq_Ra-(tot_Rq_Ra/n_Rq))/(tot_Rq_Ra/n_Rq), t_Rq_Ra);
+    $fdisplay(file, "%m: Avg L.q->Clk=%0t (%0d), Max L.q->Clk: %0t (%0.2f%%) @ %0t", tot_Lq_Clk/n_Lq, n_Lq, max_Lq_Clk, 100.0*(max_Lq_Clk-(tot_Lq_Clk/n_Lq))/(tot_Lq_Clk/n_Lq), t_Lq_Clk);
   end
   $fclose(file);
 end
@@ -152,5 +159,117 @@ always @( \R[1] ) begin
   n_R1 = (rb==1'b0) ? '0 : n_R1+1;
 end
 
+endmodule
+
+
+module bd_ct2_perf_mon (
+  input logic \A[0] ,
+  input logic \A[1] ,
+  input logic X
+);
+
+logic idle;
+always_comb idle = ( \A[0]  == \A[1] );
+
+//Save the times of the last time signals transitioned
+time t_A0, t_A1;
+int n_A0, n_A1;
+time max_diff;
+time t_diff;
+time tot_diff;
+
+always @( \A[0] ) begin
+  t_A0 = (X === 1'bx) ? '0 : $time;
+  n_A0 = (X === 1'bx) ? '0 : n_A0+1;
+end
+always @( \A[1] ) begin
+  t_A1 = (X === 1'bx) ? '0 : $time;
+  n_A1 = (X === 1'bx) ? '0 : n_A1+1;
+end
+
+time diff;
+always @( X ) begin
+  //diff = (t_A0 > t_A1) ? t_A0 - t_A1: t_A1 - t_A0;
+  diff = `MAX2(t_A0, t_A1) - `MIN2(t_A0, t_A1);
+  tot_diff += diff;
+  if (max_diff < diff) begin
+    max_diff = diff;
+    t_diff = $time;
+  end
+end
+
+integer file;
+//Display results at the end of the simulation
+final begin
+  $timeformat(-12,0,"ps");
+  if (idle == 1'b0) $display("%m: C-element inputs are not idenitical, last activity at %0t", `MAX2(t_A0, t_A1));
+  //open a new file
+  file = $fopen("bd_perf.rpt", "a");
+  if (t_diff > 0) begin
+    $fdisplay(file, "%m: Avg diff: %0t (%0d), Max diff: %0t (%.2f%%) @ %0t", tot_diff/n_A0, n_A0,  max_diff, 100.0*(max_diff-(tot_diff/n_A0))/(tot_diff/n_A0), t_diff);
+  end
+  $fclose(file);
+
+end
 
 endmodule
+
+
+module bd_ct3_perf_mon (
+  input logic \A[0] ,
+  input logic \A[1] ,
+  input logic \A[2] ,
+  input logic X
+);
+
+logic idle;
+always_comb idle = ( \A[0]  == \A[1]  && \A[1]  == \A[2]  && \A[2]  == \A[0] );
+
+//Save the times of the last time signals transitioned
+time t_A0, t_A1, t_A2;
+int n_A0, n_A1, n_A2;
+time max_diff;
+time t_diff;
+time tot_diff;
+
+
+always @( \A[0] ) begin
+  t_A0 = (X === 1'bx) ? '0 : $time;
+  n_A0 = (X === 1'bx) ? '0 : n_A0+1;
+end
+always @( \A[1] ) begin
+  t_A1 = (X === 1'bx) ? '0 : $time;
+  n_A1 = (X === 1'bx) ? '0 : n_A1+1;
+end
+always @( \A[2] ) begin
+  t_A2 = (X === 1'bx) ? '0 : $time;
+  n_A2 = (X === 1'bx) ? '0 : n_A2+1;
+end
+
+time diff;
+always @( X ) begin
+  diff = `MAX3(t_A0, t_A1, t_A2) - `MIN3(t_A0, t_A1, t_A2);
+  tot_diff += diff;
+  if (max_diff < diff) begin
+    max_diff = diff;
+    t_diff = $time;
+  end
+end
+
+
+integer file;
+//Display results at the end of the simulation
+final begin
+  $timeformat(-12,0,"ps");
+  if (idle == 1'b0) $display("%m: C-element inputs are not idenitical, last activity at %0t", `MAX3(t_A0, t_A1, t_A2));
+  //open a new file
+  file = $fopen("bd_perf.rpt", "a");
+  if (t_diff > 0) begin
+    $fdisplay(file, "%m: Avg diff: %0t (%0d), Max diff: %0t (%.2f%%) @ %0t", tot_diff/n_A0, n_A0, max_diff, 100.0*(max_diff-(tot_diff/n_A0))/(tot_diff/n_A0), t_diff);
+  end
+  $fclose(file);
+
+end
+
+endmodule
+
