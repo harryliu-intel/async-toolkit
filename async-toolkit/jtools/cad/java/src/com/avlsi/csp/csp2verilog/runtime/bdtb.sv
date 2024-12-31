@@ -36,7 +36,6 @@ reg ready_back[slack-1:0], ready_forw[slack-1:0], ready_out;
 // temp variable
 integer i;
 
-
 always @(negedge _RESET) 
 begin
     disable main;
@@ -114,6 +113,53 @@ begin : main2
             R$req = ~R$req;
         end
 end
+
+// *** error/sanity checking *** //
+
+//Check to make sure Req/Ack are not X coming out of RESET
+always @(posedge _RESET)
+begin
+    if ( L$req  === 1'bx) $display("%m: WARNING - L.req is X coming out of reset at %0t", $time);
+    if ( R$ack  === 1'bx) $display("%m: WARNING - R.ack is X coming out of reset at %0t", $time);
+end
+
+//Assign Idle signals
+logic Lidle, Ridle;
+always_comb begin
+    Lidle = L$req == L$ack;
+    Ridle = R$req == R$ack;
+end
+
+//Collect stats
+time t_Lq, t_La, t_Rq, t_Ra;
+integer n_Lq, n_La, n_Rq, n_Ra;
+always @( L$req ) begin
+    t_Lq = (_RESET==1'b0) ? '0 : $time;
+    n_Lq = (_RESET==1'b0) ? '0 : n_Lq+1;
+end
+always @( L$ack ) begin
+    t_La = (_RESET==1'b0) ? '0 : $time;
+    n_La = (_RESET==1'b0) ? '0 : n_La+1;
+end
+always @( R$req ) begin
+    t_Rq = (_RESET==1'b0) ? '0 : $time;
+    n_Rq = (_RESET==1'b0) ? '0 : n_Rq+1;
+end
+always @( R$ack ) begin
+    t_Ra = (_RESET==1'b0) ? 1'b0 : $time;
+    n_Ra = (_RESET==1'b0) ? '0 : n_Ra+1;
+end
+
+//Display information at the end of the simulation
+final begin
+    //$timeformat(-12,0,"ps");
+    if (Lidle == 1'b0 && Ridle == 1'b0) $display("%m: Both L&R channels are not idle, last activity at %0t", (t_Lq > t_Ra) ? t_Lq : t_Ra);
+    else begin
+        if (Lidle == 1'b0) $display("%m: L channel not idle, last activity at %0t", (t_Lq > t_La) ? t_Lq : t_La);
+        if (Ridle == 1'b0) $display("%m: R channel not idle, last activity at %0t", (t_Rq > t_Ra) ? t_Rq : t_Ra);
+    end
+end
+
 endmodule 
 
 
@@ -230,6 +276,53 @@ begin : main2
             `CAST2VERILOG_WAIT(100.0*cycle_time_out);
         end
 end
+
+// *** error/sanity checking *** //
+
+//Check to make sure Req/Ack are not X coming out of RESET
+always @(posedge _RESET)
+begin
+    if ( L$req  === 1'bx) $display("%m: WARNING - L.req is X coming out of reset at %0t", $time);
+    if ( R$ack  === 1'bx) $display("%m: WARNING - R.ack is X coming out of reset at %0t", $time);
+end
+
+//Assign Idle signals
+logic Lidle, Ridle;
+always_comb begin
+    Lidle = L$req == L$ack;
+    Ridle = R$req == R$ack;
+end
+
+//Collect stats
+time t_Lq, t_La, t_Rq, t_Ra;
+integer n_Lq, n_La, n_Rq, n_Ra;
+always @( L$req ) begin
+    t_Lq = (_RESET==1'b0) ? '0 : $time;
+    n_Lq = (_RESET==1'b0) ? '0 : n_Lq+1;
+end
+always @( L$ack ) begin
+    t_La = (_RESET==1'b0) ? '0 : $time;
+    n_La = (_RESET==1'b0) ? '0 : n_La+1;
+end
+always @( R$req ) begin
+    t_Rq = (_RESET==1'b0) ? '0 : $time;
+    n_Rq = (_RESET==1'b0) ? '0 : n_Rq+1;
+end
+always @( R$ack ) begin
+    t_Ra = (_RESET==1'b0) ? 1'b0 : $time;
+    n_Ra = (_RESET==1'b0) ? '0 : n_Ra+1;
+end
+
+//Display information at the end of the simulation
+final begin
+    //$timeformat(-12,0,"ps");
+    if (Lidle == 1'b0 && Ridle == 1'b0) $display("%m: Both L&R channels are not idle, last activity at %0t", (t_Lq > t_Ra) ? t_Lq : t_Ra);
+    else begin
+        if (Lidle == 1'b0) $display("%m: L channel not idle, last activity at %0t", (t_Lq > t_La) ? t_Lq : t_La);
+        if (Ridle == 1'b0) $display("%m: R channel not idle, last activity at %0t", (t_Rq > t_Ra) ? t_Rq : t_Ra);
+    end
+end
+
 endmodule 
 
 
@@ -286,6 +379,53 @@ begin : main
             R$req = ~R$req;
         end
 end
+
+// *** error/sanity checking *** //
+
+//Check to make sure Req/Ack are not X coming out of RESET
+always @(posedge _RESET)
+begin
+    if ( L$req  === 1'bx) $display("%m: WARNING - L.req is X coming out of reset at %0t", $time);
+    if ( R$ack  === 1'bx) $display("%m: WARNING - R.ack is X coming out of reset at %0t", $time);
+end
+
+//Assign Idle signals
+logic Lidle, Ridle;
+always_comb begin
+    Lidle = L$req == L$ack;
+    Ridle = R$req == R$ack;
+end
+
+//Collect stats
+time t_Lq, t_La, t_Rq, t_Ra;
+integer n_Lq, n_La, n_Rq, n_Ra;
+always @( L$req ) begin
+    t_Lq = (_RESET==1'b0) ? '0 : $time;
+    n_Lq = (_RESET==1'b0) ? '0 : n_Lq+1;
+end
+always @( L$ack ) begin
+    t_La = (_RESET==1'b0) ? '0 : $time;
+    n_La = (_RESET==1'b0) ? '0 : n_La+1;
+end
+always @( R$req ) begin
+    t_Rq = (_RESET==1'b0) ? '0 : $time;
+    n_Rq = (_RESET==1'b0) ? '0 : n_Rq+1;
+end
+always @( R$ack ) begin
+    t_Ra = (_RESET==1'b0) ? 1'b0 : $time;
+    n_Ra = (_RESET==1'b0) ? '0 : n_Ra+1;
+end
+
+//Display information at the end of the simulation
+final begin
+    //$timeformat(-12,0,"ps");
+    if (Lidle == 1'b0 && Ridle == 1'b0) $display("%m: Both L&R channels are not idle, last activity at %0t", (t_Lq > t_Ra) ? t_Lq : t_Ra);
+    else begin
+        if (Lidle == 1'b0) $display("%m: L channel not idle, last activity at %0t", (t_Lq > t_La) ? t_Lq : t_La);
+        if (Ridle == 1'b0) $display("%m: R channel not idle, last activity at %0t", (t_Rq > t_Ra) ? t_Rq : t_Ra);
+    end
+end
+
 endmodule 
 
 
@@ -344,4 +484,52 @@ begin : main
             L$ack = ~L$ack;
         end
 end
-endmodule 
+
+// *** error/sanity checking *** //
+
+//Check to make sure Req/Ack are not X coming out of RESET
+always @(posedge _RESET)
+begin
+    if ( L$req  === 1'bx) $display("%m: WARNING - L.req is X coming out of reset at %0t", $time);
+    if ( R$ack  === 1'bx) $display("%m: WARNING - R.ack is X coming out of reset at %0t", $time);
+end
+
+//Assign Idle signals
+logic Lidle, Ridle;
+always_comb begin
+    Lidle = L$req == L$ack;
+    Ridle = R$req == R$ack;
+end
+
+//Collect stats
+time t_Lq, t_La, t_Rq, t_Ra;
+integer n_Lq, n_La, n_Rq, n_Ra;
+always @( L$req ) begin
+    t_Lq = (_RESET==1'b0) ? '0 : $time;
+    n_Lq = (_RESET==1'b0) ? '0 : n_Lq+1;
+end
+always @( L$ack ) begin
+    t_La = (_RESET==1'b0) ? '0 : $time;
+    n_La = (_RESET==1'b0) ? '0 : n_La+1;
+end
+always @( R$req ) begin
+    t_Rq = (_RESET==1'b0) ? '0 : $time;
+    n_Rq = (_RESET==1'b0) ? '0 : n_Rq+1;
+end
+always @( R$ack ) begin
+    t_Ra = (_RESET==1'b0) ? 1'b0 : $time;
+    n_Ra = (_RESET==1'b0) ? '0 : n_Ra+1;
+end
+
+//Display information at the end of the simulation
+final begin
+    //$timeformat(-12,0,"ps");
+    if (Lidle == 1'b0 && Ridle == 1'b0) $display("%m: Both L&R channels are not idle, last activity at %0t", (t_Lq > t_Ra) ? t_Lq : t_Ra);
+    else begin
+        if (Lidle == 1'b0) $display("%m: L channel not idle, last activity at %0t", (t_Lq > t_La) ? t_Lq : t_La);
+        if (Ridle == 1'b0) $display("%m: R channel not idle, last activity at %0t", (t_Rq > t_Ra) ? t_Rq : t_Ra);
+    end
+end
+
+endmodule
+
