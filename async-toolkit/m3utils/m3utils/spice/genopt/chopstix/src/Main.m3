@@ -35,7 +35,6 @@ IMPORT SchemeLongReal;
 IMPORT SchemeEnvironment;
 IMPORT SchemeString;
 IMPORT QuadRobust;
-IMPORT LRVectorPair;
 IMPORT LRVectorLRPair;
 IMPORT LRVectorLRPairTextTbl;
 IMPORT FileRd;
@@ -43,7 +42,6 @@ IMPORT Scan;
 IMPORT FloatMode, Lex;
 IMPORT SchemePair;
 IMPORT MultiEvalLRVector;
-IMPORT Word;
 IMPORT IP, NetObj, ReadLineError; (* for exceptions *)
 FROM GenOptUtils IMPORT FmtP;
 FROM GenOpt IMPORT ResultWriter, rho, scmCb, doNetbatch,
@@ -52,20 +50,12 @@ FROM GenOpt IMPORT rhoEnd, rhoBeg, vseq, paramBindings, lambdaMult;
 IMPORT GenOpt;
 FROM GenOptEnv IMPORT   NbPool, NbQslot, M3Utils, NbOpts;
 FROM GenOptUtils IMPORT MustOpenWr, LRVectorSeq1, FmtLRVectorSeq;
-FROM NewUOAs IMPORT Output;
-IMPORT ModelVar;
 IMPORT LRVectorSeq;
-IMPORT LRVectorPairTextTbl;
 IMPORT LRVectorField;
 IMPORT LRVectorFieldPll;
-IMPORT MELRVectorType;
-IMPORT LRMatrix2;
-FROM VectorUtils IMPORT Orthogonalize;
-IMPORT SymbolLRTbl;
-IMPORT StatObject;
-IMPORT LRScalarField;
-IMPORT LineMinimizer;
 FROM QuadRobust IMPORT schemeMu;
+IMPORT VectorSeq;
+IMPORT MapError;
 
 <*FATAL Thread.Alerted*>
 
@@ -135,11 +125,12 @@ PROCEDURE OptInit() =
   END OptInit;
   
 PROCEDURE BaseEvalHint(base : Evaluator; p : LRVector.T) =
+  <*FATAL MapError.E*>
   BEGIN
     EVAL base.eval(p)
   END BaseEvalHint;
 
-PROCEDURE BaseEval(base : Evaluator; p : LRVector.T) : LRVector.T =
+PROCEDURE BaseEval(<*UNUSED*>base : Evaluator; p : LRVector.T) : LRVector.T =
   BEGIN
     TRY
       WITH res = AttemptEval(p, 0, FALSE) DO
@@ -156,10 +147,10 @@ PROCEDURE BaseEval(base : Evaluator; p : LRVector.T) : LRVector.T =
     END
   END BaseEval;
 
-PROCEDURE BaseMultiEval(base    : Evaluator;
-                        p       : LRVector.T;
-                        samples : CARDINAL;
-                        VAR schemaScm : Scheme.T) : MultiEvalLRVector.Result =
+PROCEDURE BaseMultiEval(<*UNUSED*>base : Evaluator;
+                        p              : LRVector.T;
+                        samples        : CARDINAL;
+                        VAR schemaScm  : Scheme.T) : MultiEvalLRVector.Result =
   BEGIN
     IF doDebug THEN
       Debug.Out("BaseMultiEval : samples " & Int(samples), 100)
@@ -184,9 +175,9 @@ PROCEDURE BaseMultiEval(base    : Evaluator;
     END
   END BaseMultiEval;
 
-PROCEDURE BaseNominalEval(base          : Evaluator;
-                          p             : LRVector.T;
-                          VAR schemaScm : Scheme.T) : LRVector.T = 
+PROCEDURE BaseNominalEval(<*UNUSED*>base    : Evaluator;
+                          p                 : LRVector.T;
+                          VAR schemaScm     : Scheme.T) : LRVector.T = 
   BEGIN
     IF doDebug THEN
       Debug.Out("BaseNominalEval : " & FmtP(p))
@@ -341,7 +332,7 @@ PROCEDURE AttemptEval(q                    : LRVector.T;
                                           MakeModelVarList(),
                                           schemaScm) DO
           IF doDebug THEN
-            Debug.Out("Schema-processed result : " & FmtLRVectorSeq(schemaRes))
+            Debug.Out(F("AttemptEval.RunCommand (nominal = %s) : schema-processed result : %s", Bool(nominal), FmtLRVectorSeq(schemaRes)))
           END;
           RETURN schemaRes
         END
@@ -431,7 +422,7 @@ PROCEDURE AttemptEval(q                    : LRVector.T;
                      schemaScm  := schemaScm)
         ELSE
           RETURN NEW(QuadResult,
-                     res        := VectorSeqToMulti(theResult, subdirPath),
+                     res        := VectorSeq.ToMulti(theResult, subdirPath),
                      schemaScm  := schemaScm)
         END
       EXCEPT
@@ -443,59 +434,6 @@ PROCEDURE AttemptEval(q                    : LRVector.T;
       END
     END
   END AttemptEval;
-
-VAR
-  idMu          := NEW(MUTEX);
-  idNx : Word.T := 0;
-
-PROCEDURE NewZeroV(n : CARDINAL) : LRVector.T =
-  VAR
-    z := NEW(LRVector.T, n);
-  BEGIN
-    FOR i := FIRST(z^) TO LAST(z^) DO
-      z[i] := 0.0d0
-    END;
-    RETURN z
-  END NewZeroV;
-  
-PROCEDURE VectorSeqToMulti(seq        : LRVectorSeq.T;
-                           subdirPath : Pathname.T) : MultiEvalLRVector.Result =
-  VAR
-    dims := NUMBER(seq.get(0)^); 
-    s, ss : LRVector.T;
-    n    := seq.size();
-    res : MultiEvalLRVector.Result;
-  BEGIN
-    res.subdirPath := subdirPath;
-    FOR d := 0 TO dims - 1 DO
-      s  := NewZeroV(dims);
-      ss := NewZeroV(dims);
-      FOR i := 0 TO seq.size() - 1 DO
-        WITH x = seq.get(i) DO
-          LRMatrix2.AddV(s^, x^, s^);
-          LRMatrix2.AddV(ss^, MELRVectorType.Times(x, x)^, ss^)
-        END
-      END;
-      
-    END;
-
-    LOCK idMu DO
-      TRY
-        <*ASSERT s # NIL*>
-        <*ASSERT ss # NIL*>
-        res :=  MultiEvalLRVector.Result { id         := idNx,
-                                           n          := n,
-                                           sum        := s,
-                                           sumsq      := ss,
-                                           extra      := NIL,
-                                           subdirPath := subdirPath }
-      FINALLY
-        INC(idNx)
-      END
-    END;
-    
-    RETURN res
-  END VectorSeqToMulti;
 
 TYPE
   MyMultiEval = MultiEvalLRVector.T OBJECT
@@ -600,6 +538,10 @@ PROCEDURE DoIt(checkRd : Rd.T) =
       Wr.Failure(x) =>
         Debug.Error(F("I/O error : Wr.Failure : while writing optimization result : %s:",
                       AL.Format(x)))
+    |
+      OSError.E(x) =>
+        Debug.Error(F("I/O error : OSError.E : while writing optimization result : %s:",
+                      AL.Format(x)))
 
     END
   END DoIt;
@@ -681,7 +623,7 @@ PROCEDURE MRWWrite(mrw : MyResultWriter; output : NewUOAs.Output)
               Rd.Close(rd)
             END
           EXCEPT
-            OSError.E, Rd.Failure =>
+            OSError.E, Rd.Failure, Rd.EndOfFile =>
             Debug.Warning("System error trying to read base result from " & subdir);
             Wr.PutChar(awr, '\n')
           END
@@ -817,12 +759,17 @@ PROCEDURE NewScheme(p : LRVector.T (* OK to be NIL *)) : Scheme.T =
       END
     END;
 
-    IF p # NIL THEN
-      WITH pOverrideNm = T2S("*p-override*"),
-           pOverride   = GenOpt.NewCoords() DO
-        GenOpt.SetCoords(p, pOverride);
-        scm.setInGlobalEnv(pOverrideNm, pOverride)
+    TRY
+      IF p # NIL THEN
+        WITH pOverrideNm = T2S("*p-override*"),
+             pOverride   = GenOpt.NewCoords() DO
+          GenOpt.SetCoords(p, pOverride);
+          scm.setInGlobalEnv(pOverrideNm, pOverride)
+        END
       END
+    EXCEPT
+      Scheme.E(msg) =>
+      Debug.Error("NewScheme : Scheme.E when overriding p : " & msg)
     END;
     
     BindParams(scm, optVars, paramVars);
@@ -842,8 +789,12 @@ PROCEDURE SchemaReadResult(schemaPath ,
     dataFiles := NEW(TextSeq.T).init();
   BEGIN
     IF doDebug THEN
-      Debug.Out(F("SchemaReadResult : schemaPath %s , dataPath %s , eval %s",
-                  schemaPath, dataPath, SchemeUtils.Stringify(schemaEval)))
+      TRY
+        Debug.Out(F("SchemaReadResult : schemaPath %s , dataPath %s , eval %s",
+                    schemaPath, dataPath, SchemeUtils.Stringify(schemaEval)))
+      EXCEPT
+        Scheme.E => (* skip --- ??? *)
+      END
     END;
     
     dataFiles.addhi(dataPath);
@@ -876,7 +827,7 @@ PROCEDURE SchemaReadResult(schemaPath ,
         RETURN cb.results
       END
     EXCEPT
-      OSError.E, Rd.Failure =>
+      OSError.E, Rd.Failure, Rd.EndOfFile  =>
       Debug.Warning("Caught system error reading schema/data.  Returning failure.");
       RETURN LRVectorSeq1(outOfDomainResult,
                                         QuadRobust.GetModelVars().size())
@@ -938,7 +889,15 @@ PROCEDURE LRVectorFromO(o : SchemePair.T) : LRVector.T =
     i := 0;
   BEGIN
     WHILE p # NIL DO
-      v[i] := SchemeLongReal.FromO(p.first);
+      TRY
+        v[i] := SchemeLongReal.FromO(p.first)
+      EXCEPT
+        Scheme.E(err) =>
+        <*FATAL Scheme.E*>
+        BEGIN
+          Debug.Error(F("LRVectorFromO : caught Scheme.E converting \"%s\" to LONGREAL : %s", SchemeUtils.Stringify(o),  err))
+        END
+      END;
       INC(i);
       p := p.rest
     END;
@@ -951,7 +910,7 @@ CONST T2S = SchemeSymbol.FromText;
 VAR
   pp                        := NEW(ParseParams.T).init(Stdio.stderr);
   scm                : Scheme.T;
-  rundirPath                := Process.GetWorkingDirectory();
+  rundirPath         : Pathname.T;
   myFullSrcPath      : Pathname.T;
   scmFiles                  := NEW(TextSeq.T).init();
   interactive        : BOOLEAN;
@@ -962,6 +921,11 @@ VAR
   
 BEGIN
 
+  <*FATAL OSError.E*>
+  BEGIN
+    rundirPath := Process.GetWorkingDirectory()
+  END;
+  
   GenOpt.DoIt := DoIt;
 
   IF FALSE THEN
@@ -1062,15 +1026,18 @@ BEGIN
       SchemeReadLine.MainLoop(NEW(ReadLine.Default).init(), scm)
     END
   ELSE
-    WITH senv      = NARROW(scm.getGlobalEnvironment(), SchemeEnvironment.T),
-         T2S       = SchemeSymbol.FromText DO
-
-      optVars   := senv.lookup(T2S("*opt-vars*"));
-      paramVars := senv.lookup(T2S("*param-vars*"));
-      
-      DoIt(checkRd)
-      
+    TRY
+      WITH senv      = NARROW(scm.getGlobalEnvironment(), SchemeEnvironment.T),
+           T2S       = SchemeSymbol.FromText DO
+        
+        optVars   := senv.lookup(T2S("*opt-vars*"));
+        paramVars := senv.lookup(T2S("*param-vars*"));
+        
+        DoIt(checkRd)
+      END
+    EXCEPT
+      Scheme.E(x) =>
+      Debug.Error(F("EXCEPTION! Scheme.E \"%s\" when setting up non-interactive run", x))
     END
   END
-
 END Main.

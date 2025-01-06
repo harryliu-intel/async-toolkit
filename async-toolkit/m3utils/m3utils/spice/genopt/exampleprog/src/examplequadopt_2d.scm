@@ -16,7 +16,7 @@
 ;; the default values are stated
 (def-paramvar 'mean   0)
 (def-paramvar 'sdev   1)
-(def-paramvar 'center 1.2345)
+(def-paramvar 'center 0)
 
 
 ;; the following are the optimization variables

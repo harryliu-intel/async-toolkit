@@ -410,7 +410,8 @@ PROCEDURE SeqToMulti(seq : LRSeq.T) : MultiEval.Result =
                                   sum   := s,
                                   sumsq := ss,
                                   extra := NIL (*UNUSED*),
-                                  subdirPath := ""}
+                                  subdirPath := "",
+                                  seq   := seq}
       FINALLY
         INC(idNx)
       END

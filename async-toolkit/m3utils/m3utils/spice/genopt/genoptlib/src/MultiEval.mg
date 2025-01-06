@@ -1,4 +1,4 @@
-GENERIC MODULE MultiEval(Field, Type);
+GENERIC MODULE MultiEval(Field, Type, TypeSeq);
 
 IMPORT LRVector;
 FROM Fmt IMPORT Int, F, LongReal, FN;
@@ -60,7 +60,9 @@ PROCEDURE Combine(READONLY a, b : Result) : Result =
                     Type.Plus(a.sum, b.sum),
                     Type.Plus(a.sumsq, b.sumsq),
                     a.extra,
-                    PathnameMax(a.subdirPath, b.subdirPath) }
+                    PathnameMax(a.subdirPath, b.subdirPath),
+                    TypeSeq.Cat(a.seq, b.seq)
+                    }
   END Combine;
 
 PROCEDURE PathnameMax(a, b : Pathname.T) : Pathname.T =

@@ -2,14 +2,21 @@ MODULE Scatter;
 IMPORT MultiEvalLRVector, MultiEvalLR;
 IMPORT PointMetricLRVector, PointMetricLR;
 IMPORT MELRType, MELRVectorType;
+IMPORT LongRealSeq AS LRSeq;
 
 PROCEDURE MultiEvalResult(READONLY in : MultiEvalLRVector.Result)
   : REF ARRAY OF MultiEvalLR.Result =
   VAR
     n   := NUMBER(in.sum^);
     res := NEW(REF ARRAY OF MultiEvalLR.Result, n);
+    seq := NEW(REF ARRAY OF LRSeq.T, n);
   BEGIN
     FOR i := 0 TO n - 1 DO
+      seq[i] := NEW(LRSeq.T).init();
+      FOR j := 0 TO in.seq.size() - 1 DO
+        seq[i].addhi(in.seq.get(j)[i])
+      END;
+      
       VAR
         nominal : LONGREAL;
       BEGIN
@@ -25,7 +32,8 @@ PROCEDURE MultiEvalResult(READONLY in : MultiEvalLRVector.Result)
         n       := in.n,
         sum     := in.sum[i],
         sumsq   := in.sumsq[i],
-        extra   := in.extra
+        extra   := in.extra,
+        seq     := seq[i]
         }
       END
     END;

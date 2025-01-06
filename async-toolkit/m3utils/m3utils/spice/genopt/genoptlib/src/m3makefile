@@ -62,8 +62,8 @@ Generic_implementation("PointEvaluator")
 
 template("multieval")
 
-MultiEval("LR",       "LRScalarField", "MELRType")
-MultiEval("LRVector", "LRVectorField", "MELRVectorType")
+MultiEval("LR",       "LRScalarField", "MELRType"      , "LongRealSeq")
+MultiEval("LRVector", "LRVectorField", "MELRVectorType", "LRVectorSeq")
 
 Module ("MELRType")
 Module ("MELRVectorType")

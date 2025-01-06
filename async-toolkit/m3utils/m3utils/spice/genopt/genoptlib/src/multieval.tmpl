@@ -1,6 +1,6 @@
-readonly proc _multiEval(nm, field, type, vis) is
-         build_generic_intf("MultiEval" & nm, "MultiEval", [field, type], vis)
-         build_generic_impl("MultiEval" & nm, "MultiEval", [field, type])
+readonly proc _multiEval(nm, field, type, typeseq, vis) is
+         build_generic_intf("MultiEval" & nm, "MultiEval", [field, type, typeseq], vis)
+         build_generic_impl("MultiEval" & nm, "MultiEval", [field, type, typeseq])
          build_generic_intf("MultiEvalResult" & nm, "MultiEvalResult", ["MultiEval" & nm], vis)
          build_generic_intf("PointMetric" & nm, "PointMetric", ["MultiEval" & nm], vis)
          build_generic_impl("PointMetric" & nm, "PointMetric", ["MultiEval" & nm])
@@ -11,10 +11,10 @@ readonly proc _multiEval(nm, field, type, vis) is
 
 end
 
-readonly proc multiEval(nm, field, type) is
-         _multiEval(nm, field, type, HIDDEN)
+readonly proc multiEval(nm, field, type, typeseq) is
+         _multiEval(nm, field, type, typeseq, HIDDEN)
 end
 
-readonly proc MultiEval(nm, field, type) is
-         _multiEval(nm, field, type, VISIBLE)
+readonly proc MultiEval(nm, field, type, typeseq) is
+         _multiEval(nm, field, type, typeseq, VISIBLE)
 end            

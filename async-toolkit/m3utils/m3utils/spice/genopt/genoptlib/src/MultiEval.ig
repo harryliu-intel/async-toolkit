@@ -1,4 +1,4 @@
-GENERIC INTERFACE MultiEval(Field, Type);
+GENERIC INTERFACE MultiEval(Field, Type, TypeSeq);
 IMPORT LRVector;
 IMPORT Word;
 IMPORT Pathname;
@@ -22,6 +22,7 @@ TYPE
     sum, sumsq : Type.T;
     extra      : REFANY;
     subdirPath : Pathname.T;
+    seq        : TypeSeq.T;
   END;
 
 CONST Brand = "MultiEval(" & Field.Brand & "," & Type.Brand & ")";
