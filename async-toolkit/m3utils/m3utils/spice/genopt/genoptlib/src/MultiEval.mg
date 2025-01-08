@@ -133,10 +133,18 @@ PROCEDURE Sdev(READONLY a : Result) : Type.T =
 
 
 PROCEDURE Format(READONLY a : Result) : TEXT =
+  VAR
+    nomStr : TEXT;
   BEGIN
+    IF a.nominal = Type.Null THEN
+      nomStr := "*NIL*"
+    ELSE
+      nomStr := Type.Format(Nominal(a))
+    END;
+    
     RETURN F("{ n=%s nom=%s mean=%s sdev=%s }",
              Int(a.n),
-             Type.Format(Nominal(a)),
+             nomStr,
              Type.Format(Mean(a)),
              Type.Format(Sdev(a)))
   END Format;

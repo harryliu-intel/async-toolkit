@@ -76,6 +76,8 @@ IMPORT MultiEvalResultLRVector;
 IMPORT Rd;
 IMPORT AL;
 IMPORT Powell;
+IMPORT LRVectorSeq;
+IMPORT VectorSeq;
 
 <*FATAL Thread.Alerted*>
 
@@ -433,7 +435,9 @@ PROCEDURE DoLeaderBoard(READONLY pr   : PointResult.T; (* current [old] point *)
       END;
     END InitFitted;
 
-  PROCEDURE DoMeasuredStatistics(p : LRVector.T) =
+  TYPE Stats = RECORD n : CARDINAL; mean, sdev : LONGREAL END;
+
+  PROCEDURE DoMeasuredStatistics(p : LRVector.T) : Stats =
     CONST
       SampleFrac  = 0.62d0;
       SampleCount = 25;
@@ -441,6 +445,9 @@ PROCEDURE DoLeaderBoard(READONLY pr   : PointResult.T; (* current [old] point *)
       r : MultiEvalLRVector.Result;
       haveIt := values.get(p, r);
       rand := NEW(Random.Default).init();
+
+      cnt        := 0;
+      sum, sumsq := 0.0d0;
 
     BEGIN
       <*ASSERT haveIt*>
@@ -453,14 +460,51 @@ PROCEDURE DoLeaderBoard(READONLY pr   : PointResult.T; (* current [old] point *)
         END
       END;
 
-      WITH np = CEILING(SampleFrac * FLOAT(r.seq.size(), LONGREAL)) DO
+      WITH n  = r.seq.size(),
+           np = CEILING(SampleFrac * FLOAT(n, LONGREAL)) DO
         FOR i := 0 TO SampleCount - 1 DO
-          (* take a sample *)
-          
-        END
-      END
+          (* take a sample, sampling with replacement for now *)
+          WITH sample = NEW(LRVectorSeq.T).init() DO
+            FOR j := 0 TO np - 1 DO
+              WITH idx = rand.integer(0, n - 1) DO
+                sample.addhi(r.seq.get(idx))
+              END
+            END;
 
-      
+            (* sample is complete *)
+            VAR
+              res := VectorSeq.ToMulti(sample, "SUBSAMPLE");
+              val : LONGREAL;
+            BEGIN
+              res.nominal := r.nominal;
+              res.extra   := r.extra; (* hmm... *)
+              
+              <*ASSERT res.sum     # NIL*>
+              <*ASSERT res.sumsq   # NIL*>
+              <*ASSERT res.nominal # NIL*>
+
+              val := SchemeFinish(res, toEval);
+
+              INC(cnt);
+              sum   := sum + val;
+              sumsq := sumsq + val * val;
+              
+              Debug.Out(F("DoMeasuredStatistics : sample %s : res = %s ; val = %s",
+                          Int(i),
+                          MultiEvalLRVector.Format(res),
+                          LR(val)
+              ))
+            END
+          END
+        END
+      END;
+
+      WITH cntf  = FLOAT(cnt, LONGREAL),
+           mean  = sum / cntf,
+           variS = sumsq / cntf - mean * mean,
+           sdev  = Math.sqrt(cntf / (cntf - 1.0d0) * variS) DO
+        RETURN Stats { cnt, mean, sdev }
+      END
     END DoMeasuredStatistics;
 
   PROCEDURE AttemptMinimize(p : LRVector.T; me : LRScalarField.T) : LRVector.T =
@@ -576,11 +620,17 @@ PROCEDURE DoLeaderBoard(READONLY pr   : PointResult.T; (* current [old] point *)
                         FmtP(darr[0].p)
             ));
 
-            WITH fp = farr[0],
-                 mp = parr[0]
+            WITH fp    = farr[0],
+                 mp    = parr[0],
+                 stats = DoMeasuredStatistics(mp.p)
              DO
 
-              DoMeasuredStatistics(mp.p);
+              Debug.Out(F("DoLeaderBoard : fp.metric = %s ; mp.metric = %s ; stats.mean = %s , stats.sdev = %s",
+                          LR(fp.metric),
+                          LR(mp.metric),
+                          LR(stats.mean),
+                          LR(stats.sdev)));
+
               
               newPr := PointResult.T { fp.p, fp.metric, TRUE, rho };
             END;
