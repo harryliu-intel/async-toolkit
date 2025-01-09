@@ -620,16 +620,34 @@ PROCEDURE DoLeaderBoard(READONLY pr   : PointResult.T; (* current [old] point *)
                         FmtP(darr[0].p)
             ));
 
-            WITH fp    = farr[0],
-                 mp    = parr[0],
-                 stats = DoMeasuredStatistics(mp.p)
+            WITH
+              (* fitted point *)
+              fp         = farr[0],
+              fpMeasured = ResMetric(farr[0].p, fvalues),
+
+              (* measured point *)
+              mp         = parr[0],
+              mpFitted   = me.eval(parr[0].p),
+
+              (* measured stats *)
+              stats      = DoMeasuredStatistics(mp.p),
+
+              (* measured tolerance *)
+              tol        = 3.0d0 * stats.sdev,
+
+              (* is within tolerance? *)
+              fpOk       = ABS(fp.metric - fpMeasured) <= tol
              DO
 
-              Debug.Out(F("DoLeaderBoard : fp.metric = %s ; mp.metric = %s ; stats.mean = %s , stats.sdev = %s",
+              Debug.Out(FN("DoLeaderBoard : fp.metric = %s , fp.measured = %s ; mp.metric = %s , mp.fitted = %s ; stats.mean = %s , stats.sdev = %s ; fpOk = %s",
+                           TA{
                           LR(fp.metric),
+                          LR(fpMeasured),
                           LR(mp.metric),
+                          LR(mpFitted),
                           LR(stats.mean),
-                          LR(stats.sdev)));
+                          LR(stats.sdev),
+                          Bool(fpOk)}));
 
               
               newPr := PointResult.T { fp.p, fp.metric, TRUE, rho };
