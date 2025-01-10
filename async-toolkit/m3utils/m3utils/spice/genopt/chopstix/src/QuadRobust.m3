@@ -25,7 +25,7 @@ FROM Fmt IMPORT LongReal, F, Int, Bool, FN, Pad;
 IMPORT LineProblem;
 IMPORT LRVectorFieldPll;
 IMPORT LongRealSeq AS LRSeq;
-FROM GenOpt IMPORT rho, iter, ResultWriter;
+FROM GenOpt IMPORT rho, iter, ResultWriter, GetOptFailureResult;
 FROM GenOptUtils IMPORT FmtP;
 IMPORT MultiEvalLRVector;
 IMPORT LRVectorSet, LRVectorSetDef;
@@ -285,6 +285,7 @@ PROCEDURE MEEval(me      : MultiEvaluator;
 
         LOCK valueMu DO
           IF doPut THEN
+            <*ASSERT res.extra # NIL*>
             EVAL me.values.put(p, res)
           END;
           EVAL me.fvalues.put(p, retval)
@@ -451,6 +452,7 @@ PROCEDURE DoLeaderBoard(READONLY pr   : PointResult.T; (* current [old] point *)
 
     BEGIN
       <*ASSERT haveIt*>
+      <*ASSERT r.extra # NIL*>
       Debug.Out(F("DoMeasuredStatistics( p = %s)", FmtP(p)));
       IF doDebug THEN
         FOR i := 0 TO r.seq.size() - 1 DO
@@ -477,11 +479,13 @@ PROCEDURE DoLeaderBoard(READONLY pr   : PointResult.T; (* current [old] point *)
               val : LONGREAL;
             BEGIN
               res.nominal := r.nominal;
+
               res.extra   := r.extra; (* hmm... *)
               
               <*ASSERT res.sum     # NIL*>
               <*ASSERT res.sumsq   # NIL*>
               <*ASSERT res.nominal # NIL*>
+              <*ASSERT res.extra   # NIL*>
 
               val := SchemeFinish(res, toEval);
 
@@ -649,8 +653,12 @@ PROCEDURE DoLeaderBoard(READONLY pr   : PointResult.T; (* current [old] point *)
                           LR(stats.sdev),
                           Bool(fpOk)}));
 
-              
-              newPr := PointResult.T { fp.p, fp.metric, TRUE, rho };
+              IF fpOk THEN
+                (* fitted point is OK *)
+                newPr := PointResult.T { fp.p, fp.metric, TRUE, rho }
+              ELSE
+                newPr := PointResult.T { mp.p, mp.metric, FALSE, rho }
+              END
             END;
             
             RETURN TRUE (* new point chosen *)
@@ -685,13 +693,15 @@ TYPE
     eval := ModelEval;
   END;
 
+CONST MaxCoord = 1.0d10;
+      
 PROCEDURE ModelEval(me : ModelEvaluator; p : LRVector.T) : LONGREAL =
   VAR
     scm := me.newScheme(p);
     pso := NEW(StatObject.DefaultPoint).init();
   BEGIN
     (* compare to SchemeFinish code *)
-    
+
     FOR i := FIRST(me.models^) TO LAST(me.models^) DO
       WITH nom = ComputeQ(p, me.models[i].bnom  ),
            mu  = ComputeQ(p, me.models[i].bmu   ),
@@ -723,6 +733,11 @@ PROCEDURE ModelEval(me : ModelEvaluator; p : LRVector.T) : LONGREAL =
       
         WITH res = scm.evalInGlobalEnv(e) DO
           Debug.Out("ModelEval : final res = " & SchemeUtils.Stringify(res));
+
+          FOR i := FIRST(p^) TO LAST(p^) DO
+            IF ABS(p[i]) > MaxCoord THEN RETURN GetOptFailureResult() END
+          END;
+          
           RETURN SchemeLongReal.FromO(res)
         END
       EXCEPT
@@ -1187,8 +1202,6 @@ PROCEDURE PickRandomPoints(s            : LRVectorSet.T;
     
   END PickRandomPoints;
 
-
-
 PROCEDURE Minimize(pa             : LRVector.T;
                    func           : MultiEvalLRVector.T;
                    toEval         : SchemeObject.T;
@@ -1333,6 +1346,22 @@ PROCEDURE Minimize(pa             : LRVector.T;
       fvalues    := checkPoint.fvalues;
       startIter  := checkPoint.iter + 1;
 
+      (* recreate Scheme interpreters *)
+      VAR
+        iter      := values.iterate();
+        newvalues := NEW(LRVectorMRVTbl.Default).init();
+        v : LRVector.T;
+        m : MultiEvalResultLRVector.T;
+      BEGIN
+        
+        WHILE iter.next(v, m) DO
+          m.extra := newScheme(v);
+          EVAL newvalues.put(v, m)
+        END;
+
+        values := newvalues
+      END;
+      
       Debug.Out("QuadRobust : restarting from checkpoint : startIter = " &
         Int(startIter))
     END
@@ -1493,31 +1522,29 @@ PROCEDURE Minimize(pa             : LRVector.T;
       END;
 
       LOCK valueMu DO
-      (* clear out the scheme interpreter links *)
+      (* clear out the scheme interpreter links -- why ? *)
         VAR
           newvalues := NEW(LRVectorMRVTbl.Default).init();
-          iter := values.iterate();
+          iterator := values.iterate();
           v : LRVector.T;
           m : MultiEvalResultLRVector.T;
         BEGIN
-          WHILE iter.next(v, m) DO
+          WHILE iterator.next(v, m) DO
             m.extra := NIL;
             EVAL newvalues.put(v, m)
           END;
-          values := newvalues
-        END;
-      
-        WITH checkpoint = NEW(QuadCheckpoint.T,
-                              iter    := iter,
-                              values  := values,
-                              fvalues := fvalues),
-             pi         = Pad(Int(iter), 6, padChar := '0'),
-             fn         = F("quadcheckpoint.%s.chk", pi),
-             tfn        = fn & "_temp",
-             wr         = FileWr.Open(tfn) DO
-          Pickle.Write(wr, checkpoint);
-          Wr.Close(wr);
-          FS.Rename(tfn, fn)
+          WITH checkpoint = NEW(QuadCheckpoint.T,
+                                iter    := iter,
+                                values  := newvalues,
+                                fvalues := fvalues),
+               pi         = Pad(Int(iter), 6, padChar := '0'),
+               fn         = F("quadcheckpoint.%s.chk", pi),
+               tfn        = fn & "_temp",
+               wr         = FileWr.Open(tfn) DO
+            Pickle.Write(wr, checkpoint);
+            Wr.Close(wr);
+            FS.Rename(tfn, fn)
+          END
         END
       END;
       

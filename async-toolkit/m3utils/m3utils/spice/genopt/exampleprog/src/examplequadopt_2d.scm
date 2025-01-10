@@ -16,7 +16,8 @@
 ;; the default values are stated
 (def-paramvar 'mean   0)
 (def-paramvar 'sdev   1)
-(def-paramvar 'center 0)
+(def-paramvar 'center 2)
+(def-paramvar 'power  2)
 
 
 ;; the following are the optimization variables
@@ -63,6 +64,7 @@
                   " -mean "   mean  ;; actually the mean shift
                   " -sdev "   sdev
                   " -center " center
+                  " -power "  power
                   (if *stoc-nominal* " -nominal " "")
                   " -p pre -p sim -p conv -p clean -p post"))
 

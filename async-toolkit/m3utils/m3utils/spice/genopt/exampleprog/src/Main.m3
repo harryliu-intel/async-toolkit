@@ -50,6 +50,7 @@ VAR
   t := ARRAY [0..2] OF LONGREAL { 0.0d0, .. };
   q := t;
   center := 0.0d0;
+  power := 2.0d0;
 BEGIN
   TRY
     nominal := pp.keywordPresent("-nominal");
@@ -61,6 +62,9 @@ BEGIN
     END;
     IF pp.keywordPresent("-temp") THEN
       temp := pp.getNextLongReal()
+    END; 
+    IF pp.keywordPresent("-power") THEN
+      power := pp.getNextLongReal()
     END; 
     IF pp.keywordPresent("-center") THEN
       center := pp.getNextLongReal()
@@ -132,8 +136,8 @@ BEGIN
     t[0] := (vdd - center) * (vdd - center)
   |
     5 =>
-    t[0] := (vdd - center) * (vdd - center) +
-                (delp - 2.0d0 * center) * (delp - 2.0d0 * center) 
+    t[0] := Math.pow(ABS(vdd - center), power) +
+            Math.pow(ABS(delp - 2.0d0 * center), power)
   END;
 
   Debug.Out(F("exampleprog : vdd %s delp %s deln %s ; val %s",
