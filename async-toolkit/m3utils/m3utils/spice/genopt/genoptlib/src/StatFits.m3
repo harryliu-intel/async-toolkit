@@ -354,6 +354,9 @@ PROCEDURE Attempt(p                : LRVector.T;
         Debug.Out(F("StatFits.Attempt lim=%s", Int(lim)));
 
         IF lim < nmDofs + LeaveOut THEN
+          Debug.Out(F("StatFits.Attempt : lim = %s < nmDofs + LeaveOut = %s",
+                      Int(lim), Int(nmDofs + LeaveOut)));
+          
           RAISE NotEnoughPoints
         END;
         bnom := DoNomFit(SUBARRAY(parr^, 0, lim), nmOrder, lambdaMult)

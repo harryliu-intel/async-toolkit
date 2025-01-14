@@ -95,7 +95,11 @@ PROCEDURE Attempt(p           : LRVector.T;
                   (* how large a region to model for nom; 0.0d0 means
                      do not perform a nom fit at all.
                      (region sizes for mu, sigma are automatic and based
-                      on a likelihood calculation) *)
+                      on a likelihood calculation) 
+
+                      we must have at least the required number of points
+                      within nomRho of p, else we raise NotEnoughPoints
+                  *)
 
                   lambdaMult := 0.0d0;
                   (* ridge regression multiplier *)

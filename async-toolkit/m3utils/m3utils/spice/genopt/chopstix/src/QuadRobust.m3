@@ -1208,7 +1208,7 @@ PROCEDURE PickRandomPoints(s            : LRVectorSet.T;
       WITH scale = FLOAT(i, LR) / FLOAT(subdivide, LR) * rho DO
         FOR j := FIRST(dp^) TO LAST(dp^) DO
           M.LinearCombinationV(1.0d0, p^, scale, dp[j]^, pp^);
-          EVAL s.insert(pp)
+          EVAL s.insert(LRVector.Copy(pp))
         END
       END
     END;
@@ -1216,11 +1216,37 @@ PROCEDURE PickRandomPoints(s            : LRVectorSet.T;
     (* add a random point along dim 0 *)
     WITH r = rand.longreal(0.0d0, 1.0d0) DO
       M.LinearCombinationV(1.0d0, p^, r, dp[0]^, pp^);
-      EVAL s.insert(pp)
+      EVAL s.insert(LRVector.Copy(pp))
     END
     
   END PickRandomPoints;
 
+PROCEDURE CountPoints(s   : LRVectorSet.T;
+                      t   : LRVectorMRVTbl.T;
+                      p   : LRVector.T;
+                      rho : LONGREAL) : CARDINAL =
+  VAR
+    sum := 0;
+    v : LRVector.T;
+    r : MultiEvalLRVector.Result;
+    ss := s.copy();
+  BEGIN
+    WITH iter = t.iterate() DO
+      WHILE iter.next(v, r) DO
+        EVAL ss.insert(v)
+      END
+    END;
+    
+    WITH iter = ss.iterate() DO
+      WHILE iter.next(v) DO
+        IF Vdist(v, p) < rho THEN
+          INC(sum)
+        END
+      END
+    END;
+    RETURN sum
+  END CountPoints;
+  
 PROCEDURE Minimize(pa             : LRVector.T;
                    func           : MultiEvalLRVector.T;
                    toEval         : SchemeObject.T;
@@ -1436,8 +1462,12 @@ PROCEDURE Minimize(pa             : LRVector.T;
                   LR(rho),
                   LR(rhoend)));
 
-      (* add some random points in the rho-ball *)
-      PickRandomPoints(newPts, pr.p, rho, 2);
+      (* add some random points in the rho-ball -- 
+         make sure we have enough points to do a fit *)
+      REPEAT
+        PickRandomPoints(newPts, pr.p, rho, 2)
+      UNTIL
+        CountPoints(newPts, values, pr.p, rho) >= Qdofs(n) + StatFits.LeaveOut;
 
       Debug.Out(F("QuadRobust.Minimize : iter %s : newPts.size()=%s",
                   Int(iter), Int(newPts.size())));
