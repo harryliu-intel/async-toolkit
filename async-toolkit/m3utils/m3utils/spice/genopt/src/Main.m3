@@ -441,7 +441,7 @@ PROCEDURE DoNominalEval(mme : MyMultiEval;
 
 VAR optVars, paramVars : SchemeObject.T;
 
-PROCEDURE DoIt(checkRd : Rd.T) =
+PROCEDURE DoIt(checkRd : Rd.T; doAnalyze : BOOLEAN) =
   VAR
     N               := vseq.size();
     pr : LRVector.T := NEW(LRVector.T, N);
@@ -873,7 +873,7 @@ BEGIN
          T2S       = SchemeSymbol.FromText DO
          optVars   := senv.lookup(T2S("*opt-vars*"));
          paramVars := senv.lookup(T2S("*param-vars*"));
-      DoIt(NIL)
+      DoIt(NIL, FALSE)
     END
   END
 

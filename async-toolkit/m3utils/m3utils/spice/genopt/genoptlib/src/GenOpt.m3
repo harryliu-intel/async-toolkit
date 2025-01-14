@@ -76,9 +76,9 @@ PROCEDURE DefDataFilename(fnm : Pathname.T) =
 PROCEDURE DefEval(obj : SchemeObject.T) =
   BEGIN schemaEval := obj END DefEval;
   
-PROCEDURE DefOptVar(nm : SchemeSymbol.T; defval, defstep : LONGREAL) =
+PROCEDURE DefOptVar(nm : SchemeSymbol.T; defval, defstep, min, max : LONGREAL) =
   BEGIN
-    vseq.addlo(OptVar.T { SchemeSymbol.ToText(nm), defval, defstep });
+    vseq.addlo(OptVar.T { SchemeSymbol.ToText(nm), defval, defstep, min, max });
     p.addlo(defval / defstep)
   END DefOptVar;
 

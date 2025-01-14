@@ -483,7 +483,7 @@ PROCEDURE MakeModelVarList() : SchemeObject.T =
 
 VAR optVars, paramVars : SchemeObject.T;
     
-PROCEDURE DoIt(checkRd : Rd.T) =
+PROCEDURE DoIt(checkRd : Rd.T; doAnalyze : BOOLEAN) =
   VAR
     N               := vseq.size();
     pr : LRVector.T := NEW(LRVector.T, N);
@@ -515,9 +515,14 @@ PROCEDURE DoIt(checkRd : Rd.T) =
                                   NewScheme,
                                   evaluator,
                                   checkRd,
+                                  doAnalyze,
                                   NEW(MyResultWriter,
                                       evaluator := evaluator,
                                       root      := "progress"));
+
+    IF doAnalyze THEN
+      RETURN (* nothing useful comes here *)
+    END;
     
     TRY
       Debug.Out(F("Minimize : %s iters, %s funcc; f = %s; %s",
@@ -658,7 +663,8 @@ VAR
   paramVarsNm := T2S("*param-vars*");
      
 PROCEDURE BindParams(schemaScm          : Scheme.T;
-                     optVars, paramVars : SchemeObject.T) =
+                     optVars, paramVars : SchemeObject.T)
+  RAISES { GenOpt.OutOfDomain } =
   (* 
      this routine binds the values of 
 
@@ -681,6 +687,10 @@ PROCEDURE BindParams(schemaScm          : Scheme.T;
              pi = GenOpt.GetCoords().get(i),
              vv = pi * v.defstep,
              sx = L2S(vv) DO
+          IF vv < v.min OR vv > v.max THEN
+            RAISE GenOpt.OutOfDomain
+          END;
+         
           schemaScm.bind(ss, sx)
         END;
 
@@ -726,7 +736,8 @@ PROCEDURE BindParams(schemaScm          : Scheme.T;
     END;
   END BindParams;
 
-PROCEDURE NewScheme(p : LRVector.T (* OK to be NIL *)) : Scheme.T =
+PROCEDURE NewScheme(p : LRVector.T (* OK to be NIL *)) : Scheme.T
+  RAISES { GenOpt.OutOfDomain } =
   (* 
      p controls the value of *p-override* in the Scheme interpreter.
 
@@ -918,7 +929,8 @@ VAR
   genOptScm          : Pathname.T;
   doDirectoryWarning : BOOLEAN;
   checkRd            : Rd.T := NIL;
-  
+  doAnalyze                 := FALSE;
+
 BEGIN
 
   <*FATAL OSError.E*>
@@ -939,6 +951,8 @@ BEGIN
   scmFiles.addhi("m3");
 
   TRY
+    doAnalyze := pp.keywordPresent("-analyze");
+    
     interactive := pp.keywordPresent("-i") OR pp.keywordPresent("-interactive");
 
     doDirectoryWarning := pp.keywordPresent("-warndirexists");
@@ -1033,7 +1047,7 @@ BEGIN
         optVars   := senv.lookup(T2S("*opt-vars*"));
         paramVars := senv.lookup(T2S("*param-vars*"));
         
-        DoIt(checkRd)
+        DoIt(checkRd, doAnalyze)
       END
     EXCEPT
       Scheme.E(x) =>

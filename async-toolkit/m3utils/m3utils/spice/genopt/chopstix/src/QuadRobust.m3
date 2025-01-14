@@ -25,7 +25,7 @@ FROM Fmt IMPORT LongReal, F, Int, Bool, FN, Pad;
 IMPORT LineProblem;
 IMPORT LRVectorFieldPll;
 IMPORT LongRealSeq AS LRSeq;
-FROM GenOpt IMPORT rho, iter, ResultWriter, GetOptFailureResult;
+FROM GenOpt IMPORT rho, iter, ResultWriter, GetOptFailureResult, OutOfDomain;
 FROM GenOptUtils IMPORT FmtP;
 IMPORT MultiEvalLRVector;
 IMPORT LRVectorSet, LRVectorSetDef;
@@ -696,12 +696,19 @@ TYPE
 CONST MaxCoord = 1.0d10;
       
 PROCEDURE ModelEval(me : ModelEvaluator; p : LRVector.T) : LONGREAL =
+
   VAR
-    scm := me.newScheme(p);
+    scm : Scheme.T;
     pso := NEW(StatObject.DefaultPoint).init();
   BEGIN
     (* compare to SchemeFinish code *)
 
+    TRY
+      scm := me.newScheme(p)
+    EXCEPT 
+      OutOfDomain => RETURN GetOptFailureResult()
+    END;
+    
     FOR i := FIRST(me.models^) TO LAST(me.models^) DO
       WITH nom = ComputeQ(p, me.models[i].bnom  ),
            mu  = ComputeQ(p, me.models[i].bmu   ),
@@ -1210,6 +1217,7 @@ PROCEDURE Minimize(pa             : LRVector.T;
                    newScheme      : SchemeMaker;
                    recorder       : ResultRecorder;
                    checkRd        : Rd.T;
+                   doAnalyze      : BOOLEAN;
                    progressWriter : ResultWriter) : Output =
 
   PROCEDURE LineMinimizationsDone() : BOOLEAN =
@@ -1340,31 +1348,31 @@ PROCEDURE Minimize(pa             : LRVector.T;
     (* setup complete *)
 
     TRY
-    IF checkRd # NIL THEN
-      checkPoint := Pickle.Read(checkRd);
-      values     := checkPoint.values;
-      fvalues    := checkPoint.fvalues;
-      startIter  := checkPoint.iter + 1;
+      IF checkRd # NIL THEN
+        checkPoint := Pickle.Read(checkRd);
+        values     := checkPoint.values;
+        fvalues    := checkPoint.fvalues;
+        startIter  := checkPoint.iter + 1;
 
-      (* recreate Scheme interpreters *)
-      VAR
-        iter      := values.iterate();
-        newvalues := NEW(LRVectorMRVTbl.Default).init();
-        v : LRVector.T;
-        m : MultiEvalResultLRVector.T;
-      BEGIN
-        
-        WHILE iter.next(v, m) DO
-          m.extra := newScheme(v);
-          EVAL newvalues.put(v, m)
+        (* recreate Scheme interpreters *)
+        VAR
+          iter      := values.iterate();
+          newvalues := NEW(LRVectorMRVTbl.Default).init();
+          v : LRVector.T;
+          m : MultiEvalResultLRVector.T;
+        BEGIN
+          
+          WHILE iter.next(v, m) DO
+            m.extra := newScheme(v);
+            EVAL newvalues.put(v, m)
+          END;
+
+          values := newvalues
         END;
-
-        values := newvalues
-      END;
-      
-      Debug.Out("QuadRobust : restarting from checkpoint : startIter = " &
-        Int(startIter))
-    END
+        
+        Debug.Out("QuadRobust : restarting from checkpoint : startIter = " &
+          Int(startIter))
+      END
     EXCEPT
       Pickle.Error(txt) => Debug.Error("?Pickle.Error : " & txt)
     |
@@ -1372,6 +1380,14 @@ PROCEDURE Minimize(pa             : LRVector.T;
         AL.Format(x))
     |
       Rd.EndOfFile => Debug.Error("I/O error reading Pickle : short read")
+    END;
+
+    IF doAnalyze THEN
+      Analyze();
+      VAR x : Output; BEGIN
+        (* return any old junk *)
+        RETURN x
+      END
     END;
     
     FOR iter := startIter TO 100 * n - 1 DO

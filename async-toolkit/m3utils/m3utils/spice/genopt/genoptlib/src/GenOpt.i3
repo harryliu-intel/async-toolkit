@@ -14,7 +14,7 @@ IMPORT OptVarSeq;
 IMPORT LRVector;
 IMPORT Rd;
 
-PROCEDURE DefOptVar(nm : SchemeSymbol.T; defval, defstep : LONGREAL);
+PROCEDURE DefOptVar(nm : SchemeSymbol.T; defval, defstep, min, max : LONGREAL);
 
 PROCEDURE SetRhoBeg(to : LONGREAL);
 
@@ -63,7 +63,7 @@ PROCEDURE NewCoords() : LongRealSeq.T;
 
 PROCEDURE OptInit();
 
-VAR DoIt : PROCEDURE(checkRd : Rd.T);
+VAR DoIt : PROCEDURE(checkRd : Rd.T; doAnalyze : BOOLEAN);
 
 PROCEDURE SetNetbatch(to : BOOLEAN);
 
@@ -117,4 +117,6 @@ VAR
   doNetbatch                := TRUE;
   lambdaMult               := 0.0d0;
 
+EXCEPTION OutOfDomain;
+          
 END GenOpt.

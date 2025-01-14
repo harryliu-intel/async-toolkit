@@ -15,9 +15,9 @@
   (set-cdr! (assoc param *param-vars*) (list to-val)))
 
 ;; note that last variable gets to be first in the list
-(define (def-optvar nm defval defstep)
+(define (def-optvar nm defval defstep min max)
   (let ((defval-x (eval-in-env 0 defval)))
-    (GenOpt.DefOptVar nm defval-x defstep)
+    (GenOpt.DefOptVar nm defval-x defstep min max)
     (set! *opt-vars* (cons (list nm defval-x defstep) *opt-vars*))))
 
 (define (def-rhobeg val)

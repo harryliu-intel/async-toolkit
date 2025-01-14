@@ -24,6 +24,7 @@ TYPE
   T = RECORD
     nm              : TEXT;
     defval, defstep : LONGREAL;
+    min, max        : LONGREAL;
   END;
 
 CONST Brand = "OptVar";

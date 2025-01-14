@@ -64,13 +64,16 @@ PROCEDURE Minimize(p              : LRVector.T;
 
                    checkRd        : Rd.T                := NIL;
                    (* reader pointing to an existing checkpoint *)
+
+                   doAnalyze      : BOOLEAN;
+                   (* analyze the checkpoint rather than restart from it *)
                    
                    progressWriter : GenOpt.ResultWriter := NIL;
                    (* write progress *)
                    
                    ) : Output;
 
-TYPE SchemeMaker = PROCEDURE(p : LRVector.T) : Scheme.T;
+TYPE SchemeMaker = PROCEDURE(p : LRVector.T) : Scheme.T RAISES { GenOpt.OutOfDomain };
 
 CONST Brand = "QuadRobust";
 
