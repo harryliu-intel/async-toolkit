@@ -64,18 +64,20 @@
 (def-compute-command
   '(string-append *cmd-path*
                   (if *stoc-nominal* " -nominal " "")
-                  " -nb -externalsweep 10 "
-                  " -vdd "    vdd
-                  " -temp "   temp
-                  " -lib "    lib
-                  " -thresh " thresh
-                  " -sweeps " *stoc-samples*
-                  " -cscale 1.0 "
-                  " -delp "   delp
-                  " -deln "   deln
-                  " -modleaves true"
-                  " -stages " stages
-                  " -step "   step
+                  " -nb"
+                  " -externalsweep    10"
+                  " -vdd "            vdd
+                  " -temp "           temp
+                  " -lib "            lib
+                  " -thresh "         thresh
+                  " -sweeps "         *stoc-samples*
+                  " -cscale           1.0 "
+                  " -delp "           delp
+                  " -deln "           deln
+                  " -modleaves        true"
+                  " -stages "         stages
+                  " -step "           step
+                  " -ctruntimelimit"  1800 ;; seconds
                   " -p pre -p sim -p conv -p clean -p post"))
 
 

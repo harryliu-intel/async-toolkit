@@ -19,7 +19,7 @@ Interface ("P1278p3_i0m_TechProcess")
 
 Interface ("TechTechs")
 
-Module ("Watchdog")
+%Module ("Watchdog")
 Module ("TechKill")
 Module ("TechConvert")
 Module ("TechMeasure")

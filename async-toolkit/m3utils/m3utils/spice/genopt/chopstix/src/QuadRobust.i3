@@ -73,7 +73,7 @@ PROCEDURE Minimize(p              : LRVector.T;
                    
                    ) : Output;
 
-TYPE SchemeMaker = PROCEDURE(p : LRVector.T) : Scheme.T RAISES { GenOpt.OutOfDomain };
+TYPE SchemeMaker = PROCEDURE(p : LRVector.T; force : BOOLEAN := FALSE) : Scheme.T RAISES { GenOpt.OutOfDomain };
 
 CONST Brand = "QuadRobust";
 

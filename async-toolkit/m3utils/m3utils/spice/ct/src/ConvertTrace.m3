@@ -48,6 +48,8 @@ IMPORT RepeatMe;
 IMPORT Conversion;
 IMPORT ConversionList;
 IMPORT Time;
+IMPORT Watchdog;
+IMPORT Scan;
 
 <*FATAL Thread.Alerted*>
 
@@ -485,13 +487,29 @@ CONST
 
 VAR
   M3Utils := Env.Get("M3UTILS");
+  watchdog : Watchdog.T := NIL;
+  runtimeLimit := LAST(LONGREAL);
   
 BEGIN
   Debug.SetOptions(SET OF Debug.Options {Debug.Options.PrintThreadID, Debug.Options.PrintPID });
   
   TRY
 
-    IF NOT pp.keywordPresent("-execute") THEN
+    IF pp.keywordPresent("-execute") THEN
+      (* this is the -execute version *)
+      IF pp.keywordPresent("-runtimelimit") THEN
+        runtimeLimit := pp.getNextLongReal()
+      ELSE
+        WITH rlvar = Env.Get("CTRUNTIMELIMIT") DO
+          IF rlvar # NIL THEN
+            runtimeLimit := Scan.LongReal(rlvar)
+          END
+        END;
+        IF runtimeLimit # LAST(LONGREAL) THEN
+          watchdog := NEW(Watchdog.T).init(runtimeLimit)
+        END
+      END
+    ELSE
       RepeatMe.Repeat("-execute",
                       10,
                       1.0d0,

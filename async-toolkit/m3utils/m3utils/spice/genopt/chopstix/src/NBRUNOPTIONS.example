@@ -5,4 +5,11 @@ setenv NBRUNOPTIONS " --target sccc05123707.zsc9.intel.com:33445 --task 18 --cla
 
 # to find feeder do eg
 # grep -i port /tmp/netbatch/mnystroe/mnystroe_sccc05123707_feeder/logs/nbfeeder.sccc05123707.out.95351720897780
+#
+# Can create a task as follows
+cp latest.task dummy.task
+# delete all the commands
+
+nbtask load dummy.task
+
 

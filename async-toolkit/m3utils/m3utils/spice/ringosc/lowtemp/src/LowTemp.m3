@@ -605,8 +605,14 @@ PROCEDURE LaunchConvert1(fsdbRoot : Pathname.T) =
     Ct     := m3utils & "/" & CtPath;
     Sz     := m3utils & "/" & SzPath;
     Nr     := m3utils & "/" & NrPath;
-    cmd    := FN("%s -fsdb %s -threads 4 -R 5e-12 -compress %s -format CompressedV1 -translate -wd %s.ctwork %s.fsdb %s",
-                TA { Ct, Nr, Sz, fsdbRoot, fsdbRoot, fsdbRoot });
+    cmd    := FN("%s -runtimelimit %s -fsdb %s -threads 4 -R 5e-12 -compress %s -format CompressedV1 -translate -wd %s.ctwork %s.fsdb %s",
+                 TA { Ct,
+                      LR(ctRuntimeLimit),
+                      Nr,
+                      Sz,
+                      fsdbRoot,
+                      fsdbRoot,
+                      fsdbRoot });
     
   BEGIN
     IF convNetbatch THEN
@@ -744,6 +750,8 @@ VAR
   batches       : CARDINAL       := 0; (* 0 means sweep internally *)
   runDir                         := FS.GetAbsolutePathname(".");
 
+  ctRuntimeLimit                 := 24.0d0 * 3600.0d0;
+  
   doNetbatch    : BOOLEAN;
   convNetbatch  : BOOLEAN;
   
@@ -773,6 +781,10 @@ BEGIN
       ELSE
         nbopts := F("--target %s --class 4C --class SLES12", NbPool);
       END
+    END;
+
+    IF pp.keywordPresent("-ctruntimelimit") THEN
+      ctRuntimeLimit := pp.getNextLongReal()
     END;
     
     IF pp.keywordPresent("-t") THEN

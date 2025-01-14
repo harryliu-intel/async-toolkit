@@ -385,8 +385,11 @@ PROCEDURE AttemptEval(q                    : LRVector.T;
             
             Debug.Warning(msg);
 
-            schemaScm := NewScheme(NIL);
-            (* normally created in running command, but not on a failure *)
+            <*FATAL GenOpt.OutOfDomain*>
+            BEGIN
+              schemaScm := NewScheme(NIL, TRUE)
+              (* normally created in running command, but not on a failure *)
+            END;
             
             IF outOfDomainResult = FIRST(LONGREAL) THEN
               RAISE ProcUtils.ErrorExit(err)
@@ -663,7 +666,8 @@ VAR
   paramVarsNm := T2S("*param-vars*");
      
 PROCEDURE BindParams(schemaScm          : Scheme.T;
-                     optVars, paramVars : SchemeObject.T)
+                     optVars, paramVars : SchemeObject.T;
+                     force              : BOOLEAN)
   RAISES { GenOpt.OutOfDomain } =
   (* 
      this routine binds the values of 
@@ -687,7 +691,7 @@ PROCEDURE BindParams(schemaScm          : Scheme.T;
              pi = GenOpt.GetCoords().get(i),
              vv = pi * v.defstep,
              sx = L2S(vv) DO
-          IF vv < v.min OR vv > v.max THEN
+          IF NOT force AND (vv < v.min OR vv > v.max) THEN
             RAISE GenOpt.OutOfDomain
           END;
          
@@ -736,7 +740,9 @@ PROCEDURE BindParams(schemaScm          : Scheme.T;
     END;
   END BindParams;
 
-PROCEDURE NewScheme(p : LRVector.T (* OK to be NIL *)) : Scheme.T
+PROCEDURE NewScheme(p     : LRVector.T (* OK to be NIL *);
+                    force : BOOLEAN    (* can we set it out of domain? *) )
+                             : Scheme.T
   RAISES { GenOpt.OutOfDomain } =
   (* 
      p controls the value of *p-override* in the Scheme interpreter.
@@ -783,7 +789,7 @@ PROCEDURE NewScheme(p : LRVector.T (* OK to be NIL *)) : Scheme.T
       Debug.Error("NewScheme : Scheme.E when overriding p : " & msg)
     END;
     
-    BindParams(scm, optVars, paramVars);
+    BindParams(scm, optVars, paramVars, force);
 
     RETURN scm
   END NewScheme;
@@ -810,7 +816,10 @@ PROCEDURE SchemaReadResult(schemaPath ,
     
     dataFiles.addhi(dataPath);
 
-    schemaScm := NewScheme(NIL);
+    <*FATAL GenOpt.OutOfDomain*>
+    BEGIN
+      schemaScm := NewScheme(NIL, TRUE)
+    END;
     
     IF doDebug THEN
       Debug.Out("SchemaReadResult : set up interpreter")

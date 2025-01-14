@@ -363,6 +363,18 @@ PROCEDURE CopyArr(a : REF ARRAY OF PointMetric.T) : REF ARRAY OF PointMetric.T =
     RETURN res
   END CopyArr;
 
+PROCEDURE Analyze(READONLY pr   : PointResult.T; (* current [old] point *)
+                  values        : LRVectorMRVTbl.T;
+                  fvalues       : LRVectorLRTbl.T;
+                  newScheme     : SchemeMaker;
+                  toEval        : SchemeObject.T;
+                  lambdaMult    : LONGREAL) =
+  (* call with valueMu locked *)
+  BEGIN
+    Debug.Out("QuadRobust.Analyze")
+  END Analyze;
+    
+
 PROCEDURE DoLeaderBoard(READONLY pr   : PointResult.T; (* current [old] point *)
                         values        : LRVectorMRVTbl.T;
                         fvalues       : LRVectorLRTbl.T;
@@ -1308,10 +1320,6 @@ PROCEDURE Minimize(pa             : LRVector.T;
       END;
     END AwaitPointEvals;
 
-  PROCEDURE Analyze() =
-    BEGIN
-    END Analyze;
-    
   VAR
     n        := NUMBER(pa^);
 
@@ -1353,10 +1361,17 @@ PROCEDURE Minimize(pa             : LRVector.T;
 
     TRY
       IF checkRd # NIL THEN
+        Debug.Out("QuadRobust : checkRd non-NIL, loading! ");
+        
         checkPoint := Pickle.Read(checkRd);
         values     := checkPoint.values;
         fvalues    := checkPoint.fvalues;
         startIter  := checkPoint.iter + 1;
+        pr         := checkPoint.pr;
+        rho        := checkPoint.rho;
+
+        Debug.Out(F("QuadRobust : pr.p = %s , rho = %s",
+                    FmtP(pr.p), LR(rho)));
 
         (* recreate Scheme interpreters *)
         VAR
@@ -1387,7 +1402,10 @@ PROCEDURE Minimize(pa             : LRVector.T;
     END;
 
     IF doAnalyze THEN
-      Analyze();
+      LOCK valueMu DO
+        Analyze(pr, values, fvalues, newScheme, toEval, lambdaMult)
+      END;
+        
       VAR x : Output; BEGIN
         (* return any old junk *)
         RETURN x
@@ -1556,7 +1574,9 @@ PROCEDURE Minimize(pa             : LRVector.T;
           WITH checkpoint = NEW(QuadCheckpoint.T,
                                 iter    := iter,
                                 values  := newvalues,
-                                fvalues := fvalues),
+                                fvalues := fvalues,
+                                pr      := pr,
+                                rho     := rho),
                pi         = Pad(Int(iter), 6, padChar := '0'),
                fn         = F("quadcheckpoint.%s.chk", pi),
                tfn        = fn & "_temp",
