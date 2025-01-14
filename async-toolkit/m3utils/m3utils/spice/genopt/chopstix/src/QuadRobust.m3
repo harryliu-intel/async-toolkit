@@ -1307,6 +1307,10 @@ PROCEDURE Minimize(pa             : LRVector.T;
         EVAL peSeq.get(i).wait()
       END;
     END AwaitPointEvals;
+
+  PROCEDURE Analyze() =
+    BEGIN
+    END Analyze;
     
   VAR
     n        := NUMBER(pa^);
