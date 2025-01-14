@@ -77,7 +77,7 @@
                   " -modleaves        true"
                   " -stages "         stages
                   " -step "           step
-                  " -ctruntimelimit"  1800 ;; seconds
+                  " -ctruntimelimit " 1800 ;; seconds
                   " -p pre -p sim -p conv -p clean -p post"))
 
 
