@@ -45,8 +45,6 @@ IMPORT ConjGradient;
 IMPORT Thread;
 IMPORT PointResult;
 IMPORT PointResultSeq;
-IMPORT NormalDeviate;
-IMPORT Process;
 FROM SurfaceRep IMPORT Qdofs, Ldofs, 
                        FmtQ, BiggestQuadratic, ComputeG,
                        ComputeQ;
@@ -529,29 +527,9 @@ PROCEDURE DebugArr(READONLY pr   : PointResult.T;
       END
     END DoMeasuredStatistics;
 
-PROCEDURE DoLeaderBoard(READONLY pr   : PointResult.T; (* current [old] point *)
-                        values        : LRVectorMRVTbl.T;
-                        fvalues       : LRVectorLRTbl.T;
-                        newScheme     : SchemeMaker;
-                        toEval        : SchemeObject.T;
-                        lambdaMult    : LONGREAL;
-                        newpts(*OUT*) : LRVectorSet.T;
-                        VAR newPr     : PointResult.T) : BOOLEAN =
-  (* call with valueMu LOCKed *)
-
-  PROCEDURE InsertBestPoints(READONLY a : ARRAY OF PointMetric.T; npts : CARDINAL) =
-    BEGIN
-      FOR i := FIRST(a) TO LAST(a) DO
-        IF i < npts THEN
-          (* insert first npts points in interesting set *)
-          Debug.Out("Adding to newpts : a[i].p = " & FmtP(a[i].p));
-          EVAL newpts.insert(a[i].p)
-        END;
-      END
-    END InsertBestPoints;
-
   PROCEDURE AttemptMinimize(p : LRVector.T; me : LRScalarField.T) : LRVector.T =
     VAR
+      n := NUMBER(p^);
       pp := LRVector.Copy(p);
     BEGIN
       Debug.Out("QuadRobust.DoLeaderBoard.AttemptMinimize");
@@ -573,10 +551,30 @@ PROCEDURE DoLeaderBoard(READONLY pr   : PointResult.T; (* current [old] point *)
                       LR(min), FmtP(pp)));
         END
       END;
-      EVAL newpts.insert(pp) (* insert min point in points to evaluate *);
       RETURN pp
     END AttemptMinimize;
     
+PROCEDURE DoLeaderBoard(READONLY pr   : PointResult.T; (* current [old] point *)
+                        values        : LRVectorMRVTbl.T;
+                        fvalues       : LRVectorLRTbl.T;
+                        newScheme     : SchemeMaker;
+                        toEval        : SchemeObject.T;
+                        lambdaMult    : LONGREAL;
+                        newpts(*OUT*) : LRVectorSet.T;
+                        VAR newPr     : PointResult.T) : BOOLEAN =
+  (* call with valueMu LOCKed *)
+
+  PROCEDURE InsertBestPoints(READONLY a : ARRAY OF PointMetric.T; npts : CARDINAL) =
+    BEGIN
+      FOR i := FIRST(a) TO LAST(a) DO
+        IF i < npts THEN
+          (* insert first npts points in interesting set *)
+          Debug.Out("Adding to newpts : a[i].p = " & FmtP(a[i].p));
+          EVAL newpts.insert(a[i].p)
+        END;
+      END
+    END InsertBestPoints;
+
   VAR
     parr := NEW(REF ARRAY OF PointMetric.T, values.size());
     n    := NUMBER(pr.p^);
@@ -606,7 +604,7 @@ PROCEDURE DoLeaderBoard(READONLY pr   : PointResult.T; (* current [old] point *)
                     
           VAR
             farr := CopyArr(parr);
-            pmm  := AttemptSurfaceFit(pr, farr^, values, lambdaMult, newpts);
+            pmm  := AttemptSurfaceFit(pr, farr^, values, lambdaMult);
             me   := NEW(ModelEvaluator,
                         models    := pmm,
                         newScheme := newScheme,
@@ -629,6 +627,10 @@ PROCEDURE DoLeaderBoard(READONLY pr   : PointResult.T; (* current [old] point *)
             InsertBestPoints(farr^, 4 * n * n);
 
             popt := AttemptMinimize(pr.p, me);
+
+            EVAL newpts.insert(popt); (* insert "best point" 
+                                         (but we should check
+                                         whether it is in domain) *)
 
             (* we have optimized the modeled target function.
                
@@ -801,8 +803,7 @@ PROCEDURE ModelEval(me : ModelEvaluator; p : LRVector.T) : LONGREAL =
 PROCEDURE AttemptSurfaceFit(pr              : PointResult.T;
                             READONLY parr   : ARRAY OF PointMetric.T;
                             values          : LRVectorMRVTbl.T;
-                            lambdaMult      : LONGREAL;
-                            newpts(*OUT*)   : LRVectorSet.T) : REF ARRAY OF StatFits.T
+                            lambdaMult      : LONGREAL) : REF ARRAY OF StatFits.T
   RAISES { Matrix.Singular, StatFits.NotEnoughPoints } =
   (* attempt a surface fit *)
 
@@ -851,13 +852,10 @@ PROCEDURE AttemptSurfaceFit(pr              : PointResult.T;
     n       := NUMBER(pr.p^);
 
     qdofs   := Qdofs(n);
-    ldofs   := Ldofs(n);
     
     seq   : PointMetricSeq.T;
-    bestQ : PointResult.T;
 
     points := SortByDistance(pr.p, parr);
-    v : MultiEvalLRVector.Result;
 
     nv := modelvars.size();
 
@@ -919,17 +917,6 @@ PROCEDURE AttemptSurfaceFit(pr              : PointResult.T;
     RETURN models
   END AttemptSurfaceFit;
 
-PROCEDURE Do1Var(vi              : CARDINAL; (* index of variable *)
-                 ctrl            : ARRAY StatComponent.T OF ResponseModel.Order;
-                 READONLY points : ARRAY OF PointMetric.T) =
-  BEGIN
-    (* model a single variable *)
-
-    (* we pick a number of points that we use to model the variable *)
-
-       
-  END Do1Var;
-  
 PROCEDURE InsertClosestPoints(n             : CARDINAL;
                               bestQ         : LRVector.T;
                               READONLY parr : ARRAY OF PointMetric.T;
@@ -978,6 +965,7 @@ PROCEDURE SortByDistance(to            : LRVector.T;
     RETURN darr
   END SortByDistance;
 
+<*UNUSED*>
 PROCEDURE GetConstantTerm(b : REF M.M) : LONGREAL =
   BEGIN
     WITH idx = LAST(b^) DO
@@ -985,6 +973,7 @@ PROCEDURE GetConstantTerm(b : REF M.M) : LONGREAL =
     END
   END GetConstantTerm;
 
+<*UNUSED*>
 PROCEDURE DoSimpleFit(p                          : LRVector.T;
                       bnom, bmu, bsigma          : REF M.M;
                       tol                        : LONGREAL;
@@ -1495,7 +1484,10 @@ PROCEDURE Minimize(pa             : LRVector.T;
         BEGIN
           
           WHILE iter.next(v, m) DO
-            m.extra := newScheme(v);
+            <*FATAL OutOfDomain*>
+            BEGIN
+              m.extra := newScheme(v)
+            END;
             EVAL newvalues.put(v, m)
           END;
 
@@ -1712,6 +1704,7 @@ PROCEDURE Minimize(pa             : LRVector.T;
     END
   END Minimize;
 
+<*UNUSED*>  
 PROCEDURE Predict(s          : LRVector.T;
                   READONLY d : ARRAY OF LRVector.T) : LRVector.T =
   VAR
