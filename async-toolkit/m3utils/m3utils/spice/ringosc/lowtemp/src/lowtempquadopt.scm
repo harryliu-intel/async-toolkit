@@ -36,6 +36,8 @@
 (GenOpt.SetLambdaMult 0)
 (QuadRobust.SetDoNominal #t)
 
+(QuadRobust.SetMinNewPts 50)
+
 ;; model the three aspects of any variable:
 ;; nom mu sigma
 (QuadRobust.DoModel 'energy_cost '(Quadratic Linear    Linear))

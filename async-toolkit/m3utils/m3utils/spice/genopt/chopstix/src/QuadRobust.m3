@@ -370,87 +370,93 @@ PROCEDURE Analyze(READONLY pr   : PointResult.T; (* current [old] point *)
                   toEval        : SchemeObject.T;
                   lambdaMult    : LONGREAL) =
   (* call with valueMu locked *)
+  VAR
+    parr := NEW(REF ARRAY OF PointMetric.T, values.size());
+    n    := NUMBER(pr.p^);
   BEGIN
-    Debug.Out("QuadRobust.Analyze")
+    Debug.Out("QuadRobust.Analyze");
+        Debug.Out("**** values.size() = " & Int(values.size()));
+
+    InitMeasured(parr, values, fvalues);
+
+    PointMetricArraySort.Sort(parr^);
+
+    Debug.Out(F("DoLeaderBoard : parr[0].p = %s", FmtP(parr[0].p)));
+
   END Analyze;
+
+PROCEDURE InitMeasured(a             : REF ARRAY OF PointMetric.T;
+                             values        : LRVectorMRVTbl.T;
+          
+fvalues       : LRVectorLRTbl.T) =
+VAR
+  iter := values.iterate();
+  i    := 0;
+  q : LRVector.T;
+  r : MultiEvalLRVector.Result;
+BEGIN
+  WHILE iter.next(q, r) DO
+    WITH metric = ResMetric(q, fvalues) DO
+      IF i > LAST(a^) THEN
+        Debug.Warning(F("i [%s] > LAST(a^) [%s]",
+                        Int(i), Int(LAST(a^))))
+      END;
+      a[i] := PointMetric.T { metric, q, r };
+      INC(i)
+    END
+  END
+END InitMeasured;
+
+PROCEDURE InitFitted(a             : REF ARRAY OF PointMetric.T;
+                     me            : LRScalarField.T;
+                     values        : LRVectorMRVTbl.T ) =
+  VAR
+    iter := values.iterate();
+    i    := 0;
+    q : LRVector.T;
+    r : MultiEvalLRVector.Result;
+  BEGIN
+    WHILE iter.next(q, r) DO
+      WITH metric = me.eval(q) DO
+        a[i] := PointMetric.T { metric, q, r };
+        INC(i)
+      END
+    END;
+  END InitFitted;
+
+PROCEDURE DebugArr(READONLY pr   : PointResult.T;
+                   READONLY a    : ARRAY OF PointMetric.T;
+                   fvalues       : LRVectorLRTbl.T;
+                   tag           : TEXT) =
+  BEGIN
     
+    WITH wx = Wx.New() DO
+      Wx.PutText(wx, F("==== QuadRobust (%s) leaderboard ====\n", tag));
+      Wx.PutText(wx, F("rho = %s ; p = %s\n", LR(rho), FmtP(pr.p)));
+      FOR i := FIRST(a) TO LAST(a) DO
+        WITH rec  = a[i],
+             dist = Vdist(rec.p, pr.p) DO
 
-PROCEDURE DoLeaderBoard(READONLY pr   : PointResult.T; (* current [old] point *)
-                        values        : LRVectorMRVTbl.T;
-                        fvalues       : LRVectorLRTbl.T;
-                        newScheme     : SchemeMaker;
-                        toEval        : SchemeObject.T;
-                        lambdaMult    : LONGREAL;
-                        newpts(*OUT*) : LRVectorSet.T;
-                        VAR newPr     : PointResult.T) : BOOLEAN =
-  (* call with valueMu LOCKed *)
-
-  PROCEDURE WalkParr(a : REF ARRAY OF PointMetric.T; tag : TEXT) =
-    BEGIN
-      
-      WITH wx = Wx.New() DO
-        Wx.PutText(wx, F("==== QuadRobust (%s) leaderboard ====\n", tag));
-        Wx.PutText(wx, F("rho = %s ; p = %s\n", LR(rho), FmtP(pr.p)));
-        FOR i := FIRST(a^) TO LAST(a^) DO
-          WITH rec  = a[i],
-               dist = Vdist(rec.p, pr.p) DO
-
-            IF newpts.size() < 4 * n * n THEN
-              (* insert first n^2 points in interesting set *)
-              Debug.Out("Adding to newpts : rec.p = " & FmtP(rec.p));
-              EVAL newpts.insert(rec.p)
-            END;
-            (*  *)
-            Wx.PutText(wx, FN("%s metric %s (meas. %s); dist %s; result %s ; rec.p %s\n",
-                              TA {tag,
-                                  LR(rec.metric),
-                                  LR(ResMetric(rec.p, fvalues)),
-                                  LR(dist),
-                                  MultiEvalLRVector.Format(rec.result),
-                                  FmtP(rec.p)}))
-          END
-        END;
-        Debug.Out(Wx.ToText(wx))
-      END
-    END WalkParr;
-
-  PROCEDURE InitMeasured(a : REF ARRAY OF PointMetric.T) =
-    VAR
-      iter := values.iterate();
-      i    := 0;
-      q : LRVector.T;
-      r : MultiEvalLRVector.Result;
-    BEGIN
-      WHILE iter.next(q, r) DO
-        WITH metric = ResMetric(q, fvalues) DO
-          IF i > LAST(a^) THEN
-            Debug.Warning(F("i [%s] > LAST(a^) [%s]",
-                            Int(i), Int(LAST(a^))))
-          END;
-          a[i] := PointMetric.T { metric, q, r };
-          INC(i)
-        END
-      END
-    END InitMeasured;
-
-  PROCEDURE InitFitted(a : REF ARRAY OF PointMetric.T; me : LRScalarField.T) =
-    VAR
-      iter := values.iterate();
-      i    := 0;
-      q : LRVector.T;
-      r : MultiEvalLRVector.Result;
-    BEGIN
-      WHILE iter.next(q, r) DO
-        WITH metric = me.eval(q) DO
-          a[i] := PointMetric.T { metric, q, r };
-          INC(i)
+          Wx.PutText(wx, FN("%s metric %s (meas. %s); dist %s; result %s ; rec.p %s\n",
+                            TA {tag,
+                                LR(rec.metric),
+                                LR(ResMetric(rec.p, fvalues)),
+                                LR(dist),
+                                MultiEvalLRVector.Format(rec.result),
+                                FmtP(rec.p)}))
         END
       END;
-    END InitFitted;
+      Debug.Out(Wx.ToText(wx))
+    END
+  END DebugArr;
 
   TYPE Stats = RECORD n : CARDINAL; mean, sdev : LONGREAL END;
 
-  PROCEDURE DoMeasuredStatistics(p : LRVector.T) : Stats =
+
+  PROCEDURE DoMeasuredStatistics(p : LRVector.T;
+                  values        : LRVectorMRVTbl.T;
+                         toEval        : SchemeObject.T;
+                          ) : Stats =
     CONST
       SampleFrac  = 0.62d0;
       SampleCount = 25;
@@ -523,6 +529,27 @@ PROCEDURE DoLeaderBoard(READONLY pr   : PointResult.T; (* current [old] point *)
       END
     END DoMeasuredStatistics;
 
+PROCEDURE DoLeaderBoard(READONLY pr   : PointResult.T; (* current [old] point *)
+                        values        : LRVectorMRVTbl.T;
+                        fvalues       : LRVectorLRTbl.T;
+                        newScheme     : SchemeMaker;
+                        toEval        : SchemeObject.T;
+                        lambdaMult    : LONGREAL;
+                        newpts(*OUT*) : LRVectorSet.T;
+                        VAR newPr     : PointResult.T) : BOOLEAN =
+  (* call with valueMu LOCKed *)
+
+  PROCEDURE InsertBestPoints(READONLY a : ARRAY OF PointMetric.T; npts : CARDINAL) =
+    BEGIN
+      FOR i := FIRST(a) TO LAST(a) DO
+        IF i < npts THEN
+          (* insert first npts points in interesting set *)
+          Debug.Out("Adding to newpts : a[i].p = " & FmtP(a[i].p));
+          EVAL newpts.insert(a[i].p)
+        END;
+      END
+    END InsertBestPoints;
+
   PROCEDURE AttemptMinimize(p : LRVector.T; me : LRScalarField.T) : LRVector.T =
     VAR
       pp := LRVector.Copy(p);
@@ -558,11 +585,13 @@ PROCEDURE DoLeaderBoard(READONLY pr   : PointResult.T; (* current [old] point *)
 
     Debug.Out("**** values.size() = " & Int(values.size()));
 
-    InitMeasured(parr);
+    InitMeasured(parr, values, fvalues);
 
     PointMetricArraySort.Sort(parr^);
 
-    WalkParr(parr, "measured");
+    DebugArr(pr, parr^, fvalues, "measured");
+
+    InsertBestPoints(parr^, 4 * n * n);
 
     Debug.Out(F("DoLeaderBoard : parr[0].p = %s", FmtP(parr[0].p)));
 
@@ -591,11 +620,13 @@ PROCEDURE DoLeaderBoard(READONLY pr   : PointResult.T; (* current [old] point *)
             (* walk through values one more time, this time rank 
                against fitted function *)
 
-            InitFitted(farr, me);
+            InitFitted(farr, me, values);
 
             PointMetricArraySort.Sort(farr^);
 
-            WalkParr(farr, "fitted");
+            DebugArr(pr, farr^, fvalues, "fitted");
+
+            InsertBestPoints(farr^, 4 * n * n);
 
             popt := AttemptMinimize(pr.p, me);
 
@@ -646,7 +677,7 @@ PROCEDURE DoLeaderBoard(READONLY pr   : PointResult.T; (* current [old] point *)
               mpFitted   = me.eval(parr[0].p),
 
               (* measured stats *)
-              stats      = DoMeasuredStatistics(mp.p),
+              stats      = DoMeasuredStatistics(mp.p, values, toEval),
 
               (* measured tolerance *)
               tol        = 3.0d0 * stats.sdev,
@@ -1221,6 +1252,15 @@ PROCEDURE PickRandomPoints(s            : LRVectorSet.T;
     
   END PickRandomPoints;
 
+VAR minNewPts := 8;
+    
+PROCEDURE SetMinNewPts(to : CARDINAL) =
+  BEGIN minNewPts := to END SetMinNewPts;
+  
+PROCEDURE GetMinNewPts() : CARDINAL =
+  BEGIN RETURN minNewPts END GetMinNewPts;
+
+
 PROCEDURE CountPoints(s   : LRVectorSet.T;
                       t   : LRVectorMRVTbl.T;
                       p   : LRVector.T;
@@ -1346,6 +1386,53 @@ PROCEDURE Minimize(pa             : LRVector.T;
       END;
     END AwaitPointEvals;
 
+  PROCEDURE WriteProgress() =
+    (* valueMu locked *)
+    BEGIN
+      IF progressWriter # NIL THEN
+        WITH output = Output { iterations := iter,
+                               funcCount  := 0,
+                               fhist      := GetFHist(allMins),
+                               message    := message,
+                               f          := pr.metric,
+                               x          := LRVector.Copy(pr.p),
+                               stoprho    := rho } DO
+          progressWriter.write(output)
+        END
+      END
+    END WriteProgress;
+    
+  PROCEDURE WriteCheckpoint() =
+    (* valueMu locked *)
+    VAR
+      newvalues := NEW(LRVectorMRVTbl.Default).init();
+      iterator := values.iterate();
+      v : LRVector.T;
+      m : MultiEvalResultLRVector.T;
+    BEGIN
+      WHILE iterator.next(v, m) DO
+        m.extra := NIL;
+        EVAL newvalues.put(v, m)
+      END;
+      WITH checkpoint = NEW(QuadCheckpoint.T,
+                            iter    := iter,
+                            values  := newvalues,
+                            fvalues := fvalues,
+                            pr      := pr,
+                            rho     := rho),
+           pi         = Pad(Int(iter), 6, padChar := '0'),
+           fn         = F("quadcheckpoint.%s.chk", pi),
+           tfn        = fn & "_temp",
+           wr         = FileWr.Open(tfn) DO
+        
+        Debug.Out("QuadRobust.Minimize : writing checkpoint file " & tfn);
+        
+        Pickle.Write(wr, checkpoint);
+        Wr.Close(wr);
+        FS.Rename(tfn, fn)
+      END
+    END WriteCheckpoint;
+    
   VAR
     n        := NUMBER(pa^);
 
@@ -1467,6 +1554,8 @@ PROCEDURE Minimize(pa             : LRVector.T;
       REPEAT
         PickRandomPoints(newPts, pr.p, rho, 2)
       UNTIL
+        newPts.size() >= minNewPts
+          AND
         CountPoints(newPts, values, pr.p, rho) >= Qdofs(n) + StatFits.LeaveOut;
 
       Debug.Out(F("QuadRobust.Minimize : iter %s : newPts.size()=%s",
@@ -1499,10 +1588,14 @@ PROCEDURE Minimize(pa             : LRVector.T;
       BEGIN
         Debug.Out("About to call DoLeaderBoard.  values.size() = " & Int(values.size()));
         LOCK valueMu DO
-          gotNew := DoLeaderBoard(pr, values, fvalues,
-                                  newScheme, toEval,
+          gotNew := DoLeaderBoard(pr,
+                                  values,
+                                  fvalues,
+                                  newScheme,
+                                  toEval,
                                   lambdaMult,
-                                  newPts, bestq);
+                                  newPts,
+                                  bestq);
           IF gotNew THEN
             (* we should really have a better update method, right? *)
             newp := bestq
@@ -1540,21 +1633,11 @@ PROCEDURE Minimize(pa             : LRVector.T;
           mins.addhi   (newp);
           allMins.addhi(newp);
 
-          IF progressWriter # NIL THEN
-            WITH output = Output { iterations := iter,
-                                   funcCount  := 0,
-                                   fhist      := GetFHist(allMins),
-                                   message    := message,
-                                   f          := pr.metric,
-                                   x          := LRVector.Copy(pr.p),
-                                   stoprho    := rho } DO
-              progressWriter.write(output)
-            END
-          END
+          WriteProgress();
+          WriteCheckpoint();
         END;
-            
-        WITH Lookback = 5 DO
 
+        WITH Lookback = 5 DO
           (* 
              if we haven't improved in five straight iterations,
              call it a day 
@@ -1589,35 +1672,6 @@ PROCEDURE Minimize(pa             : LRVector.T;
         (* we don't know how it works so we don't know how to clear it *)
       END;
 
-      LOCK valueMu DO
-      (* clear out the scheme interpreter links -- why ? *)
-        VAR
-          newvalues := NEW(LRVectorMRVTbl.Default).init();
-          iterator := values.iterate();
-          v : LRVector.T;
-          m : MultiEvalResultLRVector.T;
-        BEGIN
-          WHILE iterator.next(v, m) DO
-            m.extra := NIL;
-            EVAL newvalues.put(v, m)
-          END;
-          WITH checkpoint = NEW(QuadCheckpoint.T,
-                                iter    := iter,
-                                values  := newvalues,
-                                fvalues := fvalues,
-                                pr      := pr,
-                                rho     := rho),
-               pi         = Pad(Int(iter), 6, padChar := '0'),
-               fn         = F("quadcheckpoint.%s.chk", pi),
-               tfn        = fn & "_temp",
-               wr         = FileWr.Open(tfn) DO
-            Pickle.Write(wr, checkpoint);
-            Wr.Close(wr);
-            FS.Rename(tfn, fn)
-          END
-        END
-      END;
-      
       message := "stopping because of out of iterations"
       (* if we fall through, that's the last message we set! *)
       

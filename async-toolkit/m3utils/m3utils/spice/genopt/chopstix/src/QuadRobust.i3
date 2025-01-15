@@ -99,6 +99,12 @@ PROCEDURE OptInit();
 
 PROCEDURE GetModelVars() : ModelVarSeq.T;
 
+(* MinNewPts is the minimum # of new points to choose per iteration *)
+
+PROCEDURE SetMinNewPts(to : CARDINAL);
+
+PROCEDURE GetMinNewPts() : CARDINAL;
+
 VAR schemeMu : MUTEX;
 
 TYPE
