@@ -26,6 +26,8 @@ PROCEDURE GetRhoEnd() : LONGREAL;
 
 PROCEDURE GetRho() : LONGREAL;
 
+PROCEDURE SetRho(to : LONGREAL);
+  
 PROCEDURE SetLambdaMult(to : LONGREAL);
 
 PROCEDURE GetLambdaMult() : LONGREAL;
@@ -94,8 +96,7 @@ PROCEDURE GetMethod() : Method;
 
 CONST Brand = "GenOpt";
 
-VAR rho  : LONGREAL;
-    iter : CARDINAL;
+VAR iter : CARDINAL;
     paramBindings : TextTextTbl.T;
     
 TYPE
@@ -115,7 +116,6 @@ VAR
   outOfDomainResult        := FIRST(LONGREAL);
   method                   := Method.NewUOAs;
   doNetbatch                := TRUE;
-  lambdaMult               := 0.0d0;
 
 EXCEPTION OutOfDomain;
           

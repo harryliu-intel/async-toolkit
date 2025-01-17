@@ -44,9 +44,9 @@ IMPORT SchemePair;
 IMPORT MultiEvalLRVector;
 IMPORT IP, NetObj, ReadLineError; (* for exceptions *)
 FROM GenOptUtils IMPORT FmtP;
-FROM GenOpt IMPORT ResultWriter, rho, scmCb, doNetbatch,
+FROM GenOpt IMPORT ResultWriter, GetRho, scmCb, doNetbatch,
                    schemaDataFn, schemaPath, outOfDomainResult;
-FROM GenOpt IMPORT rhoEnd, rhoBeg, vseq, paramBindings, lambdaMult;
+FROM GenOpt IMPORT rhoEnd, rhoBeg, vseq, paramBindings;
 IMPORT GenOpt;
 FROM GenOptEnv IMPORT   NbPool, NbQslot, M3Utils, NbOpts;
 FROM GenOptUtils IMPORT MustOpenWr, LRVectorSeq1, FmtLRVectorSeq;
@@ -514,7 +514,6 @@ PROCEDURE DoIt(checkRd : Rd.T; doAnalyze : BOOLEAN) =
                                   toEval,
                                   rhoBeg,
                                   rhoEnd,
-                                  lambdaMult,
                                   NewScheme,
                                   evaluator,
                                   checkRd,
@@ -729,7 +728,7 @@ PROCEDURE BindParams(schemaScm          : Scheme.T;
           END
         END;
         
-        schemaScm.bind(T2S("*opt-rho*"), L2S(rho))
+        schemaScm.bind(T2S("*opt-rho*"), L2S(GetRho()))
       END;
       
       schemaScm.setInGlobalEnv(optVarsNm, optVars);

@@ -25,7 +25,12 @@ FROM Fmt IMPORT LongReal, F, Int, Bool, FN, Pad;
 IMPORT LineProblem;
 IMPORT LRVectorFieldPll;
 IMPORT LongRealSeq AS LRSeq;
-FROM GenOpt IMPORT rho, iter, ResultWriter, GetOptFailureResult, OutOfDomain;
+
+IMPORT GenOpt;
+FROM GenOpt IMPORT iter, ResultWriter,
+                   GetOptFailureResult, OutOfDomain, GetLambdaMult,
+                   GetRho, SetRho;
+
 FROM GenOptUtils IMPORT FmtP;
 IMPORT MultiEvalLRVector;
 IMPORT LRVectorSet, LRVectorSetDef;
@@ -76,6 +81,9 @@ IMPORT AL;
 IMPORT Powell;
 IMPORT LRVectorSeq;
 IMPORT VectorSeq;
+IMPORT QuadStats;
+IMPORT LRVectorStatsTbl;
+IMPORT Likelihood;
 
 <*FATAL Thread.Alerted*>
 
@@ -313,13 +321,13 @@ PROCEDURE ResMetric(q : LRVector.T; fvalues : LRVectorLRTbl.T) : LONGREAL =
     RETURN f
   END ResMetric;
   
-PROCEDURE InitME(self    : MultiEvaluator;
-                 func    : MultiEvalLRVector.T;
-                 samples : CARDINAL;
-                 values  : LRVectorMRVTbl.T;
-                 fvalues : LRVectorLRTbl.T;
-                 toEval  : SchemeObject.T;
-                 thisCyc : LRVectorSet.T;
+PROCEDURE InitME(self     : MultiEvaluator;
+                 func     : MultiEvalLRVector.T;
+                 samples  : CARDINAL;
+                 values   : LRVectorMRVTbl.T;
+                 fvalues  : LRVectorLRTbl.T;
+                 toEval   : SchemeObject.T;
+                 thisCyc  : LRVectorSet.T;
                  recorder : ResultRecorder) : MultiEvaluator =
   BEGIN
     self.hintsByForking := TRUE;
@@ -361,49 +369,164 @@ PROCEDURE CopyArr(a : REF ARRAY OF PointMetric.T) : REF ARRAY OF PointMetric.T =
     RETURN res
   END CopyArr;
 
+PROCEDURE ComputeLogLikelihood(s       : LRVectorSet.T;
+                               stats   : LRVectorStatsTbl.T;
+                               f       : LRScalarField.T) : LONGREAL =
+  (* compute the likelihood of fit of f over 
+     the points in s, represented in values *)
+  VAR
+    iter := s.iterate();
+    sum  := 0.0d0;
+    p : LRVector.T;
+    pstat : QuadStats.T;
+    
+  BEGIN
+    WHILE iter.next(p) DO
+      WITH hadIt = stats.get(p, pstat) DO
+        <*ASSERT hadIt*>
+        WITH fy   = f.eval(p),
+             mymu = pstat.mean,
+             mysg = pstat.sdev,
+             ll   = Likelihood.LogLikelihood(fy, mymu, mysg) DO
+          sum := sum + ll
+        END
+      END
+    END;
+    RETURN sum
+  END ComputeLogLikelihood;
+
+  
 PROCEDURE Analyze(READONLY pr   : PointResult.T; (* current [old] point *)
                   values        : LRVectorMRVTbl.T;
                   fvalues       : LRVectorLRTbl.T;
                   newScheme     : SchemeMaker;
-                  toEval        : SchemeObject.T;
-                  lambdaMult    : LONGREAL) =
+                  toEval        : SchemeObject.T) =
   (* call with valueMu locked *)
   VAR
-    parr := NEW(REF ARRAY OF PointMetric.T, values.size());
-    n    := NUMBER(pr.p^);
+    parr   := NEW(REF ARRAY OF PointMetric.T, values.size());
+    harr   := NEW(REF ARRAY OF PointMetric.T, values.size());
+    n      := NUMBER(pr.p^);
+    rho    := GenOpt.GetRho();
+    rhopts := NEW(LRVectorSetDef.T).init();
+    finpts := NEW(LRVectorSetDef.T).init();
+    stats  := NEW(LRVectorStatsTbl.Default).init();
+
+    goodv, fv  : LONGREAL;
+        
   BEGIN
-    Debug.Out("QuadRobust.Analyze");
-        Debug.Out("**** values.size() = " & Int(values.size()));
+
+    (* a good value is the value at pr.p *)
+    WITH hadIt = fvalues.get(pr.p, goodv) DO
+      <*ASSERT hadIt*>
+    END;
+    
+    Debug.Out(F("QuadRobust.Analyze **** values.size() = %s, toEval = %s, goodv = %s",
+                Int(values.size()),
+                SchemeUtils.Stringify(toEval),
+                LR(goodv)
+    ));
 
     InitMeasured(parr, values, fvalues);
 
+    harr^ := parr^;
+
+    Debug.Out(F("Analyze : bootstrapping statistics for %s points",
+                Int(NUMBER(parr^))));
+    
+    FOR i := FIRST(parr^) TO LAST(parr^) DO
+      WITH p = parr[i].p DO
+        (* bootstrap a statistical model for each point *)
+        EVAL stats.put(p, DoMeasuredStatistics(p, values, toEval));
+        
+        IF Vdist(p, pr.p) <= rho THEN
+          EVAL rhopts.insert(p);
+        END;
+
+        WITH hadIt = fvalues.get(p, fv) DO
+          IF ABS(fv) <= 100.0d0 * goodv THEN
+            EVAL finpts.insert(p)
+          END
+        END
+      END
+    END;
+
+    Debug.Out(F("Analyze : %s pts within rho %s", Int(rhopts.size()), LR(rho)));
+
     PointMetricArraySort.Sort(parr^);
 
-    Debug.Out(F("DoLeaderBoard : parr[0].p = %s", FmtP(parr[0].p)));
+    Debug.Out(F("Analyze : parr[0].p = %s", FmtP(parr[0].p)));
 
+    DebugArr(pr, parr^, fvalues, "measured", TRUE);
+
+    CONST
+      Prec = 4;
+    VAR
+      Step := Math.sqrt(2.0d0);
+      r    := rho;
+
+      min : LONGREAL;
+    BEGIN
+      FOR f := 0 TO 20 DO
+              
+        WITH fits  = AttemptSurfaceFit(pr, parr^, values, r),
+             me    = NEW(ModelEvaluator,
+                         models    := fits,
+                         newScheme := newScheme,
+                         toEval    := toEval),
+             he    = NEW(HybridEvaluator,
+                         values    := values,
+                         models    := fits,
+                         newScheme := newScheme,
+                         toEval    := toEval),
+             popt  = AttemptMinimize(pr.p, me, r, min),
+             llrho = ComputeLogLikelihood(rhopts, stats, me),
+             llfin = ComputeLogLikelihood(finpts, stats, me) DO
+          
+          Debug.Out(FN("Analyze : minimize : pr.p = %s, r = %s , popt = %s , min = %s , dist = %s , llrho = %s , llfin = %s",
+                      TA{FmtP(pr.p,         prec := Prec),
+                      LR(r,                 prec := Prec),
+                      FmtP(popt,            prec := Prec),
+                      LR(min,               prec := Prec),
+                      LR(Vdist(pr.p, popt), prec := Prec),
+                      LR(llrho),
+                      LR(llfin)
+          }));
+
+
+          IF FALSE THEN
+            InitFitted(harr, he, values);
+            PointMetricArraySort.Sort(harr^);
+            DebugArr(pr, harr^, fvalues, "hybrid", TRUE)
+          END
+        END;
+        
+        r := r * Step
+      END
+    END
+      
+    
   END Analyze;
 
 PROCEDURE InitMeasured(a             : REF ARRAY OF PointMetric.T;
-                             values        : LRVectorMRVTbl.T;
-          
-fvalues       : LRVectorLRTbl.T) =
-VAR
-  iter := values.iterate();
-  i    := 0;
-  q : LRVector.T;
-  r : MultiEvalLRVector.Result;
-BEGIN
-  WHILE iter.next(q, r) DO
-    WITH metric = ResMetric(q, fvalues) DO
-      IF i > LAST(a^) THEN
-        Debug.Warning(F("i [%s] > LAST(a^) [%s]",
-                        Int(i), Int(LAST(a^))))
-      END;
-      a[i] := PointMetric.T { metric, q, r };
-      INC(i)
+                       values        : LRVectorMRVTbl.T;
+                       fvalues       : LRVectorLRTbl.T) =
+  VAR
+    iter := values.iterate();
+    i    := 0;
+    q : LRVector.T;
+    r : MultiEvalLRVector.Result;
+  BEGIN
+    WHILE iter.next(q, r) DO
+      WITH metric = ResMetric(q, fvalues) DO
+        IF i > LAST(a^) THEN
+          Debug.Warning(F("i [%s] > LAST(a^) [%s]",
+                          Int(i), Int(LAST(a^))))
+        END;
+        a[i] := PointMetric.T { metric, q, r };
+        INC(i)
+      END
     END
-  END
-END InitMeasured;
+  END InitMeasured;
 
 PROCEDURE InitFitted(a             : REF ARRAY OF PointMetric.T;
                      me            : LRScalarField.T;
@@ -425,90 +548,97 @@ PROCEDURE InitFitted(a             : REF ARRAY OF PointMetric.T;
 PROCEDURE DebugArr(READONLY pr   : PointResult.T;
                    READONLY a    : ARRAY OF PointMetric.T;
                    fvalues       : LRVectorLRTbl.T;
-                   tag           : TEXT) =
+                   tag           : TEXT;
+                   doPoints         := FALSE) =
+  VAR
+    pfx : TEXT;
   BEGIN
     
     WITH wx = Wx.New() DO
       Wx.PutText(wx, F("==== QuadRobust (%s) leaderboard ====\n", tag));
-      Wx.PutText(wx, F("rho = %s ; p = %s\n", LR(rho), FmtP(pr.p)));
+      Wx.PutText(wx, F("p = %s\n", FmtP(pr.p)));
       FOR i := FIRST(a) TO LAST(a) DO
         WITH rec  = a[i],
              dist = Vdist(rec.p, pr.p) DO
 
-          Wx.PutText(wx, FN("%s metric %s (meas. %s); dist %s; result %s ; rec.p %s\n",
-                            TA {tag,
+          IF doPoints THEN
+            pfx := FmtP(rec.p, prec := 4) & " " & tag
+          ELSE
+            pfx := tag
+          END;
+          
+          Wx.PutText(wx, FN("%s metric %s (meas. %s); dist %s; result %s\n",
+                            TA { pfx,
                                 LR(rec.metric),
                                 LR(ResMetric(rec.p, fvalues)),
                                 LR(dist),
-                                MultiEvalLRVector.Format(rec.result),
-                                FmtP(rec.p)}))
+                                MultiEvalLRVector.Format(rec.result)
+                                }))
         END
       END;
       Debug.Out(Wx.ToText(wx))
     END
   END DebugArr;
 
-  TYPE Stats = RECORD n : CARDINAL; mean, sdev : LONGREAL END;
+PROCEDURE DoMeasuredStatistics(p             : LRVector.T;
+                               values        : LRVectorMRVTbl.T;
+                               toEval        : SchemeObject.T;
+                               ) : QuadStats.T =
+  CONST
+    SampleFrac  = 0.62d0;
+    SampleCount = 25;
+  VAR
+    r : MultiEvalLRVector.Result;
+    haveIt := values.get(p, r);
+    rand := NEW(Random.Default).init();
 
+    cnt        := 0;
+    sum, sumsq := 0.0d0;
 
-  PROCEDURE DoMeasuredStatistics(p : LRVector.T;
-                  values        : LRVectorMRVTbl.T;
-                         toEval        : SchemeObject.T;
-                          ) : Stats =
-    CONST
-      SampleFrac  = 0.62d0;
-      SampleCount = 25;
-    VAR
-      r : MultiEvalLRVector.Result;
-      haveIt := values.get(p, r);
-      rand := NEW(Random.Default).init();
-
-      cnt        := 0;
-      sum, sumsq := 0.0d0;
-
-    BEGIN
-      <*ASSERT haveIt*>
-      <*ASSERT r.extra # NIL*>
+  BEGIN
+    <*ASSERT haveIt*>
+    <*ASSERT r.extra # NIL*>
+    IF doDebug THEN
       Debug.Out(F("DoMeasuredStatistics( p = %s)", FmtP(p)));
-      IF doDebug THEN
-        FOR i := 0 TO r.seq.size() - 1 DO
-          WITH vv = r.seq.get(i) DO
-            Debug.Out(F("DoMeasuredStatistics : v = %s", FmtP(vv)))
-          END
+      FOR i := 0 TO r.seq.size() - 1 DO
+        WITH vv = r.seq.get(i) DO
+          Debug.Out(F("DoMeasuredStatistics : v = %s", FmtP(vv)))
         END
-      END;
+      END
+    END;
 
-      WITH n  = r.seq.size(),
-           np = CEILING(SampleFrac * FLOAT(n, LONGREAL)) DO
-        FOR i := 0 TO SampleCount - 1 DO
-          (* take a sample, sampling with replacement for now *)
-          WITH sample = NEW(LRVectorSeq.T).init() DO
-            FOR j := 0 TO np - 1 DO
-              WITH idx = rand.integer(0, n - 1) DO
-                sample.addhi(r.seq.get(idx))
-              END
-            END;
+    WITH n  = r.seq.size(),
+         np = CEILING(SampleFrac * FLOAT(n, LONGREAL)) DO
+      FOR i := 0 TO SampleCount - 1 DO
+        (* take a sample, sampling with replacement for now *)
+        WITH sample = NEW(LRVectorSeq.T).init() DO
+          FOR j := 0 TO np - 1 DO
+            WITH idx = rand.integer(0, n - 1) DO
+              sample.addhi(r.seq.get(idx))
+            END
+          END;
 
-            (* sample is complete *)
-            VAR
-              res := VectorSeq.ToMulti(sample, "SUBSAMPLE");
-              val : LONGREAL;
-            BEGIN
-              res.nominal := r.nominal;
+          (* sample is complete *)
+          VAR
+            res := VectorSeq.ToMulti(sample, "SUBSAMPLE");
+            val : LONGREAL;
+          BEGIN
+            res.nominal := r.nominal;
 
-              res.extra   := r.extra; (* hmm... *)
-              
-              <*ASSERT res.sum     # NIL*>
-              <*ASSERT res.sumsq   # NIL*>
-              <*ASSERT res.nominal # NIL*>
-              <*ASSERT res.extra   # NIL*>
+            res.extra   := r.extra; (* hmm... *)
+            
+            <*ASSERT res.sum     # NIL*>
+            <*ASSERT res.sumsq   # NIL*>
+            <*ASSERT res.nominal # NIL*>
+            <*ASSERT res.extra   # NIL*>
 
-              val := SchemeFinish(res, toEval);
+            val := SchemeFinish(res, toEval);
 
-              INC(cnt);
-              sum   := sum + val;
-              sumsq := sumsq + val * val;
-              
+            INC(cnt);
+            sum   := sum + val;
+            sumsq := sumsq + val * val;
+
+            IF doDebug THEN
               Debug.Out(F("DoMeasuredStatistics : sample %s : res = %s ; val = %s",
                           Int(i),
                           MultiEvalLRVector.Format(res),
@@ -517,49 +647,51 @@ PROCEDURE DebugArr(READONLY pr   : PointResult.T;
             END
           END
         END
-      END;
-
-      WITH cntf  = FLOAT(cnt, LONGREAL),
-           mean  = sum / cntf,
-           variS = sumsq / cntf - mean * mean,
-           sdev  = Math.sqrt(cntf / (cntf - 1.0d0) * variS) DO
-        RETURN Stats { cnt, mean, sdev }
       END
-    END DoMeasuredStatistics;
+    END;
 
-  PROCEDURE AttemptMinimize(p : LRVector.T; me : LRScalarField.T) : LRVector.T =
-    VAR
-      n := NUMBER(p^);
-      pp := LRVector.Copy(p);
-    BEGIN
-      Debug.Out("QuadRobust.DoLeaderBoard.AttemptMinimize");
-      IF NUMBER(p^) >= 3 THEN
-        WITH min = NewUOA_M3.Minimize(pp,
-                                      me,
-                                      n*(n - 1) + 2,
-                                      rho,
-                                      rho * 0.001d0,
-                                      200) DO
-          Debug.Out(F("QuadRobust.DoLeaderBoard.AttemptMinimize (NewUOA) min %s @ %s",
-                      LR(min), FmtP(pp)));
-        END
-      ELSE
-        VAR xi  := Matrix.Unit(Matrix.Dim{NUMBER(p^), NUMBER(p^)});
-            min := Powell.Minimize(pp, xi, rho * 0.001d0, me);
-        BEGIN
-          Debug.Out(F("QuadRobust.DoLeaderBoard.AttemptMinimize (Powell) min %s @ %s",
-                      LR(min), FmtP(pp)));
-        END
-      END;
-      RETURN pp
-    END AttemptMinimize;
-    
+    WITH cntf  = FLOAT(cnt, LONGREAL),
+         mean  = sum / cntf,
+         variS = sumsq / cntf - mean * mean,
+         sdev  = Math.sqrt(cntf / (cntf - 1.0d0) * variS) DO
+      RETURN QuadStats.T { cnt, mean, sdev }
+    END
+  END DoMeasuredStatistics;
+
+PROCEDURE AttemptMinimize(p       : LRVector.T;
+                          me      : LRScalarField.T;
+                          rho     : LONGREAL;
+                          VAR min : LONGREAL) : LRVector.T =
+  VAR
+    n := NUMBER(p^);
+    pp := LRVector.Copy(p);
+  BEGIN
+    Debug.Out("QuadRobust.AttemptMinimize");
+    IF NUMBER(p^) >= 3 THEN
+      min := NewUOA_M3.Minimize(pp,
+                                me,
+                                n*(n - 1) + 2,
+                                rho,
+                                rho * 0.001d0,
+                                200);
+      Debug.Out(F("QuadRobust.AttemptMinimize (NewUOA) min %s @ %s",
+                    LR(min), FmtP(pp)));
+    ELSE
+      VAR xi  := Matrix.Unit(Matrix.Dim{NUMBER(p^), NUMBER(p^)});
+      BEGIN
+          min := Powell.Minimize(pp, xi, rho * 0.001d0, me);
+        Debug.Out(F("QuadRobust.AttemptMinimize (Powell) min %s @ %s",
+                    LR(min), FmtP(pp)));
+      END
+    END;
+    RETURN pp
+  END AttemptMinimize;
+  
 PROCEDURE DoLeaderBoard(READONLY pr   : PointResult.T; (* current [old] point *)
                         values        : LRVectorMRVTbl.T;
                         fvalues       : LRVectorLRTbl.T;
                         newScheme     : SchemeMaker;
                         toEval        : SchemeObject.T;
-                        lambdaMult    : LONGREAL;
                         newpts(*OUT*) : LRVectorSet.T;
                         VAR newPr     : PointResult.T) : BOOLEAN =
   (* call with valueMu LOCKed *)
@@ -578,6 +710,7 @@ PROCEDURE DoLeaderBoard(READONLY pr   : PointResult.T; (* current [old] point *)
   VAR
     parr := NEW(REF ARRAY OF PointMetric.T, values.size());
     n    := NUMBER(pr.p^);
+    rho  := GetRho();
   BEGIN
     (* populate the array *)
 
@@ -604,7 +737,7 @@ PROCEDURE DoLeaderBoard(READONLY pr   : PointResult.T; (* current [old] point *)
                     
           VAR
             farr := CopyArr(parr);
-            pmm  := AttemptSurfaceFit(pr, farr^, values, lambdaMult);
+            pmm  := AttemptSurfaceFit(pr, farr^, values, rho);
             me   := NEW(ModelEvaluator,
                         models    := pmm,
                         newScheme := newScheme,
@@ -626,7 +759,9 @@ PROCEDURE DoLeaderBoard(READONLY pr   : PointResult.T; (* current [old] point *)
 
             InsertBestPoints(farr^, 4 * n * n);
 
-            popt := AttemptMinimize(pr.p, me);
+            VAR min : LONGREAL; BEGIN
+              popt := AttemptMinimize(pr.p, me, rho, min)
+            END;
 
             EVAL newpts.insert(popt); (* insert "best point" 
                                          (but we should check
@@ -738,6 +873,14 @@ TYPE
     eval := ModelEval;
   END;
 
+  (* an evaluator that combines observed nominals with modeled mu and sigma *)
+
+  HybridEvaluator = ModelEvaluator OBJECT
+    values    : LRVectorMRVTbl.T;
+  OVERRIDES
+    eval := HybridEval;
+  END;
+
 CONST MaxCoord = 1.0d10;
       
 PROCEDURE ModelEval(me : ModelEvaluator; p : LRVector.T) : LONGREAL =
@@ -760,10 +903,12 @@ PROCEDURE ModelEval(me : ModelEvaluator; p : LRVector.T) : LONGREAL =
            sig = ComputeQ(p, me.models[i].bsigma),
            v   = modelvars.get(i) DO
 
-        Debug.Out(F("ModelEval : defining %s(%s) : nom=%s mu=%s sig=%s",
-                    SchemeSymbol.ToText(v.nm),
-                    FmtP(p),
-                    LR(nom), LR(mu), LR(sig)));
+        IF doDebug THEN
+          Debug.Out(F("ModelEval : defining %s(%s) : nom=%s mu=%s sig=%s",
+                      SchemeSymbol.ToText(v.nm),
+                      FmtP(p),
+                      LR(nom), LR(mu), LR(sig)))
+        END;
         
         pso.define(v.nm, nom, mu, sig)
       END
@@ -774,18 +919,24 @@ PROCEDURE ModelEval(me : ModelEvaluator; p : LRVector.T) : LONGREAL =
          ee = NARROW(scm.getGlobalEnvironment(), SchemeEnvironment.T) DO
 
       TRY
-      scm.bind(T2S("*the-stat-object*"), pso);
-      <*ASSERT ee.lookup(T2S("*the-stat-object*")) # NIL *>
-
-      WITH blah = scm.evalInGlobalEnv(T2S("*the-stat-object*")) DO
-        Debug.Out("ModelEval : blah = " & SchemeUtils.Stringify(blah));
-      END;
-      
-      Debug.Out("ModelEval : toEval = " & SchemeUtils.Stringify(e));
-      
+        scm.bind(T2S("*the-stat-object*"), pso);
+        <*ASSERT ee.lookup(T2S("*the-stat-object*")) # NIL *>
+        
+        WITH blah = scm.evalInGlobalEnv(T2S("*the-stat-object*")) DO
+          IF doDebug THEN
+            Debug.Out("ModelEval : blah = " & SchemeUtils.Stringify(blah))
+          END
+        END;
+        
+        IF doDebug THEN
+          Debug.Out("ModelEval : toEval = " & SchemeUtils.Stringify(e))
+        END;
+        
         WITH res = scm.evalInGlobalEnv(e) DO
-          Debug.Out("ModelEval : final res = " & SchemeUtils.Stringify(res));
-
+          IF doDebug THEN
+            Debug.Out("ModelEval : final res = " & SchemeUtils.Stringify(res))
+          END;
+          
           FOR i := FIRST(p^) TO LAST(p^) DO
             IF ABS(p[i]) > MaxCoord THEN RETURN GetOptFailureResult() END
           END;
@@ -800,10 +951,83 @@ PROCEDURE ModelEval(me : ModelEvaluator; p : LRVector.T) : LONGREAL =
     END
   END ModelEval;
 
-PROCEDURE AttemptSurfaceFit(pr              : PointResult.T;
-                            READONLY parr   : ARRAY OF PointMetric.T;
-                            values          : LRVectorMRVTbl.T;
-                            lambdaMult      : LONGREAL) : REF ARRAY OF StatFits.T
+PROCEDURE HybridEval(me : HybridEvaluator; p : LRVector.T) : LONGREAL =
+  (* combine measured nom with modeled mu, sigma *)
+  VAR
+    scm : Scheme.T;
+    pso := NEW(StatObject.DefaultPoint).init();
+    res : MultiEvalLRVector.Result;
+  BEGIN
+    (* compare to SchemeFinish code *)
+
+    WITH hadIt = me.values.get(p, res) DO
+      <*ASSERT hadIt*>
+    END;
+    
+    TRY
+      scm := me.newScheme(p)
+    EXCEPT 
+      OutOfDomain => RETURN GetOptFailureResult()
+    END;
+    
+    FOR i := FIRST(me.models^) TO LAST(me.models^) DO
+      WITH nom = MultiEvalLRVector.Nominal(res)[i],
+           mu  = ComputeQ(p, me.models[i].bmu   ),
+           sig = ComputeQ(p, me.models[i].bsigma),
+           v   = modelvars.get(i) DO
+
+        IF doDebug THEN
+          Debug.Out(F("ModelEval : defining %s(%s) : nom=%s mu=%s sig=%s",
+                      SchemeSymbol.ToText(v.nm),
+                      FmtP(p),
+                      LR(nom), LR(mu), LR(sig)))
+        END;
+        
+        pso.define(v.nm, nom, mu, sig)
+      END
+    END;
+    WITH e = SchemeUtils.List3(T2S("eval-in-env"),
+                               L2S(0.0d0),
+                               SchemeUtils.List2(T2S("quote"), me.toEval)),
+         ee = NARROW(scm.getGlobalEnvironment(), SchemeEnvironment.T) DO
+
+      TRY
+        scm.bind(T2S("*the-stat-object*"), pso);
+        <*ASSERT ee.lookup(T2S("*the-stat-object*")) # NIL *>
+        
+        WITH blah = scm.evalInGlobalEnv(T2S("*the-stat-object*")) DO
+          IF doDebug THEN
+            Debug.Out("ModelEval : blah = " & SchemeUtils.Stringify(blah))
+          END
+        END;
+        
+        IF doDebug THEN
+          Debug.Out("ModelEval : toEval = " & SchemeUtils.Stringify(e))
+        END;
+        
+        WITH res = scm.evalInGlobalEnv(e) DO
+          IF doDebug THEN
+            Debug.Out("ModelEval : final res = " & SchemeUtils.Stringify(res))
+          END;
+          
+          FOR i := FIRST(p^) TO LAST(p^) DO
+            IF ABS(p[i]) > MaxCoord THEN RETURN GetOptFailureResult() END
+          END;
+          
+          RETURN SchemeLongReal.FromO(res)
+        END
+      EXCEPT
+        Scheme.E(x) =>
+        Debug.Error(F("EXCEPTION! ModelEval : Scheme.E \"%s\" when evaluating toEval", x));
+        <*ASSERT FALSE*>
+      END
+    END
+  END HybridEval;
+
+PROCEDURE AttemptSurfaceFit(pr            : PointResult.T;
+                            READONLY parr : ARRAY OF PointMetric.T;
+                            values        : LRVectorMRVTbl.T;
+                            rho           : LONGREAL) : REF ARRAY OF StatFits.T
   RAISES { Matrix.Singular, StatFits.NotEnoughPoints } =
   (* attempt a surface fit *)
 
@@ -896,9 +1120,9 @@ PROCEDURE AttemptSurfaceFit(pr              : PointResult.T;
            fit = StatFits.Attempt(pr.p,
                                   pvarr[i],
                                   selectByAll,
-                                  orders := mv.orders,
-                                  nomRho := rho,
-                                  lambdaMult := lambdaMult
+                                  orders     := mv.orders,
+                                  nomRho     := rho,
+                                  lambdaMult := GetLambdaMult()
           ) DO
         Debug.Out(F("AttemptSurfaceFit : fitting response \"%s\"",
                     SchemeSymbol.ToText(mv.nm)));
@@ -1094,7 +1318,9 @@ PROCEDURE SchemeFinish(resS    : MultiEvalLRVector.Result;
   BEGIN    
     <*ASSERT resS.sum # NIL*>
     <*ASSERT resS.sumsq # NIL*>
-    Debug.Out("SchemeFinish : resS = " & MultiEvalLRVector.Format(resS));
+    IF doDebug THEN
+      Debug.Out("SchemeFinish : resS = " & MultiEvalLRVector.Format(resS))
+    END;
 
     (* resS contains all the data *)
     WITH pso     = NEW(StatObject.DefaultPoint).init(),
@@ -1117,17 +1343,22 @@ PROCEDURE SchemeFinish(resS    : MultiEvalLRVector.Result;
                                    SchemeUtils.List2(T2S("quote"), toEval)),
              ee = NARROW(scm.getGlobalEnvironment(), SchemeEnvironment.T) DO
           TRY
-          scm.bind(T2S("*the-stat-object*"), pso);
-          <*ASSERT ee.lookup(T2S("*the-stat-object*")) # NIL *>
-
-          WITH blah = scm.evalInGlobalEnv(T2S("*the-stat-object*")) DO
-            Debug.Out("SchemeFinish : blah = " & SchemeUtils.Stringify(blah));
-          END;
-          
-          Debug.Out("SchemeFinish : toEval = " & SchemeUtils.Stringify(e));
-
+            scm.bind(T2S("*the-stat-object*"), pso);
+            <*ASSERT ee.lookup(T2S("*the-stat-object*")) # NIL *>
+            
+            IF doDebug THEN
+              WITH blah = scm.evalInGlobalEnv(T2S("*the-stat-object*")) DO
+                Debug.Out("SchemeFinish : blah = " & SchemeUtils.Stringify(blah))
+              END;
+              
+              Debug.Out("SchemeFinish : toEval = " & SchemeUtils.Stringify(e))
+            END;
+            
             WITH res = scm.evalInGlobalEnv(e) DO
-              Debug.Out("SchemeFinish : final res = " & SchemeUtils.Stringify(res));
+              IF doDebug THEN
+                Debug.Out("SchemeFinish : final res = " &
+                  SchemeUtils.Stringify(res))
+              END;
               RETURN SchemeLongReal.FromO(res)
             END
           EXCEPT
@@ -1280,7 +1511,6 @@ PROCEDURE Minimize(pa             : LRVector.T;
                    func           : MultiEvalLRVector.T;
                    toEval         : SchemeObject.T;
                    rhobeg, rhoend : LONGREAL;
-                   lambdaMult     : LONGREAL;
                    newScheme      : SchemeMaker;
                    recorder       : ResultRecorder;
                    checkRd        : Rd.T;
@@ -1317,7 +1547,7 @@ PROCEDURE Minimize(pa             : LRVector.T;
           lm[i].start(pp[i],
                       LRVector.Copy(da[i]),
                       ff,
-                      rho)
+                      GetRho())
         END
       END
     END LaunchLineMinimizations;
@@ -1385,7 +1615,7 @@ PROCEDURE Minimize(pa             : LRVector.T;
                                message    := message,
                                f          := pr.metric,
                                x          := LRVector.Copy(pr.p),
-                               stoprho    := rho } DO
+                               stoprho    := GetRho() } DO
           progressWriter.write(output)
         END
       END
@@ -1408,7 +1638,7 @@ PROCEDURE Minimize(pa             : LRVector.T;
                             values  := newvalues,
                             fvalues := fvalues,
                             pr      := pr,
-                            rho     := rho),
+                            rho     := GetRho() ),
            pi         = Pad(Int(iter), 6, padChar := '0'),
            fn         = F("quadcheckpoint.%s.chk", pi),
            tfn        = fn & "_temp",
@@ -1453,7 +1683,7 @@ PROCEDURE Minimize(pa             : LRVector.T;
     checkPoint : QuadCheckpoint.T := NIL;
     
   BEGIN
-    rho   := rhobeg;
+    SetRho(rhobeg);
     
     FOR i := 0 TO nv - 1 DO
       lm[i] := NEW(LineMinimizer.T).init()
@@ -1466,16 +1696,20 @@ PROCEDURE Minimize(pa             : LRVector.T;
         Debug.Out("QuadRobust : checkRd non-NIL, loading! ");
         
         checkPoint := Pickle.Read(checkRd);
+        Debug.Out("QuadRobust : Pickle loaded");
+        
         values     := checkPoint.values;
         fvalues    := checkPoint.fvalues;
         startIter  := checkPoint.iter + 1;
         pr         := checkPoint.pr;
-        rho        := checkPoint.rho;
+        SetRho(checkPoint.rho);
 
         Debug.Out(F("QuadRobust : pr.p = %s , rho = %s",
-                    FmtP(pr.p), LR(rho)));
+                    FmtP(pr.p), LR(GetRho())));
 
         (* recreate Scheme interpreters *)
+        Debug.Out(F("QuadRobust : re-creating %s Scheme interpreters...",
+                    Int(values.size())));
         VAR
           iter      := values.iterate();
           newvalues := NEW(LRVectorMRVTbl.Default).init();
@@ -1493,6 +1727,7 @@ PROCEDURE Minimize(pa             : LRVector.T;
 
           values := newvalues
         END;
+        Debug.Out("QuadRobust : Scheme interpreters created.");
         
         Debug.Out("QuadRobust : restarting from checkpoint : startIter = " &
           Int(startIter))
@@ -1508,7 +1743,7 @@ PROCEDURE Minimize(pa             : LRVector.T;
 
     IF doAnalyze THEN
       LOCK valueMu DO
-        Analyze(pr, values, fvalues, newScheme, toEval, lambdaMult)
+        Analyze(pr, values, fvalues, newScheme, toEval)
       END;
         
       VAR x : Output; BEGIN
@@ -1538,17 +1773,17 @@ PROCEDURE Minimize(pa             : LRVector.T;
       END;
 
       Debug.Out(F("QuadRobust.Minimize : rho=%s [rhoend=%s]",
-                  LR(rho),
+                  LR(GetRho()),
                   LR(rhoend)));
 
       (* add some random points in the rho-ball -- 
          make sure we have enough points to do a fit *)
       REPEAT
-        PickRandomPoints(newPts, pr.p, rho, 2)
+        PickRandomPoints(newPts, pr.p, GetRho(), 2)
       UNTIL
         newPts.size() >= minNewPts
           AND
-        CountPoints(newPts, values, pr.p, rho) >= Qdofs(n) + StatFits.LeaveOut;
+        CountPoints(newPts, values, pr.p, GetRho()) >= Qdofs(n) + StatFits.LeaveOut;
 
       Debug.Out(F("QuadRobust.Minimize : iter %s : newPts.size()=%s",
                   Int(iter), Int(newPts.size())));
@@ -1585,7 +1820,6 @@ PROCEDURE Minimize(pa             : LRVector.T;
                                   fvalues,
                                   newScheme,
                                   toEval,
-                                  lambdaMult,
                                   newPts,
                                   bestq);
           IF gotNew THEN
@@ -1604,16 +1838,16 @@ PROCEDURE Minimize(pa             : LRVector.T;
 
           IF newp.p^ = pr.p^ THEN
             (* if we're not going anywhere, just tighten up a little bit *)
-            rho := 0.9d0 * rho
+            SetRho(0.9d0 * GetRho())
           ELSE
             WITH dp = LRVector.Copy(pr.p) DO
               M.SubV(newp.p^, pr.p^, dp^);
               (* we blend in new rho estimator *)
               
-              rho := 0.50d0 * rho + 0.50d0 * M.Norm(dp^);
+              SetRho(0.50d0 * GetRho()+ 0.50d0 * M.Norm(dp^));
               
-              Debug.Out(F("QuadRobust.m3 : new rho = %s", LR(rho)));
-              IF rho < rhoend THEN
+              Debug.Out(F("QuadRobust.m3 : new rho = %s", LR(GetRho())));
+              IF GetRho() < rhoend THEN
                 message := "stopping because rho < rhoend";
                 EXIT
               END
@@ -1700,7 +1934,7 @@ PROCEDURE Minimize(pa             : LRVector.T;
                       message    := message,
                       f          := bestval,
                       x          := bestv,
-                      stoprho    := rho }
+                      stoprho    := GetRho() }
     END
   END Minimize;
 

@@ -1,6 +1,6 @@
 MODULE GenOptUtils;
 IMPORT LRVector, Wx;
-FROM Fmt IMPORT LongReal;
+FROM Fmt IMPORT LongReal, Style;
 IMPORT Pathname;
 IMPORT Wr;
 IMPORT LongRealSeq AS LRSeq;
@@ -11,12 +11,12 @@ FROM Fmt IMPORT F;
 IMPORT Debug;
 IMPORT LRVectorSeq;
 
-PROCEDURE FmtP(p : LRVector.T) : TEXT =
+PROCEDURE FmtP(p : LRVector.T; style : Style; prec : CARDINAL) : TEXT =
   VAR
     wx := Wx.New();
   BEGIN
     FOR i := FIRST(p^) TO LAST(p^) DO
-      Wx.PutText(wx, LongReal(p[i]));
+      Wx.PutText(wx, LongReal(p[i], style, prec));
       Wx.PutChar(wx, ' ')
     END;
     RETURN Wx.ToText(wx)
@@ -42,22 +42,22 @@ PROCEDURE LRSeq1(x : LONGREAL) : LRSeq.T =
     END
   END LRSeq1;
 
-PROCEDURE FmtLRSeq(seq : LRSeq.T) : TEXT =
+PROCEDURE FmtLRSeq(seq : LRSeq.T; style : Style; prec : CARDINAL) : TEXT =
   VAR
     res := "";
   BEGIN
     FOR i := 0 TO seq.size() - 1 DO
-      res := res & LongReal(seq.get(i)) & " "
+      res := res & LongReal(seq.get(i), style, prec) & " "
     END;
     RETURN res
   END FmtLRSeq;
   
-PROCEDURE FmtLRVectorSeq(seq : LRVectorSeq.T) : TEXT =
+PROCEDURE FmtLRVectorSeq(seq : LRVectorSeq.T; style : Style; prec : CARDINAL) : TEXT =
   VAR
     res := "";
   BEGIN
     FOR i := 0 TO seq.size() - 1 DO
-      res := res & "{" & FmtP(seq.get(i)) & "} "
+      res := res & "{" & FmtP(seq.get(i), style, prec) & "} "
     END;
     RETURN res
   END FmtLRVectorSeq;

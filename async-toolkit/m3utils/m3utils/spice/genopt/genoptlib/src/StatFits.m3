@@ -1,4 +1,4 @@
-MODULE StatFits;
+MODULE StatFits EXPORTS StatFits, Likelihood;
 IMPORT LRMatrix2 AS M;
 IMPORT LongrealPQ;
 IMPORT MultiEvalLR AS MultiEval;
@@ -86,6 +86,9 @@ PROCEDURE Format(READONLY t : T ) : TEXT =
     Wx.PutText(wx, "Ranking " & FmtRanking(t.rank));
     Wx.PutChar(wx, '\n');
 
+    Wx.PutText  (wx, "radius = " & LR(t.radius));
+    Wx.PutChar(wx, '\n');
+
     RETURN Wx.ToText(wx)
   END Format;
 
@@ -101,20 +104,16 @@ PROCEDURE DoNomFit(READONLY parr : ARRAY OF PointMetricLR.T;
                    type          : ResponseModel.Order;
                    lambdaMult    : LONGREAL) : REF M.M
   RAISES { Matrix.Singular } =
+
   VAR
-    m  := NUMBER(parr);
-    
-    n := NUMBER(parr[FIRST(parr)].p^);
-
-    dofs  := Dofs[type](n);
-
-    x     := NEW(REF M.M, m, dofs);
-
-    ynom   := NEW(REF M.M, m, 1);
+    m       := NUMBER(parr);
+    n       := NUMBER(parr[FIRST(parr)].p^);
+    dofs    := Dofs[type](n);
+    x       := NEW(REF M.M, m, dofs);
+    ynom    := NEW(REF M.M, m, 1);
+    rnom    := NEW(Regression.T);
 
     ynomHat  : REF M.M;
-    
-    rnom   := NEW(Regression.T);
 
   BEGIN
     FOR i := 0 TO m - 1 DO
@@ -173,7 +172,7 @@ PROCEDURE Attempt(p                : LRVector.T;
           pmu  = Compute[muOrder](v.p, rmu.b),
           psig = Compute[sgOrder](v.p, rsigma.b),
           
-          (* likelihoods *)
+          (* likelihoods -- weighted by n/nsf *)
           lmu  = nsf * LogLikelihood(dmu , pmu,  sMu),
           lsig = nsf * LogLikelihood(dsig, psig, sSig),
           l    = lmu + lsig DO
@@ -289,11 +288,13 @@ PROCEDURE Attempt(p                : LRVector.T;
                           M2Q[sgOrder](n, rsigma.b^),
                           ll,
                           nllf,
-                          pts   := pq,
-                          evals := sump,
-                          rank  := ARRAY Ranking OF CARDINAL { LAST(CARDINAL), .. },
+                          pts     := pq,
+                          evals   := sump,
+                          radius  := radius,
+                          rank    := ARRAY Ranking OF CARDINAL { LAST(CARDINAL), .. },
                           orders  := orders,
                           nomRho  := nomRho
+
             } DO
             thefits.addhi(fit)
           END
@@ -322,15 +323,17 @@ PROCEDURE Attempt(p                : LRVector.T;
 
     bnom     : REF M.M := NIL;
 
+    n                  := NUMBER(parr[FIRST(parr^)].p^);
+      
+    nmDofs             := Dofs[nmOrder](n);
+    muDofs             := Dofs[muOrder](n);
+    sgDofs             := Dofs[sgOrder](n);
+    
+    didfit             := FALSE;
+
     bestfits : T;
     fa       : REF ARRAY OF T;
-      n := NUMBER(parr[FIRST(parr^)].p^);
-      
-      nmDofs  := Dofs[nmOrder](n);
-      muDofs  := Dofs[muOrder](n);
-      sgDofs  := Dofs[sgOrder](n);
-      
-      didfit := FALSE;
+
   BEGIN
     PointMetricArraySort.Sort(parr^, cmp := ComparePMByDistance);
 
@@ -351,7 +354,9 @@ PROCEDURE Attempt(p                : LRVector.T;
             EXIT
           END
         END;
-        Debug.Out(F("StatFits.Attempt lim=%s", Int(lim)));
+        Debug.Out(F("StatFits.Attempt NOM nomRho=%s , lim=%s",
+                    LR(nomRho),
+                    Int(lim)));
 
         IF lim < nmDofs + LeaveOut THEN
           Debug.Out(F("StatFits.Attempt : lim = %s < nmDofs + LeaveOut = %s",

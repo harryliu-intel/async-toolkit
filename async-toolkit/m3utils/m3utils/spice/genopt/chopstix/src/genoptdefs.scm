@@ -136,10 +136,12 @@
 (define (quad-model var modes)
   (QuadRobust.DoModel var modes))
 
+(define *trace-evals* #f)
+
 (define (mu symbol)
   (let* ((so   (obj-method-wrap *the-stat-object* 'StatObject.T))
          (res  (so 'mu symbol)))
-    (dis "mu " symbol " " res dnl)
+    (if *trace-evals* (dis "mu " symbol " " res dnl))
     res
     )
   )
@@ -147,7 +149,7 @@
 (define (*n*)
   (let* ((so   (obj-method-wrap *the-stat-object* 'StatObject.T))
          (res  (so 'n)))
-    (dis "n " res dnl)
+    (if *trace-evals* (dis "n " res dnl))
     res
     )
   )
@@ -155,7 +157,7 @@
 (define (sigma symbol)
   (let* ((so   (obj-method-wrap *the-stat-object* 'StatObject.T))
          (res  (so 'sigma symbol)))
-    (dis "sigma " symbol " " res dnl)
+    (if *trace-evals* (dis "sigma " symbol " " res dnl))
     res
     )
   )
@@ -163,7 +165,7 @@
 (define (nom symbol)
   (let* ((so   (obj-method-wrap *the-stat-object* 'StatObject.T))
          (res  (so 'nom symbol)))
-    (dis "nom " symbol " " res dnl)
+    (if *trace-evals* (dis "nom " symbol " " res dnl))
     res
     )
   )

@@ -22,6 +22,9 @@ Table ("SymbolLR", "Atom", "LongrealType")
 Interface ("QuadCheckpoint")
 Module ("VectorSeq")
 
+Interface ("QuadStats")
+Table ("LRVectorStats", "LRVector", "QuadStats")
+
 SchemeStubs ("StatObject")
 SchemeStubs ("LineProblem")
 SchemeStubs ("Random")

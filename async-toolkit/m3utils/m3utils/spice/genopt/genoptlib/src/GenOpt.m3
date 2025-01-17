@@ -13,6 +13,10 @@ IMPORT SchemeString;
 IMPORT SchemeBoolean;
 IMPORT LRVector;
 
+VAR
+  lambdaMult               := 0.0d0;
+  rho          : LONGREAL;
+
 PROCEDURE GetParamBindings() : TextTextTbl.T =
   BEGIN RETURN paramBindings END GetParamBindings;
 
@@ -106,6 +110,11 @@ PROCEDURE GetRho() : LONGREAL =
   BEGIN
     RETURN rho
   END GetRho;
+
+PROCEDURE SetRho(to : LONGREAL) =
+  BEGIN
+    rho := to
+  END SetRho;
 
 PROCEDURE SetLambdaMult(to : LONGREAL) =
   BEGIN
