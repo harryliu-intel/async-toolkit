@@ -550,6 +550,8 @@ PROCEDURE Analyze(READONLY pr   : PointResult.T; (* current [old] point *)
       END
     END;
 
+    Debug.Out(F("Analyze done, bestOpt=%s", FmtP(bestOpt)));
+
     IF TRUE THEN
       VAR
         set := NEW(LRVectorSetDef.T).init();
@@ -774,7 +776,7 @@ PROCEDURE DoLeaderBoard(READONLY pr   : PointResult.T; (* current [old] point *)
 
     PointMetricArraySort.Sort(parr^);
 
-    DebugArr(pr, parr^, fvalues, "measured");
+    DebugArr(pr, parr^, fvalues, "measured", TRUE);
 
     InsertBestPoints(parr^, 4 * n * n);
 
@@ -809,7 +811,7 @@ PROCEDURE DoLeaderBoard(READONLY pr   : PointResult.T; (* current [old] point *)
 
             PointMetricArraySort.Sort(farr^);
 
-            DebugArr(pr, farr^, fvalues, "fitted");
+            DebugArr(pr, farr^, fvalues, "fitted", TRUE);
 
             InsertBestPoints(farr^, 4 * n * n);
 
@@ -1580,6 +1582,13 @@ PROCEDURE AddSegmentPointsToSet(set    : LRVectorSet.T;
     lrange := Math.log(range);
     step   := lrange / FLOAT(cnt DIV 2, LONGREAL);
   BEGIN
+    <*ASSERT p0 # NIL*>
+    <*ASSERT p1 # NIL*>
+    <*ASSERT set # NIL*>
+    
+    Debug.Out(F("AddSegmentPointsToSet p0=%s p1=%s cnt=%s range=%s",
+                FmtP(p0), FmtP(p1), Int(cnt), LR(range)));
+    
     (* ensure cnt is odd *)
     IF cnt MOD 2 = 0 THEN INC(cnt) END;
 

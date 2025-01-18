@@ -63,6 +63,7 @@ VAR
   doDebug := Debug.DebugThis("chopstix");
   
 CONST
+  LR = LongReal;
   MyM3UtilsSrcPath = "spice/genopt/chopstix/src";
 
 (* variable nomenclature:
@@ -691,6 +692,9 @@ PROCEDURE BindParams(schemaScm          : Scheme.T;
              vv = pi * v.defstep,
              sx = L2S(vv) DO
           IF NOT force AND (vv < v.min OR vv > v.max) THEN
+            Debug.Out(F("BindParams param %s out of domain vv=%s [ v.min=%s v.max=%s ]",
+                        Int(i), LR(vv), LR(v.min), LR(v.max)));
+            
             RAISE GenOpt.OutOfDomain
           END;
          

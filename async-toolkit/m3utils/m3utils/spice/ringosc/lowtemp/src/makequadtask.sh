@@ -21,7 +21,7 @@ step=1
 
 sweeps="40"
 
-stages="5 11 22 44"
+stages="5 11 11 22 44"
 kcycles="5 5 5"
 
 #trantypes="lvt ulvt" # svt doesnt work yet
@@ -35,12 +35,21 @@ temps="-80 -70 -60 -50 -40 -30 -20 -10 0 10 20 30 40 49"
 
 # for testing:
 
-testing=1
+testing=0
 
 if [ "${testing}" == "1" ]; then
     stages="10"
     temps="0"
 #    trantypes="lvt"
+    sweeps="4"
+fi
+
+fewtemps=1
+
+if [ "${fewtemps}" == "1" ]; then
+    stages="11"
+    temps="-40 0 25 45" 
+    trantypes="ulvt"
     sweeps="4"
 fi
 
