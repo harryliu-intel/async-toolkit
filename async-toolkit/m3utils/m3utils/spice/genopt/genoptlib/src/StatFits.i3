@@ -57,7 +57,7 @@ TYPE
     nllf        : LONGREAL;     (* measurements in ll *)
     pts         : LongrealPQ.T; (* points keyed by likelihood *)
     evals       : CARDINAL;     (* sum total of evaluations considered *)
-    radius      : LONGREAL;     (* actual radius of chosen fit *)
+    radius      : LONGREAL;     (* actual radius of chosen fit of mu/sigma *)
     
     rank        : ARRAY Ranking OF CARDINAL;
 

@@ -50,7 +50,7 @@ IMPORT ConjGradient;
 IMPORT Thread;
 IMPORT PointResult;
 IMPORT PointResultSeq;
-FROM SurfaceRep IMPORT Qdofs, Ldofs, 
+FROM SurfaceRep IMPORT Qdofs, 
                        FmtQ, BiggestQuadratic, ComputeG,
                        ComputeQ;
 IMPORT StatFits;
@@ -400,7 +400,7 @@ PROCEDURE Analyze(READONLY pr   : PointResult.T; (* current [old] point *)
                   values        : LRVectorMRVTbl.T;
                   fvalues       : LRVectorLRTbl.T;
                   newScheme     : SchemeMaker;
-                  toEval        : SchemeObject.T) =
+                  toEval        : SchemeObject.T) : LRVector.T =
   (* call with valueMu locked *)
   VAR
     parr   := NEW(REF ARRAY OF PointMetric.T, values.size());
@@ -412,6 +412,9 @@ PROCEDURE Analyze(READONLY pr   : PointResult.T; (* current [old] point *)
     stats  := NEW(LRVectorStatsTbl.Default).init();
 
     goodv, fv  : LONGREAL;
+
+    bestLlFin := FIRST(LONGREAL);
+    bestOpt : LRVector.T;
         
   BEGIN
 
@@ -465,11 +468,13 @@ PROCEDURE Analyze(READONLY pr   : PointResult.T; (* current [old] point *)
       r    := rho;
 
       min : LONGREAL;
+
+      
     BEGIN
       FOR f := 0 TO 20 DO
               
         WITH fits  = AttemptSurfaceFit(pr, parr^, values, r),
-             me    = NEW(ModelEvaluator,
+             me    = NEW(ModelEvaluatorAdd,
                          models    := fits,
                          newScheme := newScheme,
                          toEval    := toEval),
@@ -478,19 +483,60 @@ PROCEDURE Analyze(READONLY pr   : PointResult.T; (* current [old] point *)
                          models    := fits,
                          newScheme := newScheme,
                          toEval    := toEval),
-             popt  = AttemptMinimize(pr.p, me, r, min),
              llrho = ComputeLogLikelihood(rhopts, stats, me),
              llfin = ComputeLogLikelihood(finpts, stats, me) DO
+
+
+          VAR
+            popt : LRVector.T;
+            minRadius := r;
+            sphereMin : LONGREAL;
+            sphereTgt : LONGREAL;
+            fitv := me.eval(pr.p);
+
+          BEGIN
+            FOR i := FIRST(fits^) TO LAST(fits^) DO
+              Debug.Out(F("Analyze : fits[%s] : radius=%s",
+                          Int(i), LR(fits[i].radius)));
+              minRadius := MIN(minRadius, fits[i].radius)
+            END;
+
+            sphereMin := SampleMin(me, pr.p, minRadius, 4 * n * n);
+
+            (* we want the sphere to have the following value ... *)
+            sphereTgt := MAX(2.0d0 * goodv, sphereMin + goodv);
+            
+            Debug.Out(F("Analyze : minRadius = %s, goodv = %s, sphereMin = %s, sphereTgt = %s",
+                        LR(minRadius),
+                        LR(goodv),
+                        LR(sphereMin),
+                        LR(sphereTgt)));
+
+            WITH add = sphereTgt - sphereMin DO
+              me.p0     := LRVector.Copy(pr.p);
+              me.add    := add;
+              me.addR   := minRadius;
+              me.pow    := 4.0d0;
+              me.offset := goodv - fitv; 
+            END;
+            
+            popt  := AttemptMinimize(pr.p, me, minRadius, min);
           
-          Debug.Out(FN("Analyze : minimize : pr.p = %s, r = %s , popt = %s , min = %s , dist = %s , llrho = %s , llfin = %s",
-                      TA{FmtP(pr.p,         prec := Prec),
-                      LR(r,                 prec := Prec),
-                      FmtP(popt,            prec := Prec),
-                      LR(min,               prec := Prec),
-                      LR(Vdist(pr.p, popt), prec := Prec),
-                      LR(llrho),
-                      LR(llfin)
-          }));
+            Debug.Out(FN("Analyze : minimize : pr.p = %s, r = %s , popt = %s , min = %s , dist = %s , llrho = %s , llfin = %s",
+                         TA{FmtP(pr.p,         prec := Prec),
+                            LR(r,                 prec := Prec),
+                            FmtP(popt,            prec := Prec),
+                            LR(min,               prec := Prec),
+                            LR(Vdist(pr.p, popt), prec := Prec),
+                            LR(llrho),
+                            LR(llfin)
+            }));
+
+            IF llfin > bestLlFin THEN
+              bestLlFin := llfin;
+              bestOpt := LRVector.Copy(popt)
+            END
+          END;
 
 
           IF FALSE THEN
@@ -502,9 +548,17 @@ PROCEDURE Analyze(READONLY pr   : PointResult.T; (* current [old] point *)
         
         r := r * Step
       END
-    END
-      
+    END;
+
+    IF TRUE THEN
+      VAR
+        set := NEW(LRVectorSetDef.T).init();
+      BEGIN
+        AddSegmentPointsToSet(set, pr.p, bestOpt, 20, 2.0d0)
+      END
+    END;
     
+    RETURN bestOpt
   END Analyze;
 
 PROCEDURE InitMeasured(a             : REF ARRAY OF PointMetric.T;
@@ -881,6 +935,13 @@ TYPE
     eval := HybridEval;
   END;
 
+  ModelEvaluatorAdd = ModelEvaluator OBJECT
+    p0                     : LRVector.T;
+    add, addR, pow, offset : LONGREAL := 0.0d0;
+  OVERRIDES
+    eval := ModelAddEval;
+  END;
+
 CONST MaxCoord = 1.0d10;
       
 PROCEDURE ModelEval(me : ModelEvaluator; p : LRVector.T) : LONGREAL =
@@ -950,6 +1011,37 @@ PROCEDURE ModelEval(me : ModelEvaluator; p : LRVector.T) : LONGREAL =
       END
     END
   END ModelEval;
+
+PROCEDURE ModelAddEval(me : ModelEvaluatorAdd; p : LRVector.T) : LONGREAL =
+
+  VAR
+    modelVal := ModelEvaluator.eval(me, p);
+  BEGIN
+    IF me.p0 = NIL THEN
+      RETURN modelVal
+    ELSE
+      VAR
+        dist     := Vdist(p, me.p0);
+        dratio   := dist / me.addR;
+        mult     := Math.pow(dratio, me.pow);
+        addon    := mult * me.add;
+        res      := modelVal + addon + me.offset;
+      BEGIN
+        Debug.Out(FN("ModelAddEval : p0=%s p=%s modelVal=%s dist=%s dratio=%s mult=%s addon=%s offset=%s res=%s",
+                     TA { FmtP(me.p0, prec := 4),
+                          FmtP(p,     prec := 4),
+                          LR(modelVal, prec := 4),
+                          LR(dist, prec := 4),
+                          LR(dratio, prec := 4),
+                          LR(mult, prec := 4),
+                          LR(addon, prec := 4),
+                          LR(me.offset, prec := 4),
+                          LR(res, prec := 4) }));
+        
+        RETURN modelVal + addon + me.offset
+      END
+    END
+  END ModelAddEval;
 
 PROCEDURE HybridEval(me : HybridEvaluator; p : LRVector.T) : LONGREAL =
   (* combine measured nom with modeled mu, sigma *)
@@ -1031,10 +1123,9 @@ PROCEDURE AttemptSurfaceFit(pr            : PointResult.T;
   RAISES { Matrix.Singular, StatFits.NotEnoughPoints } =
   (* attempt a surface fit *)
 
-  PROCEDURE PickClosestPoints() : PointMetricSeq.T =
+  PROCEDURE PickClosestPoints(VAR tryrho : LONGREAL) : PointMetricSeq.T =
     VAR
       success := FALSE;
-      tryrho  := rho;
       seq   : PointMetricSeq.T;
     BEGIN
       LOOP
@@ -1050,7 +1141,7 @@ PROCEDURE AttemptSurfaceFit(pr            : PointResult.T;
             END
           END
         END;
-        IF seq.size() >= qdofs THEN
+        IF seq.size() >= qdofs + StatFits.LeaveOut THEN
           success := TRUE;
           EXIT
         ELSE
@@ -1085,10 +1176,12 @@ PROCEDURE AttemptSurfaceFit(pr            : PointResult.T;
 
     models := NEW(REF ARRAY OF StatFits.T, nv);
     pvarr  := NEW(REF ARRAY OF REF ARRAY OF PointMetricLR.T, nv);
+
+    tryrho := rho;
     
   BEGIN
     (* first, pick enough points for the fit *)
-    seq := PickClosestPoints();
+    seq := PickClosestPoints(tryrho);
 
     FOR i := FIRST(points^) TO LAST(points^) DO
       EVAL GetResult(points[i].p)
@@ -1121,11 +1214,11 @@ PROCEDURE AttemptSurfaceFit(pr            : PointResult.T;
                                   pvarr[i],
                                   selectByAll,
                                   orders     := mv.orders,
-                                  nomRho     := rho,
+                                  nomRho     := tryrho,
                                   lambdaMult := GetLambdaMult()
           ) DO
-        Debug.Out(F("AttemptSurfaceFit : fitting response \"%s\"",
-                    SchemeSymbol.ToText(mv.nm)));
+        Debug.Out(F("AttemptSurfaceFit : fitting response \"%s\" rho=%s tryrho=%s",
+                    SchemeSymbol.ToText(mv.nm), LR(rho), LR(tryrho)));
         Debug.Out(F("AttemptSurfaceFit : fit result " & StatFits.Format(fit)));
 
         models[i] := fit
@@ -1166,6 +1259,24 @@ PROCEDURE InsertClosestPoints(n             : CARDINAL;
       EVAL newpts.insert(darr[i].p)
     END
   END InsertClosestPoints;
+
+
+PROCEDURE SampleMin(f      : LRScalarField.T;
+                    center : LRVector.T;
+                    radius : LONGREAL;
+                    nsamp  : CARDINAL) : LONGREAL =
+  VAR
+    rand := NEW(Random.Default).init();
+    w := LRVector.Copy(center); (* workspace *)
+    min := LAST(LONGREAL);
+  BEGIN
+    FOR i := 0 TO nsamp - 1 DO
+      RandomVector.GetDir(rand, radius, w^);
+      M.AddV(w^, center^, w^);
+      min := MIN(min, f.eval(w))
+    END;
+    RETURN min
+  END SampleMin;
 
 PROCEDURE SortByDistance(to            : LRVector.T;
                          READONLY parr : ARRAY OF PointMetric.T)
@@ -1441,6 +1552,46 @@ PROCEDURE OrthoRandom(rand : Random.T; VAR a : ARRAY OF LRVector.T) =
     Orthogonalize(a)
   END OrthoRandom;
 
+PROCEDURE AddSegmentPointsToSet(set    : LRVectorSet.T;
+                                p0, p1 : LRVector.T;
+                                cnt    : CARDINAL;
+                                range  : LONGREAL) =
+
+  PROCEDURE AddPoint(q : INTEGER) =
+    VAR
+      r := FLOAT(q, LONGREAL) * step;
+      z := Math.exp(r);
+      pp := LRVector.Copy(p0);
+    BEGIN
+      M.LinearCombinationV(1.0d0, p0^, z, seg^, pp^);
+
+      Debug.Out(F("AddPoint : p0=%s p1=%s seg=%s z=%s pp=%s",
+                FmtP(p0, prec := 4), 
+                FmtP(p1, prec := 4), 
+                FmtP(seg, prec := 4),
+                LR(z),
+                FmtP(pp, prec := 4)));
+      
+      EVAL set.insert(pp)
+    END AddPoint;
+    
+  VAR
+    seg    := LRVector.Copy(p0);
+    lrange := Math.log(range);
+    step   := lrange / FLOAT(cnt DIV 2, LONGREAL);
+  BEGIN
+    (* ensure cnt is odd *)
+    IF cnt MOD 2 = 0 THEN INC(cnt) END;
+
+    M.SubV(p1^, p0^, seg^);
+
+    AddPoint(0);
+    FOR i := 1 TO cnt DIV 2 DO
+      AddPoint(-i);
+      AddPoint(+i)
+    END
+  END AddSegmentPointsToSet;
+  
 PROCEDURE PickRandomPoints(s            : LRVectorSet.T;
                            p            : LRVector.T;
                            rho          : LONGREAL;
@@ -1743,7 +1894,7 @@ PROCEDURE Minimize(pa             : LRVector.T;
 
     IF doAnalyze THEN
       LOCK valueMu DO
-        Analyze(pr, values, fvalues, newScheme, toEval)
+        EVAL Analyze(pr, values, fvalues, newScheme, toEval)
       END;
         
       VAR x : Output; BEGIN
@@ -1825,7 +1976,14 @@ PROCEDURE Minimize(pa             : LRVector.T;
           IF gotNew THEN
             (* we should really have a better update method, right? *)
             newp := bestq
+          END;
+
+          (* use Analyze to find an analyze-optimal point, add it and a few
+             other points to the search set *)
+          WITH aopt = Analyze(pr, values, fvalues, newScheme, toEval) DO
+            AddSegmentPointsToSet(newPts, pr.p, aopt, 20, 3.0d0)
           END
+
         END;
 
         (* can we loop here, with gotNew always false? *)
@@ -1844,7 +2002,7 @@ PROCEDURE Minimize(pa             : LRVector.T;
               M.SubV(newp.p^, pr.p^, dp^);
               (* we blend in new rho estimator *)
               
-              SetRho(0.50d0 * GetRho()+ 0.50d0 * M.Norm(dp^));
+              SetRho(0.50d0 * GetRho() + 0.50d0 * M.Norm(dp^));
               
               Debug.Out(F("QuadRobust.m3 : new rho = %s", LR(GetRho())));
               IF GetRho() < rhoend THEN

@@ -340,9 +340,11 @@ PROCEDURE Attempt(p                : LRVector.T;
     (* we can immediately do the Nom fit here, parr are sorted in distance
        from p *)
 
-    Debug.Out(F("StatFits.Attempt NUMBER(parr^)=%s LeaveOut=%s",
-                Int(NUMBER(parr^)),
-                Int(LeaveOut)));
+    IF doDebug THEN
+      Debug.Out(F("StatFits.Attempt NUMBER(parr^)=%s LeaveOut=%s",
+                  Int(NUMBER(parr^)),
+                  Int(LeaveOut)))
+    END;
               
     IF nomRho # 0.0d0 THEN
       VAR
@@ -354,14 +356,16 @@ PROCEDURE Attempt(p                : LRVector.T;
             EXIT
           END
         END;
-        Debug.Out(F("StatFits.Attempt NOM nomRho=%s , lim=%s",
-                    LR(nomRho),
-                    Int(lim)));
+        IF doDebug THEN
+          Debug.Out(F("StatFits.Attempt NOM nomRho=%s , lim=%s",
+                      LR(nomRho),
+                      Int(lim)))
+        END;
 
         IF lim < nmDofs + LeaveOut THEN
           Debug.Out(F("StatFits.Attempt : lim = %s < nmDofs + LeaveOut = %s",
                       Int(lim), Int(nmDofs + LeaveOut)));
-          
+            
           RAISE NotEnoughPoints
         END;
         bnom := DoNomFit(SUBARRAY(parr^, 0, lim), nmOrder, lambdaMult)
@@ -369,11 +373,13 @@ PROCEDURE Attempt(p                : LRVector.T;
     END;
     
     LOOP
-      Debug.Out(F("StatFits.Attempt NUMBER(parr^)=%s LeaveOut=%s max=%s m=%s",
-                  Int(NUMBER(parr^)),
-                  Int(LeaveOut),
-                  Int(max),
-                  Int(m)));
+      IF doDebug THEN
+        Debug.Out(F("StatFits.Attempt NUMBER(parr^)=%s LeaveOut=%s max=%s m=%s",
+                    Int(NUMBER(parr^)),
+                    Int(LeaveOut),
+                    Int(max),
+                    Int(m)))
+      END;
 
       WITH lim = MIN(max,m) DO
         IF lim >= muDofs + LeaveOut AND lim >= sgDofs + LeaveOut THEN
