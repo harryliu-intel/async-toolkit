@@ -50,6 +50,7 @@ IMPORT ConversionList;
 IMPORT Time;
 IMPORT Watchdog;
 IMPORT Scan;
+IMPORT Lex, FloatMode;
 
 <*FATAL Thread.Alerted*>
 
@@ -502,7 +503,12 @@ BEGIN
       ELSE
         WITH rlvar = Env.Get("CTRUNTIMELIMIT") DO
           IF rlvar # NIL THEN
-            runtimeLimit := Scan.LongReal(rlvar)
+            TRY
+              runtimeLimit := Scan.LongReal(rlvar)
+            EXCEPT
+              FloatMode.Trap, Lex.Error => RAISE ParseParams.Error
+            END
+            
           END
         END;
         IF runtimeLimit # LAST(LONGREAL) THEN
@@ -510,12 +516,20 @@ BEGIN
         END
       END
     ELSE
-      RepeatMe.Repeat("-execute",
-                      10,
-                      1.0d0,
-                      immediateQuit := ImmediateQuit,
-                      addArgs := ARRAY [0..1] OF TEXT { "-starttime",
-                                                        LR(Time.Now()) } )
+      VAR
+        timeLimit := 0.0d0;
+      BEGIN
+        IF runtimeLimit # LAST(LONGREAL) THEN
+          timeLimit := 1.0d0 * runtimeLimit + 10.0d0
+        END;
+        RepeatMe.Repeat("-execute",
+                        10,
+                        1.0d0,
+                        immediateQuit := ImmediateQuit,
+                        addArgs := ARRAY [0..1] OF TEXT { "-starttime",
+                                                          LR(Time.Now()) },
+                        maxTime := timeLimit)
+      END
     END;
 
     IF pp.keywordPresent("-starttime") THEN
