@@ -3,6 +3,7 @@ IMPORT Time;
 IMPORT Debug;
 IMPORT Process;
 IMPORT Thread;
+IMPORT Usignal;
 
 REVEAL
   T = Public BRANDED Brand OBJECT
@@ -14,26 +15,26 @@ REVEAL
     mu : MUTEX;
     expireAction : Callback;
   OVERRIDES
-    init := Init;
-    reset := Reset;
-    pause := Pause;
-    unpause := Unpause;
-    kill := Kill;
+    init            := Init;
+    reset           := Reset;
+    pause           := Pause;
+    unpause         := Unpause;
+    kill            := Kill;
     setExpireAction := SetExpireAction;
   END;
 
 TYPE
   State = { Running, Suspended, Dead };
 
-PROCEDURE Init(t : T; maxDelay : LONGREAL) : T =
+PROCEDURE Init(t : T; maxDelay : LONGREAL; callback : Callback) : T =
   BEGIN
     t.mu := NEW(MUTEX);
     LOCK t.mu DO
       WITH now = Time.Now() DO
-        t.deadline := now + maxDelay;
-        t.maxDelay := maxDelay;
-        t.state := State.Running;
-        t.expireAction := NIL
+        t.deadline     := now + maxDelay;
+        t.maxDelay     := maxDelay;
+        t.state        := State.Running;
+        t.expireAction := callback
       END
     END;
     EVAL Thread.Fork(NEW(Closure, t := t));
@@ -57,7 +58,19 @@ PROCEDURE Apply(cl : Closure) : REFANY =
           IF Time.Now() > cl.t.deadline THEN
             IF cl.t.expireAction = NIL THEN
               Debug.Warning("Watchdog expired without expire action set -- Program exiting!!!");
-              Process.Exit(1)
+              Process.Exit(1);
+
+              Thread.Pause(10.0d0);
+
+              WITH myId = Process.GetMyID() DO
+                EVAL Usignal.kill(myId, 1);
+                Thread.Pause(1.0d0);
+                EVAL Usignal.kill(myId, 15);
+                Thread.Pause(1.0d0);
+                EVAL Usignal.kill(myId,  9);
+              END;
+              
+              <*ASSERT FALSE*>
             ELSE
               cl.t.expireAction.do()
             END

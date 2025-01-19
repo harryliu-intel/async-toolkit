@@ -9,14 +9,42 @@ FROM Fmt IMPORT F, Int;
 IMPORT OSError;
 IMPORT AL;
 IMPORT Wx;
+IMPORT Watchdog;
+IMPORT Usignal;
 
+TYPE
+  WDCallback = Watchdog.Callback OBJECT
+    pid : Process.ID;
+  OVERRIDES
+    do := WDCDo;
+  END;
+
+PROCEDURE WDCDo(wdc : WDCallback) =
+
+  PROCEDURE Kill(sig : CARDINAL) =
+    BEGIN
+      Debug.Out(F("RepeatMe.WDCDo : watchdog expired : killing %s -- signal %s",
+                  Int(wdc.pid), Int(sig)));
+      EVAL Usignal.kill(wdc.pid, sig);
+    END Kill;
+    
+  BEGIN
+    Kill(1);
+    Thread.Pause(1.0d0);
+    Kill(15);
+    Thread.Pause(1.0d0);
+    Kill(9);
+  END WDCDo;
+  
 PROCEDURE Do(execFlag               : TEXT;
              immediateQuit          : Process.ExitCode;
-             READONLY addArgs       : ARRAY OF TEXT) : BOOLEAN =
+             READONLY addArgs       : ARRAY OF TEXT;
+             maxTime                : LONGREAL) : BOOLEAN =
   VAR
     stdin, stdout, stderr : File.T;
     params := NEW(REF ARRAY OF TEXT, Params.Count - 1 + NUMBER(addArgs) + 1);
-    cmd := Params.Get(0);
+    cmd    := Params.Get(0);
+    watchdog : Watchdog.T := NIL;
   BEGIN
     (* copy the parameters over, but make params[0] the execFlag *)
     params[0] := execFlag;
@@ -34,9 +62,20 @@ PROCEDURE Do(execFlag               : TEXT;
                                      params^,
                                      stdin := stdin,
                                      stdout := stdout,
-                                     stderr := stderr),
-           exitCode = Process.Wait(proc) DO
+                                     stderr := stderr) DO
+        IF maxTime > 0.0d0 THEN
+          watchdog := NEW(Watchdog.T).init(maxTime,
+                                           callback :=
+                                               NEW(WDCallback,
+                                                   pid := Process.GetID(proc)));
+        END;
+        
+        WITH exitCode = Process.Wait(proc) DO
 
+          IF watchdog # NIL THEN
+            watchdog.kill()
+          END;
+        
         IF exitCode # 0 THEN
           VAR
             wx := Wx.New();
@@ -57,6 +96,7 @@ PROCEDURE Do(execFlag               : TEXT;
         
         RETURN exitCode = 0
       END
+      END
     EXCEPT
       OSError.E(x) => Debug.Warning("Process.Create failed : OSError.E : " & AL.Format(x));
       RETURN FALSE
@@ -67,10 +107,11 @@ PROCEDURE Repeat(execFlag            : TEXT;
                  maxTimes            : CARDINAL;
                  delay               : Time.T;
                  immediateQuit       : Process.ExitCode;
-                 READONLY addArgs    : ARRAY OF TEXT) =
+                 READONLY addArgs    : ARRAY OF TEXT;
+                 maxTime             : LONGREAL) =
   BEGIN
     FOR i := 1 TO maxTimes DO
-      IF Do(execFlag, immediateQuit, addArgs) THEN
+      IF Do(execFlag, immediateQuit, addArgs, maxTime) THEN
         Process.Exit(0)
       ELSE
         Debug.Warning("Process failed.  Re-executing!");

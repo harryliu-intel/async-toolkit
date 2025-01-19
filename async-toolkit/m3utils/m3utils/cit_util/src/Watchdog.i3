@@ -4,7 +4,7 @@ TYPE
   T <: Public;
 
   Public = OBJECT METHODS
-    init(maxDelay : LONGREAL) : T;
+    init(maxDelay : LONGREAL; callback : Callback := NIL) : T;
 
     reset();
     (* reset timer to zero *)
