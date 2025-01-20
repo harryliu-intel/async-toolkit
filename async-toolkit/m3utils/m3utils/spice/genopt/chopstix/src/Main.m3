@@ -264,7 +264,7 @@ PROCEDURE AttemptEval(q                    : LRVector.T;
       END
     END CopyVectorToScheme;
 
-  PROCEDURE SetupDirectory() =
+  PROCEDURE SetupDirectory() : TEXT =
     BEGIN
       TRY
         TRY
@@ -291,9 +291,9 @@ PROCEDURE AttemptEval(q                    : LRVector.T;
         WITH cmdDbgWr    = MustOpenWr(subdirPath & "/opt.cmd"),
              runCmdDbgWr = MustOpenWr(subdirPath & "/opt.runcmd"),
              
-             nbCmd = F("nbjob run %s --mode interactive %s",
-                       nbopts,
-                       cmd) DO
+             nbCmd       = F("nbjob run %s --mode interactive %s",
+                             nbopts,
+                             cmd) DO
           VAR
             runCmd : TEXT;
           BEGIN
@@ -308,32 +308,34 @@ PROCEDURE AttemptEval(q                    : LRVector.T;
             Wr.PutText(runCmdDbgWr, runCmd);
             Wr.PutChar(runCmdDbgWr, '\n');
             Wr.Close(cmdDbgWr); Wr.Close(runCmdDbgWr);
-            
-            cm             := ProcUtils.RunText(runCmd,
-                                                stdout := stdout,
-                                                stderr := stderr,
-                                                stdin  := NIL,
-                                                wd0    := subdirPath)
+
+            RETURN runCmd
           END
         END
       EXCEPT
         Wr.Failure(x) =>
         Debug.Error(F("I/O error : Wr.Failure : while setting up %s : %s:",
-                      subdirPath, AL.Format(x)))
+                      subdirPath, AL.Format(x)));
+        <*ASSERT FALSE*>
       END
     END SetupDirectory;
 
-  PROCEDURE RunCommand(VAR(*OUT*) schemaScm : Scheme.T) : LRVectorSeq.T 
-    (* schemaScm is newly allocated *)
-    RAISES { ProcUtils.ErrorExit } =
+  PROCEDURE LaunchCmd(runCmd : TEXT) =
     BEGIN
-      IF doDebug THEN
-        Debug.Out(F("BaseEval : q = %s\nrunning : %s", FmtP(q), cmd));
-        Debug.Out("subdirPath = " & subdirPath)
-      END;
-      
-      cm.wait();
+      <*NOWARN*>stdout     := ProcUtils.WriteHere(Owr);
+      <*NOWARN*>stderr     := ProcUtils.WriteHere(Ewr);
 
+      cm             := ProcUtils.RunText(runCmd,
+                                          stdout := stdout,
+                                          stderr := stderr,
+                                          stdin  := NIL,
+                                          wd0    := subdirPath)
+      
+    END LaunchCmd;
+
+  PROCEDURE ProcessCommand(VAR(*OUT*) schemaScm : Scheme.T) : LRVectorSeq.T =
+    (* schemaScm is newly allocated *)
+    BEGIN
       IF doDebug THEN
         Debug.Out("BaseEval : ran command")
       END;
@@ -346,12 +348,45 @@ PROCEDURE AttemptEval(q                    : LRVector.T;
                                           MakeModelVarList(),
                                           schemaScm) DO
           IF doDebug THEN
-            Debug.Out(F("AttemptEval.RunCommand (nominal = %s) : schema-processed result : %s", Bool(nominal), FmtLRVectorSeq(schemaRes)))
+            Debug.Out(F("AttemptEval.ProcessCommand (nominal = %s) : schema-processed result : %s", Bool(nominal), FmtLRVectorSeq(schemaRes)))
           END;
           RETURN schemaRes
         END
       END
-    END RunCommand;
+    END ProcessCommand;
+
+  PROCEDURE Await(runCmd : TEXT) RAISES { ProcUtils.ErrorExit } =
+    CONST
+      Attempts = 5;
+    BEGIN
+      IF doDebug THEN
+        Debug.Out(F("BaseEval : q = %s\nrunning : %s", FmtP(q), cmd));
+        Debug.Out("subdirPath = " & subdirPath)
+      END;
+
+      FOR i := 0 TO Attempts - 1 DO
+        TRY
+          WITH timeo = GenOpt.GetCommandTimeout() DO
+            IF timeo = 0.0d0 THEN
+              cm.wait()
+            ELSE
+              cm.waitTimeout(timeo)
+            END
+          END;
+          RETURN
+        EXCEPT
+          ProcUtils.Timeout =>
+          Debug.Warning(F("Main.Await : command %s timed out, re-running",
+                          runCmd));
+          LaunchCmd(runCmd)
+        END
+      END;
+      WITH theError = NEW(ProcUtils.Error,
+                          error := "too many timed-out attempts") DO
+        
+        RAISE ProcUtils.ErrorExit(theError)
+      END
+    END Await;
 
   VAR
     nbopts     : TEXT;
@@ -359,18 +394,16 @@ PROCEDURE AttemptEval(q                    : LRVector.T;
     cm         : ProcUtils.Completion;
     subdirPath : Pathname.T;
     stdout, stderr : ProcUtils.Writer;
+    Owr, Ewr   : Wr.T;
     
   PROCEDURE RunIt() : EvalResult RAISES { ProcUtils.ErrorExit } =
     VAR
       schemaScm  : Scheme.T;
-      Owr                  := NEW(TextWr.T).init();
-      Ewr                  := NEW(TextWr.T).init();
-
       sdIdx                := NextIdx();
       theResult  : LRVectorSeq.T;
     BEGIN
-      <*NOWARN*>stdout     := ProcUtils.WriteHere(Owr);
-      <*NOWARN*>stderr     := ProcUtils.WriteHere(Ewr);
+      Owr                  := NEW(TextWr.T).init();
+      Ewr                  := NEW(TextWr.T).init();
 
       subdirPath           := F("%s/%s",
                                 rundirPath,
@@ -380,12 +413,17 @@ PROCEDURE AttemptEval(q                    : LRVector.T;
       
       SetNbOpts();
       CopyVectorToScheme();
-      SetupDirectory();
-      
+
       TRY
         TRY
           TRY
-            theResult := RunCommand(schemaScm);
+            
+            WITH runCmd = SetupDirectory() DO
+              LaunchCmd(runCmd);
+              Await(runCmd)
+            END;
+      
+            theResult := ProcessCommand(schemaScm);
             WITH wr = MustOpenWr(subdirPath & "/opt.ok") DO
               Wr.Close(wr)
             END

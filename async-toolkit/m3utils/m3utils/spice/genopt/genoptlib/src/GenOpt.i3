@@ -99,7 +99,11 @@ PROCEDURE GetMethod() : Method;
 PROCEDURE GetIter() : CARDINAL;
 
 PROCEDURE SetIter(to : CARDINAL);
-  
+
+PROCEDURE SetCommandTimeout(to : LONGREAL); (* in seconds *)
+
+PROCEDURE GetCommandTimeout() : LONGREAL;
+
 CONST Brand = "GenOpt";
 
 VAR paramBindings : TextTextTbl.T;

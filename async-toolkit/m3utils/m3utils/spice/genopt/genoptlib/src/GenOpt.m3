@@ -194,7 +194,15 @@ PROCEDURE GetMinRho() : LONGREAL =
 PROCEDURE SetMinRho(to : LONGREAL) =
   BEGIN minRho := to END SetMinRho;
 
+
+VAR commandTimeout : LONGREAL := 0.0d0;
+    
+PROCEDURE SetCommandTimeout(to : LONGREAL) =
+  BEGIN commandTimeout := to END SetCommandTimeout;
+
+PROCEDURE GetCommandTimeout() : LONGREAL =
+  BEGIN RETURN commandTimeout END GetCommandTimeout; 
+
 BEGIN
   paramBindings := NEW(TextTextTbl.Default).init();
-
 END GenOpt.
