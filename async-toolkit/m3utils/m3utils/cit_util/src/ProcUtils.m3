@@ -39,10 +39,11 @@ TYPE
     main    : MainClosure;
     th      : Thread.T;
   OVERRIDES
-    wait     := Wait;
-    abort    := Abort;
-    getState := GetState;
-    getPID   := GetPID;
+    wait        := Wait;
+    abort       := Abort;
+    getState    := GetState;
+    getPID      := GetPID;
+    waitTimeout := WaitTimeout;
   END;
 
   MainClosure = Thread.Closure OBJECT
@@ -583,6 +584,89 @@ PROCEDURE Wait(c: PrivateCompletion) RAISES { ErrorExit } =
 
   END Wait;
 
+  (* *)
+
+TYPE
+  Waiter = OBJECT
+    mu      : MUTEX;
+    cond    : Thread.Condition;
+    done    : BOOLEAN;
+    expired : BOOLEAN;
+    error   : Error;
+  END;
+
+  WaitCl = Thread.Closure OBJECT
+    w : Waiter;
+    c : PrivateCompletion;
+  OVERRIDES
+    apply := WaitApply;
+  END;
+
+  TimeCl = Thread.Closure OBJECT
+    w     : Waiter;
+    timeo : LONGREAL;
+  OVERRIDES
+    apply := TimeApply;
+  END;
+
+PROCEDURE WaitApply(cl : WaitCl) : REFANY =
+  BEGIN
+    TRY
+      cl.c.wait();
+      LOCK cl.w.mu DO
+        cl.w.done := TRUE;
+        Thread.Signal(cl.w.cond)
+      END
+    EXCEPT
+      ErrorExit(x) =>
+      LOCK cl.w.mu DO
+        cl.w.error := x;
+        Thread.Signal(cl.w.cond)
+      END
+    END;
+    RETURN NIL
+  END WaitApply;
+
+PROCEDURE TimeApply(cl : TimeCl) : REFANY =
+  BEGIN
+    Thread.Pause(cl.timeo);
+    LOCK cl.w.mu DO
+      cl.w.expired := TRUE;
+      Thread.Signal(cl.w.cond)
+    END;
+    RETURN NIL
+  END TimeApply;
+  
+PROCEDURE WaitTimeout(c : PrivateCompletion; timeo : LONGREAL)
+  RAISES { ErrorExit, Timeout } =
+  VAR
+    w   := NEW (Waiter,
+                mu      := NEW(MUTEX),
+                cond    := NEW(Thread.Condition),
+                done    := FALSE,
+                expired := FALSE,
+                error   := NIL );
+    wcl := NEW(WaitCl, w := w, c     := c);
+    tcl := NEW(TimeCl, w := w, timeo := timeo);
+  BEGIN
+    EVAL Thread.Fork(wcl);
+    EVAL Thread.Fork(tcl);
+    LOCK w.mu DO
+      WHILE NOT w.done AND NOT w.expired AND w.error = NIL DO
+        Thread.Wait(w.mu, w.cond)
+      END;
+      IF    w.error # NIL THEN
+        RAISE ErrorExit(w.error)
+      ELSIF w.done THEN
+        RETURN
+      ELSE
+        <*ASSERT w.expired*>
+        c.abort();
+        RAISE Timeout
+      END
+    END
+  END WaitTimeout;
+  
 (* Helpers *)
 
 PROCEDURE ToText(source: T;

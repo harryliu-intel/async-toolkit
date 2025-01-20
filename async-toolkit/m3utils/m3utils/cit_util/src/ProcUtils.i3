@@ -65,6 +65,8 @@ PROCEDURE RdToRd(source: Rd.T;
   Completion = OBJECT METHODS
     wait() RAISES { ErrorExit };
 
+    waitTimeout(timeo : LONGREAL) RAISES { ErrorExit, Timeout };
+
     abort();
 
     getState() : State;
