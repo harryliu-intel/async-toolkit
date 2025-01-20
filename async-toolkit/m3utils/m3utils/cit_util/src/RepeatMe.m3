@@ -69,6 +69,18 @@ PROCEDURE Do(execFlag               : TEXT;
                                                NEW(WDCallback,
                                                    pid := Process.GetID(proc)));
         END;
+
+
+        (* 
+           if we really can't make this work any other way, we could
+           add a secondary thread to do the Process.Wait and set a watchdog
+           to wake up from waiting on that thread OR on a timer.  Then if
+           the timer wakes us up, we simply ignore the activity in the 
+           waiter thread and try to re-execute regardless of whether 
+           the first attempt exits or not! (Of course, we need to TRY 
+           to kill the first attempt so it at least doesn't interfere
+           with subsequent attempts...)  UGH.
+        *)
         
         WITH exitCode = Process.Wait(proc) DO
 

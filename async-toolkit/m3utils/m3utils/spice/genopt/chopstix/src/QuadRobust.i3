@@ -110,4 +110,8 @@ TYPE
     resultsMu          : MUTEX;
   END;
 
+PROCEDURE SetLookback(to : CARDINAL);
+
+PROCEDURE GetLookback() : CARDINAL;
+
 END QuadRobust.

@@ -15,6 +15,9 @@ DEFS=${SRCDIR}/defs.scm
 OPTSCM=${SRCDIR}/lowtempquadopt.scm
 ME=${SRCDIR}/${MYFILE}
 
+#GDB=""
+GDB="gdb -x ${SRCDIR}/gdbcmds.txt --batch --args "
+
 nb_queue=${NBPOOL}
 nb_qslot=${NBQSLOT}
 step=1
@@ -116,7 +119,7 @@ for temp  in ${temps};     do
 
 	    cmdargs="${GENOPT} -S ${DEFS} -setparam temp ${temp} -setparam thresh ${tran} -setparam sweeps ${sweep} -setparam cscale 1 -setparam stages ${stgs}  -setparam Kcycle ${kcyc} ${OPTSCM}"
 
-            echo "${cmdargs}"   >> ${runfile}
+            echo "${GDB} ${cmdargs}"   >> ${runfile}
             chmod +x ${runfile}
         
             tasknum=`expr $tasknum + 1`

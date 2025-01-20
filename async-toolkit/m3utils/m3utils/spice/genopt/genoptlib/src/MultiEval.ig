@@ -2,6 +2,7 @@ GENERIC INTERFACE MultiEval(Field, Type, TypeSeq);
 IMPORT LRVector;
 IMPORT Word;
 IMPORT Pathname;
+IMPORT GenOpt;
 
 TYPE
   T <: Public;
@@ -10,8 +11,11 @@ TYPE
     base : Field.T;
   METHODS
     init(base : Field.T) : T;
-    multiEval(at : LRVector.T; samples : CARDINAL) : Result;
-    nominalEval(at : LRVector.T) : Type.T;
+    multiEval(at : LRVector.T; samples : CARDINAL) : Result RAISES { GenOpt.OutOfDomain } ;
+    nominalEval(at : LRVector.T) : Type.T RAISES { GenOpt.OutOfDomain } ;
+
+    inDomain(at : LRVector.T) : BOOLEAN;
+    (* check if point is in domain *)
   END;
 
 TYPE

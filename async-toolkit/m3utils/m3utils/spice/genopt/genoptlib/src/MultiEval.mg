@@ -5,6 +5,7 @@ FROM Fmt IMPORT Int, F, LongReal, FN;
 IMPORT Debug;
 IMPORT Text;
 IMPORT Pathname;
+IMPORT MapError;
 
 TYPE TA = ARRAY OF TEXT;
      
@@ -26,7 +27,7 @@ PROCEDURE Init(t : T; base : Field.T) : T =
     RETURN t
   END Init;
   
-PROCEDURE Eval(t : T; p : LRVector.T) : Type.T =
+PROCEDURE Eval(t : T; p : LRVector.T) : Type.T RAISES { MapError.E } =
   BEGIN
     RETURN t.base.eval(p)
   END Eval;

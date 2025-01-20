@@ -35,8 +35,8 @@
 (GenOpt.SetOptFailureResult 1e200)
 (GenOpt.SetLambdaMult 0)
 (QuadRobust.SetDoNominal #t)
-
 (QuadRobust.SetMinNewPts 50)
+(QuadRobust.SetLookback   7)
 
 ;; model the three aspects of any variable:
 ;; nom mu sigma
@@ -46,8 +46,9 @@
 
 
 ;; NewUOAs configuration variables
-(def-rhobeg 10  )   ;; starting step size in terms of significant delta
-(def-rhoend  0.1)   ;; ending step size for convergence
+(GenOpt.SetRhoBeg 10  )   ;; starting step size in terms of significant delta
+(GenOpt.SetMinRho  1  )   ;; do not quit until we reach at least this rho
+(GenOpt.SetRhoEnd  0.1)   ;; ending step size for convergence
 
 ;; this is the command to do an evaluation
 (define *cmd-path* (string-append *m3utils*
@@ -85,19 +86,19 @@
 
 ;; name of the output file of the computation
 ;;(def-data-filename "measure.dat.stat")
-(def-data-filename "measure.dat")
+(GenOpt.DefDataFilename "measure.dat")
 
 ;; the schema of the output of the program (of the data file)
 ;;(def-schema-path (string-append *srcdir* "/schema.dat"))
-(def-schema-path (string-append *srcdir* "/lowtempopt_single.schema"))
+(GenOpt.DefSchemaPath (string-append *srcdir* "/lowtempopt_single.schema"))
 
 ;; Scheme code needed to understand the schema and/or the evaluation
-(def-load-scm (string-append *srcdir* "/defs.scm"))
+(GenOpt.DefLoadScm (string-append *srcdir* "/defs.scm"))
 
 ;; the function to minimize, based on the schema and input
-(def-eval '(+ (nom 'energy_cost)
-              (mu 'energy_cost)
-              (nom 'silicon_cost)
-              (mu 'silicon_cost)
-              (* Kcycle (sigma 'silicon_cost))))
+(QuadOpt.DefEval '(+ (nom 'energy_cost)
+                     (mu 'energy_cost)
+                     (nom 'silicon_cost)
+                     (mu 'silicon_cost)
+                     (* Kcycle (sigma 'silicon_cost))))
 

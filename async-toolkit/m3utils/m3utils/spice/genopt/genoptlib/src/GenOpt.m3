@@ -125,12 +125,7 @@ PROCEDURE GetLambdaMult() : LONGREAL =
   BEGIN
     RETURN lambdaMult
   END GetLambdaMult;
-
-PROCEDURE GetIter() : CARDINAL =
-  BEGIN
-    RETURN iter
-  END GetIter;
-
+  
 VAR p : LRSeq.T; (* ugly! *)
 
 PROCEDURE SetCoord(i : CARDINAL; to : LONGREAL; override : LRSeq.T) =
@@ -177,6 +172,27 @@ PROCEDURE SetNetbatch(to : BOOLEAN) =
   BEGIN
     doNetbatch := to
   END SetNetbatch;
+
+
+VAR iter : CARDINAL;
+    
+PROCEDURE GetIter() : CARDINAL =
+  BEGIN
+    RETURN iter
+  END GetIter;
+
+PROCEDURE SetIter(to : CARDINAL) =
+  BEGIN
+    iter := to
+  END SetIter;
+
+VAR minRho : LONGREAL := LAST(LONGREAL);
+
+PROCEDURE GetMinRho() : LONGREAL =
+  BEGIN RETURN minRho END GetMinRho;
+
+PROCEDURE SetMinRho(to : LONGREAL) =
+  BEGIN minRho := to END SetMinRho;
 
 BEGIN
   paramBindings := NEW(TextTextTbl.Default).init();

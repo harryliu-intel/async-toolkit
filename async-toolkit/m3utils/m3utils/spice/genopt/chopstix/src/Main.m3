@@ -56,6 +56,7 @@ IMPORT LRVectorFieldPll;
 FROM QuadRobust IMPORT schemeMu;
 IMPORT VectorSeq;
 IMPORT MapError;
+IMPORT Atom;
 
 <*FATAL Thread.Alerted*>
 
@@ -97,11 +98,12 @@ TYPE
   METHODS
     init() : LRVectorField.T := InitPll;
 
-    multiEval(at : LRVector.T; samples : CARDINAL; VAR schemaScm : Scheme.T) : MultiEvalLRVector.Result :=
+    multiEval(at : LRVector.T; samples : CARDINAL; VAR schemaScm : Scheme.T) : MultiEvalLRVector.Result RAISES { GenOpt.OutOfDomain } :=
         BaseMultiEval;
 
-    nominalEval(at : LRVector.T; VAR schemaScm : Scheme.T) : LRVector.T :=
+    nominalEval(at : LRVector.T; VAR schemaScm : Scheme.T) : LRVector.T RAISES { GenOpt.OutOfDomain } :=
         BaseNominalEval;
+
   OVERRIDES
     eval     := BaseEval;
     evalHint := BaseEvalHint;
@@ -126,12 +128,16 @@ PROCEDURE OptInit() =
   END OptInit;
   
 PROCEDURE BaseEvalHint(base : Evaluator; p : LRVector.T) =
-  <*FATAL MapError.E*>
   BEGIN
-    EVAL base.eval(p)
+    TRY
+      EVAL base.eval(p)
+    EXCEPT
+      MapError.E => (* skip *)
+    END
   END BaseEvalHint;
 
-PROCEDURE BaseEval(<*UNUSED*>base : Evaluator; p : LRVector.T) : LRVector.T =
+PROCEDURE BaseEval(<*UNUSED*>base : Evaluator; p : LRVector.T) : LRVector.T
+  RAISES { MapError.E } =
   BEGIN
     TRY
       WITH res = AttemptEval(p, 0, FALSE) DO
@@ -142,7 +148,10 @@ PROCEDURE BaseEval(<*UNUSED*>base : Evaluator; p : LRVector.T) : LRVector.T =
         END
       END
     EXCEPT
-    ProcUtils.ErrorExit =>
+      GenOpt.OutOfDomain =>
+      RAISE MapError.E(Atom.FromText("GenOpt.OutOfDomain"))
+    |
+      ProcUtils.ErrorExit =>
       Debug.Error("BaseEval : Too many attempts p=" & FmtP(p));
       <*ASSERT FALSE*>
     END
@@ -151,7 +160,9 @@ PROCEDURE BaseEval(<*UNUSED*>base : Evaluator; p : LRVector.T) : LRVector.T =
 PROCEDURE BaseMultiEval(<*UNUSED*>base : Evaluator;
                         p              : LRVector.T;
                         samples        : CARDINAL;
-                        VAR schemaScm  : Scheme.T) : MultiEvalLRVector.Result =
+                        VAR schemaScm  : Scheme.T) : MultiEvalLRVector.Result
+  RAISES { GenOpt.OutOfDomain } =
+
   BEGIN
     IF doDebug THEN
       Debug.Out("BaseMultiEval : samples " & Int(samples), 100)
@@ -178,7 +189,8 @@ PROCEDURE BaseMultiEval(<*UNUSED*>base : Evaluator;
 
 PROCEDURE BaseNominalEval(<*UNUSED*>base    : Evaluator;
                           p                 : LRVector.T;
-                          VAR schemaScm     : Scheme.T) : LRVector.T = 
+                          VAR schemaScm     : Scheme.T) : LRVector.T
+  RAISES { GenOpt.OutOfDomain } = 
   BEGIN
     IF doDebug THEN
       Debug.Out("BaseNominalEval : " & FmtP(p))
@@ -213,7 +225,8 @@ TYPE
 PROCEDURE AttemptEval(q                    : LRVector.T;
                       samples              : CARDINAL;
                       nominal              : BOOLEAN) : EvalResult
-  RAISES { ProcUtils.ErrorExit } =
+  RAISES { ProcUtils.ErrorExit,
+           GenOpt.OutOfDomain } =
 
   PROCEDURE SetNbOpts() =
     BEGIN
@@ -341,115 +354,162 @@ PROCEDURE AttemptEval(q                    : LRVector.T;
     END RunCommand;
 
   VAR
-    schemaScm  : Scheme.T;
-    Owr                  := NEW(TextWr.T).init();
-    Ewr                  := NEW(TextWr.T).init();
-    <*NOWARN*>stdout     := ProcUtils.WriteHere(Owr);
-    <*NOWARN*>stderr     := ProcUtils.WriteHere(Ewr);
-
-    sdIdx                := NextIdx();
-    subdirPath           := F("%s/%s",
-                              rundirPath,
-                              Pad(Int(sdIdx), 6, padChar := '0'));
-
     nbopts     : TEXT;
     cmd        : TEXT;
     cm         : ProcUtils.Completion;
+    subdirPath : Pathname.T;
+    stdout, stderr : ProcUtils.Writer;
+    
+  PROCEDURE RunIt() : EvalResult RAISES { ProcUtils.ErrorExit } =
+    VAR
+      schemaScm  : Scheme.T;
+      Owr                  := NEW(TextWr.T).init();
+      Ewr                  := NEW(TextWr.T).init();
 
-    theResult  : LRVectorSeq.T;
-  BEGIN
-    IF nominal THEN <*ASSERT samples=1*> END;
-    
-    SetNbOpts();
-    CopyVectorToScheme();
-    SetupDirectory();
-    
-    TRY
+      sdIdx                := NextIdx();
+      theResult  : LRVectorSeq.T;
+    BEGIN
+      <*NOWARN*>stdout     := ProcUtils.WriteHere(Owr);
+      <*NOWARN*>stderr     := ProcUtils.WriteHere(Ewr);
+
+      subdirPath           := F("%s/%s",
+                                rundirPath,
+                                Pad(Int(sdIdx), 6, padChar := '0'));
+      
+      IF nominal THEN <*ASSERT samples=1*> END;
+      
+      SetNbOpts();
+      CopyVectorToScheme();
+      SetupDirectory();
+      
       TRY
         TRY
-          theResult := RunCommand(schemaScm);
-          WITH wr = MustOpenWr(subdirPath & "/opt.ok") DO
-            Wr.Close(wr)
-          END
-        EXCEPT
-          ProcUtils.ErrorExit(err) =>
-          WITH msg = F("command \"%s\" \nraised ErrorExit : %s",
-                       cmd,
-                       
-                       ProcUtils.FormatError(err)) DO
-            
-            WITH wr = MustOpenWr(subdirPath & "/opt.error") DO
-              Wr.PutText(wr, ProcUtils.FormatError(err));
-              Wr.PutChar(wr, '\n');
+          TRY
+            theResult := RunCommand(schemaScm);
+            WITH wr = MustOpenWr(subdirPath & "/opt.ok") DO
               Wr.Close(wr)
-            END;
-            
-            Debug.Warning(msg);
+            END
+          EXCEPT
+            ProcUtils.ErrorExit(err) =>
+            WITH msg = F("command \"%s\" \nraised ErrorExit : %s",
+                         cmd,
+                         
+                         ProcUtils.FormatError(err)) DO
+              
+              WITH wr = MustOpenWr(subdirPath & "/opt.error") DO
+                Wr.PutText(wr, ProcUtils.FormatError(err));
+                Wr.PutChar(wr, '\n');
+                Wr.Close(wr)
+              END;
+              
+              Debug.Warning(msg);
 
-            <*FATAL GenOpt.OutOfDomain*>
-            BEGIN
-              schemaScm := NewScheme(NIL, TRUE)
-              (* normally created in running command, but not on a failure *)
-            END;
-            
-            IF outOfDomainResult = FIRST(LONGREAL) THEN
-              RAISE ProcUtils.ErrorExit(err)
-            ELSE
-              Debug.Out("Returning outOfDomainResult : " & LongReal(outOfDomainResult));
-              theResult := LRVectorSeq1(outOfDomainResult,
-                                        QuadRobust.GetModelVars().size())
+              <*FATAL GenOpt.OutOfDomain*>
+              BEGIN
+                schemaScm := NewScheme(q, FALSE)
+                (* normally created in running command, but not on a failure *)
+              END;
+              
+              IF outOfDomainResult = FIRST(LONGREAL) THEN
+                RAISE ProcUtils.ErrorExit(err)
+              ELSE
+                Debug.Out("Returning outOfDomainResult : " & LongReal(outOfDomainResult));
+                theResult := LRVectorSeq1(outOfDomainResult,
+                                          QuadRobust.GetModelVars().size())
+              END
             END
           END
+        EXCEPT
+          Wr.Failure(x) =>
+          Debug.Error(F("I/O error : Wr.Failure : while running in %s : %s:",
+                        subdirPath, AL.Format(x)));
+          <*ASSERT FALSE*>
         END
-      EXCEPT
-        Wr.Failure(x) =>
-        Debug.Error(F("I/O error : Wr.Failure : while running in %s : %s:",
-                      subdirPath, AL.Format(x)));
-        <*ASSERT FALSE*>
-      END
-    FINALLY
-      TRY
-        WITH errWr = MustOpenWr(subdirPath & "/opt.stderr"),
-             outWr = MustOpenWr(subdirPath & "/opt.stdout"),
-             resWr = MustOpenWr(subdirPath & "/opt.result") DO
-          Wr.PutText(errWr, TextWr.ToText(Ewr));
-          Wr.PutText(outWr, TextWr.ToText(Owr));
-          Wr.PutText(resWr, FmtLRVectorSeq(theResult) & "\n");
-          Wr.Close(errWr);
-          Wr.Close(outWr);
-          Wr.Close(resWr)
-        END;
-        IF samples = 0 OR nominal THEN
-          <*ASSERT theResult.size() = 1 *>
-          RETURN NEW(LRVectorResult,
-                     res        := theResult.get(0),
-                     schemaScm  := schemaScm)
-        ELSE
-          RETURN NEW(QuadResult,
-                     res        := VectorSeq.ToMulti(theResult, subdirPath),
-                     schemaScm  := schemaScm)
+      FINALLY
+        TRY
+          WITH errWr = MustOpenWr(subdirPath & "/opt.stderr"),
+               outWr = MustOpenWr(subdirPath & "/opt.stdout"),
+               resWr = MustOpenWr(subdirPath & "/opt.result") DO
+            Wr.PutText(errWr, TextWr.ToText(Ewr));
+            Wr.PutText(outWr, TextWr.ToText(Owr));
+            Wr.PutText(resWr, FmtLRVectorSeq(theResult) & "\n");
+            Wr.Close(errWr);
+            Wr.Close(outWr);
+            Wr.Close(resWr)
+          END;
+          IF samples = 0 OR nominal THEN
+            <*ASSERT theResult.size() = 1 *>
+            RETURN NEW(LRVectorResult,
+                       res        := theResult.get(0),
+                       schemaScm  := schemaScm)
+          ELSE
+            RETURN NEW(QuadResult,
+                       res        := VectorSeq.ToMulti(theResult, subdirPath),
+                       schemaScm  := schemaScm)
+          END
+        EXCEPT
+          Wr.Failure(x) =>
+          Debug.Error(F("I/O error : Wr.Failure : while writing output in %s : %s:",
+                        subdirPath, AL.Format(x)));
+          <*ASSERT FALSE*>
+          
         END
-      EXCEPT
-        Wr.Failure(x) =>
-        Debug.Error(F("I/O error : Wr.Failure : while writing output in %s : %s:",
-                      subdirPath, AL.Format(x)));
-        <*ASSERT FALSE*>
-        
       END
-    END
+    END RunIt;
+
+  PROCEDURE CheckCoords() RAISES { GenOpt.OutOfDomain } =
+    BEGIN
+      FOR i := 0 TO vseq.size() - 1 DO
+        WITH v  = vseq.get(i),
+             nm = v.nm,
+             pi = q[i],
+             vv = pi * v.defstep DO
+          IF (vv < v.min OR vv > v.max) THEN
+            Debug.Out(F("CheckCoords param %s [%s] out of domain vv=%s [ v.min=%s v.max=%s ]",
+                        Int(i), nm, LR(vv), LR(v.min), LR(v.max)));
+            
+            RAISE GenOpt.OutOfDomain
+          END
+        END
+     END
+    END CheckCoords;
+    
+  BEGIN
+    CheckCoords();
+    RETURN RunIt()
   END AttemptEval;
 
 TYPE
   MyMultiEval = MultiEvalLRVector.T OBJECT
     base : Evaluator;
   OVERRIDES
+    inDomain    := DoInDomain;
     multiEval   := DoMultiEval;
     nominalEval := DoNominalEval;
   END;
 
+PROCEDURE DoInDomain(<*UNUSED*>mme : MyMultiEval; p : LRVector.T) : BOOLEAN =
+  BEGIN
+    FOR i := 0 TO vseq.size() - 1 DO
+      WITH v  = vseq.get(i),
+           nm = v.nm,
+           pi = p[i],
+           vv = pi * v.defstep DO
+        IF (vv < v.min OR vv > v.max) THEN
+          Debug.Out(F("DoInDomain param %s [%s] out of domain vv=%s [ v.min=%s v.max=%s ]",
+                      Int(i), nm, LR(vv), LR(v.min), LR(v.max)));
+          
+          RETURN FALSE
+        END
+      END
+    END;
+    RETURN TRUE
+  END DoInDomain;
+
 PROCEDURE DoMultiEval(mme     : MyMultiEval;
                       at      : LRVector.T;
-                      samples : CARDINAL) : MultiEvalLRVector.Result =
+                      samples : CARDINAL) : MultiEvalLRVector.Result
+  RAISES { GenOpt.OutOfDomain }=
   VAR
     scm : Scheme.T;
     res := mme.base.multiEval(at, samples, scm);
@@ -461,7 +521,8 @@ PROCEDURE DoMultiEval(mme     : MyMultiEval;
   END DoMultiEval;
 
 PROCEDURE DoNominalEval(mme : MyMultiEval;
-                        at  : LRVector.T) : LRVector.T =
+                        at  : LRVector.T) : LRVector.T
+  RAISES { GenOpt.OutOfDomain } =
   VAR
     scm : Scheme.T;
     res := mme.base.nominalEval(at, scm);

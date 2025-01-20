@@ -20,30 +20,12 @@
     (GenOpt.DefOptVar nm defval-x defstep min max)
     (set! *opt-vars* (cons (list nm defval-x defstep) *opt-vars*))))
 
-(define (def-rhobeg val)
-  (GenOpt.SetRhoBeg val))
-
-(define (def-rhoend val)
-  (GenOpt.SetRhoEnd val))
-
 (define (set-netbatch val)
   (GenOpt.SetNetbatch val))
 
 (define *compute-command* #f)
 (define (def-compute-command proc)
   (set! *compute-command* proc))
-
-(define (def-schema-path path)
-  (GenOpt.DefSchemaPath path))
-
-(define (def-load-scm scm-path)
-  (GenOpt.DefLoadScm scm-path))
-
-(define (def-data-filename fnm)
-  (GenOpt.DefDataFilename fnm))
-
-(define (def-eval lisp-code)
-  (QuadOpt.DefEval lisp-code))
 
 ;; *p*[i] = *x*[i] / *factors*[i]
 ;;(define *x* #f)       ;; the abstract point (problem variables)
@@ -130,6 +112,8 @@
     (map (lambda(i)(coords 'get i)) (uprange (coords 'size)))))
 
 (define (get-*x*)
+  ;; this scales the opt-vars from the normalized coodinates to
+  ;; the physical coordinates
   (let ((factors (map caddr *opt-vars*)))
     (map * (get-*p*) factors)))
 

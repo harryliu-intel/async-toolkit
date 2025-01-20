@@ -27,13 +27,15 @@ PROCEDURE GetRhoEnd() : LONGREAL;
 PROCEDURE GetRho() : LONGREAL;
 
 PROCEDURE SetRho(to : LONGREAL);
+
+PROCEDURE GetMinRho() : LONGREAL;
+
+PROCEDURE SetMinRho(to : LONGREAL);
   
 PROCEDURE SetLambdaMult(to : LONGREAL);
 
 PROCEDURE GetLambdaMult() : LONGREAL;
     
-PROCEDURE GetIter() : CARDINAL;
-
 PROCEDURE SetCallback(obj : OptCallback.T);
 
 (**********************************************************************)
@@ -94,10 +96,13 @@ PROCEDURE SetMethod(method : Method);
 
 PROCEDURE GetMethod() : Method;
 
+PROCEDURE GetIter() : CARDINAL;
+
+PROCEDURE SetIter(to : CARDINAL);
+  
 CONST Brand = "GenOpt";
 
-VAR iter : CARDINAL;
-    paramBindings : TextTextTbl.T;
+VAR paramBindings : TextTextTbl.T;
     
 TYPE
   ResultWriter = OBJECT
@@ -115,7 +120,7 @@ VAR
   schemaEval     : SchemeObject.T;
   outOfDomainResult        := FIRST(LONGREAL);
   method                   := Method.NewUOAs;
-  doNetbatch                := TRUE;
+  doNetbatch               := TRUE;
 
 EXCEPTION OutOfDomain;
           

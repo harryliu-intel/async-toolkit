@@ -27,7 +27,7 @@ IMPORT LRVectorFieldPll;
 IMPORT LongRealSeq AS LRSeq;
 
 IMPORT GenOpt;
-FROM GenOpt IMPORT iter, ResultWriter,
+FROM GenOpt IMPORT ResultWriter,
                    GetOptFailureResult, OutOfDomain, GetLambdaMult,
                    GetRho, SetRho;
 
@@ -97,6 +97,14 @@ VAR doDebug := Debug.DebugThis("QuadRobust");
 
 VAR doNominal := FALSE;
 
+VAR Lookback := 5;
+
+PROCEDURE SetLookback(to : CARDINAL) =
+  BEGIN Lookback := to END SetLookback;
+    
+PROCEDURE GetLookback() : CARDINAL =
+  BEGIN RETURN Lookback END GetLookback;
+    
 PROCEDURE SetDoNominal(to : BOOLEAN) =
   BEGIN doNominal := to END SetDoNominal;
 
@@ -179,6 +187,7 @@ TYPE
   END;
 
 PROCEDURE NCApply(nc : NomClosure) : REFANY =
+  <*FATAL GenOpt.OutOfDomain*>
   BEGIN
     nc.res := nc.me.nominalEval(at := nc.at);
     RETURN nc
@@ -203,6 +212,10 @@ PROCEDURE MEEval(me      : MultiEvaluator;
        we are doing nominal evals at all.
     *)
 
+    IF NOT me.base.inDomain(p) THEN
+      RETURN GenOpt.GetOptFailureResult()
+    END;
+
     LOCK valueMu DO
       isNew   := NOT me.thisCyc.insert(p);
       haveOld := me.values.get(p, oldres);
@@ -215,9 +228,12 @@ PROCEDURE MEEval(me      : MultiEvaluator;
       Debug.Out("QuadRobust.MEEval : Launching nominal eval at " & FmtP(p));
       thr := Thread.Fork(NEW(NomClosure, me := me.base, at := p))
     END;
-    
-    res := me.base.multiEval(p, me.samples);
-    <*ASSERT res.extra # NIL*>
+
+    <*FATAL GenOpt.OutOfDomain*>
+    BEGIN
+      res := me.base.multiEval(p, me.samples);
+      <*ASSERT res.extra # NIL*>
+    END;
 
     IF thr # NIL THEN
       VAR
@@ -446,6 +462,7 @@ PROCEDURE Analyze(READONLY pr   : PointResult.T; (* current [old] point *)
         END;
 
         WITH hadIt = fvalues.get(p, fv) DO
+          <*ASSERT hadIt*>
           IF ABS(fv) <= 100.0d0 * goodv THEN
             EVAL finpts.insert(p)
           END
@@ -1667,6 +1684,41 @@ PROCEDURE CountPoints(s   : LRVectorSet.T;
     RETURN sum
   END CountPoints;
   
+PROCEDURE WriteCheckpoint(READONLY pr : PointResult.T;
+                          iter        : CARDINAL;
+                          values      : LRVectorMRVTbl.T;
+                          fvalues     : LRVectorLRTbl.T;
+                          ) =
+    (* valueMu locked *)
+    VAR
+      newvalues := NEW(LRVectorMRVTbl.Default).init();
+      iterator := values.iterate();
+      v : LRVector.T;
+      m : MultiEvalResultLRVector.T;
+    BEGIN
+      WHILE iterator.next(v, m) DO
+        m.extra := NIL;
+        EVAL newvalues.put(v, m)
+      END;
+      WITH checkpoint = NEW(QuadCheckpoint.T,
+                            iter    := iter,
+                            values  := newvalues,
+                            fvalues := fvalues,
+                            pr      := pr,
+                            rho     := GetRho() ),
+           pi         = Pad(Int(iter), 6, padChar := '0'),
+           fn         = F("quadcheckpoint.%s.chk", pi),
+           tfn        = fn & "_temp",
+           wr         = FileWr.Open(tfn) DO
+        
+        Debug.Out("QuadRobust.Minimize : writing checkpoint file " & tfn);
+        
+        Pickle.Write(wr, checkpoint);
+        Wr.Close(wr);
+        FS.Rename(tfn, fn)
+      END
+    END WriteCheckpoint;
+    
 PROCEDURE Minimize(pa             : LRVector.T;
                    func           : MultiEvalLRVector.T;
                    toEval         : SchemeObject.T;
@@ -1765,7 +1817,7 @@ PROCEDURE Minimize(pa             : LRVector.T;
       END;
     END AwaitPointEvals;
 
-  PROCEDURE WriteProgress() =
+  PROCEDURE WriteProgress(iter : CARDINAL) =
     (* valueMu locked *)
     BEGIN
       IF progressWriter # NIL THEN
@@ -1780,37 +1832,6 @@ PROCEDURE Minimize(pa             : LRVector.T;
         END
       END
     END WriteProgress;
-    
-  PROCEDURE WriteCheckpoint() =
-    (* valueMu locked *)
-    VAR
-      newvalues := NEW(LRVectorMRVTbl.Default).init();
-      iterator := values.iterate();
-      v : LRVector.T;
-      m : MultiEvalResultLRVector.T;
-    BEGIN
-      WHILE iterator.next(v, m) DO
-        m.extra := NIL;
-        EVAL newvalues.put(v, m)
-      END;
-      WITH checkpoint = NEW(QuadCheckpoint.T,
-                            iter    := iter,
-                            values  := newvalues,
-                            fvalues := fvalues,
-                            pr      := pr,
-                            rho     := GetRho() ),
-           pi         = Pad(Int(iter), 6, padChar := '0'),
-           fn         = F("quadcheckpoint.%s.chk", pi),
-           tfn        = fn & "_temp",
-           wr         = FileWr.Open(tfn) DO
-        
-        Debug.Out("QuadRobust.Minimize : writing checkpoint file " & tfn);
-        
-        Pickle.Write(wr, checkpoint);
-        Wr.Close(wr);
-        FS.Rename(tfn, fn)
-      END
-    END WriteCheckpoint;
     
   VAR
     n        := NUMBER(pa^);
@@ -1841,7 +1862,7 @@ PROCEDURE Minimize(pa             : LRVector.T;
     startIter := 0;
 
     checkPoint : QuadCheckpoint.T := NIL;
-    
+
   BEGIN
     SetRho(rhobeg);
     
@@ -1915,6 +1936,8 @@ PROCEDURE Minimize(pa             : LRVector.T;
     FOR iter := startIter TO 100 * n - 1 DO
 
       (*******************  MAIN MINIMIZATION ITERATION  *******************)
+
+      GenOpt.SetIter(iter);
 
       (* track evaluations on this iter *)
       LOCK valueMu DO
@@ -2021,28 +2044,25 @@ PROCEDURE Minimize(pa             : LRVector.T;
             END
           END;
 
-
           pr := newp;
           mins.addhi   (newp);
           allMins.addhi(newp);
 
-          WriteProgress();
-          WriteCheckpoint();
+          WriteProgress(iter);
+          WriteCheckpoint(pr, iter, values, fvalues);
         END;
 
-        WITH Lookback = 5 DO
           (* 
-             if we haven't improved in five straight iterations,
+             if we haven't improved in seven straight iterations,
              call it a day 
           *)
           
           IF mins.size() > Lookback THEN
             WITH old = mins.get(mins.size() - Lookback) DO
-              IF old.metric <= newp.metric AND (NOT newp.quadratic OR old.quadratic) AND old.rho <= newp.rho THEN
+              IF old.metric <= newp.metric AND (NOT newp.quadratic OR old.quadratic) AND old.rho <= newp.rho AND GetRho() < GenOpt.GetMinRho() THEN
                 message := "stopping because no more improvement";
                 EXIT
               END
-            END
           END
         END
       END;
@@ -2065,7 +2085,7 @@ PROCEDURE Minimize(pa             : LRVector.T;
         (* we don't know how it works so we don't know how to clear it *)
       END;
 
-      message := "stopping because of out of iterations"
+      message := "stopping because of out of iterations";
       (* if we fall through, that's the last message we set! *)
       
     END;
@@ -2095,7 +2115,7 @@ PROCEDURE Minimize(pa             : LRVector.T;
       
       Debug.Out("QuadRobust.m3 : " & message);
       
-      RETURN Output { iterations := iter,
+      RETURN Output { iterations := GenOpt.GetIter(),
                       funcCount  := 0,
                       fhist      := GetFHist(allMins),
                       message    := message,
