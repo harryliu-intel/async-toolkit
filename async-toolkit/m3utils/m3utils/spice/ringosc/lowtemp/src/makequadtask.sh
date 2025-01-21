@@ -24,7 +24,8 @@ step=1
 
 sweeps="40"
 
-stages="5 11 11 22 44"
+#stages="5 11 22 44"
+stages="5 22 33 44"
 kcycles="5 5 5"
 
 #trantypes="lvt ulvt" # svt doesnt work yet
@@ -47,7 +48,7 @@ if [ "${testing}" == "1" ]; then
     sweeps="4"
 fi
 
-fewtemps=1
+fewtemps=0
 
 if [ "${fewtemps}" == "1" ]; then
     stages="11"
