@@ -37,7 +37,8 @@
 (QuadRobust.SetDoNominal        #t)
 (QuadRobust.SetMinNewPts        50)
 (QuadRobust.SetLookback          7)
-(QuadRobust.SetCommandTimeout 2000) ;; also look at -ctruntimelimit
+
+(GenOpt.SetCommandTimeout     2000) ;; also look at -ctruntimelimit
 
 ;; model the three aspects of any variable:
 ;; nom mu sigma

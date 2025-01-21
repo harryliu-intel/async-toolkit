@@ -430,7 +430,8 @@ PROCEDURE Analyze(READONLY pr   : PointResult.T; (* current [old] point *)
     goodv, fv  : LONGREAL;
 
     bestLlFin := FIRST(LONGREAL);
-    bestOpt : LRVector.T;
+    bestOpt   := LRVector.Copy(pr.p); (* must make sure it is something,
+                                         in case the optimization fails *)
         
   BEGIN
 
@@ -551,7 +552,7 @@ PROCEDURE Analyze(READONLY pr   : PointResult.T; (* current [old] point *)
 
             IF llfin > bestLlFin THEN
               bestLlFin := llfin;
-              bestOpt := LRVector.Copy(popt)
+              bestOpt   := LRVector.Copy(popt)
             END
           END;
 
