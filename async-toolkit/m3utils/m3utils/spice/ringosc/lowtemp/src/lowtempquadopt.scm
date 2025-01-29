@@ -38,7 +38,7 @@
 (QuadRobust.SetMinNewPts        50)
 (QuadRobust.SetLookback          7)
 
-(GenOpt.SetCommandTimeout     2000) ;; also look at -ctruntimelimit
+(GenOpt.SetCommandTimeout     8000) ;; also look at -ctruntimelimit
 
 ;; model the three aspects of any variable:
 ;; nom mu sigma
@@ -82,7 +82,7 @@
                   " -modleaves        true"
                   " -stages "         stages
                   " -step "           step
-                  " -ctruntimelimit " 1800 ;; seconds
+                  " -ctruntimelimit " 1900 ;; seconds
                   " -p pre -p sim -p conv -p clean -p post"))
 
 

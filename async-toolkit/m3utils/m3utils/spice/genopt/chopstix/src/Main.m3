@@ -264,6 +264,17 @@ PROCEDURE AttemptEval(q                    : LRVector.T;
       END
     END CopyVectorToScheme;
 
+  PROCEDURE NbTimeout() : TEXT =
+    BEGIN
+      WITH timeo = GenOpt.GetCommandTimeout() DO
+        IF timeo = 0.0d0 THEN
+          RETURN ""
+        ELSE
+          RETURN F("--exec-limits %s:%s ",  LR(timeo), LR(timeo))
+        END
+      END
+    END NbTimeout;
+    
   PROCEDURE SetupDirectory() : TEXT =
     BEGIN
       TRY
@@ -290,9 +301,10 @@ PROCEDURE AttemptEval(q                    : LRVector.T;
         
         WITH cmdDbgWr    = MustOpenWr(subdirPath & "/opt.cmd"),
              runCmdDbgWr = MustOpenWr(subdirPath & "/opt.runcmd"),
-             
-             nbCmd       = F("nbjob run %s --mode interactive %s",
+             nbtimeout   = NbTimeout(),
+             nbCmd       = F("nbjob run %s --mode interactive %s %s",
                              nbopts,
+                             nbtimeout,
                              cmd) DO
           VAR
             runCmd : TEXT;
