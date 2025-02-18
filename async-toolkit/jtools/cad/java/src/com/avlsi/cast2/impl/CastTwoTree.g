@@ -748,7 +748,7 @@ options {
         final String name = cellName.getText();
         final Pair baseType =
             baseType(CastTwoUtil.makeBaseTypeAST(name, metaParams, cellName),
-                     metaEnv, paramEnv, null, envContainer, null, false);
+                     metaEnv, paramEnv, null, envContainer, null, false, false);
         final UserDefinedValue udv =
             (UserDefinedValue) lookup(paramEnv, Symbol.create(name), errorAST);
 
@@ -1605,6 +1605,14 @@ options {
         System.exit(1);
     }
 
+    private void metaParamError(ASTWithInfo ast) throws SemanticException {
+        final SemanticException se = new SemanticException(
+            "only algebraic types allowed in metaparameters",
+            ast.getFilename(), ast.getLine(), ast.getColumn());
+        se.column = ast.getColumn();
+        throw se;
+    }
+
     /**
      * Binds the symbol to the value in the environment, properly
      * augmenting if the symbol is already bound to an array that can
@@ -2347,7 +2355,8 @@ type[Environment env, CellImpl cell, CellInterface envContainer,
      ASTWithInfo id, int declKind]
 returns [Pair p]
     { final Pair pb, pWidth; Pair ps = null; p = null; }
-    : #( TYPE pb=bt:baseType[env, env, cell, envContainer, varName, globalP]
+    : #( TYPE pb=bt:baseType[env, env, cell, envContainer, varName, globalP,
+                             declKind == META_PARAM]
          ( ps=arraySelector[env, declKind != LOCAL_VAR
                              ? (ParamTypeInterface) pb.getSecond()
                              : (ParamTypeInterface) null,
@@ -2429,13 +2438,16 @@ returns [Pair p]
 //   null if processing a meta-param list
 // FIXME: kwallmar: optimize more, refactor in general
 baseType[Environment metaEnv, Environment env, CellImpl cell,
-         CellInterface envContainer, HierName varName, boolean globalP]
+         CellInterface envContainer, HierName varName, boolean globalP,
+         boolean metaP]
         returns [Pair p]
     { p = null; }
     : { TupleValue tupleVal; }
       #( USER_TYPE id:IDENT
                    tupleVal=expressionList[metaEnv, false] )
       {
+          if (metaP) metaParamError(id);
+
           // These index numbers have changed recently (Jan 2002)
           // FIXME: should be able to look up old InstanceValue if
           // this has already been defined?
@@ -2594,7 +2606,7 @@ baseType[Environment metaEnv, Environment env, CellImpl cell,
                   new int[] { InstanceValue.INLINE_NONE }),
               portType);
       }
-    | p=primitiveType[env, cell, varName, globalP]
+    | p=primitiveType[env, cell, varName, globalP, metaP]
     ;
 
 // return Pair of the default value of the appropriate type
@@ -2604,14 +2616,16 @@ baseType[Environment metaEnv, Environment env, CellImpl cell,
 //   if processing a port-param list, or body variable declaration,
 //   null if processing a meta-param list
 primitiveType[Environment env, CellImpl cell, HierName varName,
-              boolean globalP]
+              boolean globalP, boolean metaP]
 returns [Pair p]
     { p = null; }
     : BOOL   { BoolValue  v = new BoolValue();  p = new Pair(v, v); }
     | INT    { IntValue   v = new IntValue();   p = new Pair(v, v); }
     | FLOAT  { FloatValue v = new FloatValue(); p = new Pair(v, v); }
-    | NODE   
+    | ty:NODE   
       {
+          if (metaP) metaParamError(ty);
+
           Debug.assertTrue(varName.getNumComponents() == 1);
 
           // if the node was declared globally, append '!' to the name
