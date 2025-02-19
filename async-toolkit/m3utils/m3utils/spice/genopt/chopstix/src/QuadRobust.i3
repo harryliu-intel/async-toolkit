@@ -105,6 +105,19 @@ PROCEDURE GetMinNewPts() : CARDINAL;
 VAR schemeMu : MUTEX;
 
 TYPE
+  (* wrap the function that is to be optimized in a ResultRecorder :
+     the optimizing algorithm will record the history of evaluations
+     in the results table.
+
+     The table keys are { p , f } where p is the evaluation point and
+     f is the evaluated value (after Scheme processing).
+
+     The table values are the names of the subdirectories where the 
+     data for each data point is located.
+
+     At present, Main seems to just use this table to print the 
+     observed value for the reported optimal point.
+  *)
   ResultRecorder = LRVectorFieldPll.T OBJECT
     results            : LRVectorLRPairTextTbl.T;
     resultsMu          : MUTEX;

@@ -24,7 +24,6 @@ IMPORT NewUOAs;
 IMPORT LRVector;
 IMPORT ProcUtils;
 IMPORT Rd;
-IMPORT TextWr;
 IMPORT FileWr;
 IMPORT SchemeSymbol;
 IMPORT Process;
@@ -279,6 +278,8 @@ PROCEDURE AttemptEval(q                    : LRVector.T;
     BEGIN
       TRY
         TRY
+          Debug.Out("AttemptEval.SetupDirectory : creating dir " & subdirPath);
+          
           FS.CreateDirectory(subdirPath);
         EXCEPT
           OSError.E(x) =>
@@ -321,6 +322,9 @@ PROCEDURE AttemptEval(q                    : LRVector.T;
             Wr.PutChar(runCmdDbgWr, '\n');
             Wr.Close(cmdDbgWr); Wr.Close(runCmdDbgWr);
 
+            Ewr := MustOpenWr(subdirPath & "/opt.stderr");
+            Owr := MustOpenWr(subdirPath & "/opt.stdout");
+            
             RETURN runCmd
           END
         END
@@ -385,11 +389,22 @@ PROCEDURE AttemptEval(q                    : LRVector.T;
               cm.waitTimeout(timeo)
             END
           END;
+          TRY
+            Wr.Close(Owr);
+            Wr.Close(Ewr);
+          EXCEPT
+            Wr.Failure(x) =>
+            Debug.Error(F("I/O error : Wr.Failure : while writing command output in %s : %s:",
+                          subdirPath, AL.Format(x)));
+          <*ASSERT FALSE*>
+          END;
           RETURN
         EXCEPT
           ProcUtils.Timeout =>
-          Debug.Warning(F("Main.Await : command %s timed out, re-running",
-                          runCmd));
+          Debug.Warning(F("Main.Await in %s : command %s timed out, re-running",
+                          subdirPath, runCmd));
+          Ewr := MustOpenWr(subdirPath & "/opt.stderr." & Int(i));
+          Owr := MustOpenWr(subdirPath & "/opt.stdout." & Int(i));
           LaunchCmd(runCmd)
         END
       END;
@@ -414,8 +429,6 @@ PROCEDURE AttemptEval(q                    : LRVector.T;
       sdIdx                := NextIdx();
       theResult  : LRVectorSeq.T;
     BEGIN
-      Owr                  := NEW(TextWr.T).init();
-      Ewr                  := NEW(TextWr.T).init();
 
       subdirPath           := F("%s/%s",
                                 rundirPath,
@@ -441,8 +454,9 @@ PROCEDURE AttemptEval(q                    : LRVector.T;
             END
           EXCEPT
             ProcUtils.ErrorExit(err) =>
-            WITH msg = F("command \"%s\" \nraised ErrorExit : %s",
+            WITH msg = F("command \"%s\" in %s\nraised ErrorExit : %s",
                          cmd,
+                         subdirPath,
                          
                          ProcUtils.FormatError(err)) DO
               
@@ -477,14 +491,8 @@ PROCEDURE AttemptEval(q                    : LRVector.T;
         END
       FINALLY
         TRY
-          WITH errWr = MustOpenWr(subdirPath & "/opt.stderr"),
-               outWr = MustOpenWr(subdirPath & "/opt.stdout"),
-               resWr = MustOpenWr(subdirPath & "/opt.result") DO
-            Wr.PutText(errWr, TextWr.ToText(Ewr));
-            Wr.PutText(outWr, TextWr.ToText(Owr));
+          WITH resWr = MustOpenWr(subdirPath & "/opt.result") DO
             Wr.PutText(resWr, FmtLRVectorSeq(theResult) & "\n");
-            Wr.Close(errWr);
-            Wr.Close(outWr);
             Wr.Close(resWr)
           END;
           IF samples = 0 OR nominal THEN
@@ -732,7 +740,7 @@ PROCEDURE MRWWrite(mrw : MyResultWriter; output : NewUOAs.Output)
         END;
         IF haveIt THEN
           TRY
-            WITH rd = FileRd.Open(subdir & "/" & schemaDataFn),
+            WITH rd   = FileRd.Open(subdir & "/" & schemaDataFn),
                  line = Rd.GetLine(rd) DO
               Wr.PutChar(awr, ',');
               Wr.PutText(awr, subdir);
@@ -962,7 +970,7 @@ PROCEDURE SchemaReadResult(schemaPath ,
       END
     EXCEPT
       OSError.E, Rd.Failure, Rd.EndOfFile  =>
-      Debug.Warning("Caught system error reading schema/data.  Returning failure.");
+      Debug.Warning(F("Caught system error reading schema/data from %s.  Returning failure.", dataPath));
       RETURN LRVectorSeq1(outOfDomainResult,
                                         QuadRobust.GetModelVars().size())
     |
@@ -1069,7 +1077,7 @@ BEGIN
     Process.Exit(0)
   END;
   
-  Debug.SetOptions(SET OF Debug.Options { Debug.Options.PrintThreadID } );
+  Debug.EnableOptions(SET OF Debug.Options { Debug.Options.PrintThreadID } );
   scmFiles.addhi("require");
   scmFiles.addhi("m3");
 

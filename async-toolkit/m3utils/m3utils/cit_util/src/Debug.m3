@@ -56,6 +56,13 @@ PROCEDURE GetOptions() : SET OF Options = BEGIN RETURN options END GetOptions;
 VAR envOverrides := NEW(LockedTextBooleanTbl.Default).init();
     valOverrides := NEW(TextTextTbl.Default).init();
 
+PROCEDURE EnableOptions(q : SET OF Options) =
+  BEGIN options := options + q END EnableOptions;
+  
+
+PROCEDURE DisableOptions(q : SET OF Options) =
+  BEGIN options := options - q END DisableOptions;
+
 PROCEDURE SetEnv(var : TEXT) =
   BEGIN EVAL envOverrides.put(var,TRUE) END SetEnv;
 
@@ -595,6 +602,14 @@ PROCEDURE CallCallbacks() =
   
 BEGIN
 
+  FOR i := FIRST(Options) TO LAST(Options) DO
+    WITH optionEnvName = "DEBUGOPT_" & OptionNames[i] DO
+      IF HaveEnv(optionEnvName) THEN
+        options := options + SET OF Options { i }
+      END
+    END
+  END;
+  
   WITH str = RTParams.Value("debugoverrides") DO
     IF str # NIL THEN
       WITH cl = NEW(OverrideClosure, fn := str) DO

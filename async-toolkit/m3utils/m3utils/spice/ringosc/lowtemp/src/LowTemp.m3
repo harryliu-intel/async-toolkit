@@ -802,6 +802,18 @@ BEGIN
       tag := pp.getNext()
     END; 
 
+    IF pp.keywordPresent("-debugfile") OR pp.keywordPresent("-dbgf") THEN
+      WITH fn = pp.getNext() DO
+        TRY
+          WITH wr = FileWr.Open(fn) DO
+            Debug.AddStream(wr)
+          END
+        EXCEPT
+          OSError.E(x) => Debug.Error(F("Can't add debug stream to file \"%s\" : OSError.E : %s", fn, AL.Format(x)))
+        END
+      END
+    END;
+    
     IF pp.keywordPresent("-sweeps") THEN
       sweeps := pp.getNextInt();
     END;

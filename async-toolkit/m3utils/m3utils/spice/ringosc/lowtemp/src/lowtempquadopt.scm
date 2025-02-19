@@ -70,6 +70,7 @@
   '(string-append *cmd-path*
                   (if *stoc-nominal* " -nominal " "")
                   " -nb"
+;;                  " -cnb"  ;; do conversions through netbatch -- why not?
                   " -externalsweep    10"
                   " -vdd "            vdd
                   " -temp "           temp
@@ -83,6 +84,7 @@
                   " -stages "         stages
                   " -step "           step
                   " -ctruntimelimit " 1900 ;; seconds
+                  " -dbgf lowtemp.stderr"
                   " -p pre -p sim -p conv -p clean -p post"))
 
 

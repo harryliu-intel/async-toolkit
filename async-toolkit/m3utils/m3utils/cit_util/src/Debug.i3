@@ -134,8 +134,25 @@ CONST This = DebugThis;
 
 TYPE Options = { PrintPID, PrintThreadID, PrintTime };
 
+CONST OptionNames = ARRAY Options OF TEXT {
+  "PrintPID", "PrintThreadID", "PrintTime" };
+
 PROCEDURE SetOptions(options : SET OF Options);
+  (* set options from program.
+
+     options are also set on startup by checking the environment
+     variable DEBUGOPT_<opt-name> and form the default set of options
+     to the Out procedure, etc. 
+  *)
+
+PROCEDURE EnableOptions(options : SET OF Options);
+  (* enable options if not set *)
+
+PROCEDURE DisableOptions(options : SET OF Options);
+  (* disable options if set *)
+
 PROCEDURE GetOptions() : SET OF Options;
+  (* check current options *)
 
 (* override environment variables programmatically *)
 
