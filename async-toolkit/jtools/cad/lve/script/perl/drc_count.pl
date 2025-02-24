@@ -10,8 +10,9 @@ while (my $line = <STDIN> ){
         $ready=1;
         my $c=$1;
         my $class;
-        if ($rule =~ /NODATA/) { $class="nodata"; }
-        elsif ($rule =~ /^bm/ || $rule =~ /^m/ || $rule =~ /^bv/ || $rule =~ /^v/) { $class="metvia"; }
+        my $r=lc($rule);
+        if ($r =~ /nodata/) { $class="nodata"; }
+        elsif ($r =~ /^bm/ || $r =~ /^m/ || $r =~ /^bv/ || $r =~ /^v/) { $class="metvia"; }
         else { $class="other"; }
         if (defined($count{$class})) { $count{$class}+=$c; $rules{$class} .= "\t$rule\t$c\n"; }
         else                         { $count{$class} =$c; $rules{$class}  = "\t$rule\t$c\n"; }
