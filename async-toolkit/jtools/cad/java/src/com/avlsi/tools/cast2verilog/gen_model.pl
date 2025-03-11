@@ -4,11 +4,12 @@ use warnings;
 use Getopt::Long;
 use Pod::Usage;
 use File::Spec::Functions qw/:ALL/;
+use Data::Dump qw(dump);
 use FindBin;
 use Cwd qw/abs_path/;
 
 my ($cast_path, $spar_dir, $gls_dir, $cell, $env, $cosim, @cast_defines);
-my ($beh, $fpga_path, @c2v_args, @vcs_args, $kdb, @sdf, $perf, $help, $nodebug);
+my ($beh, $fpga_path, @c2v_args, @vcs_args, $kdb, $sdf, $perf, $axi, $nolint, $help, $nodebug);
 my $width = 300;
 my $mem = '16G';
 my $reset_duration = '10ns';
@@ -20,15 +21,17 @@ GetOptions("cast-path=s" => \$cast_path,
            "cosim=s"     => \$cosim,
            "width=i"     => \$width,
            "fpga-path=s" => \$fpga_path,
-           "defines=s"   => \@cast_defines,
+           "define=s"    => \@cast_defines,
            "c2v-args=s"  => \@c2v_args,
            "vcs-args=s"  => \@vcs_args,
            "mem=s"       => \$mem,
            "beh!"        => \$beh,
            "kdb!"        => \$kdb,
            "no-debug!"   => \$nodebug,
-           "sdf=s"       => \@sdf,
+           "sdf=s"       => \$sdf,
            "perf!"       => \$perf,
+           "axi!"        => \$axi,
+           "no-lint!"    => \$nolint,
            "help!"       => \$help) || pod2usage(2);
 
 pod2usage(-verbose => 1) if $help;
@@ -46,9 +49,6 @@ if (!defined($cast_path)) {
     $cast_path = join(':', abs_path(catdir($hw_dir, 'cast')),
                            abs_path(catdir($hw_dir, 'spec')));
 }
-
-my $runvcs   = "run-vcs";
-my $runverdi = "run-verdi";
 
 my $flist = "testbench.f";
 
@@ -83,45 +83,16 @@ if (open(my $lh, $flist)) {
     }
 }
 
-# Collect list of cells to bind performance monitor
-my @bd_ctrls;
-my $search_ctrl = "^...bd";
-my @bd_divs;
-my $search_div = "^...divert";
+#count the number of lines from command output
+#my $num_lines = `fulcrum cast_query wc -l $flist`;
+#chomp($num_lines);
+#if ($num_lines > 0) {
+#    print "Found $num_lines files\n";
+#}
+#print "Found $num_lines files\n" if ($num_lines > 0);
+
 if ($perf) {
     unshift @vcs_args, "-f \"\$CAST2VERILOG_RUNTIME/perf.vcfg\"";
-    if (open(my $lh, $flist)) {
-        local $/;
-        my @content2 = split(/\n/, $content);
-        foreach my $line (@content2) {
-            chomp($line);
-            $line = (split(/ /, $line))[-1];
-            $line =~ s/\$GLS_DIR/$gls_dir/g;
-            $line =~ s/[\r\n]+$//;
-            #print "VLOG: $line\n";
-            my @ctrl_match = split(/\n/, `grep -oh '$search_ctrl\\w*' $line \| sort \| uniq`);
-            my @div_match = split(/\n/, `grep -oh '$search_div\\w*' $line \| sort \| uniq`);
-            chomp(@ctrl_match);
-            chomp(@div_match);
-            foreach my $match (@ctrl_match) {
-                push(@bd_ctrls, $match) unless grep{$_ =~ $match} @bd_ctrls;
-            }
-            foreach my $match (@div_match) {
-                push(@bd_divs, $match) unless grep{$_ =~ $match} @bd_divs;
-            }
-        }
-        close $lh;
-        # Generate verilog file to bind performance monitors to controllers
-        open my $fh_bind, ">bind_perf_mon.v" || die "Can't open bind_perf_mon.v: $!";
-        foreach my $ctrl (@bd_ctrls) {
-            print $fh_bind "bind $ctrl bd_ctrl_perf_mon ctrl_mon(.*);\n";
-        }
-        foreach my $div (@bd_divs) {
-            print $fh_bind "bind $div bd_div_perf_mon div_mon(.*);\n";
-        }
-        close $fh_bind;
-        push @vcs_args, "bind_perf_mon.v";
-    }
 }
 
 
@@ -138,69 +109,80 @@ my @args = ();
 if (-s $flist) {
     push @args, '-f', $flist;
 }
+
 my @sdf_args = ();
-
-push @vcs_args, '-kdb' if $kdb;
-
-open my $fh_vcs, ">$runvcs" || die "Can't open $runvcs: $!";
-open my $fh_verdi, ">$runverdi" || die "Can't open $runverdi: $!";
-
 if (defined($gls_dir)) {
-    print $fh_vcs <<'EOF';
-[[ -z "$STDCELL_DIR" ]] && export STDCELL_DIR=$NCL_DIR/stdcells
-[[ -z "$GPIO_DIR" ]] && export GPIO_DIR=$NCL_DIR/gpio/latest
-[[ -z "$CMO_DIR" ]] && export CMO_DIR=$NCL_DIR/sram/cmo/latest
-[[ -z "$PUF_DIR" ]] && export PUF_DIR=$NCL_DIR/puf/latest
-EOF
-print $fh_verdi <<'EOF';
-[[ -z "$STDCELL_DIR" ]] && export STDCELL_DIR=$NCL_DIR/stdcells
-[[ -z "$GPIO_DIR" ]] && export GPIO_DIR=$NCL_DIR/gpio/latest
-[[ -z "$CMO_DIR" ]] && export CMO_DIR=$NCL_DIR/sram/cmo/latest
-[[ -z "$PUF_DIR" ]] && export PUF_DIR=$NCL_DIR/puf/latest
-EOF
-}
+    if ($sdf) {
+        push @args, '-f', '$CAST2VERILOG_RUNTIME/sdf.vcfg';
 
-if (defined($gls_dir)) {
-    if (@sdf) {
-        my %binds = ();
+        #Get SDF file corresponding to every netlist in the filelist
+        open(my $lh, $flist) || die "Can't open $flist: $!\n";
+        while (my $vlog_file = <$lh>) {
+            chomp $vlog_file;
+            #Split vlog_file to get design FQN
+            my @vlog_split = split(/\//, $vlog_file);
+            #Remove first, last elements
+            shift @vlog_split;
+            pop @vlog_split;
+            #Build up the correct path
+            #unshift @vlog_split, "$gls_dir";
+            unshift @vlog_split, "$ENV{SPAR_DIR}";
+            push @vlog_split, "vcs";
+            #Join elements
+            #dump @vlog_split;
+            my $sdf_dir = join('/', @vlog_split);
+            #glob to get SDF file
+            my @sdf_files = glob("$sdf_dir/*$sdf*.sdf.gz");
+            #Check if glob returned any files
+            if (!@sdf_files) {
+                print "WARNIG: No SDF files found for $vlog_file in directory $sdf_dir\n";
+                next;
+            }
+            #iterate over SDF files
+            foreach my $sdf_file (@sdf_files) {
+                #Get block name directly from SDF file
+                print "SDF file: $sdf_file\n";
+                my $block = `zgrep '(DESIGN ' $sdf_file`;
+                $block = substr((split(/ /, substr($block, 1, -2)))[1], 1, -1);
+                my $arg = "$sdf:$block:$sdf_file";
+                push @sdf_args, "-sdf $arg";
+                #If performance is enabled, also include the history monitors
+                if ($perf) {
+                    my $bind_file = $sdf_dir/"${block}.bind_hist_mon.v";
+                    if (!-e $bind_file) {
+                        print "WARNIG: No history monitors found for $block in directory $sdf_dir\n";
+                        next;
+                    }
+                    push @sdf_args, "$bind_file";
+                }
+            }
+        }
+        close $lh;
 
-        my $reset_tcl = "sdf_reset.tcl";
-        open my $fh_tcl, ">$reset_tcl" || die "Can't open $reset_tcl: $!";
+        my $fh_tcl;
+        open $fh_tcl, ">run_workarounds.tcl" || die "Can't open run_workarounds.tcl: $!";
+        print $fh_tcl "source $runtime/sdf.tcl\n";
+        close $fh_tcl;
+
+        #foreach my $sdf (@sdf) {
+        #    my $arg = "max:$block:$sdf";
+        #    push(@sdf_args, ("-sdf $arg"));
+        #    print $fh_tcl "run_workarounds $block $sdf_dir/${block}_${minmax}\n";
+        #    if (open(my $fh1, '<', "$sdf_dir/$block.$minmax.bind_notifiers.sv")) {
+        #        while (<$fh1>) {
+        #            chomp;
+        #            $binds{$_} = 1;
+        #        }
+        #        close $fh1;
+        #    }
+        #}
+
+        open $fh_tcl, ">sdf_reset.tcl" || die "Can't open sdf_reset.tcl: $!";
         print $fh_tcl <<"EOF";
 source $runtime/sdf_workarounds.tcl
 reset_tcheck $reset_duration
 EOF
-        foreach my $sdf (@sdf) {
-            #Get design name directly from SDF file
-            my $block = `zgrep '(DESIGN ' $sdf`;
-            $block = substr((split(/ /, substr($block, 1, -2)))[1], 1, -1);
-            my @sdf_split = split(/\//, $sdf);
-            my $basename = pop @sdf_split;
-            my $sdf_dir = join('/', @sdf_split);
-            my $subtype = (split(/\./, $basename))[0];
-            my $minmax = (split(/\./, $basename))[1];
-
-            my $arg = "max:$block:$sdf";
-            push(@sdf_args, ("-sdf $arg"));
-            print $fh_tcl "run_workarounds $block $sdf_dir/${block}_${minmax}\n";
-            if (open(my $fh1, '<', "$sdf_dir/$block.$minmax.bind_notifiers.sv")) {
-                while (<$fh1>) {
-                    chomp;
-                    $binds{$_} = 1;
-                }
-                close $fh1;
-            }
-        }
         close $fh_tcl;
-
-        push @args, '-f', '$CAST2VERILOG_RUNTIME/sdf.vcfg';
-        if (%binds) {
-            my $nsv = 'bind_notifiers.sv';
-            open my $fh_nsv, '>', $nsv || die "Can't open $nsv: $!";
-            print $fh_nsv join('', map { "$_\n" } keys %binds);
-            close $fh_nsv;
-            push @args, $nsv;
-        }
 
     } else {
         push @args, '-f', '$CAST2VERILOG_RUNTIME/gls.vcfg';
@@ -209,24 +191,76 @@ EOF
 }
 else { $gls_dir=""; }
 
+push @vcs_args, '-kdb' if $kdb;
 push @vcs_args, '-debug_access+all', '-debug_region+cell', '+vcs+initreg+random' unless $nodebug;
+push @vcs_args, '+lint=PCWM +lint=TFIPC-L' unless $nolint;
+
+#If using AXI VIP
+if ($axi) {
+    push @vcs_args, '+vpi -LDFLAGS "-L ${QUESTA_MVC_GCC_LIB} -Wl,-V,-rpath ${QUESTA_MVC_GCC_LIB} " -laxi4_IN_SystemVerilog_VCS_full_DVC -cpp /usr/intel/pkgs/gcc/6.2.0/bin/g++';
+    #append to top of flist
+    open (my $fh_flist, "<$flist") || die "Can't open $flist: $!\n";
+    my @content = <$fh_flist>;
+    close $fh_flist;
+    open ($fh_flist, ">$flist") || die "Can't open $flist: $!\n";
+    #These lines go first
+    print $fh_flist "\$MENTOR_VIP_AE/common/questa_mvc_svapi.svh\n";
+    print $fh_flist "\$MENTOR_VIP_AE/axi4/bfm/mgc_common_axi4.sv\n";
+    print $fh_flist @content;
+    close $fh_flist;
+}
+
+#Create the scripts to run vcs and verdi commands
+my $runvcs   = "run-vcs.sh";
+my $runverdi = "run-verdi.sh";
+
+open my $fh_vcs, ">$runvcs" || die "Can't open $runvcs: $!";
+open my $fh_verdi, ">$runverdi" || die "Can't open $runverdi: $!";
+
+#Print the header
+print $fh_vcs <<'EOF';
+#!/bin/bash
+EOF
+print $fh_verdi <<'EOF';
+#!/bin/bash
+EOF
+
+if (defined($gls_dir)) {
+    print $fh_vcs <<EOF;
+[[ -z "\$STDCELL_DIR" ]] && export STDCELL_DIR=$ENV{"NCL_DIR"}/stdcells
+[[ -z "\$GPIO_DIR" ]] && export GPIO_DIR=$ENV{"NCL_DIR"}/gpio/latest
+[[ -z "\$CMO_DIR" ]] && export CMO_DIR=$ENV{"NCL_DIR"}/sram/cmo/latest
+[[ -z "\$PUF_DIR" ]] && export PUF_DIR=$ENV{"NCL_DIR"}/puf/latest
+EOF
+    print $fh_verdi <<EOF;
+[[ -z "\$STDCELL_DIR" ]] && export STDCELL_DIR=$ENV{"NCL_DIR"}/stdcells
+[[ -z "\$GPIO_DIR" ]] && export GPIO_DIR=$ENV{"NCL_DIR"}/gpio/latest
+[[ -z "\$CMO_DIR" ]] && export CMO_DIR=$ENV{"NCL_DIR"}/sram/cmo/latest
+[[ -z "\$PUF_DIR" ]] && export PUF_DIR=$ENV{"NCL_DIR"}/puf/latest
+EOF
+}
 
 print $fh_vcs <<EOF;
 export SPAR="$spar_dir"
 export CAST2VERILOG_RUNTIME="$runtime"
 export GLS_DIR="$gls_dir"
 export VCS_PRINT_INITREG_INITIALIZATION="1"
-verdi3 vcs  -assert svaext -licqueue -full64 -j4 -fgp -lrt @defines -f "\$CAST2VERILOG_RUNTIME/$vcfg" @args @vcs_args testbench.v "\$CAST2VERILOG_RUNTIME/readhexint.c" @sdf_args @netlists
+export VCS_LIB=$ENV{"VCS_HOME"}/linux64/lib
+export MENTOR_VIP_AE="/p/hdk/rtl/cad/x86-64_linux26/altera/quartus_prime/22.1.1/ip/altera/mentor_vip_ae/"
+export QUESTA_MVC_GCC_LIB=\$MENTOR_VIP_AE/common/questa_mvc_core/linux_x86_64_gcc-6.2.0_vcs
+export LD_LIBRARY_PATH={\$QUESTA_MVC_GCC_LIB:\$VCS_LIB}
+verdi3 vcs -V -assert svaext -licqueue -full64 -j4 -fgp -lrt @defines -f "\$CAST2VERILOG_RUNTIME/$vcfg" @args @vcs_args testbench.v "\$CAST2VERILOG_RUNTIME/readhexint.c" @sdf_args @netlists
 EOF
+close $fh_vcs;
+chmod 0755, $runvcs;
 print $fh_verdi <<EOF;
 export SPAR="$spar_dir"
 export CAST2VERILOG_RUNTIME="$runtime"
 export GLS_DIR="$gls_dir"
-verdi3 verdi -nologo -sv -top TESTBENCH -ssf trace.fsdb @defines -f "\$CAST2VERILOG_RUNTIME/$vcfg" @args testbench.v  @netlists &
+export GPIO_DIR=$ENV{"NCL_DIR"}/gpio/latest
+vcs verdi3 verdi -nologo -ssf trace.fsdb -dbdir simv.daidir &
 EOF
-close $fh_vcs;
 close $fh_verdi;
-chmod 0755, $runvcs;
 chmod 0755, $runverdi;
 
 __END__
@@ -255,4 +289,6 @@ gen_model.pl [options] [verilog files...]
    --vcs-arg       Flags to VCS; can be specified any number of times
    --sdf           Specify SDF args as <path_to_file.sdf>
    --perf          Enables performance monitoring of BD controllers
+   --axi           Include AXI libraries and files
+   --nolint          Enables linting during compile
 =cut
