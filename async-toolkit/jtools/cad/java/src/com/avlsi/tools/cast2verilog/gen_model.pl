@@ -148,7 +148,7 @@ if (defined($gls_dir)) {
                 push @sdf_args, "-sdf $arg";
                 #If performance is enabled, also include the history monitors
                 if ($perf) {
-                    my $bind_file = $sdf_dir/"${block}.bind_hist_mon.v";
+                    my $bind_file = "$sdf_dir/${block}.bind_hist_mon.v";
                     if (!-e $bind_file) {
                         print "WARNIG: No history monitors found for $block in directory $sdf_dir\n";
                         next;
@@ -246,11 +246,15 @@ export CAST2VERILOG_RUNTIME="$runtime"
 export GLS_DIR="$gls_dir"
 export VCS_PRINT_INITREG_INITIALIZATION="1"
 export VCS_LIB=$ENV{"VCS_HOME"}/linux64/lib
+EOF
+if ($axi) {
+    print $fh_vcs <<EOF;
 export MENTOR_VIP_AE="/p/hdk/rtl/cad/x86-64_linux26/altera/quartus_prime/22.1.1/ip/altera/mentor_vip_ae/"
 export QUESTA_MVC_GCC_LIB=\$MENTOR_VIP_AE/common/questa_mvc_core/linux_x86_64_gcc-6.2.0_vcs
 export LD_LIBRARY_PATH={\$QUESTA_MVC_GCC_LIB:\$VCS_LIB}
-verdi3 vcs -V -assert svaext -licqueue -full64 -j4 -fgp -lrt @defines -f "\$CAST2VERILOG_RUNTIME/$vcfg" @args @vcs_args testbench.v "\$CAST2VERILOG_RUNTIME/readhexint.c" @sdf_args @netlists
 EOF
+}
+print $fh_vcs "verdi3 vcs -V -assert svaext -licqueue -full64 -j4 -fgp -lrt @defines -f \"\$CAST2VERILOG_RUNTIME/$vcfg\" @args @vcs_args testbench.v \"\$CAST2VERILOG_RUNTIME/readhexint.c\" @sdf_args @netlists";
 close $fh_vcs;
 chmod 0755, $runvcs;
 print $fh_verdi <<EOF;
@@ -266,7 +270,7 @@ chmod 0755, $runverdi;
 __END__
 =head1 NAME
 
-gen_model.pl - Create collateral for VCS simulation from fpga.vg
+gen_model.pl - Create collateral for VCS simulation
 
 =head1 SYNOPSIS
 
