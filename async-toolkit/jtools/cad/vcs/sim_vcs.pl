@@ -22,10 +22,18 @@ my ($cell, $env, $level, $corner, $outdir, $simv, $tcl, $t_run, $fsdb, $verdi, @
 # Command line options to pass through to gen_model
 my (@cast_defines, @c2v_args, @gen_args, @vcs_args);
 
+#Process (and error check) the first argument
+if (@ARGV < 1) {die "ERROR: Missing required first argument \"cell_fqcn:env\"\n";}
+else {
+    #The first argument should be of the form "cell_fqcn:env"
+    my $first_arg = shift @ARGV;
+    #Check if ':' appears exactly once in the first argument
+    if ($first_arg =~ tr/:// != 1) {die "ERROR: First argument \"$first_arg\" should be of the form \"cell_fqcn:env\"\n";}
+    ($cell, $env) = split(/:/, $first_arg);
+}
 
-GetOptions("cell=s"      => \$cell,
-           "env=s"       => \$env, 
-           "level=s"     => \$level,
+#Now collect the remaining options (if applicable)
+GetOptions("level=s"     => \$level,
            "corner=s"    => \$corner,
            "outdir=s"    => \$outdir,
            "simv=s"      => \$simv,
@@ -42,7 +50,6 @@ GetOptions("cell=s"      => \$cell,
            "help!"       => \$help) || pod2usage(2);
 
 pod2usage(-verbose => 1) if $help;
-
 
 # If outdir is provided, check to make sure it exists
 my $wd;
@@ -88,6 +95,10 @@ if ($verdi && $fsdb) {
 my $cosim;
 my $gls_dir;
 my $env_cosim="{subcells,prs,csp-standard.attributes.csp_model{csp}}";
+if (!$level) {
+    print "WARNING: No simulation level specified, defaulting to \"lo\"\n";
+    $level = "lo";
+}
 if ($level eq "hi") {
     $cosim= "{csp,subcells,prs-standard.attributes.prs_model{subcells,prs,csp}}";
 }
@@ -102,7 +113,7 @@ elsif ($level eq "syn") {
     $gls_dir= "$ENV{VERILOG_DIR}/syn";
     $cosim= "{verilog.rtl,verilog.gate,subcells,prs,csp-standard.attributes.csp_model{csp,subcells,prs}-standard.attributes.verilog_model{verilog.rtl,verilog.gate,subcells,prs}}";
 }
-elsif ($level eq "gls" || $level eq "sdf") {
+elsif ($level eq "apr" || $level eq "sdf") {
     $gls_dir= "$ENV{VERILOG_DIR}";
     $cosim= "{verilog.rtl,verilog.gate,subcells,prs,csp-standard.attributes.csp_model{csp,subcells,prs}-standard.attributes.verilog_model{verilog.rtl,verilog.gate,subcells,prs}}";
     if ($level eq "sdf" && !$corner) {
@@ -110,7 +121,7 @@ elsif ($level eq "gls" || $level eq "sdf") {
         $corner= "max";
     }
 }
-else { die "ERROR: Unrecognized level $level. Must be {\"hi\", \"lo\", \"fpga\", \"syn\", \"gls\", \"sdf\"}"; }
+else { die "ERROR: Unrecognized level $level. Must be {\"hi\", \"lo\", \"fpga\", \"syn\", \"apr\", \"sdf\"}"; }
 
 if ($verbose) {print "Cell=$cell, Cosim=$cosim\n";}
 my $cosim_spec = "$cell$cosim:$env";
@@ -218,12 +229,10 @@ sim_block.pl - Wrapper for compiling and running Verilog VCS models
 
 =head1 SYNOPSIS
 
-sim_block.pl [options]
+sim_block.pl FQCN:ENV [options]
 
  Options:
-   --cell          Name of the CAST cell to simulate
-   --env           Name of the CAST environment
-   --level         The level of simulation {"hi", "lo", "fpga", "syn", "gls", "sdf"}
+   --level         The level of simulation {"hi", "lo", "fpga", "syn", "apr", "sdf"}
    --corner        Select which SDF file to use (if running sdf level simulation). Default is "max"
    --outdir        Output directory for simulation files
    --simv          Specify the simv file to execute (skip compiling a new one)
@@ -234,7 +243,7 @@ sim_block.pl [options]
    --define        Override CAST variables; can be specified any number of times
    --c2v-args      Flags to cast2verilog; can be specified any number of times
    --vcs-args      Flags to VCS; can be specified any number of times
-   --vcs-args      Flags to gen_model; can be specified any number of times
+   --gen-args      Flags to gen_model; can be specified any number of times
    --simv-args     Flags to simv; can be specified any number of times
    --help          Prints this help message
 =cut
