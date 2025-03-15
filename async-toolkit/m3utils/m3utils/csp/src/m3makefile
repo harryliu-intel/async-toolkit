@@ -1,0 +1,50 @@
+import ("libm3")
+import ("cit_util")
+import ("parseparams")
+import ("simpletoken")
+import ("mscheme")
+import ("modula3scheme")
+import ("sstubgen")
+import ("parseparams")
+
+%if defined("CM3_VERSION")
+%        m3_optimize("T")
+%end
+
+Smodule   ("CspExpression")
+Ssequence ("CspExpression", "CspExpression")
+Smodule   ("CspStatement")
+Ssequence ("CspStatement", "CspStatement")
+Smodule   ("CspType")
+
+Smodule   ("CspAst")
+
+Sinterface("CspGuardedCommand")
+Ssequence ("CspGuardedCommand", "CspGuardedCommand")
+
+Sinterface("CspDeclaration")
+Ssequence ("CspDeclaration", "CspDeclaration")
+
+Sinterface("CspDirection")
+Sinterface("CspRange")
+Sinterface("CspInterval")
+
+SchemeStubs ("BigInt")
+SchemeStubs ("Math")
+SchemeStubs ("TextWr")
+SchemeStubs ("FileWr")
+SchemeStubs ("Wr")
+SchemeStubs ("FileRd")
+SchemeStubs ("Rd")
+SchemeStubs ("SchemeEnvironment")
+SchemeStubs ("Fmt")
+SchemeStubs ("Atom")
+
+ExportSchemeStubs ("cspc")
+importSchemeStubs()
+
+implementation ("Main")
+
+program ("cspc")
+
+
