@@ -12,6 +12,7 @@ IMPORT CspDirection;
 IMPORT Pathname;
 IMPORT CspStatementSeq;
 IMPORT CspDeclarationSeq;
+IMPORT CspStructMemberSeq;
 IMPORT BigInt;
 IMPORT Atom;
 
@@ -68,7 +69,7 @@ PROCEDURE StringExpr(val : TEXT) : Expr;
 
 (* identifiers *)
 
-PROCEDURE IdentifierExpr(atom : Atom.T) : Expr;
+PROCEDURE IdentifierExpr(id : Atom.T) : Expr;
   
 (* compound expressions *)  
 
@@ -98,7 +99,7 @@ PROCEDURE ArrayType(range : Range; elemntType : Type) : Type;
 
 PROCEDURE BooleanType() : Type;
 
-PROCEDURE ChannelStructureType() : Type;
+PROCEDURE ChannelStructureType(members : CspStructMemberSeq.T) : Type;
 
 PROCEDURE ChannelType(numValues : BigInt.T; dir : Direction) : Type;
 

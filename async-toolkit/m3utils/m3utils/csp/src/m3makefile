@@ -12,10 +12,17 @@ import ("parseparams")
 %end
 
 Smodule   ("CspExpression")
+Sinterface("CspExpressionPublic")
 Ssequence ("CspExpression", "CspExpression")
+
 Smodule   ("CspStatement")
+Sinterface("CspStatementPublic")
 Ssequence ("CspStatement", "CspStatement")
+
 Smodule   ("CspType")
+Sinterface("CspTypePublic")
+Sinterface("CspStructMember")
+Ssequence ("CspStructMember", "CspStructMember")
 
 Smodule   ("CspAst")
 

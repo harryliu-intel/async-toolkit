@@ -4,71 +4,82 @@ IMPORT CspGuardedCommandSeq;
 IMPORT Pathname;
 IMPORT BigInt;
 IMPORT Atom;
-IMPORT CspExpression;
+
+IMPORT CspExpression AS X;
+IMPORT CspExpressionPublic;
+
+IMPORT CspType AS T;
+IMPORT CspTypePublic;
+
+IMPORT CspStatement AS S;
+IMPORT CspStatementPublic;
+
+IMPORT CspStructMemberSeq;
+IMPORT CspStatementSeq;
 
 PROCEDURE AssignmentStmt(lhs, rhs : Expr) : Stmt =
   BEGIN
-    RETURN NIL
+    RETURN NEW(S.Assignment, lhs := lhs, rhs := rhs)
   END AssignmentStmt;
 
 PROCEDURE DetRepetitionStmt(gcs : CspGuardedCommandSeq.T) : Stmt =
   BEGIN
-    RETURN NIL
+    RETURN NEW(S.DetRepetition, gcs := gcs)
   END DetRepetitionStmt;
 
 PROCEDURE DetSelectionStmt(gcs : CspGuardedCommandSeq.T) : Stmt =
   BEGIN
-    RETURN NIL
+    RETURN NEW(S.DetSelection, gcs := gcs)
   END DetSelectionStmt;
 
 PROCEDURE NondetRepetitionStmt(gcs : CspGuardedCommandSeq.T) : Stmt =
   BEGIN
-    RETURN NIL
+    RETURN NEW(S.NondetRepetition, gcs := gcs)
   END NondetRepetitionStmt;
 
 PROCEDURE NondetSelectionStmt(gcs : CspGuardedCommandSeq.T) : Stmt =
   BEGIN
-    RETURN NIL
+    RETURN NEW(S.NondetSelection, gcs := gcs)
   END NondetSelectionStmt;
 
 PROCEDURE ErrorStmt(fn : Pathname.T; lno, cno : CARDINAL) : Stmt =
   BEGIN
-    RETURN NIL
+    RETURN NEW(S.Error, fn := fn, lno := lno, cno := cno)
   END ErrorStmt;
 
 PROCEDURE ParallelStmt(stmts : StmtSeq) : Stmt =
   BEGIN
-    RETURN NIL
+    RETURN NEW(S.Parallel, stmts := stmts)
   END ParallelStmt;
 
 PROCEDURE SequentialStmt(stmts : StmtSeq) : Stmt =
   BEGIN
-    RETURN NIL
+    RETURN NEW(S.Sequential, stmts := stmts)
   END SequentialStmt;
 
 PROCEDURE SkipStmt() : Stmt =
   BEGIN
-    RETURN NIL
+    RETURN NEW(S.Skip)
   END SkipStmt;
 
 PROCEDURE SendStmt(chan : Expr; val : Expr) : Stmt =
   BEGIN
-    RETURN NIL
+    RETURN NEW(S.Send, chan := chan, val := val)
   END SendStmt;
 
 PROCEDURE RecvStmt(chan : Expr; val : Expr) : Stmt =
   BEGIN
-    RETURN NIL
+    RETURN NEW(S.Recv, chan := chan, val := val)
   END RecvStmt;
 
 PROCEDURE VarStmt(decls : DeclSeq; stmt : Stmt) : Stmt =
   BEGIN
-    RETURN NIL
+    RETURN NEW(S.Var, decls := decls, stmt := stmt)
   END VarStmt;
 
 PROCEDURE ExpressionStmt(expr : Expr) : Stmt =
   BEGIN
-    RETURN NIL
+    RETURN NEW(S.Expression, expr := expr)
   END ExpressionStmt;
 
 (**********************************************************************)
@@ -78,95 +89,122 @@ PROCEDURE GuardedCommand(guard : Expr; command : Stmt) : CspGuardedCommand.T =
     RETURN NEW(CspGuardedCommand.T, guard := guard, command := command);
   END GuardedCommand;
 
-
 (**********************************************************************)
 
 PROCEDURE BooleanExpr(val : BOOLEAN) : Expr =
-  BEGIN RETURN NIL END BooleanExpr;
+  BEGIN
+    RETURN NEW(X.Boolean, val := val)
+  END BooleanExpr;
 
 PROCEDURE IntegerExpr(val : BigInt.T) : Expr =
-  BEGIN RETURN NIL END IntegerExpr;
+  BEGIN
+    RETURN NEW(X.Integer, val := val)
+  END IntegerExpr;
 
 PROCEDURE StringExpr(val : TEXT) : Expr =
-  BEGIN RETURN NIL END StringExpr;
+  BEGIN
+    RETURN NEW(X.String, val := val)
+  END StringExpr;
 
-PROCEDURE IdentifierExpr(atom : Atom.T) : Expr =
-  BEGIN RETURN NIL END IdentifierExpr;
+PROCEDURE IdentifierExpr(id : Atom.T) : Expr =
+  BEGIN
+    RETURN NEW(X.Identifier, id := id)
+  END IdentifierExpr;
   
-PROCEDURE BinExpr(op : CspExpression.BinaryOp; l, r : Expr) : Expr =
-  BEGIN RETURN NIL END BinExpr;
+PROCEDURE BinExpr(op : X.BinaryOp; l, r : Expr) : Expr =
+  BEGIN
+    RETURN NEW(X.Binary, op := op, l := l, r := r)
+  END BinExpr;
 
-PROCEDURE UnaExpr(op : CspExpression.UnaryOp; x : Expr) : Expr =
-  BEGIN RETURN NIL END UnaExpr;
+PROCEDURE UnaExpr(op : X.UnaryOp; x : Expr) : Expr =
+  BEGIN
+    RETURN NEW(X.Unary, op := op, x := x)
+  END UnaExpr;
 
 PROCEDURE ArrayAccessExpr(arr, idx : Expr) : Expr =
-  BEGIN RETURN NIL END ArrayAccessExpr;
+  BEGIN
+    RETURN NEW(X.ArrayAccess, arr := arr, idx := idx)
+  END ArrayAccessExpr;
 
 PROCEDURE MemberAccessExpr(struct, member : Expr) : Expr =
-  BEGIN RETURN NIL END MemberAccessExpr;
+  BEGIN
+    RETURN NEW(X.MemberAccess, struct := struct, member := member)
+  END MemberAccessExpr;
 
 PROCEDURE StructureAccessExpr(struct, member : Expr) : Expr =
-  BEGIN RETURN NIL END StructureAccessExpr;
+  BEGIN
+    RETURN NEW(X.StructureAccess, struct := struct, member := member)
+  END StructureAccessExpr;
 
 PROCEDURE BitRangeExpr(bits, minx, maxx : Expr) : Expr =
-  BEGIN RETURN NIL END BitRangeExpr;
+  BEGIN
+    RETURN NEW(X.BitRange, bits := bits, minx := minx, maxx := maxx)
+  END BitRangeExpr;
 
 PROCEDURE RecvExpr(chan : Expr) : Expr =
-  BEGIN RETURN NIL END RecvExpr;
+  BEGIN
+    RETURN NEW(X.Receive, chan := chan)
+  END RecvExpr;
 
 PROCEDURE PeekExpr(chan : Expr) : Expr =
-  BEGIN RETURN NIL END PeekExpr;
+  BEGIN
+    RETURN NEW(X.Peek, chan := chan)
+  END PeekExpr;
 
 PROCEDURE ProbeExpr(chan : Expr) : Expr =
-  BEGIN RETURN NIL END ProbeExpr;
+  BEGIN
+    RETURN NEW(X.Probe, chan := chan)
+  END ProbeExpr;
 
 PROCEDURE FunctionCallExpr(f : Expr; args : ExprSeq) : Expr =
-  BEGIN RETURN NIL END FunctionCallExpr;
+  BEGIN
+    RETURN NEW(X.FunctionCall, f := f, args := args)
+  END FunctionCallExpr;
 
 (**********************************************************************)
 
 PROCEDURE ArrayType(range : Range; elemntType : Type) : Type =
   BEGIN
-    RETURN NIL
+    RETURN NEW(T.Array, range := range, elemntType := elemntType)
   END ArrayType;
   
 PROCEDURE BooleanType() : Type =
   BEGIN
-    RETURN NIL
+    RETURN NEW(T.Boolean)
   END BooleanType;
   
-PROCEDURE ChannelStructureType() : Type =
+PROCEDURE ChannelStructureType(members : CspStructMemberSeq.T) : Type =
   BEGIN
-    RETURN NIL
+    RETURN NEW(T.ChannelStructure, members := members)
   END ChannelStructureType;
   
 PROCEDURE ChannelType(numValues : BigInt.T; dir : Direction) : Type =
   BEGIN
-    RETURN NIL
+    RETURN NEW(T.Channel, numValues := numValues, dir := dir)
   END ChannelType;
   
 PROCEDURE IntegerType(isConst, isSigned : BOOLEAN;
                       dw                : CARDINAL;
                       interval          : Interval) : Type =
   BEGIN
-    RETURN NIL
+    RETURN NEW(T.Integer, isConst := isConst, isSigned := isSigned, dw := dw, interval := interval)
   END IntegerType;
   
 PROCEDURE NodeType(arrayed   : BOOLEAN;
                    width     : [1..LAST(CARDINAL)];
                    direction : Direction) : Type =
   BEGIN
-    RETURN NIL
+    RETURN NEW(T.Node, arrayed := arrayed, width := width, direction := direction)
   END NodeType;
 
 PROCEDURE StringType() : Type =
   BEGIN
-    RETURN NIL
+    RETURN NEW(T.String)
   END StringType;
   
 PROCEDURE StructureType(isConst : BOOLEAN; name : TEXT) : Type =
   BEGIN
-    RETURN NIL
+    RETURN NEW(T.Structure, isConst := isConst, name := name)
   END StructureType;
   
 
