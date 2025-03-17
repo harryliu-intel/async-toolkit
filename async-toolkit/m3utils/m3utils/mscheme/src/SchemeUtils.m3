@@ -22,6 +22,7 @@ IMPORT Scan;
 IMPORT Lex, FloatMode;
 IMPORT SchemeEnvironmentBinding;
 IMPORT SchemeConvertHooks;
+IMPORT BigInt;
 
 TYPE Boolean = SchemeBoolean.T;
      LongReal = SchemeLongReal.T;
@@ -527,6 +528,11 @@ PROCEDURE StringifyB(x      : Object;
             END END (* BEGIN WITH *)
           ELSE
             Put(Fmt.LongReal(lr^))
+          END
+        |
+          BigInt.T(big) =>
+          WITH txt = BigInt.Format(big, 10) DO
+            Wx.PutText(buf, "<BigInt.T>"); Wx.PutText(buf, txt); 
           END
         |
           SchemeEnvironmentBinding.T(b) =>

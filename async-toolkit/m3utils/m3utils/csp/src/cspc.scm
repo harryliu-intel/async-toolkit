@@ -6,7 +6,7 @@
 (define (load-csp fn)
 
   (let* ((p (open-input-file fn))
-         (res (read p)))
+         (res (read-big-int p)))
     (close-input-port p)
     res
     )
@@ -119,7 +119,7 @@
                             (convert-stmt (cadr gc) s))))
                     args)
 
-               (dis "here! " kw dnl)
+;;               (dis "here! " kw dnl)
 
                (let ((maker
                       (case kw
@@ -128,7 +128,7 @@
                         ((nondet-do) CspAst.NondetRepetitionStmt)
                         ((nondet-if) CspAst.NondetSelectionStmt)
                         )))
-                 (dis "here2 " maker dnl)
+;;                 (dis "here2 " maker dnl)
                  (maker (seq '*m3*)))
                ))
 
@@ -142,7 +142,15 @@
         )
       ))
 
+(define *last-x* #f)
+
+(define *all-x* '())
+
 (define (convert-expr x)
+  (set! *last-x* x)
+  (set! *all-x* (cons x *all-x*))
+
+  
   '()
   )
 
@@ -154,4 +162,6 @@
 
 (define (reload) (load "cspc.scm"))
 
+(loaddata! "arrays_p1")
 
+(define a (BigInt.New 12))

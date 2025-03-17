@@ -5,8 +5,13 @@ IMPORT CardSeq, Integer;
 IMPORT CharSeq;
 IMPORT Word;
 IMPORT Wx;
+IMPORT Text;
+IMPORT Lex;
 
-CONST Base = 1000; (* must be less than or equal to sqrt(LAST(CARDINAL)) *)
+CONST BaseLog2 = BITSIZE(Word.T) DIV 2 - 1; (* (*was*) 10 *)
+      Base     = Word.Shift(1, BaseLog2);
+      (* must be less than or equal to sqrt(LAST(CARDINAL)) *)
+      (* must be power of 2 *)
 
 (********************* sequence of cardinals *********************)
 
@@ -61,7 +66,7 @@ TYPE
 
   NSeq = OBJECT
     siz : CARDINAL; (* # of significant digits *)
-    a : NArry;
+    a   : NArry;
   METHODS
     init(hintSize : CARDINAL := 5) : NSeq := InitN;
     shift(sa : CARDINAL) := ShiftN;
@@ -125,8 +130,8 @@ PROCEDURE CTN(s : NSeq) =
 
 REVEAL 
   T = Public BRANDED Brand OBJECT
-    sign : [-1..1];
-    rep : NSeq;
+    sign : [ -1 .. 1 ];
+    rep  : NSeq;
   END;
 
 PROCEDURE Compare(a, b : T) : CompRet =
@@ -152,6 +157,11 @@ PROCEDURE Compare(a, b : T) : CompRet =
 
 PROCEDURE Equal(a, b : T) : BOOLEAN = BEGIN RETURN Compare(a,b) = 0 END Equal;
 
+PROCEDURE IsZero(a : T) : BOOLEAN = BEGIN RETURN Compare(a, Zero) = 0 END IsZero;
+
+PROCEDURE Copy(t : T) : T =
+  BEGIN RETURN Add(t, Zero) END Copy;
+  
 PROCEDURE New(x : INTEGER) : T =
   VAR
     c : CARDINAL;
@@ -285,6 +295,25 @@ PROCEDURE Mul(a, b : T) : T =
   BEGIN
     RETURN NEW(T, sign := a.sign * b.sign, rep := MulSeqs(a.rep,b.rep))
   END Mul;
+
+PROCEDURE Pow(b, x : T) : T =
+  VAR
+    r : T;
+    result := One;
+  BEGIN
+    IF x.sign = -1 THEN RETURN Zero END;
+
+    <* ASSERT x.sign = 1 *>
+
+    WHILE NOT IsZero(x) DO
+      Divide(x, Two, x, r);
+      IF NOT IsZero(r) THEN
+        result := Mul(result, b)
+      END;
+      b := Mul(b, b)
+    END;
+    RETURN result
+  END Pow;
 
 PROCEDURE MulSeqs(a, b : NSeq) : NSeq =
   VAR 
@@ -422,24 +451,76 @@ PROCEDURE Renormalize(a : NSeq) =
 PROCEDURE Neg(a : T) : T = 
   BEGIN RETURN NEW(T, rep := a.rep, sign := -a.sign) END Neg;
 
-PROCEDURE Format(a : T; base : CARDINAL) : TEXT = 
-  CONST
-    HexChars = ARRAY OF CHAR{'0','1','2','3','4','5','6','7','8','9',
-                             'A','B','C','D','E','F'};
+PROCEDURE Scan(txt : TEXT; base : PrintBase) : T
+  RAISES { Lex.Error } =
+  VAR
+    accum := Zero;
+    baseT := small[base];
+    neg : BOOLEAN;
+  BEGIN
+    <* ASSERT base <= NUMBER(HexChars) *>
+    IF Text.GetChar(txt, 0) = '-' THEN
+      neg := TRUE;
+      txt := Text.Sub(txt, 1, Text.Length(txt) - 1)
+    ELSE
+      neg := FALSE
+    END;
+     
+    FOR i := 0 TO Text.Length(txt) - 1 DO
+      WITH c = Text.GetChar(txt, i) DO
+          WITH val = CharVal[c] DO
+            IF val < 0 OR val > base - 1 THEN
+              RAISE Lex.Error
+            END;
+            accum := Add(Mul(baseT, accum), CharValT[c])
+          END
+      END
+    END;
+    IF neg THEN
+      RETURN Neg(accum)
+    ELSE
+      RETURN accum
+    END
+  END Scan;
+
+PROCEDURE ScanDelimited(txt : TEXT; base : PrintBase) : T
+  RAISES { Lex.Error } =
+  VAR
+    accum := Zero;
+    baseT := small[base];
+  BEGIN
+    <* ASSERT base <= NUMBER(HexChars) *>
+    FOR i := 0 TO Text.Length(txt) - 1 DO
+      WITH c = Text.GetChar(txt, i) DO
+        IF c IN DelimChars THEN
+          (* skip *)
+        ELSE
+          WITH val = CharVal[c] DO
+            IF val < 0 OR val > base - 1 THEN
+              RAISE Lex.Error
+            END;
+            accum := Add(Mul(baseT, accum), CharValT[c])
+          END
+        END
+      END
+    END;
+    RETURN accum
+  END ScanDelimited;
+
+PROCEDURE Format(a : T; base : PrintBase) : TEXT =
   VAR
     c := NEW(CharSeq.T).init();
     s := Sign(a);
     wx := Wx.New();
-    MyBase := New(base);
+    MyBase := small[base];
   BEGIN
-    <* ASSERT base <= 16 *>
     a := Abs(a);
 
     WHILE NOT Equal(a,Zero) DO
       VAR
         d : T;
       BEGIN
-        DivideUnsigned(a,MyBase,a,d);
+        DivideUnsigned(a, MyBase, a, d);
         <* ASSERT Compare(d,Zero) >= 0 AND Compare(d,MyBase) < 1 *>
         c.addlo(HexChars[d.rep.a[0]]);
       END
@@ -510,12 +591,91 @@ PROCEDURE ToInteger(a : T) : INTEGER RAISES { OutOfRange } =
     END;
   END ToInteger;
 
+PROCEDURE GetRepBase() : T =
+  BEGIN
+    RETURN RepBase
+  END GetRepBase;
+
+PROCEDURE GetBit(t : T; bit : CARDINAL) : [ 0 .. 1 ] =
+  VAR
+    unsignedBit : [ 0 .. 1 ];
+  BEGIN
+    WITH word = bit DIV BaseLog2,
+         pos  = bit MOD BaseLog2 DO
+      IF word > LAST(t.rep.a^) THEN
+        unsignedBit := 0
+      ELSE
+        unsignedBit := Word.Extract(t.rep.a[word], pos, 1)
+      END;
+
+      IF t.sign = 1 THEN
+        RETURN unsignedBit
+      END;
+      
+      <*ASSERT t.sign = -1*>
+
+      IF word > LAST(t.rep.a^) THEN
+        RETURN 1 (* leading 1 *)
+      END;
+      
+      VAR
+        carry : [ 0 .. 1 ] := 1;
+      BEGIN
+        FOR i := 0 TO word - 1 DO
+          IF t.rep.a[i] # 0 THEN
+            carry := 0;
+            EXIT
+          END
+        END;
+        
+        IF Word.Extract(t.rep.a[word], 0, pos) # 0 THEN
+          carry := 0
+        END;
+        
+        RETURN Word.And(1 - unsignedBit + carry, 1)
+        
+      END
+    END      
+  END GetBit;
+  
 VAR
   FirstInt, LastInt : T;
+  CharVal : ARRAY CHAR OF INTEGER;
+  CharValT : ARRAY CHAR OF T;
+  small : ARRAY PrintBase OF T;
+  RepBase := New(Base);
+  
 BEGIN 
   Zero := New(0);
   One := New(1);
   Two := New(2);
   FirstInt := New(FIRST(INTEGER));
   LastInt := New(LAST(INTEGER));
+
+  FOR c := FIRST(CHAR) TO LAST(CHAR) DO
+    VAR
+      val : INTEGER;
+    BEGIN
+      CASE c OF
+        '0'..'9' => val := ORD(c) - ORD('0')
+      |
+        'A'..'Z' => val := ORD(c) - ORD('A') + 10
+      |
+        'a'..'z' => val := ORD(c) - ORD('A') + 10
+      ELSE
+        val := -1
+      END;
+      CharVal[c] := val;
+      IF val = -1 THEN
+        CharValT[c] := NIL
+      ELSE
+        CharValT[c] := New(val)
+      END
+    END
+  END;
+
+  FOR i := FIRST(PrintBase) TO LAST(PrintBase) DO
+    small[i] := New(i)
+  END
+      
 END BigInt.

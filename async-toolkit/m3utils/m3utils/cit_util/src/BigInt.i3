@@ -4,6 +4,7 @@
 *)
 INTERFACE BigInt;
 IMPORT Word;
+IMPORT Lex;
 
 CONST Brand = "BigInt";
 
@@ -17,15 +18,36 @@ TYPE CompRet = [-1..1];
 PROCEDURE Compare(a, b : T) : CompRet;
 PROCEDURE Equal(a, b : T) : BOOLEAN;
 PROCEDURE New(x : INTEGER) : T;
+PROCEDURE Copy(t : T) : T;
 PROCEDURE Div(a, b : T) : T;
 PROCEDURE Mul(a, b : T) : T;
 PROCEDURE Add(a, b : T) : T;
+PROCEDURE Pow(b, x : T) : T;
 PROCEDURE Sub(a, b : T) : T;
 PROCEDURE Abs(a : T) : T;
 PROCEDURE Mod(a, b : T) : T;
 PROCEDURE Sign(a : T) : CompRet;
+PROCEDURE Neg(a : T) : T;
 
-PROCEDURE Format(a : T; base : CARDINAL := 10) : TEXT;
+CONST
+  HexChars = ARRAY OF CHAR{'0','1','2','3','4','5','6','7','8','9',
+                           'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H',
+                           'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P',
+                           'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X',
+                           'Y', 'Z' };
+
+  MaxBase = NUMBER(HexChars);
+
+TYPE
+  PrintBase = [ 2 .. MaxBase ];
+  
+PROCEDURE Format(a : T; base : PrintBase := 10) : TEXT;
+
+PROCEDURE Scan(text : TEXT; base : PrintBase := 10) : T RAISES { Lex.Error };
+  
+CONST DelimChars = SET OF CHAR { '_', ',', ' ', '\t' };
+
+PROCEDURE ScanDelimited(text : TEXT; base : PrintBase := 10) : T RAISES { Lex.Error }; (* as Scan, but ignore DelimChars *)
 
 VAR (* CONST *) Zero, One, Two : T;
 
@@ -38,5 +60,8 @@ PROCEDURE ToInteger(a : T) : INTEGER RAISES { OutOfRange };
 PROCEDURE Max(a, b : T) : T;
 PROCEDURE Min(a, b : T) : T;
 PROCEDURE Divide(a, b : T; VAR q, r : T);
+
+PROCEDURE GetRepBase() : T;
+PROCEDURE GetBit(t : T; bit : CARDINAL) : [ 0 .. 1 ];
 
 END BigInt.

@@ -44,6 +44,7 @@ IMPORT RefSeq;
 IMPORT XTime AS Time;
 IMPORT RefRecord;
 IMPORT SchemeClosure;
+IMPORT BigInt;
 
 <* FATAL Thread.Alerted *>
 
@@ -91,7 +92,7 @@ TYPE
         Divide, Length, List, ListQ, Apply,
         Max, Min, Minus, Newline, 
         Not, NullQ, NumberQ, PairQ, Plus, 
-        ProcedureQ, Read, Cdr, Round, Second, 
+        ProcedureQ, Read, ReadBigInt, Cdr, Round, Second, 
         SymbolQ, Times, Truncate, Write, Append,
         BooleanQ, Sqrt, Expt, Reverse, Assoc, 
         AssQ, AssV, Member, MemQ, MemV, EqvQ,
@@ -382,6 +383,7 @@ PROCEDURE InstallSandboxPrimitives(dd : Definer;
     .defPrim("quotient",       ORD(P.Quotient), dd, 2)
     .defPrim("rational?",      ORD(P.IntegerQ), dd,1)
     .defPrim("read",           ORD(P.Read), dd,     0, 1)
+    .defPrim("read-big-int",   ORD(P.ReadBigInt), dd,     0, 1)
     .defPrim("read-char",      ORD(P.ReadChar), dd, 0, 1)
     .defPrim("real?",          ORD(P.NumberQ), dd,  1)
     .defPrim("remainder",      ORD(P.Remainder), dd,2)
@@ -676,6 +678,8 @@ PROCEDURE Prims(t : T;
         P.ProcedureQ => RETURN Truth(x # NIL AND ISTYPE(x,Procedure))
       |
         P.Read => RETURN InPort(x, interp).read()
+      |
+        P.ReadBigInt => RETURN InPort(x, interp).readBigInt()
       |
         P.Cdr => RETURN PedanticRest(x)
       |
@@ -1285,7 +1289,14 @@ PROCEDURE Append2(x, y : Object; interp : Scheme.T := NIL) : Object =
 
 PROCEDURE IsExact(x : Object) : BOOLEAN RAISES { E } =
   BEGIN
-    IF x = NIL OR NOT ISTYPE(x, SchemeLongReal.T) THEN RETURN FALSE END;
+    IF x = NIL THEN
+      RETURN FALSE
+    ELSIF ISTYPE(x, BigInt.T) THEN
+      RETURN FALSE (* not YET supported *)
+    ELSIF NOT ISTYPE(x, SchemeLongReal.T) THEN
+      RETURN FALSE
+    END;
+
     WITH d = FromO(x) DO
       RETURN d = FLOAT(ROUND(d),LONGREAL) AND 
              ABS(d) < 102962884861573423.0d0 (* ??? *)
