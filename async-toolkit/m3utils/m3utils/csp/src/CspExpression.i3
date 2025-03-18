@@ -1,9 +1,10 @@
 INTERFACE CspExpression;
 IMPORT Atom;
 IMPORT BigInt;
+IMPORT CspSyntax;
 
 TYPE
-  T = BRANDED Brand OBJECT END;
+  T = CspSyntax.T BRANDED Brand OBJECT END;
 
   (* literals *)
   Boolean <: PublicBoolean;
@@ -89,5 +90,18 @@ TYPE
   FunctionCall <: T; (* see CspExpressionPublic *)
   
 CONST Brand = "CspExpression";
+
+CONST
+  BinMap = ARRAY BinaryOp OF TEXT {
+  "+", "-", "/", "%", "*",
+  "=", ">=", ">", "<", "<=", "!=",
+  "&", "|", "^",
+  "<<", ">>",
+  "&&", "||"
+  };
+
+  UnaMap = ARRAY UnaryOp OF TEXT {
+  "-", "~"
+  };
 
 END CspExpression.

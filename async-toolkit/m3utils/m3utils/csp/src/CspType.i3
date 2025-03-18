@@ -1,4 +1,5 @@
 INTERFACE CspType;
+IMPORT CspSyntax;
 IMPORT CspRange;
 IMPORT CspDirection;
 IMPORT CspInterval;
@@ -7,8 +8,7 @@ IMPORT BigInt;
 TYPE
   T <: Public;
 
-  Public = ROOT OBJECT
-  END;
+  Public = CspSyntax.T;
 
   Array = T BRANDED Brand & " Array" OBJECT
     range      : CspRange.T;

@@ -1,8 +1,16 @@
 INTERFACE CspDirection;
 
 TYPE
-  T = { In, Out, InOut };
+  T = { None, In, Out, InOut };
 
+CONST
+  Names = ARRAY T OF TEXT {
+  "none",
+  "in",
+  "out",
+  "inout"
+  };
+  
 CONST Brand = "CspDirection";
 
 END CspDirection.

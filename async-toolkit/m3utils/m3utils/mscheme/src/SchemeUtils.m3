@@ -252,6 +252,60 @@ PROCEDURE List4(x, y, z, u : Object; t : Scheme.T := NIL) : Pair =
     RETURN p1
   END List4;
 
+PROCEDURE List5(x, y, z, u, v : Object; t : Scheme.T := NIL) : Pair =
+  VAR
+    p1, p2, p3, p4, p5 : Pair;
+  BEGIN 
+    IF t = NIL THEN 
+      p1 := NEW(Pair);
+      p2 := NEW(Pair);
+      p3 := NEW(Pair);
+      p4 := NEW(Pair);
+      p5 := NEW(Pair)
+    ELSE
+      p1 := SchemeClass.GetCons(t);
+      p2 := SchemeClass.GetCons(t);
+      p3 := SchemeClass.GetCons(t);      
+      p4 := SchemeClass.GetCons(t);
+      p5 := SchemeClass.GetCons(t)
+    END;
+    p1.first := x; p2.first := y; p3.first := z; p4.first := u;
+    p1.rest := p2; p2.rest := p3; p3.rest := p4; p4.rest := p5;
+
+    p5.first := v;
+    p5.rest := NIL;
+    
+    RETURN p1
+  END List5;
+
+PROCEDURE List6(x, y, z, u, v, w : Object; t : Scheme.T := NIL) : Pair =
+  VAR
+    p1, p2, p3, p4, p5, p6 : Pair;
+  BEGIN 
+    IF t = NIL THEN 
+      p1 := NEW(Pair);
+      p2 := NEW(Pair);
+      p3 := NEW(Pair);
+      p4 := NEW(Pair);
+      p5 := NEW(Pair);
+      p6 := NEW(Pair)
+    ELSE
+      p1 := SchemeClass.GetCons(t);
+      p2 := SchemeClass.GetCons(t);
+      p3 := SchemeClass.GetCons(t);      
+      p4 := SchemeClass.GetCons(t);
+      p5 := SchemeClass.GetCons(t);
+      p6 := SchemeClass.GetCons(t)
+    END;
+    p1.first := x; p2.first := y; p3.first := z; p4.first := u;
+    p1.rest := p2; p2.rest := p3; p3.rest := p4; p4.rest := p5;
+
+    p5.first := v; p6.first := w;
+    p5.rest := p6; p6.rest  := NIL;
+    
+    RETURN p1
+  END List6;
+
 PROCEDURE ListStar(x : Object; t : Scheme.T := NIL) : Object =
   BEGIN
     IF Rest(x) = NIL THEN RETURN First(x) 

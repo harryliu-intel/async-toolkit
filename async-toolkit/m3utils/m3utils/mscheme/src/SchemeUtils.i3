@@ -56,6 +56,8 @@ PROCEDURE List1(x : Object; t : Scheme.T := NIL) : Pair;
 PROCEDURE List2(x, y : Object; t : Scheme.T := NIL) : Pair;
 PROCEDURE List3(x, y, z : Object; t : Scheme.T := NIL) : Pair;
 PROCEDURE List4(x, y, z, t : Object; s : Scheme.T := NIL) : Pair;
+PROCEDURE List5(x, y, z, t, u : Object; s : Scheme.T := NIL) : Pair;
+PROCEDURE List6(x, y, z, t, u, v : Object; s : Scheme.T := NIL) : Pair;
 PROCEDURE ListStar(x : Object; t : Scheme.T := NIL) : Object;
 
 PROCEDURE MakeList(READONLY a : ARRAY OF Object; t : Scheme.T := NIL) : Pair;

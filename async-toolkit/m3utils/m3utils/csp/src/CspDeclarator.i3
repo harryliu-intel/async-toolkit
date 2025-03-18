@@ -3,6 +3,7 @@ IMPORT CspDirection;
 IMPORT Atom;
 IMPORT CspExpression;
 IMPORT CspType;
+IMPORT SchemePair;
 
 TYPE
   T = RECORD
@@ -14,4 +15,6 @@ TYPE
 
 CONST Brand = "CspDeclarator";
 
+PROCEDURE Lisp(READONLY t : T) : SchemePair.T;
+  
 END CspDeclarator.

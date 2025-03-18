@@ -29,7 +29,7 @@ Smodule   ("CspAst")
 Sinterface("CspGuardedCommand")
 Ssequence ("CspGuardedCommand", "CspGuardedCommand")
 
-Sinterface("CspDeclaration")
+Smodule   ("CspDeclaration")
 Sinterface("CspDeclarationPublic")
 Ssequence ("CspDeclaration", "CspDeclaration")
 
@@ -37,8 +37,10 @@ Sinterface("CspDirection")
 Sinterface("CspRange")
 Sinterface("CspInterval")
 
-Sinterface("CspDeclarator")
+Smodule   ("CspDeclarator")
 Ssequence ("CspDeclarator", "CspDeclarator")
+
+Smodule   ("CspSyntax")
 
 SchemeStubs ("BigInt")
 SchemeStubs ("Math")
