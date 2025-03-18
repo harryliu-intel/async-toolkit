@@ -68,7 +68,11 @@
   (dis "CONVERT : " s dnl)
 
   (if (eq? s 'skip)
+
+      ;; special case for skip, only token allowed on its own
       (CspAst.SkipStmt)
+
+      ;; not a skip -- handle it properly
       (begin
         (if (not (pair? s))
             (begin
@@ -98,7 +102,7 @@
 
             ((assign)
              (CspAst.AssignmentStmt (convert-expr (car args))
-                                (convert-expr (cadr args))
+                                    (convert-expr (cadr args))
                                 )
              )
             
@@ -146,12 +150,95 @@
 
 (define *all-x* '())
 
+(define *rest* #f)
+
+(define *last-a* #f)
+
 (define (convert-expr x)
   (set! *last-x* x)
   (set! *all-x* (cons x *all-x*))
 
-  
-  '()
+  (dis "EXPR : " x dnl)
+
+  (cond ((null? x) (error "convert-expr : x is null"))
+
+        ((BigInt.IsT x)  (CspAst.IntegerExpr x))
+
+        ((string? x) (CspAst.StringExpr x))
+
+        ((eq? x 'else) (CspAst.BooleanExpr #t)) ;; bit of a hack
+
+        ((pair? x)
+
+         ;; a pair...
+         (case (car x)
+           ((probe) (CspAst.ProbeExpr (convert-expr (cadr x))))
+
+           ((array-access) (CspAst.ArrayAccessExpr (convert-expr (cadr x))
+                                                   (convert-expr (caddr x))))
+
+           ((id) (CspAst.IdentifierExpr (cadr x)))
+
+           ((member-access) (CspAst.MemberAccessExpr (convert-expr (cadr x))
+                                                     (caddr x)))
+           ((structure-access) (CspAst.StructureAccessExpr (convert-expr (cadr x))
+                                                     (caddr x)))
+
+           ((apply)
+            (let ((fx     (convert-expr (cadr x)))
+                  (rest   (cddr x))
+                  (argseq (init-seq 'CspExpressionSeq.T)))
+
+              (set! *rest* rest)
+              (map
+               (lambda(a)
+                 (set! *last-a* a)
+                 (argseq 'addhi (convert-expr a)))
+               rest)
+              (CspAst.FunctionCallExpr fx (argseq '*m3*))
+              )
+            )
+
+           ((not) (CspAst.UnaExpr 'Not (convert-expr (cadr x))))
+
+           ((-)
+            ;; - is special
+
+            (if (null? (cddr x))
+                (CspAst.UnaExpr 'Neg (convert-expr (cadr x)))
+                (CspAst.BinExpr 'Sub (convert-expr (cadr x))
+                                     (convert-expr (caddr x)))))
+
+           ((+ / % * == != < > >= <= & && | || ^ == << >>)
+            (CspAst.BinExpr
+             (case (car x)
+               ((+) 'Add)
+               ((/) 'Div)
+               ((%) 'Rem)
+               ((*) 'Mul)
+               ((==) 'EQ)
+               ((!=) 'NE)
+               ((<) 'LT)
+               ((>) 'GT)
+               ((>=) 'GE)
+               ((<=) 'LE)
+               ((&) 'And)
+               ((&&) 'CondAnd)
+               ((|) 'Or)
+               ((||) 'CondOr)
+               ((^) 'Xor)
+               ((<<) 'SHL)
+               ((>>) 'SHR)
+               (else (error " BinExpr " (car x))))
+             (convert-expr (cadr x))
+             (convert-expr (caddr x))))
+           
+           (else (error "unknown keyword " (car x) " : " x ))
+           )
+         )
+        
+        (else (error "dunno that type " x) )
+        )
   )
 
 (define (convert-prog p)

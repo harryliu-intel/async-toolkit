@@ -1,7 +1,7 @@
 INTERFACE CspStatement;
 IMPORT CspExpression;
 IMPORT Pathname;
-IMPORT CspDeclarationSeq;
+IMPORT CspDeclaratorSeq;
 
 TYPE
   Expr = CspExpression.T;
@@ -66,7 +66,7 @@ TYPE
   END;
 
   Var = T BRANDED Brand & " Var" OBJECT
-    decls : CspDeclarationSeq.T;
+    decls : CspDeclaratorSeq.T;
     stmt  : T;
   END;
 

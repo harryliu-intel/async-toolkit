@@ -64,4 +64,6 @@ PROCEDURE Divide(a, b : T; VAR q, r : T);
 PROCEDURE GetRepBase() : T;
 PROCEDURE GetBit(t : T; bit : CARDINAL) : [ 0 .. 1 ];
 
+PROCEDURE IsT(x : REFANY) : BOOLEAN;
+  
 END BigInt.

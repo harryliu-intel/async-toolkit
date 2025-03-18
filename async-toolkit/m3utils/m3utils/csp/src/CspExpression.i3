@@ -60,7 +60,8 @@ TYPE
   StructureAccess <: PublicAccess;
 
   PublicAccess = T OBJECT
-    struct, member : T;
+    struct : T;
+    member : Atom.T;
   END;
 
   ArrayAccess <: PublicArrayAccess;

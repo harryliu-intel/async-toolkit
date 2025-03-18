@@ -15,7 +15,12 @@ IMPORT CspStatement AS S;
 IMPORT CspStatementPublic;
 
 IMPORT CspStructMemberSeq;
-IMPORT CspStatementSeq;
+
+IMPORT CspDeclaration AS D;
+IMPORT CspDeclarationPublic;
+
+IMPORT CspDeclaratorSeq;
+IMPORT CspType;
 
 PROCEDURE AssignmentStmt(lhs, rhs : Expr) : Stmt =
   BEGIN
@@ -126,12 +131,12 @@ PROCEDURE ArrayAccessExpr(arr, idx : Expr) : Expr =
     RETURN NEW(X.ArrayAccess, arr := arr, idx := idx)
   END ArrayAccessExpr;
 
-PROCEDURE MemberAccessExpr(struct, member : Expr) : Expr =
+PROCEDURE MemberAccessExpr(struct : Expr; member : Atom.T) : Expr =
   BEGIN
     RETURN NEW(X.MemberAccess, struct := struct, member := member)
   END MemberAccessExpr;
 
-PROCEDURE StructureAccessExpr(struct, member : Expr) : Expr =
+PROCEDURE StructureAccessExpr(struct : Expr; member : Atom.T) : Expr =
   BEGIN
     RETURN NEW(X.StructureAccess, struct := struct, member := member)
   END StructureAccessExpr;
@@ -206,7 +211,21 @@ PROCEDURE StructureType(isConst : BOOLEAN; name : TEXT) : Type =
   BEGIN
     RETURN NEW(T.Structure, isConst := isConst, name := name)
   END StructureType;
-  
+
+(**********************************************************************)
+
+PROCEDURE FunctionDeclaration(funcName   : Atom.T;
+                              formals    : CspDeclaratorSeq.T;
+                              returnType : CspType.T;) : Decl =
+  BEGIN
+    RETURN NEW(D.Function, funcName := funcName, formals := formals, returnType := returnType)
+  END FunctionDeclaration;
+
+PROCEDURE StructureDeclaration(name  : Atom.T;
+                               decls : CspDeclaratorSeq.T;) : Decl =
+  BEGIN
+    RETURN NEW(D.Structure, name := name, decls := decls)
+  END StructureDeclaration;
 
 BEGIN END CspAst.
 

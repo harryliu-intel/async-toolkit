@@ -465,6 +465,12 @@ PROCEDURE Scan(txt : TEXT; base : PrintBase) : T
     ELSE
       neg := FALSE
     END;
+
+
+    (* "" and "-" are not legal numbers *)
+    IF Text.Length(txt) = 0 THEN
+      RAISE Lex.Error
+    END;
      
     FOR i := 0 TO Text.Length(txt) - 1 DO
       WITH c = Text.GetChar(txt, i) DO
@@ -637,6 +643,9 @@ PROCEDURE GetBit(t : T; bit : CARDINAL) : [ 0 .. 1 ] =
       END
     END      
   END GetBit;
+
+PROCEDURE IsT(ref : REFANY) : BOOLEAN =
+  BEGIN RETURN ISTYPE(ref, T) END IsT;
   
 VAR
   FirstInt, LastInt : T;

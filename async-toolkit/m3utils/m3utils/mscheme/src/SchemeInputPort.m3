@@ -224,8 +224,8 @@ PROCEDURE Close(t : T) : Boolean RAISES { E } =
 PROCEDURE Read(t : T) : Object RAISES { E } =
   BEGIN RETURN DoRead(t, FALSE) END Read;
 
-PROCEDURE ReadBigInt(t : T; base : BigInt.PrintBase) : Object RAISES { E } =
-  BEGIN RETURN DoRead(t, TRUE, base) END ReadBigInt;
+PROCEDURE ReadBigInt(t : T) : Object RAISES { E } =
+  BEGIN RETURN DoRead(t, TRUE, 10) END ReadBigInt;
 
 PROCEDURE IsEOF(x : Object) : BOOLEAN = BEGIN RETURN x = EOF END IsEOF;
 
@@ -460,10 +460,11 @@ PROCEDURE NextToken(t : T; bigInt : BOOLEAN; bigIntBase : BigInt.PrintBase; wx :
 
             IF HaveAlphasOtherThane(txt) THEN
             ELSE
+              (* attempt to parse as a decimal number..! *)
               EVAL WxReset(wx);
               TRY
                 IF bigInt THEN
-                  RETURN BigInt.Scan(txt, bigIntBase)
+                  RETURN BigInt.Scan(txt, 10)
                 ELSE
                   WITH lr = Scan.LongReal(txt), 
                        lrp = NEW(SchemeLongReal.T) DO

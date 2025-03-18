@@ -11,17 +11,19 @@ IMPORT CspType;
 IMPORT CspDirection;
 IMPORT Pathname;
 IMPORT CspStatementSeq;
-IMPORT CspDeclarationSeq;
+IMPORT CspDeclaratorSeq;
 IMPORT CspStructMemberSeq;
 IMPORT BigInt;
 IMPORT Atom;
+IMPORT CspDeclaration;
 
 TYPE
   Expr           = CspExpression.T;
   ExprSeq        = CspExpressionSeq.T;
   Stmt           = CspStatement.T;
   StmtSeq        = CspStatementSeq.T;
-  DeclSeq        = CspDeclarationSeq.T;
+  Decl           = CspDeclaration.T;   (* XXX *)
+  DeclSeq        = CspDeclaratorSeq.T; (* XXX *)
   Type           = CspType.T;
   Range          = CspRange.T;
   Interval       = CspInterval.T;
@@ -79,9 +81,9 @@ PROCEDURE UnaExpr(op : CspExpression.UnaryOp; x : Expr) : Expr;
 
 PROCEDURE ArrayAccessExpr(arr, idx : Expr) : Expr;
 
-PROCEDURE MemberAccessExpr(struct, member : Expr) : Expr;
+PROCEDURE MemberAccessExpr(struct : Expr; member : Atom.T) : Expr;
 
-PROCEDURE StructureAccessExpr(struct, member : Expr) : Expr;
+PROCEDURE StructureAccessExpr(struct : Expr; member : Atom.T) : Expr;
 
 PROCEDURE BitRangeExpr(bits, minx, maxx : Expr) : Expr;
 
@@ -118,5 +120,14 @@ PROCEDURE StructureType(isConst : BOOLEAN; name : TEXT) : Type;
 (*
 PROCEDURE TemporaryIntegerType() : Type; (* ?? *)
 *)
- 
+
+(**********************************************************************)  
+
+PROCEDURE FunctionDeclaration(funcName   : Atom.T;
+                              formals    : CspDeclaratorSeq.T;
+                              returnType : CspType.T;) : Decl;
+
+PROCEDURE StructureDeclaration(name  : Atom.T;
+                               decls : CspDeclaratorSeq.T;) : Decl;
+  
 END CspAst.

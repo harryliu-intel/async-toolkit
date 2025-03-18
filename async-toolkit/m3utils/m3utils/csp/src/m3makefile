@@ -30,11 +30,15 @@ Sinterface("CspGuardedCommand")
 Ssequence ("CspGuardedCommand", "CspGuardedCommand")
 
 Sinterface("CspDeclaration")
+Sinterface("CspDeclarationPublic")
 Ssequence ("CspDeclaration", "CspDeclaration")
 
 Sinterface("CspDirection")
 Sinterface("CspRange")
 Sinterface("CspInterval")
+
+Sinterface("CspDeclarator")
+Ssequence ("CspDeclarator", "CspDeclarator")
 
 SchemeStubs ("BigInt")
 SchemeStubs ("Math")
