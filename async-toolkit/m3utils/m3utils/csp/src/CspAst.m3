@@ -19,6 +19,8 @@ IMPORT CspStructMemberSeq;
 IMPORT CspDeclaration AS D;
 IMPORT CspDeclarationPublic;
 
+IMPORT CspDirection;
+IMPORT CspDeclarator;
 IMPORT CspDeclaratorSeq;
 IMPORT CspType;
 
@@ -189,10 +191,18 @@ PROCEDURE ChannelType(numValues : BigInt.T; dir : Direction) : Type =
   END ChannelType;
   
 PROCEDURE IntegerType(isConst, isSigned : BOOLEAN;
+                      hasDw             : BOOLEAN;
                       dw                : CARDINAL;
+                      hasInterval       : BOOLEAN;
                       interval          : Interval) : Type =
   BEGIN
-    RETURN NEW(T.Integer, isConst := isConst, isSigned := isSigned, dw := dw, interval := interval)
+    RETURN NEW(T.Integer,
+               isConst := isConst,
+               isSigned := isSigned,
+               hasDw := hasDw,
+               dw := dw,
+               hasInterval := hasInterval,
+               interval := interval)
   END IntegerType;
   
 PROCEDURE NodeType(arrayed   : BOOLEAN;
@@ -226,6 +236,20 @@ PROCEDURE StructureDeclaration(name  : Atom.T;
   BEGIN
     RETURN NEW(D.Structure, name := name, decls := decls)
   END StructureDeclaration;
+  
+(**********************************************************************)  
+
+PROCEDURE Declarator(ident        : Atom.T;
+                     typeFragment : CspType.T;
+                     init         : X.T;
+                     direction    : CspDirection.T) : CspDeclarator.T =
+  BEGIN
+    RETURN CspDeclarator.T {
+               ident := ident,
+               typeFragment := typeFragment,
+               init := init,
+               direction := direction }
+  END Declarator;
 
 BEGIN END CspAst.
 

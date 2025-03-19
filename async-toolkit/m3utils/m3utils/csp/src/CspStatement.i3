@@ -11,7 +11,7 @@ TYPE
 
   Public = CspSyntax.T;
 
-  Assignment = T BRANDED Brand & " Assignment" OBJECT
+  Assignment <: T OBJECT
     lhs, rhs : Expr;
   END;
 

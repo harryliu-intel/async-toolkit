@@ -94,14 +94,14 @@ CONST Brand = "CspExpression";
 CONST
   BinMap = ARRAY BinaryOp OF TEXT {
   "+", "-", "/", "%", "*",
-  "=", ">=", ">", "<", "<=", "!=",
+  "==", ">=", ">", "<", "<=", "!=",
   "&", "|", "^",
   "<<", ">>",
   "&&", "||"
   };
 
   UnaMap = ARRAY UnaryOp OF TEXT {
-  "-", "~"
+  "-", "not"
   };
 
 END CspExpression.

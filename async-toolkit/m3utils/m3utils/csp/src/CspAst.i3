@@ -16,6 +16,7 @@ IMPORT CspStructMemberSeq;
 IMPORT BigInt;
 IMPORT Atom;
 IMPORT CspDeclaration;
+IMPORT CspDeclarator;
 
 TYPE
   Expr           = CspExpression.T;
@@ -106,7 +107,9 @@ PROCEDURE ChannelStructureType(members : CspStructMemberSeq.T) : Type;
 PROCEDURE ChannelType(numValues : BigInt.T; dir : Direction) : Type;
 
 PROCEDURE IntegerType(isConst, isSigned : BOOLEAN;
+                      hasDw             : BOOLEAN;
                       dw                : CARDINAL;
+                      hasInterval       : BOOLEAN;
                       interval          : Interval) : Type;
 
 PROCEDURE NodeType(arrayed   : BOOLEAN;
@@ -130,4 +133,11 @@ PROCEDURE FunctionDeclaration(funcName   : Atom.T;
 PROCEDURE StructureDeclaration(name  : Atom.T;
                                decls : CspDeclaratorSeq.T;) : Decl;
   
+(**********************************************************************)  
+
+PROCEDURE Declarator(ident        : Atom.T;
+                     typeFragment : CspType.T;
+                     init         : CspExpression.T;
+                     direction    : CspDirection.T) : CspDeclarator.T;
+
 END CspAst.

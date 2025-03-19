@@ -34,7 +34,7 @@ Sinterface("CspDeclarationPublic")
 Ssequence ("CspDeclaration", "CspDeclaration")
 
 Sinterface("CspDirection")
-Sinterface("CspRange")
+Smodule   ("CspRange")
 Sinterface("CspInterval")
 
 Smodule   ("CspDeclarator")

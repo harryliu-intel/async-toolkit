@@ -3,6 +3,8 @@
 
 (require-modules "basic-defs" "m3" "hashtable" "display")
 
+(define (caddddr x) (car (cddddr x)))
+
 (define (load-csp fn)
 
   (let* ((p (open-input-file fn))
@@ -26,7 +28,7 @@
 
     (set! funcs (nth data 1))
     (set! structs (nth data 2))
-    (set! refparents (nth data 3))
+    (set! refparents (nth data 3))      ;
     (set! declparents (nth data 4))
     (set! inits (nth data 5))
     (set! text (nth data 6))
@@ -61,6 +63,94 @@
 (define (init-seq type)
   (let ((res (obj-method-wrap (new-modula-object type) type)))
     (obj-method-wrap (res 'init 10) type)))
+
+(define *last-var* #f)
+
+(define (convert-dir dir)
+  (case dir
+    ((none) 'None)
+    ((in)   'In)
+    ((out)  'Out)
+    ((inout) 'InOut)
+    (else (error "convert-dir : unknown direction : " dir))
+    )
+  )
+
+(define (convert-range r)
+  (if (or (not (pair? r))
+          (not (eq? (car r) 'range)))
+      (error "not a range : " r)
+      `((min . ,(convert-expr (cadr r)))
+        (max . ,(convert-expr (caddr r))))))
+
+(define (convert-type type)
+  (cond
+   ((eq? type 'boolean) (CspAst.BooleanType))
+   ((eq? type 'string)  (CspAst.StringType))
+   ((pair? type)
+    (case (car type)
+      ((array)       (CspAst.ArrayType (convert-range (cadr type))
+                                       (convert-type (caddr type))))
+      ((channeltype) (CspAst.ChannelType (cadr type) (convert-dir (caddr type))))
+      ((integer)     (let ((isConst (cadr type))
+                           (isSigned (caddr type))
+                           (dw       (cadddr type))
+                           (interval (caddddr type)))
+                       
+                       (CspAst.IntegerType
+                        isConst
+                        isSigned
+                        (not (null? dw))
+                        (if (null? dw) 0 (BigInt.ToInteger dw))
+                        (not (null? interval))
+                        (if (null? interval)
+                            '(() ())
+                            (list (car interval) (cadr interval))))))
+      
+      
+      ((node-array)  (CspAst.NodeType #t (caddr type) (convert-dir (cadr type))))
+      ((node)        (CspAst.NodeType #f 1 (convert-dir (cadr type))))
+      ((structure)   (CspAst.StructureType (cadr type)
+                                           (symbol->string (caddr type))))
+      (else (error "convert-type : unknown type (pair) : " type))
+      )
+    )
+    
+   (else (error "convert-type : unknown type : " type))
+   )
+  )
+    
+
+(define *last-decl* #f)
+
+(define (convert-declarator decl)
+  (set! *last-decl* decl)
+  (let ((ident (cadr decl))
+        (type  (caddr decl))
+        (dir   (cadddr decl))
+        (expr  (caddddr decl)))
+    (CspAst.Declarator
+     (if (or (not (pair? ident))
+             (not (eq? (car ident) 'id)))
+         (error "convert-declarator : unexpected identifier in declarator : " ident)
+         (cadr ident))
+     (convert-type type)
+     (if (null? expr) '() (convert-expr expr))
+     (convert-dir  dir))
+    )
+  )
+
+
+(define (convert-var-stmt sfx)
+  (set! *last-var* sfx)
+
+  (let ((decls (caadr sfx))
+        (stmt  (caddr sfx))
+        (seq   (init-seq 'CspDeclaratorSeq.T)))
+    (map (lambda(d)(seq 'addhi (convert-declarator d))) decls)
+    (CspAst.VarStmt (seq '*m3*) stmt)
+    )
+  )
 
 (define (convert-stmt s last)
   (set! *s* s)
@@ -105,8 +195,25 @@
                                     (convert-expr (cadr args))
                                 )
              )
+
+            ;; the next three are just syntactic sugar 
+            ((assign-operate)
+             (let ((transformed (list 'assign
+                                   (cadr args)
+                                   (list
+                                    (car args)
+                                    (cadr args)
+                                    (caddr args)))))
+               (dis "transform " s " -> " transformed dnl)
+               (convert-stmt transformed s)))
+
+            ((increment)
+             (convert-stmt (list 'assign-operate '+ (car args) (BigInt.New 1))))
+
+            ((decrement)
+             (convert-stmt (list 'assign-operate '- (car args) (BigInt.New 1))))
             
-            ((var) (dis "HI" dnl) (set! *var-s* s) '())
+            ((var) (set! *var-s* s) (convert-var-stmt s))
 
             ((recv) (CspAst.RecvStmt (convert-expr (car args))
                                      (convert-expr (cadr args))))
@@ -140,7 +247,7 @@
             
             (else (set! *bad-s* s)
                   (set! *bad-last* last)
-                  (error "Unknown statement " s))
+                  (error "convert-stmt : unknown statement " s))
             )
           )
         )
@@ -167,6 +274,10 @@
         ((string? x) (CspAst.StringExpr x))
 
         ((eq? x 'else) (CspAst.BooleanExpr #t)) ;; bit of a hack
+
+        ((eq? x #t) (CspAst.BooleanExpr #t))
+
+        ((eq? x #f) (CspAst.BooleanExpr #f))
 
         ((pair? x)
 
@@ -233,7 +344,7 @@
              (convert-expr (cadr x))
              (convert-expr (caddr x))))
            
-           (else (error "unknown keyword " (car x) " : " x ))
+           (else (error "convert-expr : unknown keyword " (car x) " : " x ))
            )
          )
         
@@ -252,3 +363,17 @@
 (loaddata! "arrays_p1")
 
 (define a (BigInt.New 12))
+
+(define csp (obj-method-wrap (convert-prog data) 'CspSyntax.T))
+
+(set-rt-error-mapping! #f)
+
+(define lisp0 (nth data 6))
+(define lisp1 (csp 'lisp))
+(define lisp2 ((obj-method-wrap (convert-stmt lisp1 '()) 'CspSyntax.T) 'lisp))
+(define lisp3 ((obj-method-wrap (convert-stmt lisp2 '()) 'CspSyntax.T) 'lisp))
+(define lisp4 ((obj-method-wrap (convert-stmt lisp3 '()) 'CspSyntax.T) 'lisp))
+
+(if (not (equal? lisp2 lisp3)) (error "lisp2 and lisp3 differ!"))
+
+

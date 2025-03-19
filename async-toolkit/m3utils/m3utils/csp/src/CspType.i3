@@ -10,40 +10,50 @@ TYPE
 
   Public = CspSyntax.T;
 
-  Array = T BRANDED Brand & " Array" OBJECT
+  PubArray = T OBJECT
     range      : CspRange.T;
     elemntType : T;
   END;
 
-  Boolean = T BRANDED Brand & " Boolean" OBJECT
-  END;
+  Array <: PubArray;
+
+  Boolean <: T;
 
   ChannelStructure <: T; (* see CspTypePublic.i3 *)
 
-  Channel = T BRANDED Brand & " Channel" OBJECT
+  PubChannel = T OBJECT
     numValues : BigInt.T;
     dir       : CspDirection.T;
   END;
 
-  Integer = T BRANDED Brand & " Integer" OBJECT
+  Channel <: PubChannel;
+
+  PubInteger = T OBJECT
     isConst, isSigned : BOOLEAN;
+    hasDw             : BOOLEAN;
     dw                : CARDINAL;
+    hasInterval       : BOOLEAN;
     interval          : CspInterval.T;
   END;
 
-  Node = T BRANDED Brand & " Node" OBJECT
+  Integer <: PubInteger;
+
+  PubNode = T OBJECT
     arrayed   : BOOLEAN;
     width     : [1..LAST(CARDINAL)];
     direction : CspDirection.T;
   END;
 
-  String = T BRANDED Brand & " String" OBJECT
-  END;
+  Node <: PubNode;
 
-  Structure = T BRANDED Brand & " Structure" OBJECT
+  String <: T;
+  
+  PubStructure = T OBJECT
     isConst : BOOLEAN;
     name    : TEXT;
   END;
+
+  Structure <: PubStructure;
   
 CONST Brand = "CspType";
 

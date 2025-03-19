@@ -265,11 +265,15 @@ PROCEDURE ModulaTypeOpApply(<*UNUSED*>proc : SchemeProcedure.T;
     
     WHILE ops # NIL DO
       IF ops.nam = name THEN
-        TRY
+        IF interp.attemptToMapRuntimeErrors() THEN
+          TRY
+            RETURN ops.proc(interp, obj, rest)
+          EXCEPT
+            <*NOWARN*>RuntimeError.E(err) =>
+            RAISE E("EXCEPTION! RuntimeError! calling out to Modula-3 code, op=" & SchemeSymbol.ToText(name) & " " &  RuntimeError.Tag(err) & "\n")
+          END
+        ELSE
           RETURN ops.proc(interp, obj, rest)
-        EXCEPT
-          <*NOWARN*>RuntimeError.E(err) =>
-          RAISE E("EXCEPTION! RuntimeError! calling out to Modula-3 code, op=" & SchemeSymbol.ToText(name) & " " &  RuntimeError.Tag(err) & "\n")
         END
       END;
       ops := ops.next

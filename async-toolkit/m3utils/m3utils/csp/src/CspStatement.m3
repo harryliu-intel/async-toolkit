@@ -55,6 +55,17 @@ REVEAL
     lisp := SkipLisp;
   END;
 
+TYPE
+  PubAssignment = T OBJECT
+    lhs, rhs : Expr;
+  END;
+
+REVEAL
+  Assignment = PubAssignment BRANDED Brand & " Assignment" OBJECT
+  OVERRIDES
+    lisp := AssignmentLisp;
+  END;
+
 TYPE  
   PubSend = T OBJECT
     chan, val : Expr;
@@ -119,6 +130,11 @@ PROCEDURE ErrorLisp(self : Error) : SchemeObject.T =
                  BigInt.New(self.lno),
                  BigInt.New(self.cno))
   END ErrorLisp;
+  
+PROCEDURE AssignmentLisp(self : Assignment) : SchemeObject.T =
+  BEGIN
+    RETURN List3(Sym("assign"), Lisp(self.lhs), Lisp(self.rhs))
+  END AssignmentLisp;
   
 PROCEDURE ExpressionLisp(self : Expression) : SchemeObject.T =
   BEGIN
