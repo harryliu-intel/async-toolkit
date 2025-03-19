@@ -70,7 +70,8 @@
     ete0=MetalEteSpace[Metal[0]]
     ete1=MetalEteSpace[Metal[1]]
     ete2=MetalEteSpace[Metal[2]]
-    (DrawChannel BusMetal0 (NodeArrayChan 0 (rows+2)*tracks_m0+1) "metal0_zone_" points ?CV tagCV)
+    (DrawChannel BusMetal0 (NodeArrayChan 0 (rows+2)*tracks_m0+1) "metal0_zone_"
+                 (list x0+ete0/2-2*GridPolyPitch:y x1-ete0/2+2*GridPolyPitch:y) ?CV tagCV)
     (DrawChannel BusMetal1 (NodeArrayChan 1 (cols+4)*tracks_m1)   "metal1_zone_" (list x:y0+ete1/2 x:y1-ete1/2) ?CV tagCV)
     (DrawChannel BusMetal2 (NodeArrayChan 2 (rows+2)*tracks_m2+1) "metal2_zone_" (list x0+ete2/2:y x1-ete2/2:y) ?CV tagCV)
 
