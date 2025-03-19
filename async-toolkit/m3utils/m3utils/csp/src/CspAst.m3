@@ -79,9 +79,9 @@ PROCEDURE RecvStmt(chan : Expr; val : Expr) : Stmt =
     RETURN NEW(S.Recv, chan := chan, val := val)
   END RecvStmt;
 
-PROCEDURE VarStmt(decls : DeclSeq; stmt : Stmt) : Stmt =
+PROCEDURE VarStmt(decl : CspDeclarator.T; stmt : Stmt) : Stmt =
   BEGIN
-    RETURN NEW(S.Var, decls := decls, stmt := stmt)
+    RETURN NEW(S.Var, decl := decl, stmt := stmt)
   END VarStmt;
 
 PROCEDURE ExpressionStmt(expr : Expr) : Stmt =

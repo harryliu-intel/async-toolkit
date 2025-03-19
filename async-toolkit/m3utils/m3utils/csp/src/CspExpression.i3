@@ -39,7 +39,8 @@ TYPE
                EQ, GE, GT, LT, LE, NE,
                And, Or, Xor,
                SHL, SHR,
-               CondAnd, CondOr };
+               CondAnd, CondOr,
+               Pow };
 
   UnaryOp = { Neg, Not };
 
@@ -97,7 +98,8 @@ CONST
   "==", ">=", ">", "<", "<=", "!=",
   "&", "|", "^",
   "<<", ">>",
-  "&&", "||"
+  "&&", "||",
+  "**"
   };
 
   UnaMap = ARRAY UnaryOp OF TEXT {

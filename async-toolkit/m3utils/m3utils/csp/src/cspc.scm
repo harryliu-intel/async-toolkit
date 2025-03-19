@@ -125,6 +125,7 @@
 
 (define (convert-declarator decl)
   (set! *last-decl* decl)
+  (dis "convert-declarator : " decl dnl)
   (let ((ident (cadr decl))
         (type  (caddr decl))
         (dir   (cadddr decl))
@@ -141,14 +142,38 @@
   )
 
 
-(define (convert-var-stmt sfx)
-  (set! *last-var* sfx)
+(define (convert-var-stmt s)
+  (set! *last-var* s)
 
-  (let ((decls (caadr sfx))
-        (stmt  (caddr sfx))
-        (seq   (init-seq 'CspDeclaratorSeq.T)))
-    (map (lambda(d)(seq 'addhi (convert-declarator d))) decls)
-    (CspAst.VarStmt (seq '*m3*) stmt)
+  (let ((decls (cadr s))
+        (decl  (caadr s))
+        (stmt  (caddr s)))
+
+    (if (not (= 1 (length decls)))
+        (error "convert-var-stmt : need to convert single var decl : " s))
+    
+    (CspAst.VarStmt (convert-declarator decl) stmt)
+    )
+  )
+
+(define (convert-var1-stmt s)
+  (let ((decl  (cadr s))
+        (stmt  (caddr s)))
+    (CspAst.VarStmt (convert-declarator decl) stmt)
+    )
+  )
+
+(define xxx #f)
+
+(define (flatten-var-stmt s)
+  ;; this desugars the var stmts to var1 stmts
+  ;; (one decl per statement)
+  (let ((the-sequence 
+         (cons 'sequence
+               (map
+                (lambda(d)(list 'var (list d) (caddr s)))
+                (cadr s)))))
+    the-sequence
     )
   )
 
@@ -212,8 +237,15 @@
 
             ((decrement)
              (convert-stmt (list 'assign-operate '- (car args) (BigInt.New 1))))
-            
-            ((var) (set! *var-s* s) (convert-var-stmt s))
+
+            ((var) (if (= 1 (length (cadr s)))
+                       
+                       (convert-var-stmt s)
+
+                       (convert-stmt (flatten-var-stmt s) s))
+             )
+
+            ((var1) (convert-var1-stmt s))
 
             ((recv) (CspAst.RecvStmt (convert-expr (car args))
                                      (convert-expr (cadr args))))
@@ -320,7 +352,7 @@
                 (CspAst.BinExpr 'Sub (convert-expr (cadr x))
                                      (convert-expr (caddr x)))))
 
-           ((+ / % * == != < > >= <= & && | || ^ == << >>)
+           ((+ / % * == != < > >= <= & && | || ^ == << >> **)
             (CspAst.BinExpr
              (case (car x)
                ((+) 'Add)
@@ -340,6 +372,7 @@
                ((^) 'Xor)
                ((<<) 'SHL)
                ((>>) 'SHR)
+               ((**) 'Pow)
                (else (error " BinExpr " (car x))))
              (convert-expr (cadr x))
              (convert-expr (caddr x))))
@@ -362,6 +395,7 @@
 
 (loaddata! "arrays_p1")
 
+
 (define a (BigInt.New 12))
 
 (define csp (obj-method-wrap (convert-prog data) 'CspSyntax.T))
@@ -375,5 +409,4 @@
 (define lisp4 ((obj-method-wrap (convert-stmt lisp3 '()) 'CspSyntax.T) 'lisp))
 
 (if (not (equal? lisp2 lisp3)) (error "lisp2 and lisp3 differ!"))
-
 

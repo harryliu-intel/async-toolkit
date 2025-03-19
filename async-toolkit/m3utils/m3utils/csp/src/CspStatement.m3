@@ -14,6 +14,7 @@ IMPORT Pathname;
 IMPORT SchemeString;
 IMPORT BigInt;
 IMPORT CspDeclaration;
+IMPORT CspDeclarator;
 
 CONST Sym = SchemeSymbol.FromText;
 
@@ -90,7 +91,7 @@ REVEAL
 
 TYPE  
   PubVar = T OBJECT
-    decls : CspDeclaratorSeq.T;
+    decl : CspDeclarator.T;
     stmt  : T;
   END;
 
@@ -143,8 +144,8 @@ PROCEDURE ExpressionLisp(self : Expression) : SchemeObject.T =
   
 PROCEDURE VarLisp(self : Var) : SchemeObject.T =
   BEGIN
-    RETURN List3(Sym("var"),
-                 List1(CspDeclaration.CspDeclaratorSeqLisp(self.decls)),
+    RETURN List3(Sym("var1"),
+                 CspDeclarator.Lisp(self.decl),
                  Lisp(self.stmt))
   END VarLisp;
   

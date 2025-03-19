@@ -1,7 +1,7 @@
 INTERFACE CspStatement;
 IMPORT CspExpression;
 IMPORT Pathname;
-IMPORT CspDeclaratorSeq;
+IMPORT CspDeclarator;
 IMPORT CspSyntax;
 
 TYPE
@@ -60,7 +60,7 @@ TYPE
   END;
 
   Var <: T OBJECT
-    decls : CspDeclaratorSeq.T;
+    decl : CspDeclarator.T;
     stmt  : T;
   END;
 
