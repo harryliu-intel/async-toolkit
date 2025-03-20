@@ -1,7 +1,5 @@
 INTERFACE CspDeclaration;
-IMPORT CspExpression;
 IMPORT CspDeclaratorSeq;
-IMPORT Atom;
 IMPORT CspSyntax;
 IMPORT SchemePair;
 

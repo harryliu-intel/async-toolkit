@@ -21,6 +21,8 @@ IMPORT CspDeclarationPublic;
 
 IMPORT CspDirection;
 IMPORT CspDeclarator;
+IMPORT CspStructDeclarator;
+IMPORT CspStructDeclaratorSeq;
 IMPORT CspDeclaratorSeq;
 IMPORT CspType;
 
@@ -232,7 +234,7 @@ PROCEDURE FunctionDeclaration(funcName   : Atom.T;
   END FunctionDeclaration;
 
 PROCEDURE StructureDeclaration(name  : Atom.T;
-                               decls : CspDeclaratorSeq.T;) : Decl =
+                               decls : CspStructDeclaratorSeq.T;) : Decl =
   BEGIN
     RETURN NEW(D.Structure, name := name, decls := decls)
   END StructureDeclaration;
@@ -241,15 +243,25 @@ PROCEDURE StructureDeclaration(name  : Atom.T;
 
 PROCEDURE Declarator(ident        : Atom.T;
                      typeFragment : CspType.T;
-                     init         : X.T;
                      direction    : CspDirection.T) : CspDeclarator.T =
   BEGIN
     RETURN CspDeclarator.T {
                ident := ident,
                typeFragment := typeFragment,
-               init := init,
                direction := direction }
   END Declarator;
 
+PROCEDURE StructDeclarator(ident        : Atom.T;
+                           typeFragment : CspType.T;
+                           init         : X.T;
+                           direction    : CspDirection.T) : CspStructDeclarator.T =
+  BEGIN
+    RETURN CspStructDeclarator.T { init := init,
+                                   decl := CspDeclarator.T {
+                                        ident := ident,
+                                        typeFragment := typeFragment,
+                                        direction := direction } }
+  END StructDeclarator;
+  
 BEGIN END CspAst.
 

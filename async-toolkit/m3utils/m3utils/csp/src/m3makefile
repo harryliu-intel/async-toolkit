@@ -39,6 +39,8 @@ Sinterface("CspInterval")
 
 Smodule   ("CspDeclarator")
 Ssequence ("CspDeclarator", "CspDeclarator")
+Smodule   ("CspStructDeclarator")
+Ssequence ("CspStructDeclarator", "CspStructDeclarator")
 
 Smodule   ("CspSyntax")
 

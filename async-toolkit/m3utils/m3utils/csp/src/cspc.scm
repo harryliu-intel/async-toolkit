@@ -126,11 +126,44 @@
 (define (convert-declarator decl)
   (set! *last-decl* decl)
   (dis "convert-declarator : " decl dnl)
+  (case (car decl)
+    ((decl)
+     (let ((ident (cadr decl))
+           (type  (caddr decl))
+           (dir   (cadddr decl))
+           (expr  (caddddr decl)))
+       (CspAst.Declarator
+        (if (or (not (pair? ident))
+                (not (eq? (car ident) 'id)))
+            (error "convert-declarator : unexpected identifier in declarator : " ident)
+            (cadr ident))
+        (convert-type type)
+        (convert-dir  dir))
+       ))
+    ((decl1)
+     (let ((ident (cadr decl))
+           (type  (caddr decl))
+           (dir   (cadddr decl)))
+       (CspAst.Declarator
+        (if (or (not (pair? ident))
+                (not (eq? (car ident) 'id)))
+            (error "convert-declarator : unexpected identifier in declarator : " ident)
+            (cadr ident))
+        (convert-type type)
+        (convert-dir  dir))
+       ))
+    (else (error "convert-declarator : dont know declarator : " decl))
+    )
+  )
+
+(define (convert-struct-declarator decl)
+  (set! *last-decl* decl)
+  (dis "convert-declarator : " decl dnl)
   (let ((ident (cadr decl))
         (type  (caddr decl))
         (dir   (cadddr decl))
         (expr  (caddddr decl)))
-    (CspAst.Declarator
+    (CspAst.StructDeclarator
      (if (or (not (pair? ident))
              (not (eq? (car ident) 'id)))
          (error "convert-declarator : unexpected identifier in declarator : " ident)
@@ -151,8 +184,23 @@
 
     (if (not (= 1 (length decls)))
         (error "convert-var-stmt : need to convert single var decl : " s))
-    
-    (CspAst.VarStmt (convert-declarator decl) stmt)
+
+    ;; check whether it's an original declarator and if so if it
+    ;; has an initial value
+    (let ((var-result     (CspAst.VarStmt (convert-declarator decl) stmt))
+          (init-val       (caddddr decl)))
+      
+      (if (and (eq? (car decl) 'decl) (not (null? init-val)))
+          (let ((assign-result
+                 (convert-stmt (list 'assign (cadr decl) init-val) s))
+                (seq (init-seq 'CspStatementSeq.T)))
+            (seq 'addhi var-result)
+            (seq 'addhi assign-result)
+            (CspAst.SequentialStmt (seq '*m3*)))
+
+          var-result
+          )
+      )
     )
   )
 
@@ -162,8 +210,6 @@
     (CspAst.VarStmt (convert-declarator decl) stmt)
     )
   )
-
-(define xxx #f)
 
 (define (flatten-var-stmt s)
   ;; this desugars the var stmts to var1 stmts
@@ -175,6 +221,58 @@
                 (cadr s)))))
     the-sequence
     )
+  )
+
+(define (compound-stmt? s)
+  (and (list? s)
+       (not (null? s))
+       (or (eq? (car s) 'parallel) (eq? (car s) 'sequence))))
+
+(define (guarded-stmt? s)
+  (and (list? s)
+       (not (null? s))
+       (or (eq? (car s) 'if)
+           (eq? (car s) 'nondet-if)
+           (eq? (car s) 'do)
+           (eq? (car s) 'nondet-do))))
+
+(define (simplify-stmt s)
+  (cond ((compound-stmt? s) (simplify-compound-stmt s))
+        ((guarded-stmt? s) (simplify-guarded-stmt s))
+        (else s)))
+
+(define (simplify-guarded-stmt s)
+  (cons (car s)
+        (map
+         (lambda(gc)
+           (let ((guard   (car gc))
+                 (command (cadr gc)))
+             (list guard (simplify-stmt command))))
+         (cdr s))))
+        
+(define (simplify-compound-stmt s)
+  (let loop ((p    (cdr s))
+             (res  (list (car s))))
+
+    (if (null? p)
+
+        (reverse res) ;; base case
+
+        (let ((next (simplify-stmt (car p))))
+
+          (if (and (compound-stmt? next)
+                   (eq? (car next) (car s)))
+
+              (begin
+;; same type of statement, just splice in the args
+;;                    (dis " splicing next  : " next dnl)
+;;                    (dis " splicing cdr next : " (cdr next) dnl)
+                
+                (loop (cdr p)
+                      (append (reverse (cdr next)) res))
+                )
+              
+              (loop (cdr p) (cons next res))))))
   )
 
 (define (convert-stmt s last)
@@ -385,6 +483,8 @@
         )
   )
 
+
+
 (define (convert-prog p)
   (if (not (and (pair? p) (eq? (car p) 'csp)))
       (error (string-append "Not a CSP program : " p)))
@@ -394,6 +494,7 @@
 (define (reload) (load "cspc.scm"))
 
 (loaddata! "arrays_p1")
+;;(loaddata! "functions_p00")
 
 
 (define a (BigInt.New 12))
@@ -403,10 +504,10 @@
 (set-rt-error-mapping! #f)
 
 (define lisp0 (nth data 6))
-(define lisp1 (csp 'lisp))
-(define lisp2 ((obj-method-wrap (convert-stmt lisp1 '()) 'CspSyntax.T) 'lisp))
-(define lisp3 ((obj-method-wrap (convert-stmt lisp2 '()) 'CspSyntax.T) 'lisp))
-(define lisp4 ((obj-method-wrap (convert-stmt lisp3 '()) 'CspSyntax.T) 'lisp))
+(define lisp1 (simplify-stmt (csp 'lisp)))
+(define lisp2 (simplify-stmt ((obj-method-wrap (convert-stmt lisp1 '()) 'CspSyntax.T) 'lisp)))
+(define lisp3 (simplify-stmt ((obj-method-wrap (convert-stmt lisp2 '()) 'CspSyntax.T) 'lisp)))
+(define lisp4 (simplify-stmt ((obj-method-wrap (convert-stmt lisp3 '()) 'CspSyntax.T) 'lisp)))
 
-(if (not (equal? lisp2 lisp3)) (error "lisp2 and lisp3 differ!"))
+(if (not (equal? lisp1 lisp4)) (error "lisp1 and lisp4 differ!"))
 

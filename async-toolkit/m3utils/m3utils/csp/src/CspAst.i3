@@ -12,11 +12,13 @@ IMPORT CspDirection;
 IMPORT Pathname;
 IMPORT CspStatementSeq;
 IMPORT CspDeclaratorSeq;
+IMPORT CspStructDeclaratorSeq;
 IMPORT CspStructMemberSeq;
 IMPORT BigInt;
 IMPORT Atom;
 IMPORT CspDeclaration;
 IMPORT CspDeclarator;
+IMPORT CspStructDeclarator;
 
 TYPE
   Expr           = CspExpression.T;
@@ -131,13 +133,17 @@ PROCEDURE FunctionDeclaration(funcName   : Atom.T;
                               returnType : CspType.T;) : Decl;
 
 PROCEDURE StructureDeclaration(name  : Atom.T;
-                               decls : CspDeclaratorSeq.T;) : Decl;
+                               decls : CspStructDeclaratorSeq.T;) : Decl;
   
 (**********************************************************************)  
 
 PROCEDURE Declarator(ident        : Atom.T;
                      typeFragment : CspType.T;
-                     init         : CspExpression.T;
                      direction    : CspDirection.T) : CspDeclarator.T;
+
+PROCEDURE StructDeclarator(ident        : Atom.T;
+                     typeFragment : CspType.T;
+                     init         : CspExpression.T;
+                     direction    : CspDirection.T) : CspStructDeclarator.T;
 
 END CspAst.

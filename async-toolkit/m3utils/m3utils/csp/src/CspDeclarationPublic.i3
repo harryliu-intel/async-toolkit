@@ -1,6 +1,7 @@
 INTERFACE CspDeclarationPublic;
 IMPORT CspDeclaration;
 IMPORT CspDeclaratorSeq;
+IMPORT CspStructDeclaratorSeq;
 IMPORT Atom;
 IMPORT CspType;
 
@@ -13,7 +14,7 @@ REVEAL
 
   CspDeclaration.Structure = CspDeclaration.T BRANDED CspDeclaration.Brand & " Structure" OBJECT
     name  : Atom.T;
-    decls : CspDeclaratorSeq.T;
+    decls : CspStructDeclaratorSeq.T;
   END;
 
 END CspDeclarationPublic.
