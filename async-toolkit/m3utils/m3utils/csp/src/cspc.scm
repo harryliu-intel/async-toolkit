@@ -339,30 +339,49 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
+;; the type visitor doesn't actually get at structure types
+;; because structure types are defined in a separate space to the
+;; text of the CSP process.
 
-(define (visit-declarator d stmt-visitor expr-visitor)
+(define (visit-type t stmt-visitor expr-visitor type-visitor)
+
+  (define (type tt) (visit-type tt stmt-visitor expr-visitor type-visitor))
+    
+  (type-visitor
+   (if (and (list? t) (eq? 'array (car t)))
+       (list 'array (cadr t) (type (caddr t)))
+       t
+       )
+   )
+  )
+
+(define (visit-declarator d stmt-visitor expr-visitor type-visitor)
   (if (not (equal? 'decl1 (car d)))
       (error "visit-declarator : not a desugared declarator : " d))
 
-  (let ((ident (cadr d))
-        (type  (caddr d))
-        (dir   (cadddr d)))
-    d
-    )
-  )
+   (let ((ident (cadr d))
+         (type  (caddr d))
+         (dir   (cadddr d)))
+     (list (car d)
+           ident
+           (visit-type type stmt-visitor expr-visitor type-visitor)
+           dir)
+     )
+   )
+  
 
-(define (visit-var1-stmt s stmt-visitor expr-visitor)
-  (list 'var1 (visit-declarator (cadr s) stmt-visitor expr-visitor))
+(define (visit-var1-stmt s stmt-visitor expr-visitor type-visitor)
+  (list 'var1 (visit-declarator (cadr s) stmt-visitor expr-visitor type-visitor))
 )
 
 (define vs #f)
 
-(define (visit-stmt s stmt-visitor expr-visitor)
+(define (visit-stmt s stmt-visitor expr-visitor type-visitor)
   ;; visit leaves before parent
 
-  (define (stmt ss)(visit-stmt ss stmt-visitor expr-visitor))
+  (define (stmt ss)(visit-stmt ss stmt-visitor expr-visitor type-visitor))
 
-  (define (expr x)(visit-expr x stmt-visitor expr-visitor))
+  (define (expr x)(visit-expr x stmt-visitor expr-visitor type-visitor))
 
   (stmt-visitor
   (if (eq? s 'skip)
@@ -388,7 +407,7 @@
                    (error "visit-stmt : need to desugar : " kw))
                   
                   ((var1)
-                   (cdr (visit-var1-stmt s stmt-visitor expr-visitor)))
+                   (cdr (visit-var1-stmt s stmt-visitor expr-visitor type-visitor)))
                   
                   ((recv send)
                    (list (expr (car args)) (expr (cadr args))))
@@ -408,14 +427,9 @@
       )
   ))
 
-(define (print-identity x)
-  (dis x dnl)
-  x
-  )
-
-(define (visit-expr x stmt-visitor expr-visitor)
+(define (visit-expr x stmt-visitor expr-visitor type-visitor)
   
-  (define (expr x)(visit-expr x stmt-visitor expr-visitor))
+  (define (expr x)(visit-expr x stmt-visitor expr-visitor type-visitor))
 
   (expr-visitor
    (if (pair? x)
@@ -447,6 +461,11 @@
        );;fi
    )
   );;enifed
+
+(define (print-identity x)
+  (dis x dnl)
+  x
+  )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
            
