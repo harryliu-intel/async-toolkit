@@ -61,7 +61,6 @@ TYPE
 
   Var <: T OBJECT
     decl : CspDeclarator.T;
-    stmt  : T;
   END;
 
   Expression <: T OBJECT

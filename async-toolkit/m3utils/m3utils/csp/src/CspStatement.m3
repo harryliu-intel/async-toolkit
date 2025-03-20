@@ -1,9 +1,8 @@
 MODULE CspStatement;
 IMPORT CspStatementPublic;
 
-IMPORT CspDeclaratorSeq;
 IMPORT SchemeObject;
-FROM SchemeUtils IMPORT List1, List2, List3, List4, Cons;
+FROM SchemeUtils IMPORT List2, List3, List4, Cons;
 IMPORT SchemeSymbol;
 IMPORT CspStatementSeq;
 IMPORT SchemePair;
@@ -13,7 +12,6 @@ FROM CspSyntax IMPORT Lisp;
 IMPORT Pathname;
 IMPORT SchemeString;
 IMPORT BigInt;
-IMPORT CspDeclaration;
 IMPORT CspDeclarator;
 
 CONST Sym = SchemeSymbol.FromText;
@@ -92,7 +90,6 @@ REVEAL
 TYPE  
   PubVar = T OBJECT
     decl : CspDeclarator.T;
-    stmt  : T;
   END;
 
 REVEAL
@@ -144,9 +141,8 @@ PROCEDURE ExpressionLisp(self : Expression) : SchemeObject.T =
   
 PROCEDURE VarLisp(self : Var) : SchemeObject.T =
   BEGIN
-    RETURN List3(Sym("var1"),
-                 CspDeclarator.Lisp(self.decl),
-                 Lisp(self.stmt))
+    RETURN List2(Sym("var1"),
+                 CspDeclarator.Lisp(self.decl))
   END VarLisp;
   
 PROCEDURE RecvLisp(self : Recv) : SchemeObject.T =

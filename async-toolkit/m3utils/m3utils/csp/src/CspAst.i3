@@ -54,7 +54,7 @@ PROCEDURE SendStmt(chan : Expr; val : Expr) : Stmt;
 
 PROCEDURE RecvStmt(chan : Expr; val : Expr) : Stmt;
 
-PROCEDURE VarStmt(decl : CspDeclarator.T; stmt : Stmt) : Stmt;
+PROCEDURE VarStmt(decl : CspDeclarator.T) : Stmt;
 
 PROCEDURE ExpressionStmt(expr : Expr) : Stmt;
 

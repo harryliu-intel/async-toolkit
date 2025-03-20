@@ -1,6 +1,42 @@
                                         ; cspc.scm ;
                                         ;
 
+;;  
+;;  CSP "compiler" (still in quotes for now)
+;;
+;; General strategy: Java has been enhanced to emit scheme-compatible
+;; S-expressions.  We parse the S-expressions, convert to the Modula-3
+;; objects, convert back to Scheme (the back and forth is mostly a
+;; consistency check of our own code.
+;;
+;; The steps performed are:
+;;
+;; 1. desugaring
+;;    a. x++ and x += c are desugared into x = x + 1 and x = x + c
+;;    b. int x=5, y; are desugared to int x; x = 5; int y;
+;;
+;; 2. function inlining
+;;    -- functions need to be inlined per Verilog copy-in/copy-out semantics
+;;
+;; 3. expression sequencing
+;;    -- expression sequences need to be constructed for all expressions
+;;    -- result should be three-address code (effectively)
+;;
+;; 4. type evaluation
+;;    -- the type of every three-address operation to be elucidated
+;;       (both input and output)
+;;
+;; 5. block extraction
+;;    -- sequential code blocks between suspension points to be computed
+;;
+;; 6. liveness computation
+;;    -- liveness of temporaries to be computed: local to block or
+;;       visible across blocks?
+;;
+;; 7. code generation
+;;
+
+
 (require-modules "basic-defs" "m3" "hashtable" "display")
 
 (define (caddddr x) (car (cddddr x)))
@@ -179,15 +215,14 @@
   (set! *last-var* s)
 
   (let ((decls (cadr s))
-        (decl  (caadr s))
-        (stmt  (caddr s)))
+        (decl  (caadr s)))
 
     (if (not (= 1 (length decls)))
         (error "convert-var-stmt : need to convert single var decl : " s))
 
     ;; check whether it's an original declarator and if so if it
     ;; has an initial value
-    (let ((var-result     (CspAst.VarStmt (convert-declarator decl) stmt))
+    (let ((var-result     (CspAst.VarStmt (convert-declarator decl)))
           (init-val       (caddddr decl)))
       
       (if (and (eq? (car decl) 'decl) (not (null? init-val)))
