@@ -15,12 +15,14 @@
 ;;    a. x++ and x += c are desugared into x = x + 1 and x = x + c
 ;;    b. int x=5, y; are desugared to int x; x = 5; int y;
 ;;
-;; 2. function inlining
-;;    -- functions need to be inlined per Verilog copy-in/copy-out semantics
-;;
-;; 3. expression sequencing
+;; 2. expression sequencing
 ;;    -- expression sequences need to be constructed for all expressions
 ;;    -- result should be three-address code (effectively)
+;;
+;; 3. function inlining
+;;    -- functions need to be inlined per Verilog copy-in/copy-out semantics
+;; 
+;; (repeat steps 2 and 3 until fixed point -- or sequence functions first)
 ;;
 ;; 4. type evaluation
 ;;    -- the type of every three-address operation to be elucidated
@@ -38,6 +40,25 @@
 
 
 (require-modules "basic-defs" "m3" "hashtable" "display")
+
+
+;;            } else if (name.equals("string")) {
+;;               preamble.add(createVarStatement(temp, new StringType()));
+;;            } else if (name.equals("print") || name.equals("assert") ||
+;;                       name.equals("cover") || name.equals("unpack")) {
+;;                noReturn = true;
+;;            } else if (name.equals("pack")) {
+;;                preamble.add(createVarStatement(temp,
+;;                                                new TemporaryIntegerType())); 
+;;            }
+
+;; also see com/avlsi/csp/util/RefinementResolver.java
+
+
+(define (identity x) x)
+
+(define special-functions
+  '(string print assert cover pack unpack))
 
 (define (caddddr x) (car (cddddr x)))
 
@@ -74,6 +95,7 @@
 
 (loaddata! "p1")
 
+(define (skip) )
 
     
 
@@ -240,9 +262,8 @@
   )
 
 (define (convert-var1-stmt s)
-  (let ((decl  (cadr s))
-        (stmt  (caddr s)))
-    (CspAst.VarStmt (convert-declarator decl) stmt)
+  (let ((decl  (cadr s)))
+    (CspAst.VarStmt (convert-declarator decl))
     )
   )
 
@@ -310,6 +331,97 @@
               (loop (cdr p) (cons next res))))))
   )
 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;; visitors
+;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+
+(define (visit-declarator d stmt-visitor expr-visitor)
+  (if (not (equal? 'decl1 (car d)))
+      (error "visit-declarator : not a desugared declarator : " d))
+
+  (let ((ident (cadr d))
+        (type  (caddr d))
+        (dir   (cadddr d)))
+    d
+    )
+  )
+
+(define (visit-var1-stmt s stmt-visitor expr-visitor)
+  (list 'var1 (visit-declarator (cadr s) stmt-visitor expr-visitor))
+)
+
+(define vs #f)
+
+(define (visit-stmt s stmt-visitor expr-visitor)
+  ;; visit leaves before parent
+
+  (define (stmt ss)(visit-stmt ss stmt-visitor expr-visitor))
+
+  (define (expr x)(visit-expr x stmt-visitor expr-visitor))
+
+  (stmt-visitor
+  (if (eq? s 'skip)
+      s
+      (begin
+        (if (not (pair? s))
+            (begin
+              (set! *bad-s* s)
+              (set! *bad-last* last)
+              (error "Not a statement : " s dnl "last : " last)))
+        
+        (let ((kw   (car s))
+              (args (cdr s))
+              )
+          (cons kw
+                (case kw
+                  ((sequence parallel) (map stmt args))
+                
+                  ((assign)            (list
+                                        (expr (car args)) (expr (cadr args))))
+                  
+                  ((assign-operate increment decrement var)
+                   (error "visit-stmt : need to desugar : " kw))
+                  
+                  ((var1)
+                   (cdr (visit-var1-stmt s stmt-visitor expr-visitor)))
+                  
+                  ((recv send)
+                   (list (expr (car args)) (expr (cadr args))))
+                
+                  ((do if nondet-if nondet-do)
+                   (set! vs s)
+                   (map (lambda(gc)(list (expr (car gc)) (stmt (cadr gc))))
+                        args))
+                  
+                  ((eval) (list (expr (car args))))
+                  
+                  (else (set! *bad-s* s)
+                        (set! *bad-last* last)
+                        (error "convert-stmt : unknown statement " s))
+                )))
+        )
+      )
+  ))
+
+(define (print-identity x)
+  (dis x dnl)
+  x
+  )
+
+(define (visit-expr x stmt-visitor expr-visitor)
+  
+  (define (expr x)(visit-expr x stmt-visitor expr-visitor))
+  
+  x
+  )
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+           
 (define (convert-stmt s last)
   (set! *s* s)
   (set! *last* last)
@@ -438,7 +550,7 @@
 
         ((string? x) (CspAst.StringExpr x))
 
-        ((eq? x 'else) (CspAst.BooleanExpr #t)) ;; bit of a hack
+        ((eq? x 'else) (CspAst.BooleanExpr #t)) ;; bit of a hack -- desugar
 
         ((eq? x #t) (CspAst.BooleanExpr #t))
 
