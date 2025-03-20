@@ -416,9 +416,37 @@
 (define (visit-expr x stmt-visitor expr-visitor)
   
   (define (expr x)(visit-expr x stmt-visitor expr-visitor))
-  
-  x
-  )
+
+  (expr-visitor
+   (if (pair? x)
+       (let ((kw (car x))
+             (args (cdr x)))
+         (cons kw
+               (case kw
+                 ((id) args)
+                 
+                 ;; unary/binary ops
+                 ((probe array-access - not
+                   + / % * == != < > >= <= & && | || ^ == << >> ** ) ;; | )
+                   (map expr args))
+
+                 ((apply)
+                  (cons (car args) (map expr (cdr args))))
+
+                 ((member-access structure-access)
+                  (list (expr (car args)) (cadr args))
+                  )
+
+                 (else (error "visit-expr : unknown keyword " kw " : " x ))
+                 ) ;; esac
+
+               );; snoc
+   
+         );;tel
+       x ;; not a pair
+       );;fi
+   )
+  );;enifed
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
            
