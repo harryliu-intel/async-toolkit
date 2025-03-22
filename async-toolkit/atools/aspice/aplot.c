@@ -1403,12 +1403,12 @@ char *command[][3]=
     {"quit","",
      "Exits aplot.  Ctrl-D also works."},
     {"png","\"file.png\" [\"title\"] [x y]",
-     "Write a png file of the current panel, with optional title and\n"
-     "dimensions."},
+     "Write png of the current panel, with optional title and dimensions."},
+    {"svg","\"file.svg\" [\"title\"] [x y]",
+     "Write svg of the current panel, with optional title and dimensions."},
     {"\\gnuplot","...",
      "Passes the rest of the line directly to gnuplot.  This can be used for\n"
-     "detailed control of titles and axes, and to make plots to non-png file\n"
-     "formats like postscript."},
+     "detailed control of titles and axes, and to write other file formats."},
     {NULL,NULL,NULL} // NULL terminate the command list
   };
 
@@ -1627,8 +1627,11 @@ int main(int argc, char *argv[])
 	{
         draw_panel(panel);
 	}
-      else if (lex_eatif_keyword(lex,"png"))
+      else if (lex_is_keyword(lex,"png") || lex_is_keyword(lex,"svg"))
         {
+        char *format=NULL;
+        if      (lex_eatif_keyword(lex,"png")) format="png";
+        else if (lex_eatif_keyword(lex,"svg")) format="svg";
         if (lex_is_quote(lex))
           {
           int x=640,y=240;
@@ -1648,7 +1651,7 @@ int main(int argc, char *argv[])
             fprintf(panel->gnuplot,"set title \"%s\"\n",lex_eat_quote(lex));
           if (lex_is_integer(lex)) x=lex_eat_integer(lex);
           if (lex_is_integer(lex)) y=lex_eat_integer(lex);
-          fprintf(panel->gnuplot,"set terminal png size %d,%d\n",x,y);
+          fprintf(panel->gnuplot,"set terminal %s size %d,%d\n",format,x,y);
           draw_panel(panel);
           fprintf(panel->gnuplot,"set terminal x11\n");
           fprintf(panel->gnuplot,"set out\n");
