@@ -9,7 +9,7 @@
 MODULE SchemeUtils;
 IMPORT Scheme, SchemeInputPort, SchemeClass, SchemeSymbol;
 IMPORT Wr, Fmt, Wx, Stdio;
-FROM Scheme IMPORT Object, E, Symbol, Vector;
+FROM Scheme IMPORT Object, E;
 FROM SchemeChar IMPORT Char;
 IMPORT SchemeLongReal, SchemeChar, SchemePair;
 IMPORT AL;

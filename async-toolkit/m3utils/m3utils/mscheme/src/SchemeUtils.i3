@@ -7,7 +7,7 @@
 *)
 
 INTERFACE SchemeUtils;
-FROM Scheme IMPORT Object, Symbol, Vector, E;
+FROM Scheme IMPORT Object, E;
 IMPORT Scheme, SchemeInputPort;
 IMPORT Wr, Wx;
 IMPORT SchemePair;
@@ -15,6 +15,8 @@ IMPORT SchemeString;
 IMPORT RefSeq, RefPairSeq;
 
 TYPE String = SchemeString.T;
+     Symbol = Scheme.Symbol;
+     Vector = Scheme.Vector;
 
 TYPE Pair = SchemePair.T;
 
