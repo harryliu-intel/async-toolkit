@@ -105,6 +105,11 @@ PROCEDURE BooleanExpr(val : BOOLEAN) : Expr =
     RETURN NEW(X.Boolean, val := val)
   END BooleanExpr;
 
+PROCEDURE ElseExpr() : Expr =
+  BEGIN
+    RETURN NEW(X.Else)
+  END ElseExpr;
+
 PROCEDURE IntegerExpr(val : BigInt.T) : Expr =
   BEGIN
     RETURN NEW(X.Integer, val := val)

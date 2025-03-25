@@ -17,6 +17,11 @@ REVEAL
   OVERRIDES
     lisp := BooleanLisp;
   END;
+
+  Else = T BRANDED Brand & " Else" OBJECT
+  OVERRIDES
+    lisp := ElseLisp;
+  END;
   
   Integer = PublicInteger BRANDED Brand & " Integer" OBJECT
   OVERRIDES
@@ -91,6 +96,11 @@ PROCEDURE BooleanLisp(self : Boolean) : SchemeObject.T =
   BEGIN
     RETURN SchemeBoolean.Truth(self.val)
   END BooleanLisp;
+
+PROCEDURE ElseLisp(<*UNUSED*>self : Else) : SchemeObject.T =
+  BEGIN
+    RETURN Sym("else")
+  END ElseLisp;
   
 PROCEDURE IntegerLisp(self : Integer) : SchemeObject.T =
   BEGIN

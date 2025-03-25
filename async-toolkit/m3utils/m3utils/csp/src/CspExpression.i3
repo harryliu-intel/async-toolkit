@@ -13,6 +13,8 @@ TYPE
     val : BOOLEAN;
   END;
 
+  Else <: T; (* special else expression *)
+
   Integer <: PublicInteger;
 
   PublicInteger = T OBJECT

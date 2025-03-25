@@ -15,6 +15,10 @@
 ;;    a. x++ and x += c are desugared into x = x + 1 and x = x + c
 ;;    b. int x=5, y; are desugared to int x; x = 5; int y;
 ;;
+;;
+;;    uniquifying block variable names
+;;
+;;
 ;; 2. expression sequencing
 ;;    -- expression sequences need to be constructed for all expressions
 ;;    -- result should be three-address code (effectively)
@@ -37,7 +41,61 @@
 ;;
 ;; 7. code generation
 ;;
-
+;;
+;; PROCESS SUSPENSION AND REACTIVATION
+;; ===================================
+;;
+;; A basic design element is how to deal with suspended processes.
+;; A process can suspend in three or four ways:
+;;
+;; i  - on an if statement (including a "wait" [X] = [X -> skip])
+;; 
+;; ii - on a receive X?_
+;;
+;; iii- partial suspension on re-joining after a comma A,B;C
+;;
+;; iv - sleeping for a "wait(n)" statement (not really suspension)
+;;
+;; The most interesting and tricky is case i- an if statement.  An
+;; if can only be suspended on probes, since there are no global
+;; variables shared between processes (other than point-to-point channels).
+;; (This is a fundamental design feature of CSP.)
+;;
+;; Since only probes can cause a suspended if to wake up, we can
+;; evaluate an if by thinking of it as a fork in the code that, based on
+;; the result of evaluating all the guards, picks one branch and executes
+;; that or else suspends waiting for another update.  The if is thus
+;; registered as the waiter on all the probes that appear in its guards.
+;;
+;; We can draw the further conclusion from this discussion that an if
+;; statement without probes in the guards can be implemented without
+;; any suspend/release actions (as a simple if...then...else
+;; in the manner of Pascal or C).
+;;
+;; What remains is to discuss the implementation of "else".  "else" is
+;; an addition to CSP made by Fulcrum.  There are three ways of considering
+;; implementing else:
+;;
+;; i   - we could implement else simply as "true" and evaluate the guards
+;;       always in textual sequence.  The problem with this is that we
+;;       would find it difficult to detect whether guards were multiply
+;;       true, if we cared to do that.
+;;
+;; ii  - we could implement else as a syntactic negation of the disjunction
+;;       of all previous guards, but this would be inefficient.
+;;
+;; iii - we could implement else as its own special expression object.
+;;       I think this is the approach we will choose.
+;;
+;;
+;; UNDECLARED VARIABLES
+;; ====================
+;;
+;; Undeclared variables appearing anywhere in the process text are 
+;; treated as if they were declared as unsigned integers at the beginning
+;; of the process (and initialized to zero).
+;;
+;;
 
 (require-modules "basic-defs" "m3" "hashtable" "display")
 
@@ -57,7 +115,7 @@
 
 (define (identity x) x)
 
-(define special-functions
+(define special-functions     ;; these are special functions per Harry
   '(string print assert cover pack unpack))
 
 (define (caddddr x) (car (cddddr x)))
@@ -343,129 +401,419 @@
 ;; because structure types are defined in a separate space to the
 ;; text of the CSP process.
 
-(define (visit-type t stmt-visitor expr-visitor type-visitor)
+(define (prepostvisit-type t
+                           stmt-previsit stmt-postvisit
+                           expr-previsit expr-postvisit
+                           type-previsit type-postvisit)
 
-  (define (type tt) (visit-type tt stmt-visitor expr-visitor type-visitor))
-    
-  (type-visitor
-   (if (and (list? t) (eq? 'array (car t)))
-       (list 'array (cadr t) (type (caddr t)))
-       t
-       )
-   )
+  (define (type tt) (prepostvisit-type tt
+                                       stmt-previsit stmt-postvisit
+                                       expr-previsit expr-postvisit
+                                       type-previsit type-postvisit))
+
+
+  (define (continue)
+    (if (and (list? t) (eq? 'array (car t)))
+        (list 'array (cadr t) (type (caddr t)))
+        t
+        )
+    )
+  
+
+  (let ((pre (type-previsit t)))
+    (cond ((eq? pre #f) t)
+          ((and (pair? pre) (eq? 'cut (car pre))) (cdr pre))
+          (else (type-postvisit (continue)))))
   )
-
-(define (visit-declarator d stmt-visitor expr-visitor type-visitor)
+  
+(define (prepostvisit-declarator d 
+                         stmt-previsit stmt-postvisit
+                         expr-previsit expr-postvisit
+                         type-previsit type-postvisit)
   (if (not (equal? 'decl1 (car d)))
-      (error "visit-declarator : not a desugared declarator : " d))
+      (error "prepostvisit-declarator : not a desugared declarator : " d))
 
    (let ((ident (cadr d))
          (type  (caddr d))
          (dir   (cadddr d)))
      (list (car d)
            ident
-           (visit-type type stmt-visitor expr-visitor type-visitor)
+           (prepostvisit-type type 
+                              stmt-previsit stmt-postvisit
+                              expr-previsit expr-postvisit
+                              type-previsit type-postvisit)
            dir)
      )
    )
   
 
-(define (visit-var1-stmt s stmt-visitor expr-visitor type-visitor)
-  (list 'var1 (visit-declarator (cadr s) stmt-visitor expr-visitor type-visitor))
+(define (prepostvisit-var1-stmt s
+                         stmt-previsit stmt-postvisit
+                         expr-previsit expr-postvisit
+                         type-previsit type-postvisit)
+  (list 'var1 (prepostvisit-declarator (cadr s)
+                                       stmt-previsit stmt-postvisit
+                                       expr-previsit expr-postvisit
+                                       type-previsit type-postvisit))
 )
 
 (define vs #f)
 
-(define (visit-stmt s stmt-visitor expr-visitor type-visitor)
-  ;; visit leaves before parent
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-  (define (stmt ss)(visit-stmt ss stmt-visitor expr-visitor type-visitor))
+(define (prepostvisit-stmt s
+                           stmt-previsit stmt-postvisit
+                           expr-previsit expr-postvisit
+                           type-previsit type-postvisit)
+  ;; first run stmt-previsit
+  ;; if it returns #f, stop recursing
+  ;; if it returns (cut . XXX) return XXX
+  ;; else run (stmt-postvisit (prepostvisit-stmt ...))
 
-  (define (expr x)(visit-expr x stmt-visitor expr-visitor type-visitor))
+  (define (stmt ss)(prepostvisit-stmt
+                    ss
+                    stmt-previsit stmt-postvisit
+                    expr-previsit expr-postvisit
+                    type-previsit type-postvisit
+                    ))
+    
+  (define (expr x)(prepostvisit-expr
+                   x
+                   stmt-previsit stmt-postvisit
+                   expr-previsit expr-postvisit
+                   type-previsit type-postvisit
+                   ))
 
-  (stmt-visitor
-  (if (eq? s 'skip)
-      s
-      (begin
-        (if (not (pair? s))
-            (begin
-              (set! *bad-s* s)
-              (set! *bad-last* last)
-              (error "Not a statement : " s dnl "last : " last)))
-        
-        (let ((kw   (car s))
-              (args (cdr s))
-              )
+  (define (continue)
+    (if (eq? s 'skip)
+        s
+        (begin
+          (if (not (pair? s))
+              (begin
+                (set! *bad-s* s)
+                (set! *bad-last* last)
+                (error "Not a statement : " s dnl "last : " last)))
+          
+          (let ((kw   (car s))
+                (args (cdr s))
+                )
+            (cons kw
+                  (case kw
+                    ((sequence parallel) (map stmt args))
+                    
+                    ((assign)            (list
+                                          (expr (car args)) (expr (cadr args))))
+                    
+                    ((assign-operate increment decrement var)
+                     (error "visit-stmt : need to desugar : " kw))
+                    
+                    ((var1)
+                     (cdr (prepostvisit-var1-stmt
+                           s
+
+                           stmt-previsit stmt-postvisit
+                           expr-previsit expr-postvisit
+                           type-previsit type-postvisit
+                           )))
+                    
+                    ((recv send)
+                     (list (expr (car args)) (expr (cadr args))))
+                    
+                    ((do if nondet-if nondet-do)
+                     (set! vs s)
+                     (map (lambda(gc)(list (expr (car gc)) (stmt (cadr gc))))
+                          args))
+                    
+                    ((eval) (list (expr (car args))))
+                    
+                    (else (set! *bad-s* s)
+                          (set! *bad-last* last)
+                          (error "visit-stmt : unknown statement " s))
+                    )))
+          )
+        )
+    )
+ 
+    
+  (let ((pre (stmt-previsit s)))
+    (cond ((eq? pre #f) s)
+          ((and (pair? pre) (eq? 'cut (car pre))) (cdr pre))
+          (else (stmt-postvisit (continue)))))
+  )
+  
+
+
+(define (prepostvisit-expr x
+                           stmt-previsit stmt-postvisit
+                           expr-previsit expr-postvisit
+                           type-previsit type-postvisit)
+  
+  (define (expr x)(prepostvisit-expr x
+                                     stmt-previsit stmt-postvisit
+                                     expr-previsit expr-postvisit
+                                     type-previsit type-postvisit))
+
+  (define (continue)
+    (if (pair? x)
+        (let ((kw (car x))
+              (args (cdr x)))
           (cons kw
                 (case kw
-                  ((sequence parallel) (map stmt args))
-                
-                  ((assign)            (list
-                                        (expr (car args)) (expr (cadr args))))
+                  ((id) args)
                   
-                  ((assign-operate increment decrement var)
-                   (error "visit-stmt : need to desugar : " kw))
-                  
-                  ((var1)
-                   (cdr (visit-var1-stmt s stmt-visitor expr-visitor type-visitor)))
-                  
-                  ((recv send)
-                   (list (expr (car args)) (expr (cadr args))))
-                
-                  ((do if nondet-if nondet-do)
-                   (set! vs s)
-                   (map (lambda(gc)(list (expr (car gc)) (stmt (cadr gc))))
-                        args))
-                  
-                  ((eval) (list (expr (car args))))
-                  
-                  (else (set! *bad-s* s)
-                        (set! *bad-last* last)
-                        (error "convert-stmt : unknown statement " s))
-                )))
-        )
-      )
-  ))
-
-(define (visit-expr x stmt-visitor expr-visitor type-visitor)
-  
-  (define (expr x)(visit-expr x stmt-visitor expr-visitor type-visitor))
-
-  (expr-visitor
-   (if (pair? x)
-       (let ((kw (car x))
-             (args (cdr x)))
-         (cons kw
-               (case kw
-                 ((id) args)
-                 
-                 ;; unary/binary ops
-                 ((probe array-access - not
-                   + / % * == != < > >= <= & && | || ^ == << >> ** ) ;; | )
+                  ;; unary/binary ops
+                  ((probe array-access - not
+                    + / % * == != < > >= <= & && | || ^ == << >> ** ) ;; | )
                    (map expr args))
+                  
+                  ((apply)
+                   (cons (car args) (map expr (cdr args))))
+                  
+                  ((member-access structure-access)
+                   (list (expr (car args)) (cadr args))
+                   )
+                  
+                  (else (error "visit-expr : unknown keyword " kw " : " x ))
+                  ) ;; esac
+                
+                );; snoc
+          
+          );;tel
+        x ;; not a pair
+        );;fi
+    );;enifed
 
-                 ((apply)
-                  (cons (car args) (map expr (cdr args))))
+  (let ((pre (expr-previsit x)))
+    (cond ((eq? pre #f) x)
+          ((and (pair? pre) (eq? 'cut (car pre))) (cdr pre))
+          (else (expr-postvisit (continue)))))
 
-                 ((member-access structure-access)
-                  (list (expr (car args)) (cadr args))
-                  )
-
-                 (else (error "visit-expr : unknown keyword " kw " : " x ))
-                 ) ;; esac
-
-               );; snoc
-   
-         );;tel
-       x ;; not a pair
-       );;fi
-   )
   );;enifed
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;; short forms for postvisit only
+;;
+
+(define (visit-stmt s stmt-visitor expr-visitor type-visitor)
+  (prepostvisit-stmt s
+                     identity stmt-visitor
+                     identity expr-visitor
+                     identity type-visitor))
+
+(define (visit-expr s stmt-visitor expr-visitor type-visitor)
+  (prepostvisit-expr s
+                     identity stmt-visitor
+                     identity expr-visitor
+                     identity type-visitor))
+
+(define (visit-type t stmt-visitor expr-visitor type-visitor)
+  (prepostvisit-type t
+                     identity stmt-visitor
+                     identity expr-visitor
+                     identity type-visitor))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+(define (find-ids lisp)
+  (define ids '())
+  
+  (define (expr-visitor x)
+     (dis "expr : " x dnl)
+
+     (if (and (pair? x) (eq? 'id (car x)))
+         (if (not (member? (cadr x) ids))
+             (set! ids (cons (cadr x) ids))))
+     x
+  )
+
+  (visit-stmt lisp identity expr-visitor identity)
+  ids
+) 
+
+(define (find-var1-stmts lisp)
+  (define var1s '())
+
+  (define (stmt-visitor s)
+    ;;(dis "stmt : " s dnl)
+    
+    (if (and (pair? s) (eq? 'var1 (car s)))
+        (set! var1s (cons s var1s)))
+
+    s
+    )
+
+  (visit-stmt lisp stmt-visitor identity identity)
+  var1s
+)
+
+(define (find-declared-vars lisp) ;; set of declared vars
+  (uniq eq? (map cadr (map cadadr (find-var1-stmts lisp)))))
+
+(define (find-declaration-vars lisp) ;; multiset of declarations
+  (map cadr (map cadadr (find-var1-stmts lisp)))))
+
+(define (multi lst) ;; multiply defined items in a list
+  (let loop ((res '())
+             (p lst))
+    (cond ((null? p) (uniq eq? res))
+          ((member? (car p) (cdr p))
+           (loop (cons (car p) res) (cdr p)))
+          (else (loop res (cdr p))))
+    )
+  )
+
+(define (rename-id lisp from to)
+  (define (expr-visitor x)
+     (if (and (pair? x) (eq? 'id (car x)) (eq? from (cadr x)))
+         (list 'id to)
+         x
+         )
+   )
+  
+  (define (stmt-visitor s)
+    ;; the only place that an identifier appears outside of expressions
+    ;; is in "var1" statements
+    (if (and (pair? s) (eq? 'var1 (car s)) (equal? `(id ,from) (cadadr s)))
+        `(var1 (decl1 (id ,to) ,@(cddadr s)))
+        s
+        )
+    )
+
+  (visit-stmt lisp stmt-visitor expr-visitor identity)
+)
+              
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (define (print-identity x)
-  (dis x dnl)
+  (dis (stringify x) dnl)
   x
   )
+
+(define (print-identity-and-referenceable x)
+  (dis (stringify x) " referenceable: " (directly-referenceable? x) dnl)
+  x
+  )
+
+(define (identifier? x)
+  (if (and (pair? x) (eq? 'id (car x)))) x #f)
+
+(define (literal? x)
+  (not (pair? x)))
+
+(define (directly-referenceable? x)
+  ;; is x an expression that's implementable as the RHS of a 3-address
+  ;; instruction?
+  ;;
+  ;; in other words, can x be used as an operand in a basic
+  ;; operation, and can it be used as a function argument,
+  ;; and can it be used as a channel to be passed to a channel operation?
+  ;;
+  ;; there are some oddities with array indexing:
+  ;;
+  ;; I believe if x is an array-indexing operation, it can be implemented
+  ;; as long as every array index is a constant or an identifier.
+  ;;
+  ;; otherwise, x must be a constant or an identifier itself
+
+  (dis "directly-referenceable? " x dnl)
+  
+  (if (pair? x)
+      (let ((kw (car x))
+            (args (cdr x)))
+        (case kw
+          ((id) #t)
+
+          ((array-access)
+           (and (identifier? (car args))
+                (directly-referenceable? (cadr args))))
+
+          ((member-access structure-access)
+           (directly-referenceable? (car args)))
+
+          (else #f)))
+
+      #t
+      )
+  )
+
+(define (make-referenceable x temp-generator)
+  (if (directly-referenceable? x)
+      x
+      (let ((new-var (temp-generator)))
+        (list 'id new-var))))
+
+;; this code isnt quite right
+;; it should only be applied to the arguments of say assign.
+
+
+;; (sequentialize-one
+;;          '(assign (id a) (+ (id a) (id b)))
+;;           (make-name-generator "t"))
+
+(define (binary-expr? x)
+  (and
+   (pair? x)
+   (= 3 (length x))
+   (binary-op? (car x))))
+
+(define (binary-op? op)
+  (case op
+    ((+ / % * == != < > >= <= & && ^ == << >> ** array-access | || ; |
+        )
+     #t)
+    (else #f)))
+
+(define (unary-expr? x)
+  (and
+   (pair? x)
+   (= 2 (length x))
+   (unary-op? (car x))))
+
+(define (unary-op? op)
+  (case op
+    ((not -) #t)
+    (else #f)))
+            
+
+(define (sequentialize-one s tg) 
+  (if (eq? s 'skip)
+      'skip
+      (let ((kw   (car s))
+            (args (cdr s)))
+        (case kw
+          ((assign) (list 'assign
+                          (car args) ;; don't do lvalues yet...?
+                          (make-referenceable (cadr args) tg)
+                          )
+           )
+          
+          (else s))
+        
+        )))
+               
+
+(define (sequentialize-stmt s)
+  (let ((tg (make-name-generator "t")))
+    (visit-stmt s
+                sequentialize-one
+                identity
+                identity)))
+  
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (make-name-generator rootstring)
+  ;;
+  ;; return a temporary-name-generator
+  ;; a procedure of zero arguments, which generates incrementing temp names
+  ;;
+  (let ((root                rootstring)
+        (counter              0))
+    (lambda()
+      (let ((res (string->symbol(string-append root (stringify counter)))))
+        (set! counter (+ counter 1))
+        res))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
            
@@ -494,7 +842,7 @@
           
           (case kw
             
-            ((sequence parallel)
+            ((sequence parallel) ;; sequential and parallel composition
              (let ((seq (init-seq 'CspStatementSeq.T)))
                (map (lambda(ss)
                       (seq 'addhi (convert-stmt ss s)))
@@ -507,14 +855,17 @@
                
                ))
 
-            ((assign)
+            ((assign) ;; simple assignment
              (CspAst.AssignmentStmt (convert-expr (car args))
                                     (convert-expr (cadr args))
                                 )
              )
 
-            ;; the next three are just syntactic sugar 
-            ((assign-operate)
+            ;; the next three are just syntactic sugar
+            ;;
+            ;; we desugar them here, so the rest of the code doesn't have
+            ;; to handle them.
+            ((assign-operate) ;; desugar to assign
              (let ((transformed (list 'assign
                                    (cadr args)
                                    (list
@@ -524,20 +875,22 @@
                (dis "transform " s " -> " transformed dnl)
                (convert-stmt transformed s)))
 
-            ((increment)
+            ((increment) ;; desugar to assign-operate
              (convert-stmt (list 'assign-operate '+ (car args) (BigInt.New 1))))
 
-            ((decrement)
+            ((decrement) ;; desugar to assign-operate
              (convert-stmt (list 'assign-operate '- (car args) (BigInt.New 1))))
 
-            ((var) (if (= 1 (length (cadr s)))
-                       
-                       (convert-var-stmt s)
-
-                       (convert-stmt (flatten-var-stmt s) s))
+            ((var) ;; desugar to var1
+             (if (= 1 (length (cadr s)))
+                 
+                 (convert-var-stmt s)
+                 
+                 (convert-stmt (flatten-var-stmt s) s))
              )
 
-            ((var1) (convert-var1-stmt s))
+            ((var1) ;; this is a simplified declaration
+             (convert-var1-stmt s))
 
             ((recv) (CspAst.RecvStmt (convert-expr (car args))
                                      (convert-expr (cadr args))))
@@ -554,8 +907,6 @@
                             (convert-stmt (cadr gc) s))))
                     args)
 
-;;               (dis "here! " kw dnl)
-
                (let ((maker
                       (case kw
                         ((do) CspAst.DetRepetitionStmt)
@@ -563,11 +914,12 @@
                         ((nondet-do) CspAst.NondetRepetitionStmt)
                         ((nondet-if) CspAst.NondetSelectionStmt)
                         )))
-;;                 (dis "here2 " maker dnl)
+
                  (maker (seq '*m3*)))
                ))
 
-            ((eval) (CspAst.ExpressionStmt (convert-expr (car args))))
+            ((eval) ;; this is ONLY used for function evaluations
+             (CspAst.ExpressionStmt (convert-expr (car args))))
             
             (else (set! *bad-s* s)
                   (set! *bad-last* last)
@@ -597,7 +949,7 @@
 
         ((string? x) (CspAst.StringExpr x))
 
-        ((eq? x 'else) (CspAst.BooleanExpr #t)) ;; bit of a hack -- desugar
+        ((eq? x 'else) (CspAst.ElseExpr))
 
         ((eq? x #t) (CspAst.BooleanExpr #t))
 
@@ -677,6 +1029,8 @@
         )
   )
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 
 
 (define (convert-prog p)
@@ -686,6 +1040,20 @@
   )
 
 (define (reload) (load "cspc.scm"))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 (loaddata! "arrays_p1")
 ;;(loaddata! "functions_p00")

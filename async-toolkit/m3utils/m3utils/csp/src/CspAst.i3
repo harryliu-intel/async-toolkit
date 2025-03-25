@@ -68,6 +68,8 @@ PROCEDURE GuardedCommand(guard : Expr; command : Stmt) : CspGuardedCommand.T;
 
 PROCEDURE BooleanExpr(val : BOOLEAN) : Expr;
 
+PROCEDURE ElseExpr() : Expr;
+
 PROCEDURE IntegerExpr(val : BigInt.T) : Expr;
 
 PROCEDURE StringExpr(val : TEXT) : Expr;
