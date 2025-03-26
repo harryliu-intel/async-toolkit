@@ -97,7 +97,7 @@
 ;;
 ;;
 
-(require-modules "basic-defs" "m3" "hashtable" "display")
+(require-modules "basic-defs" "m3" "hashtable" "display" "symbol-append.scm")
 
 
 ;;            } else if (name.equals("string")) {
@@ -615,12 +615,40 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(define (set-diff lst0 lst1)
+  (filter (lambda(x)(not (member? x lst1))) lst0))
+
+(define (set-union lst0 lst1)
+  (uniq eq? (append lst0 lst1)))
+
+(define (set-intersection lst0 lst1)
+  (filter (lambda(x)(member? x lst1)) lst0))
+  
+(define (multi lst) ;; multiply defined items in a list
+  (let loop ((res '())
+             (p lst))
+    (cond ((null? p) (uniq eq? res))
+          ((member? (car p) (cdr p))
+           (loop (cons (car p) res) (cdr p)))
+          (else (loop res (cdr p))))
+    )
+  )
+
+(define (count-in item lst)
+  (let loop ((res 0)
+             (p lst))
+    (cond  ((null? p) res)
+           ((eq? item (car p)) (loop (+ res 1) (cdr p)))
+           (else (loop res (cdr p))))
+    )
+  )
+
 
 (define (find-ids lisp)
   (define ids '())
   
   (define (expr-visitor x)
-     (dis "expr : " x dnl)
+;;     (dis "expr : " x dnl)
 
      (if (and (pair? x) (eq? 'id (car x)))
          (if (not (member? (cadr x) ids))
@@ -630,7 +658,18 @@
 
   (visit-stmt lisp identity expr-visitor identity)
   ids
-) 
+  )
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (find-referenced-vars stmt)
+  (find-ids stmt))
+
+(define (find-undeclared-vars stmt)
+  (let* ((used (find-referenced-vars stmt))
+         (declared (find-declared-vars stmt)))
+    (set-diff used declared)))
+               
 
 (define (find-var1-stmts lisp)
   (define var1s '())
@@ -652,17 +691,7 @@
   (uniq eq? (map cadr (map cadadr (find-var1-stmts lisp)))))
 
 (define (find-declaration-vars lisp) ;; multiset of declarations
-  (map cadr (map cadadr (find-var1-stmts lisp)))))
-
-(define (multi lst) ;; multiply defined items in a list
-  (let loop ((res '())
-             (p lst))
-    (cond ((null? p) (uniq eq? res))
-          ((member? (car p) (cdr p))
-           (loop (cons (car p) res) (cdr p)))
-          (else (loop res (cdr p))))
-    )
-  )
+  (map cadr (map cadadr (find-var1-stmts lisp))))
 
 (define (rename-id lisp from to)
   (define (expr-visitor x)
@@ -683,6 +712,39 @@
 
   (visit-stmt lisp stmt-visitor expr-visitor identity)
 )
+
+(define (count-declarations of stmt)
+  (count-in of (find-declaration-vars stmt)))
+
+(define (uniqify-one stmt id tg)
+
+  (define (visitor s) 
+    (if (= (count-declarations id s) 1)
+        (cons 'cut
+              (rename-id s id (symbol-append id '- (tg))))
+        stmt))
+
+  (if (>= 1 (count-declarations id stmt))
+      (error "not defined enough times : " id " : in : " stmt))
+
+  (prepostvisit-stmt stmt
+                     visitor  identity
+                     identity identity
+                     identity identity)
+)
+                     
+(define (uniqify-stmt stmt)
+  (let ((tg    (make-name-generator "uniq"))
+        (names (multi (find-declaration-vars stmt))))
+    (let loop ((p names)
+               (s stmt))
+      (if (null? p)
+          s
+          (begin
+;;            (dis "uniqifying " (car p) dnl)
+            (loop (cdr p) (uniqify-one s (car p) tg)))))
+    )
+  )
               
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
