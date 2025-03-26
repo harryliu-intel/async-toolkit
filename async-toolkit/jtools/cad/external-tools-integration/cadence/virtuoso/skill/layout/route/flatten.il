@@ -705,7 +705,7 @@ useICV = t
 
 ; inline one level with correct instance names but minimal effort
 (defun TrivialInline (inst @key (CV (geGetEditCellView)))
-  (let (sub2 path prefixes newprefixes orient flipX flipY netmap)
+  (let (sub2 path prefixes newprefixes orient flipX flipY netmap term2)
     ; map from pins of instance to parent nets
     netmap=(makeTable "netmap" nil)
     (foreach term inst->terminals netmap[term->term->net]=term->net)
@@ -721,10 +721,12 @@ useICV = t
                    (inst->status=="place"    || sub2->status=="placed"   sub2->status="placed")
                    )
              (foreach term sub1->terminals
+                      term2=(dbFindTermByName sub2->master term->name)
+                      (unless term2 (error "Unable to find terminal %s/%s\n" sub2->cellName term->name))
                       (dbCreateInstTerm
                        (if netmap[term->net] netmap[term->net] (dbMakeNet CV (strcat inst->name "." term->net->name)))
                        sub2
-                       (dbFindTermByName sub2->master term->name)
+                       term2
                        )
                       )
              )
