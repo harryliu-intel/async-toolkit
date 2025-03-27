@@ -6,7 +6,8 @@ IMPORT CharSeq;
 IMPORT Word;
 IMPORT Wx;
 IMPORT Text;
-IMPORT Lex;
+IMPORT Lex, FloatMode;
+IMPORT Scan AS M3Scan;
 
 CONST BaseLog2 = BITSIZE(Word.T) DIV 2 - 1; (* (*was*) 10 *)
       Base     = Word.Shift(1, BaseLog2);
@@ -451,19 +452,45 @@ PROCEDURE Renormalize(a : NSeq) =
 PROCEDURE Neg(a : T) : T = 
   BEGIN RETURN NEW(T, rep := a.rep, sign := -a.sign) END Neg;
 
-PROCEDURE Scan(txt : TEXT; base : PrintBase) : T
-  RAISES { Lex.Error } =
+PROCEDURE ScanBased(txt : TEXT; defaultBase : PrintBase) : T
+  RAISES { Lex.Error, FloatMode.Trap } =
   VAR
-    accum := Zero;
-    baseT := small[base];
     neg : BOOLEAN;
   BEGIN
-    <* ASSERT base <= NUMBER(HexChars) *>
     IF Text.GetChar(txt, 0) = '-' THEN
       neg := TRUE;
       txt := Text.Sub(txt, 1, Text.Length(txt) - 1)
     ELSE
       neg := FALSE
+    END;
+
+    (* "" and "-" are not legal numbers *)
+    IF Text.Length(txt) = 0 THEN
+      RAISE Lex.Error
+    END;
+
+    WITH usIndex = Text.FindChar(txt, '_') DO
+      IF usIndex = -1 THEN
+        RETURN Scan(txt, defaultBase, neg)
+      ELSE
+        WITH baseTxt = Text.Sub(txt, usIndex),
+             base    = M3Scan.Int(baseTxt),
+             mantTxt = Text.Sub(txt, LAST(CARDINAL), usIndex + 1) DO
+          RETURN Scan(mantTxt, base, neg)
+        END
+      END
+    END
+  END ScanBased;
+  
+PROCEDURE Scan(txt : TEXT; base : PrintBase; neg : BOOLEAN) : T
+  RAISES { Lex.Error } =
+  VAR
+    accum := Zero;
+    baseT := small[base];
+  BEGIN
+    IF Text.GetChar(txt, 0) = '-' THEN
+      neg := NOT neg;
+      txt := Text.Sub(txt, 1, Text.Length(txt) - 1)
     END;
 
 

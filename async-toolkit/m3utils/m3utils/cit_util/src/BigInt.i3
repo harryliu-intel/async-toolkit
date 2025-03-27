@@ -4,7 +4,7 @@
 *)
 INTERFACE BigInt;
 IMPORT Word;
-IMPORT Lex;
+IMPORT Lex, FloatMode;
 
 CONST Brand = "BigInt";
 
@@ -43,11 +43,18 @@ TYPE
   
 PROCEDURE Format(a : T; base : PrintBase := 10) : TEXT;
 
-PROCEDURE Scan(text : TEXT; base : PrintBase := 10) : T RAISES { Lex.Error };
+PROCEDURE Scan     (text : TEXT; base : PrintBase := 10; defNeg := FALSE) : T
+  RAISES { Lex.Error };
+  (* scan a text as a T, using the base as the default scanning base.
+     defNeg flips the sign, if TRUE. *)
+
+PROCEDURE ScanBased(text : TEXT; defaultBase : PrintBase := 10) : T
+  RAISES { Lex.Error, FloatMode.Trap };
   
 CONST DelimChars = SET OF CHAR { '_', ',', ' ', '\t' };
 
-PROCEDURE ScanDelimited(text : TEXT; base : PrintBase := 10) : T RAISES { Lex.Error }; (* as Scan, but ignore DelimChars *)
+PROCEDURE ScanDelimited(text : TEXT; base : PrintBase := 10) : T
+  RAISES { Lex.Error }; (* as Scan, but ignore DelimChars *)
 
 VAR (* CONST *) Zero, One, Two : T;
 
