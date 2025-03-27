@@ -115,6 +115,10 @@
 
 (define (identity x) x)
 
+(define *big-m1* (BigInt.New -1))
+(define *big-1*  (BigInt.New  1))
+(define *big-tc* (rttype-typecode *big-1*))
+
 (define special-functions     ;; these are special functions per Harry
   '(string print assert cover pack unpack))
 
@@ -214,7 +218,11 @@
 
 (define (get-function-params func)
   (check-is-function func)
-  (caddr func))
+
+  ;; function decls are unconverted, so desugar declarators
+  (map CspDeclarator.Lisp
+       (map convert-declarator
+            (apply append (caddr func)))))
 
 (define (get-function-return func)
   (check-is-function func)
@@ -222,7 +230,9 @@
 
 (define (get-function-text func)
   (check-is-function func)
-  (caddddr func))
+
+  ;; function decls are unconverted, so desugar here
+  (desugar-stmt (caddddr func)))
   
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -455,6 +465,7 @@
       ;; trivial initialization is used for boolean, int, and string
       ;;
       ;; but (slightly) non-trivial initialization can be used for structs
+      
       (if (and (eq? (car decl) 'decl) (not (null? init-val)))
           (let ((assign-result
                  (convert-stmt (list 'assign (cadr decl) init-val)))
@@ -883,7 +894,7 @@
   
   (define (stmt-visitor s)
     ;; the only place that an identifier appears outside of expressions
-    ;; is in "var1" statements
+    ;; is in "var1" statements -- and in function decls
     (if (and (pair? s) (eq? 'var1 (car s)) (equal? `(id ,from) (cadadr s)))
         `(var1 (decl1 (id ,to) ,@(cddadr s)))
         s
@@ -1120,12 +1131,12 @@
                (convert-stmt transformed s)))
 
             ((increment) ;; desugar to assign-operate
-             (convert-stmt (list 'assign-operate '+ (car args) (BigInt.New 1))
+             (convert-stmt (list 'assign-operate '+ (car args) *big-1*)
                            s)
              )
 
             ((decrement) ;; desugar to assign-operate
-             (convert-stmt (list 'assign-operate '- (car args) (BigInt.New 1))
+             (convert-stmt (list 'assign-operate '- (car args) *big-1*)
                            s)
              )
 
@@ -1151,7 +1162,15 @@
                (map (lambda (gc)
                       (seq 'addhi
                            (CspAst.GuardedCommand
-                            (convert-expr (car gc))
+
+                            (let* ((guard (car gc)) ;; convert -1 to #t
+                                   (expr-guess 
+                                    (convert-expr guard)))
+                              (if (and (= *big-tc* (rttype-typecode guard))
+                                       (BigInt.Equal *big-m1* guard))
+                                  (CspAst.BooleanExpr #t)
+                                  expr-guess))
+                            
                             (convert-stmt (cadr gc) s))))
                     args)
 
