@@ -473,9 +473,9 @@ PROCEDURE ScanBased(txt : TEXT; defaultBase : PrintBase) : T
       IF usIndex = -1 THEN
         RETURN Scan(txt, defaultBase, neg)
       ELSE
-        WITH baseTxt = Text.Sub(txt, usIndex),
+        WITH baseTxt = Text.Sub(txt, 0, usIndex),
              base    = M3Scan.Int(baseTxt),
-             mantTxt = Text.Sub(txt, LAST(CARDINAL), usIndex + 1) DO
+             mantTxt = Text.Sub(txt, usIndex + 1) DO
           RETURN Scan(mantTxt, base, neg)
         END
       END
@@ -697,7 +697,7 @@ BEGIN
       |
         'A'..'Z' => val := ORD(c) - ORD('A') + 10
       |
-        'a'..'z' => val := ORD(c) - ORD('A') + 10
+        'a'..'z' => val := ORD(c) - ORD('a') + 10
       ELSE
         val := -1
       END;

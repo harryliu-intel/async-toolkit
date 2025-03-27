@@ -283,11 +283,12 @@ PROCEDURE ReverseD(p : SchemePair.T) : SchemePair.T =
   END ReverseD;
 
 <*UNUSED*>
-PROCEDURE ReadTail(t : T;
-                   bigInt : BOOLEAN;
+PROCEDURE ReadTail(t          : T;
+                   bigInt     : BOOLEAN;
                    bigIntBase : BigInt.PrintBase;
-                   wx : Wx) : Object RAISES { E } =
-  VAR token := t.nextToken(bigInt, bigIntBase, wx);
+                   wx         : Wx) : Object RAISES { E } =
+  VAR
+    token := t.nextToken(bigInt, bigIntBase, wx);
   BEGIN
     IF    token = EOF THEN
       RETURN Error("EOF during read.")
@@ -309,7 +310,10 @@ PROCEDURE ReadTail(t : T;
     END
   END ReadTail;
 
-PROCEDURE NextToken(t : T; bigInt : BOOLEAN; bigIntBase : BigInt.PrintBase; wx : Wx) : Object RAISES { E } =
+PROCEDURE NextToken(t          : T;
+                    bigInt     : BOOLEAN;
+                    bigIntBase : BigInt.PrintBase;
+                    wx         : Wx) : Object RAISES { E } =
 
   CONST Symbol = SchemeSymbol.Symbol;
 
@@ -458,13 +462,12 @@ PROCEDURE NextToken(t : T; bigInt : BOOLEAN; bigIntBase : BigInt.PrintBase; wx :
             (* note we are stricter than Modula-3 here.
                we allow only "e" as the exponent marker.  Not E, d, D, x, or X. *)
 
-            IF HaveAlphasOtherThane(txt) THEN
-            ELSE
+            IF bigInt OR NOT HaveAlphasOtherThane(txt) THEN
               (* attempt to parse as a decimal number..! *)
               EVAL WxReset(wx);
               TRY
                 IF bigInt THEN
-                  RETURN BigInt.Scan(txt, 10)
+                  RETURN BigInt.ScanBased(txt, defaultBase := 10)
                 ELSE
                   WITH lr = Scan.LongReal(txt), 
                        lrp = NEW(SchemeLongReal.T) DO

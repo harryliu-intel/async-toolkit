@@ -10,6 +10,13 @@ CONST
   "out",
   "inout"
   };
+
+  Reverse = ARRAY T OF T {
+  T.None,
+  T.Out,
+  T.In,
+  T.InOut
+  };
   
 CONST Brand = "CspDirection";
 
