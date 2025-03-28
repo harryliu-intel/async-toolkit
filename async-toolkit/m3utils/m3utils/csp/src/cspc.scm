@@ -113,6 +113,8 @@
 ;; also see com/avlsi/csp/util/RefinementResolver.java
 
 
+(define *the-example* "parents_p2") ;; this is the test file
+
 (define (identity x) x)
 
 (define *big-m1* (BigInt.New -1))
@@ -191,8 +193,6 @@
                                   my-parents))))
     (appender their-stuff my-stuff)))
 
-(define *the-example* "parents_p2")
-
 (define *the-text* #f)
 (define *the-structs* #f)
 (define *the-funcs* #f)
@@ -233,6 +233,23 @@
 
   ;; function decls are unconverted, so desugar here
   (desugar-stmt (caddddr func)))
+
+(define (get-function-captures func)
+  ;; list of captured identifiers of this function
+  (let ((param-captures (map cadr (map cadr (get-function-params func)))))
+    (if (null? (get-function-return func))
+        param-captures
+        (cons (get-function-name func) param-captures))))
+
+(define (uniqify-function-text func sfx)
+  (let loop ((cp   (get-function-captures func))
+             (text (get-function-text func)))
+    (if (null? cp)
+        text
+        (loop (cdr cp)
+              (rename-id text
+                         (car cp)
+                         (symbol-append (car cp) sfx))))))
   
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -256,6 +273,8 @@
     )
   )
 
+(define xxx #f)
+
 (define (switch-proc! data)
   (map
    (lambda (sym)
@@ -277,15 +296,22 @@
   (set! *the-text* (close-text data))
   (set! *the-funcs* (merge-all get-funcs append data))
   (set! *the-structs* (merge-all get-structs append data))
-  (set! *the-inits* (merge-all get-inits make-sequence data))
+
+
+  ;; some problem here: why can't I desugar-stmt right here?
+  (set! *the-inits*   (simplify-stmt
+                       (desugar-stmt
+                        (merge-all get-inits make-sequence data))))
 
   (set! *the-func-tbl* (make-object-hash-table get-function-name *the-funcs*))
   'ok
     
   )
 
-
-(loaddata! "p1")
+(define (deep-copy x)
+  (if (pair? x)
+      (cons (deep-copy (car x)) (deep-copy (cdr x)))
+      x))
 
 (define (skip) )
 
@@ -824,6 +850,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define *result* #f)
+(define *undeclared* #f)
 
 (define (analyze-program prog cell-info)
   (let* ((ports      (caddddr cell-info))
@@ -835,7 +862,7 @@
          )
     (dis "portids    : " portids dnl)
     (dis "textids    : " textids dnl)
-    (dis "undeclared : " undeclared dnl)
+    (dis "undeclared : " undeclared dnl) (set! *undeclared* undeclared)
     (dis "decls      : " declnames dnl)
     (dis "multiples  : " multiples dnl)
 
