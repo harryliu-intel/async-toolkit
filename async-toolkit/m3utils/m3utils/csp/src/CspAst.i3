@@ -58,6 +58,16 @@ PROCEDURE VarStmt(decl : CspDeclarator.T) : Stmt;
 
 PROCEDURE ExpressionStmt(expr : Expr) : Stmt;
 
+PROCEDURE CommentStmt(string : TEXT) : Stmt;
+
+PROCEDURE SequentialLoop(dummy : Atom.T;
+                         range : CspRange.T;
+                         stmt  : Stmt) : Stmt;
+
+PROCEDURE ParallelLoop(dummy : Atom.T;
+                       range : CspRange.T;
+                       stmt  : Stmt) : Stmt;
+
 (**********************************************************************)
 
 PROCEDURE GuardedCommand(guard : Expr; command : Stmt) : CspGuardedCommand.T;
@@ -99,6 +109,11 @@ PROCEDURE PeekExpr(chan : Expr) : Expr;
 PROCEDURE ProbeExpr(chan : Expr) : Expr;
 
 PROCEDURE FunctionCallExpr(f : Expr; args : ExprSeq) : Expr;
+
+PROCEDURE LoopExpr(dummy : Atom.T;
+                   range : CspRange.T;
+                   op    : CspExpression.BinaryOp;
+                   x     : Expr) : Expr;
 
 (**********************************************************************)
 

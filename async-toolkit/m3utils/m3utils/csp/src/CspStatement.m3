@@ -13,6 +13,7 @@ IMPORT Pathname;
 IMPORT SchemeString;
 IMPORT BigInt;
 IMPORT CspDeclarator;
+IMPORT CspRange;
 
 CONST Sym = SchemeSymbol.FromText;
 
@@ -212,4 +213,49 @@ PROCEDURE DetRepetitionLisp(self : DetRepetition) : SchemeObject.T =
     RETURN Cons(Sym("do"), GuardedCommandSeqLisp(self.gcs))
   END DetRepetitionLisp;
 
+TYPE
+  PubComment = T OBJECT
+    string : TEXT;
+  END;
+
+REVEAL
+  Comment = PubComment BRANDED Brand & " Comment" OBJECT
+  OVERRIDES
+    lisp := CommentLisp;
+  END;
+  
+PROCEDURE CommentLisp(self : Comment) : SchemeObject.T =
+  BEGIN
+    RETURN List2(Sym("comment"),  SchemeString.FromText(self.string))
+  END CommentLisp;
+
+REVEAL
+  SequentialLoop = Loop BRANDED Brand & " SequentialLoop" OBJECT
+  OVERRIDES
+    lisp := SequentialLoopLisp;
+  END;
+
+  ParallelLoop = Loop BRANDED Brand & " ParallelLoop" OBJECT
+  OVERRIDES
+    lisp := ParallelLoopLisp;
+  END;
+
+PROCEDURE SequentialLoopLisp(loop : SequentialLoop) : SchemeObject.T =
+  BEGIN
+    RETURN List4("sequential-loop",
+                 loop.dummy,
+                 CspRange.Lisp(loop.range),
+                 loop.stmt.lisp())
+  END SequentialLoopLisp;
+  
+ 
+  
+PROCEDURE ParallelLoopLisp(loop : ParallelLoop) : SchemeObject.T =
+  BEGIN
+    RETURN List4("parallel-loop",
+                 loop.dummy,
+                 CspRange.Lisp(loop.range),
+                 loop.stmt.lisp())
+  END ParallelLoopLisp;
+  
 BEGIN END CspStatement.

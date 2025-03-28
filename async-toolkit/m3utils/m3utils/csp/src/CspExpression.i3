@@ -91,6 +91,8 @@ TYPE
   Peek <: ChanExpr;
   
   FunctionCall <: T; (* see CspExpressionPublic *)
+
+  Loop <: T; (* see CspExpressionPublic *)
   
 CONST Brand = "CspExpression";
 

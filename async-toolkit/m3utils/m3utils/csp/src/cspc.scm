@@ -1,8 +1,10 @@
-                                        ; cspc.scm ;
-                                        ;
-
-;;  
-;;  CSP "compiler" (still in quotes for now)
+;;
+;; cspc.scm
+;;
+;; CSP "compiler" (still in quotes for now)
+;;
+;; Author : Mika Nystrom <mika.nystroem@intel.com>
+;; March, 2025
 ;;
 ;; General strategy: Java has been enhanced to emit scheme-compatible
 ;; S-expressions.  We parse the S-expressions, convert to the Modula-3
@@ -91,11 +93,88 @@
 ;; UNDECLARED VARIABLES
 ;; ====================
 ;;
-;; Undeclared variables appearing anywhere in the process text are 
-;; treated as if they were declared as unsigned integers at the beginning
-;; of the process (and initialized to zero).
+;; Undeclared variables appearing anywhere in the process text are
+;; treated as if they were declared as signed integers (CSP "int"
+;; type) at the beginning of the process (and initialized to zero).
+;;
+;; There is a trap here regarding the CSP integer types:
+;;
+;; int     -- infinite-precision, signed integer
+;;            (representing a number from Z)
+;;
+;; int(N)  -- N-bit precision UNSIGNED integer, in the range 0..2^N-1
+;;
+;; sint(N) -- N-bit precision SIGNED integer in two's complement, in the
+;;            range -2^(N-1) .. 2^(N-1) - 1
+;;
+;; Note that "int" is more like a "sint(N)" than it is like an "int(N)"
 ;;
 ;;
+;; FUNCTION-CALL INLINING
+;; ======================
+;;
+;; Function calls have to be inlined.  This is not just for efficiency,
+;; but because functions can block, on sends, receives, and selections.
+;;
+;; 
+;; EXPRESSION UNFOLDING/SEQUENCING
+;; ===============================
+;;
+;; We need to unfold expressions so they can be evaluated sequentially
+;; in a form of 3-address code.  This will allow the intermediate types
+;; of the expressions to be derived, which is needed for code generation.
+;;
+;; Expression unfolding is complicated by a few things.
+;;
+;; 1. It interacts in a nasty way with function calls and function inlining
+;;
+;; 2. Receive expressions
+;;
+;; 3. Loop expressions
+;;
+;;
+;; REPRESENTATIONS
+;; ===============
+;;
+;; The Java S-expression generator generates a parse tree basically
+;; replicating the Java AST types from the com/avlsi/csp/ast directory.
+;; These types contain quite a bit of syntactic sugar.  We desugar the
+;; tree in a seemingly roundabout way: convert the tree to Modula-3
+;; types using the CspAst interface, then dump out a new S-expression
+;; by calling the .lisp() method of the CspSyntax interface.  Part of
+;; the reason to do this is to avail ourselves of the strict typechecking
+;; of Modula-3 but also to allow future, faster implementations, closer
+;; to machine language than the very flexible but likely quite slow
+;; code that we have here in the Scheme environment.
+;;
+;;
+;; GENERALLY HAIRY STUFF
+;; =====================
+;;
+;; Lots of things, really, but one of the trickiest is the parallel loop
+;;
+;; <,i:lo..hi: S(i)>;
+;;
+;; This parallel loop is especially difficult because the amount of
+;; parallelism needed for implementation is known only at execution
+;; time.  Otherwise, the block structure of the program, including
+;; branching and joining of the locus/loci of control, is known at
+;; compile time.  But the parallel loop introduces dynamic
+;; parallelism.
+;;
+;; The sequential loop can be desugared to a regular do loop.  The
+;; variable scoping rules imply that the dummy index can be declared
+;; locally to the do loop.  Note that this means we need to introduce
+;; some sort of block for variable declarations.  Ho hum...
+;;
+;; Loop expressions can be desugared during expression unfolding.
+;;
+;;
+;; The multiple steps listed above interact in a way that requires
+;; them to be called multiple times until a fixpoint is reached, which
+;; ought to be the finished program, ready for code generation.
+;;
+;; Well, let's hope it works!
 
 (require-modules "basic-defs" "m3" "hashtable" "display" "symbol-append.scm")
 
@@ -136,10 +215,10 @@
   )
 
 ;; this stuff is really experimental.
-(define cell        '())
+(define *cell*        '())
 
-(define data        '())
-(define cellinfo    '())
+(define *data*        '())
+(define *cellinfo*    '())
 
 (define funcs       '())
 (define structs     '())
@@ -197,6 +276,7 @@
 (define *the-structs* #f)
 (define *the-funcs* #f)
 (define *the-inits* #f)
+(define *the-initvars* #f)
 
 (define *the-func-tbl* #f)
 
@@ -264,12 +344,12 @@
 
 (define (loaddata! nm)
   (begin
-    (set! cell  (load-csp (string-append nm ".scm")))
+    (set! *cell*  (load-csp (string-append nm ".scm")))
 
-    (set! data (cadr cell))       ;; the CSP code itself
-    (set! cellinfo (caddr cell))  ;; the CAST ports
+    (set! *data* (cadr *cell*))       ;; the CSP code itself
+    (set! *cellinfo* (caddr *cell*))  ;; the CAST ports
 
-    (switch-proc! data)
+    (switch-proc! *data*)
     )
   )
 
@@ -293,7 +373,7 @@
           (eval (list 'length sym)) dnl))
    '(funcs structs refparents declparents inits text))
 
-  (set! *the-text* (close-text data))
+  (set! *the-text* (simplify-stmt (desugar-stmt (close-text data))))
   (set! *the-funcs* (merge-all get-funcs append data))
   (set! *the-structs* (merge-all get-structs append data))
 
@@ -302,6 +382,8 @@
   (set! *the-inits*   (simplify-stmt
                        (desugar-stmt
                         (merge-all get-inits make-sequence data))))
+
+  (set! *the-initvars* (find-referenced-vars *the-inits*))
 
   (set! *the-func-tbl* (make-object-hash-table get-function-name *the-funcs*))
   'ok
@@ -468,6 +550,35 @@
     )
   )
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (cadadadr x) (cadr (cadadr x)))
+(define (cdaadadr x) (cdar (cadadr x)))
+(define (caadadr x) (car (cadadr x)))
+(define (caddadr x) (caddr (cadr x)))
+
+(define (get-decl1-id d)
+  (cadadr d))
+
+(define (get-decl1-type d)
+  (caddr d))
+
+(define (get-decl1-dir d)
+  (cadddr d))
+  
+(define (check-var1 s)
+  (if (not (and (eq? 'var1 (stmt-type s)) (eq? 'id (caadadr v1))))
+      (error "malformed var1 : " s)))
+
+(define (get-var1-decl1 s)
+  (check-var1 s)
+  (cadr s))
+
+(define (get-var1-id s)
+  (get-decl1-id (get-var1-decl1 s)))
+
+(define (get-var1-type s)
+  (get-decl1-type (get-var1-decl1 s)))
 
 (define (convert-var-stmt s)
   (set! *last-var* s)
@@ -523,6 +634,8 @@
     the-sequence
     )
   )
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define (compound-stmt? s)
   (and (list? s)
@@ -648,6 +761,11 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(define (stmt-type stmt)
+  (if (eq? stmt 'skip)
+      'skip
+      (car stmt)))
+
 (define (prepostvisit-stmt s
                            stmt-previsit stmt-postvisit
                            expr-previsit expr-postvisit
@@ -686,7 +804,7 @@
                 )
             (cons kw
                   (case kw
-                    ((sequence parallel) (map stmt args))
+                    ((sequence parallel) (filter filter-delete (map stmt args)))
                     
                     ((assign)            (list
                                           (expr (car args)) (expr (cadr args))))
@@ -728,7 +846,8 @@
           (else (stmt-postvisit (continue)))))
   )
   
-
+(define (filter-delete stmt) ;; use to filter out 'delete
+  (not (eq? 'delete stmt)))
 
 (define (prepostvisit-expr x
                            stmt-previsit stmt-postvisit
@@ -852,16 +971,28 @@
 (define *result* #f)
 (define *undeclared* #f)
 
-(define (analyze-program prog cell-info)
+;; we can update the inits to only those that we actually need
+(define *filtered-inits* #f)
+(define *filtered-initvars* #f)
+
+(define (analyze-program prog cell-info initvars)
   (let* ((ports      (caddddr cell-info))
          (portids    (map cadr ports))
          (textids    (find-referenced-vars prog))
-         (undeclared (find-undeclared-vars prog portids))
+         (globalids  (set-intersection textids initvars))
+         (unused-globalids
+                     (set-diff initvars globalids))
+         (undeclared (set-diff
+                      (find-undeclared-vars prog portids) globalids))
          (declnames  (find-declaration-vars prog))
          (multiples  (multi declnames))
          )
+
+    ;; we should consider *the-inits* here.  We don't need to declare
+    ;; anything that *the-inits* declares.
     (dis "portids    : " portids dnl)
     (dis "textids    : " textids dnl)
+    (dis "globalids  : " globalids dnl)
     (dis "undeclared : " undeclared dnl) (set! *undeclared* undeclared)
     (dis "decls      : " declnames dnl)
     (dis "multiples  : " multiples dnl)
@@ -1346,8 +1477,8 @@
 (define a (BigInt.New 12))
 
 ;;(define csp (obj-method-wrap (convert-prog data) 'CspSyntax.T))
-(define lispm1 (close-text data))
-(define lisp0 (desugar-prog data))
+(define lispm1 (close-text *data*))
+(define lisp0 (desugar-prog *data*))
 
 (set-rt-error-mapping! #f)
 
@@ -1359,4 +1490,4 @@
 (if (not (equal? lisp1 lisp4)) (error "lisp1 and lisp4 differ!"))
 
 (define (do-analyze)
-   (analyze-program lisp1 cellinfo))
+   (analyze-program lisp1 *cellinfo* *the-initvars*))

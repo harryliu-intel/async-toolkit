@@ -1,6 +1,6 @@
 MODULE CspExpression;
 IMPORT CspExpressionPublic AS P;
-FROM SchemeUtils IMPORT List2, List3, List4, Cons;
+FROM SchemeUtils IMPORT List2, List3, List4, List5, Cons;
 IMPORT SchemeSymbol;
 IMPORT SchemeObject;
 IMPORT SchemeUtils;
@@ -9,6 +9,7 @@ FROM CspSyntax IMPORT Lisp;
 IMPORT SchemeBoolean;
 IMPORT SchemeString;
 IMPORT SchemePair;
+IMPORT CspRange;
 
 CONST Sym = SchemeSymbol.FromText;
       
@@ -92,6 +93,11 @@ REVEAL
     lisp := FunctionCallLisp;
   END;
 
+  Loop = P.PublicLoop BRANDED Brand & " Loop" OBJECT
+  OVERRIDES
+    lisp := LoopLisp;
+  END;
+
 PROCEDURE BooleanLisp(self : Boolean) : SchemeObject.T =
   BEGIN
     RETURN SchemeBoolean.Truth(self.val)
@@ -120,14 +126,14 @@ PROCEDURE IdentifierLisp(self : Identifier) : SchemeObject.T =
 PROCEDURE BinaryLisp(self : Binary) : SchemeObject.T =
   BEGIN
     RETURN SchemeUtils.List3(Sym(BinMap[self.op]),
-                               Lisp(self.l),
-                               Lisp(self.r))
+                             Lisp(self.l),
+                             Lisp(self.r))
   END BinaryLisp;
   
 PROCEDURE UnaryLisp(self : Unary) : SchemeObject.T =
   BEGIN
     RETURN SchemeUtils.List2(Sym(UnaMap[self.op]),
-                               Lisp(self.x))
+                             Lisp(self.x))
   END UnaryLisp;
   
 PROCEDURE ArrayAccessLisp(self : ArrayAccess) : SchemeObject.T =
@@ -176,5 +182,14 @@ PROCEDURE FunctionCallLisp(self : FunctionCall) : SchemeObject.T =
     p := Cons(Sym("apply"), p);
     RETURN p
   END FunctionCallLisp;
+
+PROCEDURE LoopLisp(self : Loop) : SchemeObject.T =
+  BEGIN
+    RETURN List5(Sym("loop-expression"),
+                 self.dummy,
+                 CspRange.Lisp(self.range),
+                 BinMap[self.op],
+                 self.x.lisp())
+  END LoopLisp;
 
 BEGIN END CspExpression.

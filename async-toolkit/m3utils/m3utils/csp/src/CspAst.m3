@@ -26,6 +26,8 @@ IMPORT CspStructDeclaratorSeq;
 IMPORT CspDeclaratorSeq;
 IMPORT CspType;
 
+IMPORT CspRange;
+
 PROCEDURE AssignmentStmt(lhs, rhs : Expr) : Stmt =
   BEGIN
     RETURN NEW(S.Assignment, lhs := lhs, rhs := rhs)
@@ -55,6 +57,11 @@ PROCEDURE ErrorStmt(fn : Pathname.T; lno, cno : CARDINAL) : Stmt =
   BEGIN
     RETURN NEW(S.Error, fn := fn, lno := lno, cno := cno)
   END ErrorStmt;
+
+PROCEDURE CommentStmt(string : TEXT) : Stmt =
+  BEGIN
+    RETURN NEW(S.Comment, string := string)
+  END CommentStmt;
 
 PROCEDURE ParallelStmt(stmts : StmtSeq) : Stmt =
   BEGIN
@@ -91,6 +98,20 @@ PROCEDURE ExpressionStmt(expr : Expr) : Stmt =
     RETURN NEW(S.Expression, expr := expr)
   END ExpressionStmt;
 
+PROCEDURE SequentialLoop(dummy : Atom.T;
+                         range : CspRange.T;
+                         stmt  : Stmt) : Stmt =
+  BEGIN
+    RETURN NEW(S.SequentialLoop, dummy := dummy, range := range, stmt := stmt)
+  END SequentialLoop;
+  
+PROCEDURE ParallelLoop(dummy : Atom.T;
+                       range : CspRange.T;
+                       stmt  : Stmt) : Stmt =
+  BEGIN
+    RETURN NEW(S.ParallelLoop, dummy := dummy, range := range, stmt := stmt)
+  END ParallelLoop;
+  
 (**********************************************************************)
 
 PROCEDURE GuardedCommand(guard : Expr; command : Stmt) : CspGuardedCommand.T =
@@ -174,6 +195,14 @@ PROCEDURE FunctionCallExpr(f : Expr; args : ExprSeq) : Expr =
   BEGIN
     RETURN NEW(X.FunctionCall, f := f, args := args)
   END FunctionCallExpr;
+
+PROCEDURE LoopExpr(dummy : Atom.T;
+                   range : CspRange.T;
+                   op    : X.BinaryOp;
+                   x     : Expr) : Expr =
+  BEGIN
+    RETURN NEW(X.Loop, dummy := dummy, range := range, op := op, x := x)
+  END LoopExpr;
 
 (**********************************************************************)
 
@@ -267,6 +296,6 @@ PROCEDURE StructDeclarator(ident        : Atom.T;
                                         typeFragment := typeFragment,
                                         direction := direction } }
   END StructDeclarator;
-  
+
 BEGIN END CspAst.
 

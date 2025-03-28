@@ -3,6 +3,8 @@ IMPORT CspExpression;
 IMPORT Pathname;
 IMPORT CspDeclarator;
 IMPORT CspSyntax;
+IMPORT Atom;
+IMPORT CspRange;
 
 TYPE
   Expr = CspExpression.T;
@@ -48,6 +50,18 @@ TYPE
 
   (**********************************************************************)
 
+  Loop = T OBJECT
+    dummy : Atom.T;
+    range : CspRange.T;
+    stmt  : T;
+  END;
+
+  SequentialLoop <: Loop;
+
+  ParallelLoop <: Loop;
+  
+  (**********************************************************************)
+
   Skip <: T;
 
   
@@ -65,6 +79,10 @@ TYPE
 
   Expression <: T OBJECT
     expr : Expr;
+  END;
+
+  Comment <: T OBJECT
+    string : TEXT;
   END;
 
 CONST Brand = "CspStatement";
