@@ -303,7 +303,7 @@ PROCEDURE ChanDebug(READONLY chan : IntChan) : TEXT =
   END ChanDebug;
 
 
-(**********************************************************************)
+(**********************************************************************
 
 IMPLEMENT first :
 
@@ -343,7 +343,7 @@ define SYSTEM()()
   } 
 }
 
-(**********************************************************************)
+**********************************************************************)
 
 PROCEDURE First0_0(cl : FirstClosure) : BOOLEAN =
   BEGIN
@@ -519,7 +519,7 @@ PROCEDURE BuildFirstSim() =
     END
   END BuildFirstSim;
 
-(**********************************************************************)
+(**********************************************************************
 
 IMPLEMENT select :
 
@@ -566,7 +566,7 @@ define SYSTEM()()
 
 
 
-(**********************************************************************)
+**********************************************************************)
 
 
 TYPE
@@ -845,7 +845,7 @@ PROCEDURE BuildSelectSim() =
     BuildSelect(c0, c1, cx)
   END BuildSelectSim;
  
-(**********************************************************************)
+(**********************************************************************
 IMPLEMENT parallel :
 
 module parallel;
@@ -890,7 +890,7 @@ define SYSTEM()()
 }
 
 
-(**********************************************************************)
+**********************************************************************)
 
 TYPE
   PdriveFrame = ProcFrame OBJECT
@@ -1272,10 +1272,10 @@ PROCEDURE SchedulingLoop() =
 
 TYPE
   Simulation = { First, Select, Parallel };
-  Builder = PROCEDURE();
+  Build = PROCEDURE();
   
 CONST
-  Builder = ARRAY Simulation OF Builder {
+  Builder = ARRAY Simulation OF Build {
     BuildFirstSim,
     BuildSelectSim,
     BuildParallelSim (* this one needs slack >= 1 not to deadlock *)
