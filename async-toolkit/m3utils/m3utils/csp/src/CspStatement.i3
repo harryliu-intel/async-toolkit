@@ -17,6 +17,11 @@ TYPE
     lhs, rhs : Expr;
   END;
 
+  AssignOperate <: T OBJECT
+    lhs, rhs : Expr;
+    op       : CspExpression.BinaryOp;
+  END;
+
   (**********************************************************************)
 
   Guarded <: T;

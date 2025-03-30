@@ -809,7 +809,7 @@
                     ((assign)            (list
                                           (expr (car args)) (expr (cadr args))))
                     
-                    ((assign-operate increment decrement var)
+                    ((loop increment decrement var)
                      (error "visit-stmt : need to desugar : " kw))
                     
                     ((var1)
@@ -1274,11 +1274,10 @@
                                 )
              )
 
-            ;; the next three are just syntactic sugar
-            ;;
-            ;; we desugar them here, so the rest of the code doesn't have
-            ;; to handle them.
             ((assign-operate) ;; desugar to assign
+
+             (error "not yet done" dnl)
+             
              (let ((transformed (list 'assign
                                    (cadr args)
                                    (list
@@ -1287,6 +1286,11 @@
                                     (caddr args)))))
 ;;               (dis "transform " s " -> " transformed dnl)
                (convert-stmt transformed s)))
+
+            ;; the next two are just syntactic sugar
+            ;;
+            ;; we desugar them here, so the rest of the code doesn't have
+            ;; to handle them.
 
             ((increment) ;; desugar to assign-operate
              (convert-stmt (list 'assign-operate '+ (car args) *big-1*)

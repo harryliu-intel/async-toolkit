@@ -14,6 +14,7 @@ IMPORT SchemeString;
 IMPORT BigInt;
 IMPORT CspDeclarator;
 IMPORT CspRange;
+IMPORT CspExpression;
 
 CONST Sym = SchemeSymbol.FromText;
 
@@ -64,6 +65,18 @@ REVEAL
   Assignment = PubAssignment BRANDED Brand & " Assignment" OBJECT
   OVERRIDES
     lisp := AssignmentLisp;
+  END;
+
+TYPE
+  PubAssignOperate = T OBJECT
+    lhs, rhs : Expr;
+    op       : CspExpression.BinaryOp;
+  END;
+
+REVEAL
+  AssignOperate = PubAssignOperate BRANDED Brand & " AssignOperate" OBJECT
+  OVERRIDES
+    lisp := AssignOperateLisp;
   END;
 
 TYPE  
@@ -134,6 +147,14 @@ PROCEDURE AssignmentLisp(self : Assignment) : SchemeObject.T =
   BEGIN
     RETURN List3(Sym("assign"), Lisp(self.lhs), Lisp(self.rhs))
   END AssignmentLisp;
+  
+PROCEDURE AssignOperateLisp(self : AssignOperate) : SchemeObject.T =
+  BEGIN
+    RETURN List4(Sym("assign-operate"),
+                 Sym(CspExpression.BinMap[self.op]),
+                 Lisp(self.lhs),
+                 Lisp(self.rhs))
+  END AssignOperateLisp;
   
 PROCEDURE ExpressionLisp(self : Expression) : SchemeObject.T =
   BEGIN
