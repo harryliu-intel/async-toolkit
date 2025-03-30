@@ -1,0 +1,28 @@
+module simple;
+
+int WIDTH=32;
+
+define P0()(bd(WIDTH) +R)
+{
+
+  csp {
+    int x;
+    *[ R!x; x++ ]
+  }
+}
+
+define P1()(bd(WIDTH) -L)
+{
+  csp {
+    *[ L?x ; print(x) ]
+  }
+}
+
+define SYSTEM()()
+{
+  subcells {
+    bd(WIDTH) c;
+    P0() p0(c);
+    P1() p1(c);
+  }
+}

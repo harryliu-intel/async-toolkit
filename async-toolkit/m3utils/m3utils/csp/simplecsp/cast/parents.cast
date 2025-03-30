@@ -1,0 +1,52 @@
+module parents;
+
+define common attributes {
+  csp {
+    structure s =
+      (int x = 12
+       );
+    
+    function f(int -x) : int =
+      (f = -x
+       );
+  }
+}
+
+define P0(int W0)(bd(W0) -L) <+ common
+{
+  csp {
+    structure t =
+      (int y = 13
+       );
+    
+    function g(int -x) : int =
+      (g = 2 * x
+       );
+  
+    bool q[W0];
+    q[0] = true;
+    print("W0 = " + W0);
+  }
+}
+
+define P1(int W1) <: P0(2 * W1) 
+{
+  csp {
+    function h(int -x) : int =
+      (h = 3 * x
+       );
+  
+    s z;
+    t q;
+    print("W1    = " + W1);
+    print("z::x  = " + z::x);
+    print("q::y  = " + q::y);
+    print("f(1)  = " + f(1));
+    print("g(1)  = " + g(1));
+    print("h(1)  = " + h(1));
+  }
+}
+
+define P2() <: P1(16) { }
+
+define P3() <: P2 {}

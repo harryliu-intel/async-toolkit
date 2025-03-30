@@ -1,0 +1,69 @@
+module sideeffects;
+
+int WIDTH=32;
+
+define P0()(bd(WIDTH) +R)
+{
+
+  csp {
+    *[ R!0 ; R!1 ; R!0 ; R!1 ]
+  }
+}
+
+define P1()(bd(WIDTH) -L)
+{
+  csp {
+    *[  L? == 0 -> print("zero")
+     :  L? == 1 -> print("one")
+     ]
+  }
+}
+
+define P2()(bd(WIDTH) -L)
+{
+  csp {
+
+    function Lvalue() : int =
+      (L?Lvalue
+       );
+  
+    *[  Lvalue() == 0 -> print("zero")
+     :  Lvalue() == 1 -> print("one")
+     ]
+  }
+}
+
+define P3()(bd(WIDTH) -L)
+{
+  csp {
+    bool x;
+    *[ x = (L?==0) & (L?==1) ; print(x) ]
+  }
+}
+
+define SYSTEM()()
+{
+  subcells {
+    bd(WIDTH) c;
+
+    P0() p0(c);
+    P3() p1(c);
+  }
+}
+
+
+define INCREMENT()()
+{
+  csp {
+    function increment(int -+x) : int =
+      (x = x + 1;
+       increment = x
+       );
+
+    int x = 0;
+    *[
+      print(increment(x) + " " + increment(x));
+      ]
+  }
+
+}

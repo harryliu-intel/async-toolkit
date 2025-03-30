@@ -1,0 +1,215 @@
+module arrays;
+
+int WIDTH=32;
+
+define common attributes {
+
+  csp {
+
+    function times2(int -x) : int =
+      (times2 = 2 * x
+       );
+    
+    function times4(int -x) : int =
+      (times4 = 4 * x
+       );
+    
+    structure struct0 =
+      (int(1) a;
+       int(2) b;
+       int(3) c;
+       );
+
+    structure struct1 =
+      (int(1) d;
+       struct0 s0
+       );
+
+    structure struct2 =
+      (bool b;
+       struct1 s1[0..7];
+       struct1 s2[0..0];
+       int(67) xxx=0xc0edbabe;
+       );
+
+    structure struct3 =
+      (int(2) x;
+       int(2) y[2..0]
+       );
+
+    structure struct4 =
+      (int x;
+       int y[0..5]
+       );
+      
+    structure struct5 =
+      (struct4 s[0..3];
+       struct4 t[3..0]
+       );
+
+    structure struct6 =
+      (int(8) x[0..3];
+       int(4) y[3..0]
+       );
+
+    structure struct7 =
+      (struct6 q[0..3];
+       struct6 r[3..0]
+       );
+  }
+}
+
+define P0()(bd(WIDTH) +R[0..1]) <+ common
+{
+
+  csp {
+    *[ R[0]!12 ; R[1]!13 ; R[0]!14 ; R[1]!0 ]
+  }
+}
+
+define P1P(int Q)(bd(WIDTH) -L[0..1]) <+ common
+{
+  csp {
+    bool q;
+     
+  }
+}
+
+define P1(int R) <: P1P(2 * R)
+{
+  csp {
+     function difficulty(int(32) -bits) : int(256) =
+      (int(24) mant=bits;
+       int(8) exp=bits>>24;
+       difficulty=mant*(1<<(8*(exp-3)))
+       );
+
+    function times3(int -x) : int =
+      (times3 = 3 * x
+       );
+
+    function timesn(int -x; int -n) : int =
+      (timesn = n * x
+       );
+    
+    structure struct_internal0 =
+      (int(1) a;
+       int(2) b;
+       int(3) c;
+       );
+
+    structure struct_internal1 =
+      (int(3) x;
+       int(2) y;
+       int(1) z;
+       );
+
+    structure struct7 = // same name as in the common cell
+      (int q
+       );
+
+    structure timesX =  // we can't call this times2 because it shadows function
+      (int does_this_work
+       );
+    
+    structure times3 = // but this is, oddly, OK...
+      (int does_this_work
+       );
+
+
+    function fact(int -n) : int =
+      ([  n == 0 -> fact = 1
+       [] else -> fact = n * (fact1 (n - 1))
+       ]
+       );
+
+    function fact1(int -n) : int =
+      ([  n == 0 -> fact1 = 1
+       [] else -> fact1 = n * (fact (n - 1))
+       ]
+       );
+
+    function alias(int +-x; int +-y) =
+      ( print ("alias x = " + x);
+        print ("alias y = " + y);
+        print ("alias assign x <- x + 1");
+        x = x + 1;
+        print ("alias x = " + x);
+        print ("alias y = " + y);
+        );
+        
+    function alias1(int +-x; int +-y) =
+      ( print ("alias x = " + x);
+        print ("alias y = " + y);
+        print ("alias assign y <- y + 1");
+        y = y + 1;
+        print ("alias x = " + x);
+        print ("alias y = " + y);
+        );
+        
+    int q;
+
+    q = 12;
+    *[int z;
+      int t = 1;
+      //      int u = -1;
+      int k, l = 2;
+      print ("HEY!");
+      [ #L[0] -> int x[0..2], w; L[0]?x[0]; y = x[0], w = x[1]
+        
+        : #L[1] -> struct2 x; int v=12;
+        L[1]?x; [ ~x::b -> y =  1; z = times2(v); w = v; q = -w; z = q * 2 [] else -> y = 0 ]
+        : false ->
+        bool a, b, c;
+        int u, v;
+
+        a = u < v;
+        b = u > v;
+        c = a && b;
+        b = a & c;
+        c = b ^ a;
+        c = u >= v;
+        b = c & (u == v);
+        c = ((u << v) & 1) != 0;
+        u = v ** v;
+      ];
+      print ("y = " + y + " z = " + z);
+      print ("69! = " + (69));
+
+ 
+      alias(k,k);
+      print ("after alias k = " + k);
+      alias1(k,k);
+      print ("after alias1 k = " + k);
+
+      k += 2;
+      k++;
+      
+      print (2 + 2);
+      print (times2(2 + 2));
+      print (times3(2 + 2));
+      print ("hello 2 + 2 " + 2 + 2);
+      print ("hello (2 + 2)" + (2 + 2));
+      //      print (("(hello 2) + 2" + 2) + 2);
+
+      print ("neg " + -2);
+
+      print("k before choose " + k);
+      choose(true, k, k) = k - 3;
+      print("k after choose " + k);
+      
+      print ("true + 3 = " + (choose(true, 0, 2)));
+      wait(1)
+     ]
+      }
+}
+
+define SYSTEM()()
+{
+  subcells {
+    bd(WIDTH) c[0..1];
+
+    P0() p0(c);
+    P1(18) p1(c);
+  }
+}

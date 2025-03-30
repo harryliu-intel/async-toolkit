@@ -1,0 +1,36 @@
+module blocks;
+
+int WIDTH=32;
+
+define P0()(bd(WIDTH) +R0, +R1)
+{
+
+  csp {
+    *[ R0!12 ; R1!13 ; R0!14 ; R1!0 ]
+  }
+}
+
+define P1()(bd(WIDTH) -L0, -L1)
+{
+  csp {
+    *[int z;
+      [ #L0 -> int x, w; L0?x; y = x, w = x
+        
+        : #L1 -> bool x; int v=12;
+                 L1?x; [ x -> y =  1; z = v [] else -> y = 0 ]
+        
+      ];
+      print ("y = " + y + " z = " + z)
+     ]
+      }
+}
+
+define SYSTEM()()
+{
+  subcells {
+    bd(WIDTH) c0, c1;
+
+    P0() p0(c0, c1);
+    P1() p1(c0, c1);
+  }
+}

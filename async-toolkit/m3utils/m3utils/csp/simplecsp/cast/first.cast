@@ -1,0 +1,39 @@
+module first;
+
+// cosimulate first.SYSTEM {csp,subcells}
+
+int WIDTH = 32;
+int N     = 4 * 1024;
+
+define PROC(bool DOSTART)(bd(WIDTH) -L, +R)
+{
+
+  csp {
+   int(WIDTH) i;
+   [ DOSTART -> i=0; R!0 [] ~DOSTART -> skip ];
+   
+   *[ int(WIDTH) x;
+      L?x ;
+
+      [ DOSTART -> print("i = " + i + " x = " + x); i++ [] ~DOSTART -> skip ];
+      
+      y = x + 13;
+      z = (y * 16807) % 2147483647;
+      
+      R!z
+    ]
+  }
+}
+
+define SYSTEM()()
+{
+  subcells {
+    bd(WIDTH) chan[0..N-1];
+  
+    <i:N: PROC(i == 0) p[i] (chan[i],chan[(i+1)%N]); >
+  } 
+}
+
+define PROC0 <: PROC(true) {}
+
+define PROCi <: PROC(false) {}

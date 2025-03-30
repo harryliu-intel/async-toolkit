@@ -1,0 +1,52 @@
+module loops;
+
+int WIDTH=32;
+int N=4;
+
+define G(int i)(bd(WIDTH) +R)
+{
+  csp {
+    int j = i;
+    *[ R!i ; i++ ]
+  }
+}
+
+define P(int n)(bd(WIDTH) -L[0..n-1])
+{
+  csp {
+    *[int x[0..n-1];
+      bool z;
+
+      z = 3*3 < 8;
+      
+      print("start loop");
+      
+      <,i:n: L[i]?x[i] ; print("i = " + i + ", x = " + x[i])> ;
+
+      <;i:0..n-1: L[i]?x[i] ; print("i = " + i + ", x = " + x[i])> ;
+
+      print("and now for something different...");
+      
+      <,i:x[<^j:n:L[j]?> % n] % n: L[i]?x[i] ; print("i = " + i + ", x = " + x[i])> ;
+
+      sum = <+i:n: x[i]> ;
+
+      xor = <^i:n: x[i]> ;
+      
+      print("sum = " + sum);
+      print("xor = " + xor);
+
+      ]
+  }
+}
+
+define SYSTEM()()
+{
+  subcells {
+    bd(WIDTH) c[0..N - 1];
+    
+    <i:N: G(i) g[i](c[i]);>
+    P(N)    p(c);
+  }
+
+}

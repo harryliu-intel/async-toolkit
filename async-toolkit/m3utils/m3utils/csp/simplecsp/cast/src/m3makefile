@@ -1,0 +1,8 @@
+import ("libm3")
+import ("cit_util")
+
+m3_optimize("T")
+
+implementation ("first")
+
+program ("firstsim")

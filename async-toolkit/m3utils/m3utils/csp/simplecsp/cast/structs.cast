@@ -1,0 +1,19 @@
+module structs;
+
+define common attributes {
+  csp {
+  structure struct0 =
+    (int(8) a;
+     int(8) b;
+     int(8) c = 13;
+     );
+  }
+}
+
+define SYSTEM()() <+ common
+{
+  csp {
+    struct0 x;
+    print(pack(x))
+      }
+}
