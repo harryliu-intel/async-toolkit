@@ -335,7 +335,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define (make-object-hash-table elem-namer lst)
-  (let ((res (make-hash-table 10 Atom.Hash)))
+  (let ((res (make-hash-table 100 Atom.Hash)))
     (map (lambda(elem)(res 'add-entry! (elem-namer elem) elem)) lst)
     res
     )
@@ -668,8 +668,12 @@
            (eq? (car s) 'nondet-do))))
 
 (define (simplify-stmt s)
+  ;; all that this does is flattens out parallel and sequence statements
   (cond ((compound-stmt? s) (simplify-compound-stmt s))
         ((guarded-stmt? s) (simplify-guarded-stmt s))
+
+        ;; need to handle parallel-loop and sequential-loop here
+        
         (else s)))
 
 (define (simplify-guarded-stmt s)
@@ -1171,6 +1175,7 @@
   )
 
 (define (filter-unused lisp unused-ids)
+  (dis "filtering unused ids : " unused-ids dnl)
   (define (visitor s)
     (case (get-stmt-kw s)
       ((var1)   (if (member (get-var1-id   s) unused-ids) 'delete s))
@@ -1199,13 +1204,18 @@
 (define frame-kws
   ;; keywords that introduce a declaration block
   '(
-;;    sequence parallel
+;;    sequence parallel   ;; these do NOT introduce a declaration block
     do if nondet-if nondet-do
-    parallel-loop sequential-loop))
+    parallel-loop sequential-loop
+       ))
 
 (define (try-it the-text cell-info the-inits)
 
+  (dis dnl "=========  START  =========" dnl dnl) 
+  
   (define initvars (find-referenced-vars the-inits))
+
+  (dis "analyze program : " dnl)
 
   (define lisp (analyze-program the-text cell-info initvars))
 
@@ -1213,18 +1223,18 @@
   (define syms '())
 
   (define (enter-frame!)
-    (set! syms (cons (make-hash-table 10 Atom.Hash) syms))
+    (set! syms (cons (make-hash-table 100 Atom.Hash) syms))
     (dis "enter-frame! " (length syms) dnl)
     )
 
   (define (exit-frame!)
-    (dis "exit-frame! " (map (lambda(tbl)(tbl 'keys)) syms) dnl)
+    (dis "exit-frame! " (length syms) " " (map (lambda(tbl)(tbl 'keys)) syms) dnl)
     (set! syms (cdr syms))
     )
 
   (define (define-var! sym type)
     ((car syms) 'add-entry! sym type)
-    (dis "define-var! " sym " : " type " frame : " ((car syms) 'keys) dnl)
+    (dis "define-var! " sym " : " type " /// frame : " ((car syms) 'keys) dnl)
     )
 
   (define (retrieve-defn sym)
@@ -1238,7 +1248,7 @@
     
   
   (define (stmt-pre s)
-    (dis "pre stmt  : " s dnl)
+    (dis "pre stmt  : " (stringify s) dnl)
     (if (member (get-stmt-kw s) frame-kws) (enter-frame!))
 
     (case (get-stmt-kw s)
@@ -1253,16 +1263,20 @@
     s
     )
 
+  (dis dnl "creating global frame... " dnl)
+  
   (enter-frame!) ;; global frame
 
   ;; first visit the inits
+  (dis dnl "visit inits ... " dnl dnl)
   (prepostvisit-stmt (filter-unused the-inits *unused-globals*)
                      stmt-pre stmt-post
                      identity identity
                      identity identity)
 
   ;; then visit the program itself
-  (prepostvisit-stmt lisp
+  (dis dnl "visit program text ... " dnl dnl)
+  (prepostvisit-stmt (simplify-stmt lisp)
                      stmt-pre stmt-post
                      identity identity
                      identity identity)
