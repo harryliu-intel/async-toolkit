@@ -387,6 +387,10 @@
   (set! *the-initvars* (find-referenced-vars *the-inits*))
 
   (set! *the-func-tbl* (make-object-hash-table get-function-name *the-funcs*))
+
+  (set! lisp0 (desugar-prog data))
+  (set! lisp1 (simplify-stmt lisp0))
+
   'ok
     
   )
@@ -790,6 +794,12 @@
                    type-previsit type-postvisit
                    ))
 
+  (define (range x)(prepostvisit-range x
+                                       stmt-previsit stmt-postvisit
+                                       expr-previsit expr-postvisit
+                                       type-previsit type-postvisit))
+
+
   (define (continue)
     (if (eq? s 'skip)
         s
@@ -831,6 +841,13 @@
                           args))
                     
                     ((eval) (list (expr (car args))))
+
+                    ((assign-operate)
+                     (list (car args) (expr (cadr args)) (expr (caddr args))))
+
+                    ((parallel-loop sequential-loop)
+                     (list (car args) (range (cadr args)) (stmt (caddr args)))
+                     )
                     
                     (else (set! *bad-s* s)
                           (set! *bad-last* last)
@@ -850,6 +867,22 @@
 (define (filter-delete stmt) ;; use to filter out 'delete
   (not (eq? 'delete stmt)))
 
+(define (prepostvisit-range x
+                            stmt-previsit stmt-postvisit
+                            expr-previsit expr-postvisit
+                            type-previsit type-postvisit)
+  
+  (define (expr x)(prepostvisit-expr x
+                                     stmt-previsit stmt-postvisit
+                                     expr-previsit expr-postvisit
+                                     type-previsit type-postvisit))
+
+  (if (or (not (pair? x)) (not (eq? 'range (car x))))
+      (error "not a range : " x))
+  (list 'range (expr (cadr x)) (expr (caddr x))))
+  
+
+  
 (define (prepostvisit-expr x
                            stmt-previsit stmt-postvisit
                            expr-previsit expr-postvisit
@@ -860,9 +893,14 @@
                                      expr-previsit expr-postvisit
                                      type-previsit type-postvisit))
 
+  (define (range x)(prepostvisit-range x
+                                     stmt-previsit stmt-postvisit
+                                     expr-previsit expr-postvisit
+                                     type-previsit type-postvisit))
+
   (define (continue)
     (if (pair? x)
-        (let ((kw (car x))
+        (let ((kw   (car x))
               (args (cdr x)))
           (cons kw
                 (case kw
@@ -879,6 +917,16 @@
                   ((member-access structure-access)
                    (list (expr (car args)) (cadr args))
                    )
+
+                  ((loop-expression)
+                   (car args)
+                   (range (cadr args))
+                   (caddr args)
+                   (expr (cadddr args))
+                   )
+
+                  ((recv-expression)
+                   (expr (car args)))
                   
                   (else (error "visit-expr : unknown keyword " kw " : " x ))
                   ) ;; esac
