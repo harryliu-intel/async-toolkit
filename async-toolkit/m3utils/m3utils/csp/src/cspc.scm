@@ -572,7 +572,7 @@
   (cadddr d))
   
 (define (check-var1 s)
-  (if (not (and (eq? 'var1 (stmt-type s)) (eq? 'id (caadadr v1))))
+  (if (not (and (eq? 'var1 (stmt-type s)) (eq? 'id (caadadr s))))
       (error "malformed var1 : " s)))
 
 (define (get-var1-decl1 s)
@@ -799,7 +799,6 @@
                                        expr-previsit expr-postvisit
                                        type-previsit type-postvisit))
 
-
   (define (continue)
     (if (eq? s 'skip)
         s
@@ -1017,7 +1016,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define *result* #f)
+(define *analyze-result* #f)
 (define *undeclared* #f)
 
 ;; we can update the inits to only those that we actually need
@@ -1049,16 +1048,12 @@
     (cond ((not (null? multiples))
            (begin
              (dis dnl "uniqifying..." dnl dnl)
-             (analyze-program (uniqify-stmt prog) cell-info)))
+             (analyze-program (uniqify-stmt prog) cell-info initvars)))
 
-          (else (set! *result* prog) 'ok)
+          (else (set! *analyze-result* prog) *analyze-result*)
           )
     )
-    
   )
-
-
-
 
 (define (find-referenced-vars stmt)
   (find-ids stmt))
@@ -1144,6 +1139,84 @@
     )
   )
               
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+(define (get-stmt-kw stmt)
+  (if (eq? stmt 'skip)
+      'skip
+      (if (pair? stmt)
+
+          (let ((res (car stmt)))
+            (if (member res '(loop increment decrement var))
+                (error "get-stmt-kw : need to desugar : " stmt))
+            res)
+            
+          (error "get-stmt-kw : not a statement : " stmt))))
+
+
+(define frame-kws
+  ;; keywords that introduce a declaration block
+  '(sequence parallel
+    do if nondet-if nondet-do
+    parallel-loop sequential-loop))
+
+(define (try-it the-text cell-info initvars)
+
+  (define lisp (analyze-program the-text cell-info initvars))
+
+  
+  (define syms '())
+
+  (define (enter-frame!)
+    (set! syms (cons (make-hash-table 10 Atom.Hash) syms))
+    (dis "enter-frame! " (length syms) dnl)
+    )
+
+  (define (exit-frame!)
+    (set! syms (cdr syms))
+    (dis "exit-frame! " (length syms) dnl)
+    )
+
+  (define (define-var! sym type)
+    (dis "define-var! " sym " : " type dnl)
+    ((car syms) 'add-entry! sym type))
+
+  (define (retrieve-defn sym)
+    (let loop ((p syms))
+      (if (null? p)
+          (error "retrieve-var : sym not found : " sym)
+          (let ((this-result ((car p) 'retrieve sym)))
+            (if (eq? this-result '*hash-table-search-failed*)
+                (loop (cdr p))
+                this-result)))))
+    
+  
+  (define (stmt-pre s)
+    (dis "pre stmt  : " s dnl)
+    (if (member (get-stmt-kw s) frame-kws) (enter-frame!))
+
+    (case (get-stmt-kw s)
+      ((var1) (define-var! (get-var1-id s) (get-var1-type s)))
+      )
+    s
+    )
+
+  (define (stmt-post s)
+    (dis "post stmt : " s dnl)
+    (if (member (get-stmt-kw s) frame-kws) (exit-frame!))
+    s
+    )
+
+  (enter-frame!) ;; global frame
+  (prepostvisit-stmt lisp
+                     stmt-pre stmt-post
+                     identity identity
+                     identity identity)
+  (exit-frame!)
+  'ok
+  )
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define (print-identity x)
@@ -1579,3 +1652,6 @@
 
 (define (do-analyze)
    (analyze-program lisp1 *cellinfo* *the-initvars*))
+
+(set-warnings-are-errors! #t)
+
