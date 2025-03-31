@@ -128,8 +128,7 @@ PROCEDURE ChannelStructureType(members : CspStructMemberSeq.T) : Type;
 PROCEDURE ChannelType(numValues : BigInt.T; dir : Direction) : Type;
 
 PROCEDURE IntegerType(isConst, isSigned : BOOLEAN;
-                      hasDw             : BOOLEAN;
-                      dw                : CARDINAL;
+                      dw                : Expr;
                       hasInterval       : BOOLEAN;
                       interval          : Interval) : Type;
 

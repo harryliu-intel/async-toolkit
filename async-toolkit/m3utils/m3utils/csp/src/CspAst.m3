@@ -233,18 +233,16 @@ PROCEDURE ChannelType(numValues : BigInt.T; dir : Direction) : Type =
   END ChannelType;
   
 PROCEDURE IntegerType(isConst, isSigned : BOOLEAN;
-                      hasDw             : BOOLEAN;
-                      dw                : CARDINAL;
+                      dw                : Expr;
                       hasInterval       : BOOLEAN;
                       interval          : Interval) : Type =
   BEGIN
     RETURN NEW(T.Integer,
-               isConst := isConst,
-               isSigned := isSigned,
-               hasDw := hasDw,
-               dw := dw,
+               isConst     := isConst,
+               isSigned    := isSigned,
+               dw          := dw,
                hasInterval := hasInterval,
-               interval := interval)
+               interval    := interval)
   END IntegerType;
   
 PROCEDURE NodeType(arrayed   : BOOLEAN;

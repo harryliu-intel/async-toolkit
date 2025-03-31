@@ -28,15 +28,7 @@ TYPE
 
   Channel <: PubChannel;
 
-  PubInteger = T OBJECT
-    isConst, isSigned : BOOLEAN;
-    hasDw             : BOOLEAN;
-    dw                : CARDINAL;
-    hasInterval       : BOOLEAN;
-    interval          : CspInterval.T;
-  END;
-
-  Integer <: PubInteger;
+  Integer <: T; (* see CspTypePublic.i3 *)
 
   PubNode = T OBJECT
     arrayed   : BOOLEAN;

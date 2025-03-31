@@ -1,5 +1,4 @@
 MODULE CspType;
-IMPORT CspSyntax;
 IMPORT SchemeSymbol;
 IMPORT SchemeObject;
 
@@ -9,12 +8,27 @@ IMPORT SchemeBoolean;
 IMPORT CspRange;
 IMPORT CspDirection;
 IMPORT BigInt;
+IMPORT CspExpression;
+IMPORT CspInterval;
+IMPORT CspType;
 
 CONST Sym = SchemeSymbol.FromText;
 
+TYPE
+  PubInteger = T OBJECT
+    isConst, isSigned : BOOLEAN;
+    dw                : CspExpression.T;
+    hasInterval       : BOOLEAN;
+    interval          : CspInterval.T;
+  END; 
 
 REVEAL
   T = Public BRANDED Brand OBJECT
+  END;
+
+  Integer = PubInteger BRANDED CspType.Brand & " Integer" OBJECT
+  OVERRIDES
+    lisp := IntegerLisp;
   END;
 
   Array = PubArray BRANDED Brand & " Array" OBJECT
@@ -25,11 +39,6 @@ REVEAL
   Channel = PubChannel BRANDED Brand & " Channel" OBJECT
   OVERRIDES
     lisp := ChannelLisp;
-  END;
-  
-  Integer = PubInteger BRANDED Brand & " Integer" OBJECT
-  OVERRIDES
-    lisp := IntegerLisp;
   END;
   
   Node = PubNode BRANDED Brand & " Node" OBJECT
@@ -68,23 +77,24 @@ PROCEDURE ChannelLisp(self : Channel) : SchemeObject.T =
   
 PROCEDURE IntegerLisp(self : Integer) : SchemeObject.T =
   VAR
-    lispDw : BigInt.T;
-    lispInterval : SchemeObject.T;
+    lispInterval, dw : SchemeObject.T;
   BEGIN
-    IF self.hasDw THEN
-      lispDw := BigInt.New(self.dw)
-    ELSE
-      lispDw := NIL
-    END;
     IF self.hasInterval THEN
       lispInterval := List2(self.interval.left, self.interval.right)
     ELSE
       lispInterval := NIL
     END;
+    
+    IF self.dw = NIL THEN
+      dw := NIL
+    ELSE
+      dw := self.dw.lisp()
+    END;
+    
     RETURN List5(Sym("integer"),
                  SchemeBoolean.Truth(self.isConst),
                  SchemeBoolean.Truth(self.isSigned),
-                 lispDw,
+                 dw,
                  lispInterval)
   END IntegerLisp;
   
@@ -107,12 +117,12 @@ PROCEDURE StructureLisp(self : Structure) : SchemeObject.T =
                  Sym(self.name))
   END StructureLisp;
   
-PROCEDURE BooleanLisp(self : Boolean) : SchemeObject.T =
+PROCEDURE BooleanLisp(<*UNUSED*>self : Boolean) : SchemeObject.T =
   BEGIN
     RETURN Sym("boolean")
   END BooleanLisp;
   
-PROCEDURE StringLisp(self : String) : SchemeObject.T =
+PROCEDURE StringLisp(<*UNUSED*>self : String) : SchemeObject.T =
   BEGIN
     RETURN Sym("string")
   END StringLisp;
