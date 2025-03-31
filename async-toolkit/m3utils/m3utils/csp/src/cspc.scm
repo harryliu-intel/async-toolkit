@@ -642,6 +642,18 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(define (check-assign-stmt s)
+  (if (or (not (pair? s)) (not (eq? 'assign (car s))))
+      (error "check-assign-stmt : not an assign : " s)))
+  
+(define (get-assign-id s)
+  (check-assign-stmt s)
+  (if (not (eq? 'id (caadr s)))
+      (error "get-assign-id : not done yet")
+      (cadadr s)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (define (compound-stmt? s)
   (and (list? s)
        (not (null? s))
@@ -1017,12 +1029,21 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define *analyze-result* #f)
+(define *unused-globals* #f)
 (define *undeclared* #f)
 
 ;; we can update the inits to only those that we actually need
 (define *filtered-inits* #f)
 (define *filtered-initvars* #f)
 
+(define (make-default-var1 sym)
+  ;; make a default (per CSP rules) variable declaration
+  `(var1 (decl1 (id ,sym) (integer #f #f () ()) none))
+  )
+
+(define (predeclare prog undeclared)
+   (cons 'sequence (append (map make-default-var1 undeclared) (list prog))))
+  
 (define (analyze-program prog cell-info initvars)
   (let* ((ports      (caddddr cell-info))
          (portids    (map cadr ports))
@@ -1046,11 +1067,21 @@
     (dis "multiples  : " multiples dnl)
 
     (cond ((not (null? multiples))
-           (begin
-             (dis dnl "uniqifying..." dnl dnl)
-             (analyze-program (uniqify-stmt prog) cell-info initvars)))
+           (dis dnl "uniqifying..." dnl dnl)
+           (analyze-program (uniqify-stmt prog)
+                            cell-info
+                            initvars))
 
-          (else (set! *analyze-result* prog) *analyze-result*)
+          ((not (null? undeclared))
+           (dis dnl "un-undeclaring..." dnl dnl)
+           (analyze-program (predeclare prog undeclared)
+                            cell-info
+                            initvars)
+           )
+
+          (else (set! *analyze-result* prog)
+                (set! *unused-globals* unused-globalids)
+                *analyze-result*)
           )
     )
   )
@@ -1138,6 +1169,16 @@
             (loop (cdr p) (uniqify-one s (car p) tg)))))
     )
   )
+
+(define (filter-unused lisp unused-ids)
+  (define (visitor s)
+    (case (get-stmt-kw s)
+      ((var1)   (if (member (get-var1-id   s) unused-ids) 'delete s))
+      ((assign) (if (member (get-assign-id s) unused-ids) 'delete s))
+      (else s))
+    )
+  (visit-stmt lisp visitor identity identity))
+
               
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -1157,11 +1198,14 @@
 
 (define frame-kws
   ;; keywords that introduce a declaration block
-  '(sequence parallel
+  '(
+;;    sequence parallel
     do if nondet-if nondet-do
     parallel-loop sequential-loop))
 
-(define (try-it the-text cell-info initvars)
+(define (try-it the-text cell-info the-inits)
+
+  (define initvars (find-referenced-vars the-inits))
 
   (define lisp (analyze-program the-text cell-info initvars))
 
@@ -1174,13 +1218,14 @@
     )
 
   (define (exit-frame!)
+    (dis "exit-frame! " (map (lambda(tbl)(tbl 'keys)) syms) dnl)
     (set! syms (cdr syms))
-    (dis "exit-frame! " (length syms) dnl)
     )
 
   (define (define-var! sym type)
-    (dis "define-var! " sym " : " type dnl)
-    ((car syms) 'add-entry! sym type))
+    ((car syms) 'add-entry! sym type)
+    (dis "define-var! " sym " : " type " frame : " ((car syms) 'keys) dnl)
+    )
 
   (define (retrieve-defn sym)
     (let loop ((p syms))
@@ -1203,17 +1248,27 @@
     )
 
   (define (stmt-post s)
-    (dis "post stmt : " s dnl)
+    (dis "post stmt : " (get-stmt-kw s) dnl)
     (if (member (get-stmt-kw s) frame-kws) (exit-frame!))
     s
     )
 
   (enter-frame!) ;; global frame
+
+  ;; first visit the inits
+  (prepostvisit-stmt (filter-unused the-inits *unused-globals*)
+                     stmt-pre stmt-post
+                     identity identity
+                     identity identity)
+
+  ;; then visit the program itself
   (prepostvisit-stmt lisp
                      stmt-pre stmt-post
                      identity identity
                      identity identity)
-  (exit-frame!)
+  
+  (exit-frame!) ;; and leave the global frame
+  
   'ok
   )
 

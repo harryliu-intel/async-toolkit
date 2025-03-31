@@ -63,23 +63,28 @@ define P00(int X)  <: P0(2 * X)
     x = 131531;
     y = 234655;
     int z = ff(x + y);
+    zzz = X;
     bool b;
 
-    ud_x = ff(44);
+    [ true ->
 
-    ud_x++;
+      int k, l, m = 12;
+      ud_x = ff(44);
 
-    [  ud_x > 5 -> ud_y = ud_x * 10; print("ud_y = " + ud_y)
-    [] ud_x < 5 -> int d_z = ud_x * 2047; print("d_z = " + d_z)
-    [] ud_x == 5 -> int d_z = ud_x / 2; print("d_z = " + d_z)
-    ];
+      ud_x++;
 
-    print (" f = " + f(x, y));
-    print (" g = " + g(x, y));
-    print (" h = " + h(x, y));
-    print (" q = " + q);
-    print (" b = " + b);
-    R!0
+      [  ud_x > 5 -> ud_y = ud_x * 10 + zzz; print("ud_y = " + ud_y)
+      [] ud_x < 5 -> int d_z = ud_x * 2047; print("d_z = " + d_z)
+      [] ud_x == 5 -> int d_z = ud_x / 2; print("d_z = " + d_z)
+      ];
+
+      print (" f = " + f(x, y));
+      print (" g = " + g(x, y));
+      print (" h = " + h(x, y));
+      print (" q = " + q);
+      print (" b = " + b);
+      R!0
+    ]
     
   }
 }
