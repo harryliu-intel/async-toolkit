@@ -263,17 +263,15 @@ REVEAL
 
 PROCEDURE SequentialLoopLisp(loop : SequentialLoop) : SchemeObject.T =
   BEGIN
-    RETURN List4("sequential-loop",
+    RETURN List4(Sym("sequential-loop"),
                  loop.dummy,
                  CspRange.Lisp(loop.range),
                  loop.stmt.lisp())
   END SequentialLoopLisp;
   
- 
-  
 PROCEDURE ParallelLoopLisp(loop : ParallelLoop) : SchemeObject.T =
   BEGIN
-    RETURN List4("parallel-loop",
+    RETURN List4(Sym("parallel-loop"),
                  loop.dummy,
                  CspRange.Lisp(loop.range),
                  loop.stmt.lisp())

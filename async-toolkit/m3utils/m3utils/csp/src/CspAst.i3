@@ -34,6 +34,8 @@ TYPE
   
 PROCEDURE AssignmentStmt(lhs, rhs : Expr) : Stmt;
 
+PROCEDURE AssignOperateStmt(lhs, rhs : Expr; op : CspExpression.BinaryOp) : Stmt;
+
 PROCEDURE DetRepetitionStmt(gcs : CspGuardedCommandSeq.T) : Stmt;
 
 PROCEDURE DetSelectionStmt(gcs : CspGuardedCommandSeq.T) : Stmt;

@@ -18,6 +18,16 @@ define P(int n)(bd(WIDTH) -L[0..n-1])
       bool z;
 
       z = 3*3 < 8;
+
+      int zz;
+
+      zz = 3*3 ** 8;
+      
+      zz++;
+      zz/=3;
+      zz*=3;
+
+      print("zz=" + zz);
       
       print("start loop");
       

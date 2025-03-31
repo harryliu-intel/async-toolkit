@@ -197,6 +197,7 @@
 (define (identity x) x)
 
 (define *big-m1* (BigInt.New -1))
+(define *big-0*  (BigInt.New  0))
 (define *big-1*  (BigInt.New  1))
 (define *big-tc* (rttype-typecode *big-1*))
 
@@ -1274,18 +1275,38 @@
                                 )
              )
 
-            ((assign-operate) ;; desugar to assign
+            ((assign-operate) 
+             (CspAst.AssignOperateStmt
+              (convert-expr (cadr args))
+              (convert-expr (caddr args))
+              (convert-binop (car args))
+              ))
 
-             (error "not yet done" dnl)
-             
-             (let ((transformed (list 'assign
-                                   (cadr args)
-                                   (list
-                                    (car args)
-                                    (cadr args)
-                                    (caddr args)))))
-;;               (dis "transform " s " -> " transformed dnl)
-               (convert-stmt transformed s)))
+            ((loop) ;; this is from the Java, convert to parallel or sequential
+             (let ((idxvar (car args))
+                   (range  (cadr args))
+                   (sep-id (caddr args))
+                   (stmt   (cadddr args)))
+
+               ((cond ((BigInt.Equal sep-id *big-0*) CspAst.SequentialLoop)
+                      ((BigInt.Equal sep-id *big-1*) CspAst.ParallelLoop)
+                      (else (error "convert-stmt : unknown loop type " sep-id)))
+                idxvar
+                (convert-range range)
+                (convert-stmt stmt s))))
+
+            ((sequential-loop parallel-loop) ;; what we will compile
+             (let ((idxvar (car args))
+                   (range  (cadr args))
+                   (stmt   (caddr args)))
+               ((case kw
+                  ((sequential-loop) CspAst.SequentialLoop)
+                  ((parallel-loop) CspAst.ParallelLoop)
+                  (else (error)))
+                idxvar
+                (convert-range range)
+                (convert-stmt stmt s))
+               ))
 
             ;; the next two are just syntactic sugar
             ;;
@@ -1366,6 +1387,29 @@
 
 (define *last-a* #f)
 
+(define (convert-binop sym)
+  (case sym
+    ((-) 'Sub) ;; unary op has a different name...
+    ((+) 'Add)
+    ((/) 'Div)
+    ((%) 'Rem)
+    ((*) 'Mul)
+    ((==) 'EQ)
+    ((!=) 'NE)
+    ((<) 'LT)
+    ((>) 'GT)
+    ((>=) 'GE)
+    ((<=) 'LE)
+    ((&) 'And)
+    ((&&) 'CondAnd)
+    ((|) 'Or) ;;|)
+    ((||) 'CondOr)
+    ((^) 'Xor)
+    ((<<) 'SHL)
+    ((>>) 'SHR)
+    ((**) 'Pow)
+    (else (error " BinExpr " (car x)))))
+
 (define (convert-expr x)
   (set! *last-x* x)
   (set! *all-x* (cons x *all-x*))
@@ -1415,6 +1459,17 @@
               )
             )
 
+
+           ((loop-expression)
+            (CspAst.LoopExpr (cadr x)
+                             (convert-range (caddr x))
+                             (convert-binop (cadddr x))
+                             (convert-expr (caddddr x))
+                             ))
+
+           ((recv-expression)
+            (CspAst.RecvExpr (convert-expr (cadr x))))
+           
            ((not) (CspAst.UnaExpr 'Not (convert-expr (cadr x))))
 
            ((-)
@@ -1425,28 +1480,9 @@
                 (CspAst.BinExpr 'Sub (convert-expr (cadr x))
                                      (convert-expr (caddr x)))))
 
-           ((+ / % * == != < > >= <= & && | || ^ == << >> **)
+           ((+ / % * == != < > >= <= & && | || ^ == << >> **) ;; |
             (CspAst.BinExpr
-             (case (car x)
-               ((+) 'Add)
-               ((/) 'Div)
-               ((%) 'Rem)
-               ((*) 'Mul)
-               ((==) 'EQ)
-               ((!=) 'NE)
-               ((<) 'LT)
-               ((>) 'GT)
-               ((>=) 'GE)
-               ((<=) 'LE)
-               ((&) 'And)
-               ((&&) 'CondAnd)
-               ((|) 'Or)
-               ((||) 'CondOr)
-               ((^) 'Xor)
-               ((<<) 'SHL)
-               ((>>) 'SHR)
-               ((**) 'Pow)
-               (else (error " BinExpr " (car x))))
+             (convert-binop (car x))
              (convert-expr (cadr x))
              (convert-expr (caddr x))))
            

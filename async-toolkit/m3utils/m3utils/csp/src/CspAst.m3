@@ -27,11 +27,17 @@ IMPORT CspDeclaratorSeq;
 IMPORT CspType;
 
 IMPORT CspRange;
+IMPORT CspExpression;
 
 PROCEDURE AssignmentStmt(lhs, rhs : Expr) : Stmt =
   BEGIN
     RETURN NEW(S.Assignment, lhs := lhs, rhs := rhs)
   END AssignmentStmt;
+
+PROCEDURE AssignOperateStmt(lhs, rhs : Expr; op : CspExpression.BinaryOp) : Stmt =
+  BEGIN
+    RETURN NEW(S.AssignOperate, lhs := lhs, rhs := rhs, op := op)
+  END AssignOperateStmt;
 
 PROCEDURE DetRepetitionStmt(gcs : CspGuardedCommandSeq.T) : Stmt =
   BEGIN
