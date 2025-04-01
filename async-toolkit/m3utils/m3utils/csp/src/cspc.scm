@@ -176,7 +176,8 @@
 ;;
 ;; Well, let's hope it works!
 
-(require-modules "basic-defs" "m3" "hashtable" "display" "symbol-append.scm")
+(require-modules "basic-defs" "m3" "hashtable" "set"
+                 "display" "symbol-append.scm")
 
 
 ;;            } else if (name.equals("string")) {
@@ -462,7 +463,7 @@
 (define (convert-range r)
   (if (or (not (pair? r))
           (not (eq? (car r) 'range)))
-      (error "not a range : " r)
+      (error "convert-range : not a range : " r)
       `((min . ,(convert-expr (cadr r)))
         (max . ,(convert-expr (caddr r))))))
 
@@ -651,12 +652,42 @@
 (define (check-assign-stmt s)
   (if (or (not (pair? s)) (not (eq? 'assign (car s))))
       (error "check-assign-stmt : not an assign : " s)))
+
+(define *last-assign* #f)
+
+(define (get-assign-designator s)
+  (check-assign-stmt s)
+  (cadr s))
   
 (define (get-assign-id s)
-  (check-assign-stmt s)
-  (if (not (eq? 'id (caadr s)))
-      (error "get-assign-id : not done yet")
-      (cadadr s)))
+  (set! *last-assign* s)
+  (get-designator-id (get-assign-designator s)))
+
+(define designator-example '(array-access
+                             (member-access (id mccfg) mc)
+                             (id id)))
+
+(define (get-designator-id x)
+  ;; pull the identifier out of a designator
+  (cond ((eq? 'id (car x)) (cadr x))
+        ((eq? 'array-access (car x)) (get-designator-id (cadr x)))
+        ((eq? 'member-access (car x)) (get-designator-id (cadr x)))
+        (else (error "get-designator-id : not done yet"))))
+
+(define (hash-designator d)
+  ;; hash a designator
+  (cond ((eq? 'id (car d)) (Atom.Hash (cadr d)))
+        ((eq? 'array-access (car d))
+         (+ (* 2 (hash-designator (cadr d)))
+            (if (bigint? (caddr d)) (* 57 (BigInt.ToLongReal (caddr d))) 511)))
+        ((eq? 'member-access (car d)) (* 3 (hash-designator (cadr d))))
+        (else (error "hash-designator : not done yet"))))
+
+(define (make-designator-hash-table size)
+  (make-hash-table size hash-designator))
+
+(define (make-designator-set size)
+  (make-set (lambda()(make-designator-hash-table size))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -793,6 +824,8 @@
       'skip
       (car stmt)))
 
+(define *visit-s* #f)
+
 (define (prepostvisit-stmt s
                            stmt-previsit stmt-postvisit
                            expr-previsit expr-postvisit
@@ -821,7 +854,10 @@
                                        expr-previsit expr-postvisit
                                        type-previsit type-postvisit))
 
+  (set! *visit-s* s)
+  
   (define (continue)
+    ;; this procedure does most of the work, it is called after stmt-previsit
     (if (eq? s 'skip)
         s
         (begin
@@ -834,9 +870,14 @@
           (let ((kw   (car s))
                 (args (cdr s))
                 )
+            
+            ;; we are really just re-assembling the statement here, from
+            ;; its parts
             (cons kw
                   (case kw
-                    ((sequence parallel) (filter filter-delete (map stmt args)))
+                    ((sequence parallel)
+                     ;; filter out anything that returns 'delete
+                     (filter filter-delete (map stmt args)))
                     
                     ((assign)            (list
                                           (expr (car args)) (expr (cadr args))))
@@ -858,6 +899,7 @@
                     
                     ((do if nondet-if nondet-do)
                      (set! vs s)
+                     ;; what happens if stmt returns 'delete?
                      (map (lambda(gc)(list (expr (car gc)) (stmt (cadr gc))))
                           args))
                     
@@ -867,6 +909,7 @@
                      (list (car args) (expr (cadr args)) (expr (caddr args))))
 
                     ((parallel-loop sequential-loop)
+                     ;; what happens if stmt returns 'delete?
                      (list (car args) (range (cadr args)) (stmt (caddr args)))
                      )
                     
@@ -878,7 +921,14 @@
         )
     )
  
-    
+
+  ;; Basic order of visiting:
+  ;;
+  ;; if the pre-visitor returns #f, skip the statement (and keep it unchanged)
+  ;; if the pre-visitor returns 'cut, accept the change but stop visiting
+  ;; else, just call the post-visitor on the result of the pre-visitor
+  ;;
+
   (let ((pre (stmt-previsit s)))
     (cond ((eq? pre #f) s)
           ((and (pair? pre) (eq? 'cut (car pre))) (cdr pre))
@@ -903,6 +953,7 @@
   (list 'range (expr (cadr x)) (expr (caddr x))))
   
 
+(define *visit-x* #f)
   
 (define (prepostvisit-expr x
                            stmt-previsit stmt-postvisit
@@ -919,6 +970,10 @@
                                      expr-previsit expr-postvisit
                                      type-previsit type-postvisit))
 
+  (define (expr-or-null x) (if (null? x) '() (expr x)))
+
+  (set! *visit-x* x)
+  
   (define (continue)
     (if (pair? x)
         (let ((kw   (car x))
@@ -940,14 +995,21 @@
                    )
 
                   ((loop-expression)
-                   (car args)
-                   (range (cadr args))
-                   (caddr args)
-                   (expr (cadddr args))
-                   )
+                   (list 
+                    (car args)
+                    (range (cadr args))
+                    (caddr args)
+                    (expr (cadddr args))
+                   ))
 
-                  ((recv-expression)
-                   (expr (car args)))
+                  ((recv-expression peek)
+                   (list (expr (car args))))
+
+                  ((bits)
+                   (list 
+                    (expr-or-null (car args))
+                    (expr-or-null (cadr args))
+                    (expr-or-null (caddr args))))
                   
                   (else (error "visit-expr : unknown keyword " kw " : " x ))
                   ) ;; esac
@@ -958,6 +1020,13 @@
         x ;; not a pair
         );;fi
     );;enifed
+
+  ;; Basic order of visiting:
+  ;;
+  ;; if the pre-visitor returns #f, skip the statement (and keep it unchanged)
+  ;; if the pre-visitor returns 'cut, accept the change but stop visiting
+  ;; else, just call the post-visitor on the result of the pre-visitor
+  ;;
 
   (let ((pre (expr-previsit x)))
     (cond ((eq? pre #f) x)
@@ -1181,11 +1250,24 @@
   )
 
 (define (filter-unused lisp unused-ids)
+  ;; filter out var1 and assign statements from a program
   (dis "filtering unused ids : " unused-ids dnl)
   (define (visitor s)
     (case (get-stmt-kw s)
       ((var1)   (if (member (get-var1-id   s) unused-ids) 'delete s))
       ((assign) (if (member (get-assign-id s) unused-ids) 'delete s))
+      (else s))
+    )
+  (visit-stmt lisp visitor identity identity))
+
+(define (filter-used lisp used-ids)
+  ;; filter in var1 and assign statements from a program
+  ;; for debugging mainly
+  (dis "filtering used ids : " used-ids dnl)
+  (define (visitor s)
+    (case (get-stmt-kw s)
+      ((var1)   (if (member (get-var1-id   s) used-ids) s 'delete))
+      ((assign) (if (member (get-assign-id s) used-ids) s 'delete))
       (else s))
     )
   (visit-stmt lisp visitor identity identity))
@@ -1530,8 +1612,10 @@
             ((var1) ;; this is a simplified declaration
              (convert-var1-stmt s))
 
-            ((recv) (CspAst.RecvStmt (convert-expr (car args))
-                                     (convert-expr (cadr args))))
+            ((recv)
+             ;; null receive is OK (just completes the handshake)
+             (CspAst.RecvStmt (convert-expr (car args))
+                              (convert-expr-or-null (cadr args))))
 
             ((send) (CspAst.SendStmt (convert-expr (car args))
                                      (convert-expr (cadr args))))
@@ -1666,6 +1750,15 @@
            ((recv-expression)
             (CspAst.RecvExpr (convert-expr (cadr x))))
            
+           ((peek)
+            (CspAst.PeekExpr (convert-expr (cadr x))))
+
+           ((bits)
+            (CspAst.BitRangeExpr
+             (convert-expr-or-null (cadr x))
+             (convert-expr-or-null (caddr x))
+             (convert-expr-or-null (cadddr x))))
+           
            ((not) (CspAst.UnaExpr 'Not (convert-expr (cadr x))))
 
            ((-)
@@ -1689,6 +1782,9 @@
         (else (error "dunno that type " x) )
         )
   )
+  
+(define (convert-expr-or-null x)
+  (if (null? x) '() (convert-expr x)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -1749,3 +1845,5 @@
 (if (not (equal? lisp1 lisp4)) (error "lisp1 and lisp4 differ!"))
 )
 
+;; (define b36 (BigInt.New 36))
+;; (filter (lambda(s)(and (eq? 'SUPERSET (get-designator-id s)) (BigInt.Equal b36 (caddadr s)) (BigInt.Equal b15 (caddr s)))) z)

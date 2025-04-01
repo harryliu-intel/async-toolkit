@@ -18,7 +18,7 @@ TYPE CompRet = [-1..1];
 PROCEDURE Compare(a, b : T) : CompRet;
 PROCEDURE Equal(a, b : T) : BOOLEAN;
 PROCEDURE New(x : INTEGER) : T;
-PROCEDURE Copy(t : T) : T;
+PROCEDURE Copy(t : T) : T; (* this makes no sense, right? *)
 PROCEDURE Div(a, b : T) : T;
 PROCEDURE Mul(a, b : T) : T;
 PROCEDURE Add(a, b : T) : T;
@@ -72,5 +72,9 @@ PROCEDURE GetRepBase() : T;
 PROCEDURE GetBit(t : T; bit : CARDINAL) : [ 0 .. 1 ];
 
 PROCEDURE IsT(x : REFANY) : BOOLEAN;
+
+PROCEDURE UniqReferences(to : BOOLEAN) : BOOLEAN;
+  (* if called with TRUE, all calls returning the same value will 
+     return the same reference, else that is not guaranteed *)
   
 END BigInt.

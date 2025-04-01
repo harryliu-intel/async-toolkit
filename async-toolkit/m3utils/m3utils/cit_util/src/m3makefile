@@ -200,6 +200,9 @@ Sequence("Card","Cardinal")
 
 Module("IntForRat")
 Module("BigInt")
+
+Table("BigIntBigInt", "BigInt", "BigInt")
+
 Gmodule("Rational")
 Rational("Int","IntForRat")
 Rational("Big", "BigInt")

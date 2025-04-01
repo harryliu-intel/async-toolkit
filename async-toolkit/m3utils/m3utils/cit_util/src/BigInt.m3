@@ -8,6 +8,7 @@ IMPORT Wx;
 IMPORT Text;
 IMPORT Lex, FloatMode;
 IMPORT Scan AS M3Scan;
+IMPORT BigIntBigIntTbl;
 
 CONST BaseLog2 = BITSIZE(Word.T) DIV 2 - 1; (* (*was*) 10 *)
       Base     = Word.Shift(1, BaseLog2);
@@ -161,8 +162,9 @@ PROCEDURE Equal(a, b : T) : BOOLEAN = BEGIN RETURN Compare(a,b) = 0 END Equal;
 PROCEDURE IsZero(a : T) : BOOLEAN = BEGIN RETURN Compare(a, Zero) = 0 END IsZero;
 
 PROCEDURE Copy(t : T) : T =
+  (* Uniq makes no sense here really... *)
   BEGIN RETURN Add(t, Zero) END Copy;
-  
+
 PROCEDURE New(x : INTEGER) : T =
   VAR
     c : CARDINAL;
@@ -189,9 +191,9 @@ PROCEDURE New(x : INTEGER) : T =
     END;
 
     IF corr = -1 THEN (* fix up special case of FIRST(INTEGER) *)
-      RETURN Sub(res, One)
+      RETURN Uniq(Sub(res, One))
     ELSE
-      RETURN res
+      RETURN Uniq(res)
     END
   END New;
 
@@ -244,7 +246,7 @@ PROCEDURE Shift(a : T; sa : CARDINAL) : T =
     seq := a.rep.copy();
   BEGIN
     seq.shift(sa);
-    RETURN NEW(T, sign := a.sign, rep := seq)
+    RETURN Uniq(NEW(T, sign := a.sign, rep := seq))
   END Shift;
 
 PROCEDURE DivideUnsigned(aparm, b : T; VAR q, r : T) =
@@ -294,7 +296,7 @@ PROCEDURE DivideUnsigned(aparm, b : T; VAR q, r : T) =
 
 PROCEDURE Mul(a, b : T) : T =
   BEGIN
-    RETURN NEW(T, sign := a.sign * b.sign, rep := MulSeqs(a.rep,b.rep))
+    RETURN Uniq(NEW(T, sign := a.sign * b.sign, rep := MulSeqs(a.rep,b.rep)))
   END Mul;
 
 PROCEDURE Pow(b, x : T) : T =
@@ -359,7 +361,7 @@ PROCEDURE Add(a, b : T) : T =
     END;
     
     Renormalize(res.rep);
-    RETURN res
+    RETURN Uniq(res)
   END Add;
 
 PROCEDURE Sub(a, b : T) : T =
@@ -381,7 +383,7 @@ PROCEDURE Sub(a, b : T) : T =
     END;
     
     Renormalize(res.rep);
-    RETURN res
+    RETURN Uniq(res)
   END Sub;
 
 (* unsigned addition of underlying sequences *)
@@ -426,7 +428,7 @@ PROCEDURE SubSeqs(s, t : NSeq) : NSeq =
   END SubSeqs;
 
 PROCEDURE Abs(a : T) : T = 
-  BEGIN RETURN NEW(T, sign := 1, rep := a.rep) END Abs;
+  BEGIN RETURN Uniq(NEW(T, sign := 1, rep := a.rep)) END Abs;
 
 PROCEDURE Renormalize(a : NSeq) = 
   VAR
@@ -450,7 +452,7 @@ PROCEDURE Renormalize(a : NSeq) =
   END Renormalize;
 
 PROCEDURE Neg(a : T) : T = 
-  BEGIN RETURN NEW(T, rep := a.rep, sign := -a.sign) END Neg;
+  BEGIN RETURN Uniq(NEW(T, rep := a.rep, sign := -a.sign)) END Neg;
 
 PROCEDURE ScanBased(txt : TEXT; defaultBase : PrintBase) : T
   RAISES { Lex.Error, FloatMode.Trap } =
@@ -673,6 +675,42 @@ PROCEDURE GetBit(t : T; bit : CARDINAL) : [ 0 .. 1 ] =
 
 PROCEDURE IsT(ref : REFANY) : BOOLEAN =
   BEGIN RETURN ISTYPE(ref, T) END IsT;
+
+VAR
+  mu   := NEW(MUTEX);
+  uniq := TRUE;
+  tbl  := NEW(BigIntBigIntTbl.Default).init();
+  
+PROCEDURE UniqReferences(to : BOOLEAN) : BOOLEAN =
+  VAR
+    old : BOOLEAN;
+  BEGIN
+    LOCK mu DO
+      old := uniq;
+      uniq := to;
+      RETURN old
+    END
+  END UniqReferences;
+
+PROCEDURE Uniq(t : T) : T =
+  BEGIN
+    IF NOT uniq THEN
+      RETURN t
+    END;
+
+    LOCK mu DO
+      VAR
+        q : T;
+      BEGIN
+        IF tbl.get(t, q) THEN
+          RETURN q
+        ELSE
+          EVAL tbl.put(t, t);
+          RETURN t
+        END
+      END
+    END
+  END Uniq;
   
 VAR
   FirstInt, LastInt : T;

@@ -57,7 +57,8 @@
            ((retrieve)
             (let* ((key (car args))
                    (index (hash-index-function key)))
-              (cond ( (assoc key (vector-ref table index))  (cdr (assoc key (vector-ref table index))))
+              (cond ( (assoc key (vector-ref table index))
+                      (cdr (assoc key (vector-ref table index))))
                     (else '*hash-table-search-failed*))))
 
            ((delete-entry!)
