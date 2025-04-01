@@ -388,9 +388,10 @@
 
 
   ;; some problem here: why can't I desugar-stmt right here?
-  (set! *the-inits*   (simplify-stmt
-                       (desugar-stmt
-                        (merge-all get-inits make-sequence data))))
+  (set! *the-inits*   (remove-duplicate-inits
+                       (simplify-stmt
+                        (desugar-stmt
+                         (merge-all get-inits make-sequence data)))))
 
   (set! *the-initvars* (find-referenced-vars *the-inits*))
 
@@ -402,6 +403,42 @@
   'ok
     
   )
+
+(define rdips #f)
+(define rdi-vars #f)
+(define rdi-inits #f)
+
+(define (remove-duplicate-inits init-stmts)
+  (let ((vars  (make-symbol-set 100))
+        (inits (make-designator-set 10000)))
+
+    (set! rdi-vars vars)
+    (set! rdi-inits inits)
+
+    (define (previsitor s)
+      (set! rdips s)
+      (let ((st (stmt-type s)))
+        (cond ((eq? st 'var1)
+               (if (vars 'member? (get-var1-id s))
+                   (begin
+                     ;;(dis "delete " s dnl)
+                     'delete)
+                   (begin (vars 'insert! (get-var1-id s)) s)))
+              ((eq? st 'assign)
+               (if (inits 'member? (get-assign-designator s))
+                   (begin
+                     ;;(dis "delete " s dnl)
+                     'delete)
+                   (begin (inits 'insert! (get-assign-designator s)) s)))
+
+              (else s))))
+
+    (prepostvisit-stmt init-stmts
+                       previsitor identity
+                       identity   identity
+                       identity   identity)
+
+    ))
 
 (define (deep-copy x)
   (if (pair? x)
@@ -932,6 +969,7 @@
   (let ((pre (stmt-previsit s)))
     (cond ((eq? pre #f) s)
           ((and (pair? pre) (eq? 'cut (car pre))) (cdr pre))
+          ((eq? pre 'delete) 'delete) ;; will be caught in caller
           (else (stmt-postvisit (continue)))))
   )
   
