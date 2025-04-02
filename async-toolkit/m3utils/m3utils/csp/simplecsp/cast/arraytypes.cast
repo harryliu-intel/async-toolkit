@@ -1,0 +1,29 @@
+module arraytypes;
+
+int SIZE = 4;
+int FIDX = 0;
+
+define P(int INCREMENT)(bd(2) +R)
+{
+  csp {
+    function printarr(int -n; int -x[0..0]) =
+      (string s; <;i:n: s += x[i] + " "> ; print(s));
+
+    function dec(int -n; int -+x[0..0]) =
+      ( x[FIDX] += INCREMENT; printarr(n, x); R!0 );
+    
+    int(8) x[SIZE];
+
+    printarr(SIZE, x);
+    dec     (SIZE, x);
+    printarr(SIZE, x);
+
+int a[0..3,0..3],b[0..3,0..3];
+ <j:4:<i:4: a[i,j]=b[j,i] >> ;
+
+  }
+}
+
+  
+    
+  

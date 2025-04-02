@@ -323,27 +323,69 @@
   ;; function decls are unconverted, so desugar here
   (desugar-stmt (caddddr func)))
 
-(define (get-function-captures func)
+(define (get-function-interfaces func)
   ;; list of captured identifiers of this function
   (let ((param-captures (map cadr (map cadr (get-function-params func)))))
     (if (null? (get-function-return func))
         param-captures
         (cons (get-function-name func) param-captures))))
 
-(define (uniqify-function-text func sfx)
-  (let loop ((cp   (get-function-captures func))
+(define *uft-cp* #f) 
+
+(define (uniqify-function-text func sfx cell-info initvars)
+
+  ;;
+  ;; the identifiers referenced by functions can be put in three classes
+  ;;
+  ;; 1. local variables
+  ;; 2. interface variables (parameters and return value)
+  ;; 3. captured globals
+  ;;
+  ;; in CSP, captured globals are just CAST constants and channel
+  ;; identifiers all else are either locals or interface variables
+  ;;
+  ;; When uniqifying a function (in preparation for inlining), we
+  ;; rename all the locals and interfaces.  Captured globals are kept
+  ;; as originally named.
+  ;;
+  ;; This code doesn't generate the function prolog or epilog.
+  ;; That needs to be done elsewhere.
+  ;;
+  
+  (let*((intf-vars          (get-function-interfaces func))
+        (body-vars          (find-referenced-vars (get-function-text func)))
+        (body-var-captures  (set-intersection body-vars initvars))
+        (body-chan-captures (set-intersection body-vars (get-port-ids cell-info)))
+        (rename-ids         (set-diff (set-union body-vars
+                                                 intf-vars)
+                                      (set-union body-var-captures
+                                                 body-chan-captures))))
+    
+  (dis "uniqify-function-text " (get-function-name func) " ====> " dnl)
+  (dis "uniqify-function-text intf-vars          : " intf-vars dnl)
+  (dis "uniqify-function-text body-vars          : " body-vars dnl)
+  (dis "uniqify-function-text body-var-captures  : " body-var-captures dnl)
+  (dis "uniqify-function-text body-chan-captures : " body-chan-captures dnl)
+  (dis "uniqify-function-text rename-ids         : " rename-ids dnl)
+
+
+  (let loop ((cp   rename-ids)
              (text (get-function-text func)))
     (if (null? cp)
         text
         (loop (cdr cp)
               (rename-id text
                          (car cp)
-                         (symbol-append (car cp) sfx))))))
+                         (symbol-append (car cp) sfx)))))))
   
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(define (atom-hash atom)
+  (if (null? atom) (error "atom-hash : null atom")
+      (Atom.Hash atom)))
+
 (define (make-object-hash-table elem-namer lst)
-  (let ((res (make-hash-table 100 Atom.Hash)))
+  (let ((res (make-hash-table 100 atom-hash)))
     (map (lambda(elem)(res 'add-entry! (elem-namer elem) elem)) lst)
     res
     )
@@ -383,11 +425,12 @@
    '(funcs structs refparents declparents inits text))
 
   (set! *the-text* (simplify-stmt (desugar-stmt (close-text data))))
-  (set! *the-funcs* (merge-all get-funcs append data))
+
+  (set! *the-funcs* (remove-duplicate-funcs
+                      (merge-all get-funcs append data)))
+
   (set! *the-structs* (merge-all get-structs append data))
 
-
-  ;; some problem here: why can't I desugar-stmt right here?
   (set! *the-inits*   (remove-duplicate-inits
                        (simplify-stmt
                         (desugar-stmt
@@ -409,6 +452,13 @@
 (define rdi-inits #f)
 
 (define (remove-duplicate-inits init-stmts)
+  
+  ;; I am doing it this way because the way the system is coded, init
+  ;; statements can be inherited from multiple parents, because of
+  ;; multiple inheritance of attribute cells.  These means that
+  ;; attribute declarations and initializations may be inherited
+  ;; through multiple paths and thereby appear multiply.
+  
   (let ((vars  (make-symbol-set 100))
         (inits (make-designator-set 10000)))
 
@@ -417,7 +467,7 @@
 
     (define (previsitor s)
       (set! rdips s)
-      (let ((st (stmt-type s)))
+      (let ((st (get-stmt-type s)))
         (cond ((eq? st 'var1)
                (if (vars 'member? (get-var1-id s))
                    (begin
@@ -439,6 +489,15 @@
                        identity   identity)
 
     ))
+
+(define (remove-duplicate-funcs func-list)
+  ;; funcs are duplicated (multiplicated) for the same reason that inits are
+  (let ((names (make-symbol-set 100)))
+    (filter
+     (lambda(fd)(not (names 'insert! (get-function-name fd))))
+     func-list)))
+
+;; why aren't structs multiplicated?
 
 (define (deep-copy x)
   (if (pair? x)
@@ -472,7 +531,7 @@
   (cons name type))
 
 (define (make-var-hash-table size)
-  (make-hash-table size (lambda(var)(Atom.Hash (car var)))))
+  (make-hash-table size (lambda(var)(atom-hash (car var)))))
 
 (define *bad-s* #f)
 (define *bad-last* #f)
@@ -616,7 +675,7 @@
   (cadddr d))
   
 (define (check-var1 s)
-  (if (not (and (eq? 'var1 (stmt-type s)) (eq? 'id (caadadr s))))
+  (if (not (and (eq? 'var1 (get-stmt-type s)) (eq? 'id (caadadr s))))
       (error "malformed var1 : " s)))
 
 (define (get-var1-decl1 s)
@@ -719,7 +778,7 @@
 
 (define (hash-designator d)
   ;; hash a designator
-  (cond ((eq? 'id (car d)) (Atom.Hash (cadr d)))
+  (cond ((eq? 'id (car d)) (atom-hash (cadr d)))
         ((eq? 'array-access (car d))
          (+ (* 2 (hash-designator (cadr d)))
             (if (bigint? (caddr d)) (* 57 (BigInt.ToLongReal (caddr d))) 511)))
@@ -862,13 +921,30 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define (stmt-type stmt)
+(define (get-stmt-type stmt)
   (if (eq? stmt 'skip)
       'skip
       (car stmt)))
 
 (define *visit-s* #f)
 
+
+(define *stmt-previsit* #f)
+(define *stmt-postvisit* #f)
+(define *expr-previsit* #f)
+(define *expr-postvisit* #f)
+(define *type-previsit* #f)
+(define *type-postvisit* #f)
+
+(define s-history '())
+
+(define (re-visit)
+  (prepostvisit-stmt *visit-s*
+                     *stmt-previsit* *stmt-postvisit*
+                     *expr-previsit* *expr-postvisit*
+                     *type-previsit* *type-postvisit*)
+  )
+   
 (define (prepostvisit-stmt s
                            stmt-previsit stmt-postvisit
                            expr-previsit expr-postvisit
@@ -898,6 +974,13 @@
                                        type-previsit type-postvisit))
 
   (set! *visit-s* s)
+  (set! s-history (cons s s-history))
+  (set! *stmt-previsit* stmt-previsit)
+  (set! *stmt-postvisit* stmt-postvisit)
+  (set! *expr-previsit* expr-previsit)
+  (set! *expr-postvisit* expr-postvisit)
+  (set! *type-previsit* type-previsit)
+  (set! *type-postvisit* type-postvisit)
   
   (define (continue s)
     ;; this procedure does most of the work, it is called after stmt-previsit
@@ -944,9 +1027,12 @@
                      (set! vs s)
                      ;; what happens if stmt returns 'delete?
                      (map (lambda(gc)(list (expr (car gc)) (stmt (cadr gc))))
-                          args))
+                          args)
+                     )
                     
-                    ((eval) (list (expr (car args))))
+                    ((eval)
+;;                     (dis "visit eval stmt : " (stringify args) dnl)
+                     (list (expr (car args))))
 
                     ((assign-operate)
                      (list (car args) (expr (cadr args)) (expr (caddr args))))
@@ -974,7 +1060,7 @@
 
   (let ((pre (stmt-previsit s)))
 
-    (dis "pre returns " pre dnl)
+;;    (dis "pre returns " (stringify pre) dnl)
     
     (cond ((eq? pre #f) s)
           ((and (pair? pre) (eq? 'cut (car pre))) (cdr pre))
@@ -1034,7 +1120,8 @@
                     + / % * == != < > >= <= & && | || ^ == << >> ** ) ;; | )
                    (map expr args))
                   
-                  ((apply)
+                  ((apply call-intrinsic)
+;;                   (dis "visit apply expr : " (map stringify args) dnl)
                    (cons (car args) (map expr (cdr args))))
                   
                   ((member-access structure-access)
@@ -1152,6 +1239,24 @@
   ids
   )
 
+(define (find-applys lisp)
+  (define applys '())
+
+  (define (expr-visitor x)
+;;    (dis (stringify x) dnl)
+    (if (and (pair? x) (eq? 'apply (car x)))
+        
+        (begin
+;;          (dis "found " (stringify x) dnl)
+          (set! applys (cons x applys)))
+        x)
+    )
+
+  (visit-stmt lisp identity expr-visitor identity)
+  applys
+  )
+
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define *analyze-result* #f)
@@ -1169,10 +1274,18 @@
 
 (define (predeclare prog undeclared)
    (cons 'sequence (append (map make-default-var1 undeclared) (list prog))))
-  
+
+(define *last-anal* #f)
+
+(define (get-ports cell-info)
+  (caddddr cell-info))
+
+(define (get-port-ids cell-info)
+  (map cadr (get-ports cell-info)))
+
 (define (analyze-program prog cell-info initvars)
-  (let* ((ports      (caddddr cell-info))
-         (portids    (map cadr ports))
+  (let* ((ports      (get-ports    cell-info))
+         (portids    (get-port-ids cell-info))
          (textids    (find-referenced-vars prog))
          (globalids  (set-intersection textids initvars))
          (unused-globalids
@@ -1182,6 +1295,8 @@
          (declnames  (find-declaration-vars prog))
          (multiples  (multi declnames))
          )
+
+    (set! *last-anal* prog)
 
     ;; we should consider *the-inits* here.  We don't need to declare
     ;; anything that *the-inits* declares.
@@ -1256,10 +1371,25 @@
   (define (stmt-visitor s)
     ;; the only place that an identifier appears outside of expressions
     ;; is in "var1" statements -- and in function decls
-    (if (and (pair? s) (eq? 'var1 (car s)) (equal? `(id ,from) (cadadr s)))
-        `(var1 (decl1 (id ,to) ,@(cddadr s)))
-        s
-        )
+    ;; and in loops...
+    (case (get-stmt-type s)
+      ((var1) (if  (equal? `(id ,from) (cadadr s))
+                   `(var1 (decl1 (id ,to) ,@(cddadr s)))
+                   s)
+       )
+
+      ((sequential-loop parallel-loop)
+       (let ((kw (car s))
+             (idxvar (cadr s))
+             (range  (caddr s))
+             (stmt   (cadddr s)))
+
+         (list kw (if (eq? idxvar from) to idxvar) range stmt)
+         )
+       )
+      
+      (else s)
+      )
     )
 
   (visit-stmt lisp stmt-visitor expr-visitor identity)
@@ -1268,15 +1398,20 @@
 (define (count-declarations of stmt)
   (count-in of (find-declaration-vars stmt)))
 
+(define *stop* #f)
+
 (define (uniqify-one stmt id tg)
 
-  (define (visitor s) 
-    (if (= (count-declarations id s) 1)
-        (cons 'cut
-              (rename-id s id (symbol-append id '- (tg 'next))))
-        stmt))
+  (define (visitor s)
+    (dis "here" dnl)
+    (let ((num-decls (count-declarations id s)))
+      (dis "num-decls of " id " " num-decls " : " (stringify s) dnl)
+      (if (= num-decls 1)
+          (cons 'cut
+                (rename-id s id (symbol-append id '- (tg 'next))))
+          s)))
 
-  (if (>= 1 (count-declarations id stmt))
+  (if (< (count-declarations id stmt) 2)
       (error "not defined enough times : " id " : in : " stmt))
 
   (prepostvisit-stmt stmt
@@ -1566,6 +1701,52 @@
 ;; (reload)(loaddata! "expressions_p") (try-it *the-text* *cellinfo* *the-inits*)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(define *eval-s* #f)
+
+;; some trickery here
+
+(define (if-wrap stmt)
+  ;; wrap a statement in (if true) to make it a block
+  `(if (#t ,stmt)))
+
+(define (inline-evals stmt func-tbl cell-info initvars)
+  (define tg (make-name-generator "-funccall-eval"))
+
+  (define (visitor s)
+
+    (case (get-stmt-type s)
+
+      ((eval)
+       (set! *eval-s* s)
+       (if (eq? (caadr s) 'apply)
+           (let* ((fnam      (cadadadr s))
+                  (fdef      (func-tbl 'retrieve fnam))
+                  (failed    (eq? fdef '*hash-table-search-failed*))
+                  (sfx       (if failed "" (tg 'next)))
+                  (fdef1text (if failed
+                                 `(eval (call-intrinsic ,fnam ,@(cdadr s)))
+                                 (uniqify-function-text fdef sfx cell-info initvars)))
+                  )
+             (dis "pre-inline : " (stringify s) dnl)
+;;             (dis "fdef       : " (stringify fdef) dnl)
+             (dis "fdef1text  : " (stringify fdef1text) dnl)
+             
+             fdef1text)
+           s))
+         
+      
+      (else s)
+
+      )
+    )
+
+  (visit-stmt stmt visitor identity identity)
+  )
+
+;;(reload)(loaddata! "arraytypes_p") (try-it *the-text* *cellinfo* *the-inits*)(find-applys text2) (define xx (inline-evals *the-text* *the-func-tbl*))(define yy (inline-evals xx *the-func-tbl*))(define zz (inline-evals yy *the-func-tbl*))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (define syms '())
 
 (define (retrieve-defn sym syms)
@@ -1596,8 +1777,10 @@
 
   (define lisp (analyze-program the-text cell-info initvars))
 
+;;  (error "here")
+
   (define (enter-frame!)
-    (set! syms (cons (make-hash-table 100 Atom.Hash) syms))
+    (set! syms (cons (make-hash-table 100 atom-hash) syms))
     (dis "enter-frame! " (length syms) dnl)
     )
 
@@ -1630,6 +1813,11 @@
     s
     )
 
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;;
+  ;; EXAMPLE OF CREATING SYMBOL TABLE during visitation
+  ;;
+  
   (dis dnl "creating global frame... " dnl)
   
   (enter-frame!) ;; global frame
@@ -1646,12 +1834,15 @@
   ;; then visit the program itself
   (dis dnl "visit program text ... " dnl dnl)
 
+;;  (error "here")
+  
   (set! text1
     (prepostvisit-stmt (simplify-stmt lisp)
                        stmt-pre0 stmt-post
                        identity identity
                        identity identity))
 
+  (exit-frame!) ;; and leave the global frame
   
   (define (stmt-pre1 s)
     (dis "pre stmt  : " (stringify s) dnl)
@@ -1692,7 +1883,6 @@
                'ok)
         (loop (loop2 cur-prog the-passes) cur-prog)))
 
-  (exit-frame!) ;; and leave the global frame
   
   'ok
   )
@@ -2072,7 +2262,7 @@
            ((structure-access) (CspAst.StructureAccessExpr (convert-expr (cadr x))
                                                      (caddr x)))
 
-           ((apply)
+           ((apply call-intrinsic)
             (let ((fx     (convert-expr (cadr x)))
                   (rest   (cddr x))
                   (argseq (init-seq 'CspExpressionSeq.T)))

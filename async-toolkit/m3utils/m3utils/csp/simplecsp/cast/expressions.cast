@@ -8,7 +8,7 @@ define P()()
       (f = 2 * x;
     );
     
-    int x, y, z, t;
+    int(32) x, y, z, t;
 
     t = x + y + z + t;
 
