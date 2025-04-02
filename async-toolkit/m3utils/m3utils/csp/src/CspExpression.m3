@@ -188,7 +188,7 @@ PROCEDURE LoopLisp(self : Loop) : SchemeObject.T =
     RETURN List5(Sym("loop-expression"),
                  self.dummy,
                  CspRange.Lisp(self.range),
-                 BinMap[self.op],
+                 Sym(BinMap[self.op]),
                  self.x.lisp())
   END LoopLisp;
 

@@ -700,6 +700,12 @@
   (set! *last-assign* s)
   (get-designator-id (get-assign-designator s)))
 
+(define (get-assign-lhs a)
+  (cadr a))
+
+(define (get-assign-rhs a)
+  (caddr a))
+
 (define designator-example '(array-access
                              (member-access (id mccfg) mc)
                              (id id)))
@@ -893,7 +899,7 @@
 
   (set! *visit-s* s)
   
-  (define (continue)
+  (define (continue s)
     ;; this procedure does most of the work, it is called after stmt-previsit
     (if (eq? s 'skip)
         s
@@ -967,10 +973,13 @@
   ;;
 
   (let ((pre (stmt-previsit s)))
+
+    (dis "pre returns " pre dnl)
+    
     (cond ((eq? pre #f) s)
           ((and (pair? pre) (eq? 'cut (car pre))) (cdr pre))
           ((eq? pre 'delete) 'delete) ;; will be caught in caller
-          (else (stmt-postvisit (continue)))))
+          (else (stmt-postvisit (continue pre)))))
   )
   
 (define (filter-delete stmt) ;; use to filter out 'delete
@@ -1203,6 +1212,8 @@
     )
   )
 
+
+
 (define (find-referenced-vars stmt)
   (find-ids stmt))
 
@@ -1262,7 +1273,7 @@
   (define (visitor s) 
     (if (= (count-declarations id s) 1)
         (cons 'cut
-              (rename-id s id (symbol-append id '- (tg))))
+              (rename-id s id (symbol-append id '- (tg 'next))))
         stmt))
 
   (if (>= 1 (count-declarations id stmt))
@@ -1335,7 +1346,189 @@
     parallel-loop sequential-loop
        ))
 
+
+
+
+(define *a*     #f)
+(define *syms*  #f)
+
+(define *x2* #f)
+(define *x3* #f)
+
+(define (is-ident? x)
+  (eq? (car x) 'id))
+
+(define (is-literal? x)
+  (or (boolean? x)
+      (bigint? x)
+      (string? x)))
+
+(define (is-simple-operand? x)
+  (or  (is-literal? x)(is-ident? x)))
+
+(define *rhs* #f)
+
+(define *lhs* #f)
+
+(define (handle-assign-array-rhs a syms tg)
+  (let loop ((p   (get-assign-rhs a))
+             (res '())
+             (seq '())
+             )
+    (cond ((and (eq? (car p) 'array-access)
+                (simple-operand? (caddr p)))
+           
+           (loop (cdr p) (cons (car p) res))))))
+
+(define (handle-access-assign ass tg)
+
+  
+  (if (or (not (pair? ass))
+          (not (eq? 'assign (car ass))))
+      (error "not an assignment : " ass))
+
+  (if (eq? 'assign (caadr ass))
+      (error "malformed assignment : " ass))
+  
+  (define seq '())
+  
+  (define (make-simple x)
+    (if (is-simple-operand? x)
+        x
+        (let* ((nam (tg 'next))
+               (newass `(assign (id ,nam) ,x))
+               )
+          (set! seq (cons newass seq))
+          `(id ,nam)
+          )))
+  
+  (define (handle-access-expr a)
+    
+    (dis "handle-access-expr " a dnl)
+    
+    (cond ((is-simple-operand? a) a)
+          
+          ((eq? 'member-access (car a))
+           (list 'member-access (handle-access-expr (cadr a)) (caddr a)))
+          
+          ((eq? 'array-access (car a))
+           
+           (list 'array-access
+                 (handle-access-expr (cadr a))
+                 (make-simple (caddr a))))
+          
+          (else a)
+          ))
+  
+  (dis   "handle-access-assign : called    : "  ass dnl)
+  
+  (let* ((lhs       (handle-access-expr (get-assign-lhs ass)))
+         (rhs       (handle-access-expr (get-assign-rhs ass)))
+         (this-ass `(assign ,lhs ,rhs))
+         (res       (if (null? seq)
+                        this-ass
+                        `(sequence ,@seq ,this-ass))))
+
+    (dis "handle-access-assign : returning : " res dnl)
+    res
+    )
+)
+
+
+    
+
+(define (handle-assign-rhs a syms tg)
+
+  (define (recurse a) (handle-assign-rhs a syms tg))
+  
+  (dis "assignment   : " a dnl)
+
+  (set! *a* (cons a *a*))
+  (set! *syms* (cons syms *syms*))
+
+  (let ((lhs (cadr a))
+        (rhs (caddr a)))
+
+    (set! *rhs* rhs)
+    (set! *lhs* lhs)
+    
+    (cond
+
+     ((binary-expr? rhs)
+
+           (let ((op (car rhs))
+                 (l  (cadr rhs))
+                 (r  (caddr rhs)))
+             
+             (cond ((not (is-simple-operand? l))
+                    (let*
+                        ((tempnam (tg 'next))
+                         (seq
+                          `(sequence
+                             ,(recurse `(assign (id ,tempnam) ,l))
+                             ,(recurse `(assign ,lhs (,op (id ,tempnam) ,r)))))
+                         (res (simplify-stmt seq)))
+                      res))
+
+                   ((not (is-simple-operand? r))
+                    (let*
+                        ((tempnam (tg 'next))
+                         (seq
+                          `(sequence
+                             ,(recurse `(assign (id ,tempnam) ,r))
+                             ,(recurse `(assign ,lhs (,op ,l (id ,tempnam))))))
+                         
+                         (res (simplify-stmt seq)))
+                      res))
+                   
+                   (else a))))
+
+     ((unary-expr? rhs)
+
+           (let ((op (car rhs))
+                 (x  (cadr rhs)))
+
+             (cond ((not (is-simple-operand? x))
+                    (let*
+                        ((tempnam (tg 'next))
+                         (seq
+                          `(sequence
+                             ,(recurse `(assign (id ,tempnam) ,x))
+                             ,(recurse `(assign ,lhs (,op (id ,tempnam))))))
+                         (res (simplify-stmt seq)))
+                      res))
+
+                   (else a))))
+
+                    
+          (else a))
+    )
+  )
+
+;; (reload)(loaddata! "expressions_p") (try-it *the-text* *cellinfo* *the-inits*)
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define syms '())
+
+(define (retrieve-defn sym syms)
+  (let loop ((p syms))
+    (if (null? p)
+        (error "retrieve-var : sym not found : " sym)
+        (let ((this-result ((car p) 'retrieve sym)))
+          (if (eq? this-result '*hash-table-search-failed*)
+              (loop (cdr p))
+              this-result)))))
+
+(define inits1 #f)
+(define text1 #f)
+(define text2 #f)
+  
 (define (try-it the-text cell-info the-inits)
+
+  (define tg (make-name-generator "temp"))
+  
+  (set! *a*    '())
+  (set! *syms* '())
 
   (dis dnl "=========  START  =========" dnl dnl) 
   
@@ -1344,9 +1537,6 @@
   (dis "analyze program : " dnl)
 
   (define lisp (analyze-program the-text cell-info initvars))
-
-  
-  (define syms '())
 
   (define (enter-frame!)
     (set! syms (cons (make-hash-table 100 Atom.Hash) syms))
@@ -1363,24 +1553,17 @@
     (dis "define-var! " sym " : " type " /// frame : " ((car syms) 'keys) dnl)
     )
 
-  (define (retrieve-defn sym)
-    (let loop ((p syms))
-      (if (null? p)
-          (error "retrieve-var : sym not found : " sym)
-          (let ((this-result ((car p) 'retrieve sym)))
-            (if (eq? this-result '*hash-table-search-failed*)
-                (loop (cdr p))
-                this-result)))))
-    
-  
-  (define (stmt-pre s)
+  (define (stmt-pre0 s)
     (dis "pre stmt  : " (stringify s) dnl)
     (if (member (get-stmt-kw s) frame-kws) (enter-frame!))
 
     (case (get-stmt-kw s)
-      ((var1) (define-var! (get-var1-id s) (get-var1-type s)))
+      ((var1) (define-var! (get-var1-id s) (get-var1-type s)) s)
+
+      ((assign) (handle-assign-rhs s syms tg))
+
+      (else s)
       )
-    s
     )
 
   (define (stmt-post s)
@@ -1395,18 +1578,40 @@
 
   ;; first visit the inits
   (dis dnl "visit inits ... " dnl dnl)
-  (prepostvisit-stmt (filter-unused the-inits *unused-globals*)
-                     stmt-pre stmt-post
-                     identity identity
-                     identity identity)
+
+  (set! inits1
+    (prepostvisit-stmt (filter-unused the-inits *unused-globals*)
+                       stmt-pre0 stmt-post
+                       identity identity
+                       identity identity))
 
   ;; then visit the program itself
   (dis dnl "visit program text ... " dnl dnl)
-  (prepostvisit-stmt (simplify-stmt lisp)
-                     stmt-pre stmt-post
-                     identity identity
-                     identity identity)
+
+  (set! text1
+    (prepostvisit-stmt (simplify-stmt lisp)
+                       stmt-pre0 stmt-post
+                       identity identity
+                       identity identity))
+
   
+  (define (stmt-pre1 s)
+    (dis "pre stmt  : " (stringify s) dnl)
+    (if (member (get-stmt-kw s) frame-kws) (enter-frame!))
+
+    (case (get-stmt-kw s)
+      ((assign) (handle-access-assign s tg))
+
+      (else s)
+      )
+    )
+  
+  (set! text2
+    (prepostvisit-stmt text1
+                       stmt-pre1 identity
+                       identity identity
+                       identity identity))
+
   (exit-frame!) ;; and leave the global frame
   
   'ok
@@ -1468,10 +1673,10 @@
       )
   )
 
-(define (make-referenceable x temp-generator)
+(define (make-referenceable x temp-generator) ;; BROKEN
   (if (directly-referenceable? x)
       x
-      (let ((new-var (temp-generator)))
+      (let ((new-var (temp-generator 'next)))
         (list 'id new-var))))
 
 ;; this code isnt quite right
@@ -1490,7 +1695,7 @@
 
 (define (binary-op? op)
   (case op
-    ((+ / % * == != < > >= <= & && ^ == << >> ** array-access | || ; |
+    ((+ / % * == != < > >= <= & && ^ == << >> ** | || ; |
         )
      #t)
     (else #f)))
@@ -1507,7 +1712,7 @@
     (else #f)))
             
 
-(define (sequentialize-one s tg) 
+(define (sequentialize-one s tg)   ;; BROKEN
   (if (eq? s 'skip)
       'skip
       (let ((kw   (car s))
@@ -1524,7 +1729,7 @@
         )))
                
 
-(define (sequentialize-stmt s)
+(define (sequentialize-stmt s)   ;; BROKEN
   (let ((tg (make-name-generator "t")))
     (visit-stmt s
                 sequentialize-one
@@ -1540,10 +1745,28 @@
   ;;
   (let ((root                rootstring)
         (counter              0))
-    (lambda()
-      (let ((res (string->symbol(string-append root (stringify counter)))))
-        (set! counter (+ counter 1))
-        res))))
+
+    (define (make-symbol n)
+      (string->symbol(string-append root (stringify n))))
+
+    (lambda(cmd)
+      (case cmd
+        ((names)
+         (let loop ((i (- counter 1))
+                    (res '()))
+           (if (= i -1)
+               res
+               (loop (- i 1) (cons (make-symbol i) res))))
+               
+         )
+
+        ((cur)
+         (make-symbol counter))
+        
+        ((next)
+         (let ((res (make-symbol counter)))
+           (set! counter (+ counter 1))
+           res))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
            

@@ -1,0 +1,11 @@
+module castdecl;
+
+define P(int X)()
+{
+  csp {
+    int(X) x = X;
+    print (x);
+  }
+}
+  
+define Q(int Y)() <: P(2*Y) {}
