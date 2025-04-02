@@ -1380,8 +1380,11 @@
            
            (loop (cdr p) (cons (car p) res))))))
 
-(define (handle-access-assign ass tg)
+(define *has-ass* #f)
 
+(define (handle-access-assign ass syms tg)
+
+  (set! *has-ass* ass)
   
   (if (or (not (pair? ass))
           (not (eq? 'assign (car ass))))
@@ -1407,7 +1410,7 @@
     (dis "handle-access-expr " a dnl)
     
     (cond ((is-simple-operand? a) a)
-          
+
           ((eq? 'member-access (car a))
            (list 'member-access (handle-access-expr (cadr a)) (caddr a)))
           
@@ -1432,13 +1435,14 @@
     (dis "handle-access-assign : returning : " res dnl)
     res
     )
-)
+  )
 
-
-    
+(define *har-ass* #f)
 
 (define (handle-assign-rhs a syms tg)
 
+  (set! *har-ass* a)
+  
   (define (recurse a) (handle-assign-rhs a syms tg))
   
   (dis "assignment   : " a dnl)
@@ -1454,34 +1458,88 @@
     
     (cond
 
+     ((function-application? rhs)
+      (dis "function application : " rhs dnl)
+      
+      (let ((fnam (cadr rhs)))
+        (let loop ((p   (cddr rhs))
+                   (seq '())
+                   (q   '()))
+
+          (dis "p = " p dnl)
+          
+          (cond ((null? p)
+                 ;; done iterating
+                 
+                 (dis "handle-assign-rhs base case seq : " (stringify seq) dnl)
+                 (dis "handle-assign-rhs base case q   : " (stringify q) dnl)
+                 
+                 (if (null? seq)
+                     a
+                     `(sequence ,@seq
+                                (assign ,lhs
+                                        (apply ,fnam
+                                               ,@(map (lambda(id)(list 'id id))
+                                                      (reverse q)))))))
+
+
+                ((is-simple-operand? (car p))
+                 (loop (cdr p) seq (cons (car p) q)))
+
+                (else
+                 (let ((tempnam (tg 'next)))
+                   (loop (cdr p)
+                         (cons `(assign (id ,tempnam) ,(car p))
+                               seq)
+                         (cons tempnam q))))))))
+        
+            
+     
      ((binary-expr? rhs)
 
-           (let ((op (car rhs))
+           (let* ((op (car rhs))
                  (l  (cadr rhs))
-                 (r  (caddr rhs)))
+                 (r  (caddr rhs))
+                 (complex-l (not (is-simple-operand? l)))
+                 (complex-r (not (is-simple-operand? r)))
+                 )
              
-             (cond ((not (is-simple-operand? l))
-                    (let*
-                        ((tempnam (tg 'next))
-                         (seq
-                          `(sequence
-                             ,(recurse `(assign (id ,tempnam) ,l))
-                             ,(recurse `(assign ,lhs (,op (id ,tempnam) ,r)))))
-                         (res (simplify-stmt seq)))
-                      res))
+             (cond
+              ((and complex-l complex-r)
+               (let*
+                   ((ltempnam (tg 'next))
+                    (rtempnam (tg 'next))
+                    (seq
+                     `(sequence
+                        ,(recurse `(assign (id ,ltempnam) ,l))
+                        ,(recurse `(assign (id ,rtempnam) ,r))
+                        ,(recurse `(assign ,lhs (,op (id ,ltempnam) (id ,rtempnam))))))
+                    (res (simplify-stmt seq)))
+                 res))
+                     
+              
+              (complex-l
+               (let*
+                   ((tempnam (tg 'next))
+                    (seq
+                     `(sequence
+                        ,(recurse `(assign (id ,tempnam) ,l))
+                        ,(recurse `(assign ,lhs (,op (id ,tempnam) ,r)))))
+                    (res (simplify-stmt seq)))
+                 res))
 
-                   ((not (is-simple-operand? r))
-                    (let*
-                        ((tempnam (tg 'next))
-                         (seq
-                          `(sequence
-                             ,(recurse `(assign (id ,tempnam) ,r))
-                             ,(recurse `(assign ,lhs (,op ,l (id ,tempnam))))))
-                         
-                         (res (simplify-stmt seq)))
-                      res))
-                   
-                   (else a))))
+              (complex-r
+               (let*
+                   ((tempnam (tg 'next))
+                    (seq
+                     `(sequence
+                        ,(recurse `(assign (id ,tempnam) ,r))
+                        ,(recurse `(assign ,lhs (,op ,l (id ,tempnam))))))
+                    
+                    (res (simplify-stmt seq)))
+                 res))
+              
+              (else a))))
 
      ((unary-expr? rhs)
 
@@ -1600,22 +1658,46 @@
     (if (member (get-stmt-kw s) frame-kws) (enter-frame!))
 
     (case (get-stmt-kw s)
-      ((assign) (handle-access-assign s tg))
+      ((assign) (handle-access-assign s syms tg))
 
       (else s)
       )
     )
+
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   
-  (set! text2
-    (prepostvisit-stmt text1
-                       stmt-pre1 identity
-                       identity identity
-                       identity identity))
+  (define the-passes (list handle-access-assign handle-assign-rhs))
+
+  (define (make-pre pass)
+    (lambda(stmt)
+      (if (eq? 'assign (get-stmt-kw stmt))
+          (pass stmt syms tg)
+          stmt)))
+  
+  (define (loop2 prog passes)
+    (if (null? passes)
+        prog
+        (loop2 
+         (prepostvisit-stmt prog
+                            (make-pre (car passes)) identity
+                            identity                identity
+                            identity                identity)
+         (cdr passes))))
+
+  (let loop ((cur-prog text1)
+             (prev-prog '()))
+    (if (equal? cur-prog prev-prog)
+        (begin (dis "done." dnl)
+               (set! text2 cur-prog)
+               'ok)
+        (loop (loop2 cur-prog the-passes) cur-prog)))
 
   (exit-frame!) ;; and leave the global frame
   
   'ok
   )
+
+(define (mn) (make-name-generator "t"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -1710,7 +1792,12 @@
   (case op
     ((not -) #t)
     (else #f)))
-            
+
+(define (function-application? x)
+  (and
+   (pair? x)
+   (eq? 'apply (car x))))
+
 
 (define (sequentialize-one s tg)   ;; BROKEN
   (if (eq? s 'skip)
