@@ -110,6 +110,6 @@ define W()() <+ common
   csp {
     int(8) x[1, 2, 3];
     int    q = 1;
-    printarr(q + q, x[0,0]);
+    printarr(q + q, x[q,q + q]);
   }
 }

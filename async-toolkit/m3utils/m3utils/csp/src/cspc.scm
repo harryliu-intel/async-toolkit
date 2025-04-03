@@ -304,7 +304,7 @@
   (check-is-function func)
   (cadr func))
 
-(define (get-function-params func)
+(define (get-function-formals func)
   (check-is-function func)
 
   ;; function decls are unconverted, so desugar declarators
@@ -324,7 +324,7 @@
 
 (define (get-function-interfaces func)
   ;; list of captured identifiers of this function
-  (let ((param-captures (map cadr (map cadr (get-function-params func)))))
+  (let ((param-captures (map cadr (map cadr (get-function-formals func)))))
     (if (null? (get-function-return func))
         param-captures
         (cons (get-function-name func) param-captures))))
@@ -1125,7 +1125,7 @@
                   
                   ;; unary/binary ops
                   ((probe array-access - not
-                    + / % * == != < > >= <= & && | || ^ == << >> ** ) ;; | )
+                    + / % * == != < > >= <= & && | || ^ << >> ** ) ;; | )
                    (map expr args))
                   
                   ((apply call-intrinsic)
@@ -1275,10 +1275,21 @@
 (define *filtered-inits* #f)
 (define *filtered-initvars* #f)
 
+(define (make-var1 decl)
+  `(var1 ,decl)) 
+
+(define (make-var1-decl sym type)
+  ;; vars don't have a direction
+  (make-var1 (make-decl sym type 'none)))
+
+(define (make-decl sym type dir)
+  `(decl1 (id ,sym) ,type ,dir))
+
+(define *default-int-type*  '(integer #f #f () ()))
+
 (define (make-default-var1 sym)
   ;; make a default (per CSP rules) variable declaration
-  `(var1 (decl1 (id ,sym) (integer #f #f () ()) none))
-  )
+  (make-var1 (make-decl sym *default-int-type* 'none)))
 
 (define (predeclare prog undeclared)
    (cons 'sequence (append (map make-default-var1 undeclared) (list prog))))
@@ -1410,6 +1421,9 @@
 
 (define (uniqify-one stmt id tg)
 
+  ;; this de-duplicates a multiply declared variable
+  ;; by renaming all the instances to unique names
+  
   (define (visitor s)
     (dis "here" dnl)
     (let ((num-decls (count-declarations id s)))
@@ -1525,6 +1539,105 @@
 
 (define *has-ass* #f)
 
+;; type of an expression
+
+(define *boolean-ops*
+  ;; these create booleans all on their own
+  '(probe not == != < > >= <= && == || ) ;; | )
+  )
+
+(define *integer-ops*
+  ;; these create integers all on their own
+  '(- / % * << >> **))
+
+(define *string-ops*
+  ;; these create strings all on their own
+  '())
+
+(define *polymorphic-ops*
+  ;; these create objects whose types depend on operands
+  '(+ & ^ | ) ;; | )
+  )
+
+
+
+(define (integer-expr? x syms)
+  (or (bigint? x)
+      (if (pair? x)
+          (cond
+           ((eq? 'id (car x)) (eq? 'integer
+                                   (car (retrieve-defn (cadr x) syms))))
+           ((member (car x) *integer-ops*) #t)
+           ((member (car x) *polymorphic-ops*)
+            (integer-expr? (cadr x) syms))
+           (else #f)
+           )
+          #f
+          )))
+
+(define (boolean-expr? x syms)
+  (or (boolean? x)
+      (if (pair? x)
+          (cond
+           ((eq? 'id (car x)) (eq? 'boolean (retrieve-defn (cadr x) syms)))
+           ((member (car x) *boolean-ops*) #t)
+           ((member (car x) *polymorphic-ops*)
+            (boolean-expr? (cadr x) syms))
+           (else #f)
+           )
+          #f
+          )))
+
+(define (string-expr? x syms)
+  (or (string? x)
+      (if (pair? x)
+          (cond
+           ((eq? 'id (car x)) (eq? 'string (retrieve-defn (cadr x) syms)))
+           ((member (car x) *string-ops*) #t)
+           ((member (car x) *polymorphic-ops*)
+            (string-expr? (cadr x) syms))
+           (else #f)
+           )
+          #f
+          )))
+
+(define (array-access? x)
+  (and (pair? x)(eq? 'array-access (car x))))
+
+(define (peel-array t)
+  (if (or (not (pair? t))
+          (not (eq? 'array (car t))))
+      (error "not an array type " t)
+      (caddr t)))
+
+(define (array-accessee x)
+  (if (not (array-access? x))
+      (error "array-accessee : not an array access : " x)
+      (cadr x)))
+
+(define (derive-type x syms)
+  ;; return the type of x in the environment given by syms
+  (set! ttt (cons (cons x syms) ttt))
+                 
+  (cond  ((is-ident? x) (retrieve-defn (cadr x) syms))
+
+         ((integer-expr? x syms) *default-int-type*)
+
+         ((boolean-expr? x syms) 'boolean)
+
+         ((string-expr? x syms) 'string)
+
+         ((array-access? x)
+          (peel-array
+           (derive-type (array-accessee x) syms)))
+
+         (else (error "don't know type of " x))))
+
+
+(define sss '())
+(define ttt '())
+  
+
 (define (handle-access-assign ass syms tg)
 
   (set! *has-ass* ass)
@@ -1539,12 +1652,22 @@
   (define seq '())
   
   (define (make-simple x)
+
+    (dis "make-simple " x dnl)
+    
+    (set! sss (cons (cons x syms) sss))
+    
     (if (is-simple-operand? x)
         x
-        (let* ((nam (tg 'next))
-               (newass `(assign (id ,nam) ,x))
+        (let* ((nam     (tg 'next))
+               (newtype (derive-type x syms))
+               (newvar  (make-var1-decl nam newtype))
+               (newass  (make-assign `(id ,nam) x))
                )
-          (set! seq (cons newass seq))
+          (define-var! syms nam newtype)
+          (dis "make simple adding " newvar dnl)
+          (dis "make simple adding " newass dnl)
+          (set! seq  (cons newvar (cons newass seq)))
           `(id ,nam)
           )))
   
@@ -1630,10 +1753,14 @@
                  (loop (cdr p) seq (cons (car p) q)))
 
                 (else
-                 (let ((tempnam (tg 'next)))
+                 (let* ((tempnam (tg 'next))
+                        (newtype (derive-type (car p) syms)) 
+                        (newvar (make-var1-decl tempnam newtype))
+                        (newass (make-assign `(id ,tempnam) (car p)))
+                        )
+                   (define-var! syms tempnam newtype)
                    (loop (cdr p)
-                         (cons `(assign (id ,tempnam) ,(car p))
-                               seq)
+                         (cons newvar (cons newass seq))
                          (cons tempnam q))))))))
         
             
@@ -1651,10 +1778,14 @@
          ((and complex-l complex-r)
           (let*
               ((ltempnam (tg 'next))
+               (ltype    (derive-type l syms))
                (rtempnam (tg 'next))
+               (rtype    (derive-type r syms))
                (seq
                 `(sequence
+                   ,(make-var1-decl ltempnam ltype)
                    ,(recurse `(assign (id ,ltempnam) ,l))
+                   ,(make-var1-decl rtempnam rtype)
                    ,(recurse `(assign (id ,rtempnam) ,r))
                    ,(recurse `(assign ,lhs (,op (id ,ltempnam) (id ,rtempnam))))))
                (res (simplify-stmt seq)))
@@ -1664,8 +1795,10 @@
          (complex-l
           (let*
               ((tempnam (tg 'next))
+               (type    (derive-type l syms))
                (seq
                 `(sequence
+                   ,(make-var1-decl tempnam type)
                    ,(recurse `(assign (id ,tempnam) ,l))
                    ,(recurse `(assign ,lhs (,op (id ,tempnam) ,r)))))
                (res (simplify-stmt seq)))
@@ -1674,8 +1807,10 @@
          (complex-r
           (let*
               ((tempnam (tg 'next))
+               (type    (derive-type r syms))
                (seq
                 `(sequence
+                   ,(make-var1-decl tempnam type)
                    ,(recurse `(assign (id ,tempnam) ,r))
                    ,(recurse `(assign ,lhs (,op ,l (id ,tempnam))))))
                
@@ -1692,8 +1827,10 @@
         (cond ((not (is-simple-operand? x))
                (let*
                    ((tempnam (tg 'next))
+                    (type    (derive-type x syms))
                     (seq
                      `(sequence
+                        ,(make-var1-decl tempnam type)
                         ,(recurse `(assign (id ,tempnam) ,x))
                         ,(recurse `(assign ,lhs (,op (id ,tempnam))))))
                     (res (simplify-stmt seq)))
@@ -1799,9 +1936,7 @@
 
              (if (not failed)
                  (let* ((actuals (cddadr s))
-                        (formals (map CspDeclarator.Lisp
-                                      (map convert-declarator
-                                           (map car (caddr fdef)))))
+                        (formals (get-function-formals fdef))
                         )
                  
                    (dis "actuals    : " actuals dnl)
@@ -1823,6 +1958,7 @@
 
   (symtabvisit-program the-inits the-text visitor)
   )
+
 
 (define (symtabvisit-program the-inits the-text visitor)
   ;; the visitor should take stmt and syms
@@ -1922,7 +2058,7 @@
   
   )
 
-(define (make-assignment lhs rhs) `(assign ,lhs ,rhs))
+(define (make-assign lhs rhs) `(assign ,lhs ,rhs))
 
 (define (make-eval rhs) `(eval ,rhs))
 
@@ -1957,9 +2093,15 @@
     (set! syms (cdr syms))
     )
 
+  (define (stmt-check-enter s)
+    (if (member (get-stmt-kw s) frame-kws) (enter-frame!))
+    (if (eq? 'var1 (get-stmt-kw s))
+        (define-var! syms (get-var1-id s) (get-var1-type s))) 
+    )
+  
   (define (stmt-pre0 s)
     (dis "pre stmt  : " (stringify s) dnl)
-    (if (member (get-stmt-kw s) frame-kws) (enter-frame!))
+    (stmt-check-enter s)
 
     (case (get-stmt-kw s)
       ((var1) (define-var! syms (get-var1-id s) (get-var1-type s)) s)
@@ -1969,7 +2111,7 @@
       ((eval) ;; this is a function call, we make it a fake assignment.
        (dis "eval!" dnl)
        (let* ((fake-var (tg 'next))
-              (fake-assign (make-assignment `(id ,fake-var) (cadr s))))
+              (fake-assign (make-assign `(id ,fake-var) (cadr s))))
          (remove-fake-assignment
           fake-var
           (handle-assign-rhs fake-assign syms tg)))
@@ -2020,7 +2162,7 @@
   
   (define (stmt-pre1 s)
     (dis "pre stmt  : " (stringify s) dnl)
-    (if (member (get-stmt-kw s) frame-kws) (enter-frame!))
+    (stmt-check-enter s)
 
     (case (get-stmt-kw s)
       ((assign) (handle-access-assign s syms tg))
@@ -2035,6 +2177,8 @@
 
   (define (make-pre pass)
     (lambda(stmt)
+      ;; this takes a "pass" and wraps it up so the symbol table is maintained
+      (stmt-check-enter stmt)
       (if (eq? 'assign (get-stmt-kw stmt))
           (pass stmt syms tg)
           stmt)))
@@ -2042,11 +2186,18 @@
   (define (loop2 prog passes)
     (if (null? passes)
         prog
-        (loop2 
-         (prepostvisit-stmt prog
-                            (make-pre (car passes)) identity
-                            identity                identity
-                            identity                identity)
+        (loop2
+
+         (begin
+           (enter-frame!)
+           (let ((res
+                  (prepostvisit-stmt prog
+                                     (make-pre (car passes)) stmt-post
+                                     identity                identity
+                                     identity                identity)))
+             (exit-frame!)
+             res))
+                  
          (cdr passes))))
 
   (let loop ((cur-prog text1)
