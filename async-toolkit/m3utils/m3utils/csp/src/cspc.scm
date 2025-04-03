@@ -177,7 +177,7 @@
 ;; Well, let's hope it works!
 
 (require-modules "basic-defs" "m3" "hashtable" "set"
-                 "display" "symbol-append.scm")
+                 "display" "symbol-append.scm" "clarify.scm")
 
 
 ;;            } else if (name.equals("string")) {
@@ -191,7 +191,6 @@
 ;;            }
 
 ;; also see com/avlsi/csp/util/RefinementResolver.java
-
 
 (define *the-example* "parents_p2") ;; this is the test file
 
@@ -860,6 +859,15 @@
 ;; the type visitor doesn't actually get at structure types
 ;; because structure types are defined in a separate space to the
 ;; text of the CSP process.
+
+(define (array-type? t) (eq? 'array (car t)))
+
+(define (get-array-extent      at)  (cadr at))
+(define (get-array-elem-type   at)  (caddr at))
+
+(define (make-array-type extent elem-type)
+  `(array ,extent ,elem-type))
+
 
 (define (prepostvisit-type t
                            stmt-previsit stmt-postvisit
@@ -1632,76 +1640,77 @@
      
      ((binary-expr? rhs)
 
-           (let* ((op (car rhs))
-                 (l  (cadr rhs))
-                 (r  (caddr rhs))
-                 (complex-l (not (is-simple-operand? l)))
-                 (complex-r (not (is-simple-operand? r)))
-                 )
-             
-             (cond
-              ((and complex-l complex-r)
-               (let*
-                   ((ltempnam (tg 'next))
-                    (rtempnam (tg 'next))
-                    (seq
-                     `(sequence
-                        ,(recurse `(assign (id ,ltempnam) ,l))
-                        ,(recurse `(assign (id ,rtempnam) ,r))
-                        ,(recurse `(assign ,lhs (,op (id ,ltempnam) (id ,rtempnam))))))
-                    (res (simplify-stmt seq)))
-                 res))
-                     
-              
-              (complex-l
+      (let* ((op (car rhs))
+             (l  (cadr rhs))
+             (r  (caddr rhs))
+             (complex-l (not (is-simple-operand? l)))
+             (complex-r (not (is-simple-operand? r)))
+             )
+        
+        (cond
+         ((and complex-l complex-r)
+          (let*
+              ((ltempnam (tg 'next))
+               (rtempnam (tg 'next))
+               (seq
+                `(sequence
+                   ,(recurse `(assign (id ,ltempnam) ,l))
+                   ,(recurse `(assign (id ,rtempnam) ,r))
+                   ,(recurse `(assign ,lhs (,op (id ,ltempnam) (id ,rtempnam))))))
+               (res (simplify-stmt seq)))
+            res))
+         
+         
+         (complex-l
+          (let*
+              ((tempnam (tg 'next))
+               (seq
+                `(sequence
+                   ,(recurse `(assign (id ,tempnam) ,l))
+                   ,(recurse `(assign ,lhs (,op (id ,tempnam) ,r)))))
+               (res (simplify-stmt seq)))
+            res))
+         
+         (complex-r
+          (let*
+              ((tempnam (tg 'next))
+               (seq
+                `(sequence
+                   ,(recurse `(assign (id ,tempnam) ,r))
+                   ,(recurse `(assign ,lhs (,op ,l (id ,tempnam))))))
+               
+               (res (simplify-stmt seq)))
+            res))
+         
+         (else a))))
+     
+     ((unary-expr? rhs)
+      
+      (let ((op (car rhs))
+            (x  (cadr rhs)))
+        
+        (cond ((not (is-simple-operand? x))
                (let*
                    ((tempnam (tg 'next))
                     (seq
                      `(sequence
-                        ,(recurse `(assign (id ,tempnam) ,l))
-                        ,(recurse `(assign ,lhs (,op (id ,tempnam) ,r)))))
-                    (res (simplify-stmt seq)))
-                 res))
-
-              (complex-r
-               (let*
-                   ((tempnam (tg 'next))
-                    (seq
-                     `(sequence
-                        ,(recurse `(assign (id ,tempnam) ,r))
-                        ,(recurse `(assign ,lhs (,op ,l (id ,tempnam))))))
-                    
+                        ,(recurse `(assign (id ,tempnam) ,x))
+                        ,(recurse `(assign ,lhs (,op (id ,tempnam))))))
                     (res (simplify-stmt seq)))
                  res))
               
               (else a))))
-
-     ((unary-expr? rhs)
-
-           (let ((op (car rhs))
-                 (x  (cadr rhs)))
-
-             (cond ((not (is-simple-operand? x))
-                    (let*
-                        ((tempnam (tg 'next))
-                         (seq
-                          `(sequence
-                             ,(recurse `(assign (id ,tempnam) ,x))
-                             ,(recurse `(assign ,lhs (,op (id ,tempnam))))))
-                         (res (simplify-stmt seq)))
-                      res))
-
-                   (else a))))
-
-                    
-          (else a))
+     
+     
+     (else a))
     )
   )
 
 ;; (reload)(loaddata! "expressions_p") (try-it *the-text* *cellinfo* *the-inits*)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define *eval-s* #f)
+(define *eval-s* '())
+(define *eval-syms* '())
 
 ;; some trickery here
 
@@ -1709,15 +1718,72 @@
   ;; wrap a statement in (if true) to make it a block
   `(if (#t ,stmt)))
 
-(define (inline-evals stmt func-tbl cell-info initvars)
+(define ha-a #f)
+(define ha-at #f)
+(define ha-ft #f)
+
+(load "clarify.scm")
+
+(define (inline-evals the-inits the-text func-tbl cell-info)
+
+  (define initvars (find-referenced-vars the-inits))
+  
   (define tg (make-name-generator "-funccall-eval"))
 
-  (define (visitor s)
+  (define (visitor s syms)
 
+    (define (handle-actual actual formal)
+      ;;
+      ;; each actual is a designator
+      ;; the designator references a variable, which has a type
+      ;; but the designator can have type modifiers (array dereferences
+      ;; or structure field references)
+      ;;
+      ;; So, we "clarify" the type of the designator so that we
+      ;; know the precise type of the designator before generating
+      ;; the function prolog.
+      ;;
+      ;; Note that often we don't really care so much about the type
+      ;; of the designator.  This is because the type of the inlined
+      ;; variable is the type of the formal, not the type of the actual.
+      ;; There is one exception to this: array sizes are given by the
+      ;; actual, not by the formal.  If the types don't match exactly,
+      ;; an element-by-element type conversion will eventually need to
+      ;; be performed.
+      ;;
+      (dis dnl dnl "handle-actual      actual : " actual dnl)
+      (dis "handle-actual      formal : " formal dnl)
+      (if (is-literal? actual)
+          actual
+          (begin
+            (dis "handle-symbols     : " (get-symbols syms) dnl)
+      
+            (let* ((id          (get-designator-id actual))
+                   (actual-type (retrieve-defn id syms))
+                   (formal-type (get-decl1-type formal))
+                   (desi-type   (clarify-type formal-type
+                                              actual-type
+                                              actual))
+                   )
+              (dis "handle-actual id          : " id dnl)
+              (dis "handle-actual formal type : " formal-type dnl)
+              (dis "handle-actual des    type : " desi-type dnl)
+
+              (set! ha-a actual)
+              (set! ha-at actual-type)
+              (set! ha-ft formal-type)
+              
+              )
+            )
+          )
+      (dis dnl dnl)
+      )
+  
     (case (get-stmt-type s)
 
       ((eval)
-       (set! *eval-s* s)
+       (set! *eval-s* (cons s *eval-s*))
+       (set! *eval-syms* (cons syms *eval-syms*))
        (if (eq? (caadr s) 'apply)
            (let* ((fnam      (cadadadr s))
                   (fdef      (func-tbl 'retrieve fnam))
@@ -1728,8 +1794,23 @@
                                  (uniqify-function-text fdef sfx cell-info initvars)))
                   )
              (dis "pre-inline : " (stringify s) dnl)
-;;             (dis "fdef       : " (stringify fdef) dnl)
+             (dis "fdef       : " (stringify fdef) dnl)
              (dis "fdef1text  : " (stringify fdef1text) dnl)
+
+             (if (not failed)
+                 (let* ((actuals (cddadr s))
+                        (formals (map CspDeclarator.Lisp
+                                      (map convert-declarator
+                                           (map car (caddr fdef)))))
+                        )
+                 
+                   (dis "actuals    : " actuals dnl)
+                   (dis "formals    : " formals dnl)
+                   
+                   (map handle-actual actuals formals)
+                   )
+                 )
+                   
              
              fdef1text)
            s))
@@ -1740,14 +1821,60 @@
       )
     )
 
-  (visit-stmt stmt visitor identity identity)
+  (symtabvisit-program the-inits the-text visitor)
+  )
+
+(define (symtabvisit-program the-inits the-text visitor)
+  ;; the visitor should take stmt and syms
+  (define syms '())
+
+  (define (enter-frame!)
+    (set! syms (cons (make-hash-table 100 atom-hash) syms))
+    (dis "enter-frame! " (length syms) dnl)
+    )
+  
+  (define (exit-frame!)
+    (dis "exit-frame! " (length syms) " " (map (lambda(tbl)(tbl 'keys)) syms) dnl)
+    (set! syms (cdr syms))
+    )
+
+  (define (stmt-pre0-v s)
+    (dis "pre stmt  : " (stringify s) dnl)
+    (if (member (get-stmt-kw s) frame-kws) (enter-frame!))
+
+    (case (get-stmt-kw s)
+      ((var1) (define-var! syms (get-var1-id s) (get-var1-type s))
+       (visitor s syms))
+
+      (else (visitor s syms))
+      )
+    )
+
+  (define (stmt-post s)
+    (dis "post stmt : " (get-stmt-kw s) dnl)
+    (if (member (get-stmt-kw s) frame-kws) (exit-frame!))
+    s
+    )
+
+  (enter-frame!)
+  (prepostvisit-stmt the-inits
+                     stmt-pre0-v stmt-post
+                     identity identity
+                     identity identity)
+
+  (let ((res   (prepostvisit-stmt the-text
+                                  stmt-pre0-v stmt-post
+                                  identity identity
+                                  identity identity)))
+    (exit-frame!)
+    res
+    )
   )
 
 ;;(reload)(loaddata! "arraytypes_p") (try-it *the-text* *cellinfo* *the-inits*)(find-applys text2) (define xx (inline-evals *the-text* *the-func-tbl*))(define yy (inline-evals xx *the-func-tbl*))(define zz (inline-evals yy *the-func-tbl*))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define syms '())
 
 (define (retrieve-defn sym syms)
   (let loop ((p syms))
@@ -1761,8 +1888,49 @@
 (define inits1 #f)
 (define text1 #f)
 (define text2 #f)
+
+(define (define-var! syms sym type)
+  ((car syms) 'add-entry! sym type)
+  (dis "define-var! " sym " : " type " /// frame : " ((car syms) 'keys) dnl)
+  )
+
+(define (get-symbols syms)
+  (apply append (map (lambda(tbl)(tbl 'keys)) syms)))
+
+(define (remove-fake-assignment to stmt)
+  ;; change an assignment to "to" back to an eval
+
+  (dis "remove-fake-assignment " to dnl)
+  (dis "remove-fake-assignment " (stringify stmt) dnl)
+
+  (define (visitor s)
+
+    (dis "visiting " s dnl)
+    
+    (if (and (eq? (get-stmt-type s) 'assign)
+             (is-ident? (get-assign-lhs s))
+             (equal? `(id ,to) (get-assign-lhs s)))
+
+        (let ((res (make-eval (get-assign-rhs s))))
+          (dis "replacing " s " -> " res dnl)
+          res)
+        
+        s)
+    )
+      
+  (visit-stmt stmt visitor identity identity)
   
+  )
+
+(define (make-assignment lhs rhs) `(assign ,lhs ,rhs))
+
+(define (make-eval rhs) `(eval ,rhs))
+
+
+
 (define (try-it the-text cell-info the-inits)
+
+  (define syms '())
 
   (define tg (make-name-generator "temp"))
   
@@ -1789,19 +1957,25 @@
     (set! syms (cdr syms))
     )
 
-  (define (define-var! sym type)
-    ((car syms) 'add-entry! sym type)
-    (dis "define-var! " sym " : " type " /// frame : " ((car syms) 'keys) dnl)
-    )
-
   (define (stmt-pre0 s)
     (dis "pre stmt  : " (stringify s) dnl)
     (if (member (get-stmt-kw s) frame-kws) (enter-frame!))
 
     (case (get-stmt-kw s)
-      ((var1) (define-var! (get-var1-id s) (get-var1-type s)) s)
+      ((var1) (define-var! syms (get-var1-id s) (get-var1-type s)) s)
 
       ((assign) (handle-assign-rhs s syms tg))
+
+      ((eval) ;; this is a function call, we make it a fake assignment.
+       (dis "eval!" dnl)
+       (let* ((fake-var (tg 'next))
+              (fake-assign (make-assignment `(id ,fake-var) (cadr s))))
+         (remove-fake-assignment
+          fake-var
+          (handle-assign-rhs fake-assign syms tg)))
+       
+       )
+         
 
       (else s)
       )
