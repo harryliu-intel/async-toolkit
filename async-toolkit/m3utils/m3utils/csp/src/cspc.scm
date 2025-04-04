@@ -212,6 +212,7 @@
   '(string print assert cover pack unpack))
 
 (define (caddddr x) (car (cddddr x)))
+(define (cadaddr x) (car (cdaddr x)))
 
 (define (load-csp fn)
 
@@ -763,10 +764,6 @@
 
 (define (get-assign-rhs a)
   (caddr a))
-
-(define designator-example '(array-access
-                             (member-access (id mccfg) mc)
-                             (id id)))
 
 (define (get-designator-id x)
   ;; pull the identifier out of a designator
@@ -1745,7 +1742,15 @@
                      `(sequence ,@seq
                                 (assign ,lhs
                                         (apply ,fnam
-                                               ,@(map (lambda(id)(list 'id id))
+                                               ,@(map
+                                                  (lambda(x)
+                                                    ;; this is tricky:
+                                                    ;; list holds identifiers
+                                                    ;; and literals
+                                                    (if (symbol? x)  
+                                                        (list 'id x) ;; id
+                                                        x            ;; literal
+                                                        ))
                                                       (reverse q)))))))
 
 
@@ -1861,6 +1866,10 @@
 
 (load "clarify.scm")
 
+(define assign-s    #f)
+(define assign-fnam #f)
+(define assign-fres #f)
+
 (define (inline-evals the-inits the-text func-tbl cell-info)
 
   (define initvars (find-referenced-vars the-inits))
@@ -1869,7 +1878,7 @@
 
   (define (visitor s syms)
 
-    (define (handle-actual actual formal)
+    (define (handle-actual call-sfx actual formal)
       ;;
       ;; each actual is a designator
       ;; the designator references a variable, which has a type
@@ -1891,65 +1900,119 @@
       (dis dnl dnl "handle-actual      actual : " actual dnl)
       (dis "handle-actual      formal : " formal dnl)
       (if (is-literal? actual)
-          actual
+          (list)
           (begin
             (dis "handle-symbols     : " (get-symbols syms) dnl)
       
             (let* ((id          (get-designator-id actual))
                    (actual-type (retrieve-defn id syms))
                    (formal-type (get-decl1-type formal))
-                   (desi-type   (clarify-type formal-type
+                   (formal-id   (get-decl1-id formal))
+                   (formal-dir  (get-decl1-dir formal))
+                   (copyin-id   (symbol-append formal-id call-sfx))
+                   (copyin-type (clarify-type formal-type
                                               actual-type
                                               actual))
+
+                   (newvar      (make-var1-decl copyin-id copyin-type))
+                   (newass      (make-assign `(id ,copyin-id) actual))
                    )
+              (define-var! syms copyin-id copyin-type)
               (dis "handle-actual id          : " id dnl)
+              (dis "handle-actual formal      : " formal-id dnl)
+              (dis "handle-actual copyin-id   : " copyin-id dnl)
               (dis "handle-actual formal type : " formal-type dnl)
-              (dis "handle-actual des    type : " desi-type dnl)
+              (dis "handle-actual formal dir  : " formal-dir  dnl)
+              (dis "handle-actual copyin type : " copyin-type dnl)
 
               (set! ha-a actual)
               (set! ha-at actual-type)
               (set! ha-ft formal-type)
-              
+
+              (dis dnl dnl)
+              (if (member formal-dir '(in inout))
+                  (list newvar newass)
+                  (list newvar))
               )
             )
           )
-      (dis dnl dnl)
       )
-  
+
+    (define (handle-func fnam actuals lhs)
+      (let* ((fdef      (func-tbl 'retrieve fnam))
+             
+             ;; if func-tbl doesn't contain a definition for the
+             ;; function requested, we assume it's an intrinsic.
+             
+             (failed    (eq? fdef '*hash-table-search-failed*))
+             (sfx       (if failed "" (tg 'next)))
+             (fdef1text (if failed
+                            `(eval (call-intrinsic ,fnam ,@(cdadr s)))
+                            (uniqify-function-text fdef sfx cell-info initvars)))
+             )
+        (dis "pre-inline : " (stringify s) dnl)
+        (dis "fdef       : " (stringify fdef) dnl)
+        (dis "fdef1text  : " (stringify fdef1text) dnl)
+        
+        (if failed
+            fdef1text
+            (let* ((formals (get-function-formals fdef))
+                   (copyin  (apply append
+                                   (map
+                                    (lambda(a f)(handle-actual sfx a f))
+                                    actuals formals)))
+                   (assign-result
+                    (if (null? lhs)
+                        '()
+                        (list (make-assign lhs (symbol-append fnam sfx)))))
+                   (seq
+                    (cons 'sequence (append copyin (list fdef1text) assign-result)))
+                   )
+              
+              (dis "actuals    : " actuals dnl)
+              (dis "formals    : " formals dnl)
+              (dis "fdef1text  : " fdef1text dnl)
+              (dis "copyin     : " copyin dnl)
+              (dis "seq        : " seq dnl)
+              
+              seq
+              ;;(error)
+              )
+          )
+        )
+      )
+
     (case (get-stmt-type s)
 
       ((eval)
-       (set! *eval-s* (cons s *eval-s*))
+       (set! *eval-s*    (cons s *eval-s*))
        (set! *eval-syms* (cons syms *eval-syms*))
        (if (eq? (caadr s) 'apply)
            (let* ((fnam      (cadadadr s))
-                  (fdef      (func-tbl 'retrieve fnam))
-                  (failed    (eq? fdef '*hash-table-search-failed*))
-                  (sfx       (if failed "" (tg 'next)))
-                  (fdef1text (if failed
-                                 `(eval (call-intrinsic ,fnam ,@(cdadr s)))
-                                 (uniqify-function-text fdef sfx cell-info initvars)))
+                  (fres      (handle-func fnam (cddadr s) '()))
                   )
-             (dis "pre-inline : " (stringify s) dnl)
-             (dis "fdef       : " (stringify fdef) dnl)
-             (dis "fdef1text  : " (stringify fdef1text) dnl)
-
-             (if (not failed)
-                 (let* ((actuals (cddadr s))
-                        (formals (get-function-formals fdef))
-                        )
-                 
-                   (dis "actuals    : " actuals dnl)
-                   (dis "formals    : " formals dnl)
-                   
-                   (map handle-actual actuals formals)
-                   )
-                 )
-                   
-             
-             fdef1text)
+             (dis "fres = " fres dnl)
+             fres
+            ;; (error)
+             )
            s))
-         
+
+      ((assign)
+       (let ((lhs (get-assign-lhs s))
+             (rhs (get-assign-rhs s)))
+         (if (and (pair? rhs) (eq? (car rhs) 'apply))
+             (let* ((fnam (cadadr rhs))
+                    (fres (handle-func fnam (cddr rhs) lhs))
+                    )
+               (set! assign-s    s)
+               (set! assign-fnam fnam)
+               (set! assign-fres fres)
+               fres
+               ;;(error)
+               )
+             s)
+         )
+       )
       
       (else s)
 
@@ -2007,7 +2070,23 @@
     )
   )
 
-;;(reload)(loaddata! "arraytypes_p") (try-it *the-text* *cellinfo* *the-inits*)(find-applys text2) (define xx (inline-evals *the-text* *the-func-tbl*))(define yy (inline-evals xx *the-func-tbl*))(define zz (inline-evals yy *the-func-tbl*))
+(define xx #f)
+(define yy #f)
+(define zz #f)
+(define tt #f)
+
+(define (xxxx) (run-one "arraytypes_p"))
+
+(define (run-one nm)
+  (reload)
+  (loaddata! nm)
+  (try-it *the-text* *cellinfo* *the-inits*)
+  (find-applys text2)
+  (set! xx (inline-evals *the-inits* text2 *the-func-tbl* *cellinfo*))
+  (set! yy (inline-evals *the-inits* xx    *the-func-tbl* *cellinfo*))
+  (set! zz (inline-evals *the-inits* yy    *the-func-tbl* *cellinfo*))
+  (set! tt (simplify-stmt zz))
+  )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -2110,13 +2189,19 @@
 
       ((eval) ;; this is a function call, we make it a fake assignment.
        (dis "eval!" dnl)
-       (let* ((fake-var (tg 'next))
-              (fake-assign (make-assign `(id ,fake-var) (cadr s))))
-         (remove-fake-assignment
-          fake-var
-          (handle-assign-rhs fake-assign syms tg)))
        
-       )
+       (dis "===== stmt-pre0 start " (stringify s) dnl)
+       
+       (let* ((fake-var (tg 'next))
+              (fake-assign (make-assign `(id ,fake-var) (cadr s)))
+              (full-seq   (handle-assign-rhs fake-assign syms tg))
+              (res (remove-fake-assignment fake-var full-seq)))
+
+         (dis "===== stmt-pre0 fake  " (stringify fake-assign) dnl)
+         (dis "===== stmt-pre0 full  " (stringify full-seq) dnl)
+         (dis "===== stmt-pre0 done  " (stringify res) dnl)
+         res
+       ))
          
 
       (else s)
@@ -2158,6 +2243,7 @@
                        identity identity
                        identity identity))
 
+;;  (error)
   (exit-frame!) ;; and leave the global frame
   
   (define (stmt-pre1 s)

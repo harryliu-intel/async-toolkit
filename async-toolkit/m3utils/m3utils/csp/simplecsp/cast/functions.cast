@@ -105,5 +105,33 @@ define SYSTEM()()
   }
 }
 
+define Q()()
+{
+  csp {
+    function f(int -x) : int =
+      (f = 2 * x;
+       print(f)
+       );
+
+    int y, z;
+    y = 1;
+    z = f(y)
+    }
+}
+
+define R()()
+{
+  csp {
+    function f(int -x) : int =
+      (f = 2 * x;
+       print(f)
+       );
+
+    int y, z;
+    y = 1;
+    /* eval */ f(y) 
+    }
+}
+
 
     
