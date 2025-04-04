@@ -1902,7 +1902,7 @@
       (if (is-literal? actual)
           (list)
           (begin
-            (dis "handle-symbols     : " (get-symbols syms) dnl)
+            (dis "handle-actual syms      : " (get-symbols syms) dnl)
       
             (let* ((id          (get-designator-id actual))
                    (actual-type (retrieve-defn id syms))
@@ -1915,7 +1915,8 @@
                                               actual))
 
                    (newvar      (make-var1-decl copyin-id copyin-type))
-                   (newass      (make-assign `(id ,copyin-id) actual))
+                   (newass-in   (make-assign `(id ,copyin-id) actual))
+                   (newass-out  (make-assign actual `(id ,copyin-id)))
                    )
               (define-var! syms copyin-id copyin-type)
               (dis "handle-actual id          : " id dnl)
@@ -1924,15 +1925,24 @@
               (dis "handle-actual formal type : " formal-type dnl)
               (dis "handle-actual formal dir  : " formal-dir  dnl)
               (dis "handle-actual copyin type : " copyin-type dnl)
+              (dis "handle-actual copyin  code: " newass-in dnl)
+              (dis "handle-actual copyout code: " newass-out dnl)
 
               (set! ha-a actual)
               (set! ha-at actual-type)
               (set! ha-ft formal-type)
 
               (dis dnl dnl)
-              (if (member formal-dir '(in inout))
-                  (list newvar newass)
-                  (list newvar))
+
+              (cons (if (member formal-dir '(in inout))
+                        (list newvar newass-in)
+                        (list newvar))
+                    
+                    (if (member formal-dir '(inout out))
+                        (list newass-out)
+                        '())
+                    )
+              
               )
             )
           )
@@ -1956,27 +1966,35 @@
         
         (if failed
             fdef1text
-            (let* ((formals (get-function-formals fdef))
-                   (copyin  (apply append
-                                   (map
-                                    (lambda(a f)(handle-actual sfx a f))
-                                    actuals formals)))
+            (let* ((formals    (get-function-formals fdef))
+                   (copyinout  (map
+                                (lambda(a f)(handle-actual sfx a f))
+                                actuals formals))
+                   
+                   (copyin  (apply append (map car copyinout)))
+                   (copyout (apply append (map cdr copyinout)))
+
                    (assign-result
                     (if (null? lhs)
                         '()
                         (list (make-assign lhs (symbol-append fnam sfx)))))
                    (seq
-                    (cons 'sequence (append copyin (list fdef1text) assign-result)))
+                    (cons 'sequence
+                          (append copyin
+                                  (list fdef1text)
+                                  assign-result
+                                  copyout)))
                    )
               
               (dis "actuals    : " actuals dnl)
               (dis "formals    : " formals dnl)
               (dis "fdef1text  : " fdef1text dnl)
               (dis "copyin     : " copyin dnl)
+              (dis "copyout    : " copyout dnl)
               (dis "seq        : " seq dnl)
               
               seq
-              ;;(error)
+;;              (error)
               )
           )
         )

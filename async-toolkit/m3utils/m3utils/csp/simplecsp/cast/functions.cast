@@ -134,4 +134,29 @@ define R()()
 }
 
 
-    
+
+define S()()
+{
+  csp {
+    function f(int -+x) =
+      (x = 2 * x;
+       );
+
+    int y;
+    y = 1;
+    f(y);
+  }
+}
+
+define T()()
+{
+  csp {
+    function f(int -+x) =
+      (x *= 2;
+       );
+
+    int y;
+    y = 1;
+    f(y);
+  }
+}
