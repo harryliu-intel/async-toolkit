@@ -160,3 +160,39 @@ define T()()
     f(y);
   }
 }
+
+define U()()
+{
+  csp {
+    function f(int -x) : int =
+      (f = 2 * x;
+       print(f)
+       );
+
+    int z, y = 1;
+
+    z = f(y);
+
+    z = f(y);
+
+    z = f(y + y);
+    
+    z = f(f(y));
+
+    z = f(f(f(f(f(f(y))))));
+  }
+}
+
+define V()()
+{
+  csp {
+    function f(int -x) : int =
+      (f = 2 * x;
+       print(f)
+       );
+
+    int z, y = 1;
+
+    z = f(f(y));
+  }
+}

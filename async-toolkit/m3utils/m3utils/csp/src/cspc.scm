@@ -878,7 +878,7 @@
 
 
   (define (continue)
-    (if (and (list? t) (eq? 'array (car t)))
+    (if (and (pair? t) (eq? 'array (car t)))
         (list 'array (cadr t) (type (caddr t)))
         t
         )
@@ -1249,7 +1249,7 @@
 
   (define (expr-visitor x)
 ;;    (dis (stringify x) dnl)
-    (if (and (pair? x) (eq? 'apply (car x)))
+    (if  (is-apply? x)
         
         (begin
 ;;          (dis "found " (stringify x) dnl)
@@ -1612,7 +1612,7 @@
       (error "array-accessee : not an array access : " x)
       (cadr x)))
 
-(define (derive-type x syms)
+(define (derive-type x syms func-tbl)
   ;; return the type of x in the environment given by syms
   (set! ttt (cons (cons x syms) ttt))
                  
@@ -1624,18 +1624,34 @@
 
          ((string-expr? x syms) 'string)
 
+         ((is-apply? x)
+          (dis "derive-type of apply : " x dnl)
+          
+          (let* ((fnam (get-apply-funcname x))
+                 (fdef (func-tbl 'retrieve fnam))
+                 (failed (eq? fdef '*hash-table-search-failed*))
+                 (res
+                  (if failed *default-int-type* (get-function-return fdef))))
+
+            (dis "derive-type of apply : result : " res dnl)
+            res
+            )
+
+;;          (error)
+          )
+
          ((array-access? x)
           (peel-array
            (derive-type (array-accessee x) syms)))
 
-         (else (error "don't know type of " x))))
+         (else (error "derive-type : don't know type of " x))))
 
 
 (define sss '())
 (define ttt '())
   
 
-(define (handle-access-assign ass syms tg)
+(define (handle-access-assign ass syms tg func-tbl)
 
   (set! *has-ass* ass)
   
@@ -1657,7 +1673,7 @@
     (if (is-simple-operand? x)
         x
         (let* ((nam     (tg 'next))
-               (newtype (derive-type x syms))
+               (newtype (derive-type x syms func-tbl))
                (newvar  (make-var1-decl nam newtype))
                (newass  (make-assign `(id ,nam) x))
                )
@@ -1702,11 +1718,11 @@
 
 (define *har-ass* #f)
 
-(define (handle-assign-rhs a syms tg)
+(define (handle-assign-rhs a syms tg func-tbl)
 
   (set! *har-ass* a)
   
-  (define (recurse a) (handle-assign-rhs a syms tg))
+  (define (recurse a) (handle-assign-rhs a syms tg func-tbl))
   
   (dis "assignment   : " a dnl)
 
@@ -1721,10 +1737,10 @@
     
     (cond
 
-     ((function-application? rhs)
-      (dis "function application : " rhs dnl)
+     ((is-apply? rhs)
+      (dis "handle-assign-rhs : function application : " rhs dnl)
       
-      (let ((fnam (cadr rhs)))
+      (let ((fnam (get-apply-funcname rhs)))
         (let loop ((p   (cddr rhs))
                    (seq '())
                    (q   '()))
@@ -1741,7 +1757,7 @@
                      a
                      `(sequence ,@seq
                                 (assign ,lhs
-                                        (apply ,fnam
+                                        (apply (id ,fnam)
                                                ,@(map
                                                   (lambda(x)
                                                     ;; this is tricky:
@@ -1759,7 +1775,7 @@
 
                 (else
                  (let* ((tempnam (tg 'next))
-                        (newtype (derive-type (car p) syms)) 
+                        (newtype (derive-type (car p) syms func-tbl)) 
                         (newvar (make-var1-decl tempnam newtype))
                         (newass (make-assign `(id ,tempnam) (car p)))
                         )
@@ -1783,9 +1799,9 @@
          ((and complex-l complex-r)
           (let*
               ((ltempnam (tg 'next))
-               (ltype    (derive-type l syms))
+               (ltype    (derive-type l syms func-tbl))
                (rtempnam (tg 'next))
-               (rtype    (derive-type r syms))
+               (rtype    (derive-type r syms func-tbl))
                (seq
                 `(sequence
                    ,(make-var1-decl ltempnam ltype)
@@ -1800,7 +1816,7 @@
          (complex-l
           (let*
               ((tempnam (tg 'next))
-               (type    (derive-type l syms))
+               (type    (derive-type l syms func-tbl))
                (seq
                 `(sequence
                    ,(make-var1-decl tempnam type)
@@ -1812,7 +1828,7 @@
          (complex-r
           (let*
               ((tempnam (tg 'next))
-               (type    (derive-type r syms))
+               (type    (derive-type r syms func-tbl))
                (seq
                 `(sequence
                    ,(make-var1-decl tempnam type)
@@ -1832,7 +1848,7 @@
         (cond ((not (is-simple-operand? x))
                (let*
                    ((tempnam (tg 'next))
-                    (type    (derive-type x syms))
+                    (type    (derive-type x syms func-tbl))
                     (seq
                      `(sequence
                         ,(make-var1-decl tempnam type)
@@ -2098,12 +2114,13 @@
 (define (run-one nm)
   (reload)
   (loaddata! nm)
-  (try-it *the-text* *cellinfo* *the-inits*)
+  (try-it *the-text* *cellinfo* *the-inits* *the-func-tbl*)
   (find-applys text2)
   (set! xx (inline-evals *the-inits* text2 *the-func-tbl* *cellinfo*))
   (set! yy (inline-evals *the-inits* xx    *the-func-tbl* *cellinfo*))
   (set! zz (inline-evals *the-inits* yy    *the-func-tbl* *cellinfo*))
   (set! tt (simplify-stmt zz))
+  tt
   )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -2161,7 +2178,7 @@
 
 
 
-(define (try-it the-text cell-info the-inits)
+(define (try-it the-text cell-info the-inits func-tbl)
 
   (define syms '())
 
@@ -2203,7 +2220,7 @@
     (case (get-stmt-kw s)
       ((var1) (define-var! syms (get-var1-id s) (get-var1-type s)) s)
 
-      ((assign) (handle-assign-rhs s syms tg))
+      ((assign) (handle-assign-rhs s syms tg func-tbl))
 
       ((eval) ;; this is a function call, we make it a fake assignment.
        (dis "eval!" dnl)
@@ -2212,7 +2229,7 @@
        
        (let* ((fake-var (tg 'next))
               (fake-assign (make-assign `(id ,fake-var) (cadr s)))
-              (full-seq   (handle-assign-rhs fake-assign syms tg))
+              (full-seq   (handle-assign-rhs fake-assign syms tg func-tbl))
               (res (remove-fake-assignment fake-var full-seq)))
 
          (dis "===== stmt-pre0 fake  " (stringify fake-assign) dnl)
@@ -2269,7 +2286,7 @@
     (stmt-check-enter s)
 
     (case (get-stmt-kw s)
-      ((assign) (handle-access-assign s syms tg))
+      ((assign) (handle-access-assign s syms tg func-tbl))
 
       (else s)
       )
@@ -2284,7 +2301,7 @@
       ;; this takes a "pass" and wraps it up so the symbol table is maintained
       (stmt-check-enter stmt)
       (if (eq? 'assign (get-stmt-kw stmt))
-          (pass stmt syms tg)
+          (pass stmt syms tg func-tbl)
           stmt)))
   
   (define (loop2 prog passes)
@@ -2412,11 +2429,13 @@
     ((not -) #t)
     (else #f)))
 
-(define (function-application? x)
+(define (is-apply? x)
   (and
    (pair? x)
    (eq? 'apply (car x))))
 
+(define (get-apply-funcname x)
+  (cadadr x))
 
 (define (sequentialize-one s tg)   ;; BROKEN
   (if (eq? s 'skip)
