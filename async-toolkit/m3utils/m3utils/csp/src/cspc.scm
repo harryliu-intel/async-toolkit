@@ -288,17 +288,18 @@
 (define *the-initvars* #f)
 
 (define *the-func-tbl* #f)
+(define *the-struct-tbl* #f)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 ;; function stuff
 ;;
 
-(define (is-function? func)
+(define (function? func)
   (and (pair? func) (eq? 'function (car func))))
 
 (define (check-is-function func)
-  (if (not (is-function? func))
+  (if (not (function? func))
       (error "not a function : " func)))
 
 (define (get-function-name func)
@@ -379,6 +380,55 @@
                          (symbol-append (car cp) sfx)))))))
   
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;; structs
+;;
+
+;; struct-decl is a definition of a struct type
+(define (struct-decl? struct-decl)
+  (and (pair? struct-decl)
+       (eq? 'structure-decl (car struct-decl))))
+
+(define (check-is-struct-decl struct-decl)
+  (if (not (struct-decl? struct-decl))
+      (error "not a struct-decl : " struct-decl)))
+
+(define (get-struct-decl-name struct-decl)
+  (check-is-struct-decl struct-decl)
+  (cadr struct-decl))
+
+(define (get-struct-decl-fields struct-decl)
+  (check-is-struct-decl struct-decl)
+  
+  ;; struct decls are unconverted, so desugar declarators
+  (map CspDeclarator.Lisp
+       (map convert-declarator
+            (apply append (caddr struct-decl)))))
+
+(define (get-struct-decl-field-type struct-decl fld)
+  (define (recurse p)
+    (cond ((null? p) #f)
+          ((equal? (cadar p) `(id ,fld)) (caddar p))
+          (else (recurse (cdr p)))))
+
+  (recurse (get-struct-decl-fields struct-decl)))
+
+;; struct is a reference to a struct type (an instance declaration)
+(define (struct? struct)
+  (and (pair? struct)
+       (eq? 'structure (car struct))))
+
+(define (get-struct-name struct)
+  (check-is-struct struct)
+  (caddr struct))
+
+(define (get-struct-const struct)
+  (check-is-struct struct)
+  (cadr struct))
+
+                         
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define (atom-hash atom)
   (if (null? atom) (error "atom-hash : null atom")
@@ -429,7 +479,7 @@
   (set! *the-funcs* (remove-duplicate-funcs
                       (merge-all get-funcs append data)))
 
-  (set! *the-structs* (merge-all get-structs append data))
+  (set! *the-structs* (map cadr (merge-all get-structs append data)))
 
   (set! *the-inits*   (remove-duplicate-inits
                        (simplify-stmt
@@ -439,6 +489,7 @@
   (set! *the-initvars* (find-referenced-vars *the-inits*))
 
   (set! *the-func-tbl* (make-object-hash-table get-function-name *the-funcs*))
+  (set! *the-struct-tbl* (make-object-hash-table get-struct-decl-name *the-structs*))
 
   (set! lisp0 (desugar-prog data))
   (set! lisp1 (simplify-stmt lisp0))
@@ -1561,7 +1612,7 @@
 (define (integer-type? t)
   (and (pair? t) (eq? 'integer (car t))))
 
-(define (integer-expr? x syms func-tbl)
+(define (integer-expr? x syms func-tbl struct-tbl)
   (or (bigint? x)
       (if (pair? x)
           (cond
@@ -1569,33 +1620,33 @@
                                    (car (retrieve-defn (cadr x) syms))))
            ((member (car x) *integer-ops*) #t)
            ((member (car x) *polymorphic-ops*)
-            (integer-type? (derive-type (cadr x) syms func-tbl)))
+            (integer-type? (derive-type (cadr x) syms func-tbl struct-tbl)))
            (else #f)
            )
           #f
           )))
 
-(define (boolean-expr? x syms func-tbl)
+(define (boolean-expr? x syms func-tbl struct-tbl)
   (or (boolean? x)
       (if (pair? x)
           (cond
            ((eq? 'id (car x)) (eq? 'boolean (retrieve-defn (cadr x) syms)))
            ((member (car x) *boolean-ops*) #t)
            ((member (car x) *polymorphic-ops*)
-            (eq? 'boolean (derive-type (cadr x) syms func-tbl)))
+            (eq? 'boolean (derive-type (cadr x) syms func-tbl struct-tbl)))
            (else #f)
            )
           #f
           )))
 
-(define (string-expr? x syms func-tbl)
+(define (string-expr? x syms func-tbl struct-tbl)
   (or (string? x)
       (if (pair? x)
           (cond
            ((eq? 'id (car x)) (eq? 'string (retrieve-defn (cadr x) syms)))
            ((member (car x) *string-ops*) #t)
            ((member (car x) *polymorphic-ops*)
-            (eq? 'string (derive-type (cadr x) syms func-tbl)))
+            (eq? 'string (derive-type (cadr x) syms func-tbl struct-tbl)))
            (else #f)
            )
           #f
@@ -1615,17 +1666,34 @@
       (error "array-accessee : not an array access : " x)
       (cadr x)))
 
-(define (derive-type x syms func-tbl)
+(define (member-access? x)
+  (and (pair? x)(eq? 'member-access (car x))))
+
+(define (member-accessee x)
+  (if (not (member-access? x))
+      (error "member-accessee : not a member access : " x)
+      (cadr x)))
+
+(define (member-accesser x)
+  (if (not (member-access? x))
+      (error "member-accesser : not a member access : " x)
+      (caddr x)))
+
+(define s-x  #f)
+(define s-bt #f)
+(define s-sd #f)
+
+(define (derive-type x syms func-tbl struct-tbl)
   ;; return the type of x in the environment given by syms
   (set! ttt (cons (cons x syms) ttt))
                  
   (cond  ((ident? x) (retrieve-defn (cadr x) syms))
 
-         ((integer-expr? x syms func-tbl) *default-int-type*)
+         ((integer-expr? x syms func-tbl struct-tbl) *default-int-type*)
 
-         ((boolean-expr? x syms func-tbl) 'boolean)
+         ((boolean-expr? x syms func-tbl struct-tbl) 'boolean)
 
-         ((string-expr? x syms func-tbl) 'string)
+         ((string-expr? x syms func-tbl struct-tbl) 'string)
 
          ((apply? x)
           (dis "derive-type of apply : " x dnl)
@@ -1644,11 +1712,35 @@
           )
 
          ((loopex? x)
-          (derive-type (construct-loopex-binop x) syms func-tbl))
+          (derive-type (construct-loopex-binop x) syms func-tbl struct-tbl))
 
          ((array-access? x)
           (peel-array
-           (derive-type (array-accessee x) syms func-tbl)))
+           (derive-type (array-accessee x) syms func-tbl struct-tbl)))
+
+         ((member-access? x)
+          (set! s-x x)
+          (let* ((base-type (derive-type
+                             (member-accessee x) syms func-tbl struct-tbl))
+                 (struct-def (struct-tbl 'retrieve (get-struct-name base-type)))
+                 (struct-flds (get-struct-decl-fields struct-def))
+                 (accesser   (member-accesser x))
+                 )
+
+            (set! s-bt base-type)
+            (set! s-sd struct-def)
+            
+            (dis "member-access   x           : " x dnl)
+            (dis "member-access   base-type   : " (stringify base-type) dnl)
+            (dis "member-access   struct-def  : " (stringify struct-def) dnl)
+            (dis "member-access   struct-flds : " (stringify struct-flds) dnl)
+
+            (if (not (symbol? accesser))
+                (error "member-access : not an accesser : " accesser))
+
+            (get-struct-decl-field-type struct-def accesser)
+            )
+          )
 
          ((bits? x)
           (if (equal? (get-bits-min x) (get-bits-max x))
@@ -1681,7 +1773,7 @@
   ;; ---> this will have the same type as the loop expression
   `(,(get-loopex-op x) ,(get-loopex-expr x)  ,(get-loopex-expr x) ))
 
-(define (handle-access-assign ass syms tg func-tbl)
+(define (handle-access-assign ass syms tg func-tbl struct-tbl)
 
   (set! *has-ass* ass)
   
@@ -1703,7 +1795,7 @@
     (if (is-simple-operand? x)
         x
         (let* ((nam     (tg 'next))
-               (newtype (derive-type x syms func-tbl))
+               (newtype (derive-type x syms func-tbl struct-tbl))
                (newvar  (make-var1-decl nam newtype))
                (newass  (make-assign `(id ,nam) x))
                )
@@ -1748,11 +1840,11 @@
 
 (define *har-ass* #f)
 
-(define (handle-assign-rhs a syms tg func-tbl)
+(define (handle-assign-rhs a syms tg func-tbl struct-tbl)
 
   (set! *har-ass* a)
   
-  (define (recurse a) (handle-assign-rhs a syms tg func-tbl))
+  (define (recurse a) (handle-assign-rhs a syms tg func-tbl struct-tbl))
   
   (dis "assignment   : " a dnl)
 
@@ -1805,7 +1897,7 @@
 
                 (else
                  (let* ((tempnam (tg 'next))
-                        (newtype (derive-type (car p) syms func-tbl)) 
+                        (newtype (derive-type (car p) syms func-tbl struct-tbl)) 
                         (newvar (make-var1-decl tempnam newtype))
                         (newass (make-assign `(id ,tempnam) (car p)))
                         )
@@ -1829,9 +1921,9 @@
          ((and complex-l complex-r)
           (let*
               ((ltempnam (tg 'next))
-               (ltype    (derive-type l syms func-tbl))
+               (ltype    (derive-type l syms func-tbl struct-tbl))
                (rtempnam (tg 'next))
-               (rtype    (derive-type r syms func-tbl))
+               (rtype    (derive-type r syms func-tbl struct-tbl))
                (seq
                 `(sequence
                    ,(make-var1-decl ltempnam ltype)
@@ -1846,7 +1938,7 @@
          (complex-l
           (let*
               ((tempnam (tg 'next))
-               (type    (derive-type l syms func-tbl))
+               (type    (derive-type l syms func-tbl struct-tbl))
                (seq
                 `(sequence
                    ,(make-var1-decl tempnam type)
@@ -1858,7 +1950,7 @@
          (complex-r
           (let*
               ((tempnam (tg 'next))
-               (type    (derive-type r syms func-tbl))
+               (type    (derive-type r syms func-tbl struct-tbl))
                (seq
                 `(sequence
                    ,(make-var1-decl tempnam type)
@@ -1878,7 +1970,7 @@
         (cond ((not (is-simple-operand? x))
                (let*
                    ((tempnam (tg 'next))
-                    (type    (derive-type x syms func-tbl))
+                    (type    (derive-type x syms func-tbl struct-tbl))
                     (seq
                      `(sequence
                         ,(make-var1-decl tempnam type)
@@ -1916,7 +2008,7 @@
 (define assign-fnam #f)
 (define assign-fres #f)
 
-(define (inline-evals the-inits the-text func-tbl cell-info)
+(define (inline-evals the-inits the-text func-tbl struct-tbl cell-info)
 
   (define initvars (find-referenced-vars the-inits))
   
@@ -2144,11 +2236,11 @@
 (define (run-one nm)
   (reload)
   (loaddata! nm)
-  (try-it *the-text* *cellinfo* *the-inits* *the-func-tbl*)
+  (try-it *the-text* *cellinfo* *the-inits* *the-func-tbl* *the-struct-tbl*)
   (find-applys text2)
-  (set! xx (inline-evals *the-inits* text2 *the-func-tbl* *cellinfo*))
-  (set! yy (inline-evals *the-inits* xx    *the-func-tbl* *cellinfo*))
-  (set! zz (inline-evals *the-inits* yy    *the-func-tbl* *cellinfo*))
+  (set! xx (inline-evals *the-inits* text2 *the-func-tbl* *the-struct-tbl* *cellinfo*))
+  (set! yy (inline-evals *the-inits* xx    *the-func-tbl* *the-struct-tbl* *cellinfo*))
+  (set! zz (inline-evals *the-inits* yy    *the-func-tbl* *the-struct-tbl* *cellinfo*))
   (set! tt (simplify-stmt zz))
   tt
   )
@@ -2208,7 +2300,7 @@
 
 
 
-(define (try-it the-text cell-info the-inits func-tbl)
+(define (try-it the-text cell-info the-inits func-tbl struct-tbl)
 
   (define syms '())
 
@@ -2250,7 +2342,7 @@
     (case (get-stmt-kw s)
       ((var1) (define-var! syms (get-var1-id s) (get-var1-type s)) s)
 
-      ((assign) (handle-assign-rhs s syms tg func-tbl))
+      ((assign) (handle-assign-rhs s syms tg func-tbl struct-tbl))
 
       ((eval) ;; this is a function call, we make it a fake assignment.
        (dis "eval!" dnl)
@@ -2259,7 +2351,7 @@
        
        (let* ((fake-var (tg 'next))
               (fake-assign (make-assign `(id ,fake-var) (cadr s)))
-              (full-seq   (handle-assign-rhs fake-assign syms tg func-tbl))
+              (full-seq   (handle-assign-rhs fake-assign syms tg func-tbl struct-tbl))
               (res (remove-fake-assignment fake-var full-seq)))
 
          (dis "===== stmt-pre0 fake  " (stringify fake-assign) dnl)
@@ -2316,7 +2408,7 @@
     (stmt-check-enter s)
 
     (case (get-stmt-kw s)
-      ((assign) (handle-access-assign s syms tg func-tbl))
+      ((assign) (handle-access-assign s syms tg func-tbl struct-tbl))
 
       (else s)
       )
@@ -2331,7 +2423,7 @@
       ;; this takes a "pass" and wraps it up so the symbol table is maintained
       (stmt-check-enter stmt)
       (if (eq? 'assign (get-stmt-kw stmt))
-          (pass stmt syms tg func-tbl)
+          (pass stmt syms tg func-tbl struct-tbl)
           stmt)))
   
   (define (loop2 prog passes)

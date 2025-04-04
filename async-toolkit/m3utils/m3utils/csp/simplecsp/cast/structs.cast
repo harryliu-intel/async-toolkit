@@ -4,8 +4,23 @@ define common attributes {
   csp {
   structure struct0 =
     (int(8) a;
-     int(8) b;
+     int(8) b, d;
      int(8) c = 13;
+     bool q;
+     string s;
+     string t="does this work";
+     );
+
+  structure struct1 =
+    (int a;
+     string s;
+     bool b;
+     );
+
+  structure struct2 =
+    (int a[255];
+     string s;
+     bool b;
      );
   }
 }
@@ -17,3 +32,27 @@ define SYSTEM()() <+ common
     print(pack(x))
       }
 }
+
+define P()() <+ common
+{
+  csp {
+    struct0 x;
+    int y;
+    y = 2 * x::c;
+
+    print(y);
+   }
+}
+
+define Q()() <+ common
+{
+  csp {
+    struct2 x[5];
+    int y;
+    int i, j;
+    y = 2 * x[2*i]::a[j%3];
+
+    print(y);
+   }
+}
+  
