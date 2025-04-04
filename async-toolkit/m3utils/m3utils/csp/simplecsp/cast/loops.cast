@@ -60,3 +60,16 @@ define SYSTEM()()
   }
 
 }
+
+define Q()()
+{
+  csp {
+    bool x;
+    int n;
+
+    n = 5;
+    
+    x = (<+i:n:i>)>10;
+  }
+}
+

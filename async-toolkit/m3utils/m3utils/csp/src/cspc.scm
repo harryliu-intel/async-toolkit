@@ -1249,7 +1249,7 @@
 
   (define (expr-visitor x)
 ;;    (dis (stringify x) dnl)
-    (if  (is-apply? x)
+    (if  (apply? x)
         
         (begin
 ;;          (dis "found " (stringify x) dnl)
@@ -1283,6 +1283,8 @@
   `(decl1 (id ,sym) ,type ,dir))
 
 (define *default-int-type*  '(integer #f #f () ()))
+
+(define *single-bit-type*  `(integer #f #f ,*big-1* ()))
 
 (define (make-default-var1 sym)
   ;; make a default (per CSP rules) variable declaration
@@ -1509,8 +1511,8 @@
 (define *x2* #f)
 (define *x3* #f)
 
-(define (is-ident? x)
-  (eq? (car x) 'id))
+(define (ident? x)
+  (and (pair? x) (eq? (car x) 'id)))
 
 (define (is-literal? x)
   (or (boolean? x)
@@ -1518,7 +1520,7 @@
       (string? x)))
 
 (define (is-simple-operand? x)
-  (or  (is-literal? x)(is-ident? x)))
+  (or  (is-literal? x)(ident? x)))
 
 (define *rhs* #f)
 
@@ -1556,9 +1558,10 @@
   '(+ & ^ | ) ;; | )
   )
 
+(define (integer-type? t)
+  (and (pair? t) (eq? 'integer (car t))))
 
-
-(define (integer-expr? x syms)
+(define (integer-expr? x syms func-tbl)
   (or (bigint? x)
       (if (pair? x)
           (cond
@@ -1566,33 +1569,33 @@
                                    (car (retrieve-defn (cadr x) syms))))
            ((member (car x) *integer-ops*) #t)
            ((member (car x) *polymorphic-ops*)
-            (integer-expr? (cadr x) syms))
+            (integer-type? (derive-type (cadr x) syms func-tbl)))
            (else #f)
            )
           #f
           )))
 
-(define (boolean-expr? x syms)
+(define (boolean-expr? x syms func-tbl)
   (or (boolean? x)
       (if (pair? x)
           (cond
            ((eq? 'id (car x)) (eq? 'boolean (retrieve-defn (cadr x) syms)))
            ((member (car x) *boolean-ops*) #t)
            ((member (car x) *polymorphic-ops*)
-            (boolean-expr? (cadr x) syms))
+            (eq? 'boolean (derive-type (cadr x) syms func-tbl)))
            (else #f)
            )
           #f
           )))
 
-(define (string-expr? x syms)
+(define (string-expr? x syms func-tbl)
   (or (string? x)
       (if (pair? x)
           (cond
            ((eq? 'id (car x)) (eq? 'string (retrieve-defn (cadr x) syms)))
            ((member (car x) *string-ops*) #t)
            ((member (car x) *polymorphic-ops*)
-            (string-expr? (cadr x) syms))
+            (eq? 'string (derive-type (cadr x) syms func-tbl)))
            (else #f)
            )
           #f
@@ -1616,15 +1619,15 @@
   ;; return the type of x in the environment given by syms
   (set! ttt (cons (cons x syms) ttt))
                  
-  (cond  ((is-ident? x) (retrieve-defn (cadr x) syms))
+  (cond  ((ident? x) (retrieve-defn (cadr x) syms))
 
-         ((integer-expr? x syms) *default-int-type*)
+         ((integer-expr? x syms func-tbl) *default-int-type*)
 
-         ((boolean-expr? x syms) 'boolean)
+         ((boolean-expr? x syms func-tbl) 'boolean)
 
-         ((string-expr? x syms) 'string)
+         ((string-expr? x syms func-tbl) 'string)
 
-         ((is-apply? x)
+         ((apply? x)
           (dis "derive-type of apply : " x dnl)
           
           (let* ((fnam (get-apply-funcname x))
@@ -1640,16 +1643,43 @@
 ;;          (error)
           )
 
+         ((loopex? x)
+          (derive-type (construct-loopex-binop x) syms func-tbl))
+
          ((array-access? x)
           (peel-array
-           (derive-type (array-accessee x) syms)))
+           (derive-type (array-accessee x) syms func-tbl)))
+
+         ((bits? x)
+          (if (equal? (get-bits-min x) (get-bits-max x))
+              *single-bit-type*
+              *default-int-type*))
 
          (else (error "derive-type : don't know type of " x))))
 
 
 (define sss '())
 (define ttt '())
-  
+
+(define (bits? x)
+  (and (pair? x) (eq? 'bits (car x))))
+
+(define (get-bits-expr x) (cadr x))
+(define (get-bits-min x) (caddr x))
+(define (get-bits-max x) (cadddr x))
+
+(define (loopex? x)
+  (and (pair? x) (eq? 'loop-expression (car x))))
+
+(define (get-loopex-dummy x) (cadr x))
+(define (get-loopex-range x) (caddr x))
+(define (get-loopex-op    x) (cadddr x))
+(define (get-loopex-expr  x) (caddddr x))
+
+(define (construct-loopex-binop x)
+  ;; take a loop-expression and construct a dummy binary operation
+  ;; ---> this will have the same type as the loop expression
+  `(,(get-loopex-op x) ,(get-loopex-expr x)  ,(get-loopex-expr x) ))
 
 (define (handle-access-assign ass syms tg func-tbl)
 
@@ -1737,8 +1767,8 @@
     
     (cond
 
-     ((is-apply? rhs)
-      (dis "handle-assign-rhs : function application : " rhs dnl)
+     ((apply? rhs)
+      (dis "handle-assign-rhs : function application : " (stringify rhs) dnl)
       
       (let ((fnam (get-apply-funcname rhs)))
         (let loop ((p   (cddr rhs))
@@ -2158,7 +2188,7 @@
     (dis "visiting " s dnl)
     
     (if (and (eq? (get-stmt-type s) 'assign)
-             (is-ident? (get-assign-lhs s))
+             (ident? (get-assign-lhs s))
              (equal? `(id ,to) (get-assign-lhs s)))
 
         (let ((res (make-eval (get-assign-rhs s))))
@@ -2429,7 +2459,7 @@
     ((not -) #t)
     (else #f)))
 
-(define (is-apply? x)
+(define (apply? x)
   (and
    (pair? x)
    (eq? 'apply (car x))))
@@ -2740,10 +2770,12 @@
             (CspAst.PeekExpr (convert-expr (cadr x))))
 
            ((bits)
-            (CspAst.BitRangeExpr
-             (convert-expr-or-null (cadr x))
-             (convert-expr-or-null (caddr x))
-             (convert-expr-or-null (cadddr x))))
+            (let ((base (convert-expr (cadr x)))
+                  (min  (convert-expr-or-null (caddr x)))
+                  (max  (convert-expr (cadddr x))))
+              (CspAst.BitRangeExpr base (if (null? min) max min) max)
+              )
+            )
            
            ((not) (CspAst.UnaExpr 'Not (convert-expr (cadr x))))
 

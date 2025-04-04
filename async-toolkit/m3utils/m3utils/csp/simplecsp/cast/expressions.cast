@@ -46,3 +46,31 @@ define Q()()
 
 }
  
+define R()()
+{
+  csp {
+    int a=0xc0edbabe;
+
+    int b = a{11:11};
+
+    print ("a = " + a);
+    print ("b = " + b);
+    
+  }
+}
+
+define S()()
+{
+  csp {
+    int a=0xc0edbabe;
+
+    int b = a{11} + a{10};
+
+    int c = (a{11} ^ a{10}) + 3;
+    
+    print ("a = " + a);
+    print ("b = " + b);
+    print ("c = " + c);
+    
+  }
+}
