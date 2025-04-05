@@ -1,6 +1,6 @@
 module castdecl;
 
-define P(int X)()
+define P(int X, WX)()
 {
   csp {
     int(X) x = X;
@@ -8,4 +8,4 @@ define P(int X)()
   }
 }
   
-define Q(int Y)() <: P(2*Y) {}
+define Q(int Y)() <: P(2*Y, 17) {}

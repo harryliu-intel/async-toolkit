@@ -12,7 +12,7 @@
   )
 
 
-(define (clarify-type formal-type actual-type designator)
+(define (clarify-type formal-type actual-type actual)
   ;;
   ;; this computes the type of the copy-in object for a function parameter
   ;; for arrays, it takes the element type from the function formal
@@ -20,25 +20,29 @@
   ;;
   ;; haven't done it for structs yet. (and combinations of structs and arrays)
   ;;
-  (case (car designator)
 
-    ((id)
-     (dis "clarify-type reached an id " designator dnl
-          "clarify-type actual-type   " actual-type dnl
-          "clarify-type formal-type   " formal-type dnl)
+  (if (literal? actual)
+      formal-type  ;; if the actual is a literal, just return the formal type
+  
+      (case (car actual)
 
-     (if (array-type? formal-type)
-         (replace-array-sizes formal-type actual-type)
-         formal-type))
+        ((id)
+         (dis "clarify-type reached an id " actual dnl
+              "clarify-type actual-type   " actual-type dnl
+              "clarify-type formal-type   " formal-type dnl)
+         
+         (if (array-type? formal-type)
+             (replace-array-sizes formal-type actual-type)
+             formal-type))
+        
+        ((array-access)
+         (if (not eq? 'array (car actual-type))
+             (error "array access of not an array : " actual " of " actual-type)
+             (clarify-type formal-type
+                           (caddr actual-type)
+                           (cadr actual))))
+        
+        (else (error "formal-type " formal-type " not compatible with actual " actual
 
-    ((array-access)
-     (if (not eq? 'array (car actual-type))
-         (error "array access of not an array : " designator " of " actual-type)
-         (clarify-type formal-type
-                       (caddr actual-type)
-                       (cadr designator))))
-
-    (else (error "formal-type " formal-type " not compatible with designator " designator
-
-           ))))
+                     )))))
 

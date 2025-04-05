@@ -196,3 +196,27 @@ define V()()
     z = f(f(y));
   }
 }
+
+define W()()
+{
+  csp {
+    function h(int -x) : int =
+      (h = 2 * x;
+       print(h)
+       );
+
+    function g(int -x) : int =
+      (g = h(x);
+       print(g)
+       );
+
+    function f(int -x) : int =
+      (f = h(g(x)+g(h(x)));
+       print(f)
+       );
+
+    int z, y = 1;
+
+    z = f(2*f(f(y)+f(y)));
+  }
+}

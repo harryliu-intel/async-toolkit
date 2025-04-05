@@ -418,6 +418,10 @@
   (and (pair? struct)
        (eq? 'structure (car struct))))
 
+(define (check-is-struct struct)
+  (if (not (struct? struct))
+      (error "not a struct : " struct)))
+
 (define (get-struct-name struct)
   (check-is-struct struct)
   (caddr struct))
@@ -557,26 +561,8 @@
 
 (define (skip) )
 
-(define (spaces n)
-  (if (= n 0) "" (string-append " " (spaces (- n 1)))))
+(load "pp.scm")
 
-    
-(define (pp-depth x n nsp)
-  (if (list? x)
-      (begin
-        (dis (spaces nsp) "(" dnl)
-        (map (if (= n 0)
-                 (lambda (c) (dis (spaces (+ 4 nsp)) (stringify c) dnl))
-                 (lambda (c) (pp-depth c (- n 1) (+ nsp 4))))
-             x)
-        (dis (spaces nsp) ")" dnl))
-      (dis (spaces nsp) (stringify x) dnl)
-      )
-  )
-
-(define (pp lst . n) ;; pretty-print
-  (pp-depth lst (if (null? n) 1 (car n)) 0)
-  #t)
 
 (define (make-var name type)
   (cons name type))
@@ -810,18 +796,27 @@
   (set! *last-assign* s)
   (get-designator-id (get-assign-designator s)))
 
-(define (get-assign-lhs a)
-  (cadr a))
+(define (get-assign-lhs a) (cadr a))
 
-(define (get-assign-rhs a)
-  (caddr a))
+(define (get-assign-rhs a) (caddr a))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (get-assignop-op x) (cadr x))
+(define (get-assignop-lhs x) (caddr x))
+(define (get-assignop-increment x) (cadddr x))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define *ddd* #f)
 
 (define (get-designator-id x)
   ;; pull the identifier out of a designator
+  (set! *ddd* x)
   (cond ((eq? 'id (car x)) (cadr x))
         ((eq? 'array-access (car x)) (get-designator-id (cadr x)))
         ((eq? 'member-access (car x)) (get-designator-id (cadr x)))
-        (else (error "get-designator-id : not done yet"))))
+        (else #f)))
 
 (define (hash-designator d)
   ;; hash a designator
@@ -840,62 +835,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define (compound-stmt? s)
-  (and (list? s)
-       (not (null? s))
-       (or (eq? (car s) 'parallel) (eq? (car s) 'sequence))))
-
-(define (guarded-stmt? s)
-  (and (list? s)
-       (not (null? s))
-       (or (eq? (car s) 'if)
-           (eq? (car s) 'nondet-if)
-           (eq? (car s) 'do)
-           (eq? (car s) 'nondet-do))))
-
-(define (simplify-stmt s)
-  ;; all that this does is flattens out parallel and sequence statements
-  (cond ((compound-stmt? s) (simplify-compound-stmt s))
-        ((guarded-stmt? s) (simplify-guarded-stmt s))
-
-        ;; need to handle parallel-loop and sequential-loop here
-        
-        (else s)))
-
-(define (simplify-guarded-stmt s)
-  (cons (car s)
-        (map
-         (lambda(gc)
-           (let ((guard   (car gc))
-                 (command (cadr gc)))
-             (list guard (simplify-stmt command))))
-         (cdr s))))
-        
-(define (simplify-compound-stmt s)
-  (let loop ((p    (cdr s))
-             (res  (list (car s))))
-
-    (if (null? p)
-
-        (reverse res) ;; base case
-
-        (let ((next (simplify-stmt (car p))))
-
-          (if (and (compound-stmt? next)
-                   (eq? (car next) (car s)))
-
-              (begin
-;; same type of statement, just splice in the args
-;;                    (dis " splicing next  : " next dnl)
-;;                    (dis " splicing cdr next : " (cdr next) dnl)
-                
-                (loop (cdr p)
-                      (append (reverse (cdr next)) res))
-                )
-              
-              (loop (cdr p) (cons next res))))))
-  )
-
+(load "simplify.scm")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -1095,7 +1035,12 @@
 
                     ((parallel-loop sequential-loop)
                      ;; what happens if stmt returns 'delete?
-                     (list (car args) (range (cadr args)) (stmt (caddr args)))
+                     (let ((new-stmt (stmt (caddr args))))
+                       (if (eq? new-stmt 'delete)
+                           'delete
+                           (list (car args)
+                                 (range (cadr args))
+                                 new-stmt)))
                      )
                     
                     (else (set! *bad-s* s)
@@ -1475,9 +1420,9 @@
   ;; by renaming all the instances to unique names
   
   (define (visitor s)
-    (dis "here" dnl)
+;;    (dis "here" dnl)
     (let ((num-decls (count-declarations id s)))
-      (dis "num-decls of " id " " num-decls " : " (stringify s) dnl)
+;;      (dis "num-decls of " id " " num-decls " : " (stringify s) dnl)
       (if (= num-decls 1)
           (cons 'cut
                 (rename-id s id (symbol-append id '- (tg 'next))))
@@ -1550,7 +1495,8 @@
   '(
 ;;    sequence parallel   ;; these do NOT introduce a declaration block
     do if nondet-if nondet-do
-    parallel-loop sequential-loop
+       parallel-loop sequential-loop
+       loop-expression
        ))
 
 
@@ -1565,13 +1511,19 @@
 (define (ident? x)
   (and (pair? x) (eq? (car x) 'id)))
 
-(define (is-literal? x)
+(define (literal? x)
   (or (boolean? x)
       (bigint? x)
       (string? x)))
 
-(define (is-simple-operand? x)
-  (or  (is-literal? x)(ident? x)))
+(define (literal-type literal)
+  (cond ((boolean? literal) 'boolean)
+        ((bigint? literal)  *default-int-type*)
+        ((string? literal)  'string)
+        (else (error "literal-type : not a literal : " literal))))
+
+(define (simple-operand? x)
+  (or (literal? x)(ident? x)))
 
 (define *rhs* #f)
 
@@ -1609,6 +1561,29 @@
   '(+ & ^ | ) ;; | )
   )
 
+(define (op-zero-elem op type)
+  ;; zero element for iterated ops
+  (case op
+    ((&& ==)    #t)
+    ((||)       #f)
+    ((-)        *big-0*)
+    ((* / **)   *big-1*)
+    ((+)
+     (cond ((eq? type 'string)    "")
+           ((integer-type? type)   *big-0*)
+           (else (error "???op-zero-elem of : " op " : for type : " type))))
+
+    ((&)
+     (cond ((eq? type 'boolean)   #t)
+           ((integer-type? type)  *big-m1*)
+           (else (error "???op-zero-elem of : " op " : for type : " type))))
+    
+    ((^ |) ;; |)
+     (cond ((eq? type 'boolean)   #f)
+           ((integer-type? type)   *big-0*)
+           (else (error "???op-zero-elem of : " op " : for type : " type))))
+    (else (error "???op-zero-elem of : " op))))
+    
 (define (integer-type? t)
   (and (pair? t) (eq? 'integer (car t))))
 
@@ -1712,7 +1687,12 @@
           )
 
          ((loopex? x)
-          (derive-type (construct-loopex-binop x) syms func-tbl struct-tbl))
+          ;; a bit tricky: a loopex is the only expression that
+          ;; also introduces a new symbol into the environment!
+          (derive-type (construct-loopex-binop x)
+                       (make-loopex-frame x syms)
+                       func-tbl
+                       struct-tbl))
 
          ((array-access? x)
           (peel-array
@@ -1773,6 +1753,20 @@
   ;; ---> this will have the same type as the loop expression
   `(,(get-loopex-op x) ,(get-loopex-expr x)  ,(get-loopex-expr x) ))
 
+(define (make-loopex-frame loopex syms)
+  ;; construct a frame for use inside a loopex
+  (let* ((new-frame (make-hash-table 1 atom-hash))
+         (new-syms  (cons new-frame syms)))
+    (define-var! new-syms (get-loopex-dummy loopex) *default-int-type*)
+    new-syms)
+  )
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (get-loop-dummy x) (cadr x))
+(define (get-loop-range x) (caddr x))
+(define (get-loop-stmt  x) (cadddr x))
+
 (define (handle-access-assign ass syms tg func-tbl struct-tbl)
 
   (set! *has-ass* ass)
@@ -1788,11 +1782,11 @@
   
   (define (make-simple x)
 
-    (dis "make-simple " x dnl)
+;;    (dis "make-simple " x dnl)
     
     (set! sss (cons (cons x syms) sss))
     
-    (if (is-simple-operand? x)
+    (if (simple-operand? x)
         x
         (let* ((nam     (tg 'next))
                (newtype (derive-type x syms func-tbl struct-tbl))
@@ -1808,9 +1802,9 @@
   
   (define (handle-access-expr a)
     
-    (dis "handle-access-expr " a dnl)
+;;    (dis "handle-access-expr " a dnl)
     
-    (cond ((is-simple-operand? a) a)
+    (cond ((simple-operand? a) a)
 
           ((eq? 'member-access (car a))
            (list 'member-access (handle-access-expr (cadr a)) (caddr a)))
@@ -1824,7 +1818,7 @@
           (else a)
           ))
   
-  (dis   "handle-access-assign : called    : "  ass dnl)
+;;  (dis   "handle-access-assign : called    : "  ass dnl)
   
   (let* ((lhs       (handle-access-expr (get-assign-lhs ass)))
          (rhs       (handle-access-expr (get-assign-rhs ass)))
@@ -1833,7 +1827,8 @@
                         this-ass
                         `(sequence ,@seq ,this-ass))))
 
-    (dis "handle-access-assign : returning : " res dnl)
+    (if (not (null? seq)) ;; print if changing
+        (dis "handle-access-assign : returning : " res dnl))
     res
     )
   )
@@ -1846,7 +1841,7 @@
   
   (define (recurse a) (handle-assign-rhs a syms tg func-tbl struct-tbl))
   
-  (dis "assignment   : " a dnl)
+;;  (dis "assignment   : " a dnl)
 
   (set! *a* (cons a *a*))
   (set! *syms* (cons syms *syms*))
@@ -1877,22 +1872,23 @@
                  
                  (if (null? seq)
                      a
-                     `(sequence ,@seq
-                                (assign ,lhs
-                                        (apply (id ,fnam)
-                                               ,@(map
-                                                  (lambda(x)
-                                                    ;; this is tricky:
-                                                    ;; list holds identifiers
-                                                    ;; and literals
-                                                    (if (symbol? x)  
-                                                        (list 'id x) ;; id
-                                                        x            ;; literal
-                                                        ))
-                                                      (reverse q)))))))
-
-
-                ((is-simple-operand? (car p))
+                     `(sequence
+                        ,@seq
+                        (assign ,lhs
+                                (apply (id ,fnam)
+                                       ,@(map
+                                          (lambda(x)
+                                            ;; this is tricky:
+                                            ;; list holds identifiers
+                                            ;; and literals
+                                            (if (symbol? x)  
+                                                (list 'id x) ;; id
+                                                x            ;; literal
+                                                ))
+                                          (reverse q)))))))
+                
+                
+                ((simple-operand? (car p))
                  (loop (cdr p) seq (cons (car p) q)))
 
                 (else
@@ -1913,8 +1909,8 @@
       (let* ((op (car rhs))
              (l  (cadr rhs))
              (r  (caddr rhs))
-             (complex-l (not (is-simple-operand? l)))
-             (complex-r (not (is-simple-operand? r)))
+             (complex-l (not (simple-operand? l)))
+             (complex-r (not (simple-operand? r)))
              )
         
         (cond
@@ -1967,7 +1963,7 @@
       (let ((op (car rhs))
             (x  (cadr rhs)))
         
-        (cond ((not (is-simple-operand? x))
+        (cond ((not (simple-operand? x))
                (let*
                    ((tempnam (tg 'next))
                     (type    (derive-type x syms func-tbl struct-tbl))
@@ -2008,6 +2004,8 @@
 (define assign-fnam #f)
 (define assign-fres #f)
 
+(define *last-copyio* #f)
+
 (define (inline-evals the-inits the-text func-tbl struct-tbl cell-info)
 
   (define initvars (find-referenced-vars the-inits))
@@ -2035,53 +2033,76 @@
       ;; an element-by-element type conversion will eventually need to
       ;; be performed.
       ;;
-      (dis dnl dnl "handle-actual      actual : " actual dnl)
-      (dis "handle-actual      formal : " formal dnl)
-      (if (is-literal? actual)
-          (list)
-          (begin
-            (dis "handle-actual syms      : " (get-symbols syms) dnl)
+
+      ;; here:
+      ;; 
+      ;; actual is an expression
+      ;; formal is a declarator
       
-            (let* ((id          (get-designator-id actual))
-                   (actual-type (retrieve-defn id syms))
-                   (formal-type (get-decl1-type formal))
-                   (formal-id   (get-decl1-id formal))
-                   (formal-dir  (get-decl1-dir formal))
-                   (copyin-id   (symbol-append formal-id call-sfx))
-                   (copyin-type (clarify-type formal-type
-                                              actual-type
-                                              actual))
+      (dis dnl dnl
+           "handle-actual      actual : " actual dnl) 
+      (dis "handle-actual      formal : " formal dnl)
+      
+      
+      (dis "handle-actual syms        : " (get-symbols syms) dnl)
 
-                   (newvar      (make-var1-decl copyin-id copyin-type))
-                   (newass-in   (make-assign `(id ,copyin-id) actual))
-                   (newass-out  (make-assign actual `(id ,copyin-id)))
-                   )
-              (define-var! syms copyin-id copyin-type)
-              (dis "handle-actual id          : " id dnl)
-              (dis "handle-actual formal      : " formal-id dnl)
-              (dis "handle-actual copyin-id   : " copyin-id dnl)
-              (dis "handle-actual formal type : " formal-type dnl)
-              (dis "handle-actual formal dir  : " formal-dir  dnl)
-              (dis "handle-actual copyin type : " copyin-type dnl)
-              (dis "handle-actual copyin  code: " newass-in dnl)
-              (dis "handle-actual copyout code: " newass-out dnl)
+      (if (not (simple-operand? actual))
+          'failed   ;; if it's an expression, report failure.
 
-              (set! ha-a actual)
-              (set! ha-at actual-type)
-              (set! ha-ft formal-type)
+          ;; else:
+          ;; it's either a literal or an identifier
+          
+          (let* (
+                 ;; analyze the formal, based on its declaration
+                 (formal-type (get-decl1-type formal))
+                 (formal-id   (get-decl1-id formal))
+                 (formal-dir  (get-decl1-dir formal))
 
-              (dis dnl dnl)
+                 ;; this is what the copyin variable will be called
+                 (copyin-id   (symbol-append formal-id call-sfx))
 
-              (cons (if (member formal-dir '(in inout))
-                        (list newvar newass-in)
-                        (list newvar))
-                    
-                    (if (member formal-dir '(inout out))
-                        (list newass-out)
-                        '())
-                    )
+                 (literal-actual (literal? actual))
+                 
+
+                 (actual-type
+                  (if literal-actual
+                      (literal-type actual)
+                      (let ((id          (get-designator-id actual)))
+                        (dis "handle-actual id          : " id dnl)
+                        (retrieve-defn id syms))))
+
+                 (copyin-type (clarify-type formal-type
+                                            actual-type
+                                            actual))
+                 
+                 (newvar      (make-var1-decl copyin-id copyin-type))
+                 (newass-in   (make-assign `(id ,copyin-id) actual))
+                 (newass-out  (make-assign actual `(id ,copyin-id)))
+                 )
+            (define-var! syms copyin-id copyin-type)
+            (dis "handle-actual formal      : " formal-id dnl)
+            (dis "handle-actual copyin-id   : " copyin-id dnl)
+            (dis "handle-actual formal type : " formal-type dnl)
+            (dis "handle-actual formal dir  : " formal-dir  dnl)
+            (dis "handle-actual copyin type : " copyin-type dnl)
+            (dis "handle-actual copyin  code: " newass-in dnl)
+            (dis "handle-actual copyout code: " newass-out dnl)
+            
+            (set! ha-a actual)
+            (set! ha-at actual-type)
+            (set! ha-ft formal-type)
+            
+            (dis dnl dnl)
+            
+            (cons (if (member formal-dir '(in inout))
+                      (list newvar newass-in)
+                      (list newvar))
+                  
+                  (if (member formal-dir '(inout out))
+                      (list newass-out)
+                      '())
+                  )
               
-              )
             )
           )
       )
@@ -2107,34 +2128,39 @@
             (let* ((formals    (get-function-formals fdef))
                    (copyinout  (map
                                 (lambda(a f)(handle-actual sfx a f))
-                                actuals formals))
-                   
-                   (copyin  (apply append (map car copyinout)))
-                   (copyout (apply append (map cdr copyinout)))
-
-                   (assign-result
-                    (if (null? lhs)
-                        '()
-                        (list (make-assign lhs (symbol-append fnam sfx)))))
-                   (seq
-                    (cons 'sequence
-                          (append copyin
-                                  (list fdef1text)
-                                  assign-result
-                                  copyout)))
-                   )
-              
-              (dis "actuals    : " actuals dnl)
-              (dis "formals    : " formals dnl)
-              (dis "fdef1text  : " fdef1text dnl)
-              (dis "copyin     : " copyin dnl)
-              (dis "copyout    : " copyout dnl)
-              (dis "seq        : " seq dnl)
-              
-              seq
-;;              (error)
+                                actuals formals)))
+              (set! *last-copyio* copyinout)
+              (if (member 'failed copyinout)
+                  fdef1text
+                  (let*(
+                        (copyin  (apply append (map car copyinout)))
+                        (copyout (apply append (map cdr copyinout)))
+                        
+                        (assign-result
+                         (if (null? lhs)
+                             '()
+                             (list (make-assign lhs `(id ,(symbol-append fnam sfx))))))
+                        (seq
+                         (cons 'sequence
+                               (append copyin
+                                       (list fdef1text)
+                                       assign-result
+                                       copyout)))
+                        )
+                    
+                    (dis "actuals    : " actuals dnl)
+                    (dis "formals    : " formals dnl)
+                    (dis "fdef1text  : " fdef1text dnl)
+                    (dis "copyin     : " copyin dnl)
+                    (dis "copyout    : " copyout dnl)
+                    (dis "seq        : " seq dnl)
+                    
+                    seq
+                    ;;              (error)
+                    )
+                  )
               )
-          )
+            )
         )
       )
 
@@ -2185,28 +2211,32 @@
 
   (define (enter-frame!)
     (set! syms (cons (make-hash-table 100 atom-hash) syms))
-    (dis "enter-frame! " (length syms) dnl)
+;;    (dis "enter-frame! " (length syms) dnl)
     )
   
   (define (exit-frame!)
-    (dis "exit-frame! " (length syms) " " (map (lambda(tbl)(tbl 'keys)) syms) dnl)
+;;    (dis "exit-frame! " (length syms) " " (map (lambda(tbl)(tbl 'keys)) syms) dnl)
     (set! syms (cdr syms))
     )
 
   (define (stmt-pre0-v s)
-    (dis "pre stmt  : " (stringify s) dnl)
+;;    (dis "pre stmt  : " (stringify s) dnl)
     (if (member (get-stmt-kw s) frame-kws) (enter-frame!))
 
     (case (get-stmt-kw s)
-      ((var1) (define-var! syms (get-var1-id s) (get-var1-type s))
-       (visitor s syms))
+      ((var1)
+       (define-var! syms (get-var1-id s) (get-var1-type s))
+       )
 
-      (else (visitor s syms))
+      ((parallel-loop sequential-loop)
+       (define-var! syms (get-loop-dummy s) *default-int-type*))
+         
       )
+    (visitor s syms)
     )
 
   (define (stmt-post s)
-    (dis "post stmt : " (get-stmt-kw s) dnl)
+;;    (dis "post stmt : " (get-stmt-kw s) dnl)
     (if (member (get-stmt-kw s) frame-kws) (exit-frame!))
     s
     )
@@ -2247,11 +2277,18 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(define *retrieve-defn-failed-sym* #f)
+(define *retrieve-defn-failed-syms* #f)
 
 (define (retrieve-defn sym syms)
   (let loop ((p syms))
     (if (null? p)
-        (error "retrieve-var : sym not found : " sym)
+        (begin
+          (set! *retrieve-defn-failed-sym* sym)
+          (set! *retrieve-defn-failed-syms* syms)
+          (error "retrieve-var : sym not found : " sym)
+          )
+        
         (let ((this-result ((car p) 'retrieve sym)))
           (if (eq? this-result '*hash-table-search-failed*)
               (loop (cdr p))
@@ -2263,7 +2300,7 @@
 
 (define (define-var! syms sym type)
   ((car syms) 'add-entry! sym type)
-  (dis "define-var! " sym " : " type " /// frame : " ((car syms) 'keys) dnl)
+;;  (dis "define-var! " sym " : " type " /// frame : " ((car syms) 'keys) dnl)
   )
 
 (define (get-symbols syms)
@@ -2298,6 +2335,79 @@
 
 (define (make-eval rhs) `(eval ,rhs))
 
+(define (global-simplify the-inits the-text func-tbl struct-tbl cell-inf)
+  (simplify-stmt the-text))
+
+(define (remove-assign-operate the-inits the-text func-tbl struct-tbl cell-info)
+
+  (define (visitor s)
+    (if (and (eq? 'assign-operate (get-stmt-type s))
+             (check-side-effects (get-assignop-lhs s)))
+        (make-assign (get-assignop-lhs s)
+                     `(,(get-assignop-op s)
+                       ,(get-assignop-lhs s)
+                       ,(get-assignop-increment s)))
+        s)
+    )
+
+  (visit-stmt the-text visitor identity identity)
+  )
+
+(define (check-side-effects expr)
+  ;; check whether an expression can have side effects
+  ;; returns #t if the expression *definitely not* has side effects
+  ;; returns #f if the expression *may* have side effects
+  (define result #t)
+
+  (define (visitor x)
+    (if (pair? x)
+        (case (car x)
+          ((apply call-intrinsic recv-expression) (set! result #f)))))
+
+  (visit-expr expr identity visitor identity)
+  result
+  )
+  
+  
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define *lx* #f)
+
+
+(define (generate-loop-statement-from-expression lhs rhs
+                                                 syms func-tbl struct-tbl)
+  (set! *lx* rhs)
+  (let* ((loop-op    (get-loopex-op rhs))
+         (loop-idx   (get-loopex-dummy rhs))
+         (loop-range (get-loopex-range rhs))
+         (loop-expr  (get-loopex-expr rhs))
+         (loop-frame (make-loopex-frame rhs syms))
+         (loop-type  (derive-type loop-expr loop-frame func-tbl struct-tbl))
+         (zero-elem  (op-zero-elem loop-op loop-type)))
+    `(sequence
+       (assign ,lhs
+               ,zero-elem )
+       (sequential-loop ,loop-idx
+                        ,loop-range
+                        (assign-operate ,loop-op ,lhs ,loop-expr)))))
+
+(define (remove-loop-expression s syms tg func-tbl struct-tbl)
+
+  (if (and (eq? 'assign (get-stmt-type s))
+           (ident? (get-assign-lhs s)))
+      
+      (let ( (lhs (get-assign-lhs s))
+             (rhs (get-assign-rhs s))
+             )
+        (if (loopex? rhs)
+            (generate-loop-statement-from-expression lhs rhs
+                                                     syms func-tbl struct-tbl)
+            s))
+      s)
+  )
+
+  
+
 
 
 (define (try-it the-text cell-info the-inits func-tbl struct-tbl)
@@ -2321,27 +2431,38 @@
 
   (define (enter-frame!)
     (set! syms (cons (make-hash-table 100 atom-hash) syms))
-    (dis "enter-frame! " (length syms) dnl)
+;;    (dis "enter-frame! " (length syms) dnl)
     )
 
   (define (exit-frame!)
-    (dis "exit-frame! " (length syms) " " (map (lambda(tbl)(tbl 'keys)) syms) dnl)
+    ;;    (dis "exit-frame! " (length syms) " " (map (lambda(tbl)(tbl 'keys)) syms) dnl)
+
+;;    (dis "exit-frame! " (length syms) dnl)
     (set! syms (cdr syms))
     )
 
   (define (stmt-check-enter s)
     (if (member (get-stmt-kw s) frame-kws) (enter-frame!))
-    (if (eq? 'var1 (get-stmt-kw s))
-        (define-var! syms (get-var1-id s) (get-var1-type s))) 
+    (case (get-stmt-kw s)
+      ((var1)
+       (define-var! syms (get-var1-id s) (get-var1-type s))
+       )
+
+      ((loop-expression)
+       (define-var! syms (get-loopex-dummy s) *default-int-type*)
+       )
+
+      ((parallel-loop sequential-loop)
+       (define-var! syms (get-loop-dummy s) *default-int-type*))
+         
+      )
     )
   
   (define (stmt-pre0 s)
-    (dis "pre stmt  : " (stringify s) dnl)
+;;    (dis "pre stmt  : " (stringify s) dnl)
     (stmt-check-enter s)
 
     (case (get-stmt-kw s)
-      ((var1) (define-var! syms (get-var1-id s) (get-var1-type s)) s)
-
       ((assign) (handle-assign-rhs s syms tg func-tbl struct-tbl))
 
       ((eval) ;; this is a function call, we make it a fake assignment.
@@ -2366,7 +2487,7 @@
     )
 
   (define (stmt-post s)
-    (dis "post stmt : " (get-stmt-kw s) dnl)
+;;    (dis "post stmt : " (get-stmt-kw s) dnl)
     (if (member (get-stmt-kw s) frame-kws) (exit-frame!))
     s
     )
@@ -2384,10 +2505,12 @@
   (dis dnl "visit inits ... " dnl dnl)
 
   (set! inits1
-    (prepostvisit-stmt (filter-unused the-inits *unused-globals*)
-                       stmt-pre0 stmt-post
-                       identity identity
-                       identity identity))
+        (prepostvisit-stmt
+         the-inits
+;;         (filter-unused the-inits *unused-globals*)
+         stmt-pre0 stmt-post
+         identity identity
+         identity identity))
 
   ;; then visit the program itself
   (dis dnl "visit program text ... " dnl dnl)
@@ -2415,8 +2538,15 @@
     )
 
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-  
-  (define the-passes (list handle-access-assign handle-assign-rhs))
+
+
+  (define the-passes (list
+                      (list 'assign handle-access-assign)
+                      (list 'assign handle-assign-rhs)
+                      (list 'global inline-evals)
+                      (list 'global global-simplify)
+                      (list 'global remove-assign-operate)
+                      (list 'assign remove-loop-expression)))
 
   (define (make-pre pass)
     (lambda(stmt)
@@ -2431,25 +2561,49 @@
         prog
         (loop2
 
-         (begin
-           (enter-frame!)
-           (let ((res
-                  (prepostvisit-stmt prog
-                                     (make-pre (car passes)) stmt-post
-                                     identity                identity
-                                     identity                identity)))
-             (exit-frame!)
-             res))
+         (let ((the-pass (car passes)))
+
+           (dis "========= COMPILER PASS : " the-pass " ===========" dnl)
                   
+           (cond ((eq? 'assign (car the-pass))
+                  (enter-frame!) ;; global frame
+
+                  ;; we should be able to save the globals from earlier...
+                  (dis "visiting initializations..." dnl)
+                  (prepostvisit-stmt 
+                   the-inits
+                   stmt-pre0 stmt-post
+                   identity identity
+                   identity identity)
+
+                  (dis "visiting program text..." dnl)
+
+                  (let ((res
+                         (prepostvisit-stmt prog
+                                            (make-pre (cadr the-pass)) stmt-post
+                                            identity                identity
+                                            identity                identity)))
+                    (exit-frame!)
+                    res))
+                 ((eq? 'global (car the-pass))
+                  ((cadr the-pass) the-inits prog func-tbl struct-tbl cell-info)
+                  )
+
+                 (else (error "unknown pass type " (car the-pass)))
+               )
+           )
          (cdr passes))))
 
   (let loop ((cur-prog text1)
              (prev-prog '()))
     (if (equal? cur-prog prev-prog)
-        (begin (dis "done." dnl)
+        (begin (dis "========= COMPILER REACHED A FIXED POINT " dnl)
+               (dis "========= TRANSFORMATIONS COMPLETE  " dnl)
                (set! text2 cur-prog)
                'ok)
-        (loop (loop2 cur-prog the-passes) cur-prog)))
+        (begin
+          (dis "========= PROGRAM CHANGED" dnl)
+          (loop (loop2 cur-prog the-passes) cur-prog))))
 
   
   'ok
@@ -2471,9 +2625,6 @@
 
 (define (identifier? x)
   (if (and (pair? x) (eq? 'id (car x)))) x #f)
-
-(define (literal? x)
-  (not (pair? x)))
 
 (define (directly-referenceable? x)
   ;; is x an expression that's implementable as the RHS of a 3-address

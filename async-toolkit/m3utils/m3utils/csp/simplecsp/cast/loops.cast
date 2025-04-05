@@ -73,3 +73,23 @@ define Q()()
   }
 }
 
+
+define R()()
+{
+  csp {
+    function f(int -x) : int =
+      (f = 2 * x
+       );
+    
+    int y = 1;
+    int z;
+
+    <;i:10:print(i)>;
+
+    z = f(<+i:10: i + i>);
+
+    [ true -> bool i; i = z < 3 ];
+    print (z);
+    
+  }
+}

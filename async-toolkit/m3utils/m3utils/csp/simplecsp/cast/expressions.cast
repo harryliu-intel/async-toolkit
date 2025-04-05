@@ -74,3 +74,16 @@ define S()()
     
   }
 }
+
+define T()()
+{
+  csp {
+    int x=1;
+
+    *[ int y = 2;
+       int z;
+
+       z = y * y + x * x
+     ]
+   }
+}
