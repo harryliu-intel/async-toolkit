@@ -814,6 +814,7 @@
   ;; pull the identifier out of a designator
   (set! *ddd* x)
   (cond ((eq? 'id (car x)) (cadr x))
+        ((eq? 'bits (car x)) (get-designator-id (cadr x)))
         ((eq? 'array-access (car x)) (get-designator-id (cadr x)))
         ((eq? 'member-access (car x)) (get-designator-id (cadr x)))
         (else #f)))
@@ -821,6 +822,7 @@
 (define (hash-designator d)
   ;; hash a designator
   (cond ((eq? 'id (car d)) (atom-hash (cadr d)))
+        ((eq? 'bits (car d)) (atom-hash (cadr d)))
         ((eq? 'array-access (car d))
          (+ (* 2 (hash-designator (cadr d)))
             (if (bigint? (caddr d)) (* 57 (BigInt.ToLongReal (caddr d))) 511)))
@@ -1808,6 +1810,12 @@
 
           ((eq? 'member-access (car a))
            (list 'member-access (handle-access-expr (cadr a)) (caddr a)))
+
+          ((eq? 'bits (car a))
+           (list 'bits
+                 (handle-access-expr (cadr a))
+                 (make-simple (caddr a))
+                 (make-simple (cadddr a))))
           
           ((eq? 'array-access (car a))
            
@@ -2394,7 +2402,7 @@
 (define (remove-loop-expression s syms tg func-tbl struct-tbl)
 
   (if (and (eq? 'assign (get-stmt-type s))
-           (ident? (get-assign-lhs s)))
+           (check-side-effects (get-assign-lhs s)))
       
       (let ( (lhs (get-assign-lhs s))
              (rhs (get-assign-rhs s))

@@ -90,6 +90,25 @@ define R()()
 
     [ true -> bool i; i = z < 3 ];
     print (z);
+
+    z{3} = 1;
+    print(z);
     
+  }
+}
+
+define S()()
+{
+  csp {
+    function f(int -x) : int =
+      (f = x;
+       );
+
+    int y[3];
+    int z;
+
+    y[f(0)] = 1;
+    
+    z{y[f(y[0])]} = 1;
   }
 }
