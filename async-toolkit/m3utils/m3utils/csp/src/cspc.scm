@@ -1513,6 +1513,8 @@
 (define (ident? x)
   (and (pair? x) (eq? (car x) 'id)))
 
+(define (make-ident sym) (list 'id sym))
+
 (define (literal? x)
   (or (boolean? x)
       (bigint? x)
@@ -1793,7 +1795,7 @@
         (let* ((nam     (tg 'next))
                (newtype (derive-type x syms func-tbl struct-tbl))
                (newvar  (make-var1-decl nam newtype))
-               (newass  (make-assign `(id ,nam) x))
+               (newass  (make-assign (make-ident nam) x))
                )
           (define-var! syms nam newtype)
           (dis "make simple adding " newvar dnl)
@@ -2414,6 +2416,105 @@
       s)
   )
 
+(define (make-binop op lst)
+  ;; given a list of expressions, make binary op across them
+  (cond ((null? lst) (error "make-binop of empty list"))
+        ((not (list? lst)) (error "make-binop : not a list : " lst))
+        ((= 1 (length lst)) (car lst))
+        ((= 2 (length lst)) `(,op ,(car lst) ,(cadr lst)))
+        (else `(,op ,(car lst) ,(make-binop op (cdr lst)))))
+  )
+
+(define nsgs '())
+
+(define (nonsimple-guards? s)
+  (set! nsgs (cons s nsgs))
+  ;; an if or do that has non-simple guards
+  (let* ((gcs  (cdr s))
+         (guards (map car gcs))
+         (simple (map simple-operand? guards))
+         (all-simple (eval (apply and simple))))
+    (not all-simple)
+    )
+  )
+
+(define rdr #f)
+(define (remove-do the-inits prog func-tbl struct-tbl cell-info)
+  (let ((tg (make-name-generator "remove-do")))
+
+    (define (visitor s)
+      (dis "s = " (stringify s) dnl)
+      (let ((kw (get-stmt-type s)))
+        (if (and (member kw '(do nondet-do))
+                 (nonsimple-guards? s))
+            
+            ;; get rid of it
+            (let* ((gcs   (cdr s))
+                   (ndone  (tg 'next 'not-done-))
+                   
+                   (vars  (map (lambda (gc) (tg 'next)) gcs))
+                   (grds  (map car gcs))  ;; guards
+                   (cmds  (map cadr gcs)) ;; commands
+
+                   (decls
+                    (map (lambda(nm)(make-var1-decl nm 'boolean)) vars))
+                   
+                   (assigns
+                    (map (lambda(v x)(make-assign `(id ,v) x))
+                         vars
+                         grds))
+
+                   (g-list  (map make-ident vars))
+                   
+                   (or-expr (make-binop '| g-list)) ; |))
+
+                   (ndone-decl  (make-var1-decl ndone 'boolean))
+                   (ndone-assign (make-assign (make-ident ndone)
+                                             or-expr))
+
+                   (if-grds
+                    (cons
+                     (list `(not ,(make-ident ndone)) 'skip)
+                     (map list g-list cmds)))
+
+                   (the-if (cons 'if if-grds))
+
+                   (the-body
+                    `(sequence ,@decls ,@assigns ,ndone-assign ,the-if))
+
+                   (the-loop
+                    `(do (,(make-ident ndone) ,the-body)))
+
+                   (res
+                    `(sequence ,ndone-decl ,the-loop))
+                   )
+
+              (dis "remove-do : " (stringify s) dnl)
+              (dis "remove-do : gcs   : " (stringify gcs) dnl)
+              (dis "remove-do : ndone : " (stringify ndone) dnl)
+              (dis "remove-do : vars  : " (stringify vars) dnl)
+              (dis "remove-do : grds  : " (stringify grds) dnl)
+              (dis "remove-do : cmds  : " (stringify cmds) dnl dnl)
+              (dis "remove-do : ndone-assign : " (stringify ndone-assign) dnl)
+              (dis "remove-do : the-if       : " (stringify the-if) dnl)
+              (dis "remove-do : the-body     : " (stringify the-body) dnl)
+
+              (dis "remove-do : the-loop     : " (stringify the-loop) dnl)
+
+              (set! rdr res)
+
+;;              (error)
+              
+              res
+              )
+            s
+            ) ;; fi
+        ) ;; tel
+      )
+
+    (visit-stmt prog visitor identity identity)
+    )
+  )
   
 
 
@@ -2554,6 +2655,7 @@
                       (list 'global inline-evals)
                       (list 'global global-simplify)
                       (list 'global remove-assign-operate)
+                      (list 'global remove-do)
                       (list 'assign remove-loop-expression)))
 
   (define (make-pre pass)
@@ -2744,21 +2846,25 @@
   
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(define *name-counter* 0) ;; guarantees all the names are unique
+
 (define (make-name-generator rootstring)
   ;;
   ;; return a temporary-name-generator
   ;; a procedure of zero arguments, which generates incrementing temp names
   ;;
   (let ((root                rootstring)
-        (counter              0))
+        (my-last-name        #f)
+        )
+
 
     (define (make-symbol n)
       (string->symbol(string-append root (stringify n))))
 
-    (lambda(cmd)
+    (lambda(cmd . x)
       (case cmd
         ((names)
-         (let loop ((i (- counter 1))
+         (let loop ((i (- *name-counter* 1))
                     (res '()))
            (if (= i -1)
                res
@@ -2766,12 +2872,13 @@
                
          )
 
-        ((cur)
-         (make-symbol counter))
+        ((last) my-last-name)
         
         ((next)
-         (let ((res (make-symbol counter)))
-           (set! counter (+ counter 1))
+         (let* ((z (make-symbol *name-counter*))
+                (res (if (null? x) z (symbol-append (car x) z))))
+           (set! my-last-name res)
+           (set! *name-counter* (+ *name-counter* 1))
            res))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

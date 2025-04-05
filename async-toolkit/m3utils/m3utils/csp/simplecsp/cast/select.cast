@@ -29,13 +29,57 @@ define SELECT()(bd(WIDTH) -L0, -L1, +R)
    }
 }
 
-define SYSTEM()()
+
+
+define P()(bd(WIDTH) -L[0..1], -M, +R; node +-n)
+{
+  csp {
+    function f(int i) : bool =
+      (f = #L[i] //; print(b2i(f))
+      );
+
+    *[[ f(0) -> L[0]?x
+      : f(1) -> L[1]?x
+      ];
+      print(x);
+      R!x
+      ]
+      }
+}
+
+define Q()(bd(WIDTH) -L[0..1], -M, +R; node +-n)
+{ // meaningless but syntactically unobjectionable
+  csp {
+    function f(int i) : bool =
+      (f = #L[i] //; print(b2i(f))
+      );
+
+    *[*[ f(0) -> L[0]?x
+       : f(1) -> L[1]?x
+       ];
+      print(x);
+      R!x
+      ]
+      }
+}
+
+define BITGEN()(bd(WIDTH) +R)
+{
+  csp { *[ R!0 ] }
+}
+
+define SYSTEM(int C)()
 {
   subcells {
-    bd(WIDTH) c0, c1, cx;
+    bd(WIDTH) c[0..1], cx, m;
+    node n = Vdd;
   
-    DRIVE() drive(c0, c1, cx);
-    SELECT() select(c0, c1, cx);
+    DRIVE() drive(c[0], c[1], cx);
+    [ C==0 -> SELECT() select(c[0], c[1], cx); ]
+    [ C==1 -> P() select(c, m, cx, n); BITGEN bitgen(m); ]
+    [ C==2 -> Q() select(c, m, cx, n); BITGEN bitgen(m); ]
   } 
 }
+
+
 
