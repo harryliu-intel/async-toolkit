@@ -2443,7 +2443,7 @@
   (let ((tg (make-name-generator "remove-do")))
 
     (define (visitor s)
-      (dis "s = " (stringify s) dnl)
+;;      (dis "s = " (stringify s) dnl)
       (let ((kw (get-stmt-type s)))
         (if (and (member kw '(do nondet-do))
                  (nonsimple-guards? s))
@@ -2488,6 +2488,9 @@
                    (res
                     `(sequence ,ndone-decl ,the-loop))
                    )
+
+              ;; we could insert a check for two guards for
+              ;; deterministic dos.
 
               (dis "remove-do : " (stringify s) dnl)
               (dis "remove-do : gcs   : " (stringify gcs) dnl)
@@ -2707,8 +2710,21 @@
   (let loop ((cur-prog text1)
              (prev-prog '()))
     (if (equal? cur-prog prev-prog)
-        (begin (dis "========= COMPILER REACHED A FIXED POINT " dnl)
-               (dis "========= TRANSFORMATIONS COMPLETE  " dnl)
+        (begin
+          (dis
+           "******************************************************************************" dnl)
+          (dis
+           "********************                                      ********************" dnl)
+          (dis
+           "********************  COMPILER HAS REACHED A FIXED POINT  ********************" dnl)
+          (dis
+           "********************                                      ********************" dnl)
+          (dis
+           "********************       TRANSFORMATIONS COMPLETE       ********************" dnl)
+          (dis
+           "********************                                      ********************" dnl)
+          (dis
+           "******************************************************************************" dnl)
                (set! text2 cur-prog)
                'ok)
         (begin

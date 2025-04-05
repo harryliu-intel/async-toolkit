@@ -1,19 +1,37 @@
-A proposal for the semantics of if ([...]) in Fulcrum-CSP
-=========================================================
 
-Consider the selection statement
+A proposal for the semantics of selection ([...]) in Fulcrum-CSP
+================================================================
+
+mika.nystroem@intel.com
+April 5, 2025
+
+We discuss the implementation of the selection statement (also
+known as if) in Fulcrum-CSP, for arbitrary guard expressions.
+
+Fulcrum-CSP is the dialect of the CSP (Communicating Sequential
+Processes) language (Hoare 1978) developed at Fulcrum Microsystems
+(now Intel Corp.)  It is most directly based on Martin's Communicating
+Hardware Processes (Martin 1986), which added the probe construct to
+Hoare's CSP, together with other changes.  Fulcrum-CSP differs from
+its ancestors in that it has been embedded in a complete hardware
+description language (Fulcrum-CAST) and has been used to implement a
+long lineage of chips at Fulcrum and Intel.  As a result of the industrial
+use of the language, Fulcrum-CSP has a much richer set of concrete
+programming constructs than its ancestors.
+
+Consider the CSP selection statement
 
 [  A -> P
 [] B -> Q
 ]
 
 where A and B are predicates and P and Q are program fragments.  In
-the context of the if statement, A and B are referred to as guards,
-and P and Q are called commands; the combination A -> P is called a
-guarded command.  This nomenclature derives from Dijkstra's Guarded
-Command Language (Dijkstra 1975ab).  Dijkstra used "if...[]...fi" as his syntax,
-so the selection statement is sometimes referred to as an if
-statement.
+the context of the selection statement, A and B are referred to as
+guards, and P and Q are called commands; the combination A -> P is
+called a guarded command.  This nomenclature derives from Dijkstra's
+Guarded Command Language (Dijkstra 1975ab).  Dijkstra used
+"if...[]...fi" as his syntax, so the selection statement is sometimes
+referred to as an if statement.
 
 The machine implementation of a predicate is a boolean expression.  In
 Fulcrum-CSP, the boolean expressions implementing A and B can be
@@ -22,10 +40,13 @@ the context.
 
 The freedom given by Fulcrum-CSP makes the implementation of the
 selection challenging.  For example, A and B can contain Fulcrum-CSP
-functions, which themselves can block internally, have side effects,
-etc.  While most of these behaviors are simply unwanted and useless,
-some of them may have use and we probably don't want to ban every
-"unconventional" coding of a guard.
+functions, which themselves can block internally, communicate with
+other processes, have side effects, etc.  While most of these
+behaviors are simply unwanted and useless within a guard, some of them
+may have use and we probably don't want to ban every "unconventional"
+coding of a guard.  (If we wanted to do that, we would instead have to
+define the word "unconventional", and that is probably even more
+difficult than simply giving some meaning to dubious constructs.)
 
 We propose the following semantics for the selection.
 
@@ -36,9 +57,9 @@ Consider the selection
 that is, [ G0 -> S0 [] G1 -> S1 [] ... [] GN-1 -> SN-1 ]
 
 The semantics of the execution will be given as the regularly
-understood semantics of the selection statement (from Martin 1986)
+understood semantics of the selection statement (Martin 1986):
 
-) The execution of the selection command
+The execution of the selection command
 [G1---~Sn [] ... [] G,---~Sn], where G1 through Gn
 are Boolean expressions, and S1 through Sn, are
 program parts, (Gi is called a "guard", and
@@ -48,29 +69,39 @@ holds. If  ~(G1 v... v Gn) holds, the execution
 of the command is suspended until (G1 v ... v
 Gn) holds.
 
-with an additional statement as follows
+with an additional statement now added as follows
 
 The number of times the guards are evaluated is indeterminate, but if
-guarded command Si executes, then guard Gi has been evaluated at least
-once.  (Guards G0..Gi-1 and Gi+1..GN-1 may have been evaluated zero
-times, one time, or many times.)
+command Si executes, then guard Gi has been evaluated at least once.
+
+(This means that Guards G0..Gi-1 and Gi+1..GN-1 may have been evaluated
+zero times, one time, or many times.)
 
 The rationale behind this added semantics for the guard evaluations is
 that it allows for the use of boolean expressions that, e.g, call
-functions or even ones that have side effects, as long as they are
-idempotent.  Of course, many other types of code that could be run
-within the guard evaluations remains useless, but our concern here is
-not to come up with a complete set of rules for what can "reasonably"
-be put in a selection guard, merely to propose a usable semantics for
-these guard expressions that are more powerful than what Martin had in
-mind.
+functions or even ones that have side effects, which might be useful
+as long as they are idempotent.  Of course, many other types of code
+that could be run within the guard evaluations remain useless, but our
+concern here is not to come up with a complete set of rules for what
+can "reasonably" be put in a selection guard, merely to propose a
+usable semantics for these guard expressions that are more powerful
+than what Martin had in mind.
 
 
 A reference implementation
 ==========================
 
 This is to show that the definition makes sense from the point of view
-of the implementer.  Other implementations are possible.
+of the implementer.  Other implementations are possible; I do not even
+mean to suggest that the below should be the preferred implementation.
+
+By implementation, we mean that we will implement the selection
+statement, and later, the do-loop (which is easier), in terms of
+simple guarded commands.  By simple guarded commands, we mean guarded
+commands where the guards consist only of boolean literals or simple
+boolean expressions consisting of single boolean variables.  The
+semantics of the evaluation of such simple guards is obvious, and they
+are easy to implement in any reasonable environment.
 
 Consider the reference set of the guards Q, where an object is a
 member of the reference set if and only if it is referenced by the
@@ -88,15 +119,18 @@ We further introduce concurrency control in terms of lock() and
 unlock(), which prevent other processes from changing the values of
 the objects in R during the evaluation time of the selection;
 waitfor(R) unlocks R while waiting, as in Hoare's monitors (Hoare
-1974) .  In a sequential simulator these statements can implemented as
-no-ops.  An allowable implementation of lock(), unlock(), and
-waitfor() in a concurrent system would be to have lock() make a local
-copy of R, on which the guards Gi are evaluated, and have waitfor()
-wait for a change from the previous local copy.  This implementation
-makes the locking local to the process being implemented, as it is only
-applied to its own interface channels and interface nodes.
+1974)---another way of looking at our implementation is that the guard
+evaluation block is itself a monitor.  In a sequential simulator the
+lock/unlock statements can implemented as no-ops.  An allowable
+implementation of lock(), unlock(), and waitfor() in a concurrent
+system would be to have lock() make a local copy of R, on which the
+guards Gi are evaluated, and have waitfor() wait for a change from the
+previous local copy.  This implementation makes the locking local to
+the process being implemented, as it is only applied to its own
+interface channels and interface nodes.
 
-We now implement the selection in terms of iteration (Dijkstra's do...od).
+We now implement the selection in terms of iteration (Dijkstra's
+do...od).
 
 We introduce auxiliary variables as follows:
 
@@ -151,8 +185,8 @@ the selection to deterministic Fulcrum-CSP code.  The only new
 construct is waitfor, together with the concept of the activation set.
 
 Finding the activation set for an arbitrary set of guards requires
-traversing the definitions of any functions used in the guards,
-which means that the functions must be instantiated within the processes
+traversing the definitions of any functions used in the guards, which
+means that the functions must be instantiated within the processes
 where they are to be used, since Fulcrum-CSP/CAST functions capture
 variables by name.
 
@@ -189,7 +223,8 @@ add an assertion as follows
 
    assert(~<| i : N : <| j : N : ((i != j) & gi & gj) > >)
 
-to check for multiply enabled guards.
+to check for multiply enabled guards.  (The same applies to the
+deterministic selection statement.)
 
 
 
@@ -211,4 +246,5 @@ Hoare 1974.
 C. A. R. Hoare.  Monitors : An operating system structuring concept.
 CACM 17(10), 1974.
 
-
+Hoare 1978
+C. A. R. Hoare.  Communicating sequential processes.  CACM 21(8), 1978.
