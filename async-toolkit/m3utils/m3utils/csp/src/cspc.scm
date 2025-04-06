@@ -2075,7 +2075,7 @@
     )
   )
 
-;; (reload)(loaddata! "expressions_p") (try-it *the-text* *cellinfo* *the-inits*)
+;; (reload)(loaddata! "expressions_p") (try-it *the-text* *cellinfo* *the-inits* *the-func-tbl* *the-struct-tbl*)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define *eval-s* '())
@@ -2790,7 +2790,7 @@
   (define the-passes (list
                       (list 'assign handle-access-assign)
                       (list 'assign handle-assign-rhs)
-                      (list 'eval handle-eval)
+                      (list 'eval   handle-eval)
                       (list 'global inline-evals)
                       (list 'global global-simplify)
                       (list 'global remove-assign-operate)
@@ -2865,14 +2865,17 @@
           (dis
            "******************************************************************************" dnl)
                (set! text2 cur-prog)
-               'ok)
+               'text2)
         (begin
           (dis "========= PROGRAM CHANGED" dnl)
           (loop (loop2 cur-prog the-passes) cur-prog))))
 
   
-  'ok
   )
+
+(define (compile!)
+  (try-it *the-text* *cellinfo* *the-inits* *the-func-tbl* *the-struct-tbl*))
+
 
 (define (mn) (make-name-generator "t"))
 
@@ -3355,7 +3358,7 @@
 (define lisp0 #f)
 (define lisp1 #f)
 
-(loaddata! *the-example*)
+;;(loaddata! *the-example*)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 

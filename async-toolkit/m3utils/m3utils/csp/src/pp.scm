@@ -28,5 +28,5 @@
 
 
 (define (pp lst . n) ;; pretty-print
-  (pp-depth lst (if (null? n) 1 (car n)) 0)
+  (pp-depth lst (if (null? n) 100 (car n)) 0)
   #t)
