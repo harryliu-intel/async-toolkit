@@ -290,6 +290,8 @@
       
       (cond ((simple-operand? a) a)
 
+            ((null? a) a)
+
             ((eq? 'member-access (car a))
              (list 'member-access (handle-access-rhs (cadr a)) (caddr a)))
 

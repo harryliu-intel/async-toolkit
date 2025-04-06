@@ -1917,7 +1917,7 @@
              (prev-prog '()))
     (if (equal? cur-prog prev-prog)
         (begin
-          (dis
+          (dis go-grn-bold-term
            "******************************************************************************" dnl)
           (dis
            "********************                                      ********************" dnl)
@@ -1930,12 +1930,12 @@
           (dis
            "********************                                      ********************" dnl)
           (dis
-           "******************************************************************************" dnl)
+           "******************************************************************************" reset-term dnl)
                (set! text2 cur-prog)
                'text2)
         
         (begin  ;; program not equal, must continue
-          (dis "========= PROGRAM CHANGED" dnl)
+          (dis *program-changed* dnl)
           (loop (loop2 cur-prog the-passes) cur-prog))))
   )
 
@@ -2068,6 +2068,20 @@
   (recurse the-passes)
   )
 
+;; Select Graphic Rendition
+(define sgr (list->string (list (integer->char 27))))
+
+(define go-grn-bold-term (string-append sgr "[32;1m"))
+(define go-red-bold-term (string-append sgr "[31;1m"))
+(define reset-term       (string-append sgr "[0m"))
+
+(define *program-changed*
+    (string-append
+              go-red-bold-term
+             "============================  PROGRAM CHANGED"
+              reset-term
+              ))
+
 (define (manual-pass proc prog)
 
   ;; use this to run a single pass on the program
@@ -2078,10 +2092,10 @@
          (res (run-pass
                pass prog *cellinfo* *the-inits* *the-func-tbl* *the-struct-tbl*)))
 
-    (dis "============================  " (if (equal? prog res)
-         "no change"
-         "PROGRAM CHANGED"
-         )
+    (dis (if (equal? prog res)
+             "============================  no change"
+             *program-changed*
+             )
          dnl)
     
     res
