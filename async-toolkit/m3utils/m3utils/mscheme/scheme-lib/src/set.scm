@@ -48,7 +48,7 @@
                  (map (lambda(k)(new 'insert! k)) 
                       (append (res 'keys) ((car args) 'keys)))
                  new))
-
+              
               ((diff)
                (let ((new (make-set make-hash-table)))
                  (map (lambda(k)(new 'insert! k)) 

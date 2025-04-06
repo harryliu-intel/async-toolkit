@@ -161,6 +161,13 @@ This reduces the selection statement to a sequential evaluation of the
 guards followed by a deterministic selection based on only boolean
 variables (not expressions), plus a waitfor on the activation set R.
 
+An alternative implementation that would be more efficient for larger
+selections would be one that maintains a separate activation set for
+each guard.  Such an implementation would only need to re-evaluate
+a subset of the guards whenever a change is reported from an
+interface object.
+
+
 Nondeterministic selection
 ==========================
 
