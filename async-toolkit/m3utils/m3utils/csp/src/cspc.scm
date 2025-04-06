@@ -831,7 +831,7 @@
 ;; because structure types are defined in a separate space to the
 ;; text of the CSP process.
 
-(define (array-type? t) (eq? 'array (car t)))
+(define (array-type? t) (and (pair? t) (eq? 'array (car t))))
 
 (define (get-array-extent      at)  (cadr at))
 (define (get-array-elem-type   at)  (caddr at))
@@ -1085,40 +1085,7 @@
 (define (find-declaration-vars lisp) ;; multiset of declarations
   (map cadr (map cadadr (find-var1-stmts lisp))))
 
-(define (rename-id lisp from to)
-  (define (expr-visitor x)
-     (if (and (pair? x) (eq? 'id (car x)) (eq? from (cadr x)))
-         (list 'id to)
-         x
-         )
-   )
-  
-  (define (stmt-visitor s)
-    ;; the only place that an identifier appears outside of expressions
-    ;; is in "var1" statements -- and in function decls
-    ;; and in loops...
-    (case (get-stmt-type s)
-      ((var1) (if  (equal? `(id ,from) (cadadr s))
-                   `(var1 (decl1 (id ,to) ,@(cddadr s)))
-                   s)
-       )
-
-      ((sequential-loop parallel-loop)
-       (let ((kw (car s))
-             (idxvar (cadr s))
-             (range  (caddr s))
-             (stmt   (cadddr s)))
-
-         (list kw (if (eq? idxvar from) to idxvar) range stmt)
-         )
-       )
-      
-      (else s)
-      )
-    )
-
-  (visit-stmt lisp stmt-visitor expr-visitor identity)
-)
+(load "rename.scm")
 
 (define (count-declarations of stmt)
   (count-in of (find-declaration-vars stmt)))
@@ -1563,7 +1530,7 @@
 (load "handle-assign.scm")
 
 
-;; (reload)(loaddata! "expressions_p") (try-it *the-text* *cellinfo* *the-inits* *the-func-tbl* *the-struct-tbl*)
+;; (reload)(loaddata! "expressions_p") (run-compiler! *the-text* *cellinfo* *the-inits* *the-func-tbl* *the-struct-tbl*)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define *eval-s* '())
@@ -1582,11 +1549,27 @@
 (load "clarify.scm")
 (load "inline.scm")
 (load "symtab.scm")
-
+(load "sensitivity.scm")
+(load "selection.scm")          
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(load "sensitivity.scm")
+
+(define (find-stmt oftype stmt)
+  (let ((res #f))
+
+    (define (visitor s)
+      (if (or (eq? oftype s)
+              (and (pair? s) (eq? oftype (car s))))
+          (begin
+            (set! res s)
+            'cut
+            )
+          s))
+    (visit-stmt stmt visitor identity identity)
+    res
+    )
+  )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -1600,7 +1583,7 @@
 (define (run-one nm)
   (reload)
   (loaddata! nm)
-  (try-it *the-text* *cellinfo* *the-inits* *the-func-tbl* *the-struct-tbl*)
+  (run-compiler! *the-text* *cellinfo* *the-inits* *the-func-tbl* *the-struct-tbl*)
   (find-applys text2)
   (set! xx (inline-evals *the-inits* text2 *the-func-tbl* *the-struct-tbl* *cellinfo*))
   (set! yy (inline-evals *the-inits* xx    *the-func-tbl* *the-struct-tbl* *cellinfo*))
@@ -1747,18 +1730,27 @@
 
 (define nsgs '())
 
+(define (get-guarded-gcs guarded)
+  (cdr guarded))
+
+(define (simple-guard? guard)
+  (or (eq? 'else guard)
+      (simple-operand? guard)))
+
 (define (nonsimple-guards? s)
   (set! nsgs (cons s nsgs))
   ;; an if or do that has non-simple guards
-  (let* ((gcs  (cdr s))
+
+  (let* ((gcs    (get-guarded-gcs s))
          (guards (map car gcs))
-         (simple (map simple-operand? guards))
+         (simple (map simple-guard? guards))
          (all-simple (eval (apply and simple))))
     (not all-simple)
     )
   )
 
 (define rdr #f)
+
 (define (remove-do the-inits prog func-tbl struct-tbl cell-info)
   (let ((tg (make-name-generator "remove-do")))
 
@@ -1838,7 +1830,19 @@
     (visit-stmt prog visitor identity identity)
     )
   )
+
+(define (simplify-if the-inits prog func-tbl struct-tbl cell-info)
+
+  (define (visitor s)
+    (if (member (get-stmt-type s) '(if nondet-if))
+        (make-selection-implementation s func-tbl cell-info)
+        s
+        )
+    )
   
+  (visit-stmt prog visitor identity identity)
+  )
+
 (define (handle-eval s syms tg func-tbl struct-tbl)
 
   (dis "handle-eval " s dnl)
@@ -1856,10 +1860,28 @@
     )
   )
 
+(load "dead.scm")  
 
-(define (try-it the-text cell-info the-inits func-tbl struct-tbl)
+(define the-passes (list
+                    (list 'assign handle-access-assign)
+                    (list 'recv   handle-access-recv)
+                    (list 'send   handle-access-recv)
+                    (list 'assign handle-assign-rhs)
+                    (list 'eval   handle-eval)
+                    (list 'global inline-evals)
+                    (list 'global global-simplify)
+                    (list 'global remove-assign-operate)
+                    (list 'global remove-do)
+                    (list 'global simplify-if)
+                    (list 'assign remove-loop-expression)))
+
+(define *the-pass-results* '())
+
+(define (run-compiler! the-text cell-info the-inits func-tbl struct-tbl)
 
   (define syms '())
+
+  (set! *the-pass-results* '())
 
   (define tg (make-name-generator "temp"))
   
@@ -1874,8 +1896,56 @@
 
   (define lisp (analyze-program the-text cell-info initvars))
 
-;;  (error "here")
+  ;; (dead-code) went here
 
+  
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+  (define (loop2 prog passes)
+    (cond ((null? passes) prog)
+
+          (else
+           (loop2
+            (let ((the-pass (car passes)))
+              (run-pass the-pass prog cell-info the-inits func-tbl struct-tbl)
+              )
+            (cdr passes)
+            ))))
+
+  (let loop ((cur-prog lisp)
+             (prev-prog '()))
+    (if (equal? cur-prog prev-prog)
+        (begin
+          (dis
+           "******************************************************************************" dnl)
+          (dis
+           "********************                                      ********************" dnl)
+          (dis
+           "********************  COMPILER HAS REACHED A FIXED POINT  ********************" dnl)
+          (dis
+           "********************                                      ********************" dnl)
+          (dis
+           "********************       TRANSFORMATIONS COMPLETE       ********************" dnl)
+          (dis
+           "********************                                      ********************" dnl)
+          (dis
+           "******************************************************************************" dnl)
+               (set! text2 cur-prog)
+               'text2)
+        
+        (begin  ;; program not equal, must continue
+          (dis "========= PROGRAM CHANGED" dnl)
+          (loop (loop2 cur-prog the-passes) cur-prog))))
+  )
+
+(define (run-pass the-pass prog cell-info the-inits func-tbl struct-tbl)
+  (dis "========= COMPILER PASS : " the-pass " ===========" dnl)
+
+  (define syms '())
+
+  (define tg (make-name-generator "temp"))
+  
   (define (enter-frame!)
     (set! syms (cons (make-hash-table 100 atom-hash) syms))
 ;;    (dis "enter-frame! " (length syms) dnl)
@@ -1888,23 +1958,6 @@
     (set! syms (cdr syms))
     )
 
-  (define (stmt-check-enter s)
-    (if (member (get-stmt-kw s) frame-kws) (enter-frame!))
-    (case (get-stmt-kw s)
-      ((var1)
-       (define-var! syms (get-var1-id s) (get-var1-type s))
-       )
-
-      ((loop-expression)
-       (define-var! syms (get-loopex-dummy s) *default-int-type*)
-       )
-
-      ((parallel-loop sequential-loop)
-       (define-var! syms (get-loop-dummy s) *default-int-type*))
-         
-      )
-    )
-  
   (define (stmt-pre0 s)
 ;;    (dis "pre stmt  : " (stringify s) dnl)
     (stmt-check-enter s)
@@ -1933,70 +1986,6 @@
       )
     )
 
-  (define (stmt-post s)
-;;    (dis "post stmt : " (get-stmt-kw s) dnl)
-    (if (member (get-stmt-kw s) frame-kws) (exit-frame!))
-    s
-    )
-
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-  ;;
-  ;; EXAMPLE OF CREATING SYMBOL TABLE during visitation
-  ;;
-  
-  (dis dnl "creating global frame... " dnl)
-  
-  (enter-frame!) ;; global frame
-
-  ;; first visit the inits
-  (dis dnl "visit inits ... " dnl dnl)
-
-  (set! inits1
-        (prepostvisit-stmt
-         the-inits
-;;         (filter-unused the-inits *unused-globals*)
-         stmt-pre0 stmt-post
-         identity identity
-         identity identity))
-
-  ;; then visit the program itself
-  (dis dnl "visit program text ... " dnl dnl)
-
-;;  (error "here")
-  
-  (set! text1
-    (prepostvisit-stmt (simplify-stmt lisp)
-                       stmt-pre0 stmt-post
-                       identity identity
-                       identity identity))
-
-;;  (error)
-  (exit-frame!) ;; and leave the global frame
-  
-  (define (stmt-pre1 s)
-    (dis "pre stmt  : " (stringify s) dnl)
-    (stmt-check-enter s)
-
-    (case (get-stmt-kw s)
-      ((assign) (handle-access-assign s syms tg func-tbl struct-tbl))
-
-      (else s)
-      )
-    )
-
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-
-  (define the-passes (list
-                      (list 'assign handle-access-assign)
-                      (list 'assign handle-assign-rhs)
-                      (list 'eval   handle-eval)
-                      (list 'global inline-evals)
-                      (list 'global global-simplify)
-                      (list 'global remove-assign-operate)
-                      (list 'global remove-do)
-                      (list 'assign remove-loop-expression)))
-
   (define (make-pre stmt-type pass)
     (lambda(stmt)
       ;; this takes a "pass" and wraps it up so the symbol table is maintained
@@ -2005,76 +1994,106 @@
           (pass stmt syms tg func-tbl struct-tbl)
           stmt)))
   
-  (define (loop2 prog passes)
-    (if (null? passes)
-        prog
-        (loop2
+  (define (stmt-check-enter s)
+    (if (member (get-stmt-kw s) frame-kws) (enter-frame!))
+    (case (get-stmt-kw s)
+      ((var1)
+       (define-var! syms (get-var1-id s) (get-var1-type s))
+       )
 
-         (let ((the-pass (car passes)))
+      ((loop-expression)
+       (define-var! syms (get-loopex-dummy s) *default-int-type*)
+       )
 
-           (dis "========= COMPILER PASS : " the-pass " ===========" dnl)
-                  
-           (cond ((member (car the-pass) '(assign eval))
-                  
-                  (enter-frame!) ;; global frame
-
-                  ;; we should be able to save the globals from earlier...
-                  (dis "visiting initializations..." dnl)
-                  (prepostvisit-stmt 
-                   the-inits
-                   stmt-pre0 stmt-post
-                   identity identity
-                   identity identity)
-
-                  (dis "visiting program text..." dnl)
-
-                  (let ((res
-                         (prepostvisit-stmt prog
-                                            (make-pre
-                                             (car the-pass)
-                                             (cadr the-pass)) stmt-post
-                                            identity                identity
-                                            identity                identity)))
-                    (exit-frame!)
-                    res))
-                 ((eq? 'global (car the-pass))
-                  ((cadr the-pass) the-inits prog func-tbl struct-tbl cell-info)
-                  )
-
-                 (else (error "unknown pass type " (car the-pass)))
-               )
-           )
-         (cdr passes))))
-
-  (let loop ((cur-prog text1)
-             (prev-prog '()))
-    (if (equal? cur-prog prev-prog)
-        (begin
-          (dis
-           "******************************************************************************" dnl)
-          (dis
-           "********************                                      ********************" dnl)
-          (dis
-           "********************  COMPILER HAS REACHED A FIXED POINT  ********************" dnl)
-          (dis
-           "********************                                      ********************" dnl)
-          (dis
-           "********************       TRANSFORMATIONS COMPLETE       ********************" dnl)
-          (dis
-           "********************                                      ********************" dnl)
-          (dis
-           "******************************************************************************" dnl)
-               (set! text2 cur-prog)
-               'text2)
-        (begin
-          (dis "========= PROGRAM CHANGED" dnl)
-          (loop (loop2 cur-prog the-passes) cur-prog))))
-
+      ((parallel-loop sequential-loop)
+       (define-var! syms (get-loop-dummy s) *default-int-type*))
+         
+      )
+    )
   
+  (define (stmt-post s)
+;;    (dis "post stmt : " (get-stmt-kw s) dnl)
+    (if (member (get-stmt-kw s) frame-kws) (exit-frame!))
+    s
+    )
+
+  (let ((pass-result
+         (cond ((member (car the-pass) '(assign eval recv send))
+                
+                (enter-frame!) ;; global frame
+                
+                ;; we should be able to save the globals from earlier...
+                (dis "visiting initializations..." dnl)
+                (prepostvisit-stmt 
+                 the-inits
+                 stmt-pre0 stmt-post
+                 identity identity
+                 identity identity)
+                
+                (dis "visiting program text..." dnl)
+                
+                (let ((res
+                       (prepostvisit-stmt prog
+                                          (make-pre
+                                           (car the-pass)
+                                           (cadr the-pass)) stmt-post
+                                           identity                identity
+                                           identity                identity)))
+                  (exit-frame!)
+                  res))
+               ((eq? 'global (car the-pass))
+                ((cadr the-pass) the-inits prog func-tbl struct-tbl cell-info)
+                )
+               
+               (else (error "unknown pass type " (car the-pass)))
+               )
+         )
+        )
+
+    (set! *the-pass-results*
+          (cons
+           (list the-pass pass-result)
+           *the-pass-results*))
+                              
+    pass-result
+    )
+  )
+
+(define (find-pass proc)
+
+  (define (recurse p)
+    (cond ((null? p) #f)
+          ((equal? proc (cadar p)) (car p))
+          (else (recurse (cdr p)))))
+  (recurse the-passes)
+  )
+
+(define (manual-pass proc prog)
+
+  ;; use this to run a single pass on the program
+  ;; 
+  ;; e.g., (manual-pass inline-evals <program>)
+  
+  (let* ((pass (find-pass proc))
+         (res (run-pass
+               pass prog *cellinfo* *the-inits* *the-func-tbl* *the-struct-tbl*)))
+
+    (dis "============================  " (if (equal? prog res)
+         "no change"
+         "PROGRAM CHANGED"
+         )
+         dnl)
+    
+    res
+    )
   )
 
 (define (compile!)
-  (try-it *the-text* *cellinfo* *the-inits* *the-func-tbl* *the-struct-tbl*))
+  (run-compiler! *the-text*
+                 *cellinfo*
+                 *the-inits*
+                 *the-func-tbl*
+                 *the-struct-tbl*))
 
 
 (define (mn) (make-name-generator "t"))

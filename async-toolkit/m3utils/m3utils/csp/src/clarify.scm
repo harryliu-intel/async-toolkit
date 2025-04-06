@@ -31,9 +31,11 @@
               "clarify-type actual-type   " actual-type dnl
               "clarify-type formal-type   " formal-type dnl)
          
-         (if (array-type? formal-type)
-             (replace-array-sizes formal-type actual-type)
-             formal-type))
+         (cond ((array-type? formal-type)
+                (replace-array-sizes formal-type actual-type)
+                formal-type)
+
+               (else formal-type)))
         
         ((array-access)
          (if (not eq? 'array (car actual-type))

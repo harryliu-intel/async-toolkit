@@ -1,6 +1,8 @@
 module select;
 import core.noc.router.forward.mesh_forward;
 import core.noc.router.forward.fix_int0;
+import lib.bd.6T.ecc.ecc_constants;
+import lib.bd.6T.ecc.ecc;
 
 // cosimulate first.SYSTEM {csp,subcells}
 
@@ -49,6 +51,111 @@ define P()(bd(WIDTH) -L[0..1], -M, +R; node +-n)
       }
 }
 
+define P1()(bd(WIDTH) -L[0..1], -M, +R; node +-n)
+{
+  csp {
+    function f(int i) : bool =
+      (f = #L[i] //; print(b2i(f))
+      );
+
+    function g(bool x) : bool =
+      (g = x;
+       print(" g is here! " + x);
+       );
+
+    *[[ g(g(g(f(0)))) -> L[0]?x
+      : f(1) -> L[1]?x
+      ];
+      print(x);
+      R!x
+      ]
+      }
+}
+
+define P2()(bd(WIDTH) -L[0..1], -M, +R; node +-n)
+{
+  csp {
+    function f(int i) : bool =
+      (f = #L[i] //; print(b2i(f))
+      );
+
+    function g(bool x) : bool =
+      (g = x;
+       print(" g is here! " + x);
+       );
+
+    function select() : int =
+      (int x;
+       
+       [ g(g(g(f(0)))) -> L[0]?x
+       : f(1) -> L[1]?x
+       ];
+
+       select = x
+      );
+
+    *[
+      x = select();
+      print(x);
+      R!x;
+      x = select();
+      print(x);
+      R!x;
+      x = select();
+      print(x);
+      R!x
+     ]
+      
+      }
+}
+
+define P3()(bd(WIDTH) -L[0..1], -M, +R; node +-n)
+{
+  csp {
+    function f(int i) : bool =
+      (f = #L[i] //; print(b2i(f))
+      );
+
+    function g(bool x) : bool =
+      (g = x;
+       print(" g is here! " + x);
+       );
+
+    function select() : int =
+      (int x;
+       
+       [ g(g(g(f(0)))) -> L[0]?x
+       : f(1) -> L[1]?x
+       ];
+
+       select = 0
+      );
+
+    function select2() : int =
+      (int x;
+       
+       [ g(g(g(f(0)))) -> L[select()]?x
+       : f(1) -> L[1]?x
+       ];
+
+       select2 = x
+      );
+
+    *[
+      x = select2();
+      print(x);
+      R!x;
+      x = select2();
+      print(x);
+      R!x;
+      x = select2();
+      print(x);
+      R!x
+     ]
+      
+      }
+}
+
 define Q0()(bd(WIDTH) -L[0..1], -M, +R; node +-n)
 { // meaningless but syntactically unobjectionable
   csp {
@@ -60,7 +167,7 @@ define Q0()(bd(WIDTH) -L[0..1], -M, +R; node +-n)
     
     *[*[ f(0) -> L[0]?x
        : f(1) -> L[1]?x
-       ];
+         ];
       #[ verbose -> print("" + x + x + hex(x) + x) ];
       R!x
       ]
@@ -82,6 +189,9 @@ define SYSTEM(int C)()
     [ C==0 -> SELECT() select(c[0], c[1], cx); ]
     [ C==1 -> P() select(c, m, cx, n); BITGEN bitgen(m); ]
     [ C==2 -> Q0() select(c, m, cx, n); BITGEN bitgen(m); ]
+    [ C==3 -> P1() select(c, m, cx, n); BITGEN bitgen(m); ]
+    [ C==4 -> P2() select(c, m, cx, n); BITGEN bitgen(m); ]
+    [ C==5 -> P3() select(c, m, cx, n); BITGEN bitgen(m); ]
   } 
 }
 
@@ -90,6 +200,16 @@ bool verbose = false;
 
 define FORWARD(int PORT, Q, W, WX, WY, WZ, WP, NMC, NBS)()
   <+ my_mesh_forward(Q,WX,WY,WZ,WP) {
+  csp {
+    nextHop(0,0);
+  }
+}
+
+define FORWARD1(int PORT, Q, W, WX, WY, WZ, WP, NMC, NBS)()
+  <+ mesh_forward(Q,WX,WY,WZ,WP) <+ ecc(W+1,8)
+{
+  int W_D=W+1;     // data+tail bits for ecc encoding
+  int W_P=8;       // ecc bits (for >=57b datapath)
   csp {
     nextHop(0,0);
   }
@@ -170,3 +290,37 @@ define my_mesh_forward(int Q, WX, WY, WZ, WP) attributes
     
 define R(int PORT, Q)() <: FORWARD(PORT, Q, 64, 6, 6, 0, 2, 8, 4) 
 {}
+
+define S(int PORT, Q)() <: FORWARD1(PORT, Q, 64, 6, 6, 0, 2, 8, 4)
+{
+
+  csp {
+    print (ecc_parity(10));
+  }
+
+}
+
+define T()(bd(32) -L[0..1])
+{
+  csp {
+    function f() : int =
+      (f = 1);
+
+    int x;
+    L[f()]?x
+  }
+}
+
+define U()(bd(32) -L[0..1], +R[0..1])
+{
+  csp {
+    function f() : int =
+      (f = 1);
+
+    int x[2];
+    L[f()]?x[f()];
+
+    R[f()]!x[f()]
+    
+  }
+}

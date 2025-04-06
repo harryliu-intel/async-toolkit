@@ -2,73 +2,76 @@
 
   (set! *has-ass* ass)
   
-  (if (or (not (pair? ass))
-          (not (eq? 'assign (car ass))))
-      (error "not an assignment : " ass))
+  (if (not (pair? ass))
+      (error "handle-access-assign can't handle " ass))
 
-  (if (eq? 'assign (caadr ass))
-      (error "malformed assignment : " ass))
-  
-  (define seq '())
-  
-  (define (make-simple x)
+  (let ((kw (car ass)))
 
-;;    (dis "make-simple " x dnl)
+    (if (not (eq? kw 'assign))
+        (error "not an assignment : " ass))
+
+    (define seq '())
     
-    (set! sss (cons (cons x syms) sss))
-    
-    (if (simple-operand? x)
-        x
-        (let* ((nam     (tg 'next))
-               (newtype (derive-type x syms func-tbl struct-tbl))
-               (newvar  (make-var1-decl nam newtype))
-               (newass  (make-assign (make-ident nam) x))
-               )
-          (define-var! syms nam newtype)
-          (dis "make simple adding " newvar dnl)
-          (dis "make simple adding " newass dnl)
-          (set! seq  (cons newvar (cons newass seq)))
-          `(id ,nam)
-          )))
-  
-  (define (handle-access-expr a)
-    
-;;    (dis "handle-access-expr " a dnl)
-    
-    (cond ((simple-operand? a) a)
+    (define (make-simple x)
 
-          ((eq? 'member-access (car a))
-           (list 'member-access (handle-access-expr (cadr a)) (caddr a)))
+      ;;    (dis "make-simple " x dnl)
+      
+      (set! sss (cons (cons x syms) sss))
+      
+      (if (simple-operand? x)
+          x
+          (let* ((nam     (tg 'next))
+                 (newtype (derive-type x syms func-tbl struct-tbl))
+                 (newvar  (make-var1-decl nam newtype))
+                 (newass  `(,kw ,(make-ident nam) ,x))
+                 )
+            (define-var! syms nam newtype)
+            (dis "make simple adding " newvar dnl)
+            (dis "make simple adding " newass dnl)
+            (set! seq  (cons newvar (cons newass seq)))
+            `(id ,nam)
+            )))
+    
+    (define (handle-access-expr a)
+      
+      ;;    (dis "handle-access-expr " a dnl)
+      
+      (cond ((simple-operand? a) a)
 
-          ((eq? 'bits (car a))
-           (list 'bits
-                 (handle-access-expr (cadr a))
-                 (make-simple (caddr a))
-                 (make-simple (cadddr a))))
-          
-          ((eq? 'array-access (car a))
-           
-           (list 'array-access
-                 (handle-access-expr (cadr a))
-                 (make-simple (caddr a))))
-          
-          (else a)
-          ))
-  
-;;  (dis   "handle-access-assign : called    : "  ass dnl)
-  
-  (let* ((lhs       (handle-access-expr (get-assign-lhs ass)))
-         (rhs       (handle-access-expr (get-assign-rhs ass)))
-         (this-ass `(assign ,lhs ,rhs))
-         (res       (if (null? seq)
-                        this-ass
-                        `(sequence ,@seq ,this-ass))))
+            ((eq? 'member-access (car a))
+             (list 'member-access (handle-access-expr (cadr a)) (caddr a)))
 
-    (if (not (null? seq)) ;; print if changing
-        (dis "handle-access-assign : returning : " res dnl))
-    res
+            ((eq? 'bits (car a))
+             (list 'bits
+                   (handle-access-expr (cadr a))
+                   (make-simple (caddr a))
+                   (make-simple (cadddr a))))
+            
+            ((eq? 'array-access (car a))
+             
+             (list 'array-access
+                   (handle-access-expr (cadr a))
+                   (make-simple (caddr a))))
+            
+            (else a)
+            ))
+    
+    ;;  (dis   "handle-access-assign : called    : "  ass dnl)
+    
+    (let* ((lhs       (handle-access-expr (get-assign-lhs ass)))
+           (rhs       (handle-access-expr (get-assign-rhs ass)))
+           (this-ass `(,kw ,lhs ,rhs))
+           (res       (if (null? seq)
+                          this-ass
+                          `(sequence ,@seq ,this-ass))))
+
+      (if (not (null? seq)) ;; print if changing
+          (dis "handle-access-assign : returning : " res dnl))
+      res
+      )
     )
   )
+ 
 
 (define *har-ass* #f)
 
@@ -221,3 +224,103 @@
      (else a))
     )
   )
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;; receives are similar to assignments -- sort of
+;;
+
+(define (get-recv-lhs rs)
+  (cadr rs))
+
+(define (get-recv-rhs rs)
+  (caddr rs))
+
+(define (handle-access-recv ass syms tg func-tbl struct-tbl)
+
+  (set! *has-ass* ass)
+  
+  (if (not (pair? ass))
+      (error "handle-access-recv can't handle " ass))
+
+  (let ((kw (car ass)))
+
+    (if (not (member kw '(recv send)))
+        (error "not a recv : " ass))
+
+    (define seq '())
+
+
+    (define (make-simple x)
+
+      ;;    (dis "make-simple " x dnl)
+      
+      (set! sss (cons (cons x syms) sss))
+      
+      (if (simple-operand? x)
+          x
+          (let* ((nam     (tg 'next))
+                 (newtype (derive-type x syms func-tbl struct-tbl))
+                 (newvar  (make-var1-decl nam newtype))
+                 (newass  `(assign ,(make-ident nam) ,x))
+                 )
+            (define-var! syms nam newtype)
+            (dis "make simple adding " newvar dnl)
+            (dis "make simple adding " newass dnl)
+            (set! seq  (cons newvar (cons newass seq)))
+            `(id ,nam)
+            )))
+    
+
+    (define (handle-access-lhs a)
+      
+      ;;    (dis "handle-access-lhs " a dnl)
+      
+      (cond ((eq? 'array-access (car a))
+             (list 'array-access
+                   (cadr a)
+                   (make-simple (caddr a))))
+            
+            (else a)
+            ))
+
+    (define (handle-access-rhs a)
+      
+      ;;    (dis "handle-access-expr " a dnl)
+      
+      (cond ((simple-operand? a) a)
+
+            ((eq? 'member-access (car a))
+             (list 'member-access (handle-access-rhs (cadr a)) (caddr a)))
+
+            ((eq? 'bits (car a))
+             (list 'bits
+                   (handle-access-rhs (cadr a))
+                   (make-simple (caddr a))
+                   (make-simple (cadddr a))))
+            
+            ((eq? 'array-access (car a))
+             
+             (list 'array-access
+                   (handle-access-rhs (cadr a))
+                   (make-simple (caddr a))))
+            
+            (else a)
+            ))
+    
+    ;;  (dis   "handle-access-recv : called    : "  ass dnl)
+    
+    (let* ((lhs       (handle-access-lhs  (get-recv-lhs ass)))
+           (rhs       (handle-access-rhs  (get-recv-rhs ass)))
+           (this-ass `(,kw ,lhs ,rhs))
+           (res       (if (null? seq)
+                          this-ass
+                          `(sequence ,@seq ,this-ass))))
+
+      (if (not (null? seq)) ;; print if changing
+          (dis "handle-access-recv : returning : " res dnl))
+      res
+      )
+    )
+  )
+

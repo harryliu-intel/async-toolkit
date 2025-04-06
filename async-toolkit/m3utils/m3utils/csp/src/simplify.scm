@@ -6,10 +6,7 @@
 (define (guarded-stmt? s)
   (and (list? s)
        (not (null? s))
-       (or (eq? (car s) 'if)
-           (eq? (car s) 'nondet-if)
-           (eq? (car s) 'do)
-           (eq? (car s) 'nondet-do))))
+       (member (car s) '(if nondet-if do nondet-do))))
 
 (define (loop-stmt? s)
   (and (list? s)
@@ -18,9 +15,10 @@
 
 (define (simplify-stmt s)
   ;; all that this does is flattens out parallel and sequence statements
-  (cond ((compound-stmt? s) (simplify-compound-stmt s))
-        ((guarded-stmt? s)  (simplify-guarded-stmt s))
-        ((loop-stmt? s)     (simplify-loop-stmt s))
+  (cond ((compound-stmt? s)   (simplify-compound-stmt s))
+        ((guarded-stmt? s)    (simplify-guarded-stmt s))
+        ((loop-stmt? s)       (simplify-loop-stmt s))
+        ((waiting-if-stmt? s) (simplify-waiting-if-stmt s))
         (else s)))
 
 (define (simplify-loop-stmt s)
@@ -36,6 +34,19 @@
            (let ((guard   (car gc))
                  (command (cadr gc)))
              (list guard (simplify-stmt command))))
+         (cdr s))))
+
+(define (simplify-waiting-if-stmt s)
+  (cons (car s)
+        (map
+         (lambda(cl)
+           (let ((dummy     (car cl))
+                 (sens      (cadr cl))
+                 (guardtext (caddr cl))
+                 (cmd       (cadddr cl)))
+             (list dummy sens (simplify-stmt guardtext) (simplify-stmt cmd))
+             )
+           )
          (cdr s))))
         
 (define (simplify-compound-stmt s)

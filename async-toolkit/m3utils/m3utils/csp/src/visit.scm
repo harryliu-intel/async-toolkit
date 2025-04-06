@@ -53,6 +53,20 @@
   (set! *expr-postvisit* expr-postvisit)
   (set! *type-previsit* type-previsit)
   (set! *type-postvisit* type-postvisit)
+
+
+  (define (visit-waiting-clause cl)
+    (let ((dummy     (car cl))
+          (sens      (cadr cl))
+          (guardtext (caddr cl))
+          (cmd       (cadddr cl)))
+      (list dummy sens (stmt guardtext) (stmt cmd))
+      )
+    )
+  
+  
+  (define (visit-waiting-if)
+    (map visit-waiting-clause (cdr s)))
   
   (define (continue s)
     ;; this procedure does most of the work, it is called after stmt-previsit
@@ -117,6 +131,10 @@
                            (list (car args)
                                  (range (cadr args))
                                  new-stmt)))
+                     )
+
+                    ((waiting-if)
+                     (visit-waiting-if)
                      )
                     
                     (else (set! *bad-s* s)
