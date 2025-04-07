@@ -1,3 +1,17 @@
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;; visitors
+;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+;; the type visitor doesn't actually get at structure types
+;; because structure types are defined in a separate space to the
+;; text of the CSP process.
+
+
+
 (define *visit-s* #f)
 
 
@@ -112,7 +126,12 @@
                     ((do if nondet-if nondet-do)
                      (set! vs s)
                      ;; what happens if stmt returns 'delete?
-                     (map (lambda(gc)(list (expr (car gc)) (stmt (cadr gc))))
+                     (map (lambda(gc)
+                            (let ((guard   (car gc))
+                                  (command (cadr gc)))
+                            (list
+                             (if (eq? guard 'else) 'else (expr guard))
+                             (stmt command))))
                           args)
                      )
                     
@@ -288,3 +307,80 @@
                      identity type-visitor))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (prepostvisit-range r
+                            stmt-previsit stmt-postvisit
+                            expr-previsit expr-postvisit
+                            type-previsit type-postvisit)
+
+  (if (or (not (pair? r)) (not eq? 'range (car r)))
+      (error "not a range : " r))
+
+  (list 'range
+        ;; is this the right way to do it?
+        (expr-postvisit (expr-previsit (cadr r)))
+        (expr-postvisit (expr-previsit (caddr r)))) 
+  )
+
+(define (prepostvisit-type t
+                           stmt-previsit stmt-postvisit
+                           expr-previsit expr-postvisit
+                           type-previsit type-postvisit)
+
+  (define (type tt) (prepostvisit-type tt
+                                       stmt-previsit stmt-postvisit
+                                       expr-previsit expr-postvisit
+                                       type-previsit type-postvisit))
+
+
+  (define (continue)
+    (if (and (pair? t) (eq? 'array (car t)))
+        (list 'array (prepostvisit-range
+                      (cadr t)
+                      stmt-previsit stmt-postvisit
+                      expr-previsit expr-postvisit
+                      type-previsit type-postvisit)
+              
+              (type (caddr t)))
+        t
+        )
+    )
+  
+
+  (let ((pre (type-previsit t)))
+    (cond ((eq? pre #f) t)
+          ((and (pair? pre) (eq? 'cut (car pre))) (cdr pre))
+          (else (type-postvisit (continue)))))
+  )
+  
+(define (prepostvisit-declarator d 
+                         stmt-previsit stmt-postvisit
+                         expr-previsit expr-postvisit
+                         type-previsit type-postvisit)
+  (if (not (equal? 'decl1 (car d)))
+      (error "prepostvisit-declarator : not a desugared declarator : " d))
+
+   (let ((ident (cadr d))
+         (type  (caddr d))
+         (dir   (cadddr d)))
+     (list (car d)
+           ident
+           (prepostvisit-type type 
+                              stmt-previsit stmt-postvisit
+                              expr-previsit expr-postvisit
+                              type-previsit type-postvisit)
+           dir)
+     )
+   )
+  
+
+(define (prepostvisit-var1-stmt s
+                         stmt-previsit stmt-postvisit
+                         expr-previsit expr-postvisit
+                         type-previsit type-postvisit)
+  (list 'var1 (prepostvisit-declarator (cadr s)
+                                       stmt-previsit stmt-postvisit
+                                       expr-previsit expr-postvisit
+                                       type-previsit type-postvisit))
+)
+

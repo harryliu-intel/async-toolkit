@@ -217,9 +217,9 @@ PROCEDURE ArrayType(range : Range; elemntType : Type) : Type =
     RETURN NEW(T.Array, range := range, elemntType := elemntType)
   END ArrayType;
   
-PROCEDURE BooleanType() : Type =
+PROCEDURE BooleanType(isConst : BOOLEAN) : Type =
   BEGIN
-    RETURN NEW(T.Boolean)
+    RETURN NEW(T.Boolean, isConst := isConst)
   END BooleanType;
   
 PROCEDURE ChannelStructureType(members : CspStructMemberSeq.T) : Type =
@@ -252,9 +252,9 @@ PROCEDURE NodeType(arrayed   : BOOLEAN;
     RETURN NEW(T.Node, arrayed := arrayed, width := width, direction := direction)
   END NodeType;
 
-PROCEDURE StringType() : Type =
+PROCEDURE StringType(isConst : BOOLEAN) : Type =
   BEGIN
-    RETURN NEW(T.String)
+    RETURN NEW(T.String, isConst := isConst)
   END StringType;
   
 PROCEDURE StructureType(isConst : BOOLEAN; name : TEXT) : Type =

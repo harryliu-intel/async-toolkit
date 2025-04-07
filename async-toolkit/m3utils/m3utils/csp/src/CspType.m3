@@ -15,8 +15,8 @@ IMPORT CspType;
 CONST Sym = SchemeSymbol.FromText;
 
 TYPE
-  PubInteger = T OBJECT
-    isConst, isSigned : BOOLEAN;
+  PubInteger = MayBeConst OBJECT
+    isSigned          : BOOLEAN;
     dw                : CspExpression.T;
     hasInterval       : BOOLEAN;
     interval          : CspInterval.T;
@@ -51,12 +51,12 @@ REVEAL
     lisp := StructureLisp;
   END;
   
-  Boolean = T BRANDED Brand & " Boolean" OBJECT
+  Boolean = MayBeConst BRANDED Brand & " Boolean" OBJECT
   OVERRIDES
     lisp := BooleanLisp;
   END;
 
-  String = T BRANDED Brand & " String" OBJECT
+  String = MayBeConst BRANDED Brand & " String" OBJECT
   OVERRIDES
     lisp := StringLisp;
   END;
@@ -117,14 +117,14 @@ PROCEDURE StructureLisp(self : Structure) : SchemeObject.T =
                  Sym(self.name))
   END StructureLisp;
   
-PROCEDURE BooleanLisp(<*UNUSED*>self : Boolean) : SchemeObject.T =
+PROCEDURE BooleanLisp(self : Boolean) : SchemeObject.T =
   BEGIN
-    RETURN Sym("boolean")
+    RETURN List2(Sym("boolean"), SchemeBoolean.Truth(self.isConst))
   END BooleanLisp;
   
-PROCEDURE StringLisp(<*UNUSED*>self : String) : SchemeObject.T =
+PROCEDURE StringLisp(self : String) : SchemeObject.T =
   BEGIN
-    RETURN Sym("string")
+    RETURN List2(Sym("string"), SchemeBoolean.Truth(self.isConst))
   END StringLisp;
 
 BEGIN END CspType.

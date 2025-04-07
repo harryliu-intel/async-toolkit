@@ -9,8 +9,8 @@ REVEAL
     members : CspStructMemberSeq.T;
   END;
 
-  CspType.Integer <: CspType.T OBJECT
-    isConst, isSigned : BOOLEAN;
+  CspType.Integer <: CspType.MayBeConst OBJECT
+    isSigned : BOOLEAN;
     dw                : CspExpression.T;
     hasInterval       : BOOLEAN;
     interval          : CspInterval.T;

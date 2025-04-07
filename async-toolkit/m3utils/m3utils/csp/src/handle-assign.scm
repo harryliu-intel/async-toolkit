@@ -1,4 +1,4 @@
-(define (handle-access-assign ass syms tg func-tbl struct-tbl)
+(define (handle-access-assign ass syms vals tg func-tbl struct-tbl)
 
   (set! *has-ass* ass)
   
@@ -75,11 +75,11 @@
 
 (define *har-ass* #f)
 
-(define (handle-assign-rhs a syms tg func-tbl struct-tbl)
+(define (handle-assign-rhs a syms vals tg func-tbl struct-tbl)
 
   (set! *har-ass* a)
   
-  (define (recurse a) (handle-assign-rhs a syms tg func-tbl struct-tbl))
+  (define (recurse a) (handle-assign-rhs a syms vals tg func-tbl struct-tbl))
   
 ;;  (dis "assignment   : " a dnl)
 
@@ -236,7 +236,7 @@
 (define (get-recv-rhs rs)
   (caddr rs))
 
-(define (handle-access-recv ass syms tg func-tbl struct-tbl)
+(define (handle-access-recv ass syms vals tg func-tbl struct-tbl)
 
   (set! *has-ass* ass)
   

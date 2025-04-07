@@ -3,10 +3,7 @@
 
 (define *the-example* "parents_p2") ;; this is the test file
 
-(define *big-m1* (BigInt.New -1))
-(define *big-0*  (BigInt.New  0))
-(define *big-1*  (BigInt.New  1))
-(define *big-tc* (rttype-typecode *big-1*))
+(load "bigint.scm")
 
 ;; this stuff is really experimental.
 (define *cell*        '())

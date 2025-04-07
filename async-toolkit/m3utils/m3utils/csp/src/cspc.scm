@@ -195,12 +195,7 @@
 
 (define (identity x) x)
 
-(define (bigint? x)
-  (cond ((null? x) #f)
-        ((pair? x) #f)
-        ((= *big-tc* (rttype-typecode x)) #t)
-        (else #f)))
-      
+(load "bigint.scm")
 
 (define special-functions     ;; these are special functions per Harry
   '(string
@@ -583,8 +578,8 @@
 
 (define (convert-type type)
   (cond
-   ((eq? type 'boolean) (CspAst.BooleanType))
-   ((eq? type 'string)  (CspAst.StringType))
+;;   ((eq? type 'boolean) (CspAst.BooleanType))
+;;   ((eq? type 'string)  (CspAst.StringType))
    ((pair? type)
     (case (car type)
       ((array)       (CspAst.ArrayType (convert-range (cadr type))
@@ -603,7 +598,9 @@
                         (if (null? interval)
                             '(() ())
                             (list (car interval) (cadr interval))))))
-      
+
+      ((boolean) (CspAst.BooleanType (cadr type)))
+      ((string) (CspAst.StringType (cadr type)))      
       
       ((node-array)  (CspAst.NodeType #t (caddr type) (convert-dir (cadr type))))
       ((node)        (CspAst.NodeType #f 1 (convert-dir (cadr type))))
@@ -820,17 +817,6 @@
 
 (load "simplify.scm")
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-;; visitors
-;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-
-;; the type visitor doesn't actually get at structure types
-;; because structure types are defined in a separate space to the
-;; text of the CSP process.
-
 (define (array-type? t) (and (pair? t) (eq? 'array (car t))))
 
 (define (get-array-extent      at)  (cadr at))
@@ -839,62 +825,6 @@
 (define (make-array-type extent elem-type)
   `(array ,extent ,elem-type))
 
-
-(define (prepostvisit-type t
-                           stmt-previsit stmt-postvisit
-                           expr-previsit expr-postvisit
-                           type-previsit type-postvisit)
-
-  (define (type tt) (prepostvisit-type tt
-                                       stmt-previsit stmt-postvisit
-                                       expr-previsit expr-postvisit
-                                       type-previsit type-postvisit))
-
-
-  (define (continue)
-    (if (and (pair? t) (eq? 'array (car t)))
-        (list 'array (cadr t) (type (caddr t)))
-        t
-        )
-    )
-  
-
-  (let ((pre (type-previsit t)))
-    (cond ((eq? pre #f) t)
-          ((and (pair? pre) (eq? 'cut (car pre))) (cdr pre))
-          (else (type-postvisit (continue)))))
-  )
-  
-(define (prepostvisit-declarator d 
-                         stmt-previsit stmt-postvisit
-                         expr-previsit expr-postvisit
-                         type-previsit type-postvisit)
-  (if (not (equal? 'decl1 (car d)))
-      (error "prepostvisit-declarator : not a desugared declarator : " d))
-
-   (let ((ident (cadr d))
-         (type  (caddr d))
-         (dir   (cadddr d)))
-     (list (car d)
-           ident
-           (prepostvisit-type type 
-                              stmt-previsit stmt-postvisit
-                              expr-previsit expr-postvisit
-                              type-previsit type-postvisit)
-           dir)
-     )
-   )
-  
-
-(define (prepostvisit-var1-stmt s
-                         stmt-previsit stmt-postvisit
-                         expr-previsit expr-postvisit
-                         type-previsit type-postvisit)
-  (list 'var1 (prepostvisit-declarator (cadr s)
-                                       stmt-previsit stmt-postvisit
-                                       expr-previsit expr-postvisit
-                                       type-previsit type-postvisit))
-)
 
 (define vs #f)
 
@@ -1416,80 +1346,6 @@
 
   
 
-(define (old-derive-type x syms func-tbl struct-tbl)
-  ;; return the type of x in the environment given by syms
-  ;;  (set! ttt (cons (cons x syms) ttt))
-
-  (dis x dnl)
-                 
-  (cond  ((ident? x) (retrieve-defn (cadr x) syms))
-
-         ((integer-expr? x syms func-tbl struct-tbl) *default-int-type*)
-
-         ((boolean-expr? x syms func-tbl struct-tbl) 'boolean)
-
-         ((string-expr? x syms func-tbl struct-tbl) 'string)
-
-         ((apply? x)
-          (dis "derive-type of apply : " x dnl)
-          
-          (let* ((fnam (get-apply-funcname x))
-                 (fdef (func-tbl 'retrieve fnam))
-                 (failed (eq? fdef '*hash-table-search-failed*))
-                 (res
-                  (if failed *default-int-type* (get-function-return fdef))))
-
-            (dis "derive-type of apply : result : " res dnl)
-            res
-            )
-
-;;          (error)
-          )
-
-         ((loopex? x)
-          ;; a bit tricky: a loopex is the only expression that
-          ;; also introduces a new symbol into the environment!
-          (derive-type (construct-loopex-binop x)
-                       (make-loopex-frame x syms)
-                       func-tbl
-                       struct-tbl))
-
-         ((array-access? x)
-          (peel-array
-           (derive-type (array-accessee x) syms func-tbl struct-tbl)))
-
-         ((member-access? x)
-          (set! s-x x)
-          (let* ((base-type (derive-type
-                             (member-accessee x) syms func-tbl struct-tbl))
-                 (struct-def (struct-tbl 'retrieve (get-struct-name base-type)))
-                 (struct-flds (get-struct-decl-fields struct-def))
-                 (accesser   (member-accesser x))
-                 )
-
-            (set! s-bt base-type)
-            (set! s-sd struct-def)
-            
-            (dis "member-access   x           : " x dnl)
-            (dis "member-access   base-type   : " (stringify base-type) dnl)
-            (dis "member-access   struct-def  : " (stringify struct-def) dnl)
-            (dis "member-access   struct-flds : " (stringify struct-flds) dnl)
-
-            (if (not (symbol? accesser))
-                (error "member-access : not an accesser : " accesser))
-
-            (get-struct-decl-field-type struct-def accesser)
-            )
-          )
-
-         ((bits? x)
-          (if (equal? (get-bits-min x) (get-bits-max x))
-              *single-bit-type*
-              *default-int-type*))
-
-         (else (error "derive-type : don't know type of " x))))
-
-
 (define sss '())
 (define ttt '())
 
@@ -1704,7 +1560,7 @@
                         ,loop-range
                         (assign-operate ,loop-op ,lhs ,loop-expr)))))
 
-(define (remove-loop-expression s syms tg func-tbl struct-tbl)
+(define (remove-loop-expression s syms vals tg func-tbl struct-tbl)
 
   (if (and (eq? 'assign (get-stmt-type s))
            (check-side-effects (get-assign-lhs s)))
@@ -1843,14 +1699,14 @@
   (visit-stmt prog visitor identity identity)
   )
 
-(define (handle-eval s syms tg func-tbl struct-tbl)
+(define (handle-eval s syms vals tg func-tbl struct-tbl)
 
   (dis "handle-eval " s dnl)
 
   (let* ((fake-var (tg 'next))
          (fake-assign (make-assign `(id ,fake-var) (cadr s)))
          (full-seq
-          (handle-assign-rhs fake-assign syms tg func-tbl struct-tbl))
+          (handle-assign-rhs fake-assign syms vals tg func-tbl struct-tbl))
          (res (remove-fake-assignment fake-var full-seq)))
 
     (dis "handle-eval   s = " s dnl
@@ -1861,6 +1717,7 @@
   )
 
 (load "dead.scm")  
+(load "fold-constants.scm")
 
 (define the-passes (list
                     (list 'assign handle-access-assign)
@@ -1943,11 +1800,13 @@
   (dis "========= COMPILER PASS : " the-pass " ===========" dnl)
 
   (define syms '())
+  (define vals '())
 
   (define tg (make-name-generator "temp"))
   
   (define (enter-frame!)
     (set! syms (cons (make-hash-table 100 atom-hash) syms))
+    (set! vals (cons (make-hash-table 100 atom-hash) vals))
 ;;    (dis "enter-frame! " (length syms) dnl)
     )
 
@@ -1956,6 +1815,7 @@
 
 ;;    (dis "exit-frame! " (length syms) dnl)
     (set! syms (cdr syms))
+    (set! vals (cdr vals))
     )
 
   (define (stmt-pre0 s)
@@ -1963,7 +1823,7 @@
     (stmt-check-enter s)
 
     (case (get-stmt-kw s)
-      ((assign) (handle-assign-rhs s syms tg func-tbl struct-tbl))
+      ((assign) (handle-assign-rhs s syms vals tg func-tbl struct-tbl))
 
       ((eval) ;; this is a function call, we make it a fake assignment.
        (dis "eval!" dnl)
@@ -1972,7 +1832,7 @@
        
        (let* ((fake-var (tg 'next))
               (fake-assign (make-assign `(id ,fake-var) (cadr s)))
-              (full-seq   (handle-assign-rhs fake-assign syms tg func-tbl struct-tbl))
+              (full-seq   (handle-assign-rhs fake-assign syms vals tg func-tbl struct-tbl))
               (res (remove-fake-assignment fake-var full-seq)))
 
          (dis "===== stmt-pre0 fake  " (stringify fake-assign) dnl)
@@ -1989,18 +1849,27 @@
   (define (make-pre stmt-type pass)
     (lambda(stmt)
       ;; this takes a "pass" and wraps it up so the symbol table is maintained
+;;      (dis "here!" dnl)
       (stmt-check-enter stmt)
-      (if (eq? stmt-type (get-stmt-kw stmt))
-          (pass stmt syms tg func-tbl struct-tbl)
+      (if (or (eq? stmt-type '*)(eq? stmt-type (get-stmt-kw stmt)))
+          (pass stmt syms vals tg func-tbl struct-tbl)
           stmt)))
   
   (define (stmt-check-enter s)
+;;    (dis "stmt-check-enter " (if (pair? s) (car s) s) dnl)
     (if (member (get-stmt-kw s) frame-kws) (enter-frame!))
     (case (get-stmt-kw s)
       ((var1)
+;;       (dis "define-var! " (get-var1-id s) dnl)
        (define-var! syms (get-var1-id s) (get-var1-type s))
        )
 
+      ((assign)
+       ;; don't handle arrays yet... hmm.
+       (if (ident? (get-assign-lhs s))
+           (define-var! vals (cadr (get-assign-lhs s)) (get-assign-rhs s)))
+       )
+      
       ((loop-expression)
        (define-var! syms (get-loopex-dummy s) *default-int-type*)
        )
@@ -2018,35 +1887,35 @@
     )
 
   (let ((pass-result
-         (cond ((member (car the-pass) '(assign eval recv send))
+         (cond  ((eq? 'global (car the-pass))
+                 ((cadr the-pass) the-inits prog func-tbl struct-tbl cell-info)
+                 )
+
+                (else
                 
-                (enter-frame!) ;; global frame
-                
-                ;; we should be able to save the globals from earlier...
-                (dis "visiting initializations..." dnl)
-                (prepostvisit-stmt 
-                 the-inits
-                 stmt-pre0 stmt-post
-                 identity identity
-                 identity identity)
-                
-                (dis "visiting program text..." dnl)
-                
-                (let ((res
-                       (prepostvisit-stmt prog
-                                          (make-pre
-                                           (car the-pass)
-                                           (cadr the-pass)) stmt-post
-                                           identity                identity
-                                           identity                identity)))
-                  (exit-frame!)
-                  res))
-               ((eq? 'global (car the-pass))
-                ((cadr the-pass) the-inits prog func-tbl struct-tbl cell-info)
-                )
+                 (enter-frame!) ;; global frame
+                 
+                 ;; we should be able to save the globals from earlier...
+                 (dis "visiting initializations..." dnl)
+                 (prepostvisit-stmt 
+                  the-inits
+                  stmt-pre0 stmt-post
+                  identity identity
+                  identity identity)
+                 
+                 (dis "visiting program text..." dnl)
+                 
+                 (let ((res
+                        (prepostvisit-stmt prog
+                                           (make-pre
+                                            (car the-pass)
+                                            (cadr the-pass)) stmt-post
+                                            identity                identity
+                                            identity                identity)))
+                   (exit-frame!)
+                   res))
                
-               (else (error "unknown pass type " (car the-pass)))
-               )
+                )
          )
         )
 

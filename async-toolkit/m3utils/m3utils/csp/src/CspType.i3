@@ -17,7 +17,11 @@ TYPE
 
   Array <: PubArray;
 
-  Boolean <: T;
+  MayBeConst = T OBJECT
+    isConst : BOOLEAN;
+  END;
+  
+  Boolean <: MayBeConst;
 
   ChannelStructure <: T; (* see CspTypePublic.i3 *)
 
@@ -28,7 +32,7 @@ TYPE
 
   Channel <: PubChannel;
 
-  Integer <: T; (* see CspTypePublic.i3 *)
+  Integer <: MayBeConst; (* see CspTypePublic.i3 *)
 
   PubNode = T OBJECT
     arrayed   : BOOLEAN;
@@ -38,10 +42,9 @@ TYPE
 
   Node <: PubNode;
 
-  String <: T;
+  String <: MayBeConst;
   
-  PubStructure = T OBJECT
-    isConst : BOOLEAN;
+  PubStructure = MayBeConst OBJECT
     name    : TEXT;
   END;
 

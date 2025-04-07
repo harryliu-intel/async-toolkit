@@ -121,7 +121,7 @@ PROCEDURE LoopExpr(dummy : Atom.T;
 
 PROCEDURE ArrayType(range : Range; elemntType : Type) : Type;
 
-PROCEDURE BooleanType() : Type;
+PROCEDURE BooleanType(isConst : BOOLEAN) : Type;
 
 PROCEDURE ChannelStructureType(members : CspStructMemberSeq.T) : Type;
 
@@ -136,7 +136,7 @@ PROCEDURE NodeType(arrayed   : BOOLEAN;
                    width     : [1..LAST(CARDINAL)];
                    direction : Direction) : Type;
 
-PROCEDURE StringType() : Type;
+PROCEDURE StringType(isConst : BOOLEAN) : Type;
 
 PROCEDURE StructureType(isConst : BOOLEAN; name : TEXT) : Type;
 
