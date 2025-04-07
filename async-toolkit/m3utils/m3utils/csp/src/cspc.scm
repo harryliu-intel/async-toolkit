@@ -1459,7 +1459,7 @@
         (begin
           (set! *retrieve-defn-failed-sym* sym)
           (set! *retrieve-defn-failed-syms* syms)
-          (error "retrieve-var : sym not found : " sym)
+          (error "retrieve-defn : sym not found : " sym)
           )
         
         (let ((this-result ((car p) 'retrieve sym)))
@@ -1483,7 +1483,7 @@
 
   (define (visitor s)
 
-    (dis "visiting " s dnl)
+;;    (dis "visiting " s dnl)
     
     (if (and (eq? (get-stmt-type s) 'assign)
              (ident? (get-assign-lhs s))
@@ -1895,15 +1895,24 @@
                 
                  (enter-frame!) ;; global frame
                  
+                 ;; record interface objects
+                 (let ((ports (caddddr cell-info)))
+                   (map (lambda(pd)
+                          (let ((pnm (cadr pd)))
+                            (define-var! syms pnm pd)))
+                        ports))
+                                
+                 
                  ;; we should be able to save the globals from earlier...
-                 (dis "visiting initializations..." dnl)
+                 (dis "initializations..." dnl)
+
                  (prepostvisit-stmt 
                   the-inits
                   stmt-pre0 stmt-post
                   identity identity
                   identity identity)
                  
-                 (dis "visiting program text..." dnl)
+                 (dis "program text..." dnl)
                  
                  (let ((res
                         (prepostvisit-stmt prog

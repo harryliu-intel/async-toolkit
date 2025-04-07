@@ -1,0 +1,14 @@
+module constant;
+
+define P(int W)()
+{
+  csp {
+    int(W) x;
+    int y;
+
+    y = W;
+    x = y;
+
+    print(x);
+  }
+}

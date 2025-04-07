@@ -105,8 +105,14 @@
                      ;; filter out anything that returns 'delete
                      (filter filter-delete (map stmt args)))
                     
-                    ((assign)            (list
-                                          (expr (car args)) (expr (cadr args))))
+                    ((assign)
+                     (let ((res
+                            (list
+                             (expr (car args))
+                             (expr (cadr args)))))
+                       (if (not (equal? args res))
+                           (dis "visit-assign : " s " -> " (cons kw res) dnl))
+                       res))
                     
                     ((loop increment decrement var)
                      (error "visit-stmt : need to desugar : " kw))
@@ -202,7 +208,7 @@
 
 (define *visit-x* #f)
   
-(define (prepostvisit-expr x
+(define (prepostvisit-expr xx
                            stmt-previsit stmt-postvisit
                            expr-previsit expr-postvisit
                            type-previsit type-postvisit)
@@ -219,9 +225,9 @@
 
   (define (expr-or-null x) (if (null? x) '() (expr x)))
 
-  (set! *visit-x* x)
+  (set! *visit-x* xx)
   
-  (define (continue)
+  (define (continue x)
     (if (pair? x)
         (let ((kw   (car x))
               (args (cdr x)))
@@ -276,10 +282,10 @@
   ;; else, just call the post-visitor on the result of the pre-visitor
   ;;
 
-  (let ((pre (expr-previsit x)))
-    (cond ((eq? pre #f) x)
+  (let ((pre (expr-previsit xx)))
+    (cond ((eq? pre #f) xx)
           ((and (pair? pre) (eq? 'cut (car pre))) (cdr pre))
-          (else (expr-postvisit (continue)))))
+          (else (expr-postvisit (continue pre)))))
 
   );;enifed
 
@@ -322,7 +328,7 @@
         (expr-postvisit (expr-previsit (caddr r)))) 
   )
 
-(define (prepostvisit-type t
+(define (prepostvisit-type ttt
                            stmt-previsit stmt-postvisit
                            expr-previsit expr-postvisit
                            type-previsit type-postvisit)
@@ -332,31 +338,57 @@
                                        expr-previsit expr-postvisit
                                        type-previsit type-postvisit))
 
+  (define (expr x)(prepostvisit-expr
+                   x
+                   stmt-previsit stmt-postvisit
+                   expr-previsit expr-postvisit
+                   type-previsit type-postvisit
+                   ))
 
-  (define (continue)
-    (if (and (pair? t) (eq? 'array (car t)))
-        (list 'array (prepostvisit-range
-                      (cadr t)
-                      stmt-previsit stmt-postvisit
-                      expr-previsit expr-postvisit
-                      type-previsit type-postvisit)
-              
-              (type (caddr t)))
-        t
+  (define (range x)(prepostvisit-range x
+                                       stmt-previsit stmt-postvisit
+                                       expr-previsit expr-postvisit
+                                       type-previsit type-postvisit))
+
+  (define (continue t)
+    (cond ((not (pair? t)) t)
+          ((eq? 'array (car t))
+           (list 'array (prepostvisit-range
+                         (cadr t)
+                         stmt-previsit stmt-postvisit
+                         expr-previsit expr-postvisit
+                         type-previsit type-postvisit)
+                 
+                 (type (caddr t))))
+          ((eq? 'integer (car t))
+           (let ((is-const  (cadr t))
+                 (is-signed (caddr t))
+                 (dw        (cadddr t))
+                 (the-range (caddddr t)))
+                           
+             `(integer ,is-const
+                       ,is-signed
+                       ,(expr dw)
+                       ,(if (null? the-range) '() (range the-range)))
+           ))
+           
+          (else t))
         )
-    )
-  
 
-  (let ((pre (type-previsit t)))
-    (cond ((eq? pre #f) t)
+;;  (dis "visit type " ttt dnl)
+
+  (let ((pre (type-previsit ttt)))
+    (cond ((eq? pre #f) ttt)
           ((and (pair? pre) (eq? 'cut (car pre))) (cdr pre))
-          (else (type-postvisit (continue)))))
+          (else (type-postvisit (continue pre)))))
   )
   
 (define (prepostvisit-declarator d 
                          stmt-previsit stmt-postvisit
                          expr-previsit expr-postvisit
                          type-previsit type-postvisit)
+;;  (dis "visit declarator " d dnl)
+  
   (if (not (equal? 'decl1 (car d)))
       (error "prepostvisit-declarator : not a desugared declarator : " d))
 

@@ -234,6 +234,9 @@ to check for multiply enabled guards.  (The same applies to the
 deterministic selection statement.)
 
 
+Local
+
+else
 
 References
 ==========

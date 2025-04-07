@@ -7,10 +7,22 @@
     (if (and (constant? a) (constant? b))
         (let* ((the-op-id (symbol-append 'big op))
                (the-op    (eval the-op-id)))
-          (apply the-op (list (constant-value a) (constant-value b))))
+
+
+;;          (dis "handle-integer-binop   op : " op dnl)
+;;          (dis "handle-integer-binop   a  : " a dnl)
+;;          (dis "handle-integer-binop   b  : " b dnl)
+
+          (let ((ca (constant-value a))
+                (cb (constant-value b)))
+          ;; if literals, we apply the op, else we inline the value
+          ;;
+          (if (and (bigint? a) (bigint? b))
+              (apply the-op (list ca cb))
+              (list op ca cb)))))
+          
         x
         )
-    )
   )
 
 (define *fold-stmts* '(var1 assign))
@@ -25,7 +37,7 @@
   
   (define (constant? x)
 
-    (dis "constant? " x dnl)
+;;    (dis "constant? " x dnl)
 ;;    (dis "symbols : " (map (lambda(tbl)(tbl 'keys)) syms) dnl)
     
     (cond ((bigint? x) #t)
@@ -33,36 +45,66 @@
            (let* ((defn (retrieve-defn (cadr x) syms))
                   (is-const (constant-type? defn))
                  )
-             (dis "constant? : x defn   : " defn dnl)
-             (dis "constant? : is-const : " is-const defn dnl)
+;;             (dis "constant? : x defn   : " defn dnl)
+;;             (dis "constant? : is-const : " is-const dnl)
              is-const
              )
            )
           (else #f)))
 
   (define (constant-value x)
-    (if (pair? x)
-        (retrieve-defn (cadr x) vals)
-        x)
+    (let ((res 
+           (if (pair? x)
+               (let ((val (retrieve-defn (cadr x) vals)))
+                 (dis "constant-value replacing " x " -> " val dnl)
+                 val
+                 )
+               x)))
+;;      (dis "constant-value x   : " x dnl)
+;;      (dis "constant-value res : " res dnl)
+      res
+      )
   )
 
   (define (expr-visitor x)
-    (dis "x = " x dnl)
+;;    (dis "expr-visitor x = " x dnl)
 
     (cond ((not (pair? x)) x)
 
           ((member (car x) *integer-ops*)
            (handle-integer-binop x constant? constant-value))
-          
+
+          ((ident? x)
+           (let ((res
+                  (if (constant? x) (constant-value x) x)))
+
+;;             (dis "expr-visitor ident? returning " res dnl)
+             res))
+           
           (else x)))
+
+  (define (stmt-visitor s)
+    (case (get-stmt-type s)
+      ((assign)
+
+       (dis "visiting assign " s dnl)
+       
+       `(assign
+         ,(get-assign-lhs s)
+         ,(expr-visitor (get-assign-rhs s))
+         ))
+      ((var1) (visit-stmt s identity expr-visitor identity))
+      (else s)
+      )
+    )
 
   (if (member (get-stmt-type stmt) *fold-stmts*)
       (let ((res (prepostvisit-stmt stmt
+                                    stmt-visitor identity
                                     identity identity
-                                    expr-visitor identity
                                     identity identity)))
         
-        (dis "res = " res dnl)
+;;        (dis "fold-* res = " res dnl)
         res
         )
       stmt
