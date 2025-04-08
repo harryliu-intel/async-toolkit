@@ -145,7 +145,7 @@ do...od).
 We introduce auxiliary variables as follows:
 
     boolean done  
-    boolean g0..gN
+    boolean g0..gN-1
 
 and code the selection as follows
      
