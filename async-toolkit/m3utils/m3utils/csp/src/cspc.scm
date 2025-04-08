@@ -629,8 +629,6 @@
 
 (define (convert-type type)
   (cond
-;;   ((eq? type 'boolean) (CspAst.BooleanType))
-;;   ((eq? type 'string)  (CspAst.StringType))
    ((pair? type)
     (case (car type)
       ((array)       (CspAst.ArrayType (convert-range (cadr type))
@@ -972,6 +970,7 @@
   `(decl1 (id ,sym) ,type ,dir))
 
 (define *default-int-type*  '(integer #f #f () ()))
+(define *const-int-type*  '(integer #t #f () ()))
 
 (define *single-bit-type*  `(integer #f #f ,*big-1* ()))
 
@@ -1202,9 +1201,9 @@
       (string? x)))
 
 (define (literal-type literal)
-  (cond ((boolean? literal) 'boolean)
+  (cond ((boolean? literal) '(boolean #t))
         ((bigint? literal)  *default-int-type*)
-        ((string? literal)  'string)
+        ((string? literal)  '(string #t))
         (else (error "literal-type : not a literal : " literal))))
 
 (define (simple-operand? x)
@@ -1246,6 +1245,16 @@
   '(+ & ^ | ) ;; | )
   )
 
+(define (boolean-type? t) (eq? 'boolean (car t)))
+
+(define *default-boolean-type* '(boolean #f))
+(define *const-boolean-type* '(boolean #t))
+
+(define (string-type? t) (eq? 'string (car t)))
+
+(define *default-string-type* '(string #f))
+(define *const-string-type* '(string #t))
+
 (define (op-zero-elem op type)
   ;; zero element for iterated ops
   (case op
@@ -1254,17 +1263,17 @@
     ((-)        *big-0*)
     ((* / **)   *big-1*)
     ((+)
-     (cond ((eq? type 'string)    "")
+     (cond ((string-type? type)    "")
            ((integer-type? type)   *big-0*)
            (else (error "???op-zero-elem of : " op " : for type : " type))))
 
     ((&)
-     (cond ((eq? type 'boolean)   #t)
+     (cond ((boolean-type? type)   #t)
            ((integer-type? type)  *big-m1*)
            (else (error "???op-zero-elem of : " op " : for type : " type))))
     
     ((^ |) ;; |)
-     (cond ((eq? type 'boolean)   #f)
+     (cond ((boolean-type? type)   #f)
            ((integer-type? type)   *big-0*)
            (else (error "???op-zero-elem of : " op " : for type : " type))))
     (else (error "???op-zero-elem of : " op))))
@@ -1276,7 +1285,7 @@
   (or (bigint? x)
       (if (pair? x)
           (cond
-           ((eq? 'id (car x)) (eq? 'integer
+           ((eq? 'id (car x)) (integer-type?
                                    (car (retrieve-defn (cadr x) syms))))
            ((member (car x) *integer-ops*) #t)
            ((member (car x) *polymorphic-ops*)
@@ -1290,10 +1299,10 @@
   (or (boolean? x)
       (if (pair? x)
           (cond
-           ((eq? 'id (car x)) (eq? 'boolean (retrieve-defn (cadr x) syms)))
+           ((eq? 'id (car x)) (boolean-type? (retrieve-defn (cadr x) syms)))
            ((member (car x) *boolean-ops*) #t)
            ((member (car x) *polymorphic-ops*)
-            (eq? 'boolean (derive-type (cadr x) syms func-tbl struct-tbl)))
+            (boolean-type? (derive-type (cadr x) syms func-tbl struct-tbl)))
            (else #f)
            )
           #f
@@ -1303,10 +1312,10 @@
   (or (string? x)
       (if (pair? x)
           (cond
-           ((eq? 'id (car x)) (eq? 'string (retrieve-defn (cadr x) syms)))
+           ((eq? 'id (car x)) (string-type? (retrieve-defn (cadr x) syms)))
            ((member (car x) *string-ops*) #t)
            ((member (car x) *polymorphic-ops*)
-            (eq? 'string (derive-type (cadr x) syms func-tbl struct-tbl)))
+            (string-type? (derive-type (cadr x) syms func-tbl struct-tbl)))
            (else #f)
            )
           #f
@@ -1358,12 +1367,12 @@
             (if (integer-type? id-type) *default-int-type* id-type)))
          
          ((bigint? x) *default-int-type*)
-         ((boolean? x) 'boolean)
-         ((string? x) 'string)
+         ((boolean? x) *default-boolean-type*)
+         ((string? x) *default-string-type*)
          ((pair? x)
-          (cond ((member (car x) *string-ops*) 'string)
+          (cond ((member (car x) *string-ops*) *default-string-type*)
                 ((member (car x) *integer-ops*) *default-int-type*)
-                ((member (car x) *boolean-ops*) 'boolean)
+                ((member (car x) *boolean-ops*) *default-boolean-type*)
                 ((member (car x) *polymorphic-ops*)
                  (derive-type (cadr x) syms func-tbl struct-tbl))
 
@@ -1712,7 +1721,7 @@
                    (cmds  (map cadr gcs)) ;; commands
 
                    (decls
-                    (map (lambda(nm)(make-var1-decl nm 'boolean)) vars))
+                    (map (lambda(nm)(make-var1-decl nm *default-boolean-type*)) vars))
                    
                    (assigns
                     (map (lambda(v x)(make-assign `(id ,v) x))
@@ -1723,7 +1732,7 @@
                    
                    (or-expr (make-binop '| g-list)) ; |))
 
-                   (ndone-decl  (make-var1-decl ndone 'boolean))
+                   (ndone-decl  (make-var1-decl ndone *default-boolean-type*))
                    (ndone-assign (make-assign (make-ident ndone)
                                              or-expr))
 
@@ -1963,6 +1972,14 @@
        (define-var! syms (get-loopex-dummy s) *default-int-type*)
        )
 
+      ((waiting-if)
+       (let ((dummies
+              (map get-waiting-if-clause-dummy
+                   (get-waiting-if-clauses s))))
+
+         (map (lambda(nm)(define-var! syms nm '(boolean #f))) dummies))
+       )
+
       ((parallel-loop sequential-loop)
        (dis "defining loop dummy : " (get-loop-dummy s) dnl)
        (define-var! syms (get-loop-dummy s) *default-int-type*))
@@ -2003,6 +2020,7 @@
                   identity identity)
                  
                  (dis "program text..." dnl)
+                 (set! debug #t)
                  
                  (let ((res
                         (prepostvisit-stmt prog
@@ -2012,6 +2030,8 @@
                                             identity                identity
                                             identity                identity)))
                    (exit-frame!)
+                   (set! debug #f)
+
                    res))
                
                 )

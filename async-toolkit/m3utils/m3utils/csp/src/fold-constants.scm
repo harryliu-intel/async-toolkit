@@ -71,7 +71,7 @@
           (let* ((ca (constant-value a))
                  (cb (constant-value b))
                  (ty (derive-type a syms func-tbl struct-tbl))
-                 (type (if (pair? ty) (car ty) ty)))
+                 (type (car ty)))
                      
           ;; if literals, we apply the op, else we inline the value
             ;;

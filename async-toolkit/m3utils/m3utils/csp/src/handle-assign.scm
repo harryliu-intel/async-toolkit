@@ -1,3 +1,6 @@
+(define (probe? x)  (and (pair? x) (eq? 'probe (car x))))
+(define (recv-expression? x)  (and (pair? x) (eq? 'recv-expression (car x))))
+
 (define (handle-access-assign ass syms vals tg func-tbl struct-tbl)
 
   (set! *has-ass* ass)
@@ -55,6 +58,9 @@
             
             (else a)
             ))
+
+
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     
     (if debug  (dis   "handle-access-assign : called    : "  ass dnl))
     
@@ -81,7 +87,7 @@
   
   (define (recurse a) (handle-assign-rhs a syms vals tg func-tbl struct-tbl))
   
-;;  (dis "assignment   : " a dnl)
+  (if debug (dis "assignment   : " a dnl))
 
   (set! *a* (cons a *a*))
   (set! *syms* (cons syms *syms*))
@@ -219,6 +225,59 @@
                  res))
               
               (else a))))
+
+     ((or (probe? rhs) (recv-expression? rhs))
+
+      (define seq '())
+      
+      (define (make-simple x)
+        
+        (if debug (dis "make-simple " x dnl))
+        
+        (set! sss (cons (cons x syms) sss))
+        
+        (if (simple-operand? x)
+            x
+            (let* ((nam     (tg 'next 'chanex-access-))
+                   (newtype (derive-type x syms func-tbl struct-tbl))
+                   (newvar  (make-var1-decl nam newtype))
+                   (newass  `(assign ,(make-ident nam) ,x))
+                   )
+              (define-var! syms nam newtype)
+              (dis "make simple adding " newvar dnl)
+              (dis "make simple adding " newass dnl)
+              (set! seq  (cons newvar (cons newass seq)))
+              `(id ,nam)
+              ))
+        )
+
+      (let* ((op (car rhs))
+             (x  (cadr rhs))
+             (result
+              (cond ((eq? 'array-access (car x))
+                     (let* (
+                            (the-access (list 'array-access
+                                              (cadr x)
+                                              (make-simple (caddr x))))
+                            (the-operation (list op the-access))
+                            (the-ass (list 'assign lhs the-operation))
+                           )
+
+                       
+                       (dis "probe/recv-ex the-access    : " the-access dnl)
+                       (dis "probe/recv-ex the-operation : " the-operation dnl)
+                       (dis "probe/recv-ex the-ass       : " the-ass dnl)
+                       (if (null? seq)
+                           the-ass
+                           (cons 'sequence (append seq (list the-ass))))))
+                    
+                    (else x))))
+
+        (dis "probe/recv-ex -> " (stringify result) dnl)
+        result
+;;        (error)
+        )
+      )
      
      
      (else a))
@@ -230,11 +289,9 @@
 ;; receives are similar to assignments -- sort of
 ;;
 
-(define (get-recv-lhs rs)
-  (cadr rs))
+(define (get-recv-lhs rs)  (cadr rs))
 
-(define (get-recv-rhs rs)
-  (caddr rs))
+(define (get-recv-rhs rs)  (caddr rs))
 
 (define (handle-access-recv ass syms vals tg func-tbl struct-tbl)
 

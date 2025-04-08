@@ -70,7 +70,7 @@
          (decls  (map (lambda(nm)
                         (if (eq? nm 'else)
                             'skip
-                            (make-var1-decl nm 'boolean))) vars))
+                            (make-var1-decl nm *default-boolean-type*))) vars))
 
          (assigns (map (lambda(nm guard)
                          (if (eq? guard 'else)
@@ -165,6 +165,15 @@
     res
     )
   )
-      
-      
+
+(define (get-waiting-if-clauses wif) (cdr wif))
+
+(define (get-waiting-if-clause-dummy wifc) (car wifc))
+
+(define (get-waiting-if-clause-sensitivity wifc) (cadr wifc))
+
+(define (get-waiting-if-clause-guardeval wifc) (caddr wifc))
+
+(define (get-waiting-if-clause-command wifc) (cadddr wifc))
+
              
