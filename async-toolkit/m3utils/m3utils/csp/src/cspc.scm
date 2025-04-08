@@ -212,6 +212,57 @@
 (define (caddddr x) (car (cddddr x)))
 (define (cadaddr x) (car (cdaddr x)))
 
+
+
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define *name-counter* 0) ;; guarantees all the names are unique
+
+(define (make-name-generator rootstring)
+  ;;
+  ;; return a temporary-name-generator
+  ;; a procedure of zero arguments, which generates incrementing temp names
+  ;;
+  (let ((root                rootstring)
+        (my-last-name        #f)
+        )
+
+
+    (define (make-symbol n)
+      (string->symbol(string-append root (stringify n))))
+
+    (lambda(cmd . x)
+      (case cmd
+        ((names)
+         (let loop ((i (- *name-counter* 1))
+                    (res '()))
+           (if (= i -1)
+               res
+               (loop (- i 1) (cons (make-symbol i) res))))
+               
+         )
+
+        ((last) my-last-name)
+        
+        ((next)
+         (let* ((z (make-symbol *name-counter*))
+                (res (if (null? x) z (symbol-append (car x) z))))
+           (set! my-last-name res)
+           (set! *name-counter* (+ *name-counter* 1))
+           res))))))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+
+
+
+
 (define (load-csp fn)
 
   (let* ((p   (open-input-file fn))
@@ -914,6 +965,7 @@
 
 (define (make-var1-decl sym type)
   ;; vars don't have a direction
+  (dis "make-var1-decl " type dnl)
   (make-var1 (make-decl sym type 'none)))
 
 (define (make-decl sym type dir)
@@ -1007,10 +1059,31 @@
 
   (visit-stmt lisp stmt-visitor identity identity)
   var1s
-)
+  )
+
+
+(define (find-loop-indices lisp)
+  (define idxs '())
+
+  (define (stmt-visitor s)
+    (cond ((member (get-stmt-type s) '(sequential-loop parallel-loop))
+           (set! idxs (cons (cadr s) idxs)))
+
+          ((member (get-stmt-type s) '(loop-expression))
+           (set! idxs (cons (get-loopex-dummy s) idxs)))
+
+          )
+    )
+
+  (visit-stmt lisp stmt-visitor identity identity)
+
+  idxs
+  )
+
+
 
 (define (find-declared-vars lisp) ;; set of declared vars
-  (uniq eq? (map cadr (map cadadr (find-var1-stmts lisp)))))
+  (uniq eq? (append (find-loop-indices lisp) (map cadr (map cadadr (find-var1-stmts lisp))))))
 
 (define (find-declaration-vars lisp) ;; multiset of declarations
   (map cadr (map cadadr (find-var1-stmts lisp))))
@@ -1021,6 +1094,8 @@
   (count-in of (find-declaration-vars stmt)))
 
 (define *stop* #f)
+
+(define uniqify-tg (make-name-generator "uniqify-temp"))
 
 (define (uniqify-one stmt id tg)
 
@@ -1033,7 +1108,7 @@
 ;;      (dis "num-decls of " id " " num-decls " : " (stringify s) dnl)
       (if (= num-decls 1)
           (cons 'cut
-                (rename-id s id (symbol-append id '- (tg 'next))))
+                (rename-id s id (symbol-append id '- (uniqify-tg 'next))))
           s)))
 
   (if (< (count-declarations id stmt) 2)
@@ -1269,7 +1344,19 @@
 (define s-sd #f)
 
 (define (derive-type x syms func-tbl struct-tbl)
-  (cond  ((ident? x) (retrieve-defn (cadr x) syms))
+  (cond  ((ident? x)
+          ;;
+          ;; this part is very tricky!
+          ;; derive-type is used just to construct types for new
+          ;; temporary variables, so if we are examining an integer
+          ;; variable, we return the default int type.
+          ;;
+          ;; cleaning up the integer types will be done during a
+          ;; later pass...
+          ;;
+          (let ((id-type (retrieve-defn (cadr x) syms)))
+            (if (integer-type? id-type) *default-int-type* id-type)))
+         
          ((bigint? x) *default-int-type*)
          ((boolean? x) 'boolean)
          ((string? x) 'string)
@@ -1699,11 +1786,13 @@
   (visit-stmt prog visitor identity identity)
   )
 
+(define handle-eval-tg (make-name-generator "handle-eval-temp"))
+
 (define (handle-eval s syms vals tg func-tbl struct-tbl)
 
   (dis "handle-eval " s dnl)
 
-  (let* ((fake-var (tg 'next))
+  (let* ((fake-var (handle-eval-tg 'next))
          (fake-assign (make-assign `(id ,fake-var) (cadr s)))
          (full-seq
           (handle-assign-rhs fake-assign syms vals tg func-tbl struct-tbl))
@@ -1740,7 +1829,7 @@
 
   (set! *the-pass-results* '())
 
-  (define tg (make-name-generator "temp"))
+  (define tg (make-name-generator "passes-temp"))
   
   (set! *a*    '())
   (set! *syms* '())
@@ -1802,7 +1891,7 @@
   (define syms '())
   (define vals '())
 
-  (define tg (make-name-generator "temp"))
+  (define tg (make-name-generator "run-pass-temp"))
   
   (define (enter-frame!)
     (set! syms (cons (make-hash-table 100 atom-hash) syms))
@@ -1856,7 +1945,7 @@
           stmt)))
   
   (define (stmt-check-enter s)
-;;    (dis "stmt-check-enter " (if (pair? s) (car s) s) dnl)
+;;    (dis go-red-bold-term "stmt-check-enter " (if (pair? s) (car s) s) reset-term dnl)
     (if (member (get-stmt-kw s) frame-kws) (enter-frame!))
     (case (get-stmt-kw s)
       ((var1)
@@ -1875,6 +1964,7 @@
        )
 
       ((parallel-loop sequential-loop)
+       (dis "defining loop dummy : " (get-loop-dummy s) dnl)
        (define-var! syms (get-loop-dummy s) *default-int-type*))
          
       )
@@ -2043,12 +2133,6 @@
       )
   )
 
-(define (make-referenceable x temp-generator) ;; BROKEN
-  (if (directly-referenceable? x)
-      x
-      (let ((new-var (temp-generator 'next)))
-        (list 'id new-var))))
-
 ;; this code isnt quite right
 ;; it should only be applied to the arguments of say assign.
 
@@ -2089,67 +2173,6 @@
 
 (define (get-apply-funcname x)
   (cadadr x))
-
-(define (sequentialize-one s tg)   ;; BROKEN
-  (if (eq? s 'skip)
-      'skip
-      (let ((kw   (car s))
-            (args (cdr s)))
-        (case kw
-          ((assign) (list 'assign
-                          (car args) ;; don't do lvalues yet...?
-                          (make-referenceable (cadr args) tg)
-                          )
-           )
-          
-          (else s))
-        
-        )))
-               
-
-(define (sequentialize-stmt s)   ;; BROKEN
-  (let ((tg (make-name-generator "t")))
-    (visit-stmt s
-                sequentialize-one
-                identity
-                identity)))
-  
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(define *name-counter* 0) ;; guarantees all the names are unique
-
-(define (make-name-generator rootstring)
-  ;;
-  ;; return a temporary-name-generator
-  ;; a procedure of zero arguments, which generates incrementing temp names
-  ;;
-  (let ((root                rootstring)
-        (my-last-name        #f)
-        )
-
-
-    (define (make-symbol n)
-      (string->symbol(string-append root (stringify n))))
-
-    (lambda(cmd . x)
-      (case cmd
-        ((names)
-         (let loop ((i (- *name-counter* 1))
-                    (res '()))
-           (if (= i -1)
-               res
-               (loop (- i 1) (cons (make-symbol i) res))))
-               
-         )
-
-        ((last) my-last-name)
-        
-        ((next)
-         (let* ((z (make-symbol *name-counter*))
-                (res (if (null? x) z (symbol-append (car x) z))))
-           (set! my-last-name res)
-           (set! *name-counter* (+ *name-counter* 1))
-           res))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
            

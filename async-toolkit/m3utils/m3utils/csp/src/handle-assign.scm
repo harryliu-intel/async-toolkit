@@ -14,7 +14,7 @@
     
     (define (make-simple x)
 
-      ;;    (dis "make-simple " x dnl)
+     (if debug (dis "make-simple " x dnl))
       
       (set! sss (cons (cons x syms) sss))
       
@@ -56,7 +56,7 @@
             (else a)
             ))
     
-    ;;  (dis   "handle-access-assign : called    : "  ass dnl)
+    (if debug  (dis   "handle-access-assign : called    : "  ass dnl))
     
     (let* ((lhs       (handle-access-expr (get-assign-lhs ass)))
            (rhs       (handle-access-expr (get-assign-rhs ass)))

@@ -312,6 +312,12 @@
                      identity expr-visitor
                      identity type-visitor))
 
+(define (visit-range r stmt-visitor expr-visitor type-visitor)
+  (prepostvisit-range r
+                     identity stmt-visitor
+                     identity expr-visitor
+                     identity type-visitor))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define (prepostvisit-range r

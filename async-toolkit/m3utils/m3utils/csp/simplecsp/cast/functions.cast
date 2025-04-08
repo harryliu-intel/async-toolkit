@@ -220,3 +220,11 @@ define W()()
     z = f(2*f(f(y)+f(y)));
   }
 }
+
+define X()()
+{
+  csp {
+    int(32) x = keep_msb_bit(12, 11);
+  }
+}
+ 
