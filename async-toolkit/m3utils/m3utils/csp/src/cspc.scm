@@ -473,55 +473,90 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define (loaddata! nm)
+  ;; this ends up loading the program into *the-text*
   (begin
+    (dis dnl "=========  LOADING PARSE TREE FROM " nm ".scm ..." dnl)
+
     (set! *cell*  (load-csp (string-append nm ".scm")))
 
     (set! *data* (cadr *cell*))       ;; the CSP code itself
     (set! *cellinfo* (caddr *cell*))  ;; the CAST ports
 
+    (dis "=========  PARSE TREE LOADED SUCCESSFULLY " dnl dnl)
+    
     (switch-proc! *data*)
     )
+
+  (dis   dnl go-grn-bold-term
+         "=========  INITIAL SETUP COMPLETE : run (compile!) when ready" dnl
+         reset-term dnl)
+  
+  '*the-text*
   )
 
 (define xxx #f)
 
+(define (print-atomsize sym)
+  (dis "Defined " sym " : " )
+  (dis (count-atoms (eval sym)) " atoms" dnl))
+
 (define (switch-proc! data)
+
+  (print-atomsize '*data*)
+  
   (map
    (lambda (sym)
      (let ((entry
             (apply (eval (symbol-append 'get- sym)) (list data))))
-       (dis "sym = " sym dnl)
-       (dis "entry = " entry dnl)
+       (dis sym " ")
+       (dis (count-atoms entry) " atoms" dnl)
        (eval (list 'set! sym 'entry))
        ))
-   '(funcs structs refparents declparents inits text)
+   '(refparents)
    )
   
   (map
    (lambda (sym)
      (dis (string-append "(length " (symbol->string sym) ") = ")
           (eval (list 'length sym)) dnl))
-   '(funcs structs refparents declparents inits text))
+   '(
+     ;;     funcs structs refparents declparents inits text
+     )
+   )
 
   (set! *the-text* (simplify-stmt (desugar-stmt (close-text data))))
+
+  (print-atomsize '*the-text*)
+  
 
   (set! *the-funcs* (remove-duplicate-funcs
                       (merge-all get-funcs append data)))
 
+  (print-atomsize '*the-funcs*)
+
   (set! *the-structs* (map cadr (merge-all get-structs append data)))
+
+  (print-atomsize '*the-structs*)
 
   (set! *the-inits*   (remove-duplicate-inits
                        (simplify-stmt
                         (desugar-stmt
                          (merge-all get-inits make-sequence data)))))
 
+  (print-atomsize '*the-inits*)
+
   (set! *the-initvars* (find-referenced-vars *the-inits*))
 
   (set! *the-func-tbl* (make-object-hash-table get-function-name *the-funcs*))
+
+  (dis (*the-func-tbl* 'size) " functions loaded" dnl)
+  
   (set! *the-struct-tbl* (make-object-hash-table get-struct-decl-name *the-structs*))
 
-  (set! lisp0 (desugar-prog data))
-  (set! lisp1 (simplify-stmt lisp0))
+  (dis (*the-struct-tbl* 'size) " struct types loaded" dnl)
+
+;;  (set! lisp0 (desugar-prog data))
+;;  (set! lisp1 (simplify-stmt lisp0))
 
   'ok
     
@@ -585,6 +620,11 @@
   (if (pair? x)
       (cons (deep-copy (car x)) (deep-copy (cdr x)))
       x))
+
+(define (count-atoms p)
+  (cond ((null? p) 0)
+        ((pair? p) (+ (count-atoms (car p)) (count-atoms (cdr p))))
+        (else 1)))
 
 (define (skip) )
 

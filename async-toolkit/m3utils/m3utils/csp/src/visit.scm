@@ -78,7 +78,7 @@
       )
     )
   
-  
+   
   (define (visit-waiting-if)
     (map visit-waiting-clause (cdr s)))
   

@@ -711,6 +711,72 @@ PROCEDURE Uniq(t : T) : T =
       END
     END
   END Uniq;
+
+
+CONST WordSize = BITSIZE(Word.T);
+
+TYPE  BitPos = [ 0 .. WordSize - 1 ];
+
+CONST Mask_1  : Word.T = 1;
+      Mask_2  : Word.T = Word.Or(Word.Shift(Mask_1, 1), Mask_1);
+      Mask_4  : Word.T = Word.Or(Word.Shift(Mask_2, 2), Mask_2);
+      Mask_8  : Word.T = Word.Or(Word.Shift(Mask_4, 4), Mask_4);
+      Mask16  : Word.T = Word.Or(Word.Shift(Mask_8, 8), Mask_8);
+      Mask32  : Word.T = Word.Or(Word.Shift(Mask16,16), Mask16);
+
+      Mask_1H : Word.T = Word.Shift(Mask_1, 1);
+      Mask_2H : Word.T = Word.Shift(Mask_2, 2);
+      Mask_4H : Word.T = Word.Shift(Mask_4, 4);
+      Mask_8H : Word.T = Word.Shift(Mask_8, 8);
+      Mask16H : Word.T = Word.Shift(Mask16,16);
+      Mask32H : Word.T = Word.Shift(Mask32,32);
+      
+      
+PROCEDURE FindMsb(w : Word.T) : [ -1..LAST(BitPos) ] =
+  VAR
+    pos : BitPos := 0;
+  BEGIN
+    IF w = 0 THEN RETURN -1 END;
+    
+    IF WordSize = 64 THEN
+      IF Word.And(Mask32H, w) # 0 THEN
+        INC(pos, 32);
+        w := Word.RightShift(w, 32)
+      END
+    END;
+    
+    IF Word.And(Mask16H, w) # 0 THEN
+      INC(pos, 16);
+      w := Word.RightShift(w, 16)
+    END;
+    IF Word.And(Mask_8H, w) # 0 THEN
+      INC(pos,  8);
+      w := Word.RightShift(w,  8)
+    END;
+    IF Word.And(Mask_4H, w) # 0 THEN
+      INC(pos,  4);
+      w := Word.RightShift(w,  4)
+    END;
+    IF Word.And(Mask_2H, w) # 0 THEN
+      INC(pos,  2);
+      w := Word.RightShift(w,  2)
+    END;
+    IF Word.And(Mask_1H, w) # 0 THEN
+      INC(pos,  1);
+    END;
+    RETURN pos
+  END FindMsb;
+
+PROCEDURE GetAbsMsb(t : T) : [ -1 .. LAST(CARDINAL) ] =
+  BEGIN
+    IF t = Zero THEN
+      RETURN -1
+    ELSE
+      WITH szm1 = t.rep.siz - 1 DO
+        RETURN  szm1 * BaseLog2 + FindMsb(t.rep.a[szm1])
+      END
+    END
+  END GetAbsMsb;
   
 VAR
   FirstInt, LastInt : T;
@@ -719,7 +785,8 @@ VAR
   small : ARRAY PrintBase OF T;
   RepBase := New(Base);
   
-BEGIN 
+BEGIN
+  <*ASSERT WordSize = 32 OR WordSize = 64*>
   Zero := New(0);
   One := New(1);
   Two := New(2);
