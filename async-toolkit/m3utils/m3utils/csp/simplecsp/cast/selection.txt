@@ -92,8 +92,8 @@ usable semantics for these guard expressions that are more powerful
 than what Martin 1986 had in mind.
 
 The issue of unstable guards is outside the scope of this report: it
-is fundamentally unchanged from CHP and has been studied in that
-context by Martin and others.
+is fundamentally unchanged from Martin's CHP and has been studied in
+that context by Martin and others.
 
 
 A reference implementation
@@ -117,7 +117,7 @@ member of the reference set if and only if it is referenced by the
 full expansion of the code of the guards, including the closure of all
 the functions referenced within the guards.  Consider from Q those
 objects R that are visible externally to the process containing the
-selection statement.  This will be the intersection of S with the set
+selection statement.  This will be the intersection of Q with the set
 of ports (in Fulcrum-CSP, channels and nodes) visible to the external
 environment of the process.  
 
