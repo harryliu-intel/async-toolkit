@@ -1,7 +1,9 @@
+
 (require-modules "basic-defs" "m3" "hashtable" "set"
                  "display")
 
-(define *the-example* "parents_p2") ;; this is the test file
+
+(define debug #f)
 
 (load "bigint.scm")
 

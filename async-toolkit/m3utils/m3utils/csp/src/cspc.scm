@@ -1817,6 +1817,49 @@
 (load "dead.scm")  
 (load "fold-constants.scm")
 
+(define (display-success-0)
+  (dis go-grn-bold-term
+       "******************************************************************************" dnl)
+  (dis
+   "********************                                      ********************" dnl)
+  (dis
+   "********************   INITIAL TRANSFORMATIONS COMPLETE   ********************" dnl)
+  (dis
+   "********************                                      ********************" dnl)
+  (dis
+   "******************************************************************************" reset-term dnl)
+  )
+
+(define (display-success-1)
+  (dis go-grn-bold-term
+       "******************************************************************************" dnl)
+  (dis
+   "********************                                      ********************" dnl)
+  (dis
+   "********************  COMPILER HAS REACHED A FIXED POINT  ********************" dnl)
+  (dis
+   "********************                                      ********************" dnl)
+  (dis
+   "********************  !!!  TRANSFORMATIONS COMPLETE  !!!  ********************" dnl)
+  (dis
+   "********************                                      ********************" dnl)
+  (dis
+   "******************************************************************************" reset-term dnl)
+  )
+
+(define (display-success-2)
+  (dis go-grn-bold-term
+       "******************************************************************************" dnl)
+  (dis
+   "*******************                                         ******************" dnl)
+  (dis
+   "*******************  CONSTANT BINDING AND FOLDING COMPLETE  ******************" dnl)
+  (dis
+   "*******************                                         ******************" dnl)
+  (dis
+   "******************************************************************************" reset-term dnl)
+  )
+
 (define the-passes (list
                     (list 'assign handle-access-assign)
                     (list 'recv   handle-access-recv)
@@ -1853,6 +1896,7 @@
 
   ;; (dead-code) went here
 
+  (display-success-0)
   
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -1872,22 +1916,10 @@
              (prev-prog '()))
     (if (equal? cur-prog prev-prog)
         (begin
-          (dis go-grn-bold-term
-           "******************************************************************************" dnl)
-          (dis
-           "********************                                      ********************" dnl)
-          (dis
-           "********************  COMPILER HAS REACHED A FIXED POINT  ********************" dnl)
-          (dis
-           "********************                                      ********************" dnl)
-          (dis
-           "********************       TRANSFORMATIONS COMPLETE       ********************" dnl)
-          (dis
-           "********************                                      ********************" dnl)
-          (dis
-           "******************************************************************************" reset-term dnl)
-               (set! text2 cur-prog)
-               'text2)
+          (display-success-1)
+          (set! text2 cur-prog)
+          'text2
+          )
         
         (begin  ;; program not equal, must continue
           (dis *program-changed* dnl)
@@ -2020,7 +2052,7 @@
                   identity identity)
                  
                  (dis "program text..." dnl)
-                 (set! debug #t)
+;;                 (set! debug #t)
                  
                  (let ((res
                         (prepostvisit-stmt prog
@@ -2030,7 +2062,7 @@
                                             identity                identity
                                             identity                identity)))
                    (exit-frame!)
-                   (set! debug #f)
+;;                   (set! debug #f)
 
                    res))
                
@@ -2090,12 +2122,22 @@
     )
   )
 
+(define text3 #f)
+
 (define (compile!)
   (run-compiler! *the-text*
                  *cellinfo*
                  *the-inits*
                  *the-func-tbl*
-                 *the-struct-tbl*))
+                 *the-struct-tbl*)
+  ;; result now in text2
+
+  (set! text3
+        (run-pass (list '* fold-constants-*) text2 *cellinfo* *the-inits* *the-func-tbl* *the-struct-tbl*)
+        )
+  (display-success-2)
+  'text3
+  )
 
 
 (define (mn) (make-name-generator "t"))

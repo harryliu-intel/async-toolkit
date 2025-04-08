@@ -1,7 +1,7 @@
 ;; handle-XXX-binop handles an operation that RETURNS an XXX
 ;; inputs can be polymorphic
 
-(define debug #f)
+(define (dbg . x)  (if debug (apply dis x)))
 
 (define (handle-integer-binop x constant? constant-value)
   ;; x is a binary expression such as (+ a 2)
@@ -14,9 +14,9 @@
                (the-op    (eval the-op-id)))
 
 
-          (dis "handle-integer-binop   op : " op dnl)
-          (dis "handle-integer-binop   a  : " a dnl)
-          (dis "handle-integer-binop   b  : " b dnl)
+          (dbg "handle-integer-binop   op : " op dnl)
+          (dbg "handle-integer-binop   a  : " a dnl)
+          (dbg "handle-integer-binop   b  : " b dnl)
 
           (let ((ca (constant-value a))
                 (cb (constant-value b)))
@@ -63,9 +63,9 @@
 
 
           (if debug
-              (dis "handle-boolean-binop   op : " op dnl)
-              (dis "handle-boolean-binop   a  : " a dnl)
-              (dis "handle-boolean-binop   b  : " b dnl)
+              (dbg "handle-boolean-binop   op : " op dnl)
+              (dbg "handle-boolean-binop   a  : " a dnl)
+              (dbg "handle-boolean-binop   b  : " b dnl)
               )
 
           (let* ((ca (constant-value a))
@@ -75,9 +75,9 @@
                      
           ;; if literals, we apply the op, else we inline the value
             ;;
-            (dis "ca = " ca dnl)
-            (dis "cb = " cb dnl)
-            (dis "type = " type dnl)
+            (dbg "ca = " ca dnl)
+            (dbg "cb = " cb dnl)
+            (dbg "type = " type dnl)
 
             (let loop ((p *boolean-binops*))
               (cond ((null? p)      x ;; not found
@@ -109,9 +109,9 @@
                (the-op    (eval the-op-id)))
 
 
-          (dis "handle-string-binop   op : " op dnl)
-          (dis "handle-string-binop   a  : " a dnl)
-          (dis "handle-string-binop   b  : " b dnl)
+          (dbg "handle-string-binop   op : " op dnl)
+          (dbg "handle-string-binop   a  : " a dnl)
+          (dbg "handle-string-binop   b  : " b dnl)
 
           (let ((ca (constant-value a))
                 (cb (constant-value b)))
@@ -137,20 +137,20 @@
        (cadr t)))
         
 (define (fold-constants-* stmt syms vals tg func-tbl struct-tbl)
-  (if debug (dis "fold-constants-* " (if (pair? stmt) (car stmt) stmt) dnl))
+  (dbg "fold-constants-* " (if (pair? stmt) (car stmt) stmt) dnl)
   
   (define (constant? x)
 
-;;    (dis "constant? " x dnl)
-;;    (dis "symbols : " (map (lambda(tbl)(tbl 'keys)) syms) dnl)
+;;    (dbg "constant? " x dnl)
+;;    (dbg "symbols : " (map (lambda(tbl)(tbl 'keys)) syms) dnl)
     
     (cond ((bigint? x) #t)
           ((ident? x)
            (let* ((defn (retrieve-defn (cadr x) syms))
                   (is-const (constant-type? defn))
                  )
-;;             (dis "constant? : x defn   : " defn dnl)
-;;             (dis "constant? : is-const : " is-const dnl)
+;;             (dbg "constant? : x defn   : " defn dnl)
+;;             (dbg "constant? : is-const : " is-const dnl)
              is-const
              )
            )
@@ -160,13 +160,13 @@
     (let ((res 
            (if (pair? x)
                (let ((val (retrieve-defn (cadr x) vals)))
-                 (dis "constant-value replacing " x " -> " val dnl)
+                 (dbg "constant-value replacing " x " -> " val dnl)
                  val
                  )
                x)))
       (if debug
-          (dis "constant-value x   : " x dnl)
-          (dis "constant-value res : " res dnl)
+          (dbg "constant-value x   : " x dnl)
+          (dbg "constant-value res : " res dnl)
           )
       res
       )
@@ -174,7 +174,7 @@
 
   
   (define (expr-visitor x)
-    (if debug (dis "expr-visitor x = " x dnl))
+    (dbg "expr-visitor x = " x dnl)
 
     (cond ((not (pair? x)) x)
 
@@ -182,7 +182,7 @@
            (let ((res
                   (if (constant? x) (constant-value x) x)))
 
-             (dis "expr-visitor ident? returning " res dnl)
+             (dbg "expr-visitor ident? returning " res dnl)
              res))
            
           ((integer-expr? x syms func-tbl struct-tbl)
@@ -197,7 +197,7 @@
           (else x)))
 
   (define (stmt-visitor s)
-    (if #t (dis "fold-* stmt-visitor " s dnl))
+    (if #t (dbg "fold-* stmt-visitor " s dnl))
 
     ;;
     ;; This is dumb: we are replicating parts of "stmt-check-enter"
@@ -208,12 +208,11 @@
       ((assign)
 
 
-       (set! debug #t)
-       (if debug (dis "visiting assign " s dnl))
+       (dbg "visiting assign " s dnl)
        (let ((res `(assign
                     ,(get-assign-lhs s)
                     ,(visit-expr (get-assign-rhs s) identity expr-visitor identity))))
-         (if debug (dis "returning assign " res dnl))
+         (dbg "returning assign " res dnl)
          (if (ident? (get-assign-lhs s))
 
              (define-var! vals (cadr (get-assign-lhs res)) (get-assign-rhs res))
@@ -224,12 +223,10 @@
       
       ((var1)
        (define-var! syms (get-var1-id s) (get-var1-type s))
-       (dis "defining " (get-var1-id s) dnl)
-       (set! debug #f)
-       (if debug (dis "visiting var1 " s dnl))
+       (dbg "defining " (get-var1-id s) dnl)
+       (if debug (dbg "visiting var1 " s dnl))
        (let ((res (visit-stmt s identity expr-visitor identity)))
-         (if debug (dis "returning var1 " res dnl))
-         (set! debug #f)
+         (dbg "returning var1 " res dnl)
          res
          )
        )
@@ -244,7 +241,7 @@
              (loop-idx   (cadr s))
              (loop-range (caddr s))
              (loop-stmt  (cadddr s)))
-         (dis "loop " s dnl)
+         (dbg "loop " s dnl)
          (define-var! syms loop-idx *default-int-type*)
          `(,loop-type
            ,loop-idx
@@ -262,7 +259,7 @@
                                     identity identity
                                     identity identity)))
         
-;;        (dis "fold-* res = " res dnl)
+;;        (dbg "fold-* res = " res dnl)
         res
         )
       stmt

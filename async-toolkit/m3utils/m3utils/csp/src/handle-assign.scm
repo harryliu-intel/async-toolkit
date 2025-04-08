@@ -271,15 +271,14 @@
                            the-ass
                            (cons 'sequence (append seq (list the-ass))))))
                     
-                    (else x))))
-
+                    (else a))))
+        (dbg "probe/recv-ex  : " op dnl)
+        (dbg "probe/recv-ex op : " op dnl)
+        
         (dis "probe/recv-ex -> " (stringify result) dnl)
         result
-;;        (error)
-        )
-      )
-     
-     
+        ))
+              
      (else a))
     )
   )
