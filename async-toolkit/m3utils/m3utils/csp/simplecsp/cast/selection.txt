@@ -11,13 +11,16 @@ known as if) in Fulcrum-CSP, for arbitrary guard expressions.
 Fulcrum-CSP is the dialect of the CSP (Communicating Sequential
 Processes) language (Hoare 1978) developed at Fulcrum Microsystems
 (now Intel Corp.)  It is most directly based on Martin's Communicating
-Hardware Processes (Martin 1986), which added the probe construct to
-Hoare's CSP, together with other changes.  Fulcrum-CSP differs from
-its ancestors in that it has been embedded in a complete hardware
-description language (Fulcrum-CAST) and has been used to implement a
-long lineage of chips at Fulcrum and Intel.  As a result of the industrial
-use of the language, Fulcrum-CSP has a much richer set of concrete
-programming constructs than its ancestors.
+Hardware Processes (CHP) (Martin 1986), which added the probe
+construct to Hoare's CSP, together with other changes.  Fulcrum-CSP
+differs from its ancestors in that it has been embedded in a complete
+hardware description language (Fulcrum-CAST) and has been used to
+implement a long lineage of chips at Fulcrum and Intel.  As a result
+of the industrial use of the language, Fulcrum-CSP has a much richer
+set of concrete programming constructs than its ancestors.
+Fulcrum-CSP extends Martin's CHP with procedures (called "functions"
+within the language) and the else keyword, plus more that is not
+relevant to the present discussion.
 
 Consider the CSP selection statement
 
@@ -29,7 +32,7 @@ where A and B are predicates and P and Q are program fragments.  In
 the context of the selection statement, A and B are referred to as
 guards, and P and Q are called commands; the combination A -> P is
 called a guarded command.  This nomenclature derives from Dijkstra's
-Guarded Command Language (Dijkstra 1975ab).  Dijkstra used
+Guarded Command Language (GCL) (Dijkstra 1975ab).  Dijkstra used
 "if...[]...fi" as his syntax, so the selection statement is sometimes
 referred to as an if statement.
 
@@ -46,7 +49,8 @@ behaviors are simply unwanted and useless within a guard, some of them
 may have use and we probably don't want to ban every "unconventional"
 coding of a guard.  (If we wanted to do that, we would instead have to
 define the word "unconventional", and that is probably even more
-difficult than simply giving some meaning to dubious constructs.)
+difficult than simply giving some meaning, however unpleasant, to
+these dubious constructs.)
 
 We propose the following semantics for the selection.
 
@@ -85,7 +89,11 @@ that could be run within the guard evaluations remain useless, but our
 concern here is not to come up with a complete set of rules for what
 can "reasonably" be put in a selection guard, merely to propose a
 usable semantics for these guard expressions that are more powerful
-than what Martin had in mind.
+than what Martin 1986 had in mind.
+
+The issue of unstable guards is outside the scope of this report: it
+is fundamentally unchanged from CHP and has been studied in that
+context by Martin and others.
 
 
 A reference implementation
@@ -101,15 +109,17 @@ simple guarded commands.  By simple guarded commands, we mean guarded
 commands where the guards consist only of boolean literals or simple
 boolean expressions consisting of single boolean variables.  The
 semantics of the evaluation of such simple guards is obvious, and they
-are easy to implement in any reasonable environment.
+are easy to implement in any environment where we might have a hope to
+implement CSP.
 
 Consider the reference set of the guards Q, where an object is a
 member of the reference set if and only if it is referenced by the
 full expansion of the code of the guards, including the closure of all
 the functions referenced within the guards.  Consider from Q those
 objects R that are visible externally to the process containing the
-selection statement.  (This will be the intersection of S with the set
-of ports (channels and nodes) visible to the external environment.)
+selection statement.  This will be the intersection of S with the set
+of ports (in Fulcrum-CSP, channels and nodes) visible to the external
+environment of the process.  
 
 We introduce a statement waitfor(R) that blocks until a change has
 occurred in any of the objects in R.  We call R the activation set of
@@ -163,9 +173,9 @@ variables (not expressions), plus a waitfor on the activation set R.
 
 An alternative implementation that would be more efficient for larger
 selections would be one that maintains a separate activation set for
-each guard.  Such an implementation would only need to re-evaluate
-a subset of the guards whenever a change is reported from an
-interface object.
+each guard.  Such an implementation would only need to re-evaluate a
+subset of the guards whenever a change is reported on an interface
+object.
 
 
 Nondeterministic selection
@@ -178,10 +188,10 @@ deterministic selection.
 
 The discussion above applies equally to nondeterministic selection.
 The implementation will use the deterministic selection between
-boolean variables gi exactly as the implementation of the deterministic
-selection did.  The nondeterminism is maintained by the evaluations
-gi := Gi , whose values become nondeterministic and need to be
-carefully considered by the implementer.
+boolean variables gi exactly as the implementation of the
+deterministic selection did.  The nondeterminism remains present in
+the evaluations gi := Gi , whose values become nondeterministic and
+need to be carefully considered by the implementer.
 
 
 Fulcrum-CAST implementation notes
@@ -202,7 +212,9 @@ Implementation of the loop
 ==========================
 
 Consider the loop *[ < [] i : N : Gi -> Si > ] or nondeterministic
-loop *[ < : i : N : Gi -> Si > ] [sorry for the typography].
+loop *[ < : i : N : Gi -> Si > ] [sorry for the confusing
+typography---we will just write it [] regardless of whether we mean
+deterministic or nondeterministic selection, as in GCL].
 
 This presents no trouble since the loop cannot block.
 
@@ -234,9 +246,55 @@ to check for multiply enabled guards.  (The same applies to the
 deterministic selection statement.)
 
 
-Local
+Local if
+========
+
+An important special case of the selection is one where the
+activation set is empty.  This is simply a traditional if-then.
+As in GCL, a local-if that is activated where none of the guards
+is true is an abortion (functionally equivalent to deadlock).
+
 
 else
+====
+
+Fulcrum-CSP adds the else construct to the selection.  In Fulcrum-CSP,
+"else" is allowed as the final guard in a selection, and evaluates
+to true when all the other guards have evaluated to false.  Inclusion
+of "else" turns any selection into a local-if.
+
+
+#[ ]
+====
+
+The Fulcrum-CSP syntax 
+
+    #[ <[] :: Gi -> Si> ]
+
+is syntactic sugar for
+
+    [ <[] :: Gi -> Si> [] else -> skip ] .
+
+
+Commentary
+==========
+
+Fulcrum-CSP maintains the tradition, stretching back to GCL, of not
+distinguishing between "if" and "selection", so the same statement is
+used to block waiting for an input as is used to test a debugging
+flag.  This is perhaps a mistake.  The provision of a separate,
+traditional, if...then...else would have allowed the programmer to
+distinguish between ifs that are intended to be blocking selections
+and ifs that are intended simply to choose between a few locally
+determined alternatives.  Allowing such a distinction would make it
+possible to be far more restrictive about what is allowed within the
+guards of a selection and forcing the programmer to commit to a
+"nonblocking if-then" for all other activities, which could then be
+used in the richer procedural sense allowed in most software
+programming languages, e.g., allowing recursion within the language.
+This is essentially the approach taken in Go (Pike 2009), another
+descendant of Hoare-CSP.
+
 
 References
 ==========
@@ -256,5 +314,9 @@ Hoare 1974.
 C. A. R. Hoare.  Monitors : An operating system structuring concept.
 CACM 17(10), 1974.
 
-Hoare 1978
+Hoare 1978.
 C. A. R. Hoare.  Communicating sequential processes.  CACM 21(8), 1978.
+
+Pike 2009.
+R. Pike et al.  The Go Programming Language.  2009.
+
