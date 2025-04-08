@@ -3,7 +3,7 @@ A proposal for the semantics of selection ([...]) in Fulcrum-CSP
 ================================================================
 
 mika.nystroem@intel.com
-April 5, 2025
+April 8, 2025
 
 We discuss the implementation of the selection statement (also
 known as if) in Fulcrum-CSP, for arbitrary guard expressions.
@@ -176,6 +176,16 @@ selections would be one that maintains a separate activation set for
 each guard.  Such an implementation would only need to re-evaluate a
 subset of the guards whenever a change is reported on an interface
 object.
+
+It is emphatically not our intent to extend the usage of CSP to
+programming constructs such as nested selections, that is, selections
+whose guards include the results of executing other selections.  If it
+were, we would have to consider modifying the lock(R) mechanism, which
+as written here would deadlock and further have to consider how to
+order the wake-up of the waiting selections from the waitfor()
+statements.  Since Fulcrum-CSP does not allow recursion, there is a
+definite ordering in the activation sets Ri of the selections, and the
+selections would need to be awoken in order of increasing Ri.
 
 
 Nondeterministic selection
