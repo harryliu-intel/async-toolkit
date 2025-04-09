@@ -140,16 +140,25 @@
              (intrinsic    (eq? fdef '*hash-table-search-failed*))
              (sfx       (if intrinsic "" (tg 'next)))
              (fdef1text (if intrinsic
-                            `(eval (call-intrinsic ,fnam ,@actuals))
+                            `(call-intrinsic ,fnam ,@actuals)
                             (uniqify-function-text fdef sfx cell-info initvars)))
              )
         (dis "pre-inline : " (stringify s) dnl)
+        (dis "lhs        : " (stringify lhs) dnl)
         (dis "actuals    : " (stringify actuals) dnl)
         (dis "fdef       : " (stringify fdef) dnl)
         (dis "fdef1text  : " (stringify fdef1text) dnl)
         
         (if intrinsic
-            fdef1text
+            ;; intrinsic:
+            (if (null? lhs)
+
+                (list 'eval fdef1text)
+
+                `(assign ,lhs ,fdef1text))
+            
+
+            ;; not intrinsic:
             (let* ((formals    (get-function-formals fdef))
                    (ftype      (get-function-return fdef))
                    (f-inst-nam (symbol-append fnam sfx))

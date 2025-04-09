@@ -90,6 +90,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(define *the-prog-name* #f)
 (define inits1 #f)
 (define text1 #f)
 (define text2 #f)

@@ -1,4 +1,6 @@
-(define (probe? x)  (and (pair? x) (eq? 'probe (car x))))
+
+(define (peek?            x)  (and (pair? x) (eq? 'peek (car x))))
+(define (probe?           x)  (and (pair? x) (eq? 'probe (car x))))
 (define (recv-expression? x)  (and (pair? x) (eq? 'recv-expression (car x))))
 
 (define (handle-access-assign ass syms vals tg func-tbl struct-tbl)
@@ -226,7 +228,7 @@
               
               (else a))))
 
-     ((or (probe? rhs) (recv-expression? rhs))
+     ((or (probe? rhs) (recv-expression? rhs) (peek? rhs))
 
       (define seq '())
       

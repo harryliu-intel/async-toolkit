@@ -472,8 +472,10 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+
 (define (loaddata! nm)
   ;; this ends up loading the program into *the-text*
+  (set! *the-prog-name* nm)
   (begin
     (dis dnl "=========  LOADING PARSE TREE FROM " nm ".scm ..." dnl)
 
@@ -1666,7 +1668,11 @@
   (define (visitor x)
     (if (pair? x)
         (case (car x)
-          ((apply call-intrinsic recv-expression) (set! result #f)))))
+          ((apply call-intrinsic recv-expression)
+
+           ;; note that peek doesn't have side effects, but it may block
+
+           (set! result #f)))))
 
   (visit-expr expr identity visitor identity)
   result
@@ -2137,7 +2143,7 @@
     (cond ((null? p) #f)
           ((equal? proc (cadar p)) (car p))
           (else (recurse (cdr p)))))
-  (recurse the-passes)
+  (recurse *the-passes-1*)
   )
 
 ;; Select Graphic Rendition

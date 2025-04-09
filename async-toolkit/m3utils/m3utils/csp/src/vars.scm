@@ -26,7 +26,7 @@
        
        (let* ((lhs       (get-assign-lhs s)))
          (add-entry! lhs))
-       s)
+       )
 
       ((recv)
        (let ((lhs (get-recv-lhs s))
@@ -36,13 +36,25 @@
          (dis "recv rhs : " rhs dnl)
 
          (if (not (null? rhs)) (add-entry! rhs)))
-       s
        )
 
       ((assign-operate)  ;; should be transformed out
        (error))
 
-      (else s)))
+
+      ((eval)
+       ;; should only be a call-intrinsic at this point
+       (let* ((expr (cadr s))
+              (expr-type (car expr)))
+         (if (not (eq? 'call-intrinsic expr-type))
+             (error "make-assignments-tbl called on non-inlined code : " s))
+
+         (let ((inam (cadr expr)))
+           (if (eq? inam 'unpack)
+               (add-entry! (caddr expr))))))
+      )
+    s
+    )
 
   ;;  (visit-stmt tgt visitor identity identity)
 
