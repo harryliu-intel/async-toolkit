@@ -142,9 +142,19 @@
                      )
                     
                     ((eval)
-;;                     (dis "visit eval stmt : " (stringify args) dnl)
+                     (let* ((eval-args (car args))
+                            (v-args    (expr eval-args))
+                            (new-args  (list v-args)))
 
-                     (list (expr (car args))))
+                       (if #f (begin
+                     (dis "visit eval stmt           : " (stringify args) dnl)
+                     (dis "visit eval stmt eval-args : " (stringify eval-args) dnl)
+                     (dis "visit eval stmt v-args    : " (stringify v-args) dnl)
+                     (dis "visit eval stmt new-args  : " (stringify new-args) dnl)
+                     ))
+
+                     new-args)
+                     )
 
                     ((assign-operate)
                      (list (car args) (expr (cadr args)) (expr (caddr args))))
@@ -179,14 +189,19 @@
   ;; else, just call the post-visitor on the result of the pre-visitor
   ;;
 
-  (let ((pre (stmt-previsit s)))
+  (let ((pre (begin ;; (dis "about to call stmt-previsit " s dnl)
+                    (stmt-previsit s))))
 
 ;;    (dis "pre returns " (stringify pre) dnl)
     
     (cond ((eq? pre #f) s)
           ((and (pair? pre) (eq? 'cut (car pre))) (cdr pre))
           ((eq? pre 'delete) 'delete) ;; will be caught in caller
-          (else (stmt-postvisit (continue pre)))))
+          (else
+           (let ((pre-result (continue pre)))
+;;             (dis "pre-result : " pre-result dnl)
+           (stmt-postvisit pre-result))))
+    )
   )
   
 (define (filter-delete stmt) ;; use to filter out 'delete

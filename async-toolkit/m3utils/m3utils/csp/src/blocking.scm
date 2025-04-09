@@ -26,11 +26,13 @@
           ((apply)                    (yes))
 
           ((call-intrinsic)
-           (if (eq? (cadr x) 'wait)   (yes)))
+           (if (eq? (cadr x) 'wait)   (yes) x))
 
           ((recv-expression peek)     (yes))
 
           (else x))))
+
+;;  (dis "smb? : " (stringify stmt) dnl)
 
   (visit-stmt stmt s-visitor x-visitor identity)
 
@@ -42,8 +44,9 @@
   (define (s-visitor s)
     (if (and (eq? (get-stmt-type s) 'parallel)
              (not (stmt-may-block? s)))
-        (cons 'sequence (cdr s))
-        s))
+        (cons 'sequence (cdr s)) ;; convert parallel to sequence
+        s)
+    )
   
-  (simplify-stmt (visit-stmt stmt s-visitor identity identity))
+  (visit-stmt stmt s-visitor identity identity)
   )

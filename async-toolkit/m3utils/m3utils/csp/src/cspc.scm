@@ -2178,7 +2178,11 @@
          the-inits stmt func-tbl struct-tbl cell-info)
   (sequentialize-nonblocking-parallels stmt))
 
-(define (compile!)
+(define (simplify-stmt-pass
+         the-inits stmt func-tbl struct-tbl cell-info)
+  (simplify-stmt stmt))
+
+(define (compile2!)
   (set! text2
         (run-compiler *the-passes-1*
                       *the-text*
@@ -2186,7 +2190,10 @@
                       *the-inits*
                       *the-func-tbl*
                       *the-struct-tbl*))
+  'text2
+  )
 
+(define (compile3!)
   (set! text3
         (run-pass (list '* fold-constants-*)
                   text2
@@ -2195,9 +2202,14 @@
                   *the-func-tbl*
                   *the-struct-tbl*)
         )
+  'text3
+  )
 
-  (set! text4
-        (run-compiler `((global ,sequentialize-nonblocking-parallels-pass))
+(define (compile4!)
+    (set! text4
+          (run-compiler `((global ,sequentialize-nonblocking-parallels-pass)
+                          (global ,simplify-stmt-pass)
+                          )
                        text3
                        *cellinfo*
                        *the-inits*
@@ -2206,6 +2218,13 @@
 ;;  (display-success-2)
   'text4
   )
+
+(define (compile!)
+  (compile2!)
+  (compile3!)
+  (compile4!)
+  )
+
 
 
 (define (mn) (make-name-generator "t"))
