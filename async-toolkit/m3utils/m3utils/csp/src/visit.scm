@@ -30,21 +30,34 @@
                      *expr-previsit* *expr-postvisit*
                      *type-previsit* *type-postvisit*)
   )
-   
+
 (define (prepostvisit-stmt s
                            stmt-previsit stmt-postvisit
                            expr-previsit expr-postvisit
-                           type-previsit type-postvisit)
+                           type-previsit type-postvisit
+
+                           . advance-continue-callback
+                           ;; to know the context of an expression,
+                           ;; an expression visitor can be called back
+                           ;; by the statement parser before the
+                           ;; expression visiting starts -- this way
+                           ;; the expression visitor can know the
+                           ;; context of an expression
+                           
+                           )
   ;; first run stmt-previsit
   ;; if it returns #f, stop recursing
   ;; if it returns (cut . XXX) return XXX
   ;; else run (stmt-postvisit (prepostvisit-stmt ...))
 
-  (define (stmt ss)(prepostvisit-stmt
-                    ss
-                    stmt-previsit stmt-postvisit
-                    expr-previsit expr-postvisit
-                    type-previsit type-postvisit
+  (define (stmt ss)(apply prepostvisit-stmt
+                          (append
+                           (list ss
+                                 stmt-previsit stmt-postvisit
+                                 expr-previsit expr-postvisit
+                                 type-previsit type-postvisit)
+                           
+                           advance-continue-callback)
                     ))
     
   (define (expr x)(prepostvisit-expr
@@ -84,6 +97,10 @@
   
   (define (continue s)
     ;; this procedure does most of the work, it is called after stmt-previsit
+
+    (if (not (null? advance-continue-callback))
+        ((car advance-continue-callback) s))
+    
     (if (eq? s 'skip)
         s
         (begin

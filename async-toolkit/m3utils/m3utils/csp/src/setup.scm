@@ -98,6 +98,7 @@
 (define text4 #f)
 
 (define ass-tbl #f)
+(define use-tbl #f)
 
 (dis "  ===  TO RUN COMPILER: " dnl)
 (dis "  ===  (loaddata! <csp-prefix>)" dnl)

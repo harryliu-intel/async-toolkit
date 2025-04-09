@@ -879,14 +879,37 @@
 
 (define *ddd* #f)
 
+(define (designator? x)
+  ;; supported designators
+  (or (ident? x) (bits? x) (array-access? x) (member-access? x)))
+
 (define (get-designator-id x)
-  ;; pull the identifier out of a designator
+  ;; pull the identifier of the variable being modified out of a designator
+  ;; can only be called on a designator
   (set! *ddd* x)
-  (cond ((eq? 'id (car x)) (cadr x))
-        ((eq? 'bits (car x)) (get-designator-id (cadr x)))
-        ((eq? 'array-access (car x)) (get-designator-id (cadr x)))
-        ((eq? 'member-access (car x)) (get-designator-id (cadr x)))
-        (else #f)))
+  (cond ((ident?         x)  (cadr x))
+        ((bits?          x)  (get-designator-id (cadr x)))
+        ((array-access?  x)  (get-designator-id (cadr x)))
+        ((member-access? x)  (get-designator-id (cadr x)))
+        (else (error "get-designator-id : not a designator : " x))))
+
+(define (get-designator-depend-ids x)
+  ;; put out all the identifiers needed to construct the designator,
+  ;; other than the lvalue
+  (cond ((ident?         x)  '())
+        ((bits?          x)  (uniq eq?
+                              (append
+                               (get-designator-all-ids (caddr x))
+                               (get-designator-all-ids (cadddr x)))))
+         
+        ((array-access?  x)  (get-designator-all-ids (caddr x)))
+        ((member-access? x)  '())
+        (else '())))
+
+(define (get-designator-all-ids x) 
+  ;; pull out all the identifiers used in a designator
+  (uniq eq? (find-expr-ids x)))
+  
 
 (define (hash-designator d)
   ;; hash a designator
@@ -956,7 +979,7 @@
   )
 
 
-(define (find-ids lisp)
+(define (find-stmt-ids lisp)
   (define ids '())
   
   (define (expr-visitor x)
@@ -969,6 +992,22 @@
   )
 
   (visit-stmt lisp identity expr-visitor identity)
+  ids
+  )
+
+(define (find-expr-ids expr)
+  (define ids '())
+  
+  (define (expr-visitor x)
+;;     (dis "expr : " x dnl)
+
+     (if (and (pair? x) (eq? 'id (car x)))
+         (if (not (member? (cadr x) ids))
+             (set! ids (cons (cadr x) ids))))
+     x
+  )
+
+  (visit-expr expr identity expr-visitor identity)
   ids
   )
 
@@ -1076,8 +1115,7 @@
 
 
 
-(define (find-referenced-vars stmt)
-  (find-ids stmt))
+(define (find-referenced-vars stmt) (find-stmt-ids stmt))
 
 (define (find-undeclared-vars stmt portids)
   (let* ((used (find-referenced-vars stmt))
@@ -1925,7 +1963,7 @@
    "******************************************************************************" reset-term dnl)
   )
 
-(define *the-passes-1* (list
+(define *the-passes-2* (list
                         (list 'assign handle-access-assign)
                         (list 'recv   handle-access-recv)
                         (list 'send   handle-access-recv)
@@ -2153,13 +2191,20 @@
     )
   )
 
+(load "vars.scm")
+(load "blocking.scm")
+
 (define (find-pass proc)
 
   (define (recurse p)
     (cond ((null? p) #f)
           ((equal? proc (cadar p)) (car p))
           (else (recurse (cdr p)))))
-  (recurse *the-passes-1*)
+
+  (recurse (append 
+            *the-passes-2*
+            *the-passes-3*
+            *the-passes-4*))
   )
 
 ;; Select Graphic Rendition
@@ -2210,7 +2255,7 @@
 
 (define (compile2!)
   (set! text2
-        (run-compiler *the-passes-1*
+        (run-compiler *the-passes-2*
                       *the-text*
                       *cellinfo*
                       *the-inits*
@@ -2219,31 +2264,42 @@
   'text2
   )
 
-(define (compile3!)
-  (set! text3
-        (run-compiler  `((*       ,fold-constants-*)
+(define *the-passes-3*
+  `((*       ,fold-constants-*)
                          (global  ,constantify-constant-vars-pass)
                          )
-                       
-                  text2
-                  *cellinfo*
-                  *the-inits*
-                  *the-func-tbl*
-                  *the-struct-tbl*)
+  )
+
+(define (compile3!)
+  (set! text3
+        (run-compiler  
+         *the-passes-3*
+         text2
+         *cellinfo*
+         *the-inits*
+         *the-func-tbl*
+         *the-struct-tbl*)
         )
   'text3
   )
 
+(define *the-passes-4*
+  `((global ,sequentialize-nonblocking-parallels-pass)
+    (global ,simplify-stmt-pass)
+    (global ,delete-unused-vars-pass)
+    )
+  )
+
+  
 (define (compile4!)
     (set! text4
-          (run-compiler `((global ,sequentialize-nonblocking-parallels-pass)
-                          (global ,simplify-stmt-pass)
-                          )
-                       text3
-                       *cellinfo*
-                       *the-inits*
-                       *the-func-tbl*
-                       *the-struct-tbl*))
+          (run-compiler
+           *the-passes-4*
+           text3
+           *cellinfo*
+           *the-inits*
+           *the-func-tbl*
+           *the-struct-tbl*))
 ;;  (display-success-2)
   'text4
   )
@@ -2652,5 +2708,3 @@
   (+ (+ (+ (+ (+ (+ (+ (+ (+ (+ (+ (+ (+ "mesh_forward" "a") "b") "a") "c") "b") "a") "c") "b") "a") "c")"b") "a") "c")
   )
 
-(load "vars.scm")
-(load "blocking.scm")

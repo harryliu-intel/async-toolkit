@@ -31,9 +31,9 @@
       ((recv)
        (let ((lhs (get-recv-lhs s))
              (rhs (get-recv-rhs s)))
-         (dis "recv     : " s dnl)
-         (dis "recv lhs : " lhs dnl)
-         (dis "recv rhs : " rhs dnl)
+;;         (dis "recv     : " s dnl)
+;;         (dis "recv lhs : " lhs dnl)
+;;         (dis "recv rhs : " rhs dnl)
 
          (if (not (null? rhs)) (add-entry! rhs)))
        )
@@ -62,7 +62,6 @@
   (run-pass (list '* visitor)
             prog cell-info the-inits func-tbl struct-tbl)
 
-  (set! ass-tbl tbl)
   tbl
   )
 
@@ -139,4 +138,190 @@
   )
 
 
-    
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;    
+
+
+(define (make-uses prog)
+
+  (define tbl (make-hash-table 100 atom-hash))
+
+  (define cur-stmt #f) ;; the statement currently being processed
+  
+  (define (add-entry! id)
+    (let* ((new-entry (list cur-stmt))
+           )
+;;      (dis "make-uses-tbl add-entry!  "  id " -> " cur-stmt dnl)
+      (let ((q (tbl 'retrieve id)))
+        (if (eq? q '*hash-table-search-failed*)
+            (tbl 'add-entry!    id (list new-entry))
+            (tbl 'update-entry! id (cons new-entry q))))))
+
+
+  ;; the idea here is that we record every id in every expression,
+  ;;
+  ;; EXCEPT left-hand-sides, which appear in three places:
+  ;; 1. assignments
+  ;; 2. receives
+  ;; 3. the first argument to unpack()
+  ;;
+  ;; we abort on encountering apply() and assign-operate
+  
+  (define (s-visitor s)
+
+;;    (dis "s-visitor : s : " s dnl)
+    (case (get-stmt-type s)
+
+      ((apply assign-operate)
+       (error "make-uses-tbl : being called too soon : encountered : " s))
+      
+      ((assign)
+       
+       (let* ((lhs         (get-assign-lhs s))
+              (lhs-depends (get-designator-depend-ids lhs))
+              (rhs         (get-assign-rhs s))
+              (rhs-ids     (find-expr-ids rhs)))
+         (map add-entry! lhs-depends)
+         (map add-entry! rhs-ids))
+       )
+
+      ((recv)
+       (let ((lhs (get-recv-lhs s))
+             (rhs (get-recv-rhs s)))
+;;         (dis "recv     : " s dnl)
+;;         (dis "recv lhs : " lhs dnl)
+;;         (dis "recv rhs : " rhs dnl)
+
+         (if (not (null? rhs)) ;; we do NOT want the written variable
+             (map add-entry! (get-designator-depend-ids rhs)))
+         (if (not (null? lhs))
+             (map add-entry! (find-expr-ids lhs))))
+       )
+
+
+      ((eval)
+       (let* ((expr (cadr s))
+              (expr-type (car expr)))
+         (if (not (eq? 'call-intrinsic expr-type))
+             (error "make-assignments-tbl called on non-inlined code : " s))
+
+         ;; we add all the args as dependencies unless we're unpacking.
+         (let* ((inam  (cadr expr))
+                (iargs (cddr expr))
+                (ids   (uniq eq?
+                             (if (eq? inam 'unpack)
+                                 (append
+                                  (get-designator-depend-ids (car iargs))
+                                  (apply append (map find-expr-ids (cdr iargs)))
+                                  )
+                                 
+                                 (apply append (map find-expr-ids iargs)))))
+                )
+;;           (dis "s-visitor inam " inam dnl)
+;;           (dis "s-visitor iargs " (stringify iargs) dnl)
+;;           (dis "s-visitor ids " ids dnl)
+           (map add-entry! ids)
+           )
+         )
+       )
+      
+      );;esac
+    s)
+
+  (define (advance-callback s)
+;;    (dis "advance-callback " s dnl)
+    (set! cur-stmt s)
+    s)
+  
+  (define (x-visitor x)
+
+;;    (dis "x-visitor : x is         : " x dnl)
+
+    (if (not (null? cur-stmt)) ;; we can also get called through type visiting
+
+        (let ((stmt-type (get-stmt-type cur-stmt)))
+;;          (dis "x-visitor : stmt-type is : " stmt-type " : ")
+
+          (case stmt-type
+            ((assign recv eval)
+             ;; skip
+;;             (dis "skipping" dnl)
+             )
+
+            ((parallel sequence) ;; skip
+;;             (dis "skipping" dnl)
+             )
+             
+            (else
+             (let ((ids (find-expr-ids x)))
+;;               (dis "found ids " ids dnl)
+               (map add-entry! ids)))
+
+            );;esac
+          );;tel
+        );;fi
+    x
+    )
+
+;;  (dis "make-uses" dnl)
+  (prepostvisit-stmt prog
+                     identity  s-visitor
+                     identity x-visitor 
+                     identity  identity
+                     advance-callback)
+  
+  tbl
+  )
+
+
+(define (delete-referencing-stmts prog ids)
+  ;; delete declarations and assignments to given vars.
+
+  (define (visitor s)
+    (case (get-stmt-type s)
+      ((assign)
+       (if (member (get-designator-id (get-assign-lhs s)) ids)
+           'skip
+           s))
+
+      ((var1)
+       (if (member (get-var1-id s) ids)
+           'skip
+           s))
+
+      ((recv)
+       (let ((rhs (get-recv-rhs s)))
+         (if (and (not (null? rhs))
+                  (member (get-designator-id rhs) ids))
+             `(recv (get-recv-lhs s) ())
+             s)))
+
+      (else s)
+      ))
+
+  (visit-stmt prog visitor identity identity)
+  )
+  
+
+(define (delete-unused-vars-pass  the-inits prog func-tbl struct-tbl cell-info)
+  (let* ((ass-tbl
+          (make-assignments-tbl prog cell-info the-inits func-tbl struct-tbl))
+         (use-tbl
+          (make-uses prog))
+
+         (ass-keys (ass-tbl 'keys))
+
+         (use-keys (use-tbl 'keys))
+
+         (unused-ids (set-diff ass-keys use-keys))
+
+         (result
+          (delete-referencing-stmts prog unused-ids)))
+
+    result
+    )
+  )
+
+  
+
+
+  
