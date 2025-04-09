@@ -1548,6 +1548,22 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
+(define (find-stmts oftype stmt)
+  (let ((res '()))
+
+    (define (visitor s)
+      (if (or (eq? oftype s)
+              (and (pair? s) (eq? oftype (car s))))
+          (begin
+            (set! res (cons s res))
+            s
+            )
+          s))
+    (visit-stmt stmt visitor identity identity)
+    res
+    )
+  )
+
 (define (find-stmt oftype stmt)
   (let ((res #f))
 
@@ -2184,6 +2200,10 @@
          the-inits stmt func-tbl struct-tbl cell-info)
   (sequentialize-nonblocking-parallels stmt))
 
+(define (constantify-constant-vars-pass
+         the-inits stmt func-tbl struct-tbl cell-info)
+  (constantify-constant-vars stmt))
+
 (define (simplify-stmt-pass
          the-inits stmt func-tbl struct-tbl cell-info)
   (simplify-stmt stmt))
@@ -2201,7 +2221,10 @@
 
 (define (compile3!)
   (set! text3
-        (run-pass (list '* fold-constants-*)
+        (run-compiler  `((*       ,fold-constants-*)
+                         (global  ,constantify-constant-vars-pass)
+                         )
+                       
                   text2
                   *cellinfo*
                   *the-inits*

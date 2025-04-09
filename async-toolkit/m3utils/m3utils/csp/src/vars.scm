@@ -120,3 +120,23 @@
 
   (visit-stmt prog visitor identity identity)
   )
+
+
+(define (vx)
+   (find-constant-symbols the-asses)
+
+   (define the-asses (make-asses text4))
+
+   (map car (the-asses 'retrieve 'run-pass-temp177))
+)
+
+(define (constantify-constant-vars prog)
+  (let* ((the-asses         (make-asses prog))
+         (the-constant-syms (find-constant-symbols the-asses))
+         (the-new-prog      (mark-decls-constant prog the-constant-syms)))
+    the-new-prog
+    )
+  )
+
+
+    

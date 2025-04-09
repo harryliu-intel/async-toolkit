@@ -6,7 +6,7 @@
   
   (define (s-visitor s)
     ;; statements that on their own introduce blocking
-    (dis "s-visitor " (stringify s) dnl)
+;;    (dis "s-visitor " (stringify s) dnl)
     (if result
         'cut
         (case (get-stmt-type s)
@@ -19,7 +19,7 @@
 
   (define (x-visitor x)
     ;; expressions that introduce blocking
-    (dis "x-visitor " (stringify x) dnl)
+;;    (dis "x-visitor " (stringify x) dnl)
     (if result
         'cut
         (case (get-expr-type x)
@@ -44,7 +44,10 @@
   (define (s-visitor s)
     (if (and (eq? (get-stmt-type s) 'parallel)
              (not (stmt-may-block? s)))
-        (cons 'sequence (cdr s)) ;; convert parallel to sequence
+        (begin
+          (dis "sequentialize-nonblocking-parallels : sequentializing : " s dnl)
+          (cons 'sequence (cdr s)) ;; convert parallel to sequence
+          )
         s)
     )
   

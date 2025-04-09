@@ -6,6 +6,7 @@
 (define (simplify-one-stmt s)
   ;; all that this does is flattens out parallel and sequence statements
   (cond ((compound-stmt? s)   (simplify-compound-stmt s))
+        ((eval? s) (simplify-eval s))
         (else s)))
 
 (define (simplify-compound-stmt s)
@@ -56,4 +57,21 @@
   (visit-stmt stmt simplify-one-stmt identity identity)
   )
 
-  
+
+(define (eval? s) (and (pair? s) (eq? 'eval (car s))))
+
+(define (simplify-eval s)
+  (let* ((expr (cadr s)))
+    (if (and (call-intrinsic? expr)
+             (eq? 'assert (cadr expr))
+             (eq? #t (caddr expr)))
+        ;; for now, just get rid of assert(#t)
+        (begin
+          (dis "simplify-eval : removing : " s dnl)
+         'skip
+         )
+        s
+        )
+    )
+  )
+         

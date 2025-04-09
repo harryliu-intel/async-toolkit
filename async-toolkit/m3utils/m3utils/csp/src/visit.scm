@@ -111,7 +111,10 @@
                              (expr (car args))
                              (expr (cadr args)))))
                        (if (not (equal? args res))
-                           (dis "visit-assign : " s " -> " (cons kw res) dnl))
+                           (begin
+                             ;; (dis "visit-assign : " s " -> " (cons kw res) dnl)
+                             )
+                           )
                        res))
                     
                     ((loop increment decrement var)
