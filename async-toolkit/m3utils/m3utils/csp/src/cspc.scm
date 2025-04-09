@@ -2285,8 +2285,8 @@
 
 (define *the-passes-4*
   `((global ,sequentialize-nonblocking-parallels-pass)
-    (global ,simplify-stmt-pass)
     (global ,delete-unused-vars-pass)
+    (global ,simplify-stmt-pass)
     )
   )
 

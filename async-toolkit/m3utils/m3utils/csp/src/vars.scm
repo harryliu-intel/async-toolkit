@@ -4,7 +4,7 @@
 
   (define tbl (make-hash-table 100 atom-hash))
   
-  (define (visitor s syms vals tg func-tbl struct-tbl)
+  (define (trace-ass-visitor s syms vals tg func-tbl struct-tbl)
 
     (define (add-entry! designator)
       (let* ((id        (get-designator-id designator))
@@ -59,7 +59,7 @@
   ;;  (visit-stmt tgt visitor identity identity)
 
 
-  (run-pass (list '* visitor)
+  (run-pass (list '* trace-ass-visitor)
             prog cell-info the-inits func-tbl struct-tbl)
 
   tbl
@@ -280,19 +280,32 @@
     (case (get-stmt-type s)
       ((assign)
        (if (member (get-designator-id (get-assign-lhs s)) ids)
-           'skip
+           (begin
+             (dis "delete-referencing-stmts : assign : " s dnl)
+             'skip
+             )
            s))
 
       ((var1)
        (if (member (get-var1-id s) ids)
-           'skip
+           (begin
+             (dis "delete-referencing-stmts : var1   : " s dnl)
+             'skip
+             )
            s))
 
       ((recv)
        (let ((rhs (get-recv-rhs s)))
          (if (and (not (null? rhs))
                   (member (get-designator-id rhs) ids))
-             `(recv (get-recv-lhs s) ())
+             ;;
+             ;; we cant delete recvs
+             ;; but we can make them "bare" (remove the target var)
+             ;;
+             (begin
+               (dis "delete-referencing-stmts : recv :   " s dnl)
+               `(recv (get-recv-lhs s) ())
+               )
              s)))
 
       (else s)
