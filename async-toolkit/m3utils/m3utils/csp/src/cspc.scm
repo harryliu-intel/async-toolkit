@@ -196,6 +196,7 @@
 (define (identity x) x)
 
 (load "bigint.scm")
+(load "loops.scm")
 
 (define special-functions     ;; these are special functions per Harry
   '(string
@@ -358,6 +359,11 @@
 
 (define *uft-cp* #f) 
 
+(define (get-all-dummies prog)
+  (uniq eq? (append (get-waiting-if-dummies prog)
+                    (get-loop-dummies prog)
+                    (get-loopex-dummies prog))))
+
 (define (uniqify-function-text func sfx cell-info initvars)
 
   ;;
@@ -379,7 +385,9 @@
   ;;
   
   (let*((intf-vars          (get-function-interfaces func))
-        (body-vars          (find-referenced-vars (get-function-text func)))
+        (function-text      (get-function-text func))
+        (body-vars          (find-referenced-vars function-text))
+        (body-dummies       (get-all-dummies function-text))
         (body-var-captures  (set-intersection body-vars initvars))
         (body-chan-captures (set-intersection body-vars (get-port-ids cell-info)))
         (rename-ids         (set-diff (set-union body-vars
@@ -1074,10 +1082,12 @@
          (portids    (get-port-ids cell-info))
          (textids    (find-referenced-vars prog))
          (globalids  (set-intersection textids initvars))
+         (dummies    (get-all-dummies prog))
          (unused-globalids
                      (set-diff initvars globalids))
          (undeclared (set-diff
                       (find-undeclared-vars prog portids) globalids))
+         (missing    (set-diff undeclared dummies))
          (declnames  (find-declaration-vars prog))
          (multiples  (multi declnames))
          )
@@ -1090,6 +1100,7 @@
     (dis "textids    : " textids dnl)
     (dis "globalids  : " globalids dnl)
     (dis "undeclared : " undeclared dnl) (set! *undeclared* undeclared)
+    (dis "missing    : " missing dnl)
     (dis "decls      : " declnames dnl)
     (dis "multiples  : " multiples dnl)
 
@@ -1099,9 +1110,9 @@
                             cell-info
                             initvars))
 
-          ((not (null? undeclared))
-           (dis dnl "un-undeclaring..." dnl dnl)
-           (analyze-program (predeclare prog undeclared)
+          ((not (null? missing))
+           (dis dnl "un-undeclaring missing..." dnl dnl)
+           (analyze-program (predeclare prog missing)
                             cell-info
                             initvars)
            )
@@ -1115,7 +1126,8 @@
 
 
 
-(define (find-referenced-vars stmt) (find-stmt-ids stmt))
+(define (find-referenced-vars stmt)
+  (find-stmt-ids stmt))
 
 (define (find-undeclared-vars stmt portids)
   (let* ((used (find-referenced-vars stmt))
@@ -1531,32 +1543,6 @@
 (define (get-bits-min x) (caddr x))
 (define (get-bits-max x) (cadddr x))
 
-(define (loopex? x)
-  (and (pair? x) (eq? 'loop-expression (car x))))
-
-(define (get-loopex-dummy x) (cadr x))
-(define (get-loopex-range x) (caddr x))
-(define (get-loopex-op    x) (cadddr x))
-(define (get-loopex-expr  x) (caddddr x))
-
-(define (construct-loopex-binop x)
-  ;; take a loop-expression and construct a dummy binary operation
-  ;; ---> this will have the same type as the loop expression
-  `(,(get-loopex-op x) ,(get-loopex-expr x)  ,(get-loopex-expr x) ))
-
-(define (make-loopex-frame loopex syms)
-  ;; construct a frame for use inside a loopex
-  (let* ((new-frame (make-hash-table 1 atom-hash))
-         (new-syms  (cons new-frame syms)))
-    (define-var! new-syms (get-loopex-dummy loopex) *default-int-type*)
-    new-syms)
-  )
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(define (get-loop-dummy x) (cadr x))
-(define (get-loop-range x) (caddr x))
-(define (get-loop-stmt  x) (cadddr x))
 
 (load "handle-assign.scm")
 

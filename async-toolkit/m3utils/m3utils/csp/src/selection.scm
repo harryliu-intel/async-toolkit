@@ -99,7 +99,7 @@
     )
   )
 
-(define (waiting-if-stmt? s)
+(define (waiting-if? s)
   (and (pair? s) (eq? 'waiting-if (car s))))
 
 (define (implement-waiting-if selection func-tbl cell-info)
@@ -176,4 +176,21 @@
 
 (define (get-waiting-if-clause-command wifc) (cadddr wifc))
 
-             
+(define (get-waiting-if-dummies prog)
+
+  (define ids '())
+  
+  (define (s-visit s)
+    (if (waiting-if? s)
+        (set! ids (append
+                   (map get-waiting-if-clause-dummy (get-waiting-if-clauses s))
+                   ids))
+        )
+    s
+    )
+  
+  (visit-stmt prog s-visit identity identity)
+  (uniq eq? ids)
+  )
+
+
