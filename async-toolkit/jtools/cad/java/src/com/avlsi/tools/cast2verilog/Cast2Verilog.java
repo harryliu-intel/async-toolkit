@@ -2164,6 +2164,7 @@ public class Cast2Verilog {
             "    [--ignore-inline] (do not process inline keyword)\n" +
             "    [--enable-system-verilog] (use SystemVerilog features)\n" +
             "    [--ifdef] (surround module definitions with ifdef)\n" +
+            "    [--skip-util] (do not emit Util module)\n" +
             "    [--file-list=<file>] (Verilog block dependencies)\n" +
             "    [--behavior-report=<file>] (report CSP and PRS instances)\n" +
             "    [--generate-testbench] (generate simple testbench)\n" +
@@ -2373,13 +2374,16 @@ public class Cast2Verilog {
             theArgs.argExists("emit-state-covergroup");
         final boolean generateIfDef = theArgs.argExists("ifdef");
         final boolean generateTb = theArgs.argExists("generate-testbench");
+        final boolean skipUtilModule = theArgs.argExists("skip-util");
 
         final Cast2Verilog c2v = new Cast2Verilog(systemErrWriter, 
              systemErrWriter, systemErrWriter, params,
              Integer.parseInt(registerWidth), enableSystemVerilog,
              emitCoverageProbes, emitStateCovergroup, generateIfDef,
              generateTb);
-        c2v.emitHelperFunctions(out);
+        if (!skipUtilModule) {
+            c2v.emitHelperFunctions(out);
+        }
         c2v.convert(cellEnv, instanceName, out, behOut, theArgs);
         if (c2v.checkError()) {
             System.err.println("Errors found during translation; output file " +
