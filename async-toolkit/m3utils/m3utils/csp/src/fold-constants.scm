@@ -129,32 +129,48 @@
     )
   )
 
-(define *fold-stmts* '(var1 assign sequential-loop parallel-loop))
+(define *fold-stmts* '(var1 assign sequential-loop parallel-loop eval))
 
 (define (constant-type? t)
   (and (pair? t)
-       (member (car t) '(integer boolean string struct))
+       (member (car t) '(integer boolean string structure))
        (cadr t)))
-        
+
+(define (make-constant-type t)
+  ;; take type t but mark it as constant
+
+  (if (and (pair? t)
+           (member (car t) '(integer boolean string structure)))
+      (cons (car t) (cons #t (cddr t)))
+      (error "make-constant-type : cant make constant from : " t dnl)
+      ))
+
+(define (constant-simple? x syms)
+  
+  ;;    (dbg "constant? " x dnl)
+  ;;    (dbg "symbols : " (map (lambda(tbl)(tbl 'keys)) syms) dnl)
+    
+  (cond ((literal? x) x)
+        ((ident? x)
+         (let* ((defn (retrieve-defn (cadr x) syms))
+                (is-const (constant-type? defn))
+                )
+             (dbg "constant? : x defn   : " defn dnl)
+             (dbg "constant? : is-const : " is-const dnl)
+           (if is-const defn #f)
+           )
+         )
+        (else #f)))
+
+(define fold-stmt-visit #f)
+
+(define (call-intrinsic? x)
+  (and (pair? x) (eq? 'call-intrinsic (car x))))
+
 (define (fold-constants-* stmt syms vals tg func-tbl struct-tbl)
   (dbg "fold-constants-* " (if (pair? stmt) (car stmt) stmt) dnl)
-  
-  (define (constant? x)
 
-;;    (dbg "constant? " x dnl)
-;;    (dbg "symbols : " (map (lambda(tbl)(tbl 'keys)) syms) dnl)
-    
-    (cond ((bigint? x) #t)
-          ((ident? x)
-           (let* ((defn (retrieve-defn (cadr x) syms))
-                  (is-const (constant-type? defn))
-                 )
-;;             (dbg "constant? : x defn   : " defn dnl)
-;;             (dbg "constant? : is-const : " is-const dnl)
-             is-const
-             )
-           )
-          (else #f)))
+  (define (constant? x) (constant-simple? x syms))
 
   (define (constant-value x)
     (let ((res 
@@ -179,12 +195,31 @@
     (cond ((not (pair? x)) x)
 
           ((ident? x)
+
+;;           (dis "expr-visitor x " x dnl)
+;;           (dis "expr-visitor constant? " (constant? x) dnl)
+           
            (let ((res
                   (if (constant? x) (constant-value x) x)))
 
-             (dbg "expr-visitor ident? returning " res dnl)
+;;             (dbg "expr-visitor ident? returning " res dnl)
              res))
            
+          ((call-intrinsic? x)
+           (let ((res
+                  (cons 'call-intrinsic
+                        (cons (cadr x) 
+                              (map
+                               (lambda(xx)(visit-expr xx
+                                                      identity
+                                                      expr-visitor
+                                                      identity))
+                               (cddr x))))))
+             
+             (dis "call-intrinsic x   " x dnl)
+             (dis "call-intrinsic res " res dnl)
+             res))
+      
           ((integer-expr? x syms func-tbl struct-tbl)
            (handle-integer-binop x constant? constant-value))
 
@@ -197,22 +232,24 @@
           (else x)))
 
   (define (stmt-visitor s)
-    (if #t (dbg "fold-* stmt-visitor " s dnl))
+;;    (if #t (dis "fold-* stmt-visitor " s dnl))
 
     ;;
     ;; This is dumb: we are replicating parts of "stmt-check-enter"
     ;; from the main compiler loop here.
     ;;
+
+    (set! fold-stmt-visit s)
     
     (case (get-stmt-type s)
       ((assign)
 
 
-       (dbg "visiting assign " s dnl)
+;;       (dbg "visiting assign " s dnl)
        (let ((res `(assign
                     ,(get-assign-lhs s)
                     ,(visit-expr (get-assign-rhs s) identity expr-visitor identity))))
-         (dbg "returning assign " res dnl)
+;;         (dbg "returning assign " res dnl)
          (if (ident? (get-assign-lhs s))
 
              (define-var! vals (cadr (get-assign-lhs res)) (get-assign-rhs res))
@@ -235,6 +272,11 @@
        (define-var! syms (get-loopex-dummy s) *default-int-type*)
        s
        )
+      
+      ((eval)
+;;       (dis "VISITING eval" dnl)
+       
+       (list 'eval (visit-expr (cadr s) identity expr-visitor identity)))
 
       ((sequential-loop parallel-loop)
        (let ((loop-type  (car s))
@@ -247,7 +289,7 @@
            ,loop-idx
            ,(visit-range loop-range identity expr-visitor identity)
            ,loop-stmt)))
-      
+
       (else s)
       
       )
@@ -267,3 +309,6 @@
   )
 
 (define (xx) (run-pass (list '* fold-constants-*) text2 *cellinfo* *the-inits* *the-func-tbl* *the-struct-tbl*))
+
+(define (fold-constants prog)
+  (run-pass (list '* fold-constants-*) prog *cellinfo* *the-inits* *the-func-tbl* *the-struct-tbl*))

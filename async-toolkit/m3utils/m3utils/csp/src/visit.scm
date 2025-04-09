@@ -129,7 +129,7 @@
                     ((recv send)
                      (list (expr (car args)) (expr (cadr args))))
                     
-                    ((do if nondet-if nondet-do)
+                    ((do if nondet-if nondet-do local-if)
                      (set! vs s)
                      ;; what happens if stmt returns 'delete?
                      (map (lambda(gc)
@@ -143,6 +143,7 @@
                     
                     ((eval)
 ;;                     (dis "visit eval stmt : " (stringify args) dnl)
+
                      (list (expr (car args))))
 
                     ((assign-operate)
@@ -206,8 +207,11 @@
   (list 'range (expr (cadr x)) (expr (caddr x))))
   
 
-(define *visit-x* #f)
-  
+(define *visit-x* '())
+(define *visit-c* #f)
+
+(define (get-expr-type x) (if (pair? x) (car x) 'literal))
+
 (define (prepostvisit-expr xx
                            stmt-previsit stmt-postvisit
                            expr-previsit expr-postvisit
@@ -225,9 +229,10 @@
 
   (define (expr-or-null x) (if (null? x) '() (expr x)))
 
-  (set! *visit-x* xx)
+  (set! *visit-x* (cons xx *visit-x*))
   
   (define (continue x)
+    (set! *visit-c* xx)
     (if (pair? x)
         (let ((kw   (car x))
               (args (cdr x)))

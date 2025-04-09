@@ -13,7 +13,7 @@
        (not (null? s))
        (or (eq? (car s) 'parallel-loop) (eq? (car s) 'sequential-loop))))
 
-(define (simplify-stmt s)
+(define (simplify-one-stmt s)
   ;; all that this does is flattens out parallel and sequence statements
   (cond ((compound-stmt? s)   (simplify-compound-stmt s))
         ((guarded-stmt? s)    (simplify-guarded-stmt s))
@@ -50,30 +50,44 @@
          (cdr s))))
         
 (define (simplify-compound-stmt s)
-  (if (= (length (cdr s)) 1)
-      (simplify-stmt (cadr s))
+  (cond
+   ((= (length (cdr s)) 0)
+    'skip)
+   
+   ((= (length (cdr s)) 1)
+    (simplify-stmt (cadr s)))
+
+   (else 
+    (let loop ((p    (cdr s))
+               (res  (list (car s))))
       
-      (let loop ((p    (cdr s))
-                 (res  (list (car s))))
-        
-        (if (null? p)
+      (if (null? p)
+          
+          (reverse res) ;; base case
+          
+          (let ((next (simplify-stmt (car p))))
             
-            (reverse res) ;; base case
-            
-            (let ((next (simplify-stmt (car p))))
-              
-              (if (and (compound-stmt? next)
-                       (eq? (car next) (car s)))
-                  
-                  (begin
+            (cond ((and (compound-stmt? next)
+                        (eq? (car next) (car s)))
+                   
 ;; same type of statement, just splice in the args
 ;;                    (dis " splicing next  : " next dnl)
 ;;                    (dis " splicing cdr next : " (cdr next) dnl)
                 
-                    (loop (cdr p)
-                          (append (reverse (cdr next)) res))
-                    )
+                   (loop (cdr p)
+                         (append (reverse (cdr next)) res))
+                   )
                   
-                  (loop (cdr p) (cons next res))))))
+                  
+                  ((eq? 'skip (get-stmt-type (car p)))
+                   (loop (cdr p) res))
+                  
+                  (else
+                   (loop (cdr p) (cons next res)))
+                  )
+            )
+          )
       )
+    )
+   )
   )

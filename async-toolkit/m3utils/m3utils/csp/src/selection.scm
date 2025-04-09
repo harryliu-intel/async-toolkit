@@ -78,11 +78,11 @@
                              (make-assign `(id ,nm) guard)))
                        vars guards))
 
-         (rem-if (cons 'if (map (lambda(nm cmd)
-                                  (list
-                                   (if (eq? nm 'else) 'else `(id ,nm))
-                                   cmd))
-                                vars commands)))
+         (rem-if (cons 'local-if (map (lambda(nm cmd)
+                                        (list
+                                         (if (eq? nm 'else) 'else `(id ,nm))
+                                         cmd))
+                                      vars commands)))
 
          (the-result
           `(sequence ,@decls ,@assigns ,rem-if)))

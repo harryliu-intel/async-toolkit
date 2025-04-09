@@ -325,3 +325,12 @@ define U()(bd(32) -L[0..1], +R[0..1])
   }
 }
 
+define V()()
+{
+  csp {
+    print("hi");
+    wait(100);
+    print("bye");
+  }
+}
+

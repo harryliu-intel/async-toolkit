@@ -93,6 +93,10 @@
 (define inits1 #f)
 (define text1 #f)
 (define text2 #f)
+(define text3 #f)
+(define text4 #f)
+
+(define ass-tbl #f)
 
 (dis "  ===  TO RUN COMPILER: " dnl)
 (dis "  ===  (loaddata! <csp-prefix>)" dnl)

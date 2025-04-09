@@ -288,9 +288,9 @@
 ;; receives are similar to assignments -- sort of
 ;;
 
-(define (get-recv-lhs rs)  (cadr rs))
+(define (get-recv-lhs rs)  (cadr rs))   ;; wait, isnt this backwards?
 
-(define (get-recv-rhs rs)  (caddr rs))
+(define (get-recv-rhs rs)  (caddr rs))  ;; wait, isnt this backwards?
 
 (define (handle-access-recv ass syms vals tg func-tbl struct-tbl)
 

@@ -998,8 +998,7 @@
 (define *filtered-inits* #f)
 (define *filtered-initvars* #f)
 
-(define (make-var1 decl)
-  `(var1 ,decl)) 
+(define (make-var1 decl) `(var1 ,decl)) 
 
 (define (make-var1-decl sym type)
   ;; vars don't have a direction
@@ -1522,7 +1521,7 @@
 (load "handle-assign.scm")
 
 
-;; (reload)(loaddata! "expressions_p") (run-compiler! *the-text* *cellinfo* *the-inits* *the-func-tbl* *the-struct-tbl*)
+;; (reload)(loaddata! "expressions_p") (run-compiler *the-text* *cellinfo* *the-inits* *the-func-tbl* *the-struct-tbl*)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define *eval-s* '())
@@ -1575,7 +1574,7 @@
 (define (run-one nm)
   (reload)
   (loaddata! nm)
-  (run-compiler! *the-text* *cellinfo* *the-inits* *the-func-tbl* *the-struct-tbl*)
+  (run-compiler *the-text* *cellinfo* *the-inits* *the-func-tbl* *the-struct-tbl*)
   (find-applys text2)
   (set! xx (inline-evals *the-inits* text2 *the-func-tbl* *the-struct-tbl* *cellinfo*))
   (set! yy (inline-evals *the-inits* xx    *the-func-tbl* *the-struct-tbl* *cellinfo*))
@@ -1880,7 +1879,9 @@
   (dis
    "********************                                      ********************" dnl)
   (dis
-   "********************  !!!  TRANSFORMATIONS COMPLETE  !!!  ********************" dnl)
+   "********************  !!!!  SYNTAX TRANSFORMATIONS  !!!!  ********************" dnl)
+  (dis
+   "********************  !!!!        COMPLETE          !!!!  ********************" dnl)
   (dis
    "********************                                      ********************" dnl)
   (dis
@@ -1895,27 +1896,29 @@
   (dis
    "*******************  CONSTANT BINDING AND FOLDING COMPLETE  ******************" dnl)
   (dis
+   "*******************            (PHASE ONE)                  ******************" dnl)
+  (dis
    "*******************                                         ******************" dnl)
   (dis
    "******************************************************************************" reset-term dnl)
   )
 
-(define the-passes (list
-                    (list 'assign handle-access-assign)
-                    (list 'recv   handle-access-recv)
-                    (list 'send   handle-access-recv)
-                    (list 'assign handle-assign-rhs)
-                    (list 'eval   handle-eval)
-                    (list 'global inline-evals)
-                    (list 'global global-simplify)
-                    (list 'global remove-assign-operate)
-                    (list 'global remove-do)
-                    (list 'global simplify-if)
-                    (list 'assign remove-loop-expression)))
+(define *the-passes-1* (list
+                        (list 'assign handle-access-assign)
+                        (list 'recv   handle-access-recv)
+                        (list 'send   handle-access-recv)
+                        (list 'assign handle-assign-rhs)
+                        (list 'eval   handle-eval)
+                        (list 'global inline-evals)
+                        (list 'global global-simplify)
+                        (list 'global remove-assign-operate)
+                        (list 'global remove-do)
+                        (list 'global simplify-if)
+                        (list 'assign remove-loop-expression)))
 
 (define *the-pass-results* '())
 
-(define (run-compiler! the-text cell-info the-inits func-tbl struct-tbl)
+(define (run-compiler the-passes the-text cell-info the-inits func-tbl struct-tbl)
 
   (define syms '())
 
@@ -1936,8 +1939,9 @@
 
   ;; (dead-code) went here
 
-  (display-success-0)
+    (display-success-0)
   
+
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
@@ -1957,8 +1961,7 @@
     (if (equal? cur-prog prev-prog)
         (begin
           (display-success-1)
-          (set! text2 cur-prog)
-          'text2
+          cur-prog
           )
         
         (begin  ;; program not equal, must continue
@@ -1996,7 +1999,7 @@
       ((assign) (handle-assign-rhs s syms vals tg func-tbl struct-tbl))
 
       ((eval) ;; this is a function call, we make it a fake assignment.
-       (dis "eval!" dnl)
+;;       (dis "eval!" dnl)
        
        (dis "===== stmt-pre0 start " (stringify s) dnl)
        
@@ -2021,8 +2024,16 @@
       ;; this takes a "pass" and wraps it up so the symbol table is maintained
 ;;      (dis "here!" dnl)
       (stmt-check-enter stmt)
-      (if (or (eq? stmt-type '*)(eq? stmt-type (get-stmt-kw stmt)))
-          (pass stmt syms vals tg func-tbl struct-tbl)
+      (if (or (eq? stmt-type '*)
+              (eq? stmt-type (get-stmt-kw stmt)))
+
+          (begin
+;;            (dis "make-pre stmt-type " stmt-type dnl)
+;;            (dis "make-pre stmt      " stmt dnl)
+            
+            (pass stmt syms vals tg func-tbl struct-tbl)
+            )
+          
           stmt)))
   
   (define (stmt-check-enter s)
@@ -2053,7 +2064,7 @@
        )
 
       ((parallel-loop sequential-loop)
-       (dis "defining loop dummy : " (get-loop-dummy s) dnl)
+;;       (dis "defining loop dummy : " (get-loop-dummy s) dnl)
        (define-var! syms (get-loop-dummy s) *default-int-type*))
          
       )
@@ -2078,6 +2089,7 @@
                  (let ((ports (caddddr cell-info)))
                    (map (lambda(pd)
                           (let ((pnm (cadr pd)))
+;;                            (dis "defining port " pnm " : " pd dnl)
                             (define-var! syms pnm pd)))
                         ports))
                                 
@@ -2098,7 +2110,7 @@
                         (prepostvisit-stmt prog
                                            (make-pre
                                             (car the-pass)
-                                            (cadr the-pass)) stmt-post
+                                            (cadr the-pass))        stmt-post
                                             identity                identity
                                             identity                identity)))
                    (exit-frame!)
@@ -2162,21 +2174,37 @@
     )
   )
 
-(define text3 #f)
+(define (sequentialize-nonblocking-parallels-pass
+         the-inits stmt func-tbl struct-tbl cell-info)
+  (sequentialize-nonblocking-parallels stmt))
 
 (define (compile!)
-  (run-compiler! *the-text*
-                 *cellinfo*
-                 *the-inits*
-                 *the-func-tbl*
-                 *the-struct-tbl*)
-  ;; result now in text2
+  (set! text2
+        (run-compiler *the-passes-1*
+                      *the-text*
+                      *cellinfo*
+                      *the-inits*
+                      *the-func-tbl*
+                      *the-struct-tbl*))
 
   (set! text3
-        (run-pass (list '* fold-constants-*) text2 *cellinfo* *the-inits* *the-func-tbl* *the-struct-tbl*)
+        (run-pass (list '* fold-constants-*)
+                  text2
+                  *cellinfo*
+                  *the-inits*
+                  *the-func-tbl*
+                  *the-struct-tbl*)
         )
-  (display-success-2)
-  'text3
+
+  (set! text4
+        (run-compiler `((global ,sequentialize-nonblocking-parallels-pass))
+                       text3
+                       *cellinfo*
+                       *the-inits*
+                       *the-func-tbl*
+                       *the-struct-tbl*))
+;;  (display-success-2)
+  'text4
   )
 
 
@@ -2575,3 +2603,6 @@
 (define testx '
   (+ (+ (+ (+ (+ (+ (+ (+ (+ (+ (+ (+ (+ "mesh_forward" "a") "b") "a") "c") "b") "a") "c") "b") "a") "c")"b") "a") "c")
   )
+
+(load "vars.scm")
+(load "blocking.scm")
