@@ -56,8 +56,6 @@ CONST DelimChars = SET OF CHAR { '_', ',', ' ', '\t' };
 PROCEDURE ScanDelimited(text : TEXT; base : PrintBase := 10) : T
   RAISES { Lex.Error }; (* as Scan, but ignore DelimChars *)
 
-VAR (* CONST *) Zero, One, Two : T;
-
 PROCEDURE Hash(a : T) : Word.T;
 
 EXCEPTION OutOfRange;

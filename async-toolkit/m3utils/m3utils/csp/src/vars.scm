@@ -335,6 +335,74 @@
   )
 
   
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(define (make-sint-range bits)
+  ;; what is the integer range of a <bits>-bit sint?
+  (xnum-eval
+   `(make-range (- (pow 2 (- ,bits 1))  )
+                (- (pow 2 (- ,bits 1)) 1) )))
 
+(define (make-uint-range bits)
+  ;; what is the integer range of a <bits>-bit uint?
+  (xnum-eval
+   `(make-range 0 (- (pow 2 ,bits) 1))))
+          
+(define (get-type-range declared-type)
+  (if (not (integer-type? declared-type))
+      (error "get-type-range : not an integer type : " declared-type))
+
+  (let ((bitsiz (cadddr declared-type))
+        (sint   (caddr  declared-type)))
+    
+    (cond ((null? bitsiz) *range-complete*)
+          
+          (sint        (make-sint-range bitsiz))
+          (else        (make-uint-range bitsiz)))
+    
+    )
+  )
+
+;; we'll keep the maximum size stupidly small for now, just to exercise
+;; the code without bogging down the machines with printing (which is
+;; the slow part of the routine)
+
+(define *maximum-size* 128) ;; largest finite size we'll tolerate
+
+(define *maximum-sint-range* (make-sint-range *maximum-size*))
+(define *maximum-uint-range* (make-uint-range *maximum-size*))
+
+(define (make-intdecls prog)
+  (define tbl (make-hash-table 100 atom-hash))
+  
+  (define (s-visitor s)
+    (case (get-stmt-type s)
+      ((var1)
+       (let ((id (get-var1-id s))
+             (ty (get-var1-type s)))
+
+             (if (integer-type? ty)
+
+                 (tbl 'add-entry! id (get-type-range ty)))))
+      )
+    s
+    )
+  (visit-stmt prog s-visitor identity identity)
+  tbl
+  )
+
+(define (get-smallest-type range)
+  ;; we preferentially choose the uint (what CSP calls "int(.)")
+  
+  (cond ((range-contains? *maximum-uint-range* range)
+         (make-uint-type range))
+        
+        ((range-contains? *maximum-sint-range* range)
+         (make-sint-type range))
+
+        (else *default-int-type*)))
+
+        
+                         
+      
   

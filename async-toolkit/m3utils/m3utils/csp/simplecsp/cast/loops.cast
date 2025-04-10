@@ -112,3 +112,21 @@ define S()()
     z{y[f(y[0])]} = 1;
   }
 }
+
+define T()()
+{
+  csp {
+    int(32)   x;
+    int(1024) y;
+
+    int       z;
+
+    z = x;
+
+    print (x);
+    print (y);
+    print (z);
+  }
+}
+    
+    

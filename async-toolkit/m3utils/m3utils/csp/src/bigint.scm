@@ -289,15 +289,11 @@
 
           ((equal? bfin '(+inf 0)) 'nan)
 
-
           ((equal? bfin '(fin +inf)) '+inf)
 
           ((equal? bfin '(0 +inf)) 'nan)
 
           (else (big-pow a b)))))
-
-
-
 
 (define (xnum< a b) (< (xnum-compare a b) 0))
 (define (xnum> a b) (> (xnum-compare a b) 0))
@@ -349,6 +345,9 @@
 
 (define (range-one? f)  (range-eq? r *range-one*))
 
+(define (range-contains? a b)
+  (and (xnum<= (range-min a) (range-min b))
+       (xnum>= (range-max a) (range-max b))))
 
 (define (make-simple-range-binop op)
   (lambda (a b)
@@ -369,3 +368,25 @@
 (define range-- (make-simple-range-binop xnum--))
 (define range-* (make-simple-range-binop xnum-*))
 (define range-/ (make-simple-range-binop xnum-/))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+(define (convert-eval-xnum-binop q)
+  (eval (cond ((eq? q 'make-range)   make-range)
+              (else  (symbol-append 'xnum- q)))))
+
+(define (xnum-eval expr)
+  (cond ((bigint? expr) expr)
+        ((number? expr) (BigInt.New expr))
+        ((string? expr) (BigInt.ScanBased expr 10 #f))
+
+        ((and (list? expr) (= 3 (length expr)))
+         (apply (convert-eval-xnum-binop (car expr))
+                (map xnum-eval (cdr expr))))
+
+        ((and (list? expr) (= 2 (length expr)) (eq? '- (car expr)))
+         (xnum-uneg (xnum-eval (cadr expr))))
+        
+        (else (error "xnum-eval : can't handle : " expr))))

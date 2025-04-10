@@ -1,7 +1,7 @@
 (* $Id: BigInt.m3,v 1.9 2003/08/21 03:28:30 kp Exp $ *)
 
 MODULE BigInt;
-IMPORT CardSeq, Integer;
+IMPORT Integer;
 IMPORT CharSeq;
 IMPORT Word;
 IMPORT Wx;
@@ -9,94 +9,57 @@ IMPORT Text;
 IMPORT Lex, FloatMode;
 IMPORT Scan AS M3Scan;
 IMPORT BigIntBigIntTbl;
+IMPORT Debug;
+FROM Fmt IMPORT Int, F;
 
-CONST BaseLog2 = BITSIZE(Word.T) DIV 2 - 1; (* (*was*) 10 *)
-      Base     = Word.Shift(1, BaseLog2);
+CONST BaseLog2 =  3; (* BITSIZE(Word.T) DIV 2 - 1; (* (*was*) 10 *) *)
+      Base     = 10;   (* Word.Shift(1, BaseLog2); *)
       (* must be less than or equal to sqrt(LAST(CARDINAL)) *)
       (* must be power of 2 *)
 
 (********************* sequence of cardinals *********************)
 
-TYPE 
-  Seq = CardSeq.T OBJECT METHODS
-    clearTop() := ClearTop;
-    copy() : Seq := CopySeq;
-  OVERRIDES
-    put := MyPut; 
-    get := MyGet
-  END;
-
-PROCEDURE CopySeq(s : Seq) : Seq = 
-  VAR 
-    res := NEW(Seq).init();
-  BEGIN
-    FOR i := 0 TO s.size() - 1 DO
-      res.put(i,s.get(i))
-    END;
-    RETURN res
-  END CopySeq;
-
-PROCEDURE ClearTop(s : Seq) =
-  BEGIN
-    FOR i := s.size() - 1 TO 0 BY -1 DO
-      IF CardSeq.T.get(s,i) # 0 THEN RETURN END;
-      EVAL s.remhi()
-    END
-  END ClearTop;
-
-PROCEDURE MyPut(s : Seq; i : CARDINAL; READONLY x : CARDINAL) =
-  BEGIN
-    FOR j := 1 TO i - s.size() + 1 DO s.addhi(0) END;
-    CardSeq.T.put(s,i,x);
-    s.clearTop();
-  END MyPut;
-
-PROCEDURE MyGet(s : Seq; i : CARDINAL) : CARDINAL =
-  BEGIN
-    TRY
-      FOR j := 1 TO i - s.size() + 1 DO s.addhi(0) END;
-      RETURN CardSeq.T.get(s,i)
-    FINALLY
-      s.clearTop()
-    END
-  END MyGet;
-
 (* other sequence impl *)
 
+CONST doDebug = FALSE;
+      
 TYPE 
   NArry = REF ARRAY OF CARDINAL;
 
-  NSeq = OBJECT
+  NSeq = RECORD
     siz : CARDINAL; (* # of significant digits *)
     a   : NArry;
+  END;
+
+  (*
   METHODS
     init(hintSize : CARDINAL := 5) : NSeq := InitN;
     shift(sa : CARDINAL) := ShiftN;
-    clearTop() := CTN;
     extend(toBits : CARDINAL) := ExtendN;
+    clearTop() := ClearTop;
     copy() : NSeq := CopyN;
     size() : CARDINAL := SizeN;
   END;
+  *)
 
-PROCEDURE InitN(s : NSeq; hintSize : CARDINAL) : NSeq =
+PROCEDURE InitN(VAR s : NSeq; hintSize : CARDINAL) =
   BEGIN
     s.siz := 0;
     s.a := NEW(NArry, hintSize);
-    FOR i := FIRST(s.a^) TO LAST(s.a^) DO s.a[i] := 0 END;
-    RETURN s
+    FOR i := FIRST(s.a^) TO LAST(s.a^) DO s.a[i] := 0 END
   END InitN;
 
-PROCEDURE ShiftN(s : NSeq; sa : CARDINAL) =
+PROCEDURE ShiftN(VAR s : NSeq; sa : CARDINAL) =
   VAR
     os := s.siz;
   BEGIN
     INC(s.siz,sa);
-    s.extend(s.siz);
+    ExtendN(s, s.siz);
     SUBARRAY(s.a^,sa,os) := SUBARRAY(s.a^,0,os);
     FOR i := 0 TO sa - 1 DO s.a[i] := 0 END;
   END ShiftN;
 
-PROCEDURE ExtendN(s : NSeq; toDigits : CARDINAL) =
+PROCEDURE ExtendN(VAR s : NSeq; toDigits : CARDINAL) =
   BEGIN
     IF NUMBER(s.a^) < toDigits THEN
       VAR 
@@ -111,22 +74,20 @@ PROCEDURE ExtendN(s : NSeq; toDigits : CARDINAL) =
     END
   END ExtendN;
 
-PROCEDURE SizeN(s : NSeq) : CARDINAL = BEGIN RETURN s.siz END SizeN;
-
-PROCEDURE CopyN(s : NSeq) : NSeq =
+PROCEDURE CopyN(READONLY s : NSeq) : NSeq =
   VAR
     na := NEW(NArry, NUMBER(s.a^));
   BEGIN 
     na^ := s.a^;
-    RETURN NEW(NSeq, siz := s.siz, a := na) 
+    RETURN NSeq { siz := s.siz, a := na }
   END CopyN;
 
-PROCEDURE CTN(s : NSeq) = 
-  BEGIN 
+PROCEDURE ClearTop(VAR s : NSeq) = 
+  BEGIN
     FOR i := LAST(s.a^) TO 0 BY -1 DO
       IF s.a[i] = 0 THEN s.siz := i ELSE EXIT END
-    END
-  END CTN;
+    END;
+  END ClearTop;
 
 (********************* bignum type *********************)
 
@@ -135,18 +96,18 @@ REVEAL
     sign : [ -1 .. 1 ];
     rep  : NSeq;
   END;
-
+  
 PROCEDURE Compare(a, b : T) : CompRet =
   BEGIN
     IF a.sign < b.sign THEN RETURN -1
     ELSIF a.sign > b.sign THEN RETURN 1
     END;
 
-    IF a.rep.size() > b.rep.size() THEN RETURN a.sign 
-    ELSIF a.rep.size() < b.rep.size() THEN RETURN -a.sign
+    IF    a.rep.siz > b.rep.siz THEN RETURN  a.sign 
+    ELSIF a.rep.siz < b.rep.siz THEN RETURN -a.sign
     END;
 
-    FOR i := a.rep.size() - 1 TO 0 BY -1 DO
+    FOR i := a.rep.siz - 1 TO 0 BY -1 DO
       VAR
         c := Integer.Compare(a.rep.a[i],b.rep.a[i]);
       BEGIN
@@ -163,15 +124,18 @@ PROCEDURE IsZero(a : T) : BOOLEAN = BEGIN RETURN Compare(a, Zero) = 0 END IsZero
 
 PROCEDURE Copy(t : T) : T =
   (* Uniq makes no sense here really... *)
-  BEGIN RETURN Add(t, Zero) END Copy;
+  BEGIN RETURN t END Copy;
 
 PROCEDURE New(x : INTEGER) : T =
   VAR
     c : CARDINAL;
-    s := NEW(NSeq).init(1);
+    s : NSeq;
     corr : [-1..0] := 0;
     res : T;
   BEGIN
+    InitN(s, 1);
+    IF doDebug THEN Debug.Out("New x : " & Int(x)) END;
+    
     IF x = FIRST(INTEGER) THEN
       (* very special case! can't represent ABS(FIRST(INTEGER)) as a CARDINAL *)
       corr := -1; (* remember correction for later *)
@@ -185,7 +149,7 @@ PROCEDURE New(x : INTEGER) : T =
     Renormalize(s);
 
     IF x >= 0 THEN
-      res := NEW(T, sign := 1, rep := s)
+      res := NEW(T, sign := +1, rep := s)
     ELSE
       res := NEW(T, sign := -1, rep := s)
     END;
@@ -243,23 +207,49 @@ PROCEDURE Mod(a, b : T) : T =
     
 PROCEDURE Shift(a : T; sa : CARDINAL) : T =
   VAR
-    seq := a.rep.copy();
+    seq := CopyN(a.rep);
   BEGIN
-    seq.shift(sa);
-    RETURN Uniq(NEW(T, sign := a.sign, rep := seq))
+    <*ASSERT Zero = Uniq(Zero)*>
+    ShiftN(seq, sa);
+    <*ASSERT Zero = Uniq(Zero)*>
+
+    WITH res = Uniq(NEW(T, sign := a.sign, rep := seq)) DO
+          <*ASSERT Zero = Uniq(Zero)*>
+      RETURN res
+    END
   END Shift;
 
+PROCEDURE DebugSeq(READONLY seq : NSeq) : TEXT =
+  VAR
+    res := F("{ siz=%s; ", Int(seq.siz));
+  BEGIN
+    FOR i := NUMBER(seq.a^) - 1 TO 0 BY -1 DO
+      res := res & Int(seq.a[i]) & " "
+    END;
+    RETURN res & "}"
+  END DebugSeq;
+
+PROCEDURE DebugT(t : T) : TEXT =
+  BEGIN
+    RETURN F("[ sgn %s %s]", Int(t.sign), DebugSeq(t.rep))
+  END DebugT;
+  
 PROCEDURE DivideUnsigned(aparm, b : T; VAR q, r : T) =
   VAR
     s : T;
     lo, hi : CARDINAL;
   BEGIN
+    IF doDebug THEN Debug.Out(F("DivideUnsigned aparm  = " & DebugT(aparm))) END;
+    IF doDebug THEN Debug.Out(F("DivideUnsigned b      = " & DebugT(b))) END;
+
     q := Zero;
     r := aparm;
     <* ASSERT aparm.sign = 1 AND b.sign = 1 *>
-    
-    FOR sa := aparm.rep.size() - b.rep.size() TO 0 BY -1 DO
+
+    FOR sa := aparm.rep.siz - b.rep.siz TO 0 BY -1 DO
       s := Shift(b,sa);
+
+      IF doDebug THEN Debug.Out(F("sa = %s ; s = %s", Int(sa), DebugT(s))) END;
       
       (* search for digit ... *)
       lo := 0;
@@ -276,22 +266,40 @@ PROCEDURE DivideUnsigned(aparm, b : T; VAR q, r : T) =
 
           midM := Mul(New(mid),s);
           midC := Compare(midM,r);
+
         BEGIN
+
+          IF doDebug THEN Debug.Out(F("mid = %s, midM = %s, midC = %s",
+                      Int(mid),
+                      DebugT(midM),
+                      Int(midC))) END;
+
           (*<* ASSERT Compare(loM,r) <= 0 AND Compare(hiM,r) >= 0 *>*)
           CASE midC OF
             -1 => lo := mid
           |
-             0 => q := Add(Shift(New(mid),sa),q); r := Zero; RETURN
+            0 =>
+            q := Add(Shift(New(mid),sa),q);
+            r := Zero;
+            <* ASSERT Equal(aparm, Add(r, Mul(q,b))) *>
+            RETURN
           |
              1 => hi := mid
           END
-        END
+        END;
       END;
 
-      q := Add(Shift(New(lo),sa),q);
-      r := Sub(r, Mul(New(lo),s))
+      WITH nl = New(lo) DO
+        WITH z = Shift(nl, sa) DO
+          IF doDebug THEN Debug.Out(F("lo = %s ; sa = %s; nl = %s; z = %s, q = %s",
+                      Int(lo), Int(sa), DebugT(nl), DebugT(z), DebugT(q)))END;
+          q := Add(z,q);
+        END
+      END;
+      r := Sub(r, Mul(New(lo),s));
+      IF doDebug THEN Debug.Out(F("q = %s ; r = %s", DebugT(q), DebugT(r))) END;
     END;
-    <* ASSERT Equal(aparm,Add(r,Mul(q,b))) *>
+    <* ASSERT Equal(aparm, Add(r, Mul(q,b))) *>
   END DivideUnsigned;
 
 PROCEDURE Mul(a, b : T) : T =
@@ -318,14 +326,15 @@ PROCEDURE Pow(b, x : T) : T =
     RETURN result
   END Pow;
 
-PROCEDURE MulSeqs(a, b : NSeq) : NSeq =
+PROCEDURE MulSeqs(READONLY a, b : NSeq) : NSeq =
   VAR 
-    res := NEW(NSeq).init(a.size()+b.size()+1);
+    res : NSeq;
     idx : CARDINAL;
     s : CARDINAL;
   BEGIN
-    FOR i := 0 TO a.size() - 1 DO
-      FOR j := 0 TO b.size() - 1 DO
+    InitN(res, a.siz + b.siz + 1 );
+    FOR i := 0 TO a.siz - 1 DO
+      FOR j := 0 TO b.siz - 1 DO
         idx := i+j;
         s := a.a[i] * b.a[j];
         WHILE s # 0 DO
@@ -348,19 +357,23 @@ PROCEDURE Add(a, b : T) : T =
   VAR
     res : T;
   BEGIN
-    IF a.sign = 1 AND b.sign = 1 THEN
-      res := NEW(T, sign := 1, rep := AddSeqs(a.rep,b.rep))
+    IF doDebug THEN Debug.Out(F("Add( a = %s , b = %s )", DebugT(a), DebugT(b))) END;
+    
+   IF a.sign = 1 AND b.sign = 1 THEN
+      res := NEW(T, sign := 1, rep := AddSeqs(a.rep,b.rep));
     ELSIF a.sign = -1 AND b.sign = -1 THEN
-      res := NEW(T, sign := -1, rep := AddSeqs(a.rep,b.rep))
+      res := NEW(T, sign := -1, rep := AddSeqs(a.rep,b.rep));
     ELSIF a.sign = -1 AND b.sign = 1 THEN
-      res := Sub(b,Neg(a))
+      res := Sub(b,Neg(a));
     ELSIF a.sign = 1 AND b.sign = -1 THEN
-      res := Sub(a,Neg(b))
+      res := Sub(a,Neg(b));
     ELSE
       <* ASSERT FALSE *>
     END;
-    
+
     Renormalize(res.rep);
+
+    IF doDebug THEN Debug.Out(F("Add( a = %s , b = %s ) ->  %s", DebugT(a), DebugT(b), DebugT(res))) END;
     RETURN Uniq(res)
   END Add;
 
@@ -387,33 +400,35 @@ PROCEDURE Sub(a, b : T) : T =
   END Sub;
 
 (* unsigned addition of underlying sequences *)
-PROCEDURE AddSeqs(s, t : NSeq) : NSeq =
+PROCEDURE AddSeqs(READONLY s, t : NSeq) : NSeq =
   VAR
-    m := MAX(s.size(),t.size());
-    r := NEW(NSeq).init(m+1);
+    m := MAX(s.siz, t.siz);
+    r : NSeq;
   BEGIN
-    s.extend(m); t.extend(m);
-    FOR i := 0 TO m - 1 DO
-      r.a[i] := s.a[i] + t.a[i]
+    InitN(r, m + 1);
+    SUBARRAY(r.a^, 0, s.siz) := SUBARRAY(s.a^, 0, s.siz);
+    FOR i := 0 TO MIN(m - 1, t.siz - 1) DO
+      INC(r.a[i], t.a[i]);
     END;
-    s.clearTop(); t.clearTop();
     RETURN r
   END AddSeqs;
 
 (* unsigned subtraction of underlying sequences *)
 (* s must be .ge. t *)
-PROCEDURE SubSeqs(s, t : NSeq) : NSeq =
+PROCEDURE SubSeqs(READONLY s, t : NSeq) : NSeq =
   VAR
-    tsiz := t.size();
-    m := MAX(s.size(),tsiz);
-    r := NEW(NSeq).init(m+1);
+    m := MAX(s.siz, t.siz);
+    r : NSeq;
     borrow := 0;
   BEGIN
+    <*ASSERT s.siz >= t.siz*>
+
+    InitN(r, m + 1);
     FOR i := 0 TO m - 1 DO
       VAR
         diff := s.a[i] + borrow;
       BEGIN
-        IF i<tsiz THEN DEC(diff, t.a[i]); END;
+        IF i < t.siz THEN DEC(diff, t.a[i]); END;
         borrow := 0;
 
         WHILE diff < 0 DO
@@ -430,17 +445,20 @@ PROCEDURE SubSeqs(s, t : NSeq) : NSeq =
 PROCEDURE Abs(a : T) : T = 
   BEGIN RETURN Uniq(NEW(T, sign := 1, rep := a.rep)) END Abs;
 
-PROCEDURE Renormalize(a : NSeq) = 
+PROCEDURE Renormalize(VAR a : NSeq) = 
   VAR
     carry := 0;
     o : CARDINAL;
     i := 0;
   BEGIN
-    a.clearTop();
+    ClearTop(a);
 
     WHILE i < a.siz OR carry # 0 DO
       
-      IF i >= NUMBER(a.a^) THEN a.extend(NUMBER(a.a^)+4) END;
+      IF i > LAST(a.a^) THEN ExtendN(a, NUMBER(a.a^) + 4) END;
+
+      <*ASSERT i <= LAST(a.a^)*>
+      
       o := a.a[i] + carry;
       a.a[i] := o MOD Base;
 
@@ -459,6 +477,7 @@ PROCEDURE ScanBased(txt : TEXT; defaultBase : PrintBase) : T
   VAR
     neg : BOOLEAN;
   BEGIN
+    <*ASSERT Zero=Uniq(Zero)*>
     IF Text.GetChar(txt, 0) = '-' THEN
       neg := TRUE;
       txt := Text.Sub(txt, 1, Text.Length(txt) - 1)
@@ -471,6 +490,8 @@ PROCEDURE ScanBased(txt : TEXT; defaultBase : PrintBase) : T
       RAISE Lex.Error
     END;
 
+    <*ASSERT Zero=Uniq(Zero)*>
+    
     WITH usIndex = Text.FindChar(txt, '_') DO
       IF usIndex = -1 THEN
         RETURN Scan(txt, defaultBase, neg)
@@ -495,6 +516,7 @@ PROCEDURE Scan(txt : TEXT; base : PrintBase; neg : BOOLEAN) : T
       txt := Text.Sub(txt, 1, Text.Length(txt) - 1)
     END;
 
+    <*ASSERT Zero=Uniq(Zero)*>
 
     (* "" and "-" are not legal numbers *)
     IF Text.Length(txt) = 0 THEN
@@ -511,6 +533,9 @@ PROCEDURE Scan(txt : TEXT; base : PrintBase; neg : BOOLEAN) : T
           END
       END
     END;
+
+    <*ASSERT Zero=Uniq(Zero)*>
+
     IF neg THEN
       RETURN Neg(accum)
     ELSE
@@ -547,9 +572,57 @@ PROCEDURE Format(a : T; base : PrintBase) : TEXT =
     c := NEW(CharSeq.T).init();
     s := Sign(a);
     wx := Wx.New();
-    MyBase := small[base];
+    MyExtract := extractbase[base];
   BEGIN
     a := Abs(a);
+
+    WHILE NOT Equal(a,Zero) DO
+      VAR
+        d : T;
+      BEGIN
+        
+        DivideUnsigned(a, MyExtract, a, d);
+
+        <* ASSERT Compare(d,Zero) >= 0 AND Compare(d,MyExtract) < 1 *>
+        
+        VAR
+          toPrint := d.rep.a[0];
+        BEGIN
+          FOR i := 0 TO chunkdigits[base] - 1 DO
+            IF toPrint = 0 AND a = Zero THEN
+              EXIT
+            END;
+            c.addlo(HexChars[toPrint MOD base]);
+            toPrint := toPrint DIV base;
+          END
+        END
+      END
+    END;
+
+    IF c.size() = 0 THEN
+      CASE s OF
+        0, 1 => RETURN "0"
+      |
+        -1   => RETURN "-0"
+      END
+    END;
+      
+    IF s = -1 THEN c.addlo('-') END;
+    
+    FOR i := 0 TO c.size() - 1 DO
+      Wx.PutChar(wx, c.get(i))
+    END;
+
+    RETURN Wx.ToText(wx)
+  END Format;
+
+PROCEDURE FormatOld(a : T; base : PrintBase) : TEXT =
+  VAR
+    c := NEW(CharSeq.T).init();
+    s := Sign(a);
+    wx := Wx.New();
+    MyBase := small[base];
+  BEGIN
 
     WHILE NOT Equal(a,Zero) DO
       VAR
@@ -576,14 +649,14 @@ PROCEDURE Format(a : T; base : PrintBase) : TEXT =
     END;
 
     RETURN Wx.ToText(wx)
-  END Format;
+  END FormatOld;
 
 PROCEDURE Hash(a : T) : Word.T = 
   VAR
     res : Word.T := 0;
   BEGIN
-    FOR i := 0 TO a.rep.size() - 1 DO
-      res := Word.Plus(res,a.rep.a[i])
+    FOR i := 0 TO a.rep.siz - 1 DO
+      res := Word.Plus(res, a.rep.a[i])
     END;
     RETURN res
   END Hash;
@@ -697,6 +770,14 @@ PROCEDURE Uniq(t : T) : T =
     IF NOT uniq THEN
       RETURN t
     END;
+    <*ASSERT t.sign # 0*>
+
+    IF NUMBER(t.rep.a^) = 1 AND t.rep.a[0] = 0 THEN
+      <*ASSERT NUMBER(t.rep.a^) = 1*>
+      <*ASSERT t.rep.a[0] = 0*>
+      RETURN Zero
+    END;
+      
 
     LOCK mu DO
       VAR
@@ -730,7 +811,6 @@ CONST Mask_1  : Word.T = 1;
       Mask_8H : Word.T = Word.Shift(Mask_8, 8);
       Mask16H : Word.T = Word.Shift(Mask16,16);
       Mask32H : Word.T = Word.Shift(Mask32,32);
-      
       
 PROCEDURE FindMsb(w : Word.T) : [ -1..LAST(BitPos) ] =
   VAR
@@ -779,19 +859,64 @@ PROCEDURE GetAbsMsb(t : T) : [ -1 .. LAST(CARDINAL) ] =
   END GetAbsMsb;
   
 VAR
+  chunkdigits : ARRAY PrintBase OF CARDINAL;
+  extractbase : ARRAY PrintBase OF T;
+
+PROCEDURE InitializeFormatHelp() =
+  BEGIN
+    FOR pb := FIRST(PrintBase) TO LAST(PrintBase) DO
+      VAR
+        a := 1;
+        p := pb;
+        op : CARDINAL;
+      BEGIN
+        REPEAT
+          op := p;
+          p := p * pb;
+          INC(a)
+        UNTIL p > Base;
+        DEC(a);
+        IF doDebug THEN Debug.Out(F("InitializeFormatHelp : printbase %s : p = %s  a = %s",
+                    Int(pb), Int(op), Int(a))) END;
+
+        chunkdigits[pb] := a;
+        extractbase[pb] := New(op)
+      END
+    END
+  END InitializeFormatHelp;
+
+VAR
   FirstInt, LastInt : T;
   CharVal : ARRAY CHAR OF INTEGER;
   CharValT : ARRAY CHAR OF T;
   small : ARRAY PrintBase OF T;
-  RepBase := New(Base);
+
+  RepBase : T;
+
+  Zero := NEW(T, sign := 1, rep := NSeq { 0, NEW(NArry, 1) });
+  One  := NEW(T, sign := 1, rep := NSeq { 1, NEW(NArry, 1) });
+  Two  := NEW(T, sign := 1, rep := NSeq { 1, NEW(NArry, 1) });
+
+      
+
   
 BEGIN
   <*ASSERT WordSize = 32 OR WordSize = 64*>
-  Zero := New(0);
-  One := New(1);
-  Two := New(2);
+
+  One.rep.a[0] := 1;
+  Two.rep.a[0] := 2;
+
+  EVAL Uniq(Zero);
+  <*ASSERT Zero = Uniq(Zero)*>
+  EVAL Uniq(One);
+  <*ASSERT One = Uniq(One)*>
+  EVAL Uniq(Two);
+  <*ASSERT Two = Uniq(Two)*>
+
+  RepBase  := New(Base);
   FirstInt := New(FIRST(INTEGER));
-  LastInt := New(LAST(INTEGER));
+  LastInt  := New(LAST(INTEGER));
+  <*ASSERT Zero = Uniq(Zero)*>
 
   FOR c := FIRST(CHAR) TO LAST(CHAR) DO
     VAR
@@ -814,9 +939,13 @@ BEGIN
       END
     END
   END;
+  <*ASSERT Zero = Uniq(Zero)*>
 
   FOR i := FIRST(PrintBase) TO LAST(PrintBase) DO
     small[i] := New(i)
-  END
-      
+  END;
+
+  InitializeFormatHelp();
+  <*ASSERT Zero = Uniq(Zero)*>
+
 END BigInt.
