@@ -228,32 +228,36 @@
     s)
 
   (define (advance-callback s)
-;;    (dis "advance-callback " s dnl)
+    (dis "advance-callback " s dnl)
     (set! cur-stmt s)
     s)
   
   (define (x-visitor x)
 
-;;    (dis "x-visitor : x is         : " x dnl)
+    (define (dbg . x)
+      (apply dis x)
+      )
+
+    (dbg "x-visitor : x is         : " x dnl)
 
     (if (not (null? cur-stmt)) ;; we can also get called through type visiting
 
         (let ((stmt-type (get-stmt-type cur-stmt)))
-;;          (dis "x-visitor : stmt-type is : " stmt-type " : ")
+          (dbg "x-visitor : stmt-type is : " stmt-type " : ")
 
           (case stmt-type
             ((assign recv eval)
              ;; skip
-;;             (dis "skipping" dnl)
+             (dbg "skipping" dnl)
              )
 
             ((parallel sequence) ;; skip
-;;             (dis "skipping" dnl)
+             (dbg "skipping" dnl)
              )
              
             (else
              (let ((ids (find-expr-ids x)))
-;;               (dis "found ids " ids dnl)
+               (dbg "found ids " ids dnl)
                (map add-entry! ids)))
 
             );;esac
@@ -262,7 +266,7 @@
     x
     )
 
-;;  (dis "make-uses" dnl)
+  (dbg "make-uses" dnl)
   (prepostvisit-stmt prog
                      identity  s-visitor
                      identity x-visitor 
@@ -275,7 +279,8 @@
 
 (define (delete-referencing-stmts prog ids)
   ;; delete declarations and assignments to given vars.
-
+  (dis "delete-referencing-stmts : " ids dnl)
+  
   (define (visitor s)
     (case (get-stmt-type s)
       ((assign)
@@ -330,11 +335,25 @@
          (result
           (delete-referencing-stmts prog unused-ids)))
 
+
+          (if (not (null? unused-ids))
+              (begin
+                (dis "delete-unused-vars-pass  ass-keys   : " ass-keys dnl
+                     "delete-unused-vars-pass  use-keys   : " use-keys dnl
+                     "delete-unused-vars-pass  unused-ids : " unused-ids dnl)))
+          
     result
     )
   )
 
   
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (make-the-tables prog)
+  (set! *the-ass-tbl* (make-assignments-tbl prog *cellinfo* *the-inits* '() *the-struct-tbl*))
+  (set! *the-use-tbl* (make-uses prog))
+  (set! *the-dcl-tbl* (make-intdecls prog)))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define (make-sint-range bits)

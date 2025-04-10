@@ -34,10 +34,46 @@
     )
   )
 
+(define (handle-integer-unop x constant? constant-value)
+  ;; x is a unary expression such as (- a)
+  ;; constant? is a procedure that checks whether an expression is constant
+  (let ((op (car x))
+        (a  (cadr x)))
+
+    (if (and (constant? a))
+        (let* ((the-op-id (symbol-append 'big op))
+               (the-op    (eval the-op-id)))
+
+          (dbg "handle-integer-unop   op : " op dnl)
+          (dbg "handle-integer-unop   a  : " a dnl)
+
+          (let ((ca (constant-value a)))
+          ;; if literals, we apply the op, else we inline the value
+          ;;
+          (if (and (bigint? ca))
+              (begin (let ((res (apply the-op (list ca))))
+                       (dis "performing op " the-op " : " res dnl)
+                       res)
+                     )
+              (list op ca))))
+          
+        x
+        )
+    )
+  )
+
 (define (make-boolean-binop nm arg-type text)
   (list nm arg-type text))
 
 (define (xor a b)(not (eq? a b)))
+
+;; there is one annoyance with boolean binary operators
+;; we have ==, test for equality.  Its arguments can either be
+;; boolean or integers.
+
+(define *boolean-unops*
+  (list
+   `(not boolean ,not)))
 
 (define *boolean-binops*
   (list
@@ -54,7 +90,8 @@
    `(&& boolean ,and)
    `(|| boolean ,or)))
 
-(define (handle-boolean-binop x constant? constant-value syms func-tbl struct-tbl)
+(define (handle-boolean-binop
+         x constant? constant-value syms func-tbl struct-tbl)
   (let ((op (car x))
         (a  (cadr x))
         (b  (caddr x)))
@@ -98,6 +135,45 @@
     )
   )
 
+(define (handle-boolean-unop
+         x constant? constant-value syms func-tbl struct-tbl)
+  (let ((op (car x))
+        (a  (cadr x)))
+    (if (and (constant? a))
+        (let* ((the-op-id (symbol-append 'boolean op)))
+
+
+          (if debug
+              (dbg "handle-boolean-unop   op : " op dnl)
+              (dbg "handle-boolean-unop   a  : " a dnl)
+              )
+
+          (let* ((ca (constant-value a))
+                 (ty (derive-type a syms func-tbl struct-tbl))
+                 (type (car ty)))
+                     
+            ;; if literal, we apply the op, else we inline the value
+            ;;
+            (dbg "ca = " ca dnl)
+            (dbg "type = " type dnl)
+
+            (let loop ((p *boolean-unops*))
+              (cond ((null? p)      x ;; not found
+                     )
+
+                    ((and (eq? op (caar p))
+                          (eq? type (cadar p)))
+                     (let ((res  ((caddar p) ca)))
+                       (dis "boolean-unop (" op " " ca ") = " res dnl)
+                       res))
+
+                    (else (loop (cdr p)))))
+            ))
+        x
+        )
+    )
+  )
+
 (define (handle-string-binop x constant? constant-value)
   ;; x is a binary expression such as (+ a 2)
   ;; constant? is a procedure that checks whether an expression is constant
@@ -129,7 +205,7 @@
     )
   )
 
-(define *fold-stmts* '(var1 assign sequential-loop parallel-loop eval))
+(define *fold-stmts* '(var1 assign sequential-loop parallel-loop eval local-if))
 
 (define (constant-type? t)
   (and (pair? t)
@@ -221,16 +297,30 @@
              res))
       
           ((integer-expr? x syms func-tbl struct-tbl)
-           (handle-integer-binop x constant? constant-value))
+           (cond ((= (length x) 3)
+                  (handle-integer-binop x constant? constant-value))
+                 ((= (length x) 2)
+                  (handle-integer-unop x constant? constant-value))
+                 (else (error)))
+           )
 
           ((boolean-expr? x syms func-tbl struct-tbl)
-           (handle-boolean-binop x constant? constant-value syms func-tbl struct-tbl))
+           (cond ((= (length x) 3)
+                  (handle-boolean-binop
+                   x constant? constant-value syms func-tbl struct-tbl))
+                 ((= (length x) 2)
+                  (handle-boolean-unop
+                   x constant? constant-value syms func-tbl struct-tbl))))
 
           ((string-expr? x syms func-tbl struct-tbl)
            (handle-string-binop x constant? constant-value))
 
           (else x)))
 
+  (define (expr x)
+    (visit-expr x identity expr-visitor identity)
+    )
+  
   (define (stmt-visitor s)
 ;;    (if #t (dis "fold-* stmt-visitor " s dnl))
 
@@ -248,7 +338,7 @@
 ;;       (dbg "visiting assign " s dnl)
        (let ((res `(assign
                     ,(get-assign-lhs s)
-                    ,(visit-expr (get-assign-rhs s) identity expr-visitor identity))))
+                    ,(expr (get-assign-rhs s)))))
 ;;         (dbg "returning assign " res dnl)
          (if (ident? (get-assign-lhs s))
 
@@ -276,7 +366,7 @@
       ((eval)
 ;;       (dis "VISITING eval" dnl)
        
-       (list 'eval (visit-expr (cadr s) identity expr-visitor identity)))
+       (list 'eval (expr (cadr s))))
 
       ((sequential-loop parallel-loop)
        (let ((loop-type  (car s))
@@ -290,11 +380,37 @@
            ,(visit-range loop-range identity expr-visitor identity)
            ,loop-stmt)))
 
+      ((XXXlocal-if)
+       (let* ((guards     (map car (cdr s)))
+              (stmts      (map cadr (cdr s)))
+              (guardvals  (map expr guards)))
+
+         (dis "local-if guards    " guards dnl)
+         (dis "local-if stmts     " stmts  dnl)
+         (dis "local-if guardvals " guardvals dnl)
+
+         (let ((res
+                `(local-if ,@(map list guardvals stmts))))
+           (dis "local-if ...>      " res dnl)
+           res
+;;           (error)
+           )
+               
+
+         
+         )
+       )
+
       (else s)
       
       )
     )
 
+  (dis "fold-* visiting " stmt dnl)
+
+  ;; why are we calling visit-stmt recursively here?  Is that
+  ;; really necessary?
+  
   (if (member (get-stmt-type stmt) *fold-stmts*)
       (let ((res (prepostvisit-stmt stmt
                                     stmt-visitor identity

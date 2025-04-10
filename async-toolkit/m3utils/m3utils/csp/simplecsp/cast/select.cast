@@ -344,3 +344,12 @@ define W()()
   }
 }
 
+define X()()
+{
+  csp {
+    boolean b, c, d;
+
+    [ b -> skip [] c -> skip [] d -> skip ]
+  }
+}  
+    

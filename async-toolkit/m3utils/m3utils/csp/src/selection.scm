@@ -11,9 +11,7 @@
     (if (not (member kw '(if nondet-if)))
         (error "Not a selection : " selection))
 
-    (let* ((simple (not (nonsimple-guards? selection)))
-
-           (gcs    (get-guarded-gcs selection))
+    (let* ((gcs    (get-guarded-gcs selection))
 
            (guards (map car gcs))
 
@@ -42,8 +40,6 @@
       ))
 
       (cond
-       (simple selection)
-
        (local  (implement-local-if selection func-tbl cell-info))
 
        (else 

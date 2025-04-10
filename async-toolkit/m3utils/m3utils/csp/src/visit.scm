@@ -50,16 +50,26 @@
   ;; if it returns (cut . XXX) return XXX
   ;; else run (stmt-postvisit (prepostvisit-stmt ...))
 
-  (define (stmt ss)(apply prepostvisit-stmt
-                          (append
-                           (list ss
-                                 stmt-previsit stmt-postvisit
-                                 expr-previsit expr-postvisit
-                                 type-previsit type-postvisit)
-                           
-                           advance-continue-callback)
-                    ))
+  (define (stmt ss)
+    ;; tricky stuff!
+
+    ;; when we recurse, the call will inform the expression visitor
+    ;; that we are in a new statement.
+
+    ;; we need to "pop" this information when we come back into
+    ;; our own context.
     
+    (pop
+     (apply prepostvisit-stmt
+            (append
+             (list ss
+                   stmt-previsit stmt-postvisit
+                   expr-previsit expr-postvisit
+                   type-previsit type-postvisit)
+             
+             advance-continue-callback)
+            )))
+  
   (define (expr x)(prepostvisit-expr
                    x
                    stmt-previsit stmt-postvisit
@@ -94,13 +104,17 @@
    
   (define (visit-waiting-if)
     (map visit-waiting-clause (cdr s)))
+
+  (define (pop x) ;; set the current statement to s
+    (if (not (null? advance-continue-callback))
+        ((car advance-continue-callback) s))
+    x
+    )
   
   (define (continue s)
     ;; this procedure does most of the work, it is called after stmt-previsit
 
-    (if (not (null? advance-continue-callback))
-        ((car advance-continue-callback) s))
-    
+    (pop #f)
     (if (eq? s 'skip)
         s
         (begin
@@ -120,7 +134,8 @@
                   (case kw
                     ((sequence parallel)
                      ;; filter out anything that returns 'delete
-                     (filter filter-delete (map stmt args)))
+                     (filter filter-delete (map stmt args))
+                     )
                     
                     ((assign)
                      (let ((res

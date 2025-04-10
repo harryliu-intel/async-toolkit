@@ -1584,7 +1584,7 @@
             )
           s))
     (visit-stmt stmt visitor identity identity)
-    res
+    (reverse res)
     )
   )
 
