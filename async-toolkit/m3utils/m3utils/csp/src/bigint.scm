@@ -295,11 +295,21 @@
 
           (else (big-pow a b)))))
 
-(define (xnum< a b) (< (xnum-compare a b) 0))
-(define (xnum> a b) (> (xnum-compare a b) 0))
-(define (xnum<= a b) (<= (xnum-compare a b) 0))
-(define (xnum>= a b) (>= (xnum-compare a b) 0))
-(define (xnum= a b) (= (xnum-compare a b) 0))
+(define xnum-**  xnum-pow)
+
+(define (xnum-< a b) (< (xnum-compare a b) 0))
+(define (xnum-> a b) (> (xnum-compare a b) 0))
+(define (xnum-<= a b) (<= (xnum-compare a b) 0))
+(define (xnum->= a b) (>= (xnum-compare a b) 0))
+(define (xnum-= a b) (= (xnum-compare a b) 0))
+
+(define (xnum-msb-abs a)
+  (case a
+    ((nan) 'nan)
+    ((-inf +inf) +inf)
+    (else (BigInt.GetAbsMsb a))))
+
+(define (xnum-clog2 x) (+ 1 (xnum-msb-abs (xnum-- x *big-1*))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -388,5 +398,9 @@
 
         ((and (list? expr) (= 2 (length expr)) (eq? '- (car expr)))
          (xnum-uneg (xnum-eval (cadr expr))))
+
+        ((= 2 (length expr))
+         (apply (convert-eval-xnum-binop (car expr))
+                (map xnum-eval (cdr expr))))
         
         (else (error "xnum-eval : can't handle : " expr))))

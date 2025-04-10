@@ -391,6 +391,9 @@
   tbl
   )
 
+(define (make-integer-type signed bits)
+  `(integer #f ,signed ,(force-bigint bits) ()))
+
 (define (get-smallest-type range)
   ;; we preferentially choose the uint (what CSP calls "int(.)")
   
