@@ -37,3 +37,19 @@ define SYSTEM()()
 define PROC0 <: PROC(true) {}
 
 define PROCi <: PROC(false) {}
+
+define IF0 () ()
+{
+  csp {
+    [ false -> skip [] true -> skip ];
+    boolean b;
+    print ("abc " + b)
+  }
+}
+  
+define SA()()
+{
+  csp {
+    print ("hello" + ", " + "world" + "!")
+  }
+}

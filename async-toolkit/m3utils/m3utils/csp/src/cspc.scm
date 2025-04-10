@@ -2252,8 +2252,8 @@
 
 (define *the-passes-3*
   `((*       ,fold-constants-*)
-                         (global  ,constantify-constant-vars-pass)
-                         )
+    (global  ,constantify-constant-vars-pass)
+    )
   )
 
 (define (compile3!)
@@ -2273,6 +2273,8 @@
   `((global ,sequentialize-nonblocking-parallels-pass)
     (global ,delete-unused-vars-pass)
     (global ,simplify-stmt-pass)
+;;    (*       ,fold-constants-*)
+;;    (global  ,constantify-constant-vars-pass)
     )
   )
 

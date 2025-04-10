@@ -70,8 +70,9 @@
          
     
 (define (constant-assignment? ass syms)
-  (let ((rhs (get-assign-rhs ass)))
-    (constant-simple? rhs syms)))
+  (let* ((rhs (get-assign-rhs ass))
+         (is-const (constant-simple? rhs syms))) ;; #f or a list containing the value
+    is-const))
 
 (define (ass-tgt-designator stmt)
   (case kw
@@ -142,6 +143,10 @@
 
 
 (define (make-uses prog)
+
+  (define (dbg . x)
+;;      (apply dis x)
+    )
 
   (define tbl (make-hash-table 100 atom-hash))
 
@@ -228,15 +233,11 @@
     s)
 
   (define (advance-callback s)
-    (dis "advance-callback " s dnl)
+    (dbg "advance-callback " s dnl)
     (set! cur-stmt s)
     s)
   
   (define (x-visitor x)
-
-    (define (dbg . x)
-      (apply dis x)
-      )
 
     (dbg "x-visitor : x is         : " x dnl)
 
@@ -279,7 +280,7 @@
 
 (define (delete-referencing-stmts prog ids)
   ;; delete declarations and assignments to given vars.
-  (dis "delete-referencing-stmts : " ids dnl)
+  (if (not (null? ids)) (dis "delete-referencing-stmts : " ids dnl))
   
   (define (visitor s)
     (case (get-stmt-type s)
