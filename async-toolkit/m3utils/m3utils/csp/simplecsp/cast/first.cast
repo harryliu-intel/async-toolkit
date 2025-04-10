@@ -53,3 +53,33 @@ define SA()()
     print ("hello" + ", " + "world" + "!")
   }
 }
+
+define CHATTY()()
+{
+  csp {
+
+    function g(string -s) : string =
+      (
+       g = s + s
+     );
+
+    function f(string -s) : string =
+      (
+       f = g(g(s))
+     );
+
+    function e(string -s) : string =
+      (
+       e = f(f(s))
+     );
+
+    function d(string -s) : string =
+      (
+       d = e(e(s))
+     );
+
+      print (d("I talk too much... "))
+   }
+}
+
+  

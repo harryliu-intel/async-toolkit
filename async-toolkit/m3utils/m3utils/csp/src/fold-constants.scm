@@ -110,43 +110,38 @@
               (dbg "handle-boolean-binop   b  : " b dnl)
               )
 
-          (let* ((ca (constant-value 'boolean a))
-                 (cb (constant-value 'boolean b))
-                 (ty (derive-type a syms func-tbl struct-tbl))
+          (let* ((ty (derive-type a syms func-tbl struct-tbl))
                  (type (car ty)))
                      
-          ;; if literals, we apply the op, else we inline the value
-            ;;
-            (dbg "ca        = " ca dnl)
-            (dbg "cb        = " cb dnl)
-            (dbg "type of a = " type dnl)
-
-            (if (not (boolean? ca)) (error "not a boolean : ca = " ca))
-            (if (not (boolean? cb)) (error "not a boolean : cb = " ca))
-            
             (let loop ((p *boolean-binops*))
-              (let ((bool-op   (caar p))
-                    (bool-type (cadar p))
-                    (bool-impl (caddar p)))
-                
+              (let* ((bool-op   (caar p))
+                     (bool-type (cadar p))
+                     (bool-impl (caddar p)))
                 (cond ((null? p)      x ;; not found
                        )
-                      
                       ((and (eq? op bool-op)
                             (or (eq? type bool-type) (eq? bool-type '*)))
-                       (let ((res  (bool-impl ca cb)))
+
+                       ;; operation and type match
+                       
+                       (let* (
+                              ;; coerce the types
+                              (ca (constant-value bool-type a))
+                              (cb (constant-value bool-type b))
+
+                              (res  (bool-impl ca cb))
+
+                              )
                          (dis "boolean-binop (" op " " ca " " cb ") = " res dnl)
                          res))
-
                       
-                      (else (loop (cdr p)))))
-              
-            )))
-        
+                      (else (loop (cdr p)))
+                      );;dnoc
+            ))));;*tel
         x
-        )
-    )
-  )
+        );;fi
+    );;tel
+  );;enifed
 
 (define (handle-boolean-unop
          x constant? constant-value syms func-tbl struct-tbl)
@@ -193,7 +188,7 @@
     )
   )
 
-(define string+ string-append)
+(define string+ string-append) ;; this little trickery makes + work on strings
 
 (define (handle-string-binop x constant? constant-value)
   ;; x is a binary expression such as (+ a 2)
@@ -268,6 +263,8 @@
 
 (define (coerce-type type res)
   (define (*? _) #t) ;; a type request that matches all types
+
+  (define integer? bigint?) ;; don't pollute the environment
 
   (define (do-error)
     (error "can't convert " (stringify res) " to " type))
