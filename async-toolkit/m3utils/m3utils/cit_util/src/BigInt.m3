@@ -12,8 +12,8 @@ IMPORT BigIntBigIntTbl;
 IMPORT Debug;
 FROM Fmt IMPORT Int, F;
 
-CONST BaseLog2 =  3; (* BITSIZE(Word.T) DIV 2 - 1; (* (*was*) 10 *) *)
-      Base     = 10;   (* Word.Shift(1, BaseLog2); *)
+CONST BaseLog2 =   BITSIZE(Word.T) DIV 2 - 1; (* (*was*) 10 *) 
+      Base     =  Word.Shift(1, BaseLog2); 
       (* must be less than or equal to sqrt(LAST(CARDINAL)) *)
       (* must be power of 2 *)
 
