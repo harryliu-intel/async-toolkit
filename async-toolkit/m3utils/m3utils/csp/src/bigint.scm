@@ -398,13 +398,16 @@
 (define *range-one*      `(,*big-1* ,*big-1*))
 (define *an-empty-range* `(,*big-1* ,*big-0*))
 
-(define *range-pos*        `(,*big-0*     +inf))
+(define *range-nonneg*     `(,*big-0*     +inf))
 (define *range-natural*    `(,*big-1*     +inf))
+(define *range-pos* *range-natural*)
 (define *range-neg-natural `(-inf    ,*big-m1*))
 (define *range-neg*        `(-inf    ,*big-0* ))
 (define *range-complete*   '(-inf        +inf))
 
-(define (range-zero? r) (range-eq? r *range-zero*))
+(define (range-is-zero? r) (range-eq? r *range-zero*))
+
+(define (range-contains-zero? r) (range-member? *big-0* r))
 
 (define (range-one? f)  (range-eq? r *range-one*))
 
@@ -433,7 +436,9 @@
 (define (range-intersect ra rb)
   (make-range (xnum-max (range-min ra) (range-min rb))
               (xnum-min (range-max ra) (range-max rb))))
-              
+
+(define (range-pos? r) (range-eq? r (range-intersect r *range-pos*)))
+(define (range-neg? r) (range-eq? r (range-intersect r *range-neg*)))
 
 (define range-+ (make-simple-range-binop xnum-+))
 
