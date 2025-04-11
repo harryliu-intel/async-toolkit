@@ -95,6 +95,7 @@ module bd_ct2_hist_mon (
 realtime t_A0, t_A1;
 int n_A0, n_A1;
 string ModName;
+logic [1:0] saved, changed;
 
 initial begin
   //Register ModName name
@@ -102,6 +103,8 @@ initial begin
   n_A0 = '0;
   t_A1 = '0;
   n_A1 = '0;
+  saved = '0;
+  changed = '0;
   ModName = $sformatf("%m");
   $timeformat(-15,0,"fs");
   histmon_register_node({ModName,".X"});
@@ -116,20 +119,39 @@ always @( \A[1] ) begin
   n_A1 = (X === 1'bx) ? '0 : n_A1+1;
 end
 
+always @( \A[0]  or \A[1] ) begin
+  if (\A[0]  !== 1'bx && \A[1]  !== 1'bx) begin
+    changed <= saved ^ {\A[1] ,\A[0] };
+    saved <= {\A[1] ,\A[0] };
+  end
+end
 
 always @( X ) begin
-  if (t_A0 > t_A1) begin
+  if (changed == (1'b1 << 0)) begin
     //A0 is the critical path
     //$display("%m: X fires @ %0t due to A[0] @ %0t", $realtime, t_A0);
     histmon_add_transition({ModName,".X"}, $realtime, {ModName,".\\A[0] "}, t_A0, "ct2_mon");
   end
-  else if (t_A1 > t_A0) begin
+  else if (changed == (1'b1 << 1)) begin
     //A1 is the critical path
     //$display("%m: X fires @ %0t due to A[1] @ %0t", $realtime, t_A1);
     histmon_add_transition({ModName,".X"}, $realtime, {ModName,".\\A[1] "}, t_A1, "ct2_mon");
   end
   else begin
-    $display("%m: X fires @ %0t due to BOTH A[0] and A[1] @ %0t", $realtime, t_A0);
+    $display("%m: X fires @ %0t because changed = %2b", $realtime, changed);
+    if (changed[0] == 1'b1) begin
+      //A0 is one possible critical path
+      //$display("%m: X fires @ %0t... picking A[0] @ %0t", $realtime, t_A0);
+      histmon_add_transition({ModName,".X"}, $realtime, {ModName,".\\A[0] "}, t_A0, "ct2_mon");
+    end
+    else if (changed[1] == 1'b1) begin
+      //A1 is one possible critical path
+      //$display("%m: X fires @ %0t... picking A[1] @ %0t", $realtime, t_A1);
+      histmon_add_transition({ModName,".X"}, $realtime, {ModName,".\\A[1] "}, t_A1, "ct2_mon");
+    end
+    else begin
+      $display("%m: ERROR: X fires @ %0t", $realtime);
+    end
   end
 end
 
@@ -149,6 +171,7 @@ module bd_ct3_hist_mon (
 realtime t_A0, t_A1, t_A2;
 int n_A0, n_A1, n_A2;
 string ModName;
+logic [2:0] saved, changed;
 
 initial begin
   //Register ModName name
@@ -158,6 +181,8 @@ initial begin
   n_A0 = '0;
   n_A1 = '0;
   n_A2 = '0;
+  saved = '0;
+  changed = '0;
   ModName = $sformatf("%m");
   $timeformat(-15,0,"fs");
   histmon_register_node({ModName,".X"});
@@ -176,24 +201,51 @@ always @( \A[2] ) begin
   n_A2 = (X === 1'bx) ? '0 : n_A2+1;
 end
 
+always @(\A[0]  or \A[1]  or \A[2] ) begin
+  if (\A[0]  !== 1'bx && \A[1]  !== 1'bx && \A[2]  !== 1'bx) begin
+    changed <= saved ^ {\A[2] ,\A[1] ,\A[0] };
+    saved <= {\A[2] ,\A[1] ,\A[0] };
+  end
+end
+
+
 always @( X ) begin
-  if (t_A0 > t_A1 && t_A0 > t_A2) begin
+  if (changed == (1'b1 << 0)) begin
     //A0 is the critical input
     //$display("%m: X fires @ %0t due to A[0] @ %0t", $realtime, t_A0);
     histmon_add_transition({ModName,".X"}, $realtime, {ModName,".\\A[0] "}, t_A0, "ct3_mon");
   end
-  else if (t_A1 > t_A0 && t_A1 > t_A2) begin
+  else if (changed == (1'b1 << 1)) begin
     //A1 is the critical input
     //$display("%m: X fires @ %0t due to A[1] @ %0t", $realtime, t_A1);
     histmon_add_transition({ModName,".X"}, $realtime, {ModName,".\\A[1] "}, t_A1, "ct3_mon");
   end
-  else if (t_A2 > t_A0 && t_A2 > t_A1) begin
+  else if (changed == (1'b1 << 2)) begin
     //A2 is the critical input
     //$display("%m: X fires @ %0t due to A[2] @ %0t", $realtime, t_A2);
     histmon_add_transition({ModName,".X"}, $realtime, {ModName,".\\A[2] "}, t_A2, "ct3_mon");
   end
   else begin
-    $display("%m: X fires @ %0t due to BOTH A[0] and A[1] @ %0t", $realtime, t_A0);
+    $display("%m: X fires @ %0t because changed = %3b", $realtime, changed);
+    if (changed[0] == 1'b1) begin
+      //A0 is one possible critical path
+      //$display("%m: X fires @ %0t... picking A[0] @ %0t", $realtime, t_A0);
+      histmon_add_transition({ModName,".X"}, $realtime, {ModName,".\\A[0] "}, t_A0, "ct3_mon");
+    end
+    else if (changed[1] == 1'b1) begin
+      //A1 is one possible critical path
+      //$display("%m: X fires @ %0t... picking A[1] @ %0t", $realtime, t_A1);
+      histmon_add_transition({ModName,".X"}, $realtime, {ModName,".\\A[1] "}, t_A1, "ct3_mon");
+    end
+    else if (changed[2] == 1'b1) begin
+      //A2 is one possible critical path
+      //$display("%m: X fires @ %0t... picking A[2] @ %0t", $realtime, t_A2);
+      histmon_add_transition({ModName,".X"}, $realtime, {ModName,".\\A[2] "}, t_A2, "ct3_mon");
+    end
+    else begin
+      $display("%m: ERROR: X fires @ %0t", $realtime);
+    end
+
   end
 end
 
@@ -692,7 +744,20 @@ always @(out) begin
     histmon_add_transition({ModName,".",outname}, $realtime, {ModName,".b"}, t_b, "comb2_mon");
   end
   else begin
-    $display("%m: out fires @ %0t because changed = %0b", $realtime, changed);
+    $display("%m: out fires @ %0t because changed = %2b", $realtime, changed);
+    if (changed[0] == 1'b1) begin
+      //a is one possible critical path
+      //$display("%m: out fires @ %0t... picking a @ %0t", $realtime, t_a);
+      histmon_add_transition({ModName,".",outname}, $realtime, {ModName,".a"}, t_a, "comb2_mon");
+    end
+    else if (changed[1] == 1'b1) begin
+      //b is one possible critical path
+      //$display("%m: out fires @ %0t... picking b @ %0t", $realtime, t_b);
+      histmon_add_transition({ModName,".",outname}, $realtime, {ModName,".b"}, t_b, "comb2_mon");
+    end
+    else begin
+      $display("%m: ERROR: out fires @ %0t", $realtime);
+    end
   end
 end
 
@@ -765,7 +830,21 @@ always @(out) begin
     histmon_add_transition({ModName,".",outname}, $realtime, {ModName,".c"}, t_c, "comb3_mon");
   end
   else begin
-    $display("%m: out fires @ %0t because changed = %0b", $realtime, changed);
+    $display("%m: out fires @ %0t because changed = %3b", $realtime, changed);
+    if (changed[0] == 1'b1) begin
+      //a is one possible critical path
+      //$display("%m: out fires @ %0t... picking a @ %0t", $realtime, t_a);
+      histmon_add_transition({ModName,".",outname}, $realtime, {ModName,".a"}, t_a, "comb3_mon");
+    end
+    else if (changed[1] == 1'b1) begin
+      //b is one possible critical path
+      //$display("%m: out fires @ %0t... picking b @ %0t", $realtime, t_b);
+      histmon_add_transition({ModName,".",outname}, $realtime, {ModName,".b"}, t_b, "comb3_mon");
+    end
+    else if (changed[2] == 1'b1) begin
+      //c is one possible critical path
+      //$display("%m: out fires @ %0t... picking c @ %0t", $realtime, t_c);
+      histmon_add_transition({ModName,".",outname}, $realtime, {ModName,".c"}, t_c, "comb3_mon");
   end
 end
 
