@@ -87,3 +87,49 @@ define T()()
      ]
    }
 }
+
+int W = 32;
+
+define GEN()(bd(W) +R)
+{
+  csp { R!0xc0edbabe }
+}
+
+define U()(bd(W) -L, +R)
+{
+  csp {
+
+    int i;
+
+    i++;
+
+    L?x;
+
+    y = x + 13;
+    z = (y * 16807) % 2147483647;
+      
+    print("" + z);
+
+    t = <+i:0..3:(z+i)>;
+
+    <;j:0..3: t++>;
+
+    print("" + t);
+
+    u = <+i:20:i>;
+
+    print("" + i);
+
+    print("" + u)
+  }
+}
+  
+define US()()
+{
+  subcells {
+    bd(W) c, d;
+    
+    GEN() gen(c);
+    U()   u  (c, d);
+  }
+}

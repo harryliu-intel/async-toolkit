@@ -31,7 +31,7 @@
 
   
 (define (get-loop-dummies prog)
-
+  ;; multiset
   (define ids '())
   
   (define (s-visit s)
@@ -42,11 +42,11 @@
     )
 
   (visit-stmt prog s-visit identity identity)
-  (uniq eq? ids)
+  ids
   )
 
 (define (get-loopex-dummies prog)
-
+  ;; multiset
   (define ids '())
   
   (define (x-visit x)
@@ -56,5 +56,41 @@
     )
 
   (visit-stmt prog identity x-visit identity)
-  (uniq eq? ids)
+  ids
+  )
+
+(define (uniquify-loop-dummies stmt)
+  ;; we need to uniquify the loop dummies in all kinds of angle-bracket
+  ;; loops -- before we do anything else!
+  ;; note that we *only* want to call this pass when we detect that
+  ;; there are non-unique dummies.  Because it renames all the dummies!
+  ;;
+  ;; -- otherwise the entire compiler will loop!
+
+  (dis "uniquify-loop-dummies" dnl)
+  
+  (define tg (make-name-generator "uniqify-loop"))
+  
+  (define (s-visitor s)
+    (if (loop? s) (rename-id s (get-loop-dummy s) (tg 'next)) s)
+    )
+
+  (define (x-visitor x)
+    (if (loopex? x)
+        (visit-expr x
+
+                    identity
+
+                    (make-renaming-expr-visitor
+                     (get-loopex-dummy x)
+                     (tg 'next))
+
+                    identity)
+        x)
+    )
+  
+  (visit-stmt stmt
+              s-visitor
+              x-visitor
+              identity)
   )

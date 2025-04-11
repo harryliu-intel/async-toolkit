@@ -347,13 +347,92 @@
     )
   )
 
+(define (recv? x)(and (pair? x)(eq? 'recv (car x))))
+(define (assign? x)(and (pair? x)(eq? 'assign (car x))))
+
+
+(define (get-channel-type-bit-width channel-type)
+  (if (or (not (eq? 'channel             (car channel-type)))
+          (not (eq? 'standard.channel.bd (cadr channel-type))))
+      (error "not a channel type I understand : " channel-type))
+  (caaddr channel-type))
+
+
   
+(define (assignment-range ass chan-tbl)
+  ;; compute the range of an assignment
+  ;; the "ass" should be in the format of the ass-tbl,
+  ;; that is: (ass syms id vals)
+
+  (define syms (cadr   ass))
+  (define id   (caddr  ass))
+  (define vals (cadddr ass))
+
+  (dis "assignment-range syms " syms dnl)
+  (dis "assignment-range id   " id   dnl)
+  (dis "assignment-range vals " vals dnl)
+
+  (define (channel-value-range channel-designator)
+    (let* ((id        (get-designator-id channel-designator))
+           (chan-decl (chan-tbl 'retrieve id))
+           (width     (get-channel-type-bit-width (cadddr chan-decl))))
+
+      (dis "cvr : id : " id dnl)
+      (dis "cvr : cd : " chan-decl dnl)
+
+      (make-uint-range width)
+      
+      )
+    )
+  
+  (let* ((ass-stmt   (car ass))
+         (is-recv    (recv? ass-stmt))
+         (is-assn    (assign? ass-stmt))
+         (simple-rhs (and is-assn (ident? (get-assign-rhs ass-stmt)))))
+
+    (cond (is-recv
+           (channel-value-range (get-recv-lhs ass-stmt)))
+
+          (simple-rhs
+           (declared-ident-range (get-assign-rhs ass-stmt) syms))
+
+          (is-assn ;; an expression
+           (expression-range (get-assign-rhs ass-stmt) syms))
+
+          (else
+           (error "dont understand assignment " (stringify ass)))))
+  )
+
+(define (declared-ident-range id syms)
+  (let ((decl (retrieve-defn id syms)))
+    (get-type-range decl))
+  )
+
+(define (expression-range expr syms)
+  (bigint? expr)
+  )
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(define (make-port-table cell-info)
+
+  (define tbl (make-hash-table 100 atom-hash))
+  
+  (map (lambda(p)(tbl 'add-entry! (cadr p) p)) 
+       (get-ports cell-info))
+
+  tbl
+
+)
+  
 (define (make-the-tables prog)
-  (set! *the-ass-tbl* (make-assignments-tbl prog *cellinfo* *the-inits* '() *the-struct-tbl*))
+  (set! *the-ass-tbl* (make-assignments-tbl
+                       prog *cellinfo* *the-inits* '() *the-struct-tbl*))
   (set! *the-use-tbl* (make-uses prog))
-  (set! *the-dcl-tbl* (make-intdecls prog)))
+  (set! *the-dcl-tbl* (make-intdecls prog))
+  (set! *the-prt-tbl* (make-port-table *cellinfo*))
+  'ok
+  )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 

@@ -1,32 +1,46 @@
+(define  (rename-dbg . x)
+;;      (apply dis x)
+    )
 
-(define (rename-id lisp from to)
-
-  (define (range-visitor r)
-    (dis "range-visitor " r dnl)
-    (let ((res
-           `(range ,(visit-expr (cadr r)  identity expr-visitor identity)
-                   ,(visit-expr (caddr r) identity expr-visitor identity)))
-          )
-      (dis "range-visitor res " res dnl)
-      res))
+(define (make-renaming-range-visitor from to expr-visitor)
+  (lambda(r)
+        (rename-dbg "range-visitor " r dnl)
+        (let ((res
+               `(range ,(visit-expr (cadr r)  identity expr-visitor identity)
+                       ,(visit-expr (caddr r) identity expr-visitor identity)))
+              )
+          (rename-dbg "range-visitor res " res dnl)
+          res)
+        )
+  )
+        
+(define (make-renaming-expr-visitor from to)
+  (lambda (x)
+    (let expr-visitor ((x x))
       
-  (define (expr-visitor x)
+      (define range-visitor (make-renaming-range-visitor from to expr-visitor))
+      
+      (cond ((and (ident? x) (eq? from (cadr x)))
+             (list 'id to))
+            
+            ((loopex? x)
+             `(loop-expression
+               ,(let ((dummy (get-loopex-dummy x)))
+                  (if (eq? dummy from) to dummy))
+               ,(range-visitor (get-loopex-range x))
+               ,(get-loopex-op x)
+               ,(get-loopex-expr x)))
+            
+            (else x)
+            )
+      )
+    )
+  )
 
-    (cond ((and (ident? x) (eq? from (cadr x)))
-           (list 'id to))
+(define (rename-id stmt from to)
 
-          ((loopex? x)
-           `(loop-expression
-             ,(let ((dummy (get-loopex-dummy x)))
-                (if (eq? dummy from) to dummy))
-             ,(range-visitor (get-loopex-range x))
-             ,(get-loopex-op x)
-             ,(get-loopex-expr x)))
-          
-          (else x)
-         )
-   )
-  
+  (define x-visit (make-renaming-expr-visitor from to))
+    
   (define (stmt-visitor s)
     ;; the only place that an identifier appears outside of expressions
     ;; is in "var1" statements -- and in function decls
@@ -35,7 +49,7 @@
     ;; and in waiting-if
 
     ;; and in ranges...
-    
+
     (case (get-stmt-type s)
       ((var1) (if  (equal? `(id ,from) (cadadr s))
                    `(var1 (decl1 (id ,to) ,@(cddadr s)))
@@ -43,12 +57,13 @@
        )
 
       ((sequential-loop parallel-loop)
-       (let ((kw     (car s))
-             (idxvar (cadr s))
-             (range  (range-visitor (caddr s)))
-             (stmt   (cadddr s)))
+       (let* ((kw      (car s))
+              (idxvar  (cadr s))
+              (r-visit (make-renaming-range-visitor from to x-visit))
+              (range   (r-visit (caddr s)))
+              (stmt    (cadddr s)))
 
-         (dis "rename visitor " s dnl)
+         (rename-dbg "rename visitor " s dnl)
          (list kw (if (eq? idxvar from) to idxvar) range stmt)
          )
        )
@@ -69,6 +84,9 @@
       )
     )
 
-  (visit-stmt lisp stmt-visitor expr-visitor identity)
+  (visit-stmt stmt
+              stmt-visitor
+              x-visit
+              identity)
 )
 

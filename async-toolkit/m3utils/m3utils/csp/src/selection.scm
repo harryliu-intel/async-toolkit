@@ -173,7 +173,7 @@
 (define (get-waiting-if-clause-command wifc) (cadddr wifc))
 
 (define (get-waiting-if-dummies prog)
-
+  ;; multiset
   (define ids '())
   
   (define (s-visit s)
@@ -186,7 +186,6 @@
     )
   
   (visit-stmt prog s-visit identity identity)
-  (uniq eq? ids)
   )
 
 

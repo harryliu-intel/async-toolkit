@@ -1,0 +1,69 @@
+;; early-stage analysis to clean up the program
+;; has to be run initially and after a few transformations
+;; (such as after function inlining)
+
+
+(define (analyze-program prog cell-info initvars)
+  (let* ((ports      (get-ports    cell-info))
+         (portids    (get-port-ids cell-info))
+         (textids    (find-referenced-vars prog))
+         (globalids  (set-intersection textids initvars))
+         (dummies    (get-all-dummies prog))
+         (unused-globalids
+                     (set-diff initvars globalids))
+         (undeclared (set-diff
+                      (find-undeclared-vars prog portids) globalids))
+         (missing    (set-diff undeclared dummies))
+         (declnames  (find-declaration-vars prog))
+         (multiples  (multi declnames))
+         )
+
+    (set! *last-anal* prog)
+
+    ;; we should consider *the-inits* here.  We don't need to declare
+    ;; anything that *the-inits* declares.
+    (dis "portids    : " portids dnl)
+    (dis "textids    : " textids dnl)
+    (dis "globalids  : " globalids dnl)
+    (dis "undeclared : " undeclared dnl) (set! *undeclared* undeclared)
+    (dis "missing    : " missing dnl)
+    (dis "decls      : " declnames dnl)
+    (dis "multiples  : " multiples dnl)
+
+    (cond ((not (null? multiples))
+           (dis dnl "uniqifying..." dnl dnl)
+           (analyze-program (uniqify-stmt prog)
+                            cell-info
+                            initvars))
+
+          ((not (null? missing))
+           (dis dnl "un-undeclaring missing..." dnl dnl)
+           (analyze-program (predeclare prog missing)
+                            cell-info
+                            initvars)
+           )
+
+          (else (set! *analyze-result* prog)
+                (set! *unused-globals* unused-globalids)
+                *analyze-result*)
+          )
+    )
+  )
+
+(define (find-referenced-vars stmt)
+  (find-stmt-ids stmt))
+
+(define (find-undeclared-vars stmt portids)
+  (let* ((used (find-referenced-vars stmt))
+         (declared (find-declared-vars stmt)))
+    (set-diff (set-diff used declared) portids)))
+               
+(define (find-declared-vars lisp) ;; set of declared vars
+  (uniq eq? (append (find-loop-indices lisp) (map cadr (map cadadr (find-var1-stmts lisp))))))
+
+(define (find-declaration-vars lisp) ;; multiset of declarations
+  (map cadr (map cadadr (find-var1-stmts lisp))))
+
+(define (count-declarations of stmt)
+  (count-in of (find-declaration-vars stmt)))
+

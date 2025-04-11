@@ -506,9 +506,18 @@
 
 (define xxx #f)
 
+(define *ascii-space* (car (string->list " ")))
+
+(define (pad w . str)
+  (Fmt.Pad (apply string-append str) w *ascii-space* 'Left))
+
+(define (padr w . str)
+  (Fmt.Pad (apply string-append str) w *ascii-space* 'Right))
+
+
 (define (print-atomsize sym)
-  (dis "Defined " sym " : " )
-  (dis (count-atoms (eval sym)) " atoms" dnl))
+  (dis (pad  23 "Defined " sym) " : " )
+  (dis (padr 10 (stringify (count-atoms (eval sym)))) " atoms" dnl))
 
 (define (switch-proc! data)
 
@@ -522,7 +531,9 @@
        (dis (count-atoms entry) " atoms" dnl)
        (eval (list 'set! sym 'entry))
        ))
-   '(refparents)
+   '(
+;;     refparents
+     )
    )
   
   (map
@@ -1077,64 +1088,6 @@
 (define (get-port-ids cell-info)
   (map cadr (get-ports cell-info)))
 
-(define (analyze-program prog cell-info initvars)
-  (let* ((ports      (get-ports    cell-info))
-         (portids    (get-port-ids cell-info))
-         (textids    (find-referenced-vars prog))
-         (globalids  (set-intersection textids initvars))
-         (dummies    (get-all-dummies prog))
-         (unused-globalids
-                     (set-diff initvars globalids))
-         (undeclared (set-diff
-                      (find-undeclared-vars prog portids) globalids))
-         (missing    (set-diff undeclared dummies))
-         (declnames  (find-declaration-vars prog))
-         (multiples  (multi declnames))
-         )
-
-    (set! *last-anal* prog)
-
-    ;; we should consider *the-inits* here.  We don't need to declare
-    ;; anything that *the-inits* declares.
-    (dis "portids    : " portids dnl)
-    (dis "textids    : " textids dnl)
-    (dis "globalids  : " globalids dnl)
-    (dis "undeclared : " undeclared dnl) (set! *undeclared* undeclared)
-    (dis "missing    : " missing dnl)
-    (dis "decls      : " declnames dnl)
-    (dis "multiples  : " multiples dnl)
-
-    (cond ((not (null? multiples))
-           (dis dnl "uniqifying..." dnl dnl)
-           (analyze-program (uniqify-stmt prog)
-                            cell-info
-                            initvars))
-
-          ((not (null? missing))
-           (dis dnl "un-undeclaring missing..." dnl dnl)
-           (analyze-program (predeclare prog missing)
-                            cell-info
-                            initvars)
-           )
-
-          (else (set! *analyze-result* prog)
-                (set! *unused-globals* unused-globalids)
-                *analyze-result*)
-          )
-    )
-  )
-
-
-
-(define (find-referenced-vars stmt)
-  (find-stmt-ids stmt))
-
-(define (find-undeclared-vars stmt portids)
-  (let* ((used (find-referenced-vars stmt))
-         (declared (find-declared-vars stmt)))
-    (set-diff (set-diff used declared) portids)))
-               
-
 (define (find-var1-stmts lisp)
   (define var1s '())
 
@@ -1170,18 +1123,10 @@
   idxs
   )
 
+(load "analyze.scm")
 
-
-(define (find-declared-vars lisp) ;; set of declared vars
-  (uniq eq? (append (find-loop-indices lisp) (map cadr (map cadadr (find-var1-stmts lisp))))))
-
-(define (find-declaration-vars lisp) ;; multiset of declarations
-  (map cadr (map cadadr (find-var1-stmts lisp))))
 
 (load "rename.scm")
-
-(define (count-declarations of stmt)
-  (count-in of (find-declaration-vars stmt)))
 
 (define *stop* #f)
 
@@ -1966,6 +1911,11 @@
 
 (define (run-compiler the-passes the-text cell-info the-inits func-tbl struct-tbl)
 
+  ;; n.b. that we can't introduce uniquify-loop-dummies inside here
+  ;; because that (and only that) transformation unconditionally changes
+  ;; the program.  Maybe we can fix it, but for now our solution is to
+  ;; only run that transformation at the outside of the program.
+  
   (define syms '())
 
   (set! *the-pass-results* '())
@@ -1978,6 +1928,7 @@
   (dis dnl "=========  START  =========" dnl dnl) 
   
   (define initvars (find-referenced-vars the-inits))
+  ;; should not be repeated over and over... not when we don't change the-inits.
 
   (dis "analyze program : " dnl)
 
@@ -2239,14 +2190,22 @@
          the-inits stmt func-tbl struct-tbl cell-info)
   (simplify-stmt stmt))
 
+(define (compile1!)
+  ;; unquify the loops before doing ANYTHING else
+  (set! text1
+        (uniquify-loop-dummies *the-text*))
+  'text1
+  )
+
 (define (compile2!)
   (set! text2
-        (run-compiler *the-passes-2*
-                      *the-text*
-                      *cellinfo*
-                      *the-inits*
-                      *the-func-tbl*
-                      *the-struct-tbl*))
+        (uniquify-loop-dummies
+         (run-compiler *the-passes-2*
+                       text1
+                       *cellinfo*
+                       *the-inits*
+                       *the-func-tbl*
+                       *the-struct-tbl*)))
   'text2
   )
 
@@ -2258,13 +2217,14 @@
 
 (define (compile3!)
   (set! text3
-        (run-compiler  
-         *the-passes-3*
-         text2
-         *cellinfo*
-         *the-inits*
-         *the-func-tbl*
-         *the-struct-tbl*)
+        (uniquify-loop-dummies
+         (run-compiler  
+          *the-passes-3*
+          text2
+          *cellinfo*
+          *the-inits*
+          *the-func-tbl*
+          *the-struct-tbl*))
         )
   'text3
   )
@@ -2281,18 +2241,27 @@
   
 (define (compile4!)
     (set! text4
-          (run-compiler
-           *the-passes-4*
-           text3
-           *cellinfo*
-           *the-inits*
-           *the-func-tbl*
-           *the-struct-tbl*))
+          (uniquify-loop-dummies
+           (run-compiler
+            *the-passes-4*
+            text3
+            *cellinfo*
+            *the-inits*
+            *the-func-tbl*
+            *the-struct-tbl*)))
 ;;  (display-success-2)
   'text4
   )
 
+
+(define (compile5!)
+  (make-the-tables text4)
+
+  )
+
+
 (define (compile!)
+  (compile1!)
   (compile2!)
   (compile3!)
   (compile4!)
