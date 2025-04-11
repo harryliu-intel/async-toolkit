@@ -1,4 +1,7 @@
 
+(define (vars-dbg . x)
+  (apply dis x)
+  )
 
 (define (make-assignments-tbl prog cell-info the-inits func-tbl struct-tbl)
 
@@ -31,9 +34,9 @@
       ((recv)
        (let ((lhs (get-recv-lhs s))
              (rhs (get-recv-rhs s)))
-;;         (dis "recv     : " s dnl)
-;;         (dis "recv lhs : " lhs dnl)
-;;         (dis "recv rhs : " rhs dnl)
+         (vars-dbg "recv     : " s dnl)
+         (vars-dbg "recv lhs : " lhs dnl)
+         (vars-dbg "recv rhs : " rhs dnl)
 
          (if (not (null? rhs)) (add-entry! rhs)))
        )
@@ -42,6 +45,11 @@
        (error))
 
 
+      ((sequential-loop parallel-loop)
+       (add-entry! `(id ,(get-loop-dummy s)))
+       )
+      
+      
       ((eval)
        ;; should only be a call-intrinsic at this point
        (let* ((expr (cadr s))
@@ -109,7 +117,7 @@
     (if (eq? 'var1 (get-stmt-type s))
         (if (member (get-var1-id s) constant-ids)
             (let ((res (make-var1-constant s)))
-              (dis "mark-decls-constant " (get-var1-id s) " " res dnl)
+              (vars-dbg "mark-decls-constant " (get-var1-id s) " " res dnl)
               res
               )
             s
@@ -155,7 +163,7 @@
   (define (add-entry! id)
     (let* ((new-entry (list cur-stmt))
            )
-;;      (dis "make-uses-tbl add-entry!  "  id " -> " cur-stmt dnl)
+;;      (vars-dbg "make-uses-tbl add-entry!  "  id " -> " cur-stmt dnl)
       (let ((q (tbl 'retrieve id)))
         (if (eq? q '*hash-table-search-failed*)
             (tbl 'add-entry!    id (list new-entry))
@@ -173,7 +181,7 @@
   
   (define (s-visitor s)
 
-;;    (dis "s-visitor : s : " s dnl)
+;;    (vars-dbg "s-visitor : s : " s dnl)
     (case (get-stmt-type s)
 
       ((apply assign-operate)
@@ -192,9 +200,9 @@
       ((recv)
        (let ((lhs (get-recv-lhs s))
              (rhs (get-recv-rhs s)))
-;;         (dis "recv     : " s dnl)
-;;         (dis "recv lhs : " lhs dnl)
-;;         (dis "recv rhs : " rhs dnl)
+;;         (vars-dbg "recv     : " s dnl)
+;;         (vars-dbg "recv lhs : " lhs dnl)
+;;         (vars-dbg "recv rhs : " rhs dnl)
 
          (if (not (null? rhs)) ;; we do NOT want the written variable
              (map add-entry! (get-designator-depend-ids rhs)))
@@ -221,9 +229,9 @@
                                  
                                  (apply append (map find-expr-ids iargs)))))
                 )
-;;           (dis "s-visitor inam " inam dnl)
-;;           (dis "s-visitor iargs " (stringify iargs) dnl)
-;;           (dis "s-visitor ids " ids dnl)
+;;           (vars-dbg "s-visitor inam " inam dnl)
+;;           (vars-dbg "s-visitor iargs " (stringify iargs) dnl)
+;;           (vars-dbg "s-visitor ids " ids dnl)
            (map add-entry! ids)
            )
          )
@@ -347,6 +355,9 @@
     )
   )
 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (define (recv? x)(and (pair? x)(eq? 'recv (car x))))
 (define (assign? x)(and (pair? x)(eq? 'assign (car x))))
 
@@ -359,7 +370,7 @@
 
 
   
-(define (assignment-range ass chan-tbl)
+(define (assignment-range ass port-tbl)
   ;; compute the range of an assignment
   ;; the "ass" should be in the format of the ass-tbl,
   ;; that is: (ass syms id vals)
@@ -368,48 +379,115 @@
   (define id   (caddr  ass))
   (define vals (cadddr ass))
 
-  (dis "assignment-range syms " syms dnl)
-  (dis "assignment-range id   " id   dnl)
-  (dis "assignment-range vals " vals dnl)
+  (vars-dbg "assignment-range syms " syms dnl)
+  (vars-dbg "assignment-range id   " id   dnl)
+  (vars-dbg "assignment-range vals " vals dnl)
 
   (define (channel-value-range channel-designator)
     (let* ((id        (get-designator-id channel-designator))
-           (chan-decl (chan-tbl 'retrieve id))
+           (chan-decl (port-tbl 'retrieve id))
            (width     (get-channel-type-bit-width (cadddr chan-decl))))
 
-      (dis "cvr : id : " id dnl)
-      (dis "cvr : cd : " chan-decl dnl)
+      (vars-dbg "cvr : id : " id dnl)
+      (vars-dbg "cvr : cd : " chan-decl dnl)
 
       (make-uint-range width)
       
       )
     )
+
+  (define (loop-range loop-stmt)
+    (let* ((the-range (get-loop-range loop-stmt))
+           (min-expr  (cadr the-range))
+           (max-expr  (caddr the-range)))
+      (vars-dbg "loop-range " loop-stmt dnl)
+      (make-range (range-min (expr-range min-expr syms))
+                  (range-max (expr-range max-expr syms)))))
+      
   
   (let* ((ass-stmt   (car ass))
-         (is-recv    (recv? ass-stmt))
+         (is-recv    (recv?   ass-stmt))
          (is-assn    (assign? ass-stmt))
+         (is-loop    (loop?   ass-stmt))
          (simple-rhs (and is-assn (ident? (get-assign-rhs ass-stmt)))))
 
+    (vars-dbg "assignment-range ass-stmt   " ass-stmt dnl)
+    (vars-dbg "assignment-range is-recv    " is-recv dnl)
+    (vars-dbg "assignment-range is-assn    " is-assn dnl)
+    (vars-dbg "assignment-range is-loop    " is-loop dnl)
+    (vars-dbg "assignment-range simple-rhs " simple-rhs dnl)
+    
     (cond (is-recv
            (channel-value-range (get-recv-lhs ass-stmt)))
 
           (simple-rhs
-           (declared-ident-range (get-assign-rhs ass-stmt) syms))
+           (declared-ident-range (cadr (get-assign-rhs ass-stmt)) syms))
 
           (is-assn ;; an expression
-           (expression-range (get-assign-rhs ass-stmt) syms))
+           (expr-range (get-assign-rhs ass-stmt) syms))
+
+          (is-loop
+           (loop-range ass-stmt)
+           )
 
           (else
            (error "dont understand assignment " (stringify ass)))))
   )
 
+(define (var-ass-range id ass-tbl port-tbl)
+  (let* ((var-asses   (ass-tbl 'retrieve id))
+         (var-ranges  (map (lambda(ass)(assignment-range ass port-tbl))
+                           var-asses)))
+    var-ranges
+    )
+  )
+ 
 (define (declared-ident-range id syms)
   (let ((decl (retrieve-defn id syms)))
     (get-type-range decl))
   )
 
-(define (expression-range expr syms)
-  (bigint? expr)
+(define (search-range tbl id)
+  (let ((tentative (tbl 'retrieve id)))
+    (if (eq? tentative '*hash-table-search-failed*)
+        *range-complete*
+        tentative
+        )
+    )
+  )
+
+
+(define (expr-range expr syms)
+  (vars-dbg "expr-range : expr : " expr dnl)
+  
+  (cond ((bigint? expr) (make-point-range expr))
+
+        ((not (pair? expr))
+         (error "expr-range : not an integer expression : " expr))
+
+        ((ident? expr)
+         (let* ((id  (cadr expr))
+                (rng (search-range *the-rng-tbl* id))
+                (dcl (search-range *the-dcl-tbl* id))
+                (res (range-intersect rng dcl))
+               )
+           res)
+         )
+
+        ((binary-expr? expr)
+         (let* ((op (car expr))
+                (rop (symbol-append 'range op)))
+           (rop (expr-range (cadr expr) syms)
+                (expr-range (caddr expr) syms)))
+         )
+
+        ((unary-expr? expr)
+         (let* ((op (car expr))
+                (rop (symbol-append 'range op)))
+           (rop (expr-range (cadr expr) syms)))
+         )
+            
+        (else *range-complete*))
   )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -429,7 +507,8 @@
   (set! *the-ass-tbl* (make-assignments-tbl
                        prog *cellinfo* *the-inits* '() *the-struct-tbl*))
   (set! *the-use-tbl* (make-uses prog))
-  (set! *the-dcl-tbl* (make-intdecls prog))
+  (set! *the-dcl-tbl* (make-intdecls prog))            ;; declared ranges
+  (set! *the-rng-tbl* (make-hash-table 100 atom-hash)) ;; derived ranges
   (set! *the-prt-tbl* (make-port-table *cellinfo*))
   'ok
   )

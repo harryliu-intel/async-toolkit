@@ -96,12 +96,14 @@
 (define text2 #f)
 (define text3 #f)
 (define text4 #f)
+(define text5 #f)
 
 
 (define *the-ass-tbl* #f)
 (define *the-use-tbl* #f)
 (define *the-dcl-tbl* #f)
 (define *the-prt-tbl* #f)
+(define *the-rng-tbl* #f)
 
 (dis "  ===  TO RUN COMPILER: " dnl)
 (dis "  ===  (loaddata! <csp-prefix>)" dnl)

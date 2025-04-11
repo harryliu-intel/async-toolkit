@@ -117,6 +117,9 @@ define U()(bd(W) -L, +R)
     print("" + t);
 
     u = <+i:20:i>;
+    u = z;
+    u = y;
+   
 
     print("" + i);
 
@@ -131,5 +134,13 @@ define US()()
     
     GEN() gen(c);
     U()   u  (c, d);
+  }
+}
+
+define V()()
+{
+  csp {
+    w = <+i:W:<*j:i + i:i + i + j + j>>;
+    print(w)
   }
 }

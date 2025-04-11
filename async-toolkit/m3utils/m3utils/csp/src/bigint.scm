@@ -1,4 +1,8 @@
 
+(define (bigint-dbg . x)
+;;    (apply dis x)
+  )
+  
 
 (require-modules "fold.scm")
 
@@ -67,9 +71,12 @@
 
 (define (dumb-binop-range op)
   (lambda (a b)
+    (bigint-dbg "dumb-binop-range " op " " a " " b dnl)
     (let* ((all-pairs   (cartesian-product
                          (map force-bigint a)
                          (map force-bigint b)))
+
+           
            (all-results (map eval (map (lambda(x)(cons op x)) all-pairs)))
            (min-res     (apply big-min all-results))
            (max-res     (apply big-max all-results)))
@@ -130,6 +137,11 @@
 ;; extended with +-inf and not-a-number.
 ;;
 
+;; the following defs allow us to (eval x) for any xnum x
+(define +inf '+inf)
+(define -inf '-inf)
+
+(define *xnum-special-values* '(nan -inf +inf))
 
 (define (make-xnum x)
   (cond ((bigint? x) x)
@@ -163,6 +175,7 @@
         ((eq? b '+inf) -1)
         ((member 'nan (list a b)) 0)  ;; hmm.....
         (else (BigInt.Compare a b))))
+
 
 (define (xnum-zero? x) (eq? x xnum-0))
 (define (xnum-neg? x) (= -1 (xnum-compare x xnum-0)))
@@ -202,7 +215,10 @@
         (else (BigInt.Abs a))))
         
 
-(define (xnum-- a b) (xnum-+ a (xnum-uneg b)))
+(define (xnum-- a . b)
+  (if (null? b)
+      (xnum-uneg a)
+      (xnum-+ a (xnum-uneg (car b)))))
 
 (define (xnum-* a b)
   (let* ((both (list a b))
@@ -243,6 +259,8 @@
          (have-neg  (member -1 bsgn))
          (have-nan  (member 'nan both)))
 
+    (bigint-dbg "bfin : " bfin dnl)
+    
     (cond (have-nan 'nan)
 
           ;; { no nan }
@@ -252,7 +270,9 @@
           ;; { no nan & no neg }
 
           ((equal? bfin '(0 0)) 'nan) ;; 0/0
-          
+
+          ((eq? a xnum-0) xnum-0) ;; 0 / not-nan-not-zero
+
           ((eq? b xnum-0) '+inf) ;; not-nan-not-zero / 0
           
           ((equal? bfin '(fin fin)) (big/ a b))
@@ -311,6 +331,34 @@
 
 (define (xnum-clog2 x) (+ 1 (xnum-msb-abs (xnum-- x *big-1*))))
 
+(define (xnum-max2 a b)
+  (define blist (list a b))
+  (cond 
+        ((member '+inf blist) '+inf)
+        ((member 'nan blist) 'nan)
+        ((eq? a '-inf) b)
+        ((eq? b '-inf) a)
+        (else (BigInt.Max a b))))
+
+(define (xnum-max a . b)
+  (if (null? b) a
+      (xnum-max2 a (apply xnum-max b)))
+  )
+
+(define (xnum-min2 a b)
+  (define blist (list a b))
+  (cond
+        ((member '-inf blist) '-inf)
+        ((member 'nan blist) 'nan)
+        ((eq? a '+inf) b)
+        ((eq? b '+inf) a)
+        (else (BigInt.Min a b))))
+
+(define (xnum-min a . b)
+  (if (null? b) a
+      (xnum-min2 a (apply xnum-min b)))
+  )
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define (make-range min max)
@@ -328,7 +376,7 @@
 
 (define (range-pos-inf? r) (eq? '+inf (range-max r)))
 
-(define (range-empty? r) (xnum< (range-max x) (range-min x)))
+(define (range-empty? r) (xnum-< (range-max r) (range-min r)))
 
 (define (range-infinite? r) (or (infinite-xnum? (range-min r))
                                 (infinite-xnum? (range-max r))))
@@ -343,28 +391,34 @@
 (define (range-point? r) (and (not (range-nan? r))
                               (eq? (range-min r) (range-max r))))
 
-(define *range-zero* '(0 0))
-(define *range-one* '(1 1))
-(define *an-empty-range* '(1 0))
+(define (range-member? x r)
+  (range-contains? r (make-point-range x)))
 
-(define *range-pos*      '(0    +inf))
-(define *range-neg*      '(-inf    0))
-(define *range-complete* '(-inf +inf))
+(define *range-zero*     `(,*big-0* ,*big-0*))
+(define *range-one*      `(,*big-1* ,*big-1*))
+(define *an-empty-range* `(,*big-1* ,*big-0*))
+
+(define *range-pos*        `(,*big-0*     +inf))
+(define *range-natural*    `(,*big-1*     +inf))
+(define *range-neg-natural `(-inf    ,*big-m1*))
+(define *range-neg*        `(-inf    ,*big-0* ))
+(define *range-complete*   '(-inf        +inf))
 
 (define (range-zero? r) (range-eq? r *range-zero*))
 
 (define (range-one? f)  (range-eq? r *range-one*))
 
 (define (range-contains? a b)
-  (and (xnum<= (range-min a) (range-min b))
-       (xnum>= (range-max a) (range-max b))))
+  (and (xnum-<= (range-min a) (range-min b))
+       (xnum->= (range-max a) (range-max b))))
 
 (define (make-simple-range-binop op)
   (lambda (a b)
+    (bigint-dbg "simple-range-binop " op " " a " " b dnl)
     (let* ((all-pairs   (cartesian-product a b))
            (all-results (map eval (map (lambda(x)(cons op x)) all-pairs)))
-           (min-res     (apply big-min all-results))
-           (max-res     (apply big-max all-results)))
+           (min-res     (apply xnum-min all-results))
+           (max-res     (apply xnum-max all-results)))
       (dbg "all-pairs   : " all-pairs dnl)
       (dbg "all-results : " all-results dnl)
       (dbg "min-res     : " min-res dnl)
@@ -372,10 +426,25 @@
       
       (list min-res max-res))))
 
-
+(define (range-union ra rb)
+  (make-range (xnum-min (range-min ra) (range-min rb))
+              (xnum-max (range-max ra) (range-max rb))))
+              
+(define (range-intersect ra rb)
+  (make-range (xnum-max (range-min ra) (range-min rb))
+              (xnum-min (range-max ra) (range-max rb))))
+              
 
 (define range-+ (make-simple-range-binop xnum-+))
-(define range-- (make-simple-range-binop xnum--))
+
+(define range-bin- (make-simple-range-binop xnum--))
+
+(define (range-un- r)
+  (make-range (xnum-- (cadr r)) (xnum-- (car r))))
+
+(define (range-- a . b)
+  (if (null? b) (range-un- a) (range-bin- a (car b))))
+
 (define range-* (make-simple-range-binop xnum-*))
 (define range-/ (make-simple-range-binop xnum-/))
 
@@ -404,3 +473,118 @@
                 (map xnum-eval (cdr expr))))
         
         (else (error "xnum-eval : can't handle : " expr))))
+
+(define mult  1e11)
+(define bmult (BigInt.New mult)) 
+
+(define *r* #f)
+(define *rr* #f)
+
+(define (xnum-random range)
+  (let* ((rr (range-intersect range *val-range*))
+         (lo (car rr))
+         (hi (cadr rr))
+         (eq (eq? lo hi))
+         (delta (if (eq? lo hi) *big-0* (xnum-- hi lo)))
+         (r1    (random)))
+
+    (cond ((< r1 0.1) (car range))  ;; may be -inf
+          ((< r1 0.2) (cadr range)) ;; may be +inf
+          (else
+           (let* ((r2 (* mult (random)))
+                  (b2 (BigInt.New (round r2)))
+                  (x  (xnum-* b2 delta))
+                  (y  (xnum-/ x  bmult))
+                  (res (xnum-+ lo y))
+                  )
+
+             (set! *r* range)
+             (set! *rr* rr)
+             
+             (bigint-dbg "range = " range dnl)
+             (bigint-dbg "rr    = " rr dnl)
+             (bigint-dbg "delta = " delta dnl)
+             (bigint-dbg "eq    = " eq dnl)
+             (bigint-dbg "r2    = " r2 dnl)
+             (bigint-dbg "b2    = " b2 dnl)
+             (bigint-dbg "x     = " x  dnl)
+             (bigint-dbg "y     = " y  dnl)
+             (bigint-dbg "lo    = " lo  dnl)
+             (bigint-dbg "res   = " res dnl)
+             res
+             )
+           )
+          )
+    )
+  )
+
+(define (range-random)
+  ;; return a potentially infinite range
+  (let* ((a0    (xnum-random *range-complete*))
+         (a1    (xnum-random *range-complete*))
+         (min   (xnum-min a0 a1))
+         (max   (xnum-max a0 a1))
+         (ra    (make-range min max)))
+    (if (and (eq? min max)
+             (xnum-infinite? min))
+        ;; dont return -inf -inf or +inf +inf
+        (range-random)
+        ra)
+    )
+  )
+
+(define *val-lo* (BigInt.New -100))
+(define *val-hi* (BigInt.New +100))
+(define *val-range* (make-range *val-lo* *val-hi*))
+
+
+
+(define (make-random-range r)
+  (let* ((rand (range-random))
+         (res (range-intersect r rand)))
+
+    (if (range-empty? res) (make-random-range r) res)))
+    
+
+(define (validate-range-binop op count rra rrb)
+  ;; random testing of the range code
+
+  (define xnum-op (eval (symbol-append 'xnum- op)))
+
+  (define range-op (eval (symbol-append 'range- op)))
+  
+  (define (validate-specific ra rb rc count)
+    ;; when the input ranges are ra, rb, draw some values and check them
+
+    (if (= 0 count)
+        'ok
+        (begin
+          (let* ((a (xnum-random ra))
+                 (b (xnum-random rb))
+                 (c (xnum-op a b)))
+            (if (not (range-member? c rc))
+                (error "not in range : (" xnum-op " " a " " b ") = " c
+                       " NOT IN (" range-op " " ra " " rb ") = " rc)
+                )
+            )
+
+          (validate-specific ra rb rc (- count 1))
+          )
+        )
+    )
+
+  
+  (if (= 0 count)
+      'ok
+      (begin
+        (let* ((ra    (make-random-range rra))
+               (rb    (make-random-range rrb))
+               (rc    (range-op ra rb))
+               )
+
+          (bigint-dbg "validate-specific " ra rb rc count dnl)
+          (validate-specific ra rb rc count))
+        (validate-range-binop op (- count 1) rra rrb))))
+
+
+

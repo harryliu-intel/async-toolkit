@@ -1242,8 +1242,7 @@
         ((string? literal)  '(string #t))
         (else (error "literal-type : not a literal : " literal))))
 
-(define (simple-operand? x)
-  (or (literal? x)(ident? x)))
+(define (simple-operand? x) (or (literal? x)(ident? x)))
 
 (define *rhs* #f)
 
@@ -1894,19 +1893,6 @@
    "******************************************************************************" reset-term dnl)
   )
 
-(define *the-passes-2* (list
-                        (list 'assign handle-access-assign)
-                        (list 'recv   handle-access-recv)
-                        (list 'send   handle-access-recv)
-                        (list 'assign handle-assign-rhs)
-                        (list 'eval   handle-eval)
-                        (list 'global inline-evals)
-                        (list 'global global-simplify)
-                        (list 'global remove-assign-operate)
-                        (list 'global remove-do)
-                        (list 'global simplify-if)
-                        (list 'assign remove-loop-expression)))
-
 (define *the-pass-results* '())
 
 (define (run-compiler the-passes the-text cell-info the-inits func-tbl struct-tbl)
@@ -2178,24 +2164,39 @@
     )
   )
 
-(define (sequentialize-nonblocking-parallels-pass
-         the-inits stmt func-tbl struct-tbl cell-info)
-  (sequentialize-nonblocking-parallels stmt))
+(define (make-simple-pass stmt-xform)
+  (lambda(the-inits stmt func-tbl struct-tbl cell-info)
+    (stmt-xform stmt)))
 
-(define (constantify-constant-vars-pass
-         the-inits stmt func-tbl struct-tbl cell-info)
-  (constantify-constant-vars stmt))
+(define (define-simple-pass sym)
+  (define-global-symbol
+    (symbol-append sym '-pass) (make-simple-pass (eval sym))))
 
-(define (simplify-stmt-pass
-         the-inits stmt func-tbl struct-tbl cell-info)
-  (simplify-stmt stmt))
-
+(define-simple-pass 'sequentialize-nonblocking-parallels)
+(define-simple-pass 'constantify-constant-vars)
+(define-simple-pass 'simplify-stmt)
+(define-simple-pass 'unfold-loop-ranges)
+          
 (define (compile1!)
   ;; unquify the loops before doing ANYTHING else
   (set! text1
         (uniquify-loop-dummies *the-text*))
   'text1
   )
+
+(define *the-passes-2* (list
+                        (list 'assign handle-access-assign)
+                        (list 'recv   handle-access-recv)
+                        (list 'send   handle-access-recv)
+                        (list 'assign handle-assign-rhs)
+                        (list 'eval   handle-eval)
+                        (list 'global inline-evals)
+                        (list 'global global-simplify)
+                        (list 'global remove-assign-operate)
+                        (list 'global remove-do)
+                        (list 'global simplify-if)
+                        (list 'global unfold-loop-ranges-pass)
+                        (list 'assign remove-loop-expression)))
 
 (define (compile2!)
   (set! text2
@@ -2257,6 +2258,8 @@
 (define (compile5!)
   (make-the-tables text4)
 
+  (set! text5 text4)
+  'text5
   )
 
 
@@ -2265,6 +2268,7 @@
   (compile2!)
   (compile3!)
   (compile4!)
+  (compile5!)
   )
 
 
@@ -2336,7 +2340,7 @@
   (and
    (pair? x)
    (= 3 (length x))
-   (binary-op? (car x))))
+   (or (unary-op? (car x)) (binary-op? (car x)))))
 
 (define (binary-op? op)
   (case op

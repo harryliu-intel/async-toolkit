@@ -21,9 +21,9 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define (get-loop-dummy x) (cadr x))
-(define (get-loop-range x) (caddr x))
-(define (get-loop-stmt  x) (cadddr x))
+(define (get-loop-dummy s) (cadr s))
+(define (get-loop-range s) (caddr s))
+(define (get-loop-stmt  s) (cadddr s))
 
 
 (define (loop? s)
@@ -94,3 +94,52 @@
               x-visitor
               identity)
   )
+
+(define (simple-range? r)
+  (and (simple-operand? (cadr r)) (simple-operand? (caddr r))))
+
+
+(define (build-integer-ass-sequence lhs rhs)
+  (list
+   (make-var1-decl (cadr lhs) *default-int-type*)
+   (make-assign lhs rhs)
+   )
+  )
+
+(define (unfold-loop-ranges prog)
+  ;; this transformation introduces a new variable for the
+  ;; loop range if the range consists of complex things.
+
+  (define tg (make-name-generator "unfold-loop-range"))
+
+  (define (s-visit s)
+    (if (and (loop? s)
+             (not (simple-range? (get-loop-range s))))
+        
+        (let* ((kw (car s))
+               (dummy (get-loop-dummy s))
+               (range (get-loop-range s))
+               (stmt  (get-loop-stmt s))
+               (rmin  (cadr range))
+               (rmax  (caddr range))
+               (rminv `(id ,(tg 'next)))
+               (rmaxv `(id ,(tg 'next)))
+               
+               (minseq  (build-integer-ass-sequence rminv rmin))
+               (maxseq  (build-integer-ass-sequence rmaxv rmax))
+
+               (newrange `(range ,rminv ,rmaxv))
+
+               (newloop         `(,kw ,dummy ,newrange ,stmt))
+               )
+
+          `(sequence ,@minseq ,@maxseq ,newloop)
+          );;tel*
+        s
+        )
+    )
+
+  (visit-stmt prog s-visit identity identity)
+  )
+          
+

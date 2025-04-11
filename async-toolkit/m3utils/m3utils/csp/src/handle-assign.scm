@@ -1,3 +1,6 @@
+(define (handle-assign-dbg . x)
+;;  (apply dis x)
+  )
 
 (define (peek?            x)  (and (pair? x) (eq? 'peek (car x))))
 (define (probe?           x)  (and (pair? x) (eq? 'probe (car x))))
@@ -19,7 +22,7 @@
     
     (define (make-simple x)
 
-     (if debug (dis "make-simple " x dnl))
+      (handle-assign-dbg "make-simple " x dnl)
       
       (set! sss (cons (cons x syms) sss))
       
@@ -39,7 +42,7 @@
     
     (define (handle-access-expr a)
       
-      ;;    (dis "handle-access-expr " a dnl)
+      ;;    (handle-assign-dbg "handle-access-expr " a dnl)
       
       (cond ((simple-operand? a) a)
 
@@ -64,7 +67,7 @@
 
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     
-    (if debug  (dis   "handle-access-assign : called    : "  ass dnl))
+    (handle-assign-dbg   "handle-access-assign : called    : "  ass dnl)
     
     (let* ((lhs       (handle-access-expr (get-assign-lhs ass)))
            (rhs       (handle-access-expr (get-assign-rhs ass)))
@@ -89,22 +92,25 @@
   
   (define (recurse a) (handle-assign-rhs a syms vals tg func-tbl struct-tbl))
   
-  (if debug (dis "assignment   : " a dnl))
+  (handle-assign-dbg "handle-assign-rhs   : " a dnl)
 
   (set! *a* (cons a *a*))
   (set! *syms* (cons syms *syms*))
 
-  (let ((lhs (cadr a))
-        (rhs (caddr a)))
+  (let ((lhs (get-assign-lhs a))
+        (rhs (get-assign-rhs a)))
 
     (set! *rhs* rhs)
     (set! *lhs* lhs)
-    
+
+    (handle-assign-dbg "handle-assign-rhs   lhs : " lhs dnl)
+    (handle-assign-dbg "handle-assign-rhs   rhs : " rhs dnl)
+
     (cond
 
      ((or (apply? rhs)
           (call-intrinsic? rhs))
-      (dis "handle-assign-rhs : function application : " (stringify rhs) dnl)
+      (handle-assign-dbg "handle-assign-rhs : function application : " (stringify rhs) dnl)
       
       (let* ((call-type (car rhs))
              (fnam      (cadr rhs)))
@@ -112,13 +118,13 @@
                    (seq '())
                    (q   '()))
 
-          (dis "p = " p dnl)
+          (handle-assign-dbg "p = " p dnl)
           
           (cond ((null? p)
                  ;; done iterating
                  
-                 (dis "handle-assign-rhs base case seq : " (stringify seq) dnl)
-                 (dis "handle-assign-rhs base case q   : " (stringify q) dnl)
+                 (handle-assign-dbg "handle-assign-rhs base case seq : " (stringify seq) dnl)
+                 (handle-assign-dbg "handle-assign-rhs base case q   : " (stringify q) dnl)
                  
                  (if (null? seq)
                      a
@@ -157,6 +163,8 @@
      
      ((binary-expr? rhs)
 
+      (handle-assign-dbg "binary-expr : rhs : " rhs dnl)
+      
       (let* ((op (car rhs))
              (l  (cadr rhs))
              (r  (caddr rhs))
@@ -234,7 +242,7 @@
       
       (define (make-simple x)
         
-        (if debug (dis "make-simple " x dnl))
+        (handle-assign-dbg "make-simple " x dnl)
         
         (set! sss (cons (cons x syms) sss))
         
@@ -266,9 +274,9 @@
                            )
 
                        
-                       (dis "probe/recv-ex the-access    : " the-access dnl)
-                       (dis "probe/recv-ex the-operation : " the-operation dnl)
-                       (dis "probe/recv-ex the-ass       : " the-ass dnl)
+                       (handle-assign-dbg "probe/recv-ex the-access    : " the-access dnl)
+                       (handle-assign-dbg "probe/recv-ex the-operation : " the-operation dnl)
+                       (handle-assign-dbg "probe/recv-ex the-ass       : " the-ass dnl)
                        (if (null? seq)
                            the-ass
                            (cons 'sequence (append seq (list the-ass))))))
@@ -277,7 +285,7 @@
         (dbg "probe/recv-ex  : " op dnl)
         (dbg "probe/recv-ex op : " op dnl)
         
-        (dis "probe/recv-ex -> " (stringify result) dnl)
+        (handle-assign-dbg "probe/recv-ex -> " (stringify result) dnl)
         result
         ))
               
@@ -311,7 +319,7 @@
 
     (define (make-simple x)
 
-      ;;    (dis "make-simple " x dnl)
+      ;;    (handle-assign-dbg "make-simple " x dnl)
       
       (set! sss (cons (cons x syms) sss))
       
@@ -332,7 +340,7 @@
 
     (define (handle-access-lhs a)
       
-      ;;    (dis "handle-access-lhs " a dnl)
+      ;;    (handle-assign-dbg "handle-access-lhs " a dnl)
       
       (cond ((eq? 'array-access (car a))
              (list 'array-access
@@ -344,7 +352,7 @@
 
     (define (handle-access-rhs a)
       
-      ;;    (dis "handle-access-expr " a dnl)
+      ;;    (handle-assign-dbg "handle-access-expr " a dnl)
       
       (cond ((simple-operand? a) a)
 
@@ -368,7 +376,7 @@
             (else a)
             ))
     
-    ;;  (dis   "handle-access-recv : called    : "  ass dnl)
+    ;;  (handle-assign-dbg   "handle-access-recv : called    : "  ass dnl)
     
     (let* ((lhs       (handle-access-lhs  (get-recv-lhs ass)))
            (rhs       (handle-access-rhs  (get-recv-rhs ass)))
