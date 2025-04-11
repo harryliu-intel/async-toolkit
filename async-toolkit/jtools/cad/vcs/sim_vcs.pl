@@ -9,6 +9,7 @@ use Cwd qw/abs_path/;
 use Cwd qw/chdir/;
 use File::Spec::Functions;
 use Scalar::Util qw(looks_like_number);
+#use Scalar::MoreUtils qw( define );
 
 #Make sure all the appropriate environment variables are defined
 die "ERROR: undefined \$SPAR_DIR\n"  unless (defined($ENV{SPAR_DIR}));
@@ -18,7 +19,7 @@ die "ERROR: undefined \$SOURCE_VERILOG_DIR\n" unless (defined($ENV{SOURCE_VERILO
 
 
 # Command line options for simulation
-my ($cell, $env, $level, $corner, $outdir, $simv, $tcl, $t_run, $fsdb, $verdi, @simv_args, $verbose, $help);
+my ($cell, $env, $level, $corner, $outdir, $simv, $tcl, $t_run, $perf, $fsdb, $verdi, @simv_args, $verbose, $help);
 # Command line options to pass through to gen_model
 my (@cast_defines, @c2v_args, @gen_args, @vcs_args);
 
@@ -39,6 +40,7 @@ GetOptions("level=s"     => \$level,
            "simv=s"      => \$simv,
            "tcl=s"       => \$tcl,
            "t-run=s"     => \$t_run,
+           "perf=s"      => \$perf,
            "define=s"    => \@cast_defines,
            "c2v-args=s"  => \@c2v_args,
            "gen-args=s"  => \@gen_args,
@@ -62,6 +64,7 @@ if ($outdir) {
 
 
 #Check if simv was specified and exists
+#NOTE: simv is not relative to the workding directory
 if ($simv) {
     #An existing simv is specified, use that for simulation
     if ($outdir) {
@@ -143,19 +146,21 @@ if (!$outdir) {
         $cell_base = (split(/\./, $cell))[-2];
     }
     $wd = "vcs.${cell_base}_${env}.${level}.${curtime}";
-    mkdir $wd;
+    mkdir $wd or die "Can't mkdir $wd: $!\n";
     chmod 0750, $wd;
     system("rm -if vcs_latest; ln -s $wd vcs_latest") == 0 or die "Symlink failed\n";
 }
 if ($verbose) {print "Changing to working directory: $wd\n";}
 chdir($wd) or die "$!";
 
+my $fulcrum = "fulcrum";
+$fulcrum = $ENV{MY_FULCRUM} if (defined($ENV{MY_FULCRUM}));
+
+
 #If no simv was specified, generate verilog and compile it
 if (!$simv) {
     #No simv specified, will need to generate one
     #First: generate the verilog model
-    my $fulcrum = "fulcrum";
-    $fulcrum = $ENV{MY_FULCRUM} if (defined($ENV{MY_FULCRUM}));
     my $gen_cmd="$fulcrum --latest gen_model --width=1024 --beh --kdb " .
         "--cast-path=\"$ENV{CAST_PATH}\" " .
         "--spar-dir=\"$ENV{SPAR_DIR}\" " .
@@ -170,6 +175,9 @@ if (!$simv) {
         $gen_cmd .= "--gls-dir=$gls_dir ";
         if ($level eq "sdf") {
             $gen_cmd .= "--sdf=$corner ";
+        }
+        if ($perf) {
+            $gen_cmd .= "--perf ";
         }
     }
     print "Running gen_model...\n";
@@ -186,12 +194,12 @@ if (!$simv) {
 }
 
 if (!$t_run) {
-    print "WARNING: No run time specified, defaulting to 50us\n";
+    if ($verbose) {print "WARNING: No run time specified, defaulting to 50us\n";}
     $t_run = "50us";
 }
 
 if (!$fsdb) {
-    print "WARNING: No FSDB file specified, defaulting to trace.fsdb\n";
+    if ($verbose) {print "WARNING: No FSDB file specified, defaulting to trace.fsdb\n";}
     $fsdb = "trace.fsdb";
 }
 
@@ -212,6 +220,14 @@ print "Running simulation...\n";
 my $sim_cmd = "verdi3 $simv -fgp=num_threads:4 +vcs+initreg+0 -ucli -do $tcl @simv_args >& sim.log";
 print("$sim_cmd\n");
 system($sim_cmd)==0 or die "ERROR: Simulation failed in $wd\n";
+
+#If perf, run critical path analysis
+if ($perf) {
+    my $crit_cmd = "./run-crit.sh $perf -d 100";
+    print "Running critical path analysis...\n";
+    if ($verbose) {print("$crit_cmd\n");}
+    system($crit_cmd)==0 or die "ERROR: critical.py failed in $wd\n";
+}
 
 #if verdi is specified after compile and simulation, run verdi in the output directory
 if ($verdi) {

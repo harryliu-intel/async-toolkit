@@ -111,6 +111,7 @@ if (-s $flist) {
 }
 
 my @sdf_args = ();
+my @crit_args = ();
 if (defined($gls_dir)) {
     if ($sdf) {
         push @args, '-f', '$CAST2VERILOG_RUNTIME/sdf.vcfg';
@@ -154,6 +155,12 @@ if (defined($gls_dir)) {
                         next;
                     }
                     push @sdf_args, "$bind_file";
+                    my $conn_file = "$sdf_dir/${block}.bd_conn.rpt";
+                    if (!-e $conn_file) {
+                        print "WARNIG: No connectivity file found for $block in directory $sdf_dir\n";
+                        next;
+                    }
+                    push @crit_args, "$conn_file";
                 }
             }
         }
@@ -213,9 +220,11 @@ if ($axi) {
 #Create the scripts to run vcs and verdi commands
 my $runvcs   = "run-vcs.sh";
 my $runverdi = "run-verdi.sh";
+my $runcrit = "run-crit.sh";
 
 open my $fh_vcs, ">$runvcs" || die "Can't open $runvcs: $!";
 open my $fh_verdi, ">$runverdi" || die "Can't open $runverdi: $!";
+open my $fh_crit, ">$runcrit" || die "Can't open $runcrit: $!";
 
 #Print the header
 print $fh_vcs <<'EOF';
@@ -224,6 +233,11 @@ EOF
 print $fh_verdi <<'EOF';
 #!/bin/bash
 EOF
+if ($perf) {
+    print $fh_crit <<'EOF';
+#!/bin/bash
+EOF
+}
 
 if (defined($gls_dir)) {
     print $fh_vcs <<EOF;
@@ -266,6 +280,14 @@ vcs verdi3 verdi -nologo -ssf trace.fsdb -dbdir simv.daidir &
 EOF
 close $fh_verdi;
 chmod 0755, $runverdi;
+
+if ($perf) {
+    print $fh_crit <<EOF;
+\$MY_FULCRUM --latest critical bd_hist.log @crit_args \$@
+EOF
+    close $fh_crit;
+    chmod 0755, $runcrit;
+}
 
 __END__
 =head1 NAME
