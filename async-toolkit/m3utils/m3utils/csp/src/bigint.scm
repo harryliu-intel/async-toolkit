@@ -60,12 +60,11 @@
         (else (BigInt.New x))))
 
 (define (big<< x sa)
-  (let ((pow2 (BigInt.Pow *big2* (make-big sa))))
-    (BigInt.Mul (make-big x) pow2)))
+  (BigInt.Shift x (BigInt.ToInteger sa)))
+
 
 (define (big>> x sa)
-  (let ((pow2 (BigInt.Pow *big2* (make-big sa))))
-    (BigInt.Div (make-big x) pow2)))
+  (BigInt.Shift x (- (BigInt.ToInteger sa))))
 
 (define cartesian-product 
   (lambda (xs ys)
@@ -100,16 +99,24 @@
 (define big=  (big-compare =))
 
 (define (big-neg? b) (big< b *big0*))
+(define (big-zero? b) (big= b *big0*))
 
 (define (big/ a b)
-  (cond ((big-neg? a) (big- (big/ (big- a)       b )))
-        ((big-neg? b) (big- (big/       a  (big- b))))
-        (else (BigInt.Div a b))))
+  (cond
+   ((big-zero? b) *big0*) ;; weird CSP semantics for dbZ
+   ((big-neg? a) (big- (big/ (big- a)       b )))
+   ((big-neg? b) (big- (big/       a  (big- b))))
+   (else (BigInt.Div a b))))
 
 (define (big% a b)
   (cond ((big-neg? a) (big- (big% (big- a)       b )))
         ((big-neg? b)       (big%       a  (big- b)) )
         (else (BigInt.Mod a b))))
+
+(define (big** a b)
+  (cond
+   ((big-zero? a) *big0*) ;; covers 0**0 - weird CSP semantics
+   (else (BigInt.Pow a b))))
 
 (let () ;; don't pollute the global environment
   

@@ -151,6 +151,8 @@ PROCEDURE Equal(a, b : T) : BOOLEAN = BEGIN RETURN Compare(a,b) = 0 END Equal;
 
 PROCEDURE IsZero(a : T) : BOOLEAN = BEGIN RETURN Compare(a, Zero) = 0 END IsZero;
 
+PROCEDURE IsOne(a : T) : BOOLEAN = BEGIN RETURN Compare(a, One) = 0 END IsOne;
+
 PROCEDURE Copy(t : T) : T =
   (* Uniq makes no sense here really... *)
   BEGIN RETURN t END Copy;
@@ -196,13 +198,14 @@ PROCEDURE Sign(a : T) : CompRet =
     RETURN a.sign;
   END Sign;
 
-PROCEDURE Divide(a, b : T; VAR q, r : T) = 
+PROCEDURE Divide(a, b : T; VAR q, r : T)  RAISES { DivisionByZero } = 
   (* first do a C-style divide *)
   VAR
     sign := a.sign * b.sign;
     aa := Abs(a);
     bb := Abs(b);
   BEGIN
+    IF IsZero(b) THEN RAISE DivisionByZero END;
     DivideUnsigned(aa,bb,q,r);
     IF sign < 0 THEN q := Neg(q); r := Neg(r) END;
 
@@ -218,7 +221,7 @@ PROCEDURE Divide(a, b : T; VAR q, r : T) =
     END;
   END Divide;
 
-PROCEDURE Div(a, b : T) : T =
+PROCEDURE Div(a, b : T) : T  RAISES { DivisionByZero } =
   VAR
     q, r : T;
   BEGIN
@@ -226,7 +229,7 @@ PROCEDURE Div(a, b : T) : T =
     RETURN q
   END Div;
 
-PROCEDURE Mod(a, b : T) : T =
+PROCEDURE Mod(a, b : T) : T  RAISES { DivisionByZero } =
   VAR
     q, r : T;
   BEGIN
@@ -397,11 +400,15 @@ PROCEDURE Mul(a, b : T) : T =
     RETURN Uniq(NEW(T, sign := a.sign * b.sign, rep := MulSeqs(a.rep,b.rep)))
   END Mul;
 
-PROCEDURE Pow(b, x : T) : T =
+PROCEDURE Pow(b, x : T) : T  RAISES { DivisionByZero } =
   VAR
     r : T;
     result := One;
   BEGIN
+    IF IsZero(b) AND IsZero(x) THEN RAISE DivisionByZero END;
+
+    IF IsOne(b) THEN RETURN One END;
+    
     IF x.sign = -1 THEN RETURN Zero END;
 
     <* ASSERT x.sign = 1 *>
@@ -879,7 +886,7 @@ PROCEDURE ToLongReal(a : T) : LONGREAL =
         res := res * FLOAT(Base,LONGREAL);
         res := res + FLOAT(a.rep.a[i],LONGREAL)
       END;
-      RETURN res;
+      RETURN FLOAT(a.sign, LONGREAL) * res;
     END;
   END ToLongReal;
 
@@ -897,7 +904,7 @@ PROCEDURE ToInteger(a : T) : INTEGER RAISES { OutOfRange } =
         res := res * Base;
         res := res + a.rep.a[i]
       END;
-      RETURN res;
+      RETURN a.sign * res;
     END;
   END ToInteger;
 

@@ -15,17 +15,19 @@ TYPE Public = ROOT;
 
 TYPE CompRet = [-1..1];
 
+EXCEPTION DivisionByZero;
+
 PROCEDURE Compare(a, b : T) : CompRet;
 PROCEDURE Equal(a, b : T) : BOOLEAN;
 PROCEDURE New(x : INTEGER) : T;
 PROCEDURE Copy(t : T) : T; (* this makes no sense, right? *)
-PROCEDURE Div(a, b : T) : T;
+PROCEDURE Div(a, b : T) : T RAISES { DivisionByZero };
 PROCEDURE Mul(a, b : T) : T;
 PROCEDURE Add(a, b : T) : T;
-PROCEDURE Pow(b, x : T) : T;
+PROCEDURE Pow(b, x : T) : T RAISES { DivisionByZero };
 PROCEDURE Sub(a, b : T) : T;
 PROCEDURE Abs(a : T) : T;
-PROCEDURE Mod(a, b : T) : T;
+PROCEDURE Mod(a, b : T) : T RAISES { DivisionByZero };
 PROCEDURE Sign(a : T) : CompRet;
 PROCEDURE Neg(a : T) : T;
 
@@ -79,7 +81,8 @@ PROCEDURE ToInteger(a : T) : INTEGER RAISES { OutOfRange };
 PROCEDURE Max(a, b : T) : T;
 PROCEDURE Min(a, b : T) : T;
 
-PROCEDURE Divide(dividend, divisor : T; VAR quotient, modulo : T);
+PROCEDURE Divide(dividend, divisor : T; VAR quotient, modulo : T)
+  RAISES { DivisionByZero };
   (* returns quotient in q and modulo in m, using the regular rules for
      modulo (the modulo is always been the divisor and zero) *)
 
