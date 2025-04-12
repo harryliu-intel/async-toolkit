@@ -82,7 +82,7 @@ PROCEDURE ShiftRightInternalN(VAR s : NSeq; sa : CARDINAL) =
     os := s.siz;
   BEGIN
     s.siz := MAX(os - sa, 0);
-    Debug.Out("s.siz = " & Int(s.siz));
+    IF doDebug THEN Debug.Out("s.siz = " & Int(s.siz)) END;
     SUBARRAY(s.a^, 0, s.siz) := SUBARRAY(s.a^, sa, s.siz);
     FOR i := s.siz TO os - 1 DO s.a[i] := 0 END;
   END ShiftRightInternalN;
@@ -474,10 +474,12 @@ PROCEDURE RightShiftNonneg(a : T; sa : CARDINAL) : T =
       WITH x = Word.Or(s.a[tgt], Word.LeftShift(s.a[tgt + 1], BaseLog2)),
            y = Word.RightShift(x, sab),
            z = Word.And(y, WordMask) DO
-        Debug.Out("tgt = " & Int(tgt));
-        Debug.Out("x   = " & Unsigned(x));
-        Debug.Out("y   = " & Unsigned(y));
-        Debug.Out("z   = " & Unsigned(z));
+        IF doDebug THEN
+          Debug.Out("tgt = " & Int(tgt));
+          Debug.Out("x   = " & Unsigned(x));
+          Debug.Out("y   = " & Unsigned(y));
+          Debug.Out("z   = " & Unsigned(z));
+        END;
         s.a[tgt] := z
       END
     END;
@@ -485,8 +487,10 @@ PROCEDURE RightShiftNonneg(a : T; sa : CARDINAL) : T =
       s.a[0] := 0
     ELSE
       WITH z =  Word.RightShift(s.a[s.siz - 1] , sab) DO
-        Debug.Out("tgt = " & Int(s.siz-1));
-        Debug.Out("z   = " & Unsigned(z));
+        IF doDebug THEN
+          Debug.Out("tgt = " & Int(s.siz-1));
+          Debug.Out("z   = " & Unsigned(z));
+        END;
         s.a[s.siz - 1] := z
       END
     END;
