@@ -1,6 +1,21 @@
 (* $Id: BigInt.m3,v 1.9 2003/08/21 03:28:30 kp Exp $ *)
 
 MODULE BigInt;
+
+  (*
+    what we should probably do is restructure this module as follows.
+
+    make a T a simple wrapper around a RECORD that is used internally
+    for all the work.
+
+    in fact the RECORD could be exporting a different interface and
+    we just use the RECORD here.  Hmm...
+
+    The point of the T would be to provide referential transparency.
+
+    That could just be an external generic.... working on any RECORD type!
+  *)
+
 IMPORT Integer;
 IMPORT CharSeq;
 IMPORT Word;
@@ -10,12 +25,15 @@ IMPORT Lex, FloatMode;
 IMPORT Scan AS M3Scan;
 IMPORT BigIntBigIntTbl;
 IMPORT Debug;
-FROM Fmt IMPORT Int, F;
+FROM Fmt IMPORT Int, F, Unsigned;
 
 CONST BaseLog2 =   BITSIZE(Word.T) DIV 2 - 1; (* (*was*) 10 *) 
       Base     =  Word.Shift(1, BaseLog2); 
       (* must be less than or equal to sqrt(LAST(CARDINAL)) *)
       (* must be power of 2 *)
+
+      WordMask   =  Base - 1;
+      WordUnmask =  Word.Not(WordMask);
 
 (********************* sequence of cardinals *********************)
 
@@ -34,7 +52,7 @@ TYPE
   (*
   METHODS
     init(hintSize : CARDINAL := 5) : NSeq := InitN;
-    shift(sa : CARDINAL) := ShiftN;
+    shift(sa : CARDINAL) := ShiftLeftInternalN;
     extend(toBits : CARDINAL) := ExtendN;
     clearTop() := ClearTop;
     copy() : NSeq := CopyN;
@@ -49,7 +67,7 @@ PROCEDURE InitN(VAR s : NSeq; hintSize : CARDINAL) =
     FOR i := FIRST(s.a^) TO LAST(s.a^) DO s.a[i] := 0 END
   END InitN;
 
-PROCEDURE ShiftN(VAR s : NSeq; sa : CARDINAL) =
+PROCEDURE ShiftLeftInternalN(VAR s : NSeq; sa : CARDINAL) =
   VAR
     os := s.siz;
   BEGIN
@@ -57,7 +75,17 @@ PROCEDURE ShiftN(VAR s : NSeq; sa : CARDINAL) =
     ExtendN(s, s.siz);
     SUBARRAY(s.a^,sa,os) := SUBARRAY(s.a^,0,os);
     FOR i := 0 TO sa - 1 DO s.a[i] := 0 END;
-  END ShiftN;
+  END ShiftLeftInternalN;
+
+PROCEDURE ShiftRightInternalN(VAR s : NSeq; sa : CARDINAL) =
+  VAR
+    os := s.siz;
+  BEGIN
+    s.siz := MAX(os - sa, 0);
+    Debug.Out("s.siz = " & Int(s.siz));
+    SUBARRAY(s.a^, 0, s.siz) := SUBARRAY(s.a^, sa, s.siz);
+    FOR i := s.siz TO os - 1 DO s.a[i] := 0 END;
+  END ShiftRightInternalN;
 
 PROCEDURE ExtendN(VAR s : NSeq; toDigits : CARDINAL) =
   BEGIN
@@ -96,7 +124,8 @@ REVEAL
     sign : [ -1 .. 1 ];
     rep  : NSeq;
   END;
-  
+
+
 PROCEDURE Compare(a, b : T) : CompRet =
   BEGIN
     IF a.sign < b.sign THEN RETURN -1
@@ -205,23 +234,23 @@ PROCEDURE Mod(a, b : T) : T =
     RETURN r
   END Mod;
     
-PROCEDURE Shift(a : T; sa : CARDINAL) : T =
+PROCEDURE ShiftLeftInternal(a : T; sa : CARDINAL) : T =
   VAR
     seq := CopyN(a.rep);
   BEGIN
     <*ASSERT Zero = Uniq(Zero)*>
-    ShiftN(seq, sa);
+    ShiftLeftInternalN(seq, sa);
     <*ASSERT Zero = Uniq(Zero)*>
 
     WITH res = Uniq(NEW(T, sign := a.sign, rep := seq)) DO
           <*ASSERT Zero = Uniq(Zero)*>
       RETURN res
     END
-  END Shift;
+  END ShiftLeftInternal;
 
 PROCEDURE DebugSeq(READONLY seq : NSeq) : TEXT =
   VAR
-    res := F("{ siz=%s; ", Int(seq.siz));
+    res := F("{ siz=%s; ", Unsigned(seq.siz));
   BEGIN
     FOR i := NUMBER(seq.a^) - 1 TO 0 BY -1 DO
       res := res & Int(seq.a[i]) & " "
@@ -242,12 +271,15 @@ PROCEDURE DivideUnsigned(aparm, b : T; VAR q, r : T) =
     IF doDebug THEN Debug.Out(F("DivideUnsigned aparm  = " & DebugT(aparm))) END;
     IF doDebug THEN Debug.Out(F("DivideUnsigned b      = " & DebugT(b))) END;
 
+    <*ASSERT RepOK(aparm)*>
+    <*ASSERT RepOK(b)*>
+
     q := Zero;
     r := aparm;
     <* ASSERT aparm.sign = 1 AND b.sign = 1 *>
 
     FOR sa := aparm.rep.siz - b.rep.siz TO 0 BY -1 DO
-      s := Shift(b,sa);
+      s := ShiftLeftInternal(b,sa);
 
       IF doDebug THEN Debug.Out(F("sa = %s ; s = %s", Int(sa), DebugT(s))) END;
       
@@ -279,7 +311,7 @@ PROCEDURE DivideUnsigned(aparm, b : T; VAR q, r : T) =
             -1 => lo := mid
           |
             0 =>
-            q := Add(Shift(New(mid),sa),q);
+            q := Add(ShiftLeftInternal(New(mid),sa),q);
             r := Zero;
             <* ASSERT Equal(aparm, Add(r, Mul(q,b))) *>
             RETURN
@@ -290,7 +322,7 @@ PROCEDURE DivideUnsigned(aparm, b : T; VAR q, r : T) =
       END;
 
       WITH nl = New(lo) DO
-        WITH z = Shift(nl, sa) DO
+        WITH z = ShiftLeftInternal(nl, sa) DO
           IF doDebug THEN Debug.Out(F("lo = %s ; sa = %s; nl = %s; z = %s, q = %s",
                       Int(lo), Int(sa), DebugT(nl), DebugT(z), DebugT(q)))END;
           q := Add(z,q);
@@ -299,9 +331,67 @@ PROCEDURE DivideUnsigned(aparm, b : T; VAR q, r : T) =
       r := Sub(r, Mul(New(lo),s));
       IF doDebug THEN Debug.Out(F("q = %s ; r = %s", DebugT(q), DebugT(r))) END;
     END;
-    <* ASSERT Equal(aparm, Add(r, Mul(q,b))) *>
+    <*ASSERT RepOK(q)*>
+    <*ASSERT RepOK(r)*>
+
+    WITH m  = Mul(q, b),
+         aa = Add(r, m) DO
+      IF NOT  Equal(aparm, aa) THEN
+        Debug.Error("Division failed!",
+                    exit := FALSE);
+        Debug.Error(F("aparm = %s, b         = %s", DebugT(aparm), DebugT(b)),
+                    exit := FALSE);
+        Debug.Error(F("q     = %s, r         = %s", DebugT(q), DebugT(r)),
+                    exit := FALSE);
+        Debug.Error(F("q x b = %s, q x b + 4 = %s", DebugT(m), DebugT(aa)),
+                    exit := TRUE);
+      END
+    END
+    
   END DivideUnsigned;
 
+PROCEDURE RepOK(a : T) : BOOLEAN =
+  VAR
+    ok := TRUE;
+  BEGIN
+    IF a.rep.siz > NUMBER(a.rep.a^) THEN
+      Debug.Error(F("a.rep.siz = %s, NUMBER(a.rep.a^) = %s",
+                    Int(a.rep.siz), Int(NUMBER(a.rep.a^))),
+                  exit := FALSE);
+      ok := FALSE
+    END;
+
+    FOR i := FIRST(a.rep.a^) TO LAST(a.rep.a^) DO
+      IF a.rep.a[i] >= Base THEN
+        Debug.Error(F("a.rep.a[%s] = 16_%s >= Base = 16_%s",
+                      Int(i), Unsigned(a.rep.a[i]), Unsigned(Base)),
+                    exit := FALSE);
+        ok := FALSE
+      END
+    END;
+    IF NUMBER(a.rep.a^) = 0 THEN
+      Debug.Error(F("NUMBER(a.rep.a^) = 0"));
+      ok := FALSE
+    END;
+    IF a.rep.siz > 1 AND a.rep.a[a.rep.siz - 1] = 0 THEN
+      Debug.Error(F("a.rep.a[a.rep.siz - 1] = %s # 0 (a=%s)",
+                    Unsigned(a.rep.a[a.rep.siz - 1])),
+                  exit := FALSE);
+      ok := FALSE
+    END;
+
+    IF a.rep.siz = 0 AND a.sign = -1 THEN
+      Debug.Error(F("negative zero doesn't work with sign-magnitude!"),
+                  exit := FALSE);
+      ok := FALSE
+    END;
+    
+    IF NOT ok THEN
+      Debug.Error(F("a = %s", DebugT(a)), exit := FALSE)
+    END;
+    RETURN ok
+  END RepOK;
+  
 PROCEDURE Mul(a, b : T) : T =
   BEGIN
     RETURN Uniq(NEW(T, sign := a.sign * b.sign, rep := MulSeqs(a.rep,b.rep)))
@@ -330,7 +420,7 @@ PROCEDURE MulSeqs(READONLY a, b : NSeq) : NSeq =
   VAR 
     res : NSeq;
     idx : CARDINAL;
-    s : CARDINAL;
+    s   : CARDINAL;
   BEGIN
     InitN(res, a.siz + b.siz + 1 );
     FOR i := 0 TO a.siz - 1 DO
@@ -352,6 +442,112 @@ PROCEDURE MulSeqs(READONLY a, b : NSeq) : NSeq =
     Renormalize(res);
     RETURN res
   END MulSeqs;
+
+(**********************************************************************)
+
+PROCEDURE Shift(a : T; sa : INTEGER) : T =
+  BEGIN
+    IF    sa < 0 THEN
+      RETURN RightShift(a, -sa)
+    ELSIF sa > 0 THEN
+      RETURN LeftShift(a, sa)
+    ELSE
+      RETURN a
+    END
+  END Shift;
+
+PROCEDURE RightShiftNonneg(a : T; sa : CARDINAL) : T =
+  VAR
+    s   := CopyN(a.rep);
+    saw := MIN(sa DIV BaseLog2, s.siz);
+    sab := sa MOD BaseLog2;
+  BEGIN
+    <*ASSERT a.sign = +1*>
+    ShiftRightInternalN(s, saw);
+
+    (* our approach will be to copy the half-words down, then we will
+       shift each word, and finally mask *)
+
+    Debug.Out(F("RightShift(%s , %s)", DebugT(a), Int(sa)));
+    Debug.Out(F("saw = %s , sab = %s", Int(saw), Int(sab)));
+    FOR tgt := 0 TO s.siz - 2 DO
+      WITH x = Word.Or(s.a[tgt], Word.LeftShift(s.a[tgt + 1], BaseLog2)),
+           y = Word.RightShift(x, sab),
+           z = Word.And(y, WordMask) DO
+        Debug.Out("tgt = " & Int(tgt));
+        Debug.Out("x   = " & Unsigned(x));
+        Debug.Out("y   = " & Unsigned(y));
+        Debug.Out("z   = " & Unsigned(z));
+        s.a[tgt] := z
+      END
+    END;
+    IF s.siz = 0 THEN
+      s.a[0] := 0
+    ELSE
+      WITH z =  Word.RightShift(s.a[s.siz - 1] , sab) DO
+        Debug.Out("tgt = " & Int(s.siz-1));
+        Debug.Out("z   = " & Unsigned(z));
+        s.a[s.siz - 1] := z
+      END
+    END;
+
+    Renormalize(s);
+    WITH pres = NEW(T, sign := a.sign, rep := s),
+         res  = Uniq(pres) DO
+        <*ASSERT RepOK(pres)*>
+        <*ASSERT RepOK(res)*>
+      RETURN res
+    END
+  END RightShiftNonneg;
+
+PROCEDURE RightShift(a : T; sa : CARDINAL) : T =
+  BEGIN
+    IF    a.sign = -1 THEN
+      RETURN Neg(Add(RightShiftNonneg(Sub(Neg(a), One), sa), One))
+    ELSIF a.sign = +1 THEN
+      RETURN RightShiftNonneg(a, sa)
+    ELSE
+      <*ASSERT FALSE*>
+    END
+  END RightShift;
+
+PROCEDURE Odd(a : T) : BOOLEAN =
+  BEGIN RETURN Word.Extract(a.rep.a[0], 0, 1) = 1 END Odd;
+
+PROCEDURE Even(a : T) : BOOLEAN =
+  BEGIN RETURN Word.Extract(a.rep.a[0], 0, 1) = 0 END Even;
+
+PROCEDURE LeftShift(a : T; sa : CARDINAL) : T =
+  VAR
+    s   := CopyN(a.rep);
+
+    (* we shift left by an extra word, then shift right! *)
+
+    saw := sa DIV BaseLog2 + 1;
+    sab := -(sa MOD BaseLog2 - BaseLog2);
+  BEGIN
+    ShiftLeftInternalN(s, saw);
+
+    (* our approach will be to copy the half-words down, then we will
+       shift each word, and finally mask *)
+
+    FOR tgt := 0 TO s.siz - 2 DO
+      WITH x = Word.Or(s.a[tgt], Word.LeftShift(s.a[tgt + 1], BaseLog2)),
+           y = Word.RightShift(x, sab),
+           z = Word.And(y, WordMask) DO
+        s.a[tgt] := z
+      END
+    END;
+    s.a[s.siz - 1] := Word.RightShift(s.a[s.siz - 1] , sab);
+    Renormalize(s);
+    WITH pres = NEW(T, sign := a.sign, rep := s),
+         res  = Uniq(pres) DO
+      <*ASSERT RepOK(pres)*>
+      <*ASSERT RepOK(res)*>
+      RETURN res
+    END
+  END LeftShift;
+
 
 PROCEDURE Add(a, b : T) : T =
   VAR
@@ -885,6 +1081,9 @@ PROCEDURE InitializeFormatHelp() =
     END
   END InitializeFormatHelp;
 
+PROCEDURE GetInitialized() : BOOLEAN =
+  BEGIN RETURN initialized END GetInitialized;
+  
 VAR
   FirstInt, LastInt : T;
   CharVal : ARRAY CHAR OF INTEGER;
@@ -899,7 +1098,8 @@ VAR
 
       
 
-  
+  initialized : BOOLEAN;
+
 BEGIN
   <*ASSERT WordSize = 32 OR WordSize = 64*>
 
@@ -948,4 +1148,5 @@ BEGIN
   InitializeFormatHelp();
   <*ASSERT Zero = Uniq(Zero)*>
 
+  initialized := TRUE;
 END BigInt.

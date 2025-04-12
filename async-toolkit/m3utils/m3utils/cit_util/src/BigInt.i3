@@ -29,6 +29,20 @@ PROCEDURE Mod(a, b : T) : T;
 PROCEDURE Sign(a : T) : CompRet;
 PROCEDURE Neg(a : T) : T;
 
+(* bitwise ops *)
+PROCEDURE GetBit(t : T; bit : CARDINAL) : [ 0 .. 1 ];
+  (* returns the value of t{bit} assuming t is represented as 2's complement
+     (which it isn't actually, internally) *)
+
+PROCEDURE GetAbsMsb(t : T) : [-1..LAST(CARDINAL)];
+  (* get the highest bit set in Abs(t) :
+     returns -1 for Zero
+  *)
+
+PROCEDURE Shift(a : T; sa : INTEGER) : T;
+PROCEDURE RightShift(a : T; sa : CARDINAL) : T;
+PROCEDURE LeftShift(a : T; sa : CARDINAL) : T;
+
 CONST
   HexChars = ARRAY OF CHAR{'0','1','2','3','4','5','6','7','8','9',
                            'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H',
@@ -66,21 +80,21 @@ PROCEDURE Max(a, b : T) : T;
 PROCEDURE Min(a, b : T) : T;
 PROCEDURE Divide(a, b : T; VAR q, r : T);
 
+PROCEDURE Odd(a : T) : BOOLEAN;
+PROCEDURE Even(a : T) : BOOLEAN;
+  
+  
 PROCEDURE GetRepBase() : T;
-
-PROCEDURE GetBit(t : T; bit : CARDINAL) : [ 0 .. 1 ];
-  (* returns the value of t{bit} assuming t is represented as 2's complement
-     (which it isn't actually, internally) *)
-
-PROCEDURE GetAbsMsb(t : T) : [-1..LAST(CARDINAL)];
-  (* get the highest bit set in Abs(t) :
-     returns -1 for Zero
-   *)
 
 PROCEDURE IsT(x : REFANY) : BOOLEAN;
 
 PROCEDURE UniqReferences(to : BOOLEAN) : BOOLEAN;
   (* if called with TRUE, all calls returning the same value will 
      return the same reference, else that is not guaranteed *)
-  
+
+
+PROCEDURE GetInitialized() : BOOLEAN;
+
+PROCEDURE DebugT(t : T) : TEXT;
+
 END BigInt.
