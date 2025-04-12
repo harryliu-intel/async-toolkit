@@ -3,6 +3,8 @@
                  "display")
 
 
+(if (not (BigInt.GetInitialized)) (error "BigInt not initialized"))
+
 (define debug #f)
 
 (load "bigint.scm")

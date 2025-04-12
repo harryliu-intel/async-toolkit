@@ -1,0 +1,69 @@
+module math;
+
+define P()()
+{
+  csp {
+
+  int x = 0xc0edbabe;
+
+  print ("x = " + hex(x));
+
+  x = x << 4;
+
+  print ("x = " + hex(x));
+
+  x = -x;
+
+  print ("x = " + hex(x));
+
+  x = x >> 4;
+
+  print ("x = " + hex(x));
+
+  x = x >> 1024;
+
+  print ("x = " + hex(x));
+
+
+  x = -0xc0edbabe;
+
+  print ("x = " + hex(x));
+
+  <i:0..32:
+    sint(64) y = x >> i;
+    int (64) z = x >> i;
+    print ("x >> " + i + " = " + hex(x >> i));
+  
+    print ("y     = " + hex(y));
+    print ("z     = " + hex(z))
+   >
+
+  }
+
+}
+
+
+define Q()()
+{
+  csp {
+  function f(int -a, -b) =
+    (
+    print (" " + a + " / " + b + " = " + ( a/ b));
+    print ("-" + a + " / " + b + " = " + (-a/ b));
+    print (" " + a + " /-" + b + " = " + ( a/-b));
+    print ("-" + a + " /-" + b + " = " + (-a/-b));
+
+    print (" " + a + " % " + b + " = " + ( a% b));
+    print ("-" + a + " % " + b + " = " + (-a% b));
+    print (" " + a + " %-" + b + " = " + ( a%-b));
+    print ("-" + a + " %-" + b + " = " + (-a%-b));
+
+     );
+
+    
+    f(1,3);
+    f(7,3);
+    f(9,3);
+  }
+}
+    

@@ -78,7 +78,10 @@ PROCEDURE ToLongReal(a : T) : LONGREAL;
 PROCEDURE ToInteger(a : T) : INTEGER RAISES { OutOfRange };
 PROCEDURE Max(a, b : T) : T;
 PROCEDURE Min(a, b : T) : T;
-PROCEDURE Divide(a, b : T; VAR q, r : T);
+
+PROCEDURE Divide(dividend, divisor : T; VAR quotient, modulo : T);
+  (* returns quotient in q and modulo in m, using the regular rules for
+     modulo (the modulo is always been the divisor and zero) *)
 
 PROCEDURE Odd(a : T) : BOOLEAN;
 PROCEDURE Even(a : T) : BOOLEAN;

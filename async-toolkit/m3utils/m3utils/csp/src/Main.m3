@@ -15,6 +15,7 @@ IMPORT Scheme;
 IMPORT Pathname;
 IMPORT Thread;
 IMPORT TextSeq;
+IMPORT BigInt;
 
 <*FATAL Thread.Alerted*>
 
@@ -39,6 +40,7 @@ VAR
   pp := NEW(ParseParams.T).init(Stdio.stderr);
   doScheme := FALSE;
   extra := NEW(TextSeq.T).init();
+  x := BigInt.GetInitialized();
 BEGIN
   TRY
     doScheme := pp.keywordPresent("-scm");

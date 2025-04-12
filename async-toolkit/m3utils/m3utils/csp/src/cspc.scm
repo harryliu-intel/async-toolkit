@@ -1071,7 +1071,7 @@
 (define *default-int-type*  '(integer #f #f () ()))
 (define *const-int-type*  '(integer #t #f () ()))
 
-(define *single-bit-type*  `(integer #f #f ,*big-1* ()))
+(define *single-bit-type*  `(integer #f #f ,*big1* ()))
 
 (define (make-default-var1 sym)
   ;; make a default (per CSP rules) variable declaration
@@ -1295,21 +1295,21 @@
   (case op
     ((&& ==)    #t)
     ((||)       #f)
-    ((-)        *big-0*)
-    ((* / **)   *big-1*)
+    ((-)        *big0*)
+    ((* / **)   *big1*)
     ((+)
      (cond ((string-type? type)    "")
-           ((integer-type? type)   *big-0*)
+           ((integer-type? type)   *big0*)
            (else (error "???op-zero-elem of : " op " : for type : " type))))
 
     ((&)
      (cond ((boolean-type? type)   #t)
-           ((integer-type? type)  *big-m1*)
+           ((integer-type? type)  *bigm1*)
            (else (error "???op-zero-elem of : " op " : for type : " type))))
     
     ((^ |) ;; |)
      (cond ((boolean-type? type)   #f)
-           ((integer-type? type)   *big-0*)
+           ((integer-type? type)   *big0*)
            (else (error "???op-zero-elem of : " op " : for type : " type))))
     (else (error "???op-zero-elem of : " op))))
     
@@ -2428,8 +2428,8 @@
                    (sep-id (caddr args))
                    (stmt   (cadddr args)))
 
-               ((cond ((BigInt.Equal sep-id *big-0*) CspAst.SequentialLoop)
-                      ((BigInt.Equal sep-id *big-1*) CspAst.ParallelLoop)
+               ((cond ((BigInt.Equal sep-id *big0*) CspAst.SequentialLoop)
+                      ((BigInt.Equal sep-id *big1*) CspAst.ParallelLoop)
                       (else (error "convert-stmt : unknown loop type " sep-id)))
                 idxvar
                 (convert-range range)
@@ -2454,12 +2454,12 @@
             ;; to handle them.
 
             ((increment) ;; desugar to assign-operate
-             (convert-stmt (list 'assign-operate '+ (car args) *big-1*)
+             (convert-stmt (list 'assign-operate '+ (car args) *big1*)
                            s)
              )
 
             ((decrement) ;; desugar to assign-operate
-             (convert-stmt (list 'assign-operate '- (car args) *big-1*)
+             (convert-stmt (list 'assign-operate '- (car args) *big1*)
                            s)
              )
 
@@ -2491,8 +2491,8 @@
                             (let* ((guard (car gc)) ;; convert -1 to #t
                                    (expr-guess 
                                     (convert-expr guard)))
-                              (if (and (= *big-tc* (rttype-typecode guard))
-                                       (BigInt.Equal *big-m1* guard))
+                              (if (and (= *bigtc* (rttype-typecode guard))
+                                       (BigInt.Equal *bigm1* guard))
                                   (CspAst.BooleanExpr #t)
                                   expr-guess))
                             

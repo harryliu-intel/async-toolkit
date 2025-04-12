@@ -468,8 +468,10 @@ PROCEDURE RightShiftNonneg(a : T; sa : CARDINAL) : T =
     (* our approach will be to copy the half-words down, then we will
        shift each word, and finally mask *)
 
-    Debug.Out(F("RightShift(%s , %s)", DebugT(a), Int(sa)));
-    Debug.Out(F("saw = %s , sab = %s", Int(saw), Int(sab)));
+    IF doDebug THEN
+      Debug.Out(F("RightShift(%s , %s)", DebugT(a), Int(sa)));
+      Debug.Out(F("saw = %s , sab = %s", Int(saw), Int(sab)));
+    END;
     FOR tgt := 0 TO s.siz - 2 DO
       WITH x = Word.Or(s.a[tgt], Word.LeftShift(s.a[tgt + 1], BaseLog2)),
            y = Word.RightShift(x, sab),
@@ -581,7 +583,7 @@ PROCEDURE Sub(a, b : T) : T =
   VAR
     res : T;
   BEGIN
-    IF a.sign = 1 AND b.sign = 1 AND Compare(a,b) > -1 THEN
+    IF    a.sign = 1 AND b.sign = 1 AND Compare(a,b) > -1 THEN
       res := NEW(T, sign := 1, rep := SubSeqs(a.rep,b.rep))
     ELSIF a.sign = 1 AND b.sign = 1 AND Compare(a,b) = -1 THEN
       res := NEW(T, sign := -1, rep := SubSeqs(b.rep,a.rep))
@@ -590,7 +592,7 @@ PROCEDURE Sub(a, b : T) : T =
     ELSIF a.sign = -1 AND b.sign = 1 THEN
       res := Neg(Add(Neg(a),b))
     ELSIF a.sign = 1 AND b.sign = -1 THEN
-      res := Add(a,b)
+      res := Add(a,Neg(b))
     ELSE
       <* ASSERT FALSE *>
     END;
