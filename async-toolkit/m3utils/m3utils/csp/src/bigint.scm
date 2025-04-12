@@ -27,7 +27,7 @@
   
   (lambda x
 
-    (dis x dnl)
+;;    (dis x dnl)
     
     (if (null? (cdr x))
         (if (not (null? init-val))
@@ -109,7 +109,8 @@
    (else (BigInt.Div a b))))
 
 (define (big% a b)
-  (cond ((big-neg? a) (big- (big% (big- a)       b )))
+  (cond ((big-zero? b) *big0*) ;; more weird CSP semantics
+        ((big-neg? a) (big- (big% (big- a)       b )))
         ((big-neg? b)       (big%       a  (big- b)) )
         (else (BigInt.Mod a b))))
 
@@ -461,14 +462,14 @@
 
   (fold-left do2 ra rb))
               
-(define (range-intersect ra . rb)
+(define (range-intersection ra . rb)
   (define (do2 ra rb)
     (make-range (xnum-max (range-min ra) (range-min rb))
                 (xnum-min (range-max ra) (range-max rb))))
   (fold-left do2 ra rb))
 
-(define (range-pos? r) (range-eq? r (range-intersect r *range-pos*)))
-(define (range-neg? r) (range-eq? r (range-intersect r *range-neg*)))
+(define (range-pos? r) (range-eq? r (range-intersection r *range-pos*)))
+(define (range-neg? r) (range-eq? r (range-intersection r *range-neg*)))
 
 (define (range-nonneg? r) (not (range-neg? r)))
 (define (range-nonpos? r) (not (range-pos? r)))
@@ -480,17 +481,21 @@
 (define (range-remove r x) ;; remove x if at top or bottom of range
   (cond ((range-empty? r) r)
         ((not (range-member? x r)) r)
-        ((eq? (car r) x) (list (xnum-+ x *big1*) (cadr r)))
-        ((eq? (cadr r) x) (list (car r) (xnum-- x *big1*)))
+        ((eq? (car r) x)  (list
+                           (xnum-+ x *big1*)
+                           (cadr r)))
+        ((eq? (cadr r) x) (list
+                           (car r)
+                           (xnum-- x *big1*)))
         (else r)))
 
 (define (split-range r x)
   ;; return list of ranges split at x
   (if (range-member? x r)
       (filter range-nonempty?
-              (list (range-intersect (range-remove (range-lo x) x) r)
+              (list (range-intersection  (range-remove (range-lo x) x) r)
                     (make-point-range x)
-                    (range-intersect (range-remove (range-hi x) x) r)))
+                    (range-intersection  (range-remove (range-hi x) x) r)))
       r)
   )
 
@@ -516,6 +521,10 @@
   ;; true iff r contains x but is not x
   (and (range-member? x r)
        (not (range-eq? r (make-point-range x)))))
+
+(define (range-extend r x)
+  ;; extend r by x
+  (range-union r (make-point-range x)))
 
 (define (range-/ a b)
   (let ((unsigned/ (make-simple-range-binop xnum-/)))
@@ -543,6 +552,47 @@
           )
     );tel
   )
+
+(define (range-% a b)
+  (cond ((range-extends? a *big0*)
+         (let* ((alist (split-range a *big0*))
+                (rlist (map (lambda(a)(range-% a b)) alist)))
+           (apply range-union rlist)))
+        
+        ((range-extends? b *big0*)
+           (let* ((blist (split-range b *big0*))
+                  (rlist (map (lambda(b)(range-% a b)) blist)))
+             (apply range-union rlist)))
+
+        ((range-is-zero? a) a) ;; return zero range
+        
+        ((range-is-zero? b) b) ;; return zero range
+
+        ;; result has sign of dividend
+
+        ((range-neg? a) (negate-range (range% (negate-range a) b)))
+
+        ;; we get here, a is strictly positive,
+        ;; b is strictly negative or positive
+
+        ((range-neg? b) (range% a (negate-range b)))
+
+        ;; we get here, both ranges are positive
+
+        (else (let* ((xa  (range-extend a *big0*))
+
+                     (xb  (range-extend b *big0*))
+                     
+                     (xbr (range-remove xb (range-max xb)))
+                     ;; remove the max point of xb, since the remainder
+                     ;; is always at least one less than the divisor
+                     )
+
+                ;; we extend whatever is left to zero and intersect that
+                ;; we don't take finer patterns into account!
+                (range-intersection xa xbr)
+                ))
+        ))
 
 
 
@@ -578,7 +628,7 @@
 (define *rr* #f)
 
 (define (xnum-random range)
-  (let* ((rr (range-intersect range *val-range*))
+  (let* ((rr (range-intersection  range *val-range*))
          (lo (car rr))
          (hi (cadr rr))
          (eq (eq? lo hi))
@@ -638,7 +688,7 @@
 
 (define (make-random-range r)
   (let* ((rand (range-random))
-         (res (range-intersect r rand)))
+         (res (range-intersection r rand)))
 
     (if (range-empty? res) (make-random-range r) res)))
     
