@@ -128,6 +128,14 @@ TYPE
 
     initCopy(t : T); (* XXX *)
     (* used to implement copy() -- implementers should provide this *)
+
+    clearErrorEnvironment() : SchemeEnvironmentSuper.T;
+    (* get the first environment an error occurred since the last
+       time clearErrorEnvironment was called -- allows the environment
+       in which the error occurred to be inspected for debugging *)
+
+    getErrorEvalX() : Object;
+    (* get object last evaluated to create an error *)
   END;
 
 TYPE Interrupter = OBJECT METHODS interrupt() : BOOLEAN; END;

@@ -2258,6 +2258,8 @@
 (define (compile5!)
   (make-the-tables text4)
 
+  (close-integer-ranges!)
+  (propose-types!)
   (set! text5 text4)
   'text5
   )

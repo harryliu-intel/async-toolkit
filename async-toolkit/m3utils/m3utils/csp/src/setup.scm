@@ -106,6 +106,8 @@
 (define *the-dcl-tbl* #f)
 (define *the-prt-tbl* #f)
 (define *the-rng-tbl* #f)
+(define *the-loop-indices* #f)
+(define *proposed-types* #f)
 
 (dis "  ===  TO RUN COMPILER: " dnl)
 (dis "  ===  (loaddata! <csp-prefix>)" dnl)

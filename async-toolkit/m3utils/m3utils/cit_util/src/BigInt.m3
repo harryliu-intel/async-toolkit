@@ -27,7 +27,10 @@ IMPORT BigIntBigIntTbl;
 IMPORT Debug;
 FROM Fmt IMPORT Int, F, Unsigned;
 
-CONST BaseLog2 =   BITSIZE(Word.T) DIV 2 - 1; (* (*was*) 10 *) 
+CONST Chunk = 4; (* make it easy to debug in hex *)
+      BaseLog2 =   ((BITSIZE(Word.T) DIV 2 - 1) DIV Chunk) * Chunk;
+      (* (*was*) 10 *)
+      
       Base     =  Word.Shift(1, BaseLog2); 
       (* must be less than or equal to sqrt(LAST(CARDINAL)) *)
       (* must be power of 2 *)
@@ -377,7 +380,7 @@ PROCEDURE RepOK(a : T) : BOOLEAN =
       ok := FALSE
     END;
     IF a.rep.siz > 1 AND a.rep.a[a.rep.siz - 1] = 0 THEN
-      Debug.Error(F("a.rep.a[a.rep.siz - 1] = %s # 0 (a=%s)",
+      Debug.Error(F("a.rep.a[a.rep.siz - 1] = %s # 0",
                     Unsigned(a.rep.a[a.rep.siz - 1])),
                   exit := FALSE);
       ok := FALSE
@@ -394,6 +397,12 @@ PROCEDURE RepOK(a : T) : BOOLEAN =
     END;
     RETURN ok
   END RepOK;
+
+PROCEDURE CheckRep(a : T) : T =
+  BEGIN
+    <*ASSERT RepOK(a)*>
+    RETURN a
+  END CheckRep;
   
 PROCEDURE Mul(a, b : T) : T =
   BEGIN
@@ -955,6 +964,215 @@ PROCEDURE GetBit(t : T; bit : CARDINAL) : [ 0 .. 1 ] =
     END      
   END GetBit;
 
+  (* the following are very slow implementations for now. *)
+
+TYPE BitProc = PROCEDURE(x, y : Word.T) : Word.T;
+
+PROCEDURE GetTheBits(a : T; VAR res : ARRAY OF Word.T) =
+  (* assume res is at least big enough to hold a and a guard bit,
+     the sign bit  *)
+  CONST
+    ws = BITSIZE(Word.T); (* machine word size *)
+    rs = BaseLog2;        (* representation size *)
+  VAR
+    bi := 0; (* bit index *)
+    wi := 0; (* word index *)
+  BEGIN
+    (* clear res *)
+    FOR i := FIRST(res) TO LAST(res) DO
+      res[i] := 0
+    END;
+    
+    (* start out by putting the magnitude *)
+    FOR i := 0 TO a.rep.siz - 1 DO
+      WITH space     = ws - bi,
+           thisChunk = MIN(rs, space),
+           remaining = rs - thisChunk DO
+        res[wi] := Word.Or(res[wi], Word.Shift(a.rep.a[i], bi));
+        INC(bi, thisChunk);
+        IF bi = ws THEN
+          bi := 0;
+          INC(wi);
+          IF remaining # 0 THEN
+            res[wi] := Word.Or(res[wi], Word.Shift(a.rep.a[i], -thisChunk));
+            INC(bi, remaining)
+          END
+        END
+      END
+    END;
+
+    Debug.Out("GetTheBits : before sign adj res = " & FmtWordArr(res));
+
+    IF a.sign = -1 THEN
+      FOR i := FIRST(res) TO LAST(res) DO
+        res[i] := Word.Not(res[i])
+      END;
+      FOR i := FIRST(res) TO LAST(res) DO
+        res[i] := Word.Plus(res[i], 1);
+        
+        IF res[i] # 0 THEN EXIT END (* carry chain stopped *)
+      END
+    END;
+
+    Debug.Out("GetTheBits : after  sign adj res = " & FmtWordArr(res))
+  END GetTheBits;
+
+PROCEDURE StuffTheBits((*MODIFIES*)VAR wa : ARRAY OF Word.T) : T =
+  CONST
+    ws = BITSIZE(Word.T);
+    rs = BaseLog2;     
+  VAR
+    bits := NUMBER(wa) * ws;
+    siz  := bits DIV rs; (* note that we can't necessarily represent all of wa,
+                            but that should be OK *)
+    sgn  := +1;
+  BEGIN
+    Debug.Out("StuffTheBits : before sign adj wa = " & FmtWordArr(wa));
+    
+    (* start by computing the sign-magnitude form *)
+    IF Word.Extract(wa[LAST(wa)], ws - 1, 1) = 1 THEN
+      sgn := -1;
+      FOR i := FIRST(wa) TO LAST(wa) DO
+        wa[i] := wa[i] - 1;
+        IF (wa[i]) # -1 THEN EXIT END (*hmm, ugly!*)
+      END;
+      FOR i := FIRST(wa) TO LAST(wa) DO
+        wa[i] := Word.Not(wa[i])
+      END
+    END;
+
+    Debug.Out("StuffTheBits : after  sign adj wa = " & FmtWordArr(wa));
+
+    VAR
+      seq := NSeq { siz := siz, a := NEW(NArry, siz) };
+      bi := 0; (* bit index *)
+      wi := 0; (* word index *)
+    BEGIN
+
+      FOR i := 0 TO seq.siz - 1 DO
+        WITH left      = ws - bi,
+             thisChunk = MIN(rs, left),
+             remaining = rs - thisChunk DO
+          seq.a[i] := Word.Shift(wa[wi], -bi); 
+          INC(bi, thisChunk);
+
+          Debug.Out(F("wi=%s bi=%s thisChunk=%s seq.a[%s] = %s",
+                      Int(wi),
+                      Int(bi),
+                      Unsigned(thisChunk),
+                      Int(i),
+                      Unsigned(seq.a[i])));
+          
+          IF bi = ws THEN
+            bi := 0;
+            INC(wi);
+            IF remaining # 0 THEN
+              seq.a[i] := Word.Or(seq.a[i], Word.Shift(wa[wi], thisChunk));
+              INC(bi, remaining)
+            END
+          END
+        END;
+        seq.a[i] := Word.And(seq.a[i], WordMask)
+      END;
+      Renormalize(seq);
+      RETURN Uniq(CheckRep(NEW(T, sign := sgn, rep := seq)))
+    END
+  END StuffTheBits;
+
+      
+(*
+      FOR i := 0 TO seq.siz - 1 DO
+        WITH thisWord  = ws - bi,
+             remaining = rs - thisWord DO
+          seq.a[i] := Word.Shift(wa[wi], -bi);
+
+          Debug.Out(F("seq.a[%s] := Word.Shift(wa[%s] = %s , %s) = %s",
+                      Int(i),
+                      Int(wi),
+                      Unsigned(wa[wi]),
+                      Int(-bi),
+                      Unsigned(seq.a[i])));
+
+          INC(bi, rs);
+          IF bi >= ws THEN
+            DEC(bi, ws);
+            INC(wi)
+          END;
+          
+          IF remaining # 0 THEN
+            WITH remBits = Word.Shift(wa[wi], thisWord) DO
+              seq.a[i] := Word.Or(seq.a[i], remBits);
+              Debug.Out(F("seq.a[%s] := Word.Or(seq.a[%s], %s) = %s",
+                          Int(i),
+                          Int(i),
+                          Unsigned(remBits),
+                          Unsigned(seq.a[i])));
+            END;
+                      
+            INC(bi, remaining)
+          END
+        END;
+        seq.a[i] := Word.And(seq.a[i], WordMask)
+      END;
+    END
+*)
+
+
+PROCEDURE FmtWordArr(READONLY a : ARRAY OF Word.T) : TEXT =
+  VAR
+    res := "{ ";
+  BEGIN
+    FOR i := LAST(a) TO FIRST(a) BY -1 DO
+      res := res & "16_" & Unsigned(a[i]) & " "
+    END;
+    RETURN res & "}"
+  END FmtWordArr;
+  
+PROCEDURE DoBitwiseOp(op : BitProc; a, b : T) : T =
+  (* the way we do it is we fill an array with all the bits, plus
+     guard bits.  We perform the operations on the arrays, using the
+     Word ops, then build a new number with the correct layout *)
+
+  VAR
+    repBits  := MAX(GetAbsMsb(a), GetAbsMsb(b)) + 2; (* do we need two extra? *)
+    repWords := (repBits - 1) DIV BITSIZE(Word.T) + 1;
+    aa, ba, ca := NEW(REF ARRAY OF Word.T, repWords);
+  BEGIN
+    GetTheBits(a, aa^);
+    GetTheBits(b, ba^);
+
+    FOR i := 0 TO repWords - 1 DO
+      ca[i] := op(aa[i], ba[i])
+    END;
+
+    RETURN StuffTheBits(ca^)
+  END DoBitwiseOp;
+
+PROCEDURE WordNotFirst(a : Word.T; <*UNUSED*> b : Word.T) : Word.T =
+  BEGIN
+    RETURN Word.Not(a)
+  END WordNotFirst;
+
+PROCEDURE Or(a, b : T) : T =
+  BEGIN
+    RETURN DoBitwiseOp(Word.Or, a, b)
+  END Or;
+  
+PROCEDURE And(a, b : T) : T =
+  BEGIN
+    RETURN DoBitwiseOp(Word.And, a, b)
+  END And;
+  
+PROCEDURE Xor(a, b : T) : T =
+  BEGIN
+    RETURN DoBitwiseOp(Word.Xor, a, b)
+  END Xor;
+  
+PROCEDURE Not(a : T) : T =
+  BEGIN
+    RETURN DoBitwiseOp(WordNotFirst, a, Zero)
+  END Not;
+
 PROCEDURE IsT(ref : REFANY) : BOOLEAN =
   BEGIN RETURN ISTYPE(ref, T) END IsT;
 
@@ -981,9 +1199,10 @@ PROCEDURE Uniq(t : T) : T =
     END;
     <*ASSERT t.sign # 0*>
 
-    IF NUMBER(t.rep.a^) = 1 AND t.rep.a[0] = 0 THEN
-      <*ASSERT NUMBER(t.rep.a^) = 1*>
+    IF t.rep.siz = 0 THEN
       <*ASSERT t.rep.a[0] = 0*>
+      RETURN Zero
+    ELSIF t.rep.siz = 1 AND t.rep.a[0] = 0 THEN
       RETURN Zero
     END;
       

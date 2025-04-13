@@ -140,7 +140,9 @@ TYPE
 
         EqMemo, EqualMemo,
 
-        Cosh, Sinh, Tanh, Acosh, Asinh, Atanh
+        Cosh, Sinh, Tanh, Acosh, Asinh, Atanh,
+
+        ChangeGlobalEnv, GetParentEnv
   };
 
 REVEAL 
@@ -472,17 +474,24 @@ PROCEDURE InstallDefaultExtendedPrimitives(dd : Definer;
     EVAL env
     (*///////////// Extensions ////////////////*)
 
-    .defPrim("set-warnings-are-errors!",     ORD(P.SetWarningsAreErrors), dd,      1, 1)
-    .defPrim("random",                ORD(P.Random), dd,      0, 0)
-    .defPrim("enable-tracebacks!",                ORD(P.EnableTracebacks), dd,      0, 0)
-    .defPrim("disable-tracebacks!",                ORD(P.DisableTracebacks), dd,      0, 0)
+    .defPrim("set-warnings-are-errors!",
+             ORD(P.SetWarningsAreErrors), dd,      1, 1)
+    .defPrim("random",
+             ORD(P.Random), dd,      0, 0)
+    .defPrim("enable-tracebacks!",
+             ORD(P.EnableTracebacks), dd,      0, 0)
+    .defPrim("disable-tracebacks!",
+             ORD(P.DisableTracebacks), dd,      0, 0)
     .defPrim("number->LONGREAL", ORD(P.NumberToLONGREAL), dd, 1, 1)
     .defPrim("number->EXTENDED", ORD(P.NumberToEXTENDED), dd, 1, 1)
     .defPrim("number->REAL", ORD(P.NumberToREAL), dd, 1, 1)
     .defPrim("string-havesub?", ORD(P.StringHaveSub), dd, 2, 2)
     .defPrim("normal",                ORD(P.Normal), dd,      0, 2)
     .defPrim("refrecord-format", ORD(P.RefRecordFormat), dd, 1, 1)
-    .defPrim("set-rt-error-mapping!", ORD(P.SetRTErrorMapping), dd, 1, 1);
+    .defPrim("set-rt-error-mapping!", ORD(P.SetRTErrorMapping), dd, 1, 1)
+    .defPrim("change-global-environment!", ORD(P.ChangeGlobalEnv), dd, 1, 1)
+    .defPrim("get-parent-environment", ORD(P.GetParentEnv), dd, 1, 1)
+    ;
     RETURN env;
 
   END InstallDefaultExtendedPrimitives;
@@ -587,10 +596,10 @@ PROCEDURE CheckVectorIdx(vec : Vector; idx : INTEGER) RAISES { E } =
     END
   END CheckVectorIdx;
 
-PROCEDURE Prims(t : T; 
-                interp : Scheme.T; 
+PROCEDURE Prims(t          : T; 
+                interp     : Scheme.T; 
                 args, x, y : Object; 
-                VAR free : BOOLEAN) : Object
+                VAR free   : BOOLEAN) : Object
   RAISES { E } =
   VAR z : Object;
   BEGIN
@@ -1183,9 +1192,38 @@ PROCEDURE Prims(t : T;
         P.EqMemo => RETURN DoEqMemo(x)
       |
         P.EqualMemo => RETURN DoEqualMemo(x)
+      |
+        P.ChangeGlobalEnv => RETURN ChangeGlobalEnv(interp, x)
+      |
+        P.GetParentEnv => RETURN GetParentEnv(x)
       END
     END
   END Prims;
+
+PROCEDURE GetParentEnv(   x      : Object) : Object
+  RAISES { E } =
+  BEGIN
+    TYPECASE x OF
+      SchemeEnvironment.T(env) => RETURN env.getParent()
+    ELSE
+      RAISE E ("expected an environment, got " & Stringify(x))
+    END;
+  END GetParentEnv;
+
+PROCEDURE ChangeGlobalEnv(interp : Scheme.T;
+                          x      : Object) : Object
+  RAISES { E } =
+  BEGIN
+    IF NOT ISTYPE(x, SchemeEnvironment.T) THEN
+      RAISE E ("expected an environment, got " & Stringify(x))
+    END;
+
+    WITH res = interp.getGlobalEnvironment() DO
+      interp.changeGlobalEnvironment(x);
+      RETURN res
+    END
+    
+  END ChangeGlobalEnv;
 
 PROCEDURE DoEqMemo(x : Object) : Object RAISES { E } =
   BEGIN

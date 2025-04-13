@@ -41,6 +41,12 @@ PROCEDURE GetAbsMsb(t : T) : [-1..LAST(CARDINAL)];
      returns -1 for Zero
   *)
 
+PROCEDURE Or(a, b : T) : T;
+PROCEDURE And(a, b : T) : T;
+PROCEDURE Xor(a, b : T) : T;
+PROCEDURE Not(a : T) : T;
+  
+
 PROCEDURE Shift(a : T; sa : INTEGER) : T;
 PROCEDURE RightShift(a : T; sa : CARDINAL) : T;
 PROCEDURE LeftShift(a : T; sa : CARDINAL) : T;
@@ -89,9 +95,6 @@ PROCEDURE Divide(dividend, divisor : T; VAR quotient, modulo : T)
 PROCEDURE Odd(a : T) : BOOLEAN;
 PROCEDURE Even(a : T) : BOOLEAN;
   
-  
-PROCEDURE GetRepBase() : T;
-
 PROCEDURE IsT(x : REFANY) : BOOLEAN;
 
 PROCEDURE UniqReferences(to : BOOLEAN) : BOOLEAN;
@@ -99,8 +102,14 @@ PROCEDURE UniqReferences(to : BOOLEAN) : BOOLEAN;
      return the same reference, else that is not guaranteed *)
 
 
+(* the following are used only for debugging *)
+  
+PROCEDURE GetRepBase() : T; 
+
 PROCEDURE GetInitialized() : BOOLEAN;
 
 PROCEDURE DebugT(t : T) : TEXT;
 
+PROCEDURE Uniq(t : T) : T; (* internal use, but no harm in exporting it *)
+       
 END BigInt.

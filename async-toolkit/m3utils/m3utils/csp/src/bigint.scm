@@ -161,6 +161,7 @@
 ;; the following defs allow us to (eval x) for any xnum x
 (define +inf '+inf)
 (define -inf '-inf)
+(define nan  'nan)
 
 (define *xnum-special-values* '(nan -inf +inf))
 
@@ -234,7 +235,13 @@
         ((eq? a '+inf) '+inf)
         ((eq? a '-inf) '+inf)
         (else (BigInt.Abs a))))
-        
+
+(define (xnum-log2 a)
+  (cond ((eq? a 'nan)   a)
+        ((eq? a '+inf) '+inf)
+        ((eq? a '-inf) '+inf)
+        (else (BigInt.New (xnum-clog2 a)))))
+
 
 (define (xnum-- a . b)
   (if (null? b)
@@ -389,7 +396,45 @@
                      (rlog2 (+ (BigInt.ToInteger sa) xlog2)))
                 (if (> rlog2 *maximum-size*) +inf (BigInt.Shift x (BigInt.ToInteger sa)))))))
                
-         
+
+(define (xnum-| a b) ;; |)
+  (let ((blist (list a b)))
+    (cond
+     ((eq? a *big0*) b)
+     ((eq? b *big0*) a)
+     ((member? '+inf blist) +inf)
+     ((member? '-inf blist) -inf)
+     ((member? 'nan blist)  nan)
+     (else (BigInt.Or a b)))))
+
+(define (xnum-^ a b) ;; |)
+  (let ((blist (list a b)))
+    (cond 
+     ((eq? a *big0*) b)
+     ((eq? b *big0*) a)
+     ((member? '+inf blist) +inf)
+     ((member? '-inf blist) -inf)
+     ((member? 'nan blist)  nan)
+     (else (BigInt.Xor a b)))))
+
+(define (xnum-& a b) ;; |)
+  (let ((blist (list a b)))
+    (cond
+     ((eq? a *big0*) *big0*)
+     ((eq? b *big0*) *big0*)
+     ((member? '+inf blist) nan)
+     ((member? '-inf blist) nan)
+     ((member? 'nan blist)  nan)
+     (else (BigInt.And a b)))))
+
+(define (xnum-~ a)
+  (cond 
+     ((eq? a *big0*) *bigm1*)
+     ((eq? a *bigm1*) *big0*)
+     ((eq? a '+inf) nan)
+     ((eq? a '-inf) nan)
+     (else (BigInt.Not a))))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define (make-range min max)
@@ -411,8 +456,8 @@
 
 (define (range-nonempty? r) (not (range-empty? r)))
 
-(define (range-infinite? r) (or (infinite-xnum? (range-min r))
-                                (infinite-xnum? (range-max r))))
+(define (range-infinite? r) (or (xnum-infinite? (range-min r))
+                                (xnum-infinite? (range-max r))))
 
 (define (range-nan? r) (member 'nan r))
 
@@ -583,12 +628,12 @@
 
         ;; result has sign of dividend
 
-        ((range-neg? a) (negate-range (range% (negate-range a) b)))
+        ((range-neg? a) (negate-range (range-% (negate-range a) b)))
 
         ;; we get here, a is strictly positive,
         ;; b is strictly negative or positive
 
-        ((range-neg? b) (range% a (negate-range b)))
+        ((range-neg? b) (range-% a (negate-range b)))
 
         ;; we get here, both ranges are positive
 
@@ -637,10 +682,20 @@
   (eval (cond ((eq? q 'make-range)   make-range)
               (else  (symbol-append 'xnum- q)))))
 
+(define xex #f)
 (define (xnum-eval expr)
+  (set! xex expr)
   (cond ((bigint? expr) expr)
         ((number? expr) (BigInt.New expr))
         ((string? expr) (BigInt.ScanBased expr 10 #f))
+
+        ((and (pair? expr)
+              (eq? 'apply (car expr)))
+         (let* ((proc-expr (cadr expr))
+                (proc-id   (cadr proc-expr))
+                (xproc     (eval (symbol-append 'xnum- proc-id)))
+                (result    (apply xproc (cddr expr))))
+           result))
 
         ((and (list? expr) (= 3 (length expr)))
          (apply (convert-eval-xnum-binop (car expr))

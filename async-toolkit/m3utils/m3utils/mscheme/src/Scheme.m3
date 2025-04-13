@@ -41,6 +41,8 @@ REVEAL
 
     mapRTErrors                                 := TRUE;
 
+    errorEnvironment  : SchemeEnvironment.T;
+    errorEvalX        : Object;
   METHODS
     readInitialFiles(READONLY files : ARRAY OF Pathname.T) RAISES { E } := ReadInitialFiles;
   OVERRIDES
@@ -70,7 +72,12 @@ REVEAL
     setRTErrorMapping := SetRTErrorMapping;
     copy              := Copy;
     initCopy          := InitCopy;
+    clearErrorEnvironment  := ClearErrorEnvironment;
+    getErrorEvalX     := GetErrorEvalX;
   END;
+
+PROCEDURE GetErrorEvalX(t : T) : Object =
+  BEGIN RETURN t.errorEvalX END GetErrorEvalX;
 
 PROCEDURE Copy(t : T) : T =
   BEGIN
@@ -161,6 +168,10 @@ PROCEDURE Init2(t : T;
       EVAL t.prims.installPrimitives(t.globalEnvironment)
     END;
     t.readInitialFiles(files);
+
+    t.defineInGlobalEnv(SchemeSymbol.FromText("*the-global-environment*"),
+                        t.globalEnvironment);
+    
     RETURN t
   END Init2;
 
@@ -380,6 +391,15 @@ PROCEDURE TruncateText(txt : TEXT; maxLen : CARDINAL) : TEXT =
     END(* WITH *)
   END TruncateText;
 
+PROCEDURE ClearErrorEnvironment(t : T) : SchemeEnvironmentSuper.T =
+  BEGIN
+    TRY
+      RETURN t.errorEnvironment
+    FINALLY
+      t.errorEnvironment := NIL
+    END
+  END ClearErrorEnvironment;
+  
 PROCEDURE Eval(t : T; x : Object; envP : SchemeEnvironmentSuper.T) : Object 
   RAISES { E } =
   CONST
@@ -393,6 +413,11 @@ PROCEDURE Eval(t : T; x : Object; envP : SchemeEnvironmentSuper.T) : Object
       EXCEPT
         E(txt) =>
 
+        IF t.errorEnvironment = NIL THEN
+          t.errorEnvironment := envP;
+          t.errorEvalX       := x
+        END;
+        
         IF Text.Equal(txt, "CallCC123") THEN 
           (* don't intercept call/cc, see SchemePrimitive.m3 *)
           RAISE E(txt) 

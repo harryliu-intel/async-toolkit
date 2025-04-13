@@ -99,11 +99,17 @@ define U()(bd(W) -L, +R)
 {
   csp {
 
-    int i;
+    int i, v;
+
+    int (1024) xx;
 
     i++;
 
     L?x;
+    L?t;
+    L?xx;
+
+    t = 2 * t;
 
     y = x + 13;
     z = (y * 16807) % 2147483647;
@@ -119,11 +125,17 @@ define U()(bd(W) -L, +R)
     u = <+i:20:i>;
     u = z;
     u = y;
-   
+    v = t;
+
+    x = 12;
+
+    u = <+i:x:i>;
 
     print("" + i);
 
-    print("" + u)
+    print("" + u);
+
+    print("" + xx);
   }
 }
   
@@ -143,4 +155,12 @@ define V()()
     w = <+i:W:<*j:i + i:i + i + j + j>>;
     print(w)
   }
+}
+
+define LOG2()()
+{
+
+  csp {
+    <;i:-32..32:print("log2(" + i  +") = " + log2(i))>
+      }
 }

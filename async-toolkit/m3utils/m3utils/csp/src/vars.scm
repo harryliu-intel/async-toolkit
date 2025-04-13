@@ -1,3 +1,7 @@
+;; (loaddata! "expressions_u")
+;;(var-ass-range 'y *the-ass-tbl* *the-prt-tbl*)
+
+(load "debug.scm")
 
 (define (vars-dbg . x)
   (apply dis x)
@@ -368,12 +372,14 @@
       (error "not a channel type I understand : " channel-type))
   (caaddr channel-type))
 
-
+(define *ar-ass* #f)
   
 (define (assignment-range ass port-tbl)
   ;; compute the range of an assignment
   ;; the "ass" should be in the format of the ass-tbl,
   ;; that is: (ass syms id vals)
+
+  (set! *ar-ass* ass)
 
   (define syms (cadr   ass))
   (define id   (caddr  ass))
@@ -458,7 +464,8 @@
 
 
 (define (expr-range expr syms)
-  (vars-dbg "expr-range : expr : " expr dnl)
+  ;; should remove globals here...
+  (vars-dbg "expr-range : expr : " (stringify expr) dnl)
   
   (cond ((bigint? expr) (make-point-range expr))
 
@@ -469,25 +476,98 @@
          (let* ((id  (cadr expr))
                 (rng (search-range *the-rng-tbl* id))
                 (dcl (search-range *the-dcl-tbl* id))
-                (res (range-intersect rng dcl))
+                (res (range-intersection rng dcl))
                )
            res)
          )
 
         ((binary-expr? expr)
          (let* ((op (car expr))
-                (rop (symbol-append 'range op)))
+                (rop (eval (symbol-append 'range- op))))
            (rop (expr-range (cadr expr) syms)
                 (expr-range (caddr expr) syms)))
          )
 
         ((unary-expr? expr)
          (let* ((op (car expr))
-                (rop (symbol-append 'range op)))
+                (rop (eval (symbol-append 'range- op))))
            (rop (expr-range (cadr expr) syms)))
          )
             
         (else *range-complete*))
+  )
+
+(define (get-loop-range-range stmt syms)
+  ;; I think maybe we don't need this...
+  (let* ((lr      (get-loop-range stmt))
+         (lrminx  (cadr lr))
+         (lrmaxx  (caddr lr))
+         
+         (lrminxr (expr-range lrminx syms))
+         (lrmaxxr (expr-range lrmaxx syms))
+         (res     (range-union lrminxr lrmaxxr))
+        )
+
+    (dis "get-loop-range-range stmt     : " stmt dnl)
+    (dis "get-loop-range-range lr       : " lr dnl)
+
+    (dis "get-loop-range-range lrminx   : " lrminx dnl)
+    (dis "get-loop-range-range lrmaxx   : " lrmaxx dnl)
+
+    (dis "get-loop-range-range lrminxr  : " lrminxr dnl)
+    (dis "get-loop-range-range lrmaxxr  : " lrmaxxr dnl)
+
+    (dis "get-loop-range-range res      : " res dnl)
+
+    res
+    )
+  )
+
+
+(define (get-id-range id)
+  ;; based on the tables, what is the range for id?
+  (apply range-union (var-ass-range id *the-ass-tbl* *the-prt-tbl*))
+  )
+
+(define (update-id-range! id rng-tbl)
+  (dis "update-id-range! " id dnl)
+  
+  (let ((old-range (rng-tbl 'retrieve id))
+        (new-range (get-id-range id)))
+    (rng-tbl 'update-entry! id new-range)
+    (not (equal? old-range new-range))
+    )
+  )
+
+
+
+(define (update-id-ranges! rng-tbl)
+  ;; on each iteration we have to re-evaluate the loop ranges, since
+  ;; they can change.  Right?  (They literally *are* ranges.)
+  (eval (apply or
+               (map (lambda(id)(update-id-range! id rng-tbl))
+                    (the-typed-ids))
+               )
+        )
+  )
+
+(define (iterate-until-false f)
+  (let ((res (f)))
+    (if res (iterate-until-false f) res)))
+
+(define (the-typed-ids)
+   (uniq eq?
+         (append (*the-dcl-tbl* 'keys) (*the-rng-tbl* 'keys))))
+
+(define (display-the-ranges)
+  (display-tbl *the-rng-tbl* (the-typed-ids)))
+
+(define (display-tbl tbl keys)
+  (map
+   (lambda(id)
+     (dis (pad 40 id) " : " (tbl 'retrieve id) dnl))
+   keys)
+  'ok
   )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -502,6 +582,12 @@
   tbl
 
 )
+
+(define (get-all-loop-indices prog)
+  (map cadr
+       (apply append
+              (map (lambda(stype)(find-stmts stype text4))
+                   '(sequential-loop parallel-loop)))))
   
 (define (make-the-tables prog)
   (set! *the-ass-tbl* (make-assignments-tbl
@@ -510,9 +596,15 @@
   (set! *the-dcl-tbl* (make-intdecls prog))            ;; declared ranges
   (set! *the-rng-tbl* (make-hash-table 100 atom-hash)) ;; derived ranges
   (set! *the-prt-tbl* (make-port-table *cellinfo*))
+  (set! *the-loop-indices* (get-all-loop-indices prog))
   'ok
   )
 
+(define (close-integer-ranges!)
+  (iterate-until-false (lambda()(update-id-ranges! *the-rng-tbl*)))
+  (dis "=========  INTEGER RANGES COMPUTED :" dnl)
+  (display-the-ranges)
+  )
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define (make-sint-range bits)
@@ -525,8 +617,11 @@
   ;; what is the integer range of a <bits>-bit uint?
   (xnum-eval
    `(make-range 0 (- (pow 2 ,bits) 1))))
-          
+
+(define gtr-dt #f)
+
 (define (get-type-range declared-type)
+  (set! gtr-dt declared-type)
   (if (not (integer-type? declared-type))
       (error "get-type-range : not an integer type : " declared-type))
 
@@ -561,8 +656,14 @@
 
              (if (integer-type? ty)
 
-                 (tbl 'add-entry! id (get-type-range ty)))))
-      )
+                 (tbl 'add-entry! id (get-type-range ty))))
+       )
+
+      ;; we need to handle the loops separately, since we know
+      ;; more about their ranges than we do about declared variables
+      ;; (which we only know widths for)
+      
+      );;esac
     s
     )
   (visit-stmt prog s-visitor identity identity)
@@ -583,7 +684,50 @@
 
         (else *default-int-type*)))
 
-        
+(define (make-uint-type range)
+  (if (range-infinite? range)
+      *default-int-type*
+      (let ((bits (xnum-clog2 (xnum-+ (range-max range) *big1*))))
+        (make-integer-type #f bits))))
+
+(define (make-sint-type range)
+  (if (range-infinite? range)
+      *default-int-type*
+      (let* ((max (range-max range))
+             (min (range-min range))
+             
+             (max0
+              (if (xnum-< min *big0*)
+                  (xnum-- (xnum-abs min) *big1*) ;; need one less value for neg
+                  (xnum-abs min)))
+             
+             (max1 (xnum-abs max))
+
+             (mmax (xnum-max max0 max1))
+
+             (bits (xnum-+ *big1* (xnum-clog2 (xnum-+ mmax *big1*)))))
+        (make-integer-type #t bits))))
+
+
+(define (make-proposed-type-tbl)
+  (let ((tbl (make-hash-table 100 atom-hash)))
+    (map
+     (lambda(id)
+       (tbl 'add-entry! id
+            (get-smallest-type
+             (*the-rng-tbl* 'retrieve id))))
+     (*the-rng-tbl* 'keys))
+    tbl
+    )
+)
+
+(define (propose-types!)
+  (set! *proposed-types* (make-proposed-type-tbl))
+  (dis "=========  INTEGER TYPES DERIVED :" dnl)
+  (display-tbl *proposed-types* (*proposed-types* 'keys))
+ )
+
+         
                          
       
   
