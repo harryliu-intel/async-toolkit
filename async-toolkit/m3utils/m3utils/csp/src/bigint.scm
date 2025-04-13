@@ -377,6 +377,19 @@
 
   (fold-left do2 a b))
 
+(define (xnum-<< x sa)
+  (cond ((eq? *big0* sa) x)
+        ((eq? x 'nan) 'nan)
+        ((eq? x '-inf) '-inf)
+        ((eq? x '+inf) '+inf)
+        ((eq? sa 'nan) 'nan)
+        ((eq? sa '+inf) '+inf)
+        ((eq? sa '-inf) *big0*)
+        (else (let* ((xlog2 (BigInt.GetAbsMsb x))
+                     (rlog2 (+ (BigInt.ToInteger sa) xlog2)))
+                (if (> rlog2 *maximum-size*) +inf (BigInt.Shift x (BigInt.ToInteger sa)))))))
+               
+         
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define (make-range min max)
@@ -593,6 +606,27 @@
                 (range-intersection xa xbr)
                 ))
         ))
+
+(define (range->> a b)
+  (range-<< a (negate-range b)))
+
+(define (range-<< a b)
+  (let ((pos<< (make-simple-range-binop xnum-<<)))
+    (cond ((range-extends? a *big0*)
+           (let* ((alist (split-range a *big0*))
+                  (rlist (map (lambda(a)(range-<< a b)) alist)))
+             (apply range-union rlist)))
+
+          ((range-neg? a) (negate-range (range-<< (negate-range a) b)))
+
+
+          ((and (eq? a *range-zero*) (eq? b *range-zero*))
+           (pos<< a b ))
+          
+          (else (pos<< a b))
+          )
+    );tel
+  )
 
 
 

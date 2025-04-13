@@ -277,7 +277,7 @@
           
           ((boolean)
            (if (bigint? res)
-               (if (eq? *big-0* res) #f #t)
+               (if (eq? *big0* res) #f #t)
                (do-error))
            )
           
