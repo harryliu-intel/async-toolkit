@@ -45,7 +45,7 @@ CONST Chunk = 4; (* make it easy to debug in hex *)
 CONST doDebug = FALSE;
       
 TYPE 
-  NArry = REF ARRAY OF CARDINAL;
+  NArry = REF ARRAY OF Word.T;  (* hmm... *)
 
   NSeq = RECORD
     siz : CARDINAL; (* # of significant digits *)
@@ -1032,6 +1032,8 @@ PROCEDURE StuffTheBits((*MODIFIES*)VAR wa : ARRAY OF Word.T) : T =
     sgn  := +1;
   BEGIN
     IF doDebug THEN
+      Debug.Out(F("StuffTheBits : NUMBER(wa) = %s, siz = %s",
+                  Int(NUMBER(wa)), Int(siz)));
       Debug.Out("StuffTheBits : before sign adj wa = " & FmtWordArr(wa))
     END;
     
@@ -1061,6 +1063,12 @@ PROCEDURE StuffTheBits((*MODIFIES*)VAR wa : ARRAY OF Word.T) : T =
         WITH left      = ws - bi,
              thisChunk = MIN(rs, left),
              remaining = rs - thisChunk DO
+          IF doDebug THEN
+            Debug.Out(F("i = %s, wi = %s, left = %s, thisChunk = %s, remaining = %s",
+                        Int(i), Int(wi), Int(left), Int(thisChunk), Int(remaining)));
+            Debug.Out(F("NUMBER(seq.a^) = %s ; NUMBER(wa) = %s; -bi = %s",
+                        Int(NUMBER(seq.a^)), Int(NUMBER(wa)), Int(-bi)))
+          END;
           seq.a[i] := Word.Shift(wa[wi], -bi); 
           INC(bi, thisChunk);
 

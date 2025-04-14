@@ -694,14 +694,49 @@
          (amax (range-max a))
          (bmin (range-min b))
          (bmax (range-max b))
-         (rmin (xop (xnum-clearallbits amin) (xnum-setallbits bmin)))
+         (rmin (xop (xnum-clearallbits amin) (xnum-clearallbits bmin)))
          (rmax (xnum-max amax bmax)))
     (make-range rmin rmax)))
 
+(define (range-^ a b)
+  (define xop xnum-^) ;; |)
+
+  (let* ((amin (range-min a))
+         (amax (range-max a))
+         (bmin (range-min b))
+         (bmax (range-max b))
+
+         (neg  (or (xnum-neg? amin) (xnum-neg? bmin)))
+         (pos  (or (xnum-pos? amax) (xnum-pos? bmax)))
+                
+         (rmin (if neg
+                   (xnum-min
+                    (xnum-clearallbits amin)
+                    (xnum-clearallbits bmin)
+                    (xnum-~ (xnum-setallbits amax))
+                    (xnum-~ (xnum-setallbits bmax))
+                    )
+                   *big0*))
+         (rmax (if pos
+                   (xnum-max
+                    (xnum-setallbits amax)
+                    (xnum-setallbits bmax)
+                    (xnum-~ (xnum-clearallbits amin))
+                    (xnum-~ (xnum-clearallbits bmin))
+                    )
+                   *bigm1*))
+         )
+    (make-range rmin rmax)))
+  
+(define (range-not a)
+  (make-range (xnum-clearallbits (range-min a))
+              (xnum-setallbits (range-max a))))
   
 (define (xnum-setallbits x)
   ;; set all bits up to and including the highest set bit in x
-  (cond ((xnum-pos? x)
+  (cond ((eq? x +inf) *bigm1*)
+
+        ((xnum-pos? x)
          (xnum-- (xnum-pow *big2*
                            (BigInt.New (xnum-clog2 (xnum-+ x *big1*))))
                  *big1*))
@@ -711,7 +746,8 @@
 
 (define (xnum-clearallbits x)
   ;; clear all bits up to and including the highest clear bit in x
-  (cond ((xnum-neg? x)
+  (cond ((eq? x -inf) *big0*) 
+        ((xnum-neg? x)
          (xnum-~ (xnum-setallbits (xnum-~ x))))
         ((eq? x *big0*) *big0*)
         ((xnum-pos? x) *big0*)
