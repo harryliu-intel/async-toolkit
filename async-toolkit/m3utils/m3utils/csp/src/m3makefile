@@ -44,6 +44,9 @@ Ssequence ("CspStructDeclarator", "CspStructDeclarator")
 
 Smodule   ("CspSyntax")
 
+Smodule   ("FiniteInterval")
+Smodule   ("VaryBits")
+
 SchemeStubs ("Debug")
 SchemeStubs ("BigInt")
 SchemeStubs ("Math")
