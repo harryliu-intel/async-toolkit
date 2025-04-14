@@ -1,6 +1,6 @@
 (* $Id: BigInt.m3,v 1.9 2003/08/21 03:28:30 kp Exp $ *)
 
-MODULE BigInt;
+MODULE BigInt EXPORTS BigInt, BigIntRep;
 
   (*
     what we should probably do is restructure this module as follows.
@@ -27,42 +27,9 @@ IMPORT BigIntBigIntTbl;
 IMPORT Debug;
 FROM Fmt IMPORT Int, F, Unsigned;
 
-CONST Chunk = 4; (* make it easy to debug in hex *)
-      BaseLog2 =   ((BITSIZE(Word.T) DIV 2 - 1) DIV Chunk) * Chunk;
-      (* (*was*) 10 *)
-      
-      Base     =  Word.Shift(1, BaseLog2); 
-      (* must be less than or equal to sqrt(LAST(CARDINAL)) *)
-      (* must be power of 2 *)
-
-      WordMask   =  Base - 1;
-      WordUnmask =  Word.Not(WordMask);
-
-(********************* sequence of cardinals *********************)
-
-(* other sequence impl *)
 
 CONST doDebug = FALSE;
       
-TYPE 
-  NArry = REF ARRAY OF Word.T;  (* hmm... *)
-
-  NSeq = RECORD
-    siz : CARDINAL; (* # of significant digits *)
-    a   : NArry;
-  END;
-
-  (*
-  METHODS
-    init(hintSize : CARDINAL := 5) : NSeq := InitN;
-    shift(sa : CARDINAL) := ShiftLeftInternalN;
-    extend(toBits : CARDINAL) := ExtendN;
-    clearTop() := ClearTop;
-    copy() : NSeq := CopyN;
-    size() : CARDINAL := SizeN;
-  END;
-  *)
-
 PROCEDURE InitN(VAR s : NSeq; hintSize : CARDINAL) =
   BEGIN
     s.siz := 0;
@@ -122,11 +89,6 @@ PROCEDURE ClearTop(VAR s : NSeq) =
 
 (********************* bignum type *********************)
 
-REVEAL 
-  T = Public BRANDED Brand OBJECT
-    sign : [ -1 .. 1 ];
-    rep  : NSeq;
-  END;
 
 
 PROCEDURE Compare(a, b : T) : CompRet =
@@ -964,7 +926,7 @@ PROCEDURE GetBit(t : T; bit : CARDINAL) : [ 0 .. 1 ] =
     END      
   END GetBit;
 
-  (* the following are very slow implementations for now. *)
+(**********************************************************************)
 
 TYPE BitProc = PROCEDURE(x, y : Word.T) : Word.T;
 

@@ -200,6 +200,7 @@ Sequence("Card","Cardinal")
 
 Module("IntForRat")
 Module("BigInt")
+Interface("BigIntRep")
 
 Table("BigIntBigInt", "BigInt", "BigInt")
 
