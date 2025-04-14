@@ -87,8 +87,9 @@
     
 (define (constant-assignment? ass syms)
   (let* ((rhs (get-assign-rhs ass))
+         (is-id (ident? (get-assign-lhs ass)))
          (is-const (constant-simple? rhs syms))) ;; #f or a list containing the value
-    is-const))
+    (and is-id is-const)))
 
 (define (ass-tgt-designator stmt)
   (case kw
@@ -377,7 +378,9 @@
   (caaddr channel-type))
 
 (define *ar-ass* #f)
-  
+
+(load "bits.scm")
+
 (define (assignment-range ass port-tbl)
   ;; compute the range of an assignment
   ;; the "ass" should be in the format of the ass-tbl,
@@ -414,6 +417,25 @@
       (make-range (range-min (expr-range min-expr syms))
                   (range-max (expr-range max-expr syms)))))
       
+
+  (define (get-bits-interval bs)
+
+    (vars-dbg "get-bits-interval : bs : " bs dnl)
+    (let* ((the-index-range (range-union (expr-range (get-bits-min bs) syms)
+                                         (expr-range (get-bits-max bs) syms)))
+           (the-range
+            (range-extend  ;; this is a little bit pessimistic
+             (range-- (range-<< *range1* the-index-range) *range1*)
+             *big0*)))
+
+      (vars-dbg "get-bits-interval : the-index-range : " the-index-range dnl)
+      (vars-dbg "get-bits-interval : the-range       : " the-range dnl)
+
+      the-range
+;;      *range-complete*
+      )
+    )
+  
   
   (let* ((ass-stmt   (car ass))
          (is-recv    (recv?   ass-stmt))
@@ -432,7 +454,7 @@
            (channel-value-range (get-recv-lhs ass-stmt)))
 
           (is-bits-lhs ;; we do this for now...
-           *range-complete*)
+           (get-bits-interval (get-assign-lhs ass-stmt)))
 
 ;;          (simple-rhs
 ;;           (declared-ident-range (cadr (get-assign-rhs ass-stmt)) syms))
@@ -515,16 +537,17 @@
 
         ((bits? expr)
          (let* ((bexpr          (get-bits-expr expr))
-                (bmin           (get-bits-min expr))
-                (bmax           (get-bits-max expr))
+                (bmin           (expr-range (get-bits-min expr) syms))
+                (bmax           (expr-range (get-bits-max expr) syms))
 
                 (source-range   (expr-range bexpr syms)) ;; range of source
 
-                (extract-range ;; range of extraction
-                 (if (equal? bmin bmax)
-                     *range-bit*
-                     (expr-range `(+ (- ,bmax ,bmin) ,*big1*) syms))))
-           (range-intersection source-range extract-range)))
+                (extract-mask-range ;; range of extraction
+                 (range-extend
+                  (range-- (range-<< *range1* bmax) *range1*)
+                  *big0*)))
+
+                 (range-& source-range extract-mask-range)))
             
         (else *range-complete*))
   )

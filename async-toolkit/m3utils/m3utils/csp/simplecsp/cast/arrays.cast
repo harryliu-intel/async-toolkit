@@ -251,3 +251,14 @@ define const(int W_P)() <+ stuff(W_P)
   }
 }
   
+define bits()()
+{
+  csp {
+    int x=3;
+    int y;
+
+    y{x} = 1;
+
+    print("" + y);
+  }
+}
