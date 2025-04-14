@@ -31,8 +31,12 @@
     (case (get-stmt-type s)
       ((assign)
        
-       (let* ((lhs       (get-assign-lhs s)))
-         (add-entry! lhs))
+       (let* ((rhs       (get-assign-rhs s))
+              (lhs       (get-assign-lhs s)))
+         (if (not (equal? rhs lhs))
+             ;; self-assignments don't count!
+             ;; (Andrew adds these for some sort of synchronization)
+             (add-entry! lhs)))
        )
 
       ((recv)
@@ -415,6 +419,7 @@
          (is-recv    (recv?   ass-stmt))
          (is-assn    (assign? ass-stmt))
          (is-loop    (loop?   ass-stmt))
+         (is-bits-lhs(and is-assn (bits? (get-assign-lhs ass-stmt))))
          (simple-rhs (and is-assn (ident? (get-assign-rhs ass-stmt)))))
 
     (vars-dbg "assignment-range ass-stmt   " ass-stmt dnl)
@@ -426,8 +431,11 @@
     (cond (is-recv
            (channel-value-range (get-recv-lhs ass-stmt)))
 
-          (simple-rhs
-           (declared-ident-range (cadr (get-assign-rhs ass-stmt)) syms))
+          (is-bits-lhs ;; we do this for now...
+           *range-complete*)
+
+;;          (simple-rhs
+;;           (declared-ident-range (cadr (get-assign-rhs ass-stmt)) syms))
 
           (is-assn ;; an expression
            (expr-range (get-assign-rhs ass-stmt) syms))
@@ -441,16 +449,27 @@
   )
 
 (define (var-ass-range id ass-tbl port-tbl)
+
+  ;; I think we have a bug here.
+  ;; if we have a bits() on the LHS, this won't be right, I don't think.
+  
   (let* ((var-asses   (ass-tbl 'retrieve id))
          (var-ranges  (map (lambda(ass)(assignment-range ass port-tbl))
                            var-asses)))
+    (dis "var-ass-range : var-asses  : " var-asses dnl)
+    (dis "var-ass-range : var-ranges : " var-ranges dnl)
     var-ranges
     )
   )
- 
+
+(define (get-fundamental-type-range decl)
+  (if (and (pair?  decl) (eq? 'array (car decl)))
+      (get-fundamental-type-range (caddr decl))
+      (get-type-range decl)))
+
 (define (declared-ident-range id syms)
   (let ((decl (retrieve-defn id syms)))
-    (get-type-range decl))
+    (get-fundamental-type-range decl))
   )
 
 (define (search-range tbl id)
@@ -493,6 +512,19 @@
                 (rop (eval (symbol-append 'range- op))))
            (rop (expr-range (cadr expr) syms)))
          )
+
+        ((bits? expr)
+         (let* ((bexpr          (get-bits-expr expr))
+                (bmin           (get-bits-min expr))
+                (bmax           (get-bits-max expr))
+
+                (source-range   (expr-range bexpr syms)) ;; range of source
+
+                (extract-range ;; range of extraction
+                 (if (equal? bmin bmax)
+                     *range-bit*
+                     (expr-range `(+ (- ,bmax ,bmin) ,*big1*) syms))))
+           (range-intersection source-range extract-range)))
             
         (else *range-complete*))
   )
@@ -523,6 +555,10 @@
     )
   )
 
+(define (seed-integer-ranges!)
+  (map (lambda(id)(*the-rng-tbl* 'add-entry! id (*the-dcl-tbl* 'retrieve id)))
+       (*the-dcl-tbl* 'keys))
+  )
 
 (define (get-id-range id)
   ;; based on the tables, what is the range for id?
@@ -532,8 +568,22 @@
 (define (update-id-range! id rng-tbl)
   (dis "update-id-range! " id dnl)
   
-  (let ((old-range (rng-tbl 'retrieve id))
-        (new-range (get-id-range id)))
+  (let*((old-range (rng-tbl 'retrieve id))
+
+        (dcl-range (*the-dcl-tbl* 'retrieve id))
+
+        (id-range  (get-id-range id))
+        
+        (new-range
+         (if (eq? dcl-range '*hash-table-search-failed*)
+             id-range
+             (range-intersection dcl-range id-range))
+             )
+        
+        )
+    (if (range-empty? new-range)
+        (error (string-append "update-id-range! : got empty range for : " id " : " new-range "( dcl-range = " dcl-range " ; old-range = " old-range " ; id-range = " id-range " )" )))
+    
     (rng-tbl 'update-entry! id new-range)
     (not (equal? old-range new-range))
     )
@@ -557,7 +607,7 @@
 
 (define (the-typed-ids)
    (uniq eq?
-         (append (*the-dcl-tbl* 'keys) (*the-rng-tbl* 'keys))))
+         (append (*the-dcl-tbl* 'keys) (*the-rng-tbl* 'keys) *the-loop-indices*)))
 
 (define (display-the-ranges)
   (display-tbl *the-rng-tbl* (the-typed-ids)))

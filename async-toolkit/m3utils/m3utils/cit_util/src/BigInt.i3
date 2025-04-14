@@ -41,6 +41,10 @@ PROCEDURE GetAbsMsb(t : T) : [-1..LAST(CARDINAL)];
      returns -1 for Zero
   *)
 
+PROCEDURE GetMsb(t : T) : [-1..LAST(CARDINAL)];
+  (* get the highest bit in the 2s complement representation of t
+     that is different from the sign bit *)
+
 PROCEDURE Or(a, b : T) : T;
 PROCEDURE And(a, b : T) : T;
 PROCEDURE Xor(a, b : T) : T;

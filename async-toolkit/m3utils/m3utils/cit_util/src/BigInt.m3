@@ -1226,6 +1226,26 @@ PROCEDURE GetAbsMsb(t : T) : [ -1 .. LAST(CARDINAL) ] =
       END
     END
   END GetAbsMsb;
+
+PROCEDURE GetMsb(t : T) : [-1..LAST(CARDINAL)] =
+  VAR
+    sgn := Sign(t);
+  BEGIN
+    IF    sgn = 1 THEN
+      RETURN GetAbsMsb(t)
+    ELSIF sgn = -1 THEN
+      WITH absMsb = GetAbsMsb(t) DO
+        IF GetBit(t, absMsb) = 0 THEN
+          RETURN absMsb
+        ELSE
+          <*ASSERT absMsb = 0 (* t = -1 *) OR GetBit(t, absMsb - 1) = 0*>
+          RETURN absMsb - 1
+        END
+      END
+    ELSE
+      RETURN -1
+    END
+  END GetMsb;
   
 VAR
   chunkdigits : ARRAY PrintBase OF CARDINAL;

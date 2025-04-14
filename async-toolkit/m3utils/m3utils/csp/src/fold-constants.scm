@@ -2,7 +2,25 @@
 ;; inputs can be polymorphic
 
 (define (dbg . x)
-;;  (apply dis x) ;; comment this out to make it quiet
+  (apply dis x) ;; comment this out to make it quiet
+  )
+
+(define (handle-intrinsic name constant? constant-value arg-list)
+  (case name
+    ((log2)
+     (let ((arg (car arg-list)))
+       (if (constant? arg)
+           (let* ((ca (constant-value 'integer arg))
+                  (result (xnum-log2 ca)))
+
+             (dis "performing intrinsic : (log2 " arg " <- " ca ") = " result dnl)
+             result
+             )
+             
+           `(call-intrinsic ,name ,arg))
+       )
+     )
+    (else (error "handle-intrinsic of " name)))
   )
 
 (define (handle-integer-binop x constant? constant-value)
@@ -346,19 +364,29 @@
              res))
           
           ((call-intrinsic? x)
-           (let ((res
-                  (cons 'call-intrinsic
-                        (cons (cadr x) 
-                              (map
-                               (lambda(xx)(visit-expr xx
-                                                      identity
-                                                      expr-visitor
-                                                      identity))
-                               (cddr x))))))
-             
-             (dbg "call-intrinsic x   " x dnl)
-             (dbg "call-intrinsic res " res dnl)
-             res))
+           (let* ((nam (cadr x)))
+
+             (if (member nam '(log2))
+                 (handle-intrinsic nam
+                                   constant?
+                                   constant-value
+                                   (cddr x))
+
+                 
+                 (let((res
+                       (cons 'call-intrinsic
+                             (cons (cadr x) 
+                                   (map
+                                    (lambda(xx)(visit-expr xx
+                                                           identity
+                                                           expr-visitor
+                                                           identity))
+                                    (cddr x))))))
+                   
+                   (dbg "call-intrinsic x   " x dnl)
+                   (dbg "call-intrinsic res " res dnl)
+                   res)))
+           )
           
           ((integer-expr? x syms func-tbl struct-tbl)
            (cond ((= (length x) 3)
@@ -378,6 +406,19 @@
           
           ((string-expr? x syms func-tbl struct-tbl)
            (handle-string-binop x constant? constant-value))
+
+          ((array-access? x)
+           (let* ((base (get-designator-id x))
+                  (ilist (get-index-list x))
+                  (data  (*the-globals* 'retrieve base))
+                  (value (if (or (not ilist)
+                                 (eq? data '*hash-table-search-failed*))
+                             '*hash-table-search-failed*
+                             (data 'retrieve ilist))))
+             (if (eq? value '*hash-table-search-failed*)
+                 x
+                 value))
+           )
           
           (else x)))
   
@@ -402,6 +443,10 @@
                     ,(get-assign-lhs s)
                     ,((expr '*) (get-assign-rhs s)))))
          (dbg "returning assign " res dnl)
+
+         (if (procedure? (get-assign-rhs res))
+             (error "garbage!"))
+         
          (if (ident? (get-assign-lhs s))
 
              (define-var!

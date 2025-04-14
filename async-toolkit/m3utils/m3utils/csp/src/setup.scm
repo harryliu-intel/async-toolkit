@@ -109,6 +109,8 @@
 (define *the-loop-indices* #f)
 (define *proposed-types* #f)
 
+(define *the-globals* #f)
+
 (dis "  ===  TO RUN COMPILER: " dnl)
 (dis "  ===  (loaddata! <csp-prefix>)" dnl)
 (dis "  ===  (compile!)" dnl)

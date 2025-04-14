@@ -146,6 +146,12 @@
   
   )
 
+(define big| BigInt.Or) ;; |)
+
+(define big& BigInt.And)
+
+(define big^ BigInt.Xor)
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 ;; an extended number "xnum" is one of
@@ -475,9 +481,11 @@
 (define (range-member? x r)
   (range-contains? r (make-point-range x)))
 
-(define *range-one*      `(,*big1* ,*big1*))
-(define *an-empty-range* `(   +inf   -inf )) 
-(define *range-zero*     `(,*big0* ,*big0*))
+(define *range-one*           `(,*big1* ,*big1*))
+(define *an-empty-range*      `(   +inf   -inf )) 
+(define *range-zero*          `(,*big0* ,*big0*))
+(define *range-bit*           `(,*big0* ,*big1*))
+(define *range-unsigned-byte* `(,*big0* ,(BigInt.New 255)))
 
 ;; natural, pos, and neg DO NOT include zero.
 
@@ -679,24 +687,30 @@
 (define (range-| a b) ;; both pos
   (define xop xnum-|) ;; |)
 
-  (let* ((amin (range-min a))
-         (amax (range-max a))
-         (bmin (range-min b))
-         (bmax (range-max b))
-         (rmin (xnum-min amin bmin))
-         (rmax (xop (xnum-setallbits amax) (xnum-setallbits bmax))))
-    (make-range rmin rmax)))
+  (if (or (range-infinite? a) (range-infinite? b))
+      *range-complete*
+      (let* ((amin (range-min a))
+             (amax (range-max a))
+             (bmin (range-min b))
+             (bmax (range-max b))
+             (rmin (xnum-min amin bmin))
+             (rmax (xop (xnum-setallbits amax) (xnum-setallbits bmax))))
+        (make-range rmin rmax))))
 
 (define (range-& a b) ;; both pos
   (define xop xnum-&) ;; |)
 
-  (let* ((amin (range-min a))
-         (amax (range-max a))
-         (bmin (range-min b))
-         (bmax (range-max b))
-         (rmin (xop (xnum-clearallbits amin) (xnum-clearallbits bmin)))
-         (rmax (xnum-max amax bmax)))
-    (make-range rmin rmax)))
+  (cond ((range-infinite? a) b)
+        ((range-infinite? b) a)
+        (else 
+         (let* ((amin (range-min a))
+                (amax (range-max a))
+                (bmin (range-min b))
+                (bmax (range-max b))
+                (rmin (xop (xnum-clearallbits amin) (xnum-clearallbits bmin)))
+                (rmax (xnum-max  ; |)
+                       (xnum-setallbits amax) (xnum-setallbits bmax))))
+           (make-range rmin rmax)))))
 
 (define (range-^ a b)
   (define xop xnum-^) ;; |)
@@ -729,9 +743,22 @@
     (make-range rmin rmax)))
   
 (define (range-not a)
-  (make-range (xnum-clearallbits (range-min a))
-              (xnum-setallbits (range-max a))))
-  
+  (negate-range (range-- a *range1*)))
+
+
+(define (range-pos-& a b)
+  ;; a and b are positive ranges
+  (make-range *big0* (xnum-min (range-max a) (range-max b))))
+
+(define xnum-pos-& xnum-&)
+
+(define (range-pos-| a b) ;|)
+  ;; a and b are positive ranges
+  (make-range *big0* (xnum-setallbits (xnum-max (range-max a) (range-max b)))))
+
+(define xnum-pos-| xnum-|) ;)
+
+                
 (define (xnum-setallbits x)
   ;; set all bits up to and including the highest set bit in x
   (cond ((eq? x +inf) *bigm1*)

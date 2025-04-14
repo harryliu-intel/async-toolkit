@@ -114,3 +114,12 @@ define SHIFT()()
   }
 }
     
+
+define LOG2()()
+{
+  csp {
+    x = log2(4);
+
+    print("" + x);
+  }
+}

@@ -213,3 +213,41 @@ define SYSTEM()()
     P1(18) p1(c);
   }
 }
+
+define stuff(int W_P) attributes
+{
+  int GRAYPAT[0..3]={0,1,1,0};
+
+  int GRAYCODE[0..2**W_P-1];
+  <i:2**W_P: GRAYCODE[i] = <+j:W_P: (2**j)*GRAYPAT[i/(2**j)%4]>; >
+
+  int TWOD[0..1, 0..1] = {{1, 2}, {3, 4}};
+
+  csp {
+      structure struct0 =
+    (int(32) a = 17;);
+
+  }
+}
+
+define const(int W_P)() <+ stuff(W_P)
+{
+  csp {
+    int x = GRAYCODE[3];
+    print("" + x);
+
+    int y = TWOD[IDLE_0,1];
+
+    print ("" + y);
+
+    struct0 S[0..7];
+    int z = S[3]::a;
+    print("" + z);
+
+    struct0 T;
+    int t = T::a;
+
+    print("" + t);
+  }
+}
+  

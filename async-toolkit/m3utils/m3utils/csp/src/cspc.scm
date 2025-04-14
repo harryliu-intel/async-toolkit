@@ -2210,6 +2210,8 @@
   'text2
   )
 
+(load "globals.scm")
+
 (define *the-passes-3*
   `((*       ,fold-constants-*)
     (global  ,constantify-constant-vars-pass)
@@ -2217,6 +2219,7 @@
   )
 
 (define (compile3!)
+  (set! *the-globals* (construct-globals-tbl *the-inits*))
   (set! text3
         (uniquify-loop-dummies
          (run-compiler  
@@ -2257,7 +2260,7 @@
 
 (define (compile5!)
   (make-the-tables text4)
-
+  (seed-integer-ranges!)
   (close-integer-ranges!)
   (propose-types!)
   (set! text5 text4)
@@ -2273,6 +2276,22 @@
   (compile5!)
   )
 
+
+(define (write-text sym)
+  (let* ((fn (string-append sym ".dmp"))
+         (wr (FileWr.Open fn)))
+    (dis (stringify (eval sym)) wr)
+    (Wr.Close wr)
+    )
+  )
+
+(define (write-object fn obj)
+  (let* ((wr (FileWr.Open fn)))
+    (dis (stringify obj) wr)
+    (Wr.Close wr)
+    )
+  )
+  
 
 
 (define (mn) (make-name-generator "t"))
