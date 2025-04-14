@@ -1001,7 +1001,9 @@ PROCEDURE GetTheBits(a : T; VAR res : ARRAY OF Word.T) =
       END
     END;
 
-    Debug.Out("GetTheBits : before sign adj res = " & FmtWordArr(res));
+    IF doDebug THEN
+      Debug.Out("GetTheBits : before sign adj res = " & FmtWordArr(res))
+    END;
 
     IF a.sign = -1 THEN
       FOR i := FIRST(res) TO LAST(res) DO
@@ -1014,7 +1016,9 @@ PROCEDURE GetTheBits(a : T; VAR res : ARRAY OF Word.T) =
       END
     END;
 
-    Debug.Out("GetTheBits : after  sign adj res = " & FmtWordArr(res))
+    IF doDebug THEN
+      Debug.Out("GetTheBits : after  sign adj res = " & FmtWordArr(res))
+    END
   END GetTheBits;
 
 PROCEDURE StuffTheBits((*MODIFIES*)VAR wa : ARRAY OF Word.T) : T =
@@ -1027,7 +1031,9 @@ PROCEDURE StuffTheBits((*MODIFIES*)VAR wa : ARRAY OF Word.T) : T =
                             but that should be OK *)
     sgn  := +1;
   BEGIN
-    Debug.Out("StuffTheBits : before sign adj wa = " & FmtWordArr(wa));
+    IF doDebug THEN
+      Debug.Out("StuffTheBits : before sign adj wa = " & FmtWordArr(wa))
+    END;
     
     (* start by computing the sign-magnitude form *)
     IF Word.Extract(wa[LAST(wa)], ws - 1, 1) = 1 THEN
@@ -1041,7 +1047,9 @@ PROCEDURE StuffTheBits((*MODIFIES*)VAR wa : ARRAY OF Word.T) : T =
       END
     END;
 
-    Debug.Out("StuffTheBits : after  sign adj wa = " & FmtWordArr(wa));
+    IF doDebug THEN
+      Debug.Out("StuffTheBits : after  sign adj wa = " & FmtWordArr(wa))
+    END;
 
     VAR
       seq := NSeq { siz := siz, a := NEW(NArry, siz) };
@@ -1056,13 +1064,15 @@ PROCEDURE StuffTheBits((*MODIFIES*)VAR wa : ARRAY OF Word.T) : T =
           seq.a[i] := Word.Shift(wa[wi], -bi); 
           INC(bi, thisChunk);
 
-          Debug.Out(F("wi=%s bi=%s thisChunk=%s seq.a[%s] = %s",
-                      Int(wi),
-                      Int(bi),
-                      Unsigned(thisChunk),
-                      Int(i),
-                      Unsigned(seq.a[i])));
-          
+          IF doDebug THEN
+            Debug.Out(F("wi=%s bi=%s thisChunk=%s seq.a[%s] = %s",
+                        Int(wi),
+                        Int(bi),
+                        Unsigned(thisChunk),
+                        Int(i),
+                        Unsigned(seq.a[i])))
+          END;
+            
           IF bi = ws THEN
             bi := 0;
             INC(wi);
@@ -1078,45 +1088,6 @@ PROCEDURE StuffTheBits((*MODIFIES*)VAR wa : ARRAY OF Word.T) : T =
       RETURN Uniq(CheckRep(NEW(T, sign := sgn, rep := seq)))
     END
   END StuffTheBits;
-
-      
-(*
-      FOR i := 0 TO seq.siz - 1 DO
-        WITH thisWord  = ws - bi,
-             remaining = rs - thisWord DO
-          seq.a[i] := Word.Shift(wa[wi], -bi);
-
-          Debug.Out(F("seq.a[%s] := Word.Shift(wa[%s] = %s , %s) = %s",
-                      Int(i),
-                      Int(wi),
-                      Unsigned(wa[wi]),
-                      Int(-bi),
-                      Unsigned(seq.a[i])));
-
-          INC(bi, rs);
-          IF bi >= ws THEN
-            DEC(bi, ws);
-            INC(wi)
-          END;
-          
-          IF remaining # 0 THEN
-            WITH remBits = Word.Shift(wa[wi], thisWord) DO
-              seq.a[i] := Word.Or(seq.a[i], remBits);
-              Debug.Out(F("seq.a[%s] := Word.Or(seq.a[%s], %s) = %s",
-                          Int(i),
-                          Int(i),
-                          Unsigned(remBits),
-                          Unsigned(seq.a[i])));
-            END;
-                      
-            INC(bi, remaining)
-          END
-        END;
-        seq.a[i] := Word.And(seq.a[i], WordMask)
-      END;
-    END
-*)
-
 
 PROCEDURE FmtWordArr(READONLY a : ARRAY OF Word.T) : TEXT =
   VAR

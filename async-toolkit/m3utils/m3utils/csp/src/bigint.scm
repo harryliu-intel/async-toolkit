@@ -444,6 +444,9 @@
 
 (define (make-point-range x) (list x x))
 
+(define *range1* (make-point-range *big1*))
+(define *rangem1* (make-point-range *bigm1*))
+
 (define (range-min r) (car r))
 
 (define (range-max r) (cadr r))
@@ -673,6 +676,47 @@
     );tel
   )
 
+(define (range-| a b) ;; both pos
+  (define xop xnum-|) ;; |)
+
+  (let* ((amin (range-min a))
+         (amax (range-max a))
+         (bmin (range-min b))
+         (bmax (range-max b))
+         (rmin (xnum-min amin bmin))
+         (rmax (xop (xnum-setallbits amax) (xnum-setallbits bmax))))
+    (make-range rmin rmax)))
+
+(define (range-& a b) ;; both pos
+  (define xop xnum-&) ;; |)
+
+  (let* ((amin (range-min a))
+         (amax (range-max a))
+         (bmin (range-min b))
+         (bmax (range-max b))
+         (rmin (xop (xnum-clearallbits amin) (xnum-setallbits bmin)))
+         (rmax (xnum-max amax bmax)))
+    (make-range rmin rmax)))
+
+  
+(define (xnum-setallbits x)
+  ;; set all bits up to and including the highest set bit in x
+  (cond ((xnum-pos? x)
+         (xnum-- (xnum-pow *big2*
+                           (BigInt.New (xnum-clog2 (xnum-+ x *big1*))))
+                 *big1*))
+        ((eq? x *big0*) *big0*)
+        ((xnum-neg? x) *bigm1*)
+        (else (error))))
+
+(define (xnum-clearallbits x)
+  ;; clear all bits up to and including the highest clear bit in x
+  (cond ((xnum-neg? x)
+         (xnum-~ (xnum-setallbits (xnum-~ x))))
+        ((eq? x *big0*) *big0*)
+        ((xnum-pos? x) *big0*)
+        (else (error))))
+
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -772,7 +816,8 @@
 (define *val-lo* (BigInt.New -100))
 (define *val-hi* (BigInt.New +100))
 (define *val-range* (make-range *val-lo* *val-hi*))
-
+(define *val-pos* (make-range *big1* *val-hi*))
+(define *val-neg* (make-range *val-lo* *bigm1*))
 
 
 (define (make-random-range r)
@@ -780,7 +825,14 @@
          (res (range-intersection r rand)))
 
     (if (range-empty? res) (make-random-range r) res)))
-    
+
+(define *fail-op* #f)
+(define *fail-ra* #f)
+(define *fail-rb* #f)
+(define *fail-a*  #f)
+(define *fail-b*  #f)
+(define *fail-rc* #f)
+(define *fail-c*  #f)
 
 (define (validate-range-binop op count rra rrb)
   ;; random testing of the range code
@@ -799,8 +851,20 @@
                  (b (xnum-random rb))
                  (c (xnum-op a b)))
             (if (not (range-member? c rc))
-                (error "not in range : (" xnum-op " " a " " b ") = " c
-                       " NOT IN (" range-op " " ra " " rb ") = " rc)
+                (begin
+                  (set! *fail-op* xnum-op)
+                  (set! *fail-ra* ra)
+                  (set! *fail-rb* rb)
+                  (set! *fail-a*  a)
+                  (set! *fail-b*  b)
+                  (set! *fail-rc* rc)
+                  (set! *fail-c*  c)
+                  
+                  (error
+                   (string-append
+                    "not in range : (" xnum-op " " a " " b ") = " c
+                    " NOT IN (" range-op " " ra " " rb ") = " rc))
+                  )
                 )
             )
 
