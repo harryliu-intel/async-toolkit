@@ -99,6 +99,7 @@
 (define text3 #f)
 (define text4 #f)
 (define text5 #f)
+(define text6 #f)
 
 
 (define *the-ass-tbl* #f)
@@ -110,6 +111,7 @@
 (define *proposed-types* #f)
 
 (define *the-globals* #f)
+(define *the-global-ranges* #f)
 
 (dis "  ===  TO RUN COMPILER: " dnl)
 (dis "  ===  (loaddata! <csp-prefix>)" dnl)

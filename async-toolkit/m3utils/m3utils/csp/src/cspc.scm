@@ -2208,7 +2208,6 @@
 
 (define *the-passes-3*
   `((*       ,fold-constants-*)
-    (global  ,constantify-constant-vars-pass)
     )
   )
 
@@ -2227,7 +2226,31 @@
   'text3
   )
 
+
 (define *the-passes-4*
+  ;; we need to insert assignments after initialization for
+  ;; all var1s that aren't immediately followed by an initialization,
+  ;; before we run constantification
+  `((*       ,fold-constants-*)
+    (global  ,constantify-constant-vars-pass)
+    )
+  )
+
+(define (compile4!)
+  (set! text4
+        (uniquify-loop-dummies
+         (run-compiler  
+          *the-passes-4*
+          (patch-uninitialized-uses text3)
+          *cellinfo*
+          *the-inits*
+          *the-func-tbl*
+          *the-struct-tbl*))
+        )
+  'text4
+  )
+
+(define *the-passes-5*
   `((global ,sequentialize-nonblocking-parallels-pass)
     (global ,delete-unused-vars-pass)
     (global ,simplify-stmt-pass)
@@ -2237,28 +2260,28 @@
   )
 
   
-(define (compile4!)
-    (set! text4
+(define (compile5!)
+    (set! text5
           (uniquify-loop-dummies
            (run-compiler
             *the-passes-4*
-            text3
+            text4
             *cellinfo*
             *the-inits*
             *the-func-tbl*
             *the-struct-tbl*)))
 ;;  (display-success-2)
-  'text4
+  'text5
   )
 
 
-(define (compile5!)
-  (make-the-tables text4)
+(define (compile6!)
+  (make-the-tables text5)
   (seed-integer-ranges!)
   (close-integer-ranges!)
   (propose-types!)
-  (set! text5 text4)
-  'text5
+  (set! text6 text5)
+  'text6
   )
 
 
@@ -2268,6 +2291,7 @@
   (compile3!)
   (compile4!)
   (compile5!)
+  (compile6!)
   )
 
 

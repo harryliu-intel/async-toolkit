@@ -249,11 +249,20 @@
 (define (make-constant-type t)
   ;; take type t but mark it as constant
 
-  (if (and (pair? t)
-           (member (car t) '(integer boolean string structure)))
-      (cons (car t) (cons #t (cddr t)))
-      (error "make-constant-type : cant make constant from : " t dnl)
-      ))
+  (cond ((and (pair? t)
+              (member (car t) '(integer boolean string structure)))
+         (cons (car t) (cons #t (cddr t))))
+
+        ((array? t)
+         (let ((range (cadr t))
+               (constant-base-type (make-constant-type (caddr t))))
+           (list 'array range constant-base-type)))
+
+        (else
+         (error "make-constant-type : cant make constant from : " t dnl))
+        
+        )
+  )
 
 (define (constant-simple? x syms)
   

@@ -262,3 +262,20 @@ define bits()()
     print("" + y);
   }
 }
+
+define xref()(bd(32) -L, +R) <+ stuff(10)
+{
+  csp {
+    L?x;
+
+    y = GRAYCODE[x];
+
+    R!y;
+
+    int q[3];
+
+    z = q[y];
+
+    R!z
+  }
+}

@@ -122,6 +122,7 @@
   (make-var1-decl (get-var1-id v1) (make-constant-type (get-var1-type v1)))) 
 
 (define (mark-decls-constant prog constant-ids)
+  (vars-dbg "mark-decls-constant" dnl)
   (define (visitor s)
     (if (eq? 'var1 (get-stmt-type s))
         (if (member (get-var1-id s) constant-ids)
@@ -148,6 +149,7 @@
 )
 
 (define (constantify-constant-vars prog)
+  (dis "constantify-constant-vars" dnl)
   (let* ((the-asses         (make-asses prog))
          (the-constant-syms (find-constant-symbols the-asses))
          (the-new-prog      (mark-decls-constant prog the-constant-syms)))
@@ -517,7 +519,8 @@
          (let* ((id  (cadr expr))
                 (rng (search-range *the-rng-tbl* id))
                 (dcl (search-range *the-dcl-tbl* id))
-                (res (range-intersection rng dcl))
+                (glb (search-range *the-global-ranges* id))
+                (res (range-intersection rng dcl glb))
                )
            res)
          )
@@ -548,7 +551,10 @@
                   *big0*)))
 
                  (range-& source-range extract-mask-range)))
-            
+
+        ((array-access? expr)
+         (expr-range (cadr expr) syms))
+        
         (else *range-complete*))
   )
 
@@ -670,6 +676,7 @@
   (set! *the-rng-tbl* (make-hash-table 100 atom-hash)) ;; derived ranges
   (set! *the-prt-tbl* (make-port-table *cellinfo*))
   (set! *the-loop-indices* (get-all-loop-indices prog))
+  (set! *the-global-ranges* (make-global-range-tbl *the-globals*))
   'ok
   )
 
@@ -802,5 +809,113 @@
 
          
                          
-      
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (search-uninitialized-uses seq)
+  (let loop ((p               (cdr seq))
+             (declared        '())
+             (assigned        '())
+             (used-early      '()))
+    (dis "visit-sequence loop p : " p dnl)
+    (cond ((null? p)
+           (dis "end of sequence : " dnl
+                "declared        : " declared dnl
+                "assigned        : " assigned dnl
+                "used-early      : " used-early dnl)
+
+           ;; a variable is suspicious if it has been used before
+           ;; being assigned to or it has been declared but not assigned
+           ;; to by end of sequence
+           
+           (set-union used-early (set-diff declared assigned)))
+
+          ((eq? 'var1 (get-stmt-type (car p)))
+           (loop (cdr p)
+                 (cons (get-var1-id (car p)) declared)
+                 assigned
+                 used-early))
+
+          ((eq? 'assign (get-stmt-type (car p)))
+           (loop (cdr p)
+                 declared
+                 (cons (get-designator-id (get-assign-lhs (car p))) assigned)
+                 used-early))
+
+          ((eq? 'recv (get-stmt-type (car p)))
+           (loop (cdr p)
+                 declared
+                 (cons (get-designator-id (get-recv-rhs (car p))) assigned)
+                 used-early))
+
+          (else
+           (let* ((cur-refs (find-referenced-vars (car p)))
+                  (unassigned (set-diff cur-refs assigned)))
+             (loop (cdr p)
+                   declared
+                   assigned
+                   
+                   (if (null? unassigned)
+                       used-early
+                       (begin
+                         (dis "used early in : " (car p) " : " unassigned dnl)
+                         (append unassigned used-early))
+                       );;fi
+                   );;pool
+             );;*tel
+           );;esle
+         );;dnoc
+    );;tel
+  );;enifed
+
+(define (initialize-sequence seq vars)
+  (let loop ((p       (cdr seq))
+             (output '()))
+    (cond ((null? p) (cons 'sequence (reverse output)))
+
+          ((eq? 'var1 (get-stmt-type (car p)))
+           (let ((tgt (get-var1-id (car p))))
+             (if (member tgt vars)
+                 (loop (cdr p)
+                       (cons `(assign (id ,tgt) ,*big0*)
+                             (cons (car p)
+                                   output)))
+
+                 (loop (cdr p)
+                       (cons (car p) output)));;fi
+             );;tel
+           )
+
+          (else (loop (cdr p) (cons (car p) output))))))
   
+(define (patch-uninitialized-uses prog)
+
+  (define (visit-s s)
+    (if (eq? 'sequence (get-stmt-type s))
+        (let ((uninit-uses (search-uninitialized-uses s)))
+          (if (null? uninit-uses)
+              s
+              (initialize-sequence s uninit-uses)))
+        s))
+
+  (visit-stmt prog visit-s identity identity)
+  )
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (make-global-range-tbl global-tbl)
+  (define tbl (make-hash-table 100 atom-hash))
+
+  (define (insert-one-range! id)
+    (dis "making global range for : " id dnl)
+    
+    (let ((r
+           (apply range-union
+                  (map make-point-range ((global-tbl 'retrieve id) 'values)))))
+      (tbl 'add-entry! id r)))
+
+  (map insert-one-range! (*the-globals* 'keys))
+  tbl
+  )
+
+
+    
