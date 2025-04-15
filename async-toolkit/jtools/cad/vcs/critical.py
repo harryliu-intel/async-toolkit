@@ -38,6 +38,9 @@ class OutputNode:
     def get_worst_transition(self):
         return (self.times[self.worst_idx][1], self.times[self.worst_idx][2])
 
+    def get_first_transition(self):
+        return (self.times[0][1], self.times[0][2])
+    
     def get_last_transition(self):
         return (self.times[self.last_idx][1], self.times[self.last_idx][2])
 
@@ -171,15 +174,19 @@ def critical_path(hist_name, connect_name, start, depth, log_name, verbose=False
         start_time = -1
     if "TESTBENCH" not in start_node:
         start_node = convert_apr_to_vcs_name(start_node)
-    print("Crtitical path starting at %s @ %d" % (start_node, start_time))
-    log_file.write("Crtitical path starting at %s @ %d\n" % (start_node, start_time))
     if start_node not in node_dict:
         print("ERROR: Start node %s not found" % start_node)
         return
+    print("Crtitical path starting at %s @ %d" % (start_node, start_time))
+    log_file.write("Crtitical path starting at %s @ %d\n" % (start_node, start_time))
+    print(node_dict[start_node])
+    if start_time == -1:
+        (cur_node, cur_time) = node_dict[start_node].get_last_transition()
     else:
-        print(node_dict[start_node])
-        if start_time == -1:
-            (cur_node, cur_time) = node_dict[start_node].get_last_transition()
+        first_time = node_dict[start_node].get_first_transition()[1]
+        if start_time < first_time:
+            print("ERROR: Given start time %d is earlier than first logged transition time %d for node %s" % (start_time, first_time, start_node))
+            return
         else:
             (cur_node, cur_time) = node_dict[start_node].get_transition(start_time)
 
