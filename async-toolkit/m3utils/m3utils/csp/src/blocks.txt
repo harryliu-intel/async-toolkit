@@ -1,0 +1,132 @@
+Implementing blocks for the Fulcrum-CSP compiler
+================================================
+
+  mika.nystroem@intel.com
+  4/15/2025
+
+
+Classify statements as:
+
+Blocking statements Bi
+Non-blocking statements Ni
+
+Sequential compilation
+======================
+
+N0; B0; N1; B1...
+
+compile as
+
+N0; goto B0
+
+B0 ; N1; goto B1
+
+B1...
+
+
+Parallel compilation
+====================
+
+N0; N1, N2; N3; B...
+
+compile as
+
+N0; goto (N1, N2)
+
+N1; goto J0
+
+N2; goto J1
+
+join (J0,J1); N3; goto B
+
+B...
+
+
+Variable parallel composition
+=============================
+
+N0; <,i:M: N1> ; N2; B
+
+N0; goto (<i:M:N1(i)>)
+
+N1(i); goto Ji
+
+join (<i:M:Ji>); N2; goto B
+
+B...
+
+Note that the only variable that can be shared safely across
+concurrent blocks is the dummy.
+
+So, e.g., the CSP
+
+int x;
+
+<,i : M : x++ >
+
+doesn't really mean very much.
+
+
+Selection statement compilation
+===============================
+
+Imagine we have
+
+[ g0 -> S0 [] g1 -> S1 ]
+
+where the gis are boolean variables (not complex expressions), but
+there is a blocking statement B inside the sequence S0:
+
+[  g0 -> N00; B0; N01
+[] g1 -> N1
+];
+
+N2;
+
+B1
+
+When B0 returns, the following trace is N01; N2; B1 (which blocks again).
+
+We get three traces:
+
+[  g0 -> N00; goto B0
+[] g1 -> N1; N2; goto B1
+]
+
+B0; N01; N2; goto B1
+
+B1
+
+
+Loop compilation
+================
+
+Per our work on selection, the only loop that has to be implemented
+is *[ ~done -> S ].
+
+Consider:
+
+*[ ~done -> N0; B0; N1 ] ; N2; B1
+
+The solution is
+
+[  ~done -> N0 ; goto B0
+[]  done -> N2 ; goto B1
+
+B0 ; N1; N2 ; goto B1
+
+B1
+
+
+
+
+
+
+
+
+
+
+
+
+
+
