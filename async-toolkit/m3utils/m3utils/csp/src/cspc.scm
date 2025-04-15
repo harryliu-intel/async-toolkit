@@ -2121,7 +2121,10 @@
   (recurse (append 
             *the-passes-2*
             *the-passes-3*
-            *the-passes-4*))
+            *the-passes-4*
+            *the-passes-5*
+;;            *the-passes-6*
+            ))
   )
 
 ;; Select Graphic Rendition
@@ -2264,7 +2267,7 @@
     (set! text5
           (uniquify-loop-dummies
            (run-compiler
-            *the-passes-4*
+            *the-passes-5*
             text4
             *cellinfo*
             *the-inits*

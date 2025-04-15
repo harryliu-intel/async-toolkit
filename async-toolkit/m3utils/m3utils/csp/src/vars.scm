@@ -636,7 +636,9 @@
 
 (define (the-typed-ids)
    (uniq eq?
-         (append (*the-dcl-tbl* 'keys) (*the-rng-tbl* 'keys) *the-loop-indices*)))
+         (append (*the-dcl-tbl* 'keys)
+                 (*the-rng-tbl* 'keys)
+                 *the-loop-indices*)))
 
 (define (display-the-ranges)
   (display-tbl *the-rng-tbl* (the-typed-ids)))
@@ -665,7 +667,7 @@
 (define (get-all-loop-indices prog)
   (map cadr
        (apply append
-              (map (lambda(stype)(find-stmts stype text4))
+              (map (lambda(stype)(find-stmts stype prog))
                    '(sequential-loop parallel-loop)))))
   
 (define (make-the-tables prog)
