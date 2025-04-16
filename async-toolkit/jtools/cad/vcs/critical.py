@@ -205,9 +205,14 @@ def critical_path(hist_name, connect_name, start, depth, log_name, verbose=False
                 log_file.write("%2d: %d, %4d, %s\n" % (cur_depth, cur_time, path[-1][1]-cur_time, convert_vcs_to_apr_name(cur_node)))
         path.append((cur_node, cur_time))
         cur_depth += 1
+        # Check if the current node exists in the connectivity dictionary
+        if cur_node not in conn_dict:
+            # Current node doesn't exist, gracefully exit
+            log_file.write("%2d: No connectivitiy found for %s\n" % (cur_depth, convert_vcs_to_apr_name(cur_node)))
+            print("WARNING: Input node %s not found in connectivity dictionary. Ending trace..." % cur_node)
+            break
         cur_node = conn_dict[cur_node]
         (cur_node, cur_time) = node_dict[cur_node].get_transition(cur_time)
-    
     log_file.close()
 
 
