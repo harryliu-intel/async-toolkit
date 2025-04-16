@@ -19,7 +19,8 @@ die "ERROR: undefined \$SOURCE_VERILOG_DIR\n" unless (defined($ENV{SOURCE_VERILO
 
 
 # Command line options for simulation
-my ($cell, $env, $level, $corner, $outdir, $simv, $tcl, $t_run, $perf, $fsdb, $verdi, @simv_args, $verbose, $help);
+my ($cell, $env, $level, $corner, $outdir, $simv, $tcl, $t_run, $perf, $depth,
+    $fsdb, $verdi, @simv_args, $verbose, $help);
 # Command line options to pass through to gen_model
 my (@cast_defines, @c2v_args, @gen_args, @vcs_args);
 
@@ -41,6 +42,7 @@ GetOptions("level=s"     => \$level,
            "tcl=s"       => \$tcl,
            "t-run=s"     => \$t_run,
            "perf=s"      => \$perf,
+           "depth=s"     => \$depth,
            "define=s"    => \@cast_defines,
            "c2v-args=s"  => \@c2v_args,
            "gen-args=s"  => \@gen_args,
@@ -223,7 +225,8 @@ system($sim_cmd)==0 or die "ERROR: Simulation failed in $wd\n";
 
 #If perf, run critical path analysis
 if ($perf) {
-    my $crit_cmd = "./run-crit.sh $perf -d 100";
+    my $crit_cmd = "./run-crit.sh $perf";
+    if ($depth) { $crit_cmd .= " -d $depth"; }
     print "Running critical path analysis...\n";
     if ($verbose) {print("$crit_cmd\n");}
     system($crit_cmd)==0 or die "ERROR: critical.py failed in $wd\n";
