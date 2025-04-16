@@ -107,3 +107,25 @@ define CHATTY()()
 }
 
   
+define LR()(bd(32) -L, +R)
+{
+
+  csp {
+    R! L?
+  }
+  
+  
+}
+
+define LRb()(bd(32) -L, +R)
+{
+
+  csp {
+    boolean x;
+    x = (L? != 0);
+    
+    R! x
+  }
+  
+  
+}

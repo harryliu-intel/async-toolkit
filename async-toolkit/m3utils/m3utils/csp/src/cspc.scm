@@ -885,8 +885,12 @@
   (get-designator-id (get-assign-designator s)))
 
 (define (get-assign-lhs a) (cadr a))
-
 (define (get-assign-rhs a) (caddr a))
+
+(define (get-send-lhs a) (cadr a))
+(define (get-send-rhs a) (caddr a))
+
+(define (make-send lhs rhs) (list 'send lhs rhs))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -1316,7 +1320,7 @@
 (define (integer-type? t)
   (and (pair? t) (eq? 'integer (car t))))
 
-(define (integer-expr? x syms func-tbl struct-tbl)
+(define (integer-expr? x syms func-tbl struct-tbl cell-info)
   (or (bigint? x)
       (if (pair? x)
           (cond
@@ -1324,33 +1328,33 @@
                                    (car (retrieve-defn (cadr x) syms))))
            ((member (car x) *integer-ops*) #t)
            ((member (car x) *polymorphic-ops*)
-            (integer-type? (derive-type (cadr x) syms func-tbl struct-tbl)))
+            (integer-type? (derive-type (cadr x) syms func-tbl struct-tbl cell-info)))
            (else #f)
            )
           #f
           )))
 
-(define (boolean-expr? x syms func-tbl struct-tbl)
+(define (boolean-expr? x syms func-tbl struct-tbl cell-info)
   (or (boolean? x)
       (if (pair? x)
           (cond
            ((eq? 'id (car x)) (boolean-type? (retrieve-defn (cadr x) syms)))
            ((member (car x) *boolean-ops*) #t)
            ((member (car x) *polymorphic-ops*)
-            (boolean-type? (derive-type (cadr x) syms func-tbl struct-tbl)))
+            (boolean-type? (derive-type (cadr x) syms func-tbl struct-tbl cell-info)))
            (else #f)
            )
           #f
           )))
 
-(define (string-expr? x syms func-tbl struct-tbl)
+(define (string-expr? x syms func-tbl struct-tbl cell-info)
   (or (string? x)
       (if (pair? x)
           (cond
            ((eq? 'id (car x)) (string-type? (retrieve-defn (cadr x) syms)))
            ((member (car x) *string-ops*) #t)
            ((member (car x) *polymorphic-ops*)
-            (string-type? (derive-type (cadr x) syms func-tbl struct-tbl)))
+            (string-type? (derive-type (cadr x) syms func-tbl struct-tbl cell-info)))
            (else #f)
            )
           #f
@@ -1387,7 +1391,7 @@
 (define s-bt #f)
 (define s-sd #f)
 
-(define (derive-type x syms func-tbl struct-tbl)
+(define (derive-type x syms func-tbl struct-tbl cell-info)
   (cond  ((ident? x)
           ;;
           ;; this part is very tricky!
@@ -1404,12 +1408,23 @@
          ((bigint? x) *default-int-type*)
          ((boolean? x) *default-boolean-type*)
          ((string? x) *default-string-type*)
+
+         ((recv-expression? x)
+          (let* ((port-tbl  (make-port-table cell-info)) ;; hrmph
+                 (channel-designator (cadr x))
+                 (id        (get-designator-id channel-designator))
+                 (chan-decl (port-tbl 'retrieve id))
+                 (width     (get-channel-type-bit-width (cadddr chan-decl))))
+            (make-integer-type #f width)
+            )
+          )
+         
          ((pair? x)
           (cond ((member (car x) *string-ops*) *default-string-type*)
                 ((member (car x) *integer-ops*) *default-int-type*)
                 ((member (car x) *boolean-ops*) *default-boolean-type*)
                 ((member (car x) *polymorphic-ops*)
-                 (derive-type (cadr x) syms func-tbl struct-tbl))
+                 (derive-type (cadr x) syms func-tbl struct-tbl cell-info))
 
                 ((apply? x)
                  (dis "derive-type of apply : " x dnl)
@@ -1434,16 +1449,16 @@
                  (derive-type (construct-loopex-binop x)
                               (make-loopex-frame x syms)
                               func-tbl
-                              struct-tbl))
+                              struct-tbl cell-info))
                 
                 ((array-access? x)
                  (peel-array
-                  (derive-type (array-accessee x) syms func-tbl struct-tbl)))
+                  (derive-type (array-accessee x) syms func-tbl struct-tbl cell-info)))
                 
                 ((member-access? x)
                  (set! s-x x)
                  (let* ((base-type (derive-type
-                                    (member-accessee x) syms func-tbl struct-tbl))
+                                    (member-accessee x) syms func-tbl struct-tbl cell-info))
                         (struct-def (struct-tbl 'retrieve (get-struct-name base-type)))
                         (struct-flds (get-struct-decl-fields struct-def))
                         (accesser   (member-accesser x))
@@ -1485,7 +1500,7 @@
 (load "handle-assign.scm")
 
 
-;; (reload)(loaddata! "expressions_p") (run-compiler *the-text* *cellinfo* *the-inits* *the-func-tbl* *the-struct-tbl*)
+;; (reload)(loaddata! "expressions_p") (run-compiler *the-text* *cellinfo* *the-inits* *the-func-tbl* *the-struct-tbl cell-info*)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define *eval-s* '())
@@ -1663,14 +1678,15 @@
 
 
 (define (generate-loop-statement-from-expression lhs rhs
-                                                 syms func-tbl struct-tbl)
+                                                 syms func-tbl struct-tbl
+                                                 cell-info)
   (set! *lx* rhs)
   (let* ((loop-op    (get-loopex-op rhs))
          (loop-idx   (get-loopex-dummy rhs))
          (loop-range (get-loopex-range rhs))
          (loop-expr  (get-loopex-expr rhs))
          (loop-frame (make-loopex-frame rhs syms))
-         (loop-type  (derive-type loop-expr loop-frame func-tbl struct-tbl))
+         (loop-type  (derive-type loop-expr loop-frame func-tbl struct-tbl cell-info))
          (zero-elem  (op-zero-elem loop-op loop-type)))
     `(sequence
        (assign ,lhs
@@ -1679,7 +1695,7 @@
                         ,loop-range
                         (assign-operate ,loop-op ,lhs ,loop-expr)))))
 
-(define (remove-loop-expression s syms vals tg func-tbl struct-tbl)
+(define (remove-loop-expression s syms vals tg func-tbl struct-tbl cell-info)
 
   (if (and (eq? 'assign (get-stmt-type s))
            (check-side-effects (get-assign-lhs s)))
@@ -1689,7 +1705,8 @@
              )
         (if (loopex? rhs)
             (generate-loop-statement-from-expression lhs rhs
-                                                     syms func-tbl struct-tbl)
+                                                     syms func-tbl struct-tbl
+                                                     cell-info)
             s))
       s)
   )
@@ -1820,14 +1837,14 @@
 
 (define handle-eval-tg (make-name-generator "handle-eval-temp"))
 
-(define (handle-eval s syms vals tg func-tbl struct-tbl)
+(define (handle-eval s syms vals tg func-tbl struct-tbl cell-info)
 
   (dis "handle-eval " s dnl)
 
   (let* ((fake-var (handle-eval-tg 'next))
          (fake-assign (make-assign `(id ,fake-var) (cadr s)))
          (full-seq
-          (handle-assign-rhs fake-assign syms vals tg func-tbl struct-tbl))
+          (handle-assign-rhs fake-assign syms vals tg func-tbl struct-tbl cell-info))
          (res (remove-fake-assignment fake-var full-seq)))
 
     (dis "handle-eval   s = " s dnl
@@ -1973,7 +1990,7 @@
     (stmt-check-enter s)
 
     (case (get-stmt-kw s)
-      ((assign) (handle-assign-rhs s syms vals tg func-tbl struct-tbl))
+      ((assign) (handle-assign-rhs s syms vals tg func-tbl struct-tbl cell-info))
 
       ((eval) ;; this is a function call, we make it a fake assignment.
 ;;       (dis "eval!" dnl)
@@ -1982,7 +1999,7 @@
        
        (let* ((fake-var (tg 'next))
               (fake-assign (make-assign `(id ,fake-var) (cadr s)))
-              (full-seq   (handle-assign-rhs fake-assign syms vals tg func-tbl struct-tbl))
+              (full-seq   (handle-assign-rhs fake-assign syms vals tg func-tbl struct-tbl cell-info))
               (res (remove-fake-assignment fake-var full-seq)))
 
          (dis "===== stmt-pre0 fake  " (stringify fake-assign) dnl)
@@ -2008,7 +2025,7 @@
 ;;            (dis "make-pre stmt-type " stmt-type dnl)
 ;;            (dis "make-pre stmt      " stmt dnl)
             
-            (pass stmt syms vals tg func-tbl struct-tbl)
+            (pass stmt syms vals tg func-tbl struct-tbl cell-info)
             )
           
           stmt)))
@@ -2186,6 +2203,7 @@
                         (list 'recv   handle-access-recv)
                         (list 'send   handle-access-recv)
                         (list 'assign handle-assign-rhs)
+                        (list 'send   handle-send-rhs)
                         (list 'eval   handle-eval)
                         (list 'global inline-evals)
                         (list 'global global-simplify)
@@ -2244,7 +2262,10 @@
         (uniquify-loop-dummies
          (run-compiler  
           *the-passes-4*
+
+          ;; we patch the uninitialized uses:
           (patch-uninitialized-uses text3)
+          
           *cellinfo*
           *the-inits*
           *the-func-tbl*
@@ -2324,59 +2345,8 @@
   x
   )
 
-(define (print-identity-and-referenceable x)
-  (dis (stringify x) " referenceable: " (directly-referenceable? x) dnl)
-  x
-  )
-
 (define (identifier? x)
   (if (and (pair? x) (eq? 'id (car x)))) x #f)
-
-(define (directly-referenceable? x)
-  ;; is x an expression that's implementable as the RHS of a 3-address
-  ;; instruction?
-  ;;
-  ;; in other words, can x be used as an operand in a basic
-  ;; operation, and can it be used as a function argument,
-  ;; and can it be used as a channel to be passed to a channel operation?
-  ;;
-  ;; there are some oddities with array indexing:
-  ;;
-  ;; I believe if x is an array-indexing operation, it can be implemented
-  ;; as long as every array index is a constant or an identifier.
-  ;;
-  ;; otherwise, x must be a constant or an identifier itself
-
-  ;; XXX not done
-  
-  (dis "directly-referenceable? " x dnl)
-  
-  (if (pair? x)
-      (let ((kw (car x))
-            (args (cdr x)))
-        (case kw
-          ((id) #t)
-
-          ((array-access)
-           (and (identifier? (car args))
-                (directly-referenceable? (cadr args))))
-
-          ((member-access structure-access)
-           (directly-referenceable? (car args)))
-
-          (else #f)))
-
-      #t
-      )
-  )
-
-;; this code isnt quite right
-;; it should only be applied to the arguments of say assign.
-
-
-;; (sequentialize-one
-;;          '(assign (id a) (+ (id a) (id b)))
-;;           (make-name-generator "t"))
 
 (define (binary-expr? x)
   (and

@@ -11,7 +11,7 @@
 
   (define tbl (make-hash-table 100 atom-hash))
   
-  (define (trace-ass-visitor s syms vals tg func-tbl struct-tbl)
+  (define (trace-ass-visitor s syms vals tg func-tbl struct-tbl _cell-info)
 
     (define (add-entry! designator)
       (let* ((id        (get-designator-id designator))
@@ -818,7 +818,7 @@
              (declared        '())
              (assigned        '())
              (used-early      '()))
-    (dis "visit-sequence loop p : " p dnl)
+;;    (dis "visit-sequence loop p : " p dnl)
     (cond ((null? p)
            (dis "end of sequence : " dnl
                 "declared        : " declared dnl
@@ -859,7 +859,8 @@
                    (if (null? unassigned)
                        used-early
                        (begin
-                         (dis "used early in : " (car p) " : " unassigned dnl)
+                         (dis "used early : " unassigned dnl)
+;;                         (dis "used early in : " (car p) " : " unassigned dnl)
                          (append unassigned used-early))
                        );;fi
                    );;pool

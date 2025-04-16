@@ -130,14 +130,29 @@ unlock(), which prevent other processes from changing the values of
 the objects in R during the evaluation time of the selection;
 waitfor(R) unlocks R while waiting, as in Hoare's monitors (Hoare
 1974)---another way of looking at our implementation is that the guard
-evaluation block is itself a monitor.  In a sequential simulator the
-lock/unlock statements can implemented as no-ops.  An allowable
-implementation of lock(), unlock(), and waitfor() in a concurrent
-system would be to have lock() make a local copy of R, on which the
-guards Gi are evaluated, and have waitfor() wait for a change from the
-previous local copy.  This implementation makes the locking local to
-the process being implemented, as it is only applied to its own
-interface channels and interface nodes.
+evaluation block is itself a monitor.
+
+In a sequential simulator the lock/unlock statements can implemented
+as no-ops.
+
+*** Actually this isn't quite true: the computation of Gi can itself
+yield.  If this happens, we either:
+
+(0) deadlock, if other processes can't change R (is this actually
+right?  maybe these deadlocks are acceptable..?)
+
+(1) have to deal with inconsistent gis (which can lead to deadlock)
+
+(2) as for the concurrent version (see below) have to make a
+"reference copy" of R, so that waitfor will wake immediately if
+changes have happened to R while the gis were evaluted.
+
+An allowable implementation of lock(), unlock(), and waitfor() in a
+concurrent system would be to have lock() make a local copy of R, on
+which the guards Gi are evaluated, and have waitfor() wait for a
+change from the previous local copy.  This implementation makes the
+locking local to the process being implemented, as it is only applied
+to its own interface channels and interface nodes.
 
 We now implement the selection in terms of iteration (Dijkstra's
 do...od).

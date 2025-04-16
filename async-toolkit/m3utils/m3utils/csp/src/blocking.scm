@@ -1,3 +1,6 @@
+
+
+
 (define (stmt-may-block? stmt)
 
   (define result #f)
@@ -23,7 +26,7 @@
     (if result
         'cut
         (case (get-expr-type x)
-          ((apply)                    (yes))
+          ((apply)                    (yes)) ;; shouldnt happen in compiled
 
           ((call-intrinsic)
            (if (eq? (cadr x) 'wait)   (yes) x))
@@ -42,14 +45,68 @@
 (define (sequentialize-nonblocking-parallels stmt)
 
   (define (s-visitor s)
-    (if (and (eq? (get-stmt-type s) 'parallel)
-             (not (stmt-may-block? s)))
-        (begin
-          (dis "sequentialize-nonblocking-parallels : sequentializing : " s dnl)
-          (cons 'sequence (cdr s)) ;; convert parallel to sequence
-          )
-        s)
+    (if (not (stmt-may-block? s))
+        (case (get-stmt-type s)
+          ((parallel)
+           (dis "sequentialize-nonblocking-parallels : sequentializing : "
+                s dnl)
+           (cons 'sequence (cdr s)) ;; convert parallel to sequence
+           )
+          
+          ((parallel-loop)
+           (dis "sequentialize-nonblocking-parallels : sequentializing : "
+                s dnl)
+           (cons 'sequential-loop (cdr s)) ;; convert parallel to sequence
+           )
+
+          (else s))
+        s);;fi
     )
   
   (visit-stmt stmt s-visitor identity identity)
   )
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (insert-block-labels stmt)
+  (define tg (make-name-generator ""))
+  
+  (define (s-visitor s)
+
+    (define (mark side)
+      (let* ((tail (case side
+                     ((both) `((label ,(tg 'next))))
+                     ((before) '())))
+             (res (append (list 'sequence
+                                `(label ,(tg 'next))
+                                s)
+                          tail)))
+
+        res
+        )
+      )
+
+    
+    (case (get-stmt-type s)
+      ((recv send) (mark 'before))
+
+      ((waiting-if) (mark 'before))
+
+      ((if nondet-if) (error))
+
+      ((parallel parallel-loop) (mark 'both))
+
+      ((assign)
+       (let ((rhs (get-assign-rhs s)))
+         (if (or (peek? rhs) (recv-expression? rhs))
+             (mark 'before)
+             s))
+       )
+
+      (else s)))
+
+
+  (visit-stmt stmt s-visitor identity identity)
+  )
+
+  

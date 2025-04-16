@@ -6,7 +6,7 @@
 (define (probe?           x)  (and (pair? x) (eq? 'probe (car x))))
 (define (recv-expression? x)  (and (pair? x) (eq? 'recv-expression (car x))))
 
-(define (handle-access-assign ass syms vals tg func-tbl struct-tbl)
+(define (handle-access-assign ass syms vals tg func-tbl struct-tbl cell-info)
 
   (set! *has-ass* ass)
   
@@ -29,7 +29,7 @@
       (if (simple-operand? x)
           x
           (let* ((nam     (tg 'next))
-                 (newtype (derive-type x syms func-tbl struct-tbl))
+                 (newtype (derive-type x syms func-tbl struct-tbl cell-info))
                  (newvar  (make-var1-decl nam newtype))
                  (newass  `(,kw ,(make-ident nam) ,x))
                  )
@@ -86,11 +86,33 @@
 
 (define *har-ass* #f)
 
-(define (handle-assign-rhs a syms vals tg func-tbl struct-tbl)
+(define (handle-send-rhs s syms vals tg func-tbl struct-tbl cell-info)
+  (let ((lhs (get-send-lhs s))
+        (rhs (get-send-rhs s)))
+    (handle-assign-dbg "handle-send-rhs :       " s dnl)
+    (handle-assign-dbg "handle-send-rhs : lhs : " lhs dnl)
+    (handle-assign-dbg "handle-send-rhs : rhs : " rhs dnl)
+    (if (simple-operand? rhs)
+        s
+
+        (let* ((tempnam (tg 'next))
+               (newtype (derive-type rhs syms func-tbl struct-tbl cell-info)) 
+               (newvar  (make-var1-decl tempnam newtype))
+               (newass  (make-assign `(id ,tempnam) rhs))
+               (newsend (make-send lhs `(id ,tempnam)))
+               )
+          (define-var! syms tempnam newtype)
+          (list 'sequence newvar newass newsend)
+          )
+        )
+    )
+  )
+
+(define (handle-assign-rhs a syms vals tg func-tbl struct-tbl cell-info)
 
   (set! *har-ass* a)
   
-  (define (recurse a) (handle-assign-rhs a syms vals tg func-tbl struct-tbl))
+  (define (recurse a) (handle-assign-rhs a syms vals tg func-tbl struct-tbl cell-info))
   
   (handle-assign-dbg "handle-assign-rhs   : " a dnl)
 
@@ -150,7 +172,7 @@
 
                 (else
                  (let* ((tempnam (tg 'next))
-                        (newtype (derive-type (car p) syms func-tbl struct-tbl)) 
+                        (newtype (derive-type (car p) syms func-tbl struct-tbl cell-info)) 
                         (newvar (make-var1-decl tempnam newtype))
                         (newass (make-assign `(id ,tempnam) (car p)))
                         )
@@ -176,9 +198,9 @@
          ((and complex-l complex-r)
           (let*
               ((ltempnam (tg 'next))
-               (ltype    (derive-type l syms func-tbl struct-tbl))
+               (ltype    (derive-type l syms func-tbl struct-tbl cell-info))
                (rtempnam (tg 'next))
-               (rtype    (derive-type r syms func-tbl struct-tbl))
+               (rtype    (derive-type r syms func-tbl struct-tbl cell-info))
                (seq
                 `(sequence
                    ,(make-var1-decl ltempnam ltype)
@@ -193,7 +215,7 @@
          (complex-l
           (let*
               ((tempnam (tg 'next))
-               (type    (derive-type l syms func-tbl struct-tbl))
+               (type    (derive-type l syms func-tbl struct-tbl cell-info))
                (seq
                 `(sequence
                    ,(make-var1-decl tempnam type)
@@ -205,7 +227,7 @@
          (complex-r
           (let*
               ((tempnam (tg 'next))
-               (type    (derive-type r syms func-tbl struct-tbl))
+               (type    (derive-type r syms func-tbl struct-tbl cell-info))
                (seq
                 `(sequence
                    ,(make-var1-decl tempnam type)
@@ -225,7 +247,7 @@
         (cond ((not (simple-operand? x))
                (let*
                    ((tempnam (tg 'next))
-                    (type    (derive-type x syms func-tbl struct-tbl))
+                    (type    (derive-type x syms func-tbl struct-tbl cell-info))
                     (seq
                      `(sequence
                         ,(make-var1-decl tempnam type)
@@ -249,7 +271,7 @@
         (if (simple-operand? x)
             x
             (let* ((nam     (tg 'next 'chanex-access-))
-                   (newtype (derive-type x syms func-tbl struct-tbl))
+                   (newtype (derive-type x syms func-tbl struct-tbl cell-info))
                    (newvar  (make-var1-decl nam newtype))
                    (newass  `(assign ,(make-ident nam) ,x))
                    )
@@ -302,7 +324,7 @@
 
 (define (get-recv-rhs rs)  (caddr rs))  ;; wait, isnt this backwards?
 
-(define (handle-access-recv ass syms vals tg func-tbl struct-tbl)
+(define (handle-access-recv ass syms vals tg func-tbl struct-tbl cell-info)
 
   (set! *has-ass* ass)
   
@@ -326,7 +348,7 @@
       (if (simple-operand? x)
           x
           (let* ((nam     (tg 'next))
-                 (newtype (derive-type x syms func-tbl struct-tbl))
+                 (newtype (derive-type x syms func-tbl struct-tbl cell-info))
                  (newvar  (make-var1-decl nam newtype))
                  (newass  `(assign ,(make-ident nam) ,x))
                  )

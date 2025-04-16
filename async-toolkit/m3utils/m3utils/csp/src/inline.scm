@@ -68,7 +68,7 @@
         (if (not (simple-operand? actual))
             
             ;; not a simple type
-            (let ((actual-type (derive-type actual syms func-tbl struct-tbl))
+            (let ((actual-type (derive-type actual syms func-tbl struct-tbl cell-info))
                   (newvar      (make-var1-decl copyin-id formal-type))
                   )
               (define-var! syms copyin-id formal-type)

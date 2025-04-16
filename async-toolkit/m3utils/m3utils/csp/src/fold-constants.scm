@@ -2,7 +2,7 @@
 ;; inputs can be polymorphic
 
 (define (dbg . x)
-  (apply dis x) ;; comment this out to make it quiet
+;;  (apply dis x) ;; comment this out to make it quiet
   )
 
 (define (handle-intrinsic name constant? constant-value arg-list)
@@ -114,7 +114,7 @@
    `(not * ,not)))
 
 (define (handle-boolean-binop
-         x constant? constant-value syms func-tbl struct-tbl)
+         x constant? constant-value syms func-tbl struct-tbl cell-info)
   (let ((op (car x))
         (a  (cadr x))
         (b  (caddr x)))
@@ -128,7 +128,7 @@
               (dbg "handle-boolean-binop   b  : " b dnl)
               )
 
-          (let* ((ty (derive-type a syms func-tbl struct-tbl))
+          (let* ((ty (derive-type a syms func-tbl struct-tbl cell-info))
                  (type (car ty)))
                      
             (let loop ((p *boolean-binops*))
@@ -162,7 +162,7 @@
   );;enifed
 
 (define (handle-boolean-unop
-         x constant? constant-value syms func-tbl struct-tbl)
+         x constant? constant-value syms func-tbl struct-tbl cell-info)
   (let ((op (car x))
         (a  (cadr x)))
     (if (and (constant? a))
@@ -175,7 +175,7 @@
               )
 
           (let* ((ca (constant-value 'boolean a))
-                 (ty (derive-type a syms func-tbl struct-tbl))
+                 (ty (derive-type a syms func-tbl struct-tbl cell-info))
                  (type (car ty)))
                      
             ;; if literal, we apply the op, else we inline the value
@@ -327,7 +327,7 @@
 
 (define *xgs* #f)
 
-(define (fold-constants-* stmt syms vals tg func-tbl struct-tbl)
+(define (fold-constants-* stmt syms vals tg func-tbl struct-tbl cell-info)
   (dbg "fold-constants-* " (if (pair? stmt) (car stmt) stmt) dnl)
 
   (define (constant? x) (constant-simple? x syms))
@@ -397,7 +397,7 @@
                    res)))
            )
           
-          ((integer-expr? x syms func-tbl struct-tbl)
+          ((integer-expr? x syms func-tbl struct-tbl cell-info)
            (cond ((= (length x) 3)
                   (handle-integer-binop x constant? constant-value))
                  ((= (length x) 2)
@@ -405,15 +405,15 @@
                  (else (error)))
            )
           
-          ((boolean-expr? x syms func-tbl struct-tbl)
+          ((boolean-expr? x syms func-tbl struct-tbl cell-info)
            (cond ((= (length x) 3)
                   (handle-boolean-binop
-                   x constant? constant-value syms func-tbl struct-tbl))
+                   x constant? constant-value syms func-tbl struct-tbl cell-info))
                  ((= (length x) 2)
                   (handle-boolean-unop
-                   x constant? constant-value syms func-tbl struct-tbl))))
+                   x constant? constant-value syms func-tbl struct-tbl cell-info))))
           
-          ((string-expr? x syms func-tbl struct-tbl)
+          ((string-expr? x syms func-tbl struct-tbl cell-info)
            (handle-string-binop x constant? constant-value))
 
           ((array-access? x)

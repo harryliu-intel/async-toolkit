@@ -136,6 +136,8 @@
                      ;; filter out anything that returns 'delete
                      (filter filter-delete (map stmt args))
                      )
+
+                    ((label) args)
                     
                     ((assign)
                      (let ((res

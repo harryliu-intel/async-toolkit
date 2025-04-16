@@ -66,6 +66,14 @@ int x;
 
 doesn't really mean very much.
 
+But: we need to be a bit careful.  A nested loop variable parallel
+composition is legal, such as:
+
+<,i : M : <, j : i : f(i, j) > >
+
+the tricky part here is that j and j both need to be allocated during
+the construction of the parallel loops.
+
 
 Selection statement compilation
 ===============================
@@ -97,6 +105,44 @@ B0; N01; N2; goto B1
 
 B1
 
+
+Detailed selection compilation
+==============================
+
+Elsewhere, we implement the selection as follows:
+
+
+    boolean done  
+    boolean g0..gN-1
+
+    done := false;
+
+    *[ ~done ->
+
+       lock(R);
+
+       <; i : N : gi := Gi > ;
+
+       done := < | : i : N : gi > ;
+
+       [ <[] : N : gi -> Si > ];
+
+       [ ~done -> waitfor(R) [] done -> unlock(R) ]
+
+     ]
+
+     { done & R is unlocked & exists i : Si has executed }
+
+We now give implementations of lock, waitfor, and unlock.
+
+lock(R)    = (wait_state := state(R))
+
+waitfor(R) = (while state(R) = wait_state do wait(R) end)
+
+unlock(R)  = (skip)
+
+where wait(R) waits for any change in R, and the evaluation of
+state(R) = wait_state is atomic.
 
 Loop compilation
 ================
