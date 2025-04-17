@@ -14,7 +14,7 @@ IMPORT Debug, OSError, ReadLineError, NetObj;
 IMPORT Dsim;
 IMPORT NameRefTbl;
 IMPORT NameSet, NameSetDef;
-IMPORT TextUtils;
+IMPORT CitTextUtils AS TextUtils;
 IMPORT Wr;
 IMPORT SchemeSymbol, SchemeString;
 

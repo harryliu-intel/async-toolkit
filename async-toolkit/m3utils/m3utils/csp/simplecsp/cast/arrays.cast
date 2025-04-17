@@ -279,3 +279,14 @@ define xref()(bd(32) -L, +R) <+ stuff(10)
     R!z
   }
 }
+
+define ci()(bd(32) -L[0..1])
+{
+  csp {
+    int x[2];
+    //    x[0] = 1;
+    int y= 0;
+    print (x[0]);
+    print (L[y]?);
+  }
+}

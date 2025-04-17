@@ -2,7 +2,7 @@
 ;; inputs can be polymorphic
 
 (define (dbg . x)
-;;  (apply dis x) ;; comment this out to make it quiet
+  (apply dis x) ;; comment this out to make it quiet
   )
 
 (define (handle-intrinsic name constant? constant-value arg-list)
@@ -239,7 +239,11 @@
     )
   )
 
-(define *fold-stmts* '(var1 assign sequential-loop parallel-loop eval local-if))
+(define *fold-stmts* '(var1 assign
+                            sequential-loop parallel-loop
+                            eval
+                            local-if
+                            while))
 
 (define (constant-type? t)
   (and (pair? t)
@@ -357,7 +361,7 @@
     )
   
   (define (expr-visitor x)
-    (dbg "expr-visitor x = " x dnl)
+    (dbg "fold-constants-* expr-visitor x = " x dnl)
     
     (cond ((not (pair? x)) x)
           
@@ -430,7 +434,6 @@
            )
           
           (else x)))
-  
 
   (define (stmt-visitor s)
     (dbg "fold-* stmt-visitor " s dnl)
@@ -465,6 +468,13 @@
              )
          res
          )
+       )
+
+      ((while)
+       (if (eq? (cadr s) #f)
+           'skip
+           (list 'while ((expr 'boolean) (cadr s)) (caddr s))
+           )
        )
       
       ((var1)

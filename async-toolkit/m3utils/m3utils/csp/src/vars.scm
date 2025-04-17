@@ -98,14 +98,24 @@
                 (if (null? tgt) '() (get-designator-id (get-recv-rhs stmt)))))
     (else (error "not an assigning statement : " stmt))))
 
+(define (all-elems-equal? lst)
+  (cond ((null? lst)      #t)
+        ((null? (cdr lst) #t))
+        (else (and (equal? (car lst) (cadr lst))
+                   (all-elems-equal? (cdr lst))))))
+         
+
+
 (define (find-constant-symbols tbl)
   (let* ((keys      (tbl 'keys))  ;; all the keys from the assignment table
          
          (ass-lsts  (map (lambda(k)(tbl 'retrieve k)) keys))
          ;; get the assignments for each key
          
-         (ssa-lst   (map car (filter (lambda(l)(= (length l) 1)) ass-lsts)))
+         (ssa-lst   (map car (filter all-elems-equal? ass-lsts)))
          ;; filter out the single assignment variables
+         ;; note we don't check the length in case the same thing
+         ;; is being assigned (happens from do -> while conversion)
          
          (con-lsts  (filter (lambda(e)(constant-assignment? (car e) (cadr e)))
                             ssa-lst))

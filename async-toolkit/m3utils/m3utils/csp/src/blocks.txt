@@ -148,7 +148,7 @@ Loop compilation
 ================
 
 Per our work on selection, the only loop that has to be implemented
-is *[ ~done -> S ].
+is *[ ~done -> S ].  We call this "while".
 
 Consider:
 
@@ -166,13 +166,50 @@ B1
 
 
 
+How to extract the program fragments
+====================================
+
+At this point in the compilation, there are the following compound
+statements to consider:
+
+parallel
+
+sequential
+
+parallel-loop
+
+sequential-loop
+
+while
+
+local-if
+
+waiting-if
+
+Note that labels are always contained in a sequential.
+
+Labels are never contained in a parallel, but a parallel is always
+bracketed by labels.
+
+A parallel-loop has to be handled as a special construct.
+
+A sequential-loop not containing a blocking statement can be
+implemented directly.  But a sequential-loop that does contain a blocking
+statement needs to be desugared to a while-loop.
 
 
 
 
 
+----------------------------------------------------------------------
 
+(define (fact n)
+   (if (= 0 n) 1 (* n (fact (- n 1)))))
 
+In CPS
+
+(define (fact n c)
+   (if (= 0 n) (c 1) (c (* n (fact (- n 1) )))))
 
 
 

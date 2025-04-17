@@ -4,7 +4,7 @@
   (if (or (char? x) (string? x)) x (stringify x)))
 
 (define (do-dbg . x)
-;;  (apply dis  (map stringify-if-not-string x))
+  (apply dis  (map stringify-if-not-string x))
   )
 
 (define (remove-do the-inits prog func-tbl struct-tbl cell-info)
@@ -50,13 +50,13 @@
                    (the-if (cons 'if if-grds))
 
                    (the-body
-                    `(sequence ,@decls ,@assigns ,ndone-assign ,the-if))
+                    `(sequence ,@assigns ,ndone-assign ,the-if))
 
                    (the-loop
                     `(while ,ndone-id ,the-body))
 
                    (res
-                    `(sequence ,ndone-decl ,ndone-init ,the-loop))
+                    `(sequence ,ndone-decl ,@decls ,@assigns ,ndone-assign ,the-loop))
                    )
 
               ;; we could insert a check for two guards for

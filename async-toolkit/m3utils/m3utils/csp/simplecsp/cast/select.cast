@@ -353,3 +353,25 @@ define X()()
   }
 }  
     
+define Y()(bd(32) -L[0..1])
+{
+  csp {
+    *[  #L[0] -> print ( L[0]? )
+     [] #L[0] -> print ( L[1]? )
+     ]
+  }
+}
+    
+define Z()(bd(32) -L[0..1])
+{
+  csp {
+    boolean b;
+    b = true;
+    
+    *[ print ( L[0]? )
+     ]
+  }
+}
+    
+
+  
