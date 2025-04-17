@@ -67,3 +67,8 @@
 (define (count-declarations of stmt)
   (count-in of (find-declaration-vars stmt)))
 
+(define (get-all-dummies prog)
+  (uniq eq? (append (get-waiting-if-dummies prog)
+                    (get-loop-dummies prog)
+                    (get-loopex-dummies prog))))
+

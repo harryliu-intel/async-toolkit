@@ -1,4 +1,9 @@
-(dis "loading selection.scm" dnl)
+;;(dis "loading selection.scm" dnl)
+
+(define (selection-dbg . x)
+  (apply dis x)
+  )
+
 
 (define msi-selection #f)
 
@@ -98,6 +103,8 @@
 (define (waiting-if? s)
   (and (pair? s) (eq? 'waiting-if (car s))))
 
+(define wif #f)
+
 (define (implement-waiting-if selection func-tbl cell-info)
   ;; here we will implement the selection as a waiting-if
   ;;
@@ -155,9 +162,8 @@
     (dis "implement-waiting-if assigns       : " (stringify assigns) dnl)  
     (dis "implement-waiting-if table         : " (stringify table) dnl)
     (dis "implement-waiting-if res           : " (stringify  res) dnl)
-    
-
-
+    ;;(error)
+    (set! wif res)
     res
     )
   )
@@ -186,6 +192,7 @@
     )
   
   (visit-stmt prog s-visit identity identity)
+  ids
   )
 
 

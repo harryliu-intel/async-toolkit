@@ -4,7 +4,7 @@
        (or (eq? (car s) 'parallel) (eq? (car s) 'sequence))))
 
 (define (simplify-one-stmt s)
-  (dis "simplify-one-stmt s : " s dnl)
+  (if #f (dis "simplify-one-stmt s : " s dnl))
   
   ;; all that this does is flattens out parallel and sequence statements
   (cond ((compound-stmt? s)   (simplify-compound-stmt s))

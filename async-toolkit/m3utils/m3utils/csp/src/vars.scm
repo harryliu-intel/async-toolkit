@@ -164,7 +164,7 @@
 (define (make-uses prog)
 
   (define (dbg . x)
-;;      (apply dis x)
+      (apply vars-dbg x)
     )
 
   (define tbl (make-hash-table 100 atom-hash))
@@ -174,7 +174,7 @@
   (define (add-entry! id)
     (let* ((new-entry (list cur-stmt))
            )
-;;      (vars-dbg "make-uses-tbl add-entry!  "  id " -> " cur-stmt dnl)
+      (vars-dbg "make-uses-tbl add-entry!  "  id " -> " cur-stmt dnl)
       (let ((q (tbl 'retrieve id)))
         (if (eq? q '*hash-table-search-failed*)
             (tbl 'add-entry!    id (list new-entry))
@@ -221,6 +221,9 @@
              (map add-entry! (find-expr-ids lhs))))
        )
 
+      ((waiting-if) ;; add the wait conditions as referenced vars
+       (map add-entry! (map car (cdr s)))
+       )
 
       ((eval)
        (let* ((expr (cadr s))
@@ -373,11 +376,31 @@
 (define (assign? x)(and (pair? x)(eq? 'assign (car x))))
 
 
+(define gctbw #f)
+
 (define (get-channel-type-bit-width channel-type)
-  (if (or (not (eq? 'channel             (car channel-type)))
-          (not (eq? 'standard.channel.bd (cadr channel-type))))
-      (error "not a channel type I understand : " channel-type))
-  (caaddr channel-type))
+  (set! gctbw channel-type)
+  
+  (vars-dbg "get-channel-type-bit-width : channel-type : " channel-type dnl)
+
+  (define (err)
+    (error "not a channel type I understand : " channel-type))
+
+  (cond ((not (pair? channel-type)) (err))
+        
+        ((eq? 'channel (car channel-type))
+         (if (eq? 'standard.channel.bd (cadr channel-type))
+             (caaddr channel-type)
+             (err)
+             ))
+
+        ((eq? 'array (car channel-type))
+         (get-channel-type-bit-width (caddr channel-type)))
+
+        (else (err))))
+
+
+
 
 (define *ar-ass* #f)
 

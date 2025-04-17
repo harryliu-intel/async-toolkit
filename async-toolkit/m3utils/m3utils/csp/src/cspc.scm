@@ -359,11 +359,6 @@
 
 (define *uft-cp* #f) 
 
-(define (get-all-dummies prog)
-  (uniq eq? (append (get-waiting-if-dummies prog)
-                    (get-loop-dummies prog)
-                    (get-loopex-dummies prog))))
-
 (define (uniqify-function-text func sfx cell-info initvars)
 
   ;;
@@ -481,9 +476,20 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
-(define (loaddata! nm)
+(define (loaddata! . nma)
   ;; this ends up loading the program into *the-text*
-  (set! *the-prog-name* nm)
+
+  (let  ((nm
+          (if (null? nma)
+              *the-prog-name*
+              (begin 
+              
+                (set! *the-prog-name* (car nma))
+                (car nma)
+                )
+              )
+          )
+         )
   (begin
     (dis dnl "=========  LOADING PARSE TREE FROM " nm ".scm ..." dnl)
 
@@ -500,7 +506,7 @@
   (dis   dnl go-grn-bold-term
          "=========  INITIAL SETUP COMPLETE : run (compile!) when ready" dnl
          reset-term dnl)
-  
+  )
   '*the-text*
   )
 
@@ -1409,7 +1415,7 @@
          ((boolean? x) *default-boolean-type*)
          ((string? x) *default-string-type*)
 
-         ((recv-expression? x)
+         ((or (probe? x)(recv-expression? x))
           (let* ((port-tbl  (make-port-table cell-info)) ;; hrmph
                  (channel-designator (cadr x))
                  (id        (get-designator-id channel-designator))
@@ -1741,88 +1747,7 @@
     )
   )
 
-(define rdr #f)
-
-(define (remove-do the-inits prog func-tbl struct-tbl cell-info)
-  (let ((tg (make-name-generator "remove-do")))
-
-    (define (visitor s)
-;;      (dis "s = " (stringify s) dnl)
-      (let ((kw (get-stmt-type s)))
-        (if (and (member kw '(do nondet-do))
-                 (nonsimple-guards? s))
-            
-            ;; get rid of it
-            (let* ((gcs   (cdr s))
-                   (ndone  (tg 'next 'not-done-))
-                   
-                   (vars  (map (lambda (gc) (tg 'next)) gcs))
-                   (grds  (map car gcs))  ;; guards
-                   (cmds  (map cadr gcs)) ;; commands
-
-                   (decls
-                    (map (lambda(nm)(make-var1-decl nm *default-boolean-type*)) vars))
-                   
-                   (assigns
-                    (map (lambda(v x)(make-assign `(id ,v) x))
-                         vars
-                         grds))
-
-                   (g-list  (map make-ident vars))
-                   
-                   (or-expr (make-binop '| g-list)) ; |))
-
-                   (ndone-decl  (make-var1-decl ndone *default-boolean-type*))
-                   (ndone-assign (make-assign (make-ident ndone)
-                                             or-expr))
-
-                   (if-grds
-                    (cons
-                     (list `(not ,(make-ident ndone)) 'skip)
-                     (map list g-list cmds)))
-
-                   (the-if (cons 'if if-grds))
-
-                   (the-body
-                    `(sequence ,@decls ,@assigns ,ndone-assign ,the-if))
-
-                   (the-loop
-                    `(do (,(make-ident ndone) ,the-body)))
-
-                   (res
-                    `(sequence ,ndone-decl ,the-loop))
-                   )
-
-              ;; we could insert a check for two guards for
-              ;; deterministic dos.
-
-              (dis "remove-do : " (stringify s) dnl)
-              (dis "remove-do : gcs   : " (stringify gcs) dnl)
-              (dis "remove-do : ndone : " (stringify ndone) dnl)
-              (dis "remove-do : vars  : " (stringify vars) dnl)
-              (dis "remove-do : grds  : " (stringify grds) dnl)
-              (dis "remove-do : cmds  : " (stringify cmds) dnl dnl)
-              (dis "remove-do : ndone-assign : " (stringify ndone-assign) dnl)
-              (dis "remove-do : the-if       : " (stringify the-if) dnl)
-              (dis "remove-do : the-body     : " (stringify the-body) dnl)
-
-              (dis "remove-do : the-loop     : " (stringify the-loop) dnl)
-
-              (set! rdr res)
-
-;;              (error)
-              
-              res
-              )
-            s
-            ) ;; fi
-        ) ;; tel
-      )
-
-    (visit-stmt prog visitor identity identity)
-    )
-  )
-
+(load "do.scm")
 (define (simplify-if the-inits prog func-tbl struct-tbl cell-info)
 
   (define (visitor s)
@@ -2089,7 +2014,7 @@
                                 
                  
                  ;; we should be able to save the globals from earlier...
-                 (dis "initializations..." dnl)
+;;                 (dis "initializations..." dnl)
 
                  (prepostvisit-stmt 
                   the-inits
@@ -2097,7 +2022,7 @@
                   identity identity
                   identity identity)
                  
-                 (dis "program text..." dnl)
+;;                 (dis "program text..." dnl)
 ;;                 (set! debug #t)
                  
                  (let ((res
@@ -2275,9 +2200,10 @@
   )
 
 (define *the-passes-5*
-  `((global ,sequentialize-nonblocking-parallels-pass)
-    (global ,delete-unused-vars-pass)
-    (global ,simplify-stmt-pass)
+  `((global          ,sequentialize-nonblocking-parallels-pass)
+    (global          ,delete-unused-vars-pass)
+    (global          ,simplify-stmt-pass)
+    (sequential-loop ,unblock-loops)
 ;;    (*       ,fold-constants-*)
 ;;    (global  ,constantify-constant-vars-pass)
     )

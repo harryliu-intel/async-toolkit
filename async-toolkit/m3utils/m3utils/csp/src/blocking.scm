@@ -9,7 +9,7 @@
   
   (define (s-visitor s)
     ;; statements that on their own introduce blocking
-;;    (dis "s-visitor " (stringify s) dnl)
+;;7    (dis "s-visitor " (stringify s) dnl)
     (if result
         'cut
         (case (get-stmt-type s)
@@ -68,20 +68,30 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define (insert-block-labels stmt)
-  (define tg (make-name-generator ""))
+(define (insert-block-labels prog)
+  (define tg (make-name-generator "L"))
   
   (define (s-visitor s)
 
     (define (mark side)
-      (let* ((tail (case side
-                     ((both) `((label ,(tg 'next))))
-                     ((before) '())))
-             (res (append (list 'sequence
-                                `(label ,(tg 'next))
-                                s)
-                          tail)))
+      (let* ((suffix (case side
+                       ((both after)
+                        `((label ,(tg 'next))))
+                       ((before -before)
+                        '())))
 
+             (prefix (case side
+                       ((-before) ;; - labels are optional
+                        `((label ,(symbol-append '- (tg 'next)))))
+                       ((before) ;; - labels are optional
+                        `((label ,(tg 'next))))
+                       ((both)
+                        `((label ,(tg 'next))))
+                       ((after)
+                        '())))
+             
+             (res (append '(sequence) prefix (list s) suffix))
+             )
         res
         )
       )
@@ -92,10 +102,16 @@
 
       ((waiting-if) (mark 'before))
 
-      ((if nondet-if) (error))
+      ((if nondet-if do nondet-do) (error))
 
       ((parallel parallel-loop) (mark 'both))
 
+      ((while)
+       (if (stmt-may-block? s) (mark '-before) s))
+
+      ((eval)
+       (if (stmt-may-block? s) (mark 'before) s))
+      
       ((assign)
        (let ((rhs (get-assign-rhs s)))
          (if (or (peek? rhs) (recv-expression? rhs))
@@ -106,7 +122,56 @@
       (else s)))
 
 
-  (visit-stmt stmt s-visitor identity identity)
+  ;; label the entry point also
+  `(sequence (label START) ,(visit-stmt prog s-visitor identity identity))
   )
 
+(define (unblock-loops stmt syms vals tg func-tbl struct-tbl cell-info)
+
+  ;; sequential-loop with a blocking statement have to be desugared
+  ;; to regular while loops
   
+  (define tg (make-name-generator "unblock-loops"))
+
+    (define (s-visitor s)
+      (dis "s-visitor s : " s dnl)
+      (if (and (eq? 'sequential-loop (get-stmt-type s))
+               (stmt-may-block? s))
+          
+          (let* ((loopr    (get-loop-range s))
+                 (lmin     (cadr loopr))
+                 (lmax     (caddr loopr))
+                 
+                 (nam      (get-loop-dummy s))
+                 ;; reuse the dummy
+                 
+                 (newtype  (derive-type lmax syms func-tbl struct-tbl cell-info))
+                 ;; we can only count upward... so lmax is a safe type
+                 
+                 (newddecl (make-var1-decl nam newtype))
+                 
+                 (newdinit  (make-assign `(id ,nam) lmin))
+                 
+                 (incstmt   (make-assign `(id ,nam) `(+ (id, nam) ,*big1*)))
+                 
+                 (newbnam  (tg 'next))
+                 
+                 (newbdecl (make-var1-decl newbnam *default-boolean-type*))
+                 
+                 (bupdate  (make-assign `(id ,newbnam) `(<= (id ,newbnam ,lmax))))
+                 
+                 (the-loop `(while (id ,newbnam) (sequence ,(get-loop-stmt s)
+                                                           ,incstmt
+                                                           ,bupdate)))
+                 )
+            
+            (define-var! syms nam newtype)
+            (define-var! syms newbnam *default-boolean-type*)
+            
+            `(sequence ,newddecl ,newdinit ,newbdecl ,bupdate , the-loop))
+          s
+          )
+      )
+
+    (visit-stmt stmt s-visitor identity identity)
+    )

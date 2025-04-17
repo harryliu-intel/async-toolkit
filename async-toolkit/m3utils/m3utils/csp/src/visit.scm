@@ -177,6 +177,13 @@
                              (stmt command))))
                           args)
                      )
+
+                    ((while) ;; desugared do
+                     (let ((G (car args))
+                           (S (cadr args)))
+                       (list (expr G) (stmt S))
+                       )
+                     )
                     
                     ((eval)
                      (let* ((eval-args (car args))
