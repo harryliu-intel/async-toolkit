@@ -974,9 +974,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define (get-stmt-type stmt)
-  (if (eq? stmt 'skip)
-      'skip
-      (car stmt)))
+  (if (pair? stmt)
+      (car stmt)
+      'skip))
 
 
 (define (set-diff lst0 lst1)

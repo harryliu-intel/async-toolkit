@@ -115,15 +115,9 @@
     ;; this procedure does most of the work, it is called after stmt-previsit
 
     (pop #f)
-    (if (eq? s 'skip)
+    (if (eq? (get-stmt-type s) 'skip)
         s
         (begin
-          (if (not (pair? s))
-              (begin
-                (set! *bad-s* s)
-                (set! *bad-last* last)
-                (error "Not a statement : " s dnl "last : " last)))
-          
           (let ((kw   (car s))
                 (args (cdr s))
                 )
@@ -137,7 +131,7 @@
                      (filter filter-delete (map stmt args))
                      )
 
-                    ((label) args)
+                    ((label goto) args)
                     
                     ((assign)
                      (let ((res
@@ -225,7 +219,7 @@
         )
     )
  
-
+  ;;
   ;; Basic order of visiting:
   ;;
   ;; if the pre-visitor returns #f, skip the statement (and keep it unchanged)

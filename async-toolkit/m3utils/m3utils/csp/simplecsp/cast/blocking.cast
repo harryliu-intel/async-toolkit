@@ -1,0 +1,58 @@
+module blocking;
+
+define A()(bd(32) -L, -M)
+{
+  csp {
+    <; i: L? .. L? : M?x >;
+    print(x)
+  }
+
+}
+
+define B()(bd(32) -L, -M)
+{
+  csp {
+    <; i: L? .. L? : M?x >;
+    print(x);
+
+    [ x > 2 -> L?x
+    [] x < 2 -> M?x
+      ];
+
+    print(x);
+
+    wait(12345);
+  }
+
+}
+
+define W()(bd(32) -L, -M)
+{
+  csp {
+    *[
+      
+    [  #L -> L?x
+    [] #M -> M?x
+    ];
+
+    print(x)
+    ]
+  }
+}
+
+define FALSE()(bd(32) -L, -M)
+{
+  csp {
+
+  *[ 3 > 2 ->
+      
+    [  #L -> L?x
+    [] #M -> M?x
+    ];
+
+    print(x)
+    ]
+  }
+}
+  
+

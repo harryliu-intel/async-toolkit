@@ -195,7 +195,7 @@ A parallel-loop has to be handled as a special construct.
 
 A sequential-loop not containing a blocking statement can be
 implemented directly.  But a sequential-loop that does contain a blocking
-statement needs to be desugared to a while-loop.
+statement needs to be desugared to a while-loop. [DONE]
 
 
 
