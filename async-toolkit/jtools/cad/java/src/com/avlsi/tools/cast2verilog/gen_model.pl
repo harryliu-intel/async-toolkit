@@ -145,7 +145,7 @@ if (defined($gls_dir)) {
                 print "SDF file: $sdf_file\n";
                 my $block = `zgrep '(DESIGN ' $sdf_file`;
                 $block = substr((split(/ /, substr($block, 1, -2)))[1], 1, -1);
-                my $arg = "$sdf:$block:$sdf_file";
+                my $arg = "max:$block:$sdf_file";
                 push @sdf_args, "-sdf $arg";
                 #If performance is enabled, also include the history monitors
                 if ($perf) {
