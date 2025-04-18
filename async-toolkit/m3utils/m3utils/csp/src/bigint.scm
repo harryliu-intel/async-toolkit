@@ -66,10 +66,6 @@
 (define (big>> x sa)
   (BigInt.Shift x (- (BigInt.ToInteger sa))))
 
-(define cartesian-product 
-  (lambda (xs ys)
-    (apply append (map (lambda (x) (map (lambda (y) (list x y)) ys)) xs))))
-
 (define (dumb-binop-range op)
   (lambda (a b)
     (bigint-dbg "dumb-binop-range " op " " a " " b dnl)

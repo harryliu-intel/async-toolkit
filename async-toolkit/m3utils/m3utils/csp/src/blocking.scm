@@ -184,100 +184,68 @@
 
 (define (add-prefix pfx) (lambda(lst)(cons pfx lst)))
 
+(define (combine-seqs a b) (append b a))
+
+(define (combine-block-sets as bs)
+  (apply append
+         (map (lambda(a)(map
+                         (lambda(b)(combine-seqs a b))
+                         bs)
+                     )
+              as)
+         )
+  )
+
 (define (scan-sequence sequence)
 
-  (let loop ((p               (cdr sequence))
-             ;; remaining statements in sequence
-             ;; -- we've already skipped the "sequence"
-             
-             (cur             '())
-             ;; text of current block  -- first should be a label
+  (define result '()) ;; hold finished blocks here
 
-             (result          '())
-             ;; list of blocks generated
+  (define (add-result! x)
+    (dis "add-result : x : " x dnl)
+    (set! result (cons x result)))
+  
+  (define (recurse sofar  ;; current block so far, list of list of statements
+                   p      ;; remaining statements
+                   )
 
-             (proc-label        #t)
-             )
+    (dis "recurse sofar = " sofar dnl)
+    (dis "recurse p     = " p dnl)
+    
+    (cond ((null? p) (map add-result! sofar))
 
-    (dis "loop p      : " p dnl)
-    (dis "loop cur    : " cur dnl)
-    (dis "loop result : " result dnl)
-    (dis "==============" dnl)
-
-    (define (done)
-      ;; take the result and format it correctly
-      (reverse
-       (map (add-prefix 'sequence)
-            (cons (reverse cur) result))))
-
-    (cond ((null?  p)       (done))
-           
           ((label? (car p))
-           (let ((revseq (cons (label->goto (car p)) cur)))
-             ;; revseq is the subsequence, it should start in a label
-             ;; and end in a goto or have a "loose end"
-             ;; (but it's reversed)
+           (map
+            (lambda(seq) (add-result! (cons (label->goto (car p)) seq)))
+            sofar
+            )
+           ;; label : close out all current blocks
 
-             (if proc-label
-                 (loop (cdr p)
-                       ;; next statement
-                       
-                       (list (car p))
-                       ;; lead with label
-                       
-                       (if (not (null? cur))
-                           (cons (reverse revseq) result)
-                           ;; and cons on the result, unless it's empty
-                           )
-
-                       #t
-                       );;pool
-
-                 (loop '()
-                       '()
-                       (if (not (null? cur))
-                           (cons (reverse revseq) result)
-                           ;; and cons on the result, unless it's empty
-                           )
-                       #f
-                       )
-
-                 );;fi
-             );;tel
-           );;?lebal
-
-          
-          (else ;; just add the statement to the current block
-           (let* ((next         (car p))
-                  (next-blocks  (scan-stmt (car p))))
-             
-             (dis "next        : " next dnl)
-             (dis "next-blocks : " next-blocks dnl)
-
-             ;; to the extent that the blocks aren't closed, we
-             ;; map the rest of the parsing across all the blocks
-             ;; those that *are* closed, we just add to result
-             ;;
-             ;; but we need to make sure that only one of the recursions
-             ;; survives the next label.  Hmm...!
-             (apply append
-                    (map (lambda(blk)
-                           (if (loose-end? blk)
-                               (loop (cdr p) (cons blk cur) result #f)
-                               (loop (cdr p) '() (cons blk result) #t)
-                               );; fi
-                           )
-                         next-blocks))
-                    
-
-;;             (error)
-             )
+           (dis "starting from label : " (car p) dnl)
+           
+           (recurse (list (list (car p))) (cdr p))
+           ;; start fresh
            )
+          
+          (else
 
-          );; dnoc
+           ;; a statement that is not a label
+           
+           (let* ((carblks    (scan-stmt (car p)))
+                  (looseends  (filter loose-end? carblks))
+                  (closeends  (filter (filter-not loose-end?) carblks)))
 
-    );;tel
-  )
+             (map add-result! closeends) ;; remember the closed ends
+
+             (recurse (combine-block-sets sofar looseends) (cdr p))
+             )
+            );;esle
+           
+          );;dnoc     
+    );;enifed
+
+  (recurse (scan-stmt (cadr sequence)) (cddr sequence))
+  (reverse (map (lambda(seq)(cons 'sequence seq))(map reverse result)))
+  );;enifed
 
 ;; idea... blocking a statement results in a set of blocks.
 ;; any blocks that aren't closed should be closed with the coda within
@@ -329,13 +297,13 @@
          )
     (if (member kw *scan-stmts*)
         ((eval callsym) stmt)
-        (list stmt)
+        (list (list stmt))
         )
     )
   )
 
 (define (scan-parallel stmt)
-  (cdr stmt))
+  (apply append (map scan-stmt (cdr stmt))))
 
         
         
