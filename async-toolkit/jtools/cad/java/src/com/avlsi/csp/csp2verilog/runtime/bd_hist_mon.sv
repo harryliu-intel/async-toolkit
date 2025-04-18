@@ -255,6 +255,50 @@ end
 
 endmodule
 
+//Altverter/Diverter
+module bd_altdiv_hist_mon (
+  input logic rb,
+  input logic L,
+  input logic \R[0] ,
+  input logic \R[1] 
+);
+
+realtime t_L;
+int n_L;
+
+initial begin
+  //Register ModName name
+  t_L = '0;
+  n_L = '0;
+  ModName = $sformatf("%m");
+  $timeformat(-15,0,"fs");
+  histmon_register_node({ModName,".L"});
+end
+
+always @(L) begin
+  t_L = (rb==1'b0) ? 1'b0 : $realtime;
+  n_L = (rb==1'b0) ? '0 : n_L + 1;
+end
+
+always @( \R[0]  ) begin
+    //L is (always) the critical path
+    //$display("%m: R[0] fires @ %0t due to L @ %0t", $realtime, t_L);
+    histmon_add_transition({ModName,".\\R[0] "}, $realtime, {ModName,".L"}, t_L, "altdiv_mon");
+end
+
+always @( \R[1]  ) begin
+    //L is (always) the critical path
+    //$display("%m: R[1] fires @ %0t due to L @ %0t", $realtime, t_L);
+    histmon_add_transition({ModName,".\\R[1] "}, $realtime, {ModName,".L"}, t_L, "altdiv_mon");
+end
+
+final begin
+  histmon_sim_done();
+end
+
+endmodule
+
+
 //Slackless arbiter
 module bd_szarb2_hist_mon (
   input logic \L[0].0 ,
@@ -845,6 +889,10 @@ always @(out) begin
       //c is one possible critical path
       //$display("%m: out fires @ %0t... picking c @ %0t", $realtime, t_c);
       histmon_add_transition({ModName,".",outname}, $realtime, {ModName,".c"}, t_c, "comb3_mon");
+    end
+    else begin
+      $display("%m: ERROR: out fires @ %0t", $realtime);
+    end
   end
 end
 
