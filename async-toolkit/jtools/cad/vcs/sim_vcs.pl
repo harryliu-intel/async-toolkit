@@ -24,16 +24,6 @@ my ($cell, $env, $level, $corner, $outdir, $simv, $tcl, $t_run, $perf, $depth,
 # Command line options to pass through to gen_model
 my (@cast_defines, @c2v_args, @gen_args, @vcs_args);
 
-#Process (and error check) the first argument
-if (@ARGV < 1) {die "ERROR: Missing required first argument \"cell_fqcn:env\"\n";}
-else {
-    #The first argument should be of the form "cell_fqcn:env"
-    my $first_arg = shift @ARGV;
-    #Check if ':' appears exactly once in the first argument
-    if ($first_arg =~ tr/:// != 1) {die "ERROR: First argument \"$first_arg\" should be of the form \"cell_fqcn:env\"\n";}
-    ($cell, $env) = split(/:/, $first_arg);
-}
-
 #Now collect the remaining options (if applicable)
 GetOptions("level=s"     => \$level,
            "corner=s"    => \$corner,
@@ -54,6 +44,18 @@ GetOptions("level=s"     => \$level,
            "help!"       => \$help) || pod2usage(2);
 
 pod2usage(-verbose => 1) if $help;
+
+#Process (and error check) the remaining ARGV (which should be just 1)
+if (@ARGV < 1) {die "ERROR: Missing required argument \"cell_fqcn:env\"\n";}
+else {
+    #The first argument should be of the form "cell_fqcn:env"
+    my $first_arg = shift @ARGV;
+    #Check if ':' appears exactly once in the first argument
+    if ($first_arg =~ tr/:// != 1) {die "ERROR: First argument \"$first_arg\" should be of the form \"cell_fqcn:env\"\n";}
+    ($cell, $env) = split(/:/, $first_arg);
+}
+if (@ARGV != 0) {die "ERROR: There are remaining unknown arguments: @ARGV \n";}
+
 
 # If outdir is provided, check to make sure it exists
 my $wd;
