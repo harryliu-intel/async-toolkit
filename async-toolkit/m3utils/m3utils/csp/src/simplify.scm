@@ -42,7 +42,8 @@
                      )
                     
                     
-                    ((eq? 'skip (get-stmt-type next))
+                    ((skip? next)
+                     ;; this coding allows pseudocode to be simplified
                      (loop (cdr p) res))
                     
                     (else

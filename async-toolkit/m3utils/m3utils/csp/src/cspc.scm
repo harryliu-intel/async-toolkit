@@ -303,6 +303,9 @@
 
 (define (filter-not filter-pred)
   (lambda(x)(not (filter-pred x))))
+
+(define (filter-and filter-p0 filter-p1)
+  (lambda(x)(and (filter-p0 x) (filter-p1 x))))
                          
 (define (make-sequence . x)
   (cons 'sequence (filter (filter-not null?) x)))
