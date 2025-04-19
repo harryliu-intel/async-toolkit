@@ -107,7 +107,20 @@
       ((parallel parallel-loop) (mark 'both))
 
       ((while)
-       (if (stmt-may-block? s) (mark '-before) s))
+       (if (stmt-may-block? s)
+           (let* ((lab (tg 'next))
+                  (G   (cadr s))
+                  (S   (caddr s))
+                  (res `(sequence
+                          (label ,lab)
+                          (local-if (,G (sequence ,S (goto ,lab)))
+                                    (else skip))))
+                  )
+             (dis "while may block : lab = " lab dnl)
+             (dis "while may block : " res dnl)
+             res
+             )
+           s))
 
       ((eval)
        (if (stmt-may-block? s) (mark 'before) s))
@@ -380,7 +393,7 @@
                               (map reverse openend))
                       (cdr p))
 
-             (map add-result! closed) ;; remember the closed ends
+             (map add-result! (map reverse closed)) ;; remember the closed ends
 
              (map add-result! (combine-block-sets sofar openbeg))
              
