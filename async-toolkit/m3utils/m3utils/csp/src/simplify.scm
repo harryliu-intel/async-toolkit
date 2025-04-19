@@ -13,6 +13,8 @@
 
 (define (simplify-compound-stmt s)
 
+  (let ((kw (car s)))
+
     (cond
      ((= (length (cdr s)) 0)
       'skip)
@@ -24,38 +26,51 @@
       (let loop ((p    (cdr s))
                  (res  '()))
         
-        (if (null? p)
+        (cond ((null? p)
             
-            (cons (car s) (reverse res)) ;; base case
-            
-            (let ((next (car p)))
+               (cons kw (reverse res)) ;; base case
+               )
+
+              ((and (eq? kw 'sequence) (goto? (car p)))
+
+               ;; if it's a goto in a sequence, drop the rest of the
+               ;; sequence
+
+               (cons kw (reverse (cons (car p) res)))
+               )
+
               
-              (cond ((and (compound-stmt? next)
-                          (eq? (car next) (car s)))
-                     
-                     ;; same type of statement, just splice in the args
-                     ;;                    (dis " splicing next  : " next dnl)
-                     ;;                    (dis " splicing cdr next : " (cdr next) dnl)
-                     
-                     (loop (cdr p)
-                           (append (reverse (cdr next)) res))
-                     )
-                    
-                    
-                    ((skip? next)
-                     ;; this coding allows pseudocode to be simplified
-                     ;; without dropping pseudo-statements
-                     (loop (cdr p) res))
-                    
-                    (else
-                     (loop (cdr p) (cons next res)))
-                    )
-              )
+              (else
+               (let ((next (car p)))
+                 
+                 (cond ((and (compound-stmt? next)
+                             (eq? (car next) kw))
+                        
+                        ;; same type of statement, just splice in the args
+                        ;;                    (dis " splicing next  : " next dnl)
+                        ;;                    (dis " splicing cdr next : " (cdr next) dnl)
+                        
+                        (loop (cdr p)
+                              (append (reverse (cdr next)) res))
+                        )
+                       
+                       
+                       ((skip? next)
+                        ;; this coding allows pseudocode to be simplified
+                        ;; without dropping pseudo-statements
+                        (loop (cdr p) res))
+                       
+                       (else
+                        (loop (cdr p) (cons next res)))
+                       )
+                 )
+               )
             )
         )
       )
      )
     )
+  )
 
 (define (simplify-stmt stmt)
   (visit-stmt stmt simplify-one-stmt identity identity)
@@ -79,3 +94,12 @@
     )
   )
          
+(define (make-fixpoint-func f)
+
+  (define (iterate x)
+    (let ((fx (f x)))
+      (dis x " -> " fx dnl)
+      (if (equal? fx x) x (iterate fx))))
+
+  (lambda(x)(iterate x))
+  )

@@ -2091,6 +2091,7 @@
 (define-simple-pass 'constantify-constant-vars)
 (define-simple-pass 'simplify-stmt)
 (define-simple-pass 'unfold-loop-ranges)
+(define-simple-pass 'convert-waiting-ifs)
           
 (define (compile1!)
   ;; unquify the loops before doing ANYTHING else
@@ -2111,6 +2112,7 @@
                         (list 'global remove-assign-operate)
                         (list 'global remove-do)
                         (list 'global simplify-if)
+                        (list 'global convert-waiting-ifs-pass)
                         (list 'global unfold-loop-ranges-pass)
                         (list 'assign remove-loop-expression)))
 
@@ -2210,6 +2212,23 @@
   'text6
   )
 
+(define (compile7!)
+  (set! text7
+        (insert-block-labels text6)
+        (dis "=========  PROGRAM LABELS INSERTED" dnl)
+        )
+  'text7
+  )
+
+(define (compile8!)
+  (set! text8
+        (map (make-fixpoint-func simplify-stmt) (scan-stmt text7)))
+        (dis "=========  PROGRAM BLOCKS GENERATED" dnl)
+        (dis "---  BEGIN PROGRAM LISTING  ---" dnl)
+        (map pp text8)
+        (dis "---   END PROGRAM LISTING   ---" dnl)
+  'text8
+  )
 
 (define (compile!)
   (compile1!)
@@ -2218,6 +2237,8 @@
   (compile4!)
   (compile5!)
   (compile6!)
+  (compile7!)
+  (compile8!)
   )
 
 

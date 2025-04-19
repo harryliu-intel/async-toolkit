@@ -241,7 +241,7 @@
   'ok
   )
 
-(define *scan-stmts* '(parallel sequence local-if))
+(define *scan-stmts* '(seq parallel sequence local-if))
 
 (define (scan-stmt stmt)
   ;; return a list of statements (may be a singleton)
@@ -261,13 +261,14 @@
 (define (scan-parallel stmt)
   (apply append (map scan-stmt (cdr stmt))))
 
-        
-        
 (define (label? x) (and (pair? x) (eq? 'label (car x))))
 (define (goto? x) (and (pair? x) (eq? 'goto (car x))))
 (define (skip? x) (eq? 'skip x))
-(define (sequence? x) (and (pair? x) (eq? 'sequence (car x))))
-(define (parallel? x) (and (pair? x) (eq? 'parallel (car x))))
+
+(define (sequence? x) (and (pair? x) (member (car x) '(seq sequence))))
+
+(define (parallel? x) (and (pair? x) (member (car x) '(parallel pll))))
+
 (define (local-if? x) (and (pair? x) (eq? 'local-if (car x))))
 
 (define (add-prefix pfx) (lambda(lst)(cons pfx lst)))
@@ -436,9 +437,13 @@
          (res
           (cons lif-cls  (apply append (map cdr stmt-bls))))
          )
-
-         (dis "scan-local-if returns : " res dnl)
-         res
+    
+    (dis "scan-local-if guards  : " guards dnl)
+    (dis "scan-local-if stmts   : " stmts dnl)
+    (dis "scan-local-if lif-cls : " lif-cls dnl)
+    
+    (dis "scan-local-if returns : " res dnl)
+    res
     )
   )
 
@@ -448,4 +453,8 @@
 
 
 (define (label->goto x) `(goto ,(cadr x)))
-         
+
+(define scan-pll scan-parallel)
+(define scan-seq scan-sequence)
+        
+

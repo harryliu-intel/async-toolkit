@@ -269,3 +269,10 @@
     )
   )
 
+(define (convert-waiting-ifs prog)
+
+  (define (visitor stmt)
+    (if (waiting-if? stmt) (convert-waiting-if stmt) stmt))
+  
+  (visit-stmt prog visitor identity identity)
+  )
