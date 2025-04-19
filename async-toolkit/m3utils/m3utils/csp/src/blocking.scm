@@ -69,6 +69,12 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define (insert-block-labels prog)
+  ;;
+  ;; insert block labels around blocking statements as required
+  ;;
+  ;; ALSO converts while to a local-if and gotos when the while may block
+  ;;
+  
   (define tg (make-name-generator "L"))
   
   (define (s-visitor s)
@@ -111,10 +117,17 @@
            (let* ((lab (tg 'next))
                   (G   (cadr s))
                   (S   (caddr s))
-                  (res `(sequence
-                          (label ,lab)
-                          (local-if (,G (sequence ,S (goto ,lab)))
-                                    (else skip))))
+                  (true-clause `(sequence ,S (goto ,lab)))
+                  (false-clause 'skip)
+                  
+                  (res
+                   `(sequence
+                      (label ,lab)
+                      ,(cond ((eq? G #t) true-clause)
+                             ((eq? G #f) false-clause)
+                             (else 
+                              `(local-if (,G   ,true-clause )
+                                         (else ,false-clause))))))
                   )
              (dis "while may block : lab = " lab dnl)
              (dis "while may block : " res dnl)
@@ -252,7 +265,7 @@
         
 (define (label? x) (and (pair? x) (eq? 'label (car x))))
 (define (goto? x) (and (pair? x) (eq? 'goto (car x))))
-(define (skip? x) (and (pair? x) (eq? 'skip (car x))))
+(define (skip? x) (eq? 'skip x))
 (define (sequence? x) (and (pair? x) (eq? 'sequence (car x))))
 (define (parallel? x) (and (pair? x) (eq? 'parallel (car x))))
 (define (local-if? x) (and (pair? x) (eq? 'local-if (car x))))

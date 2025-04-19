@@ -103,7 +103,7 @@
 (define (waiting-if? s)
   (and (pair? s) (eq? 'waiting-if (car s))))
 
-(define wif #f)
+(define *wif* #f)
 
 (define (implement-waiting-if selection func-tbl cell-info)
   ;; here we will implement the selection as a waiting-if
@@ -163,7 +163,7 @@
     (dis "implement-waiting-if table         : " (stringify table) dnl)
     (dis "implement-waiting-if res           : " (stringify  res) dnl)
     ;;(error)
-    (set! wif res)
+    (set! *wif* res)
     res
     )
   )
@@ -195,4 +195,77 @@
   ids
   )
 
+(define (convert-waiting-if wif)
+  ;; convert waiting-if to if/loop/goto version
+  ;; this is, well, an optional module, because we could leave
+  ;; the implementation to the code generator, or implement it
+  ;; differently.
+  ;;
+  ;; See the document:
+  ;; A proposal for the semantics of selection ([...]) in Fulcrum-CSP
+  ;;
+  
+  (let* ((tg           (make-name-generator "convert-waiting-if"))
+         (wif-clauses  (get-waiting-if-clauses wif))
+         (dummies      (map get-waiting-if-clause-dummy wif-clauses))
+
+         (wif-clauses-decls
+                       (map (lambda(d) (make-var1-decl d
+                                                       *default-boolean-type*))
+                            dummies))
+         
+         (sensit       (uniq eq?
+                             (apply append
+                                    (map get-waiting-if-clause-sensitivity
+                                         wif-clauses))))
+         (guardeval    (cons 'sequence
+                             (map get-waiting-if-clause-guardeval
+                                  wif-clauses)))
+
+         (lif-clauses  (map (lambda(wif-cl)
+                              `((id ,(get-waiting-if-clause-dummy wif-cl))
+                                ,(get-waiting-if-clause-command wif-cl)))
+                            wif-clauses))
+
+         (wif-clauses-lif
+                      `(local-if ,@lif-clauses))
+                                        
+         ;; need to make the or
+
+         (g-list       (map make-ident dummies))
+         (or-expr      (make-binop '| g-list)) ; |))
+         (nor-expr    `(not ,or-expr))
+         ;; the OR/NOR expression
+         
+         (ndone        (tg 'next 'not-done-))
+
+         (ndone-id     (make-ident ndone))
+         (ndone-decl   (make-var1-decl ndone *default-boolean-type*))
+         ;; declare the "not done" variable
+         
+         (ndone-init   (make-assign ndone-id #t))
+         (ndone-assign (make-assign ndone-id nor-expr))
+
+         (lock         `(lock ,@sensit))
+         (unlock       `(unlock ,@sensit))
+         (waitfor      `(waitfor ,@sensit))
+         (done-lif     `(local-if (,ndone-id ,waitfor) (else ,unlock)))
+
+         (the-loop     `(while ,ndone-id
+                               (sequence
+                                 ,@wif-clauses-decls
+                                 ,lock
+                                 ,guardeval
+                                 ,ndone-assign
+                                 ,wif-clauses-lif
+                                 ,done-lif)))
+         (res          `(sequence ,ndone-decl
+                                  ,ndone-init
+                                  ,the-loop))
+         )
+
+    res
+
+    )
+  )
 

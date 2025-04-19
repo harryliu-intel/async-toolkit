@@ -47,6 +47,10 @@
       ((sequence)
        (map run-interpreter (cdr stmt)))
 
+      ((skip)
+       ;; skip
+       )
+      
       ((var1)
        (handle-var1 stmt))
 

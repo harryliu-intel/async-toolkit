@@ -131,8 +131,6 @@
                      (filter filter-delete (map stmt args))
                      )
 
-                    ((label goto) args)
-                    
                     ((assign)
                      (let ((res
                             (list
@@ -172,13 +170,6 @@
                           args)
                      )
 
-                    ((while) ;; desugared do
-                     (let ((G (car args))
-                           (S (cadr args)))
-                       (list (expr G) (stmt S))
-                       )
-                     )
-                    
                     ((eval)
                      (let* ((eval-args (car args))
                             (v-args    (expr eval-args))
@@ -207,6 +198,25 @@
                                  new-stmt)))
                      )
 
+                    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+                    ;;
+                    ;; below are things for later compiler passes
+                    ;;
+                    
+                    ((while) ;; desugared do
+                     (let ((G (car args))
+                           (S (cadr args)))
+                       (list (expr G) (stmt S))
+                       )
+                     )
+
+                    ((label goto) args)
+                    ;; labels and gotos
+
+                    ((lock unlock waitfor) args)
+                    ;; waiting-if implementation details
+                    
+                    
                     ((waiting-if)
                      (visit-waiting-if)
                      )

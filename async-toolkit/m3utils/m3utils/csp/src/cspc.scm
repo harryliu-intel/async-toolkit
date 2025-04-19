@@ -1048,7 +1048,7 @@
 
 (define (make-var1-decl sym type)
   ;; vars don't have a direction
-  (dis "make-var1-decl " type dnl)
+;;  (dis "make-var1-decl " type dnl)
   (make-var1 (make-decl sym type 'none)))
 
 (define (make-decl sym type dir)

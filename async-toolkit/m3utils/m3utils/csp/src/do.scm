@@ -19,7 +19,7 @@
             
             ;; get rid of it
             (let* ((gcs   (cdr s))
-                   (ndone  (tg 'next 'not-done-))
+                   (ndone  (tg 'next 'do-not-done-))
                    
                    (vars  (map (lambda (gc) (tg 'next)) gcs))
                    (grds  (map car gcs))  ;; guards
@@ -37,9 +37,9 @@
                    
                    (or-expr (make-binop '| g-list)) ; |))
 
-                   (ndone-id    (make-ident ndone))
-                   (ndone-decl  (make-var1-decl ndone *default-boolean-type*))
-                   (ndone-init  (make-assign ndone-id #t))
+                   (ndone-id     (make-ident ndone))
+                   (ndone-decl   (make-var1-decl ndone *default-boolean-type*))
+                   (ndone-init   (make-assign ndone-id #t))
                    (ndone-assign (make-assign ndone-id or-expr))
 
                    (if-grds

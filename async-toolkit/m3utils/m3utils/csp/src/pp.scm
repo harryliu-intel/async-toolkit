@@ -2,7 +2,7 @@
   (if (= n 0) "" (string-append " " (spaces (- n 1)))))
 
 (define *one-liners*
-  '(label var1 assign recv send id call-intrinsic apply range assign-operate))
+  '(lock unlock waitfor label goto var1 assign recv send id call-intrinsic apply range assign-operate))
 
 (define (pp-depth x n nsp)
 

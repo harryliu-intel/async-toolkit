@@ -44,6 +44,7 @@
                     
                     ((skip? next)
                      ;; this coding allows pseudocode to be simplified
+                     ;; without dropping pseudo-statements
                      (loop (cdr p) res))
                     
                     (else

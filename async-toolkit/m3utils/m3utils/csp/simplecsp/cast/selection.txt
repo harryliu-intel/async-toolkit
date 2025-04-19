@@ -262,6 +262,9 @@ as
    
 The implementation for a nondeterministic loop is identical.
 
+Note the similarity between the implementation of the loop and that
+of the waiting-if.  Only the sense of the done variable is different.
+
 In the case that the loop was coded as deterministic (using []) we can
 add an assertion as follows
 
