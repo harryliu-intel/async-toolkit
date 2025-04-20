@@ -1,0 +1,28 @@
+;;
+;; generic higher-order Scheme stuff
+;; 
+
+(define (identity x) x)
+
+(define (curry1 f x) (lambda(y)(f x y)))
+
+(define (make-fixpoint-func f)
+
+  (define (iterate x)
+    (let ((fx (f x)))
+      (dis x " -> " fx dnl)
+      (if (equal? fx x) x (iterate fx))))
+
+  (lambda(x)(iterate x))
+  )
+
+;; filter ops
+(define (filter-not filter-pred)
+  (lambda(x)(not (filter-pred x))))
+
+(define (filter-and filter-p0 filter-p1)
+  (lambda(x)(and (filter-p0 x) (filter-p1 x))))
+                         
+(define (filter-or filter-p0 filter-p1)
+  (lambda(x)(or (filter-p0 x) (filter-p1 x))))
+                         

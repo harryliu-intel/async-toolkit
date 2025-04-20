@@ -105,12 +105,3 @@
     )
   )
          
-(define (make-fixpoint-func f)
-
-  (define (iterate x)
-    (let ((fx (f x)))
-      (dis x " -> " fx dnl)
-      (if (equal? fx x) x (iterate fx))))
-
-  (lambda(x)(iterate x))
-  )

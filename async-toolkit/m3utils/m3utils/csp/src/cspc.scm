@@ -193,7 +193,7 @@
 ;; also see com/avlsi/csp/util/RefinementResolver.java
 
 
-(define (identity x) x)
+(load "higher-order.scm")
 
 (load "bigint.scm")
 (load "loops.scm")
@@ -264,12 +264,6 @@
           this-text
           (car (map loop (get-refparents p)))))))
 
-(define (filter-not filter-pred)
-  (lambda(x)(not (filter-pred x))))
-
-(define (filter-and filter-p0 filter-p1)
-  (lambda(x)(and (filter-p0 x) (filter-p1 x))))
-                         
 (define (make-sequence . x)
   (cons 'sequence (filter (filter-not null?) x)))
 
@@ -1880,6 +1874,8 @@
 
       (desugar-stmt (close-text p))
   )
+
+(load "codegen.scm")
 
 (define (reload) (load "cspc.scm"))
 
