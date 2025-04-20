@@ -1617,7 +1617,7 @@
 (define (make-eval rhs) `(eval ,rhs))
 
 (define (global-simplify the-inits the-text func-tbl struct-tbl cell-inf)
-  (simplify-stmt the-text))
+  (fixpoint-simplify-stmt the-text))
 
 (define (remove-assign-operate the-inits the-text func-tbl struct-tbl cell-info)
 
