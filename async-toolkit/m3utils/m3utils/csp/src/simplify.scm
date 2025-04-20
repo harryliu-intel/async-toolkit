@@ -8,8 +8,19 @@
   
   ;; all that this does is flattens out parallel and sequence statements
   (cond ((compound-stmt? s)   (simplify-compound-stmt s))
+        ((local-if? s) (simplify-local-if s))
         ((eval? s) (simplify-eval s))
         (else s)))
+
+(define (simplify-local-if s)
+  ;; look for one special case: a single else clause
+
+  (if (and (= 2 (length s))
+           (eq? 'else (caadr s)))
+      (cadadr s)
+      s
+      )
+  )
 
 (define (simplify-compound-stmt s)
 

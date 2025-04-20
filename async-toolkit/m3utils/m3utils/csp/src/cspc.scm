@@ -2202,6 +2202,7 @@
   'text5
   )
 
+(define fixpoint-simplify-stmt (make-fixpoint-func simplify-stmt))
 
 (define (compile6!)
   (make-the-tables text5)
@@ -2214,7 +2215,7 @@
 
 (define (compile7!)
   (set! text7
-        (insert-block-labels text6)
+        (fixpoint-simplify-stmt (insert-block-labels text6))
         (dis "=========  PROGRAM LABELS INSERTED" dnl)
         )
   'text7
@@ -2222,7 +2223,7 @@
 
 (define (compile8!)
   (set! text8
-        (map (make-fixpoint-func simplify-stmt) (scan-stmt text7)))
+        (map fixpoint-simplify-stmt  (scan-stmt text7)))
         (dis "=========  PROGRAM BLOCKS GENERATED" dnl)
         (dis "---  BEGIN PROGRAM LISTING  ---" dnl)
         (map pp text8)
