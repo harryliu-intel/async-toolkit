@@ -2,6 +2,7 @@
 ;; has to be run initially and after a few transformations
 ;; (such as after function inlining)
 
+(define *last-anal* #f)
 
 (define (analyze-program prog cell-info initvars)
   (let* ((ports      (get-ports    cell-info))

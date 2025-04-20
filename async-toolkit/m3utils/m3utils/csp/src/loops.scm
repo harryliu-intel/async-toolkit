@@ -143,3 +143,40 @@
   )
           
 
+(define *lx* #f)
+
+
+(define (generate-loop-statement-from-expression lhs rhs
+                                                 syms func-tbl struct-tbl
+                                                 cell-info)
+  (set! *lx* rhs)
+  (let* ((loop-op    (get-loopex-op rhs))
+         (loop-idx   (get-loopex-dummy rhs))
+         (loop-range (get-loopex-range rhs))
+         (loop-expr  (get-loopex-expr rhs))
+         (loop-frame (make-loopex-frame rhs syms))
+         (loop-type  (derive-type loop-expr loop-frame func-tbl struct-tbl cell-info))
+         (zero-elem  (op-zero-elem loop-op loop-type)))
+    `(sequence
+       (assign ,lhs
+               ,zero-elem )
+       (sequential-loop ,loop-idx
+                        ,loop-range
+                        (assign-operate ,loop-op ,lhs ,loop-expr)))))
+
+(define (remove-loop-expression s syms vals tg func-tbl struct-tbl cell-info)
+
+  (if (and (eq? 'assign (get-stmt-type s))
+           (check-side-effects (get-assign-lhs s)))
+      
+      (let ( (lhs (get-assign-lhs s))
+             (rhs (get-assign-rhs s))
+             )
+        (if (loopex? rhs)
+            (generate-loop-statement-from-expression lhs rhs
+                                                     syms func-tbl struct-tbl
+                                                     cell-info)
+            s))
+      s)
+  )
+
