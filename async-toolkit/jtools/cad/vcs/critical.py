@@ -31,18 +31,24 @@ class OutputNode:
             if self.times[idx][0] <= time:
                 self.last_idx = idx
                 #print("      Found Critical transition %s: %d -> %d (%d)" % (convert_vcs_to_apr_name(self.times[idx][1]), self.times[idx][2], self.times[idx][0], self.times[idx][0] - self.times[idx][2]))
-                return (self.times[idx][1], self.times[idx][2])
+                return self.times[idx]
         print("WARNING: No more transitions found for time %f" % time)
-        return (None, None)
+        return None
     
+    def get_forward_transition_count(self, time):
+        for idx in range(self.last_idx, len(self.times)):
+            if self.times[idx][0] >= time:
+                return idx - self.last_idx
+        return 0
+        
     def get_worst_transition(self):
-        return (self.times[self.worst_idx][1], self.times[self.worst_idx][2])
+        return self.times[self.worst_idx]
 
     def get_first_transition(self):
-        return (self.times[0][1], self.times[0][2])
+        return self.times[0]
     
     def get_last_transition(self):
-        return (self.times[self.last_idx][1], self.times[self.last_idx][2])
+        return self.times[self.last_idx]
 
 
 def convert_apr_to_vcs_name(apr_name):
@@ -82,6 +88,10 @@ def convert_vcs_to_apr_name(vcs_name):
     #print("Converted %s to %s" % (vcs_name, apr_name))
     return apr_name
 
+def convert_vcs_to_apr_pin_name(vcs_pin):
+    apr_pin = convert_vcs_to_apr_name(vcs_pin)
+    apr_pin = apr_pin.split('/')[-1]
+    return apr_pin
 
 def cycle_check(path, cur_node, cur_time, verbose=False):
     for node in reversed(path):
@@ -181,14 +191,16 @@ def critical_path(hist_name, connect_name, start, depth, log_name, verbose=False
     log_file.write("Crtitical path starting at %s @ %d\n" % (start_node, start_time))
     print(node_dict[start_node])
     if start_time == -1:
-        (cur_node, cur_time) = node_dict[start_node].get_last_transition()
+        (cur_time, cur_in_node, cur_in_time) = node_dict[start_node].get_last_transition()
+        cur_node = start_node
     else:
-        first_time = node_dict[start_node].get_first_transition()[1]
+        first_time = node_dict[start_node].get_first_transition()[0]
         if start_time < first_time:
             print("ERROR: Given start time %d is earlier than first logged transition time %d for node %s" % (start_time, first_time, start_node))
             return
         else:
-            (cur_node, cur_time) = node_dict[start_node].get_transition(start_time)
+            (cur_time, cur_in_node, cur_in_time) = node_dict[start_node].get_transition(start_time)
+            cur_node = start_node
 
     # Find the critical path
     max_depth = int(depth)
@@ -197,22 +209,23 @@ def critical_path(hist_name, connect_name, start, depth, log_name, verbose=False
     while cur_depth < max_depth:
         cycle_time = cycle_check(path, cur_node, cur_time)
         if cycle_time > 0:
-            log_file.write("%2d: %d, %4d, %s +Cycle %d\n" % (cur_depth, cur_time, path[-1][1]-cur_time, convert_vcs_to_apr_name(cur_node), cycle_time))
+            transition_count = node_dict[cur_node].get_forward_transition_count(cur_time+cycle_time)
+            log_file.write("%2d: %d, %4d, %4d, %s, %s +Cycle %d/%d=%.1f\n" % (cur_depth, cur_time, path[-1][2]-cur_time, cur_time-cur_in_time, convert_vcs_to_apr_name(cur_node), convert_vcs_to_apr_pin_name(cur_in_node), cycle_time, transition_count, 1.0*cycle_time/transition_count))
         else:
             if cur_depth == 0:
-                log_file.write("%2d: %d, %4d, %s\n" % (cur_depth, cur_time, 0, convert_vcs_to_apr_name(cur_node)))
+                log_file.write("%2d: %d, %4d, %4d, %s, %s\n" % (cur_depth, cur_time, 0, cur_time-cur_in_time, convert_vcs_to_apr_name(cur_node), convert_vcs_to_apr_pin_name(cur_in_node)))
             else:
-                log_file.write("%2d: %d, %4d, %s\n" % (cur_depth, cur_time, path[-1][1]-cur_time, convert_vcs_to_apr_name(cur_node)))
-        path.append((cur_node, cur_time))
+                log_file.write("%2d: %d, %4d, %4d, %s, %s\n" % (cur_depth, cur_time, path[-1][2]-cur_time, cur_time-cur_in_time, convert_vcs_to_apr_name(cur_node), convert_vcs_to_apr_pin_name(cur_in_node)))
+        path.append((cur_node, cur_time, cur_in_time))
         cur_depth += 1
         # Check if the current node exists in the connectivity dictionary
-        if cur_node not in conn_dict:
+        if cur_in_node not in conn_dict:
             # Current node doesn't exist, gracefully exit
-            log_file.write("%2d: No connectivitiy found for %s\n" % (cur_depth, convert_vcs_to_apr_name(cur_node)))
-            print("WARNING: Input node %s not found in connectivity dictionary. Ending trace..." % cur_node)
+            log_file.write("%2d: No connectivitiy found for %s\n" % (cur_depth, convert_vcs_to_apr_name(cur_in_node)))
+            print("WARNING: Input node %s not found in connectivity dictionary. Ending trace..." % cur_in_node)
             break
-        cur_node = conn_dict[cur_node]
-        (cur_node, cur_time) = node_dict[cur_node].get_transition(cur_time)
+        cur_node = conn_dict[cur_in_node]
+        (cur_time, cur_in_node, cur_in_time) = node_dict[cur_node].get_transition(cur_in_time)
     log_file.close()
 
 
