@@ -2,7 +2,7 @@
 ;; inputs can be polymorphic
 
 (define (fold-constants-dbg . x)
-;;  (apply dis x) ;; comment this out to make it quiet
+  (apply dis x) ;; comment this out to make it quiet
   )
 
 (define (handle-intrinsic name constant? constant-value arg-list)
@@ -21,6 +21,40 @@
        )
      )
     (else (error "handle-intrinsic of " name)))
+  )
+
+(define (handle-integer-ternop x constant? constant-value)
+  ;; x is a ternary expression such as (bits a 2 12)
+  ;; constant? is a procedure that checks whether an expression is constant
+  (let ((op (car x))
+        (a  (cadr x))
+        (b  (caddr x))
+        (c  (caddr x))
+        )
+    (if (and (constant? a) (constant? b)(constant? c))
+        (let* ((the-op-id (symbol-append 'big op))
+               (the-op    (eval the-op-id)))
+
+          (fold-constants-dbg "handle-integer-ternop   op : " op dnl)
+          (fold-constants-dbg "handle-integer-ternop   a  : " a dnl)
+          (fold-constants-dbg "handle-integer-ternop   b  : " b dnl)
+          (fold-constants-dbg "handle-integer-ternop   c  : " c dnl)
+
+          (let ((ca (constant-value 'integer a))
+                (cb (constant-value 'integer b))
+                (cc (constant-value 'integer b))
+                )
+          ;; if literals, we apply the op, else we inline the value
+          ;;
+          (if (and (bigint? ca) (bigint? cb) (bigint? cc))
+              (begin (let ((res (apply the-op (list ca cb cc))))
+                       (dis "performing op " the-op " : " res dnl)
+                       res)
+                     )
+              (list op ca cb cc))))
+        x
+        )
+    )
   )
 
 (define (handle-integer-binop x constant? constant-value)
@@ -402,7 +436,10 @@
            )
           
           ((integer-expr? x syms func-tbl struct-tbl cell-info)
-           (cond ((= (length x) 3)
+           (fold-constants-dbg "integer-expr length = " (length x) dnl)
+           (cond ((= (length x) 4)
+                  (handle-integer-ternop x constant? constant-value))
+                 ((= (length x) 3)
                   (handle-integer-binop x constant? constant-value))
                  ((= (length x) 2)
                   (handle-integer-unop x constant? constant-value))

@@ -148,6 +148,12 @@
 
 (define big^ BigInt.Xor)
 
+(define (bigbits x a b)
+  (let* ((w    (big+ *big1* (big- b a)))
+         (sx   (big>> x a))
+         (mask (big- (big<< *big1* w) *big1*)))
+    (big& sx mask)))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 ;; an extended number "xnum" is one of
@@ -239,6 +245,7 @@
         (else (BigInt.Abs a))))
 
 (define (xnum-log2 a)
+  ;; note this ROUNDS UP -- as in CSP.
   (cond ((eq? a 'nan)   a)
         ((eq? a '+inf) '+inf)
         ((eq? a '-inf) '+inf)
@@ -397,7 +404,8 @@
         (else (let* ((xlog2 (BigInt.GetAbsMsb x))
                      (rlog2 (+ (BigInt.ToInteger sa) xlog2)))
                 (if (> rlog2 *maximum-size*) +inf (BigInt.Shift x (BigInt.ToInteger sa)))))))
-               
+
+(define (xnum->> x sa) (xnum-<< x (xnum-uneg sa)))
 
 (define (xnum-| a b) ;; |)
   (let ((blist (list a b)))
@@ -777,6 +785,34 @@
         (else (error))))
 
 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(define (xnum-bits x lo hi)
+  (cond ((eq? x *big0*) *big0*)
+        ((eq? lo +inf) *big0*)
+        ((eq? lo -inf) nan)
+        ((eq? lo  nan) nan)
+
+        ((eq? (xnum-> lo hi) #t) *big0*)
+         
+        ;; lo is finite
+        ((not (eq? lo *big0*))
+         (xnum-bits (xnum->> x lo) *big0* (xnum-+ (xnum-- hi lo) 1)))
+
+        ;; lo is zero
+        ((eq? hi +inf) x)
+        ((eq? hi -inf) *big0*)
+        ((eq? hi nan) nan)
+
+        ;; hi is finite
+        ((xnum-> hi (xnum-log2 x))
+         x)
+
+        (else
+         (bigbits x lo hi))
+
+        );;dnoc
+)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 

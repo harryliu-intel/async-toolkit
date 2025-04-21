@@ -9,7 +9,7 @@
 
 (define *integer-ops*
   ;; these create integers all on their own
-  '(- / % * << >> **))
+  '(- / % * << >> ** bits))
 
 (define *string-ops*
   ;; these create strings all on their own
