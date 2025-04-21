@@ -265,6 +265,7 @@ module bd_altdiv_hist_mon (
 
 realtime t_L;
 int n_L;
+string ModName;
 
 initial begin
   //Register ModName name
