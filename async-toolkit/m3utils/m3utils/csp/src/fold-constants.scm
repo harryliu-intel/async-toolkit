@@ -1,8 +1,8 @@
 ;; handle-XXX-binop handles an operation that RETURNS an XXX
 ;; inputs can be polymorphic
 
-(define (dbg . x)
-  (apply dis x) ;; comment this out to make it quiet
+(define (fold-constants-dbg . x)
+;;  (apply dis x) ;; comment this out to make it quiet
   )
 
 (define (handle-intrinsic name constant? constant-value arg-list)
@@ -34,9 +34,9 @@
                (the-op    (eval the-op-id)))
 
 
-          (dbg "handle-integer-binop   op : " op dnl)
-          (dbg "handle-integer-binop   a  : " a dnl)
-          (dbg "handle-integer-binop   b  : " b dnl)
+          (fold-constants-dbg "handle-integer-binop   op : " op dnl)
+          (fold-constants-dbg "handle-integer-binop   a  : " a dnl)
+          (fold-constants-dbg "handle-integer-binop   b  : " b dnl)
 
           (let ((ca (constant-value 'integer a))
                 (cb (constant-value 'integer b)))
@@ -64,8 +64,8 @@
         (let* ((the-op-id (symbol-append 'big op))
                (the-op    (eval the-op-id)))
 
-          (dbg "handle-integer-unop   op : " op dnl)
-          (dbg "handle-integer-unop   a  : " a dnl)
+          (fold-constants-dbg "handle-integer-unop   op : " op dnl)
+          (fold-constants-dbg "handle-integer-unop   a  : " a dnl)
 
           (let ((ca (constant-value 'integer a)))
           ;; if literals, we apply the op, else we inline the value
@@ -123,9 +123,9 @@
 
 
           (if debug
-              (dbg "handle-boolean-binop   op : " op dnl)
-              (dbg "handle-boolean-binop   a  : " a dnl)
-              (dbg "handle-boolean-binop   b  : " b dnl)
+              (fold-constants-dbg "handle-boolean-binop   op : " op dnl)
+              (fold-constants-dbg "handle-boolean-binop   a  : " a dnl)
+              (fold-constants-dbg "handle-boolean-binop   b  : " b dnl)
               )
 
           (let* ((ty (derive-type a syms func-tbl struct-tbl cell-info))
@@ -170,8 +170,8 @@
 
 
           (if debug
-              (dbg "handle-boolean-unop   op : " op dnl)
-              (dbg "handle-boolean-unop   a  : " a dnl)
+              (fold-constants-dbg "handle-boolean-unop   op : " op dnl)
+              (fold-constants-dbg "handle-boolean-unop   a  : " a dnl)
               )
 
           (let* ((ca (constant-value 'boolean a))
@@ -180,8 +180,8 @@
                      
             ;; if literal, we apply the op, else we inline the value
             ;;
-            (dbg "ca = " ca dnl)
-            (dbg "type = " type dnl)
+            (fold-constants-dbg "ca = " ca dnl)
+            (fold-constants-dbg "type = " type dnl)
 
             (if (not (boolean? ca)) (error "not a boolean : ca = " ca))
 
@@ -219,9 +219,9 @@
                (the-op    (eval the-op-id)))
 
 
-          (dbg "handle-string-binop   op : " op dnl)
-          (dbg "handle-string-binop   a  : " a dnl)
-          (dbg "handle-string-binop   b  : " b dnl)
+          (fold-constants-dbg "handle-string-binop   op : " op dnl)
+          (fold-constants-dbg "handle-string-binop   a  : " a dnl)
+          (fold-constants-dbg "handle-string-binop   b  : " b dnl)
 
           (let ((ca (constant-value 'string a))
                 (cb (constant-value 'string b)))
@@ -270,8 +270,8 @@
 
 (define (constant-simple? x syms)
   
-  (dbg "constant? " x dnl)
-  (dbg "symbols : " (map (lambda(tbl)(tbl 'keys)) syms) dnl)
+  (fold-constants-dbg "constant? " x dnl)
+  (fold-constants-dbg "symbols : " (map (lambda(tbl)(tbl 'keys)) syms) dnl)
 
   ;; this has to return a list containing the value
   ;; #f is a constant
@@ -280,8 +280,8 @@
          (let* ((defn (retrieve-defn (cadr x) syms))
                 (is-const (constant-type? defn))
                 )
-             (dbg "constant? : x defn   : " defn dnl)
-             (dbg "constant? : is-const : " is-const dnl)
+             (fold-constants-dbg "constant? : x defn   : " defn dnl)
+             (fold-constants-dbg "constant? : is-const : " is-const dnl)
            (if is-const (list defn) #f)
            )
          )
@@ -332,7 +332,7 @@
 (define *xgs* #f)
 
 (define (fold-constants-* stmt syms vals tg func-tbl struct-tbl cell-info)
-  (dbg "fold-constants-* " (if (pair? stmt) (car stmt) stmt) dnl)
+  (fold-constants-dbg "fold-constants-* " (if (pair? stmt) (car stmt) stmt) dnl)
 
   (define (constant? x) (constant-simple? x syms))
 
@@ -341,13 +341,13 @@
     (let ((res 
            (if (pair? x)
                (let ((val (retrieve-defn (cadr x) vals)))
-                 (dbg "constant-value replacing " x " -> " val dnl)
+                 (fold-constants-dbg "constant-value replacing " x " -> " val dnl)
                  val
                  )
                x)))
-      (dbg "constant-value x    : " x dnl)
-      (dbg "constant-value type : " type dnl)
-      (dbg "constant-value res  : " res dnl)
+      (fold-constants-dbg "constant-value x    : " x dnl)
+      (fold-constants-dbg "constant-value type : " type dnl)
+      (fold-constants-dbg "constant-value res  : " res dnl)
 
       (coerce-type type res)
       )
@@ -361,19 +361,19 @@
     )
   
   (define (expr-visitor x)
-    (dbg "fold-constants-* expr-visitor x = " x dnl)
+    (fold-constants-dbg "fold-constants-* expr-visitor x = " x dnl)
     
     (cond ((not (pair? x)) x)
           
           ((ident? x)
            
-           (dbg "expr-visitor x " x dnl)
-           (dbg "expr-visitor constant? " (constant? x) dnl)
+           (fold-constants-dbg "expr-visitor x " x dnl)
+           (fold-constants-dbg "expr-visitor constant? " (constant? x) dnl)
            
            (let ((res
                   (if (constant? x) (constant-value '* x) x)))
              
-             (dbg "expr-visitor ident? returning " res dnl)
+             (fold-constants-dbg "expr-visitor ident? returning " res dnl)
              res))
           
           ((call-intrinsic? x)
@@ -396,8 +396,8 @@
                                                            identity))
                                     (cddr x))))))
                    
-                   (dbg "call-intrinsic x   " x dnl)
-                   (dbg "call-intrinsic res " res dnl)
+                   (fold-constants-dbg "call-intrinsic x   " x dnl)
+                   (fold-constants-dbg "call-intrinsic res " res dnl)
                    res)))
            )
           
@@ -436,7 +436,7 @@
           (else x)))
 
   (define (stmt-visitor s)
-    (dbg "fold-* stmt-visitor " s dnl)
+    (fold-constants-dbg "fold-* stmt-visitor " s dnl)
 
     ;;
     ;; This is dumb: we are replicating parts of "stmt-check-enter"
@@ -449,12 +449,12 @@
       ((assign)
 
 
-       (dbg "visiting assign " s dnl)
+       (fold-constants-dbg "visiting assign " s dnl)
 ;;       (error)
        (let ((res `(assign
                     ,(get-assign-lhs s)
                     ,((expr '*) (get-assign-rhs s)))))
-         (dbg "returning assign " res dnl)
+         (fold-constants-dbg "returning assign " res dnl)
 
          (if (procedure? (get-assign-rhs res))
              (error "garbage!"))
@@ -479,10 +479,10 @@
       
       ((var1)
        (define-var! syms (get-var1-id s) (get-var1-type s))
-       (dbg "var1 : defining  " (get-var1-id s) dnl)
-       (dbg "var1 : visiting  " s dnl)
+       (fold-constants-dbg "var1 : defining  " (get-var1-id s) dnl)
+       (fold-constants-dbg "var1 : visiting  " s dnl)
        (let ((res (visit-stmt s identity expr-visitor identity)))
-         (dbg "var1 : returning " res dnl)
+         (fold-constants-dbg "var1 : returning " res dnl)
          res
          )
        )
@@ -493,7 +493,7 @@
        )
       
       ((eval)
-;;       (dbg "VISITING eval" dnl)
+;;       (fold-constants-dbg "VISITING eval" dnl)
        
        (list 'eval ((expr '*) (cadr s))))
 
@@ -502,7 +502,7 @@
              (loop-idx   (cadr s))
              (loop-range (caddr s))
              (loop-stmt  (cadddr s)))
-         (dbg "loop " s dnl)
+         (fold-constants-dbg "loop " s dnl)
          (define-var! syms loop-idx *default-int-type*)
          `(,loop-type
            ,loop-idx
@@ -515,16 +515,16 @@
               (guardvals  (map (expr 'boolean) guards))
               )
 
-         (dbg "local-if guards    " guards dnl)
-         (dbg "local-if stmts     " stmts  dnl)
-         (dbg "local-if guardvals " guardvals dnl)
+         (fold-constants-dbg "local-if guards    " guards dnl)
+         (fold-constants-dbg "local-if stmts     " stmts  dnl)
+         (fold-constants-dbg "local-if guardvals " guardvals dnl)
 
          (let* ((xgs  (map list guardvals stmts))
                 (fxgs (filter car xgs))
                 )
 
-           (dbg "local-if xgs       " xgs dnl)
-           (dbg "local-if fxgs      " fxgs dnl)
+           (fold-constants-dbg "local-if xgs       " xgs dnl)
+           (fold-constants-dbg "local-if fxgs      " fxgs dnl)
 
            (set! *xgs* xgs)
 
@@ -547,7 +547,7 @@
       )
     )
 
-  (dbg "fold-* visiting " stmt dnl)
+  (fold-constants-dbg "fold-* visiting " stmt dnl)
 
   ;; why are we calling visit-stmt recursively here?  Is that
   ;; really necessary?
@@ -558,7 +558,7 @@
                                     identity identity
                                     identity identity)))
         
-;;        (dbg "fold-* res = " res dnl)
+;;        (fold-constants-dbg "fold-* res = " res dnl)
         res
         )
       stmt

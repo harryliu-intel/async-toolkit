@@ -1,5 +1,6 @@
-
-
+(define (blocking-dbg . x)
+  ;; (apply dis x)
+  )
 
 (define (stmt-may-block? stmt)
 
@@ -9,7 +10,7 @@
   
   (define (s-visitor s)
     ;; statements that on their own introduce blocking
-;;7    (dis "s-visitor " (stringify s) dnl)
+;;7    (blocking-dbg "s-visitor " (stringify s) dnl)
     (if result
         'cut
         (case (get-stmt-type s)
@@ -22,7 +23,7 @@
 
   (define (x-visitor x)
     ;; expressions that introduce blocking
-;;    (dis "x-visitor " (stringify x) dnl)
+;;    (blocking-dbg "x-visitor " (stringify x) dnl)
     (if result
         'cut
         (case (get-expr-type x)
@@ -35,7 +36,7 @@
 
           (else x))))
 
-;;  (dis "smb? : " (stringify stmt) dnl)
+;;  (blocking-dbg "smb? : " (stringify stmt) dnl)
 
   (visit-stmt stmt s-visitor x-visitor identity)
 
@@ -79,29 +80,28 @@
   
   (define (s-visitor s)
 
-    (define (mark side)
+    (define (mark side . x)
+      (dis "mark " side " . " x dnl)
+
+      (define (lab . x) `((label ,(tg 'next) ,@x)))
+      
       (let* ((suffix (case side
-                       ((both after)
-                        `((label ,(tg 'next))))
-                       ((before -before)
-                        '())))
+                       ((both)                  (apply lab (cons 'join x)))
+                       ((before)                    '())
+                       );;esac
+                     )
 
              (prefix (case side
-                       ((-before) ;; - labels are optional
-                        `((label ,(symbol-append '- (tg 'next)))))
-                       ((before) ;; - labels are optional
-                        `((label ,(tg 'next))))
-                       ((both)
-                        `((label ,(tg 'next))))
-                       ((after)
-                        '())))
+                       ((before)                (apply lab x))
+                       ((both)                  (apply lab (cons 'fork x)))
+                       );;esac
+                     )
              
              (res (append '(sequence) prefix (list s) suffix))
              )
         res
         )
       )
-
     
     (case (get-stmt-type s)
       ((recv send) (mark 'before))
@@ -110,7 +110,11 @@
 
       ((if nondet-if do nondet-do) (error))
 
-      ((parallel parallel-loop) (mark 'both))
+      ((parallel) (mark 'both))
+
+      ((parallel-loop) (mark 'both
+                             (get-loop-dummy s)
+                             (get-loop-range s)))
 
       ((while)
        (if (stmt-may-block? s)
@@ -147,9 +151,9 @@
 
       (else s)))
 
-
-  ;; label the entry point also
-  `(sequence (label START) ,(visit-stmt prog s-visitor identity identity))
+  ;; label the entry and exit point also
+  `(sequence (label START) ,(visit-stmt prog s-visitor identity identity)
+             (label END))
   )
 
 (define (unblock-loops stmt syms vals tg func-tbl struct-tbl cell-info)
@@ -160,7 +164,7 @@
   (define tg (make-name-generator "unblock-loops"))
 
     (define (s-visitor s)
-      (dis "s-visitor s : " s dnl)
+      (blocking-dbg "s-visitor s : " s dnl)
       (if (and (eq? 'sequential-loop (get-stmt-type s))
                (stmt-may-block? s))
           
@@ -194,7 +198,7 @@
             (define-var! syms nam newtype)
             (define-var! syms newbnam *default-boolean-type*)
             
-            `(sequence ,newddecl ,newdinit ,newbdecl ,bupdate , the-loop))
+            `(sequence ,newddecl ,newdinit ,newbdecl ,bupdate ,the-loop))
           s
           )
       )
@@ -241,7 +245,7 @@
   'ok
   )
 
-(define *scan-stmts* '(seq parallel sequence local-if))
+(define *scan-stmts* '(seq parallel sequence local-if parallel-loop))
 
 (define (scan-stmt stmt)
   ;; return a list of statements (may be a singleton)
@@ -290,31 +294,25 @@
     
     )
   )
- 
-
-  
-   
 
 (define (combine-seqs a b)
-  (dis "combine-seqs a : " a " ")
-  (dis "combine-seqs b : " b dnl)
+  (blocking-dbg "combine-seqs a : " a " ")
+  (blocking-dbg "combine-seqs b : " b dnl)
 
   (let ((res (cons b a)))
-    (dis "combine-seqs res : " res dnl)
+    (blocking-dbg "combine-seqs res : " res dnl)
 
     (cond ((local-if? (car a))
            (cons (stuff-open-lif-clauses (car a) b) (cdr a)))
           
           (else
            res))
-
     )
-
   )
 
 (define (combine-block-sets as bs)
-  (dis "combine-block-sets as : " as dnl)
-  (dis "combine-block-sets bs : " bs dnl)
+  (blocking-dbg "combine-block-sets as : " as dnl)
+  (blocking-dbg "combine-block-sets bs : " bs dnl)
   
   (apply append
          (map (lambda(a)(map
@@ -332,7 +330,7 @@
   (define result '()) ;; hold finished blocks here
 
   (define (add-result! x)
-    (dis "add-result : x : " x dnl)
+    (blocking-dbg "add-result : x : " x dnl)
 
     (if first-result
         (set! result (cons (reverse x) result))
@@ -356,7 +354,7 @@
             )
            ;; label : close out all current blocks
 
-           (dis "starting from label : " (car p) dnl)
+           (blocking-dbg "starting from label : " (car p) dnl)
            
            (recurse (list (list (car p) 'sequence))
                     (cdr p))
@@ -394,13 +392,13 @@
              ;; open    : append input sofar, then add to output sofar
              
 
-             (dis "recurse -----> " dnl)
-             (dis "sofar   = " sofar dnl)
-             (dis "p       = " p dnl)
-             (dis "open      " open      dnl)
-             (dis "openbeg   " openbeg   dnl)
-             (dis "openend   " openend   dnl)
-             (dis "closed    " closed    dnl)
+             (blocking-dbg "recurse -----> " dnl)
+             (blocking-dbg "sofar   = " sofar dnl)
+             (blocking-dbg "p       = " p dnl)
+             (blocking-dbg "open      " open      dnl)
+             (blocking-dbg "openbeg   " openbeg   dnl)
+             (blocking-dbg "openend   " openend   dnl)
+             (blocking-dbg "closed    " closed    dnl)
              
              (recurse (append 
                               (combine-block-sets sofar (reverse open))
@@ -419,8 +417,8 @@
 
   (recurse '((sequence)) (cdr sequence))
 
-  (dis "after recursion, first-result : " first-result dnl)
-  (dis "after recursion, result       : " result dnl)
+  (blocking-dbg "after recursion, first-result : " first-result dnl)
+  (blocking-dbg "after recursion, result       : " result dnl)
 
   (cons first-result (reverse result)) ;; the reverse here is just for
                                        ;; readability
@@ -438,11 +436,11 @@
           (cons lif-cls  (apply append (map cdr stmt-bls))))
          )
     
-    (dis "scan-local-if guards  : " guards dnl)
-    (dis "scan-local-if stmts   : " stmts dnl)
-    (dis "scan-local-if lif-cls : " lif-cls dnl)
+    (blocking-dbg "scan-local-if guards  : " guards dnl)
+    (blocking-dbg "scan-local-if stmts   : " stmts dnl)
+    (blocking-dbg "scan-local-if lif-cls : " lif-cls dnl)
     
-    (dis "scan-local-if returns : " res dnl)
+    (blocking-dbg "scan-local-if returns : " res dnl)
     res
     )
   )
@@ -452,9 +450,15 @@
 ;; the enclosing statement
 
 
-(define (label->goto x) `(goto ,(cadr x)))
+(define (label->goto x) `(goto ,(cadr x) ,@(cddr x)))
 
-(define scan-pll scan-parallel)
-(define scan-seq scan-sequence)
+(define (scan-parallel-loop ploop)
+  ;; all the work for handling this has already been done by
+  ;; the label/goto insertion mechanism
+  (scan-stmt (cadddr ploop))
+  )
+
+(define scan-pll           scan-parallel)  ;; shorthand
+(define scan-seq           scan-sequence)  ;; shorthand
         
 

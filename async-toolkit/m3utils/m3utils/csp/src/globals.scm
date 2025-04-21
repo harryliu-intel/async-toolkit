@@ -1,3 +1,7 @@
+(define (globals-dbg . x)
+  ;; (apply dis x)
+  )
+
 (define (array? type)
   (and (pair? type) (eq? 'array (car type))))
 
@@ -23,14 +27,14 @@
   (define tbl (make-hash-table 100 atom-hash))
   
   (define (handle-var1 v1)
-    (dis "handle-var1 : " v1 dnl)
+    (globals-dbg "handle-var1 : " v1 dnl)
 
     (if (array? (get-var1-type v1))
         (tbl 'add-entry! (get-var1-id v1) (make-hash-table 100 index-hash)))
     )
 
   (define (handle-assign ass)
-    (dis "handle-assign : " ass dnl)
+    (globals-dbg "handle-assign : " ass dnl)
     (set! a ass)
     (let ((lhs (get-assign-lhs ass)))
       (if (array-access? lhs)

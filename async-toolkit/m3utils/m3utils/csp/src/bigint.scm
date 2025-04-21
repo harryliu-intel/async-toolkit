@@ -77,10 +77,10 @@
            (all-results (map eval (map (lambda(x)(cons op x)) all-pairs)))
            (min-res     (apply big-min all-results))
            (max-res     (apply big-max all-results)))
-      (dbg "all-pairs   : " all-pairs dnl)
-      (dbg "all-results : " all-results dnl)
-      (dbg "min-res     : " min-res dnl)
-      (dbg "max-res     : " max-res dnl)
+      (bigint-dbg "all-pairs   : " all-pairs dnl)
+      (bigint-dbg "all-results : " all-results dnl)
+      (bigint-dbg "min-res     : " min-res dnl)
+      (bigint-dbg "max-res     : " max-res dnl)
       
       (list min-res max-res))))
 
@@ -513,10 +513,10 @@
                   (all-results (map eval (map (lambda(x)(cons op x)) all-pairs)))
                   (min-res     (apply xnum-min all-results))
                   (max-res     (apply xnum-max all-results)))
-             (dbg "all-pairs   : " all-pairs dnl)
-             (dbg "all-results : " all-results dnl)
-             (dbg "min-res     : " min-res dnl)
-             (dbg "max-res     : " max-res dnl)
+             (bigint-dbg "all-pairs   : " all-pairs dnl)
+             (bigint-dbg "all-results : " all-results dnl)
+             (bigint-dbg "min-res     : " min-res dnl)
+             (bigint-dbg "max-res     : " max-res dnl)
              
              (list min-res max-res))))))
 

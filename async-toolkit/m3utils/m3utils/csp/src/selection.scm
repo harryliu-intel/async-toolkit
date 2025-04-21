@@ -1,7 +1,7 @@
 ;;(dis "loading selection.scm" dnl)
 
 (define (selection-dbg . x)
-  (apply dis x)
+;;  (apply dis x)
   )
 
 
@@ -34,13 +34,13 @@
                 (null? (apply append sensitivities)))))
 
       (if #f (begin
-      (dis "make-selection-implementation : simple        : "
+      (selection-dbg "make-selection-implementation : simple        : "
            simple dnl)
-      (dis "make-selection-implementation : guards        : "
+      (selection-dbg "make-selection-implementation : guards        : "
            (stringify guards) dnl)
-      (dis "make-selection-implementation : sensitivities : "
+      (selection-dbg "make-selection-implementation : sensitivities : "
            (stringify sensitivities) dnl)
-      (dis "make-selection-implementation : local         : "
+      (selection-dbg "make-selection-implementation : local         : "
            local dnl)
       ))
 
@@ -88,12 +88,12 @@
          (the-result
           `(sequence ,@decls ,@assigns ,rem-if)))
 
-    (dis "implement-local-if start     : " (stringify selection) dnl)
-    (dis "implement-local-if guards    : " (stringify guards) dnl)
-    (dis "implement-local-if commands  : " (stringify commands) dnl)
-    (dis "implement-local-if assigns   : " (stringify assigns) dnl)
-    (dis "implement-local-if rem-if    : " (stringify rem-if) dnl)
-    (dis "implement-local-if result    : " (stringify the-result) dnl)
+    (selection-dbg "implement-local-if start     : " (stringify selection) dnl)
+    (selection-dbg "implement-local-if guards    : " (stringify guards) dnl)
+    (selection-dbg "implement-local-if commands  : " (stringify commands) dnl)
+    (selection-dbg "implement-local-if assigns   : " (stringify assigns) dnl)
+    (selection-dbg "implement-local-if rem-if    : " (stringify rem-if) dnl)
+    (selection-dbg "implement-local-if result    : " (stringify the-result) dnl)
     
     the-result
 
@@ -124,7 +124,7 @@
   ;;                 the result in dummy_i
   ;;
 
-  (dis "implement-waiting-if : " selection dnl)
+  (selection-dbg "implement-waiting-if : " selection dnl)
 
   ;; because of the definition of a local if, there can be no "else"
   ;; clause in a waiting if.
@@ -155,13 +155,13 @@
          )
 
     
-    (dis "implement-waiting-if guards        : " (stringify guards) dnl)
-    (dis "implement-waiting-if commands      : " (stringify commands) dnl)
-    (dis "implement-waiting-if vars          : " (stringify vars) dnl)
-    (dis "implement-waiting-if sensitivities : " (stringify sensitivities) dnl)
-    (dis "implement-waiting-if assigns       : " (stringify assigns) dnl)  
-    (dis "implement-waiting-if table         : " (stringify table) dnl)
-    (dis "implement-waiting-if res           : " (stringify  res) dnl)
+    (selection-dbg "implement-waiting-if guards        : " (stringify guards) dnl)
+    (selection-dbg "implement-waiting-if commands      : " (stringify commands) dnl)
+    (selection-dbg "implement-waiting-if vars          : " (stringify vars) dnl)
+    (selection-dbg "implement-waiting-if sensitivities : " (stringify sensitivities) dnl)
+    (selection-dbg "implement-waiting-if assigns       : " (stringify assigns) dnl)  
+    (selection-dbg "implement-waiting-if table         : " (stringify table) dnl)
+    (selection-dbg "implement-waiting-if res           : " (stringify  res) dnl)
     ;;(error)
     (set! *wif* res)
     res

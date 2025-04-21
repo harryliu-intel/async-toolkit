@@ -4,7 +4,7 @@
   (if (or (char? x) (string? x)) x (stringify x)))
 
 (define (do-dbg . x)
-  (apply dis  (map stringify-if-not-string x))
+;;  (apply dis  (map stringify-if-not-string x))
   )
 
 (define (remove-do the-inits prog func-tbl struct-tbl cell-info)

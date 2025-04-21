@@ -123,12 +123,4 @@
 
 
 
-(define (make-binop op lst)
-  ;; given a list of expressions, make binary op across them
-  (cond ((null? lst) (error "make-binop of empty list"))
-        ((not (list? lst)) (error "make-binop : not a list : " lst))
-        ((= 1 (length lst)) (car lst))
-        ((= 2 (length lst)) `(,op ,(car lst) ,(cadr lst)))
-        (else `(,op ,(car lst) ,(make-binop op (cdr lst)))))
-  )
 

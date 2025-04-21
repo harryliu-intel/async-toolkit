@@ -30,3 +30,8 @@
 (define (pp lst . n) ;; pretty-print
   (pp-depth lst (if (null? n) 100 (car n)) 0)
   #t)
+
+(define (qq lst)
+  (map pp lst)
+  'ok
+  )

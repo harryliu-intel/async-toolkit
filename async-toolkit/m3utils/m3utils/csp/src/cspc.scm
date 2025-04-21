@@ -1778,12 +1778,19 @@
 
 (define (compile8!)
   (set! text8
-        (map fixpoint-simplify-stmt  (scan-stmt text7)))
+        (map fixpoint-simplify-stmt  (scan-stmt text7) ) )
+  'text8
+  )
+
+
+(define (compile9!)
+  (set! text9
+        (remove-empty-blocks text8) )
         (dis "=========  PROGRAM BLOCKS GENERATED" dnl)
         (dis "---  BEGIN PROGRAM LISTING  ---" dnl)
-        (map pp text8)
+        (map pp text9)
         (dis "---   END PROGRAM LISTING   ---" dnl)
-  'text8
+  'text9
   )
 
 (define (compile!)
@@ -1795,6 +1802,7 @@
   (compile6!)
   (compile7!)
   (compile8!)
+  (compile9!)
   )
 
 

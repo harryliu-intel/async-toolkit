@@ -37,9 +37,9 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(dis dnl "  ===  LOADING COMPILER ..." dnl dnl)
+(dis dnl "=====  LOADING COMPILER ..." dnl dnl)
 (load "cspc.scm")
-(dis dnl "  ===  COMPILER LOADED." dnl dnl)
+(dis dnl "=====  COMPILER LOADED." dnl dnl)
 
 (define setup-loaded #t)
 
@@ -102,6 +102,7 @@
 (define text6 #f)
 (define text7 #f)
 (define text8 #f)
+(define text9 #f)
 
 
 (define *the-ass-tbl* #f)

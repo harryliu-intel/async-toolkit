@@ -10,7 +10,7 @@
 
   (define (iterate x)
     (let ((fx (f x)))
-      (dis x " -> " fx dnl)
+;;      (dis x " -> " fx dnl)
       (if (equal? fx x) x (iterate fx))))
 
   (lambda(x)(iterate x))
@@ -26,3 +26,7 @@
 (define (filter-or filter-p0 filter-p1)
   (lambda(x)(or (filter-p0 x) (filter-p1 x))))
                          
+(define (iterate-until-false f)
+  (let ((res (f)))
+    (if res (iterate-until-false f) res)))
+

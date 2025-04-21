@@ -129,4 +129,58 @@ define T()()
   }
 }
     
-    
+define U()()
+{
+  csp {
+    <,i:10:print("" + i)> // will turn into a sequential loop
+  }
+}
+
+define V()()
+{
+  csp {
+    *[ skip ]
+  }
+}
+
+define W()(bd(32) -L)
+{
+  csp {
+    <,i:10:print("" + L?)> // will turn into a sequential loop
+  }
+}
+
+define Wseq()(bd(32) -L)
+{
+  csp {
+    <;i:10:print("" + L?)> // will turn into a sequential loop
+  }
+}
+
+define X()()
+{
+  csp {
+    print("hello, world!")
+  }
+}
+
+define Y()(bd(32) -L)
+{
+  csp {
+    <,i:3: <,j:4: L?x >; wait(0); print(x) >
+  }
+}
+
+define Z()(bd(32) -L)
+{
+  csp {
+    <,i:3: <,j:4: L?x >; wait(1234); print(x) >
+  }
+}
+
+define ZZ()(bd(32) -L0, -L1)
+{
+  csp {
+    L0?x, L1?y; print (x + y)
+  }
+}

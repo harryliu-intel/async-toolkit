@@ -4,7 +4,7 @@
 (load "debug.scm")
 
 (define (vars-dbg . x)
-  (apply dis x)
+;;  (apply dis x)
   )
 
 (define (make-assignments-tbl prog cell-info the-inits func-tbl struct-tbl)
@@ -173,10 +173,6 @@
 
 (define (make-uses prog)
 
-  (define (dbg . x)
-      (apply vars-dbg x)
-    )
-
   (define tbl (make-hash-table 100 atom-hash))
 
   (define cur-stmt #f) ;; the statement currently being processed
@@ -265,32 +261,32 @@
     s)
 
   (define (advance-callback s)
-    (dbg "advance-callback " s dnl)
+    (vars-dbg "advance-callback " s dnl)
     (set! cur-stmt s)
     s)
   
   (define (x-visitor x)
 
-    (dbg "x-visitor : x is         : " x dnl)
+    (vars-dbg "x-visitor : x is         : " x dnl)
 
     (if (not (null? cur-stmt)) ;; we can also get called through type visiting
 
         (let ((stmt-type (get-stmt-type cur-stmt)))
-          (dbg "x-visitor : stmt-type is : " stmt-type " : ")
+          (vars-dbg "x-visitor : stmt-type is : " stmt-type " : ")
 
           (case stmt-type
             ((assign recv eval)
              ;; skip
-             (dbg "skipping" dnl)
+             (vars-dbg "skipping" dnl)
              )
 
             ((parallel sequence) ;; skip
-             (dbg "skipping" dnl)
+             (vars-dbg "skipping" dnl)
              )
              
             (else
              (let ((ids (find-expr-ids x)))
-               (dbg "found ids " ids dnl)
+               (vars-dbg "found ids " ids dnl)
                (map add-entry! ids)))
 
             );;esac
@@ -299,7 +295,7 @@
     x
     )
 
-  (dbg "make-uses" dnl)
+  (vars-dbg "make-uses" dnl)
   (prepostvisit-stmt prog
                      identity  s-visitor
                      identity x-visitor 
@@ -415,257 +411,8 @@
 (define *ar-ass* #f)
 
 (load "bits.scm")
+(load "interval.scm")
 
-(define (assignment-range ass port-tbl)
-  ;; compute the range of an assignment
-  ;; the "ass" should be in the format of the ass-tbl,
-  ;; that is: (ass syms id vals)
-
-  (set! *ar-ass* ass)
-
-  (define syms (cadr   ass))
-  (define id   (caddr  ass))
-  (define vals (cadddr ass))
-
-  (vars-dbg "assignment-range syms " syms dnl)
-  (vars-dbg "assignment-range id   " id   dnl)
-  (vars-dbg "assignment-range vals " vals dnl)
-
-  (define (channel-value-range channel-designator)
-    (let* ((id        (get-designator-id channel-designator))
-           (chan-decl (port-tbl 'retrieve id))
-           (width     (get-channel-type-bit-width (cadddr chan-decl))))
-
-      (vars-dbg "cvr : id : " id dnl)
-      (vars-dbg "cvr : cd : " chan-decl dnl)
-
-      (make-uint-range width)
-      
-      )
-    )
-
-  (define (loop-range loop-stmt)
-    (let* ((the-range (get-loop-range loop-stmt))
-           (min-expr  (cadr the-range))
-           (max-expr  (caddr the-range)))
-      (vars-dbg "loop-range " loop-stmt dnl)
-      (make-range (range-min (expr-range min-expr syms))
-                  (range-max (expr-range max-expr syms)))))
-      
-
-  (define (get-bits-interval bs)
-
-    (vars-dbg "get-bits-interval : bs : " bs dnl)
-    (let* ((the-index-range (range-union (expr-range (get-bits-min bs) syms)
-                                         (expr-range (get-bits-max bs) syms)))
-           (the-range
-            (range-extend  ;; this is a little bit pessimistic
-             (range-- (range-<< *range1* the-index-range) *range1*)
-             *big0*)))
-
-      (vars-dbg "get-bits-interval : the-index-range : " the-index-range dnl)
-      (vars-dbg "get-bits-interval : the-range       : " the-range dnl)
-
-      the-range
-;;      *range-complete*
-      )
-    )
-  
-  
-  (let* ((ass-stmt   (car ass))
-         (is-recv    (recv?   ass-stmt))
-         (is-assn    (assign? ass-stmt))
-         (is-loop    (loop?   ass-stmt))
-         (is-bits-lhs(and is-assn (bits? (get-assign-lhs ass-stmt))))
-         (simple-rhs (and is-assn (ident? (get-assign-rhs ass-stmt)))))
-
-    (vars-dbg "assignment-range ass-stmt   " ass-stmt dnl)
-    (vars-dbg "assignment-range is-recv    " is-recv dnl)
-    (vars-dbg "assignment-range is-assn    " is-assn dnl)
-    (vars-dbg "assignment-range is-loop    " is-loop dnl)
-    (vars-dbg "assignment-range simple-rhs " simple-rhs dnl)
-    
-    (cond (is-recv
-           (channel-value-range (get-recv-lhs ass-stmt)))
-
-          (is-bits-lhs ;; we do this for now...
-           (get-bits-interval (get-assign-lhs ass-stmt)))
-
-;;          (simple-rhs
-;;           (declared-ident-range (cadr (get-assign-rhs ass-stmt)) syms))
-
-          (is-assn ;; an expression
-           (expr-range (get-assign-rhs ass-stmt) syms))
-
-          (is-loop
-           (loop-range ass-stmt)
-           )
-
-          (else
-           (error "dont understand assignment " (stringify ass)))))
-  )
-
-(define (var-ass-range id ass-tbl port-tbl)
-
-  ;; I think we have a bug here.
-  ;; if we have a bits() on the LHS, this won't be right, I don't think.
-  
-  (let* ((var-asses   (ass-tbl 'retrieve id))
-         (var-ranges  (map (lambda(ass)(assignment-range ass port-tbl))
-                           var-asses)))
-    (dis "var-ass-range : var-asses  : " var-asses dnl)
-    (dis "var-ass-range : var-ranges : " var-ranges dnl)
-    var-ranges
-    )
-  )
-
-(define (get-fundamental-type-range decl)
-  (if (and (pair?  decl) (eq? 'array (car decl)))
-      (get-fundamental-type-range (caddr decl))
-      (get-type-range decl)))
-
-(define (declared-ident-range id syms)
-  (let ((decl (retrieve-defn id syms)))
-    (get-fundamental-type-range decl))
-  )
-
-(define (search-range tbl id)
-  (let ((tentative (tbl 'retrieve id)))
-    (if (eq? tentative '*hash-table-search-failed*)
-        *range-complete*
-        tentative
-        )
-    )
-  )
-
-
-(define (expr-range expr syms)
-  ;; should remove globals here...
-  (vars-dbg "expr-range : expr : " (stringify expr) dnl)
-  
-  (cond ((bigint? expr) (make-point-range expr))
-
-        ((not (pair? expr))
-         (error "expr-range : not an integer expression : " expr))
-
-        ((ident? expr)
-         (let* ((id  (cadr expr))
-                (rng (search-range *the-rng-tbl* id))
-                (dcl (search-range *the-dcl-tbl* id))
-                (glb (search-range *the-global-ranges* id))
-                (res (range-intersection rng dcl glb))
-               )
-           res)
-         )
-
-        ((binary-expr? expr)
-         (let* ((op (car expr))
-                (rop (eval (symbol-append 'range- op))))
-           (rop (expr-range (cadr expr) syms)
-                (expr-range (caddr expr) syms)))
-         )
-
-        ((unary-expr? expr)
-         (let* ((op (car expr))
-                (rop (eval (symbol-append 'range- op))))
-           (rop (expr-range (cadr expr) syms)))
-         )
-
-        ((bits? expr)
-         (let* ((bexpr          (get-bits-expr expr))
-                (bmin           (expr-range (get-bits-min expr) syms))
-                (bmax           (expr-range (get-bits-max expr) syms))
-
-                (source-range   (expr-range bexpr syms)) ;; range of source
-
-                (extract-mask-range ;; range of extraction
-                 (range-extend
-                  (range-- (range-<< *range1* bmax) *range1*)
-                  *big0*)))
-
-                 (range-& source-range extract-mask-range)))
-
-        ((array-access? expr)
-         (expr-range (cadr expr) syms))
-        
-        (else *range-complete*))
-  )
-
-(define (get-loop-range-range stmt syms)
-  ;; I think maybe we don't need this...
-  (let* ((lr      (get-loop-range stmt))
-         (lrminx  (cadr lr))
-         (lrmaxx  (caddr lr))
-         
-         (lrminxr (expr-range lrminx syms))
-         (lrmaxxr (expr-range lrmaxx syms))
-         (res     (range-union lrminxr lrmaxxr))
-        )
-
-    (dis "get-loop-range-range stmt     : " stmt dnl)
-    (dis "get-loop-range-range lr       : " lr dnl)
-
-    (dis "get-loop-range-range lrminx   : " lrminx dnl)
-    (dis "get-loop-range-range lrmaxx   : " lrmaxx dnl)
-
-    (dis "get-loop-range-range lrminxr  : " lrminxr dnl)
-    (dis "get-loop-range-range lrmaxxr  : " lrmaxxr dnl)
-
-    (dis "get-loop-range-range res      : " res dnl)
-
-    res
-    )
-  )
-
-(define (seed-integer-ranges!)
-  (map (lambda(id)(*the-rng-tbl* 'add-entry! id (*the-dcl-tbl* 'retrieve id)))
-       (*the-dcl-tbl* 'keys))
-  )
-
-(define (get-id-range id)
-  ;; based on the tables, what is the range for id?
-  (apply range-union (var-ass-range id *the-ass-tbl* *the-prt-tbl*))
-  )
-
-(define (update-id-range! id rng-tbl)
-  (dis "update-id-range! " id dnl)
-  
-  (let*((old-range (rng-tbl 'retrieve id))
-
-        (dcl-range (*the-dcl-tbl* 'retrieve id))
-
-        (id-range  (get-id-range id))
-        
-        (new-range
-         (if (eq? dcl-range '*hash-table-search-failed*)
-             id-range
-             (range-intersection dcl-range id-range))
-             )
-        
-        )
-    (if (range-empty? new-range)
-        (error (string-append "update-id-range! : got empty range for : " id " : " new-range "( dcl-range = " dcl-range " ; old-range = " old-range " ; id-range = " id-range " )" )))
-    
-    (rng-tbl 'update-entry! id new-range)
-    (not (equal? old-range new-range))
-    )
-  )
-
-
-
-(define (update-id-ranges! rng-tbl)
-  ;; on each iteration we have to re-evaluate the loop ranges, since
-  ;; they can change.  Right?  (They literally *are* ranges.)
-  (eval (apply or
-               (map (lambda(id)(update-id-range! id rng-tbl))
-                    (the-typed-ids))
-               )
-        )
-  )
-
-(define (iterate-until-false f)
-  (let ((res (f)))
-    (if res (iterate-until-false f) res)))
 
 (define (the-typed-ids)
    (uniq eq?
@@ -715,114 +462,7 @@
   'ok
   )
 
-(define (close-integer-ranges!)
-  (iterate-until-false (lambda()(update-id-ranges! *the-rng-tbl*)))
-  (dis "=========  INTEGER RANGES COMPUTED :" dnl)
-  (display-the-ranges)
-  )
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(define (make-sint-range bits)
-  ;; what is the integer range of a <bits>-bit sint?
-  (xnum-eval
-   `(make-range (- (pow 2 (- ,bits 1))  )
-                (- (pow 2 (- ,bits 1)) 1) )))
-
-(define (make-uint-range bits)
-  ;; what is the integer range of a <bits>-bit uint?
-  (xnum-eval
-   `(make-range 0 (- (pow 2 ,bits) 1))))
-
-(define gtr-dt #f)
-
-(define (get-type-range declared-type)
-  (set! gtr-dt declared-type)
-  (if (not (integer-type? declared-type))
-      (error "get-type-range : not an integer type : " declared-type))
-
-  (let ((bitsiz (cadddr declared-type))
-        (sint   (caddr  declared-type)))
-    
-    (cond ((null? bitsiz) *range-complete*)
-          
-          (sint        (make-sint-range bitsiz))
-          (else        (make-uint-range bitsiz)))
-    
-    )
-  )
-
-;; we'll keep the maximum size stupidly small for now, just to exercise
-;; the code without bogging down the machines with printing (which is
-;; the slow part of the routine)
-
-(define *maximum-size* 128) ;; largest finite size we'll tolerate
-
-(define *maximum-sint-range* (make-sint-range *maximum-size*))
-(define *maximum-uint-range* (make-uint-range *maximum-size*))
-
-(define (make-intdecls prog)
-  (define tbl (make-hash-table 100 atom-hash))
-  
-  (define (s-visitor s)
-    (case (get-stmt-type s)
-      ((var1)
-       (let ((id (get-var1-id s))
-             (ty (get-var1-type s)))
-
-             (if (integer-type? ty)
-
-                 (tbl 'add-entry! id (get-type-range ty))))
-       )
-
-      ;; we need to handle the loops separately, since we know
-      ;; more about their ranges than we do about declared variables
-      ;; (which we only know widths for)
-      
-      );;esac
-    s
-    )
-  (visit-stmt prog s-visitor identity identity)
-  tbl
-  )
-
-(define (make-integer-type signed bits)
-  `(integer #f ,signed ,(force-bigint bits) ()))
-
-(define (get-smallest-type range)
-  ;; we preferentially choose the uint (what CSP calls "int(.)")
-  
-  (cond ((range-contains? *maximum-uint-range* range)
-         (make-uint-type range))
-        
-        ((range-contains? *maximum-sint-range* range)
-         (make-sint-type range))
-
-        (else *default-int-type*)))
-
-(define (make-uint-type range)
-  (if (range-infinite? range)
-      *default-int-type*
-      (let ((bits (xnum-clog2 (xnum-+ (range-max range) *big1*))))
-        (make-integer-type #f bits))))
-
-(define (make-sint-type range)
-  (if (range-infinite? range)
-      *default-int-type*
-      (let* ((max (range-max range))
-             (min (range-min range))
-             
-             (max0
-              (if (xnum-< min *big0*)
-                  (xnum-- (xnum-abs min) *big1*) ;; need one less value for neg
-                  (xnum-abs min)))
-             
-             (max1 (xnum-abs max))
-
-             (mmax (xnum-max max0 max1))
-
-             (bits (xnum-+ *big1* (xnum-clog2 (xnum-+ mmax *big1*)))))
-        (make-integer-type #t bits))))
-
+(load "integer-types.scm")
 
 (define (make-proposed-type-tbl)
   (let ((tbl (make-hash-table 100 atom-hash)))
@@ -841,8 +481,6 @@
   (dis "=========  INTEGER TYPES DERIVED :" dnl)
   (display-tbl *proposed-types* (*proposed-types* 'keys))
  )
-
-         
                          
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
