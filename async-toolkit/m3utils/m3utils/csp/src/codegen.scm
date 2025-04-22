@@ -11,10 +11,39 @@
 (define (retrieve-var1 v1lst id)
   (car (filter (lambda(v1)(eq? id (get-var1-id v1) )) v1lst)))
 
-(define (gen-decls the-text prop-types)
+(define (filter-out-var1s lisp)
+  ;; remove all var1 statements from lisp
+  (define (visitor s)
+    (case (get-stmt-kw s)
+      ((var1)   'skip)
+      (else s))
+    )
+  (fixpoint-simplify-stmt (visit-stmt lisp visitor identity identity))
+  )
+
+(define (filter-in-var1s lisp)
+
+  (define res '())
+  
+  (define (visitor s)
+    (case (get-stmt-kw s)
+      ((var1)
+       (set! res (cons s res))
+       s)
+      (else     s))
+    )
+  
+  
+  (visit-stmt lisp visitor identity identity)
+  res
+  )
+
+(define (sequence-length seq) (length (cdr seq)))
+
+(define (gen-decls the-blocks prop-types)
   ;; generate all program declarations
   ;; prefer prop-types over the declared types
-  (let* ((decl-var1s  (apply append (map (curry1 find-stmts 'var1) text8)))
+  (let* ((decl-var1s  (apply append (map (curry1 find-stmts 'var1) the-blocks)))
 
          (prop-syms  (prop-types 'keys))
 
@@ -41,84 +70,50 @@
     )
   )
 
-(define (filter-out-var1s lisp)
-  ;; remove all var1 statements from lisp
+(define (visit-blocks blk-list v)
+  (map (lambda(blk)(visit-stmt blk v identity identity)) blk-list))
+
+(define (get-label-dummies the-blocks)
+  ;; get label dummies from dynamic fork/join statements
+  (define res '())
+
   (define (visitor s)
     (case (get-stmt-kw s)
-      ((var1)   'skip)
-      (else s))
+      ((label)
+       (if (and (not (null? (cddr s)))
+                (eq? 'fork (caddr s)))
+           (set! res (cons (cadddr s) res))))))
+
+  (visit-blocks the-blocks visitor)
+  res
+  )
+
+(define (get-shared-variables the-blocks cell-info)
+  (let* ((port-ids         (get-port-ids cell-info))
+         (var-refs         (map find-referenced-vars the-blocks))
+         (shared-ids       (multi (apply append var-refs)))
+         (shared-var-ids   (set-diff shared-ids port-ids)))
+    shared-var-ids
     )
-  (fixpoint-simplify-stmt (visit-stmt lisp visitor identity identity))
   )
 
-(define (sequence-length seq) (length (cdr seq)))
-
-(define (empty-block? blk)
-
-  ;; an empty block is either
-  ;; 1. skip
-  ;; 2. label X ; goto Y
-  
-  (or (eq? blk 'skip)
-      (and (sequence? blk)
-           (= 2 (sequence-length blk))
-           (or (simple-label? (first (cdr blk)))
-               (fork-label? (first (cdr blk))))
-           (simple-goto? (last blk)))))
-
-(define (simple-label? x) (and (label? x) (null?   (cddr x))))
-
-(define (fork-label? x) (and (label? x) (equal?  (caddr x) 'fork)))
-                      
-(define (simple-goto? x) (and (goto? x) (null? (cddr x))))
-                      
-(define (find-empty-blocks blk-lst) (filter empty-block? blk-lst))
-
-(define label-label cdr)
-(define goto-label cdr)
-
-(define (find-empty-label-remap blk-lst)
-  ;; find the remapping map to get rid of empty blocks
-  (map (lambda(blk)
-         (if (sequence? blk)
-             (cons (label-label (cadr blk))
-                   (goto-label  (last blk)))
-             #f
-             )
-         )
-       (filter identity (find-empty-blocks blk-lst))
-       )
-  )
-
-(define (remap-label blk from to)
-  ;; remap a single label from from to to
-  (define (visitor s)
-    (case (get-stmt-kw s)
-      ((goto)    (if (equal? from (goto-label  s)) `(goto ,@to) s))
-      ((label)   (if (equal? from (label-label s)) `(label ,@to) s))
-      (else s))
+(define (get-block-label blk)
+  (if (not (sequence? blk))
+      (error "block is not a sequence : " blk))
+  (let ((first (cadr blk)))
+    (if (not (label? first))
+        (error "first statement in block is not a label : " first))
+    first
     )
-  (visit-stmt blk visitor identity identity)
   )
 
-(define (remap-labels remap blk)
-  ;; remap all the labels according to the remapping map remap;
-  ;; remap is a list of conses (from . to)
-  (if (null? remap)
-      blk
-      (remap-labels (cdr remap)
-                    (remap-label blk (cdar remap) (caar remap))))
-  )
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;; the following will need to be enhanced for structured ports
+;;
 
-(define (remove-empty-blocks blk-lst)
+(define (port-direction pdef) (caddr pdef)) ;; works for both channel and node
 
-  ;; remove all the empty blocks from the blk-lst,
-  ;; and patching the labels so control flow remains
-  
-  (let ((remap     (find-empty-label-remap blk-lst))
-        (short-lst (filter (filter-not empty-block?) blk-lst))
-        )
-    (map (lambda(blk)(remap-labels remap blk)) short-lst)))
 
-                    
-(load "codegen-m3.scm")
+(define (input-port? pdef) (eq? 'in (port-direction pdef)))
+(define (output-port? pdef) (eq? 'out (port-direction pdef)))

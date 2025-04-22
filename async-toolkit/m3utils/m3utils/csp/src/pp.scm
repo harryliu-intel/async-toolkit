@@ -35,3 +35,10 @@
   (map pp lst)
   'ok
   )
+
+(define (dis1 . x)
+  (apply dis x)
+  (dis dnl)
+  'ok
+  )
+

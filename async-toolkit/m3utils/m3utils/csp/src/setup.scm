@@ -26,14 +26,15 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define *the-text* #f)
-(define *the-structs* #f)
-(define *the-funcs* #f)
-(define *the-inits* #f)
-(define *the-initvars* #f)
+(define *the-proc-type-name* #f)
+(define *the-text*           #f)
+(define *the-structs*        #f)
+(define *the-funcs*          #f)
+(define *the-inits*          #f)
+(define *the-initvars*       #f)
 
-(define *the-func-tbl* #f)
-(define *the-struct-tbl* #f)
+(define *the-func-tbl*       #f)
+(define *the-struct-tbl*     #f)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 

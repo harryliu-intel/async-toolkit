@@ -14,7 +14,7 @@
   (define (visitor s syms)
     
     (define (handle-actual call-sfx actual formal)
-      (define tg (make-name-generator "-inline-eval-handle-actual"))
+      (define tg (make-name-generator "-inline-actual"))
       
       ;;
       ;; each actual is a designator
@@ -126,7 +126,7 @@
       )
 
     (define (handle-func fnam actuals lhs)
-      (define tg (make-name-generator "-inline-eval-handle-func"))
+      (define tg (make-name-generator "-inline-func-body"))
 
       (let* ((fdef      (begin
                          (let ((res (func-tbl 'retrieve fnam)))
@@ -141,7 +141,7 @@
              (sfx       (if intrinsic "" (tg 'next)))
              (fdef1text (if intrinsic
                             `(call-intrinsic ,fnam ,@actuals)
-                            (uniqify-function-text fdef sfx cell-info initvars)))
+                            (uniquify-function-text fdef sfx cell-info initvars)))
              )
         (dis "pre-inline : " (stringify s) dnl)
         (dis "lhs        : " (stringify lhs) dnl)

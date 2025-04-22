@@ -321,7 +321,7 @@
 
 (load "set-ops.scm")
 
-(define (uniqify-function-text func sfx cell-info initvars)
+(define (uniquify-function-text func sfx cell-info initvars)
 
   ;;
   ;; the identifiers referenced by functions can be put in three classes
@@ -333,7 +333,7 @@
   ;; in CSP, captured globals are just CAST constants and channel
   ;; identifiers all else are either locals or interface variables
   ;;
-  ;; When uniqifying a function (in preparation for inlining), we
+  ;; When uniquifying a function (in preparation for inlining), we
   ;; rename all the locals and interfaces.  Captured globals are kept
   ;; as originally named.
   ;;
@@ -352,12 +352,12 @@
                                       (set-union body-var-captures
                                                  body-chan-captures))))
     
-  (dis "uniqify-function-text " (get-function-name func) " ====> " dnl)
-  (dis "uniqify-function-text intf-vars          : " intf-vars dnl)
-  (dis "uniqify-function-text body-vars          : " body-vars dnl)
-  (dis "uniqify-function-text body-var-captures  : " body-var-captures dnl)
-  (dis "uniqify-function-text body-chan-captures : " body-chan-captures dnl)
-  (dis "uniqify-function-text rename-ids         : " rename-ids dnl)
+  (dis "uniquify-function-text " (get-function-name func) " ====> " dnl)
+  (dis "uniquify-function-text intf-vars          : " intf-vars dnl)
+  (dis "uniquify-function-text body-vars          : " body-vars dnl)
+  (dis "uniquify-function-text body-var-captures  : " body-var-captures dnl)
+  (dis "uniquify-function-text body-chan-captures : " body-chan-captures dnl)
+  (dis "uniquify-function-text rename-ids         : " rename-ids dnl)
 
 
   (let loop ((cp   rename-ids)
@@ -456,11 +456,14 @@
     (dis dnl "=========  LOADING PARSE TREE FROM " nm ".scm ..." dnl)
 
     (set! *cell*  (load-csp (string-append nm ".scm")))
-
+    (set! *the-proc-type-name* (car *cell*))
+    
     (set! *data* (cadr *cell*))       ;; the CSP code itself
     (set! *cellinfo* (caddr *cell*))  ;; the CAST ports
 
     (dis "=========  PARSE TREE LOADED SUCCESSFULLY " dnl dnl)
+
+    (dis "=========  " *the-proc-type-name* dnl dnl)
     
     (switch-proc! *data*)
     )
@@ -787,7 +790,6 @@
   ;; pull out all the identifiers used in a designator
   (uniq eq? (find-expr-ids x)))
   
-
 (define (hash-designator d)
   ;; hash a designator
   (cond ((eq? 'id (car d)) (atom-hash (cadr d)))
@@ -807,15 +809,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (load "simplify.scm")
-
-(define (array-type? t) (and (pair? t) (eq? 'array (car t))))
-
-(define (get-array-extent      at)  (cadr at))
-(define (get-array-elem-type   at)  (caddr at))
-
-(define (make-array-type extent elem-type)
-  `(array ,extent ,elem-type))
-
+(load "expr.scm")
 
 (define vs #f)
 
@@ -826,8 +820,8 @@
       (car stmt)
       'skip))
 
-
 (define (find-stmt-ids lisp)
+  ;; returns ids represented by program as a set-list
   (define ids '())
   
   (define (expr-visitor x)
@@ -912,8 +906,10 @@
 (define (get-ports cell-info)
   (caddddr cell-info))
 
+(define (get-port-id pdef) (cadr pdef))
+  
 (define (get-port-ids cell-info)
-  (map cadr (get-ports cell-info)))
+  (map get-port-id (get-ports cell-info)))
 
 (define (find-var1-stmts lisp)
   (define var1s '())
@@ -955,9 +951,9 @@
 
 (define *stop* #f)
 
-(define uniqify-tg (make-name-generator "uniqify-temp"))
+(define uniquify-tg (make-name-generator "uniquify-temp"))
 
-(define (uniqify-one stmt id tg)
+(define (uniquify-one stmt id tg)
 
   ;; this de-duplicates a multiply declared variable
   ;; by renaming all the instances to unique names
@@ -968,7 +964,7 @@
 ;;      (dis "num-decls of " id " " num-decls " : " (stringify s) dnl)
       (if (= num-decls 1)
           (cons 'cut
-                (rename-id s id (symbol-append id '- (uniqify-tg 'next))))
+                (rename-id s id (symbol-append id '- (uniquify-tg 'next))))
           s)))
 
   (if (< (count-declarations id stmt) 2)
@@ -980,7 +976,7 @@
                      identity identity)
 )
                      
-(define (uniqify-stmt stmt)
+(define (uniquify-stmt stmt)
   (let ((tg    (make-name-generator "uniq"))
         (names (multi (find-declaration-vars stmt))))
     (let loop ((p names)
@@ -988,8 +984,8 @@
       (if (null? p)
           s
           (begin
-;;            (dis "uniqifying " (car p) dnl)
-            (loop (cdr p) (uniqify-one s (car p) tg)))))
+;;            (dis "uniquifying " (car p) dnl)
+            (loop (cdr p) (uniquify-one s (car p) tg)))))
     )
   )
 
@@ -1883,7 +1879,9 @@
       (desugar-stmt (close-text p))
   )
 
+(load "ports.scm")
 (load "codegen.scm")
+(load "codegen-m3.scm")
 
 (define (reload) (load "cspc.scm"))
 

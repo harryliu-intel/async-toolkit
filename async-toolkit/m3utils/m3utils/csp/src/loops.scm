@@ -69,7 +69,7 @@
 
   (dis "uniquify-loop-dummies" dnl)
   
-  (define tg (make-name-generator "uniqify-loop"))
+  (define tg (make-name-generator "uniquify-loop"))
   
   (define (s-visitor s)
     (if (loop? s) (rename-id s (get-loop-dummy s) (tg 'next)) s)

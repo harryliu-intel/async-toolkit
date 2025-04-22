@@ -6,6 +6,10 @@
 
 (define (curry1 f x) (lambda(y)(f x y)))
 
+(define (curry2 f x y) (lambda(z)(f x y z)))
+
+(define (curry f . x) (lambda r (apply f (append x r))))
+
 (define (make-fixpoint-func f)
 
   (define (iterate x)

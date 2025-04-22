@@ -42,27 +42,8 @@ TYPE
   METHODS
     run();
   END;
-  
-  FirstFrame = ProcFrame OBJECT
-    L, R          : REF IntChan;     (* interface *)
-    i, x, y, z    : Word.T;          (* locals *)
-    c0, c1, c2    : FirstClosure;     (* closures *)
-  END;
 
-  FirstBlock = PROCEDURE (cl : FirstClosure) : BOOLEAN;
-  (* representing a fragment of CSP process text *)
-
-  FirstClosure = ProcClosure OBJECT
-    frame  : FirstFrame;  (* reference to process locals *)
-    block  : FirstBlock;  (* program text of block *)
-  OVERRIDES
-    run := RunFirst;
-  END;
-
-PROCEDURE RunFirst(cl : FirstClosure) =
-  BEGIN
-    EVAL cl.block(cl)
-  END RunFirst;
+(**********************************************************************)
   
   (* 
      channel buf rep
@@ -343,8 +324,28 @@ define SYSTEM()()
   } 
 }
 
-**********************************************************************)
+TYPE
+  FirstFrame = ProcFrame OBJECT
+    L, R          : REF IntChan;     (* interface *)
+    i, x, y, z    : Word.T;          (* locals *)
+    c0, c1, c2    : FirstClosure;    (* closures *)
+  END;
 
+  FirstBlock = PROCEDURE (cl : FirstClosure) : BOOLEAN;
+  (* representing a fragment of CSP process text *)
+
+  FirstClosure = ProcClosure OBJECT
+    frame  : FirstFrame;  (* reference to process locals *)
+    block  : FirstBlock;  (* program text of block *)
+  OVERRIDES
+    run := RunFirst;
+  END;
+
+PROCEDURE RunFirst(cl : FirstClosure) =
+  BEGIN
+    EVAL cl.block(cl)
+  END RunFirst;
+  
 PROCEDURE First0_0(cl : FirstClosure) : BOOLEAN =
   BEGIN
     IF doDebug THEN Debug.Out("First0_0 : " & Int(cl.frame.id)) END;

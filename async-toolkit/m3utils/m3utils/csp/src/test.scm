@@ -92,7 +92,7 @@
                                                 (parallel
                                                     (sequence
                                                         (label L319)
-                                                        (send (id TO) (id to-uniqify-temp2))
+                                                        (send (id TO) (id to-uniquify-temp2))
                                                     )
                                                     (sequence
                                                         (label L320)
@@ -110,12 +110,12 @@
 
 
 (define f1
-  '(sequence (assign (id to-uniqify-temp2) (id keep_msb_bit-inline-eval-handle-func61))
+  '(sequence (assign (id to-uniquify-temp2) (id keep_msb_bit-inline-eval-handle-func61))
                             (label L18)
                             (parallel
                                 (sequence
                                     (label L15)
-                                    (send (id TO) (id to-uniqify-temp2))
+                                    (send (id TO) (id to-uniquify-temp2))
                                 )
                                 (sequence
                                     (label L16)

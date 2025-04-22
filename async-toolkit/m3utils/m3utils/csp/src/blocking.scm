@@ -239,12 +239,6 @@
 (define (labelled-sequence? seq) ;; a sequence that starts with a label
   (and (sequence? seq) (not (null? (cdr seq))) (label? (cadr seq))))
 
-(define (dis1 . x)
-  (apply dis x)
-  (dis dnl)
-  'ok
-  )
-
 (define *scan-stmts* '(seq parallel sequence local-if parallel-loop))
 
 (define (scan-stmt stmt)
@@ -462,3 +456,75 @@
 (define scan-seq           scan-sequence)  ;; shorthand
         
 
+(define (sequence-length seq) (length (cdr seq)))
+
+(define (empty-block? blk)
+
+  ;; an empty block is either
+  ;; 1. skip
+  ;; 2. label X ; goto Y
+  
+  (or (eq? blk 'skip)
+      (and (sequence? blk)
+           (= 2 (sequence-length blk))
+;;           (or
+            (simple-label? (first (cdr blk)))
+;;            (fork-label? (first (cdr blk)))
+;;            )
+           (simple-goto? (last blk)))))
+
+(define (simple-label? x) (and (label? x) (null?   (cddr x))))
+
+(define (fork-label? x) (and (label? x) (equal?  (caddr x) 'fork)))
+                      
+(define (simple-goto? x) (and (goto? x) (null? (cddr x))))
+                      
+(define (find-empty-blocks blk-lst) (filter empty-block? blk-lst))
+
+(define label-label cdr)
+(define goto-label cdr)
+
+(define (find-empty-label-remap blk-lst)
+  ;; find the remapping map to get rid of empty blocks
+  (map (lambda(blk)
+         (if (sequence? blk)
+             (cons (label-label (cadr blk))
+                   (goto-label  (last blk)))
+             #f
+             )
+         )
+       (filter identity (find-empty-blocks blk-lst))
+       )
+  )
+
+(define (remap-label blk from to)
+  ;; remap a single label from from to to
+  (define (visitor s)
+    (case (get-stmt-kw s)
+      ((goto)    (if (equal? from (goto-label  s)) `(goto ,@to) s))
+      ((label)   (if (equal? from (label-label s)) `(label ,@to) s))
+      (else s))
+    )
+  (visit-stmt blk visitor identity identity)
+  )
+
+(define (remap-labels remap blk)
+  ;; remap all the labels according to the remapping map remap;
+  ;; remap is a list of conses (from . to)
+  (if (null? remap)
+      blk
+      (remap-labels (cdr remap)
+                    (remap-label blk (cdar remap) (caar remap))))
+  )
+
+(define (remove-empty-blocks blk-lst)
+
+  ;; remove all the empty blocks from the blk-lst,
+  ;; and patching the labels so control flow remains
+  
+  (let ((remap     (find-empty-label-remap blk-lst))
+        (short-lst (filter (filter-not empty-block?) blk-lst))
+        )
+    (map (lambda(blk)(remap-labels remap blk)) short-lst)))
+
+                    

@@ -8,7 +8,15 @@
 (define *default-string-type* '(string #f))
 (define *const-string-type* '(string #t))
 
-(load "expr.scm")
+(define (array-type? t) (and (pair? t) (eq? 'array (car t))))
+
+(define (get-array-extent      at)  (cadr at))
+(define (get-array-elem-type   at)  (caddr at))
+
+(define (make-array-type extent elem-type)
+  `(array ,extent ,elem-type))
+
+(define (struct-type? t) (and (pair? t) (eq? 'struct (car t))))
 
 (define s-x  #f)
 (define s-bt #f)
@@ -33,7 +41,7 @@
          ((string? x) *default-string-type*)
 
          ((or (probe? x)(recv-expression? x))
-          (let* ((port-tbl  (make-port-table cell-info)) ;; hrmph
+          (let* ((port-tbl  (make-port-table cell-info)) ;; hrmph, slow
                  (channel-designator (cadr x))
                  (id        (get-designator-id channel-designator))
                  (chan-decl (port-tbl 'retrieve id))

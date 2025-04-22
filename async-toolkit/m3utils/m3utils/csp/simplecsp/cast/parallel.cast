@@ -39,3 +39,10 @@ define SYSTEM()()
   } 
 }
 
+define LOOPS()(bd(WIDTH) +R0, +R1)
+{
+  csp {
+    *[ R0!0 ] , *[ R1! 1 ]
+  }
+}
+  

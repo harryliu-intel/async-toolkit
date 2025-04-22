@@ -32,8 +32,8 @@
     (dis "multiples  : " multiples dnl)
 
     (cond ((not (null? multiples))
-           (dis dnl "uniqifying..." dnl dnl)
-           (analyze-program (uniqify-stmt prog)
+           (dis dnl "uniquifying..." dnl dnl)
+           (analyze-program (uniquify-stmt prog)
                             cell-info
                             initvars))
 
