@@ -1,0 +1,78 @@
+import ("libm3")
+import ("cit_util")
+import ("parseparams")
+import ("simpletoken")
+import ("mscheme")
+import ("modula3scheme")
+import ("sstubgen")
+import ("parseparams")
+
+%if defined("CM3_VERSION")
+%        m3_optimize("T")
+%end
+
+Smodule   ("CspExpression")
+Sinterface("CspExpressionPublic")
+Ssequence ("CspExpression", "CspExpression")
+
+Smodule   ("CspStatement")
+Sinterface("CspStatementPublic")
+Ssequence ("CspStatement", "CspStatement")
+
+Smodule   ("CspType")
+Sinterface("CspTypePublic")
+Sinterface("CspStructMember")
+Ssequence ("CspStructMember", "CspStructMember")
+
+Smodule   ("CspAst")
+
+Sinterface("CspGuardedCommand")
+Ssequence ("CspGuardedCommand", "CspGuardedCommand")
+
+Smodule   ("CspDeclaration")
+Sinterface("CspDeclarationPublic")
+Ssequence ("CspDeclaration", "CspDeclaration")
+
+Sinterface("CspDirection")
+Smodule   ("CspRange")
+Sinterface("CspInterval")
+
+Smodule   ("CspDeclarator")
+Ssequence ("CspDeclarator", "CspDeclarator")
+Smodule   ("CspStructDeclarator")
+Ssequence ("CspStructDeclarator", "CspStructDeclarator")
+
+Smodule   ("CspSyntax")
+
+Smodule   ("FiniteInterval")
+Smodule   ("VaryBits")
+
+Smodule   ("DynamicInt")
+Table     ("DynIntDynInt", "DynamicInt", "DynamicInt")
+
+Smodule   ("WideInt")
+Smodule   ("NativeInt")
+
+SchemeStubs ("Debug")
+SchemeStubs ("BigInt")
+SchemeStubs ("Math")
+SchemeStubs ("TextWr")
+SchemeStubs ("FileWr")
+SchemeStubs ("Wr")
+SchemeStubs ("FileRd")
+SchemeStubs ("Rd")
+SchemeStubs ("TextRd")
+SchemeStubs ("SchemeEnvironment")
+SchemeStubs ("SchemeUtils")
+SchemeStubs ("Fmt")
+SchemeStubs ("Atom")
+SchemeStubs ("Word")
+
+ExportSchemeStubs ("cspc")
+importSchemeStubs()
+
+implementation ("Main")
+
+program ("cspc")
+
+

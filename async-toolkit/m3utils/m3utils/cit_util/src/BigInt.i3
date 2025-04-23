@@ -62,10 +62,10 @@ CONST
                            'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X',
                            'Y', 'Z' };
 
-  MaxBase = NUMBER(HexChars);
+  MaxPrintBase = NUMBER(HexChars);
 
 TYPE
-  PrintBase = [ 2 .. MaxBase ];
+  PrintBase = [ 2 .. MaxPrintBase ];
   
 PROCEDURE Format(a : T; base : PrintBase := 10) : TEXT;
 

@@ -2,7 +2,7 @@
 (define (m3-expand-type type)
   (cond ((boolean-type? type) "BOOLEAN")
         ((string-type? type) "TEXT")
-        ((integer-type? type) (m3-expand-integer-type type))
+        ((integer-type? type) (m3-expand-int-type type))
         ((array-type? type) (m3-expand-array-type type))
         ((struct-type? type) (m3-expand-struct-type type)) ;; hmm
         (else (error "Unknown type " type))
@@ -52,7 +52,7 @@
 
 (define *us* (char->integer #\_))
 
-(define (map-char c)
+(define (m3-char c)
   (cond ((alpha-checker c) (list (char->integer c)))
         ((digit-checker c) (list (char->integer c)))
         (else  `(,*us* 
@@ -61,30 +61,33 @@
 
                   ,*us*))))
         
-(define (m3-map-ident scm-ident) ;; Good grief
-;;  (dis "m3-map-ident : " scm-ident dnl)
+(define (m3-ident scm-ident) ;; Good grief
+
+  ;; this just turns a Scheme symbol into a legal Modula-3 identifier
+  
+;;  (dis "m3-ident : " scm-ident dnl)
   (string-append "m3__"
                  (list->string
                   (map integer->char
                        (apply append
-                              (map map-char
+                              (map m3-char
                                    (string->list
                                     (symbol->string scm-ident))))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
+;; 
 ;;
 ;;
 
 (define (m3-write-port-decl w pdef)
-  (w "    " (pad 40 (m3-map-ident (get-port-id pdef))) " : REF "
+  (w "    " (pad 40 (m3-ident (get-port-id pdef))) " : REF "
      (m3-convert-port-type (cadddr pdef))
      ".T;" dnl
      )
   )
 
 (define (m3-format-port-ass pdef)
-  (let ((ident (m3-map-ident (get-port-id pdef))))
+  (let ((ident (m3-ident (get-port-id pdef))))
     (string-append ident " := " ident)
     )
   )
@@ -96,7 +99,7 @@
         ((struct-type?  type) (error "not done") )
         ((integer-type? type)
          (let ((width (cadddr type)))
-           (cond ((not (bigint? width)) "DynamicInteger.T")
+           (cond ((not (bigint? width)) "DynamicInt.T")
                  ((caddr type)
                   (string-append "SInt" (BigInt.Format width 10) ".T"))
                  (else
@@ -112,7 +115,7 @@
   (let ((id (get-var1-id v1))
         (ty (get-decl1-type (get-var1-decl1 v1)))
         )
-    (string-append (pad 40 (m3-map-ident id)) " : " (m3-map-decltype ty) ";")
+    (string-append (pad 40 (m3-ident id)) " : " (m3-map-decltype ty) ";")
     )
   )
 
@@ -130,7 +133,7 @@
   (w "    (* closures *)" dnl)
 
   (map (lambda(blk)
-         (let* ((btag (m3-map-ident (cadr (get-block-label blk)))))
+         (let* ((btag (m3-ident (cadr (get-block-label blk)))))
            (w "    " (pad 40 btag "_Cl") " : Closure;" dnl)
            );;*tel
          )
@@ -216,7 +219,7 @@
     (let ((iw (indent-writer w "     ")))
 
       (let* ((inlist (filter input-port? proc-ports))
-             (ids    (map m3-map-ident (map get-port-id inlist)))
+             (ids    (map m3-ident (map get-port-id inlist)))
              )
         (map (lambda(m3id)
                (iw "MarkReader(" m3id ", frame);" dnl))
@@ -226,7 +229,7 @@
       (w dnl)
       
       (let* ((outlist (filter output-port? proc-ports))
-             (ids    (map m3-map-ident (map get-port-id outlist)))
+             (ids    (map m3-ident (map get-port-id outlist)))
              )
         (map (lambda(m3id)
                (iw "MarkWriter(" m3id ", frame);" dnl))
@@ -236,22 +239,23 @@
 
       (w dnl)
 
-      (let* ((blk-labels (map m3-map-ident
+      (let* ((blk-labels (map m3-ident
                               (map cadr
                                    (map get-block-label (cdr the-blocks)))))
-             (iiw (indent-writer iw (pad 45 "")))
+             (iiw (indent-writer iw (pad 22 "")))
              )
         (map (lambda(m3lab)
-               (iw  (pad 45 "frame." m3lab "_Cl := NEW(") m3lab "Closure," dnl)
-               (iiw        "id      := NextId()," dnl)
-               (iiw        "frameId := frame.id," dnl)
-               (iiw        "frame   := frame," dnl)
-               (iiw        "block   := Block_" m3lab ");" dnl dnl)
+               (iw  (pad 22 "frame." m3lab "_Cl")
+                    " := NEW(" m3lab "Closure," dnl)
+               (iiw "        id      := NextId()," dnl)
+               (iiw "        frameId := frame.id," dnl)
+               (iiw "        frame   := frame," dnl)
+               (iiw "        block   := Block_" m3lab ");" dnl dnl)
                )
              blk-labels)
         );;*tel
 
-      (iw "Schedule(frame." (m3-map-ident (cadar the-blocks))"_Cl);" dnl)
+      (iw "Schedule(frame." (m3-ident (cadar the-blocks))"_Cl);" dnl)
       );;tel (iw)
     
     (w "    END(*WITH*)" dnl)
@@ -290,7 +294,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define (declared-type proc-context expr)
+(define (declared-type pc expr)
 
   ;;
   ;; This is similar to derive-type in the front-end;
@@ -302,20 +306,20 @@
   ;; 
 
   
-  (let ((symtab       (car proc-context))
-        (cell-info    (cadr proc-context))
-        (struct-tbl   (caddr proc-context)))
+  (let ((symtab       (car pc))
+        (cell-info    (cadr pc))
+        (struct-tbl   (caddr pc)))
     (if (not (designator? expr))
         (error "declared-type : not a designator : " expr))
 
     (let* ((declared-id (get-designator-id expr))
            (id-type     (symtab 'retrieve declared-id)))
       (cond ((array-access? expr)
-             (peel-array (declared-type proc-context (array-accessee expr))))
+             (peel-array (declared-type pc (array-accessee expr))))
 
             ((member-access? expr)
              (let* ((base-type (declared-type
-                                proc-context (member-accessee expr) ))
+                                pc (member-accessee expr) ))
                     (struct-def (struct-tbl 'retrieve (get-struct-name base-type)))
                     (struct-flds (get-struct-decl-fields struct-def))
                         (accesser   (member-accesser x))
@@ -332,16 +336,16 @@
     )
   )
 
-(define (m3-derive-type proc-context expr)
-  (let ((symtab       (car proc-context))
-        (cell-info    (cadr proc-context))
-        (struct-tbl   (caddr proc-context)))
+(define (m3-derive-type pc expr)
+  (let ((symtab       (car pc))
+        (cell-info    (cadr pc))
+        (struct-tbl   (caddr pc)))
     (derive-type expr (list symtab) '() struct-tbl cell-info)
     )
   )
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define (m3-format-designator proc-context designator)
+(define (m3-format-designator pc designator)
   ;; actually, we need to look up the designator to know
   ;; whether it is
   ;;
@@ -354,9 +358,33 @@
   ;;
   ;; (each of which has a different access method)
 
-  (cond ((ident? designator) (m3-map-ident (cadr designator)))
+  (cond ((ident? designator) (m3-ident (cadr designator)))
 
         (else (error "not yet"))))
+
+(define (m3-format-varid pc id)
+  ;; given an id (as part of a designator) in Scheme,
+  ;; generate a correctly formatted reference for it for the
+  ;; compiled program, from within a block procedure
+
+  (let ((the-scopes (cadddr pc)))
+    (case (the-scopes 'retrieve id)
+      ((*hash-table-search-failed*) (error "unknown id : " id))
+      
+      ((port)           (string-append "cl.frame." (m3-ident id)))
+      
+      ((process)        (string-append "cl.frame." (m3-ident id)))
+      
+      ((block)          (m3-ident id))
+      
+      ((parallel-dummy) ;; this is sketchy
+       (string-append "cl.frame." (m3-ident id)))
+      
+      (else (error))
+      )
+    )
+  )
+
 
 ;;
 ;; integer types --
@@ -391,14 +419,17 @@
 (define (m3-uint-type? t)
   (and (integer-type? t) (not (caddr t)) (bigint? (cadddr t))))
 
-(define (m3-bigint-type? t) ;; what's this?
+(define (m3-dynamic-int-type? t) ;; what's this?
   (and (integer-type? t) (not (caddr t)) (not (bigint? (cadddr t)))))
 
 (define (m3-int-type-width t)
-  (BigInt.ToInteger (cadddr t)))
+  (if (m3-dynamic-int-type? t) (error) (BigInt.ToInteger (cadddr t))))
 
-(define (m3-narrow-integer-type? t)
+(define (m3-natively-representable-type? t)
   ;; if a type is "narrow", we can do regular math on it
+
+  ;; this means that the bit pattern matches the bit pattern of
+  ;; a Modula-3 INTEGER, and that the operations do too
 
   ;; hmm there will be a very special case for operands that are
   ;; unsigned and exactly 64 bits wide.
@@ -407,70 +438,269 @@
        (or (and (m3-sint-type? t) (<= (m3-int-type-width t) 64))
            (and (m3-uint-type? t) (<= (m3-int-type-width t) 63)))) ;; hmm.
   )
-       
-       
-       
-(define (m3-compile-narrow-integer-assign w proc-context stmt)
 
+(define (m3-uint64-type? t) ;; 64-bit uint is a special case: rep : Word.T
+  (and (m3-uint-type? t) (= (m3-int-type-width t) 64))) 
+  
+(define (m3-wide-int-type? t)
+  (and (not (m3-dynamic-int-type?            t))
+       (not (m3-uint64-type?                 t))
+       (not (m3-natively-representable-type? t))
+       );;dna
   )
 
-(define (m3-compile-scalar-integer-assign w proc-context stmt)
+(define (exists? pred? lst)
+  (eval (apply or (map pred? lst)))) ;; why do we need eval?
+
+(define (forall? pred? lst)
+  (eval (apply and (map pred? lst)))) ;; why do we need eval?
+  
+(define (m3-compile-scalar-int-assign pc stmt)
   (let* ((lhs (get-assign-lhs stmt))
-         (lty (declared-type proc-context lhs)))
+         (lty (declared-type pc lhs)))
 
-    (cond ((m3-narrow-integer-type? lty)
-           (m3-compile-narrow-integer-assign w proc-context stmt))
+    (cond ((m3-natively-representable-type? lty)
+           (m3-compile-native-int-assign pc stmt))
 
-          ((m3-wide-integer-type? lty)
-           (m3-compile-wide-integer-assign w proc-context stmt))
+          ((m3-dynamic-int-type? lty)
+           (m3-compile-wide-int-assign pc stmt))
+
+          ((m3-wide-int-type? lty)
+           (m3-compile-wide-int-assign pc stmt))
 
           (else
            (error)))
+    )
   )
-)
 
-(define (m3-format-string-expr proc-context x)
-  (let ((type (declared-type proc-context x)))
-    (cond ((ident? x)  (m3-format-designator proc-context x))
-          ((string? x) (stringify x))
-          ((+? x)      (string-append
-                        "Text.Cat("
-                        (m3-format-string-expr proc-context (cadr x))
-                        ","
-                        (m3-format-string-expr proc-context (cadr x))
-                        ")"))
+(define (operand-type pc expr)
+  (if (literal? expr)
+      (let ((lt (literal-type expr)))
+        (if (integer-type? lt)
+            (get-smallest-type (list expr expr))
+            lt))
+      (declared-type pc expr)))
 
-          ((m3-narrow-uint-type? type)
-           (string-append
-            "Fmt.Unsigned("
-            (m3-format-integer-expr proc-context x)
-            ", base := 10)"
-            ))
-            
-          ((m3-narrow-sint-type? type)
-           (string-append
-            "Fmt.Int("
-            (m3-format-integer-expr proc-context x)
-            ", base := 10)"
-            ))
 
-          ((m3-wide-int-type? type)
-           (string-append
-            "DynamicInteger.Fmt("
-            (m3-format-integer-expr proc-context x)
-            ", base := 10)"
-            ))
-           
-           
-           
-      
+(define (classify-type pc expr)
+  (let ((ty (operand-type pc expr)))
+    (cond ((m3-natively-representable-type? ty) 'native)
+          ((m3-dynamic-int-type? ty) 'dynamic)
+          ((integer-type? ty) 'wide)
+          (else (error "not an integer : " expr))
           )
-))
+    )
+  )
 
-(define (m3-compile-assign w proc-context stmt)
+(define (max-type . x)
+  (cond ((member 'dynamic x) 'dynamic)
+        ((member 'wide    x) 'wide)
+        (else (car x))))
+
+(define (get-m3-int-intf t)
+  (case t
+    ((dynamic) "DynamicInt")
+    ((wide)    "WideInt")
+    ((native)  "NativeInt")
+    (else (error "get-m3-int-intf : " t))
+    )
+  )
+
+(define (m3-compile-convert-type from to arg)
+  (sa (get-m3-int-intf to) ".Convert" (get-m3-int-intf from)
+      "("
+      arg
+      ")"
+      )
+  )
+
+(define (format-int-literal cat x)
+  (case cat
+    ((native)
+     (Fmt.Int (BigInt.ToInteger x) 10))
+
+    ((wide) ;; we need to dump it out in 64-bit chunks
+     (error "not yet"))
+
+    ((dynamic)
+     (sa "DynamicInt.FromWideInt(" (format-int-literal 'wide x) ")"))
+
+    (else (error))
+    )
+  )
+
+(define (force-type pc cat x)
+  (if (literal? x)
+      (format-int-literal cat x)
+      (let ((x-category (classify-type pc x)))
+        (if (eq? x-category cat)
+            (m3-format-designator pc x)
+            (m3-compile-convert-type x-category
+                                     cat
+                                     (m3-format-designator pc x)
+                                     )))))
+
+(define m3-binary-infix-ops '(+ / % * -))
+
+(define (m3-map-symbol-op op)
+  (case op
+    ((/) "DIV")
+    ((%) "MOD")
+    ((+) "+")
+    ((*) "*")
+    ((-) "-")
+    )
+  )
+
+(define (m3-map-named-op op)
+  (case op
+    ((&)    "And")
+    ((^)    "Xor")
+    ((<<)   "Shl")
+    ((**)   "Pow")
+    ((|) ;; |)
+            "Or")
+    (else (error "m3-map-named-op : " op))
+    );; esac
+  )
+
+
+(define (m3-compile-binop cat op a-arg b-arg)
+  (cond ((and (eq? 'native cat) (member op m3-binary-infix-ops))
+         (sa "( " a-arg " " (m3-map-symbol-op op) " " b-arg " )"))
+        ((and (eq? 'native cat) (eq? '>> op))
+         (sa "NativeInt.Shift( " a-arg " , -( " b-arg " ) )"))
+        (else (sa (get-m3-int-intf cat) "." (m3-map-named-op op) "( "
+                  a-arg " , " b-arg " )"))
+        )
+  )
+
+(define (m3-compile-typed-binop pc tgt op a b)
+  (let* ((op-type (max-type tgt (classify-type pc a) (classify-type pc b)))
+         (opx     (m3-compile-binop op-type
+                                    op
+                                    (force-type pc op-type a)
+                                    (force-type pc op-type b))))
+    (if (eq? tgt op-type)
+        opx
+        (m3-compile-convert-type op-type tgt opx))
+    )
+  )
+
+  
+(define (m3-compile-native-int-assign pc x)
+  (dis "m3-compile-native-int-assign : x : " x dnl)
+  ;; assign when lhs is native
+  (let* ((lhs (get-assign-lhs x))
+         (rhs (get-assign-rhs x)))
+    (sa (m3-format-designator pc lhs) " := "
+        (cond ((ident? rhs)
+               (force-native rhs))
+        
+              ((bigint? rhs)
+               (BigInt.Format rhs 10))
+              
+              ((binary-expr? rhs)
+               (m3-compile-typed-binop pc 'native (car rhs) (cadr rhs) (caddr rhs)))
+              
+              ((unary-expr? rhs)
+               (m3-compile-native-unop pc rhs))
+              
+              ((bits? rhs)
+               (m3-compile-native-bits pc rhs))
+
+              (else (error "m3-compile-native-int-assign"))
+              );;dnoc
+        )
+    );;*tel
+  )
+
+(define (m3-compile-stringify-integer-value pc x)
+  (if (bigint? x)
+      (BigInt.Format x 10)
+      (let ((type (declared-type pc x)))
+        (cond
+         
+         ((m3-natively-representable-type? type)
+          (string-append
+           "Fmt.Unsigned("
+           (m3-compile-integer-value pc x)
+           ", base := 10)"
+           ))
+         
+         ((m3-dynamic-int-type? type)
+          (string-append
+           "DynamicInt.Fmt("
+           (m3-compile-integer-value pc x)
+           ", base := 10)"
+           ))
+         
+         (else
+          (string-append
+           "FixedBigInt.Format("
+           (m3-compile-integer-value pc x)
+           ", base := 10)"
+           ))
+         )
+        )
+      )
+  )
+
+(define (m3-compile-integer-value pc x)
+  (define (err) (error "m3-compile-integer-value : can't map to string : " x))
+  
+  (cond ((ident? x)  
+         (let ((type (declared-type pc x)))
+           (cond
+            ((integer-type?  type)
+             (m3-format-varid pc (cadr x)))
+
+            (else (err))
+            )
+           )
+         )
+
+        (else (err))
+        );;dnoc
+  )
+
+(define (+? x) (and (pair? x) (eq? '+ (car x))))
+
+(define (m3-compile-string-expr pc x)
+  (define (err) (error "m3-compile-string-expr : can't map to string : " x))
+  
+  (cond ((ident? x)  
+         (let ((type (declared-type pc x)))
+           (cond
+            ((integer-type?  type)
+             (m3-compile-stringify-integer-value pc x))
+
+            ((string-type? type)
+             (m3-format-varid pc (cadr x)))
+
+            (else (err))
+            )
+           )
+         )
+
+        ((string? x) (stringify x))
+        
+        ((+? x)      (string-append
+                      "Text.Cat( "
+                      (m3-compile-string-expr pc (cadr x))
+                      " , "
+                      (m3-compile-string-expr pc (caddr x))
+                      " )"))
+        (else (err))
+        );;dnoc
+  )
+
+(define sa string-append)
+
+(define (m3-compile-assign pc stmt)
   (dis "m3-compile-assign : " stmt dnl)
   (let* ((lhs (get-assign-lhs stmt))
-         (lty (declared-type proc-context lhs))
+         (lty (declared-type pc lhs))
          (rhs (get-assign-rhs stmt)))
 
     (dis "m3-compile-assign : lhs : " lhs dnl)
@@ -478,10 +708,12 @@
     (dis "m3-compile-assign : rhs : " (stringify rhs) dnl)
 
     (cond ((boolean-type? lty)
-           (w (m3-format-designator proc-context lhs) " := " (m3-format-boolean-expr rhs)))
+           (sa (m3-format-designator pc lhs) " := "
+              (m3-compile-boolean-expr rhs)))
 
           ((string-type? lty)
-           (w (m3-format-designator proc-context lhs) " := " (m3-format-string-expr proc-context rhs)))
+           (sa (m3-format-designator pc lhs) " := "
+              (m3-compile-string-expr pc rhs)))
 
           ((array-type? lty)
            (error "not yet"))
@@ -490,7 +722,7 @@
            (error "not yet"))
           
           ((integer-type? lty)
-           (m3-compile-scalar-integer-assign w proc-context stmt))
+           (m3-compile-scalar-int-assign pc stmt))
 
           (else
            (error "???")))
@@ -498,22 +730,34 @@
     )
   )
 
-(define (m3-compile-goto w proc-context stmt)
+(define (m3-compile-goto pc stmt)
   (dis "m3-compile-goto" dnl)
 
   (if (not (null? (cddr stmt))) (error "cant compile complex gotos yet"))
   
-  (w (string-append "Release(" (m3-map-ident (cadr stmt)) "_Cl);") dnl)
-  (w "RETURN TRUE;" dnl)
+  (string-append "Release(" (m3-ident (cadr stmt)) "_Cl);"
+  " RETURN TRUE")
   )
 
-(define (m3-compile-send w proc-context stmt)
+(define (m3-compile-send pc stmt)
   )
 
-(define (m3-compile-recv w proc-context stmt)
+(define (m3-compile-recv pc stmt)
   )
 
-(define (m3-compile-eval w proc-context stmt)
+(define (m3-compile-eval pc stmt)
+  (let ((expr (cadr stmt)))
+    (string-append "EVAL " (m3-compile-intrinsic pc expr))
+    )
+  )
+
+(define (m3-compile-intrinsic pc expr)
+  (if (not (call-intrinsic? expr)) (error "not an intrinsic : " expr))
+
+  (sa "CspIntrinsics." (symbol->string (cadr expr)) "("
+      (m3-format-varid pc (cadaddr expr))
+                       ")")
+
   )
 
 
@@ -521,14 +765,16 @@
 
 
 
-(define (m3-compile-stmt w proc-context stmt)
+(define (m3-compile-write-stmt w pc stmt)
   (let (
         (stmt-type (get-stmt-type stmt))
         (iw        (indent-writer w "      "))
         )
+
+    (dis "m3-compile-write-stmt : stmt : " stmt dnl)
     
     (if (member stmt-type *known-stmt-types*)
-        ((eval (symbol-append 'm3-compile- stmt-type)) iw proc-context stmt)
+        (iw ((eval (symbol-append 'm3-compile- stmt-type)) pc stmt) ";" dnl)
         (error "Unknown statement type in : " stmt)
         )          
 
@@ -538,15 +784,18 @@
     )
   )
 
-;; proc-context contains three things:
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;; The PROCESS CONTEXT pc contains three things:
 ;; car   : a symtab built from the-decls
 ;; cadr  : the cell-info
 ;; caddr : the struct-tbl
+;;
 
-(define (m3-write-block w proc-context blk)
+(define (m3-write-block w pc blk)
   (dis (get-block-label blk) dnl)
   (dis "m3-write-block : " blk dnl)
-  (let* ((btag (m3-map-ident (cadr (get-block-label blk))))
+  (let* ((btag (m3-ident (cadr (get-block-label blk))))
          (bnam (string-append "Block_" btag))
          (the-code (cddr (filter-out-var1s blk)))
          )
@@ -557,7 +806,7 @@
      "    WITH frame = cl.frame DO" dnl)
     
     ;; the block text goes here
-    (map (curry m3-compile-stmt w proc-context) the-code)
+    (map (curry m3-compile-write-stmt w pc) the-code)
 
     (w 
      "    END(*WITH*)" dnl
@@ -566,9 +815,48 @@
     )
   )
 
-(define (m3-write-blocks w the-blocks proc-context)
-  (map (curry m3-write-block w proc-context)
+(define (m3-write-blocks w the-blocks pc)
+  (map (curry m3-write-block w pc)
        (cdr the-blocks))
+  )
+
+(define (m3-make-scope-map the-blocks cell-info)
+  ;; a bound identifier can have four types of scope:
+  ;; 1. block local
+  ;; 2. process local
+  ;; 3. parallel-loop dummy
+  ;; 4. a port reference
+
+  (define tbl (make-hash-table 100 atom-hash))
+
+  (define (make-add! tag) (lambda(id)(tbl 'add-entry! id tag)))
+
+  (map (make-add! 'port) (map get-port-id (get-ports cell-info)))
+
+  (map (make-add! 'process) (get-shared-variables the-blocks cell-info))
+
+  (map (make-add! 'parallel-dummy)
+                  (apply append (map find-parallel-loop-dummies the-blocks)))
+
+
+  (let* ((all-refs     (apply append (map find-referenced-vars the-blocks)))
+         (block-locals (set-diff all-refs (tbl 'keys))))
+    (map (make-add! 'block) block-locals)
+    )
+
+  tbl
+  )
+
+(define (find-parallel-loop-dummies prog)
+  (define res '())
+  (define (visit s)
+    (if (eq? 'parallel-loop (get-stmt-type s))
+        (begin (set! res (cons (get-loop-dummy s) res)) s)
+        s)
+    )
+
+  (visit-stmt prog visit identity identity)
+  res
   )
 
 (define (do-m3!)
@@ -576,11 +864,12 @@
          (cell-info  *cellinfo*)
          (port-tbl   *the-prt-tbl*)
          (the-decls  (gen-decls the-blocks *proposed-types*))
-         (root       (m3-map-ident (string->symbol *the-proc-type-name*)))
+         (root       (m3-ident (string->symbol *the-proc-type-name*)))
          (i3fn       (string-append "build/" root ".i3"))
          (i3wr       (FileWr.Open i3fn))
          (m3fn       (string-append "build/" root ".m3"))
          (m3wr       (FileWr.Open m3fn))
+         (the-scopes (m3-make-scope-map the-blocks cell-info))
          )
 
     (define (intf . x) (Wr.PutText i3wr (apply string-append x)))
@@ -606,10 +895,14 @@
     (m3-write-closure-decl    modu)
     (m3-write-build-defn      modu cell-info the-blocks)
 
-    (m3-write-blocks          modu the-blocks (list
-                                               (m3-make-symtab the-decls)
-                                               cell-info
-                                               *the-struct-tbl*))
+    (let ((pc (list
+                         (m3-make-symtab the-decls)
+                         cell-info
+                         *the-struct-tbl*
+                         the-scopes)))
+      (set! *proc-context* pc)
+      (m3-write-blocks          modu the-blocks pc)
+      )
     
     (modu dnl "BEGIN END " root "." dnl)
     

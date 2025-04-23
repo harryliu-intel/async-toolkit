@@ -117,6 +117,9 @@
 (define *the-globals* #f)
 (define *the-global-ranges* #f)
 
+;; back-end data structures
+(define *proc-context* #f) 
+
 (dis "  ===  TO RUN COMPILER: " dnl)
 (dis "  ===  (loaddata! <csp-prefix>)" dnl)
 (dis "  ===  (compile!)" dnl)
