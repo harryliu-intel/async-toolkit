@@ -13,6 +13,23 @@ FROM Fmt IMPORT Int, F, Unsigned;
 
 
 CONST doDebug = FALSE;
+
+PROCEDURE Or(a, b : T) : T =
+  BEGIN
+    RETURN DoBitwiseOp(Word.Or, a, b)
+  END Or;
+  
+PROCEDURE And(a, b : T) : T =
+  BEGIN
+    RETURN DoBitwiseOp(Word.And, a, b)
+  END And;
+  
+PROCEDURE Xor(a, b : T) : T =
+  BEGIN
+    RETURN DoBitwiseOp(Word.Xor, a, b)
+  END Xor;
+  
+
       
 PROCEDURE InitN(VAR s : NSeq; hintSize : CARDINAL) =
   BEGIN
@@ -1078,21 +1095,6 @@ PROCEDURE WordNotFirst(a : Word.T; <*UNUSED*> b : Word.T) : Word.T =
     RETURN Word.Not(a)
   END WordNotFirst;
 
-PROCEDURE Or(a, b : T) : T =
-  BEGIN
-    RETURN DoBitwiseOp(Word.Or, a, b)
-  END Or;
-  
-PROCEDURE And(a, b : T) : T =
-  BEGIN
-    RETURN DoBitwiseOp(Word.And, a, b)
-  END And;
-  
-PROCEDURE Xor(a, b : T) : T =
-  BEGIN
-    RETURN DoBitwiseOp(Word.Xor, a, b)
-  END Xor;
-  
 PROCEDURE Not(a : T) : T =
   BEGIN
     RETURN DoBitwiseOp(WordNotFirst, a, Zero)

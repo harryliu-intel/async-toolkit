@@ -1,0 +1,26 @@
+import ("libm3")
+import ("cit_util")
+import ("parseparams")
+import ("simpletoken")
+import ("mscheme")
+import ("modula3scheme")
+import ("sstubgen")
+import ("parseparams")
+
+%if defined("CM3_VERSION")
+%        m3_optimize("T")
+%end
+
+Module   ("DynamicInt")
+
+Module   ("FiniteInterval")
+Module   ("VaryBits")
+
+Table     ("DynIntDynInt", "DynamicInt", "DynamicInt")
+
+Module   ("WideInt")
+Module   ("NativeInt")
+
+library ("cspsimlib")
+
+
