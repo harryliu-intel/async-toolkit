@@ -1157,6 +1157,14 @@
   tt
   )
 
+(define (compile-m3! nm)
+  (loaddata! nm)
+  (compile!)
+  (do-m3!)
+  (dis go-grn-bold-term (run-command "banner **DONE**") reset-term dnl)
+  'ok
+  )
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define *retrieve-defn-failed-sym* #f)

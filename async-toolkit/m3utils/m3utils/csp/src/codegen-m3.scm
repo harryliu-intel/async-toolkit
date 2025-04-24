@@ -81,7 +81,7 @@
 
 (define (m3-write-port-decl w pdef)
   (w "    " (pad 40 (m3-ident (get-port-id pdef))) " : REF "
-     (m3-convert-port-type (cadddr pdef))
+     (m3-convert-port-type (get-port-def-type pdef))
      ".T;" dnl
      )
   )
@@ -292,6 +292,25 @@
     )
   )
 
+(define (m3-convert-port-ass-type ptype)
+  ;; return string name of interface that defines the assignable data
+  ;; on a port requested by the CSP code
+  (let ((stype (port-type-short ptype)))
+    (case (car stype)
+      ((node) (string-append "UInt" (BigInt.Format (cadr stype) 10)))
+      ((bd)   (string-append "UInt" (BigInt.Format (cadr stype) 10)))
+      (else (error))
+      )
+    )
+  )
+
+(define (m3-convert-port-ass-bits ptype)
+  (let ((stype (port-type-short ptype)))
+    (BigInt.ToInteger (cadr stype))))
+
+(define (m3-convert-port-ass-category ptype)
+  (if (> (m3-convert-port-ass-bits ptype) 64) 'wide 'native))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define (declared-type pc expr)
@@ -358,7 +377,7 @@
   ;;
   ;; (each of which has a different access method)
 
-  (cond ((ident? designator) (m3-ident (cadr designator)))
+  (cond ((ident? designator) (m3-format-varid pc (cadr designator)))
 
         (else (error "not yet"))))
 
@@ -378,7 +397,7 @@
       ((block)          (m3-ident id))
       
       ((parallel-dummy) ;; this is sketchy
-       (string-append "cl.frame." (m3-ident id)))
+       (string-append "cl." (m3-ident id)))
       
       (else (error))
       )
@@ -507,10 +526,14 @@
   )
 
 (define (m3-compile-convert-type from to arg)
-  (sa (get-m3-int-intf to) ".Convert" (get-m3-int-intf from)
-      "("
+  (if (eq? from to)
       arg
-      ")"
+      
+      (sa (get-m3-int-intf to) ".Convert" (get-m3-int-intf from)
+          "("
+          arg
+          ")"
+          )
       )
   )
 
@@ -533,12 +556,11 @@
   (if (literal? x)
       (format-int-literal cat x)
       (let ((x-category (classify-type pc x)))
-        (if (eq? x-category cat)
-            (m3-format-designator pc x)
-            (m3-compile-convert-type x-category
-                                     cat
-                                     (m3-format-designator pc x)
-                                     )))))
+        (m3-compile-convert-type x-category
+                                 cat
+                                 (m3-format-designator pc x)
+                                 ))))
+
 
 (define m3-binary-infix-ops '(+ / % * -))
 
@@ -581,10 +603,7 @@
                                     op
                                     (force-type pc op-type a)
                                     (force-type pc op-type b))))
-    (if (eq? tgt op-type)
-        opx
-        (m3-compile-convert-type op-type tgt opx))
-    )
+    (m3-compile-convert-type op-type tgt opx))
   )
 
   
@@ -735,14 +754,71 @@
 
   (if (not (null? (cddr stmt))) (error "cant compile complex gotos yet"))
   
-  (string-append "Release(" (m3-ident (cadr stmt)) "_Cl);"
+  (string-append "Release(cl.frame." (m3-ident (cadr stmt)) "_Cl);"
   " RETURN TRUE")
   )
 
+(define (get-port-def-type pdef) (cadddr pdef))
+
 (define (m3-compile-send pc stmt)
+  (let* ((port-tbl     (caddddr pc))
+
+         (port-des     (get-send-lhs stmt)) ;; doesnt work for arrays/structs
+         (rhs          (get-send-rhs stmt))
+         
+         (port-id      (get-designator-id port-des))
+         (port-def     (port-tbl 'retrieve port-id))
+         (port-type    (get-port-def-type port-def))
+         (port-typenam (m3-convert-port-type port-type))
+         (copy-type    (m3-convert-port-ass-type port-type))
+         (send-class   (classify-type pc (get-send-rhs stmt)))
+         
+         (m3-pname     (m3-format-varid pc port-id))
+         (port-class   (m3-convert-port-ass-category port-type))
+
+         (literal      (literal? (get-send-rhs stmt)))
+         )
+
+    (sa "VAR toSend : "
+        copy-type " := " (force-type pc port-class rhs)
+        "; BEGIN IF NOT "
+        port-typenam ".Send( " m3-pname " , toSend , cl ) THEN RETURN FALSE END END"
+        )
+    )
   )
 
 (define (m3-compile-recv pc stmt)
+  (let* ((port-tbl     (caddddr pc))
+
+         (port-des     (get-recv-lhs stmt)) ;; doesnt work for arrays/structs
+         (rhs          (get-recv-rhs stmt))
+         
+         (port-id      (get-designator-id port-des))
+         (port-def     (port-tbl 'retrieve port-id))
+         (port-type    (get-port-def-type port-def))
+         (port-typenam (m3-convert-port-type port-type))
+         (copy-type    (m3-convert-port-ass-type port-type))
+         (recv-class   (classify-type pc (get-recv-rhs stmt)))
+         
+         (m3-pname     (m3-format-varid pc port-id))
+         (port-class   (m3-convert-port-ass-category port-type))
+         (rhs-class    (classify-type pc rhs))
+
+         )
+
+    (sa "VAR toRecv : "
+        copy-type
+        "; BEGIN IF NOT "
+        port-typenam ".Recv( " m3-pname " , toRecv , cl ); "
+        (m3-format-designator pc rhs) " := "
+        (m3-compile-convert-type
+         recv-class
+         rhs-class
+         "toRecv"
+         )
+        " THEN RETURN FALSE END END"
+        )
+    )
   )
 
 (define (m3-compile-eval pc stmt)
@@ -760,10 +836,7 @@
 
   )
 
-
 (define *known-stmt-types* '(recv send assign eval goto local-if while))
-
-
 
 (define (m3-compile-write-stmt w pc stmt)
   (let (
@@ -899,7 +972,8 @@
                          (m3-make-symtab the-decls)
                          cell-info
                          *the-struct-tbl*
-                         the-scopes)))
+                         the-scopes
+                         (make-port-table cell-info))))
       (set! *proc-context* pc)
       (m3-write-blocks          modu the-blocks pc)
       )
