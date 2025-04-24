@@ -1,25 +1,25 @@
 INTERFACE DynamicInt;
 
-
-
 IMPORT Word;
 IMPORT Lex, FloatMode;
 
 CONST Brand = "DynamicInt";
 
-TYPE T        <: Public;
 TYPE Natural  = T;
 
 TYPE Public = ROOT;
 
-TYPE CompRet = [-1..1];
+TYPE CompRet = [ -1 .. 1 ];
 
 EXCEPTION DivisionByZero;
 
+CONST MustCopy = FALSE; (* as long as it is a reference type *)
+
+PROCEDURE Copy(READONLY from : T; VAR to : T);
+          
 PROCEDURE Compare(a, b : T) : CompRet;
 PROCEDURE Equal(a, b : T) : BOOLEAN;
 PROCEDURE New(x : INTEGER) : T;
-PROCEDURE Copy(t : T) : T; (* this makes no sense, right? *)
 PROCEDURE Div(a, b : T) : T RAISES { DivisionByZero };
 PROCEDURE Mul(a, b : T) : T;
 PROCEDURE Add(a, b : T) : T;
@@ -115,16 +115,13 @@ PROCEDURE DebugT(t : T) : TEXT;
 
 PROCEDURE Uniq(t : T) : T; (* internal use, but no harm in exporting it *)
        
-
-
-REVEAL 
+TYPE
   T = Public BRANDED Brand OBJECT
     sign : [ -1 .. 1 ];
     rep  : NSeq;
   END;
 
-CONST Chunk = 4; (* make it easy to debug in hex *)
-      BaseLog2 =   ((BITSIZE(Word.T) DIV 2 - 1) DIV Chunk) * Chunk;
+CONST BaseLog2 =   ((BITSIZE(Word.T) DIV 2 - 1));
       (* (*was*) 10 *)
       
       Base     =  Word.Shift(1, BaseLog2); 
@@ -134,9 +131,6 @@ CONST Chunk = 4; (* make it easy to debug in hex *)
       WordMask   =  Base - 1;
       WordUnmask =  Word.Not(WordMask);
 
-
-(* other sequence impl *)
-
 TYPE 
   NArry = REF ARRAY OF Word.T;  (* hmm... *)
 
@@ -144,16 +138,18 @@ TYPE
     siz  : CARDINAL; (* # of significant digits *)
     a    : NArry;
   END;
-PROCEDURE InitN(VAR s : NSeq; hintSize : CARDINAL) ;
-PROCEDURE ShiftLeftInternalN(VAR s : NSeq; sa : CARDINAL) ;
-PROCEDURE ShiftRightInternalN(VAR s : NSeq; sa : CARDINAL) ;
-PROCEDURE ExtendN(VAR s : NSeq; toDigits : CARDINAL) ;
-PROCEDURE CopyN(READONLY s : NSeq) : NSeq ;
-PROCEDURE ClearTop(VAR s : NSeq) ; 
+  
+PROCEDURE InitN               (VAR s : NSeq; hintSize : CARDINAL) ;
+PROCEDURE ShiftLeftInternalN  (VAR s : NSeq; sa : CARDINAL) ;
+PROCEDURE ShiftRightInternalN (VAR s : NSeq; sa : CARDINAL) ;
+PROCEDURE ExtendN             (VAR s : NSeq; toDigits : CARDINAL) ;
+PROCEDURE CopyN               (READONLY s : NSeq) : NSeq ;
+PROCEDURE ClearTop            (VAR s : NSeq) ; 
 
-PROCEDURE StuffTheBits((*MODIFIES*)VAR wa : ARRAY OF Word.T) : T ;
 
-PROCEDURE GetTheBits(a : T; VAR res : ARRAY OF Word.T) ;
+(* 2s complement work ... *)  
+PROCEDURE StuffTheBits        ((*MODIFIES*)VAR wa : ARRAY OF Word.T) : T ;
+PROCEDURE GetTheBits          (a : T; VAR res : ARRAY OF Word.T) ;
 
 
 END DynamicInt.

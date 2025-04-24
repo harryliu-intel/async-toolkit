@@ -21,6 +21,17 @@ Table     ("DynIntDynInt", "DynamicInt", "DynamicInt")
 Module   ("WideInt")
 Module   ("NativeInt")
 
+Module ("CspCompiledProcess")
+Module ("CspCompiledScheduler")
+Interface ("CspBoolean")
+Interface ("CspText")
+
+Generic_module ("Channel")
+template ("channel")
+
+Generic_interface ("Node")
+template ("node")
+
 library ("cspsimlib")
 
 

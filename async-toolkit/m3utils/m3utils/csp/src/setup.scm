@@ -1,13 +1,18 @@
 
-(require-modules "basic-defs" "m3" "hashtable" "set"
-                 "display")
+(require-modules "basic-defs" "m3" "hashtable" "set" "display")
+
+
+(define *m3utils*   (Env.Get "M3UTILS"))
+(define *pkg-path*  "csp/src"          )
+
+(set! **scheme-load-path** (cons (string-append *m3utils* "/" *pkg-path*)
+                                 **scheme-load-path**))
+
 
 
 (if (not (BigInt.GetInitialized)) (error "BigInt not initialized"))
 
 (define debug #f)
-
-(load "bigint.scm")
 
 ;; this stuff is really experimental.
 (define *cell*        '())
@@ -104,7 +109,7 @@
 (define text7 #f)
 (define text8 #f)
 (define text9 #f)
-
+(define text10 #f)
 
 (define *the-ass-tbl* #f)
 (define *the-use-tbl* #f)
@@ -125,4 +130,6 @@
 (dis "  ===  (compile!)" dnl)
 (dis dnl dnl dnl)
 
+
+(define *ai* #f)
 

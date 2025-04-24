@@ -747,7 +747,13 @@ PROCEDURE ScanDelimited(txt : TEXT; base : PrintBase) : T
     RETURN accum
   END ScanDelimited;
 
+PROCEDURE FormatLiteral(a : T; base : PrintBase) : TEXT =
+  BEGIN RETURN FormatInternal(a, base, TRUE) END FormatLiteral;
+  
 PROCEDURE Format(a : T; base : PrintBase) : TEXT =
+  BEGIN RETURN FormatInternal(a, base, FALSE) END Format;
+  
+PROCEDURE FormatInternal(a : T; base : PrintBase; literal : BOOLEAN) : TEXT =
   VAR
     c := NEW(CharSeq.T).init();
     s := Sign(a);
@@ -787,14 +793,21 @@ PROCEDURE Format(a : T; base : PrintBase) : TEXT =
       END
     END;
       
-    IF s = -1 THEN c.addlo('-') END;
+    IF s = -1 THEN
+      Wx.PutChar(wx, '-')
+    END;
+    
+    IF literal THEN
+      Wx.PutText(wx, Int(base));
+      Wx.PutChar(wx, '_')
+    END;
     
     FOR i := 0 TO c.size() - 1 DO
       Wx.PutChar(wx, c.get(i))
     END;
 
     RETURN Wx.ToText(wx)
-  END Format;
+  END FormatInternal;
 
 PROCEDURE FormatOld(a : T; base : PrintBase) : TEXT =
   VAR

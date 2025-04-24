@@ -68,6 +68,7 @@ TYPE
   PrintBase = [ 2 .. MaxPrintBase ];
   
 PROCEDURE Format(a : T; base : PrintBase := 10) : TEXT;
+PROCEDURE FormatLiteral(a : T; base : PrintBase := 10) : TEXT;
 
 PROCEDURE Scan     (text : TEXT; base : PrintBase := 10; defNeg := FALSE) : T
   RAISES { Lex.Error };

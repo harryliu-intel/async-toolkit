@@ -405,9 +405,6 @@
 
         (else (err))))
 
-
-
-
 (define *ar-ass* #f)
 
 (load "bits.scm")

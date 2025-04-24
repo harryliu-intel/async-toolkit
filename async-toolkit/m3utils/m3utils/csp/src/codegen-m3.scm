@@ -1,10 +1,10 @@
 
 (define (m3-expand-type type)
   (cond ((boolean-type? type) "BOOLEAN")
-        ((string-type? type) "TEXT")
+        ((string-type? type)  "TEXT")
         ((integer-type? type) (m3-expand-int-type type))
-        ((array-type? type) (m3-expand-array-type type))
-        ((struct-type? type) (m3-expand-struct-type type)) ;; hmm
+        ((array-type? type)   (m3-expand-array-type type))
+        ((struct-type? type)  (m3-expand-struct-type type)) ;; hmm
         (else (error "Unknown type " type))
         )
   )
@@ -93,17 +93,38 @@
   )
                   
 (define (m3-map-decltype type)
-  (cond ((string-type?  type) "TEXT")
-        ((boolean-type? type) "BOOLEAN")
+  ;; returns interface
+  (cond ((string-type?  type) "CspText")
+        ((boolean-type? type) "CspBoolean")
         ((array-type?   type) (error "not done") )
         ((struct-type?  type) (error "not done") )
         ((integer-type? type)
          (let ((width (cadddr type)))
-           (cond ((not (bigint? width)) "DynamicInt.T")
+           (cond ((not (bigint? width)) "DynamicInt")
                  ((caddr type)
-                  (string-append "SInt" (BigInt.Format width 10) ".T"))
+                  (string-append "SInt" (BigInt.Format width 10)))
                  (else
-                  (string-append "UInt" (BigInt.Format width 10) ".T"))
+                  (string-append "UInt" (BigInt.Format width 10)))
+                 );;dnoc
+           );;tel
+         )
+        (else (error "m3-map-decltype : unknown type to map : " type))
+        );;dnoc
+  )
+
+(define (m3-map-declbuild type)
+  ;; returns interface to build
+  (cond ((string-type?  type) #f)
+        ((boolean-type? type) #f)
+        ((array-type?   type) (error "not done") )
+        ((struct-type?  type) (error "not done") )
+        ((integer-type? type)
+         (let ((width (cadddr type)))
+           (cond ((not (bigint? width)) #f)
+                 ((caddr type)
+                  (cons 'SInt (BigInt.ToInteger width)))
+                 (else
+                  (cons 'UInt (BigInt.ToInteger width)))
                  );;dnoc
            );;tel
          )
@@ -115,7 +136,7 @@
   (let ((id (get-var1-id v1))
         (ty (get-decl1-type (get-var1-decl1 v1)))
         )
-    (string-append (pad 40 (m3-ident id)) " : " (m3-map-decltype ty) ";")
+    (string-append (pad 40 (m3-ident id)) " : " (m3-map-decltype ty) ".T;")
     )
   )
 
@@ -187,7 +208,8 @@
   )
 
 (define (m3-write-build-signature w cell-info)
-  (w "PROCEDURE Build(" dnl)
+  (w dnl
+     "PROCEDURE Build(" dnl)
   (m3-write-port-list w cell-info)
   (w ")")
   )
@@ -199,17 +221,34 @@
 
 (define (indent-writer w by) (lambda x (apply w (cons by x))))
 
+(define (m3-mark-reader w m3id)
+  (w "<*ASSERT " m3id ".reader = NIL*>" dnl)
+  (w m3id ".reader := frame;" dnl
+     dnl)
+  )
+
+(define (m3-mark-writer w m3id)
+  (w "<*ASSERT " m3id ".writer = NIL*>" dnl)
+  (w m3id ".writer := frame;" dnl
+     dnl)
+  )
+
+(define (node-port? pdef) (eq? 'node (car (cadddr pdef))))
+
+(define (channel-port? pdef) (eq? 'channel (car (cadddr pdef))))
+
+
 (define (m3-write-build-defn w cell-info the-blocks)
   (let ((proc-ports (get-ports cell-info)))
     (m3-write-build-signature w cell-info)
     (w " = " dnl)
     (w "  BEGIN" dnl)
     (w "    WITH frame = NEW(Frame," dnl
-       "                     id := NextFrameId()," dnl)
+       "                     id := Process.NextFrameId()" dnl)
 
     (let ((asslist (map m3-format-port-ass proc-ports)))
       (map (lambda(ass)
-             (w "                     " ass ";" dnl))
+             (w "                     ," ass  dnl))
            asslist)
       );;tel
     
@@ -218,24 +257,22 @@
     ;; build body
     (let ((iw (indent-writer w "     ")))
 
-      (let* ((inlist (filter input-port? proc-ports))
+
+      ;; mark channels as read and written by us
+      
+      (let* ((inlist (filter channel-port? (filter input-port? proc-ports)))
              (ids    (map m3-ident (map get-port-id inlist)))
              )
-        (map (lambda(m3id)
-               (iw "MarkReader(" m3id ", frame);" dnl))
-             ids
-             )
+        (map (curry m3-mark-reader iw) ids)
         )
       (w dnl)
       
-      (let* ((outlist (filter output-port? proc-ports))
+      (let* ((outlist (filter channel-port? (filter output-port? proc-ports)))
              (ids    (map m3-ident (map get-port-id outlist)))
              )
-        (map (lambda(m3id)
-               (iw "MarkWriter(" m3id ", frame);" dnl))
-             ids
-             )
+        (map (curry m3-mark-writer iw) ids)
         )
+      
 
       (w dnl)
 
@@ -246,8 +283,8 @@
              )
         (map (lambda(m3lab)
                (iw  (pad 22 "frame." m3lab "_Cl")
-                    " := NEW(" m3lab "Closure," dnl)
-               (iiw "        id      := NextId()," dnl)
+                    " := NEW(Closure," dnl)
+               (iiw "        id      := Process.NextId()," dnl)
                (iiw "        frameId := frame.id," dnl)
                (iiw "        frame   := frame," dnl)
                (iiw "        block   := Block_" m3lab ");" dnl dnl)
@@ -255,7 +292,7 @@
              blk-labels)
         );;*tel
 
-      (iw "Schedule(frame." (m3-ident (cadar the-blocks))"_Cl);" dnl)
+      (iw "Scheduler.Schedule(frame." (m3-ident (cadar the-blocks))"_Cl);" dnl)
       );;tel (iw)
     
     (w "    END(*WITH*)" dnl)
@@ -270,14 +307,34 @@
 
   )
 
-(define (m3-write-modu-imports w)
-  (w "IMPORT CspCompiledProcess AS Process;" dnl)
-
+(define (m3-write-imports w intfs)
+  (dis "m3-write-imports : intfs : " intfs dnl)
+  
+  (w "<*NOWARN*>IMPORT CspCompiledProcess AS Process;" dnl)
+  (w "<*NOWARN*>IMPORT CspCompiledScheduler AS Scheduler;" dnl)
+  (map (lambda(intf)(w "IMPORT " intf ";" dnl))
+       (map format-intf-name intfs))
   )
 
-(define (m3-write-intf-imports w)
-  (w "IMPORT CspCompiledProcess AS Process;" dnl)
-  
+(define *map-chantypes* ;; these are types generated by generics..
+  '((UIntChan UInt Chan)
+    (SIntChan SInt Chan)))
+
+(define (format-intf-name intf-pair)
+  (let* ((n  (car intf-pair))
+         (w  (cdr intf-pair))
+         (ws (number->string w))
+         (m  (assoc n *map-chantypes*))
+         )
+    (if (eq? 'Node n)
+        (sa "NodeUInt" (number->string w) " AS Node" ws)
+        (if m
+            (sa (format-intf-name (cons (cadr m) w))
+                (symbol->string (caddr m)))
+            (sa (symbol->string n) ws)
+            )
+        )
+    )
   )
 
 (define (m3-convert-port-type ptype)
@@ -287,6 +344,16 @@
     (case (car stype)
       ((node) (string-append "Node" (BigInt.Format (cadr stype) 10)))
       ((bd)   (string-append "UInt" (BigInt.Format (cadr stype) 10) "Chan"))
+      (else (error))
+      )
+    )
+  )
+
+(define (m3-convert-port-type-build ptype)
+  (let ((stype (port-type-short ptype)))
+    (case (car stype)
+      ((node) (cons 'Node (BigInt.ToInteger (cadr stype))))
+      ((bd)   (cons 'UInt (BigInt.ToInteger (cadr stype))))
       (else (error))
       )
     )
@@ -323,7 +390,6 @@
   ;; Here, we have already inferred the bit widths, so we need to pull
   ;; them out of our tables.
   ;; 
-
   
   (let ((symtab       (car pc))
         (cell-info    (cadr pc))
@@ -351,7 +417,6 @@
 
             (else id-type))
          )
-    
     )
   )
 
@@ -390,9 +455,9 @@
     (case (the-scopes 'retrieve id)
       ((*hash-table-search-failed*) (error "unknown id : " id))
       
-      ((port)           (string-append "cl.frame." (m3-ident id)))
+      ((port)           (string-append "frame." (m3-ident id)))
       
-      ((process)        (string-append "cl.frame." (m3-ident id)))
+      ((process)        (string-append "frame." (m3-ident id)))
       
       ((block)          (m3-ident id))
       
@@ -404,7 +469,7 @@
     )
   )
 
-
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 ;; integer types --
 ;;
@@ -685,6 +750,11 @@
 
 (define (+? x) (and (pair? x) (eq? '+ (car x))))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;; strings
+;;
+
 (define (m3-compile-string-expr pc x)
   (define (err) (error "m3-compile-string-expr : can't map to string : " x))
   
@@ -749,12 +819,17 @@
     )
   )
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;; goto -- not complete yet
+;; 
+
 (define (m3-compile-goto pc stmt)
   (dis "m3-compile-goto" dnl)
 
   (if (not (null? (cddr stmt))) (error "cant compile complex gotos yet"))
   
-  (string-append "Release(cl.frame." (m3-ident (cadr stmt)) "_Cl);"
+  (string-append "Scheduler.Release(cl.frame." (m3-ident (cadr stmt)) "_Cl);"
   " RETURN TRUE")
   )
 
@@ -780,9 +855,9 @@
          )
 
     (sa "VAR toSend : "
-        copy-type " := " (force-type pc port-class rhs)
+        copy-type ".T := " (force-type pc port-class rhs)
         "; BEGIN IF NOT "
-        port-typenam ".Send( " m3-pname " , toSend , cl ) THEN RETURN FALSE END END"
+        port-typenam ".Send( " m3-pname "^ , toSend , cl ) THEN RETURN FALSE END END"
         )
     )
   )
@@ -807,16 +882,15 @@
          )
 
     (sa "VAR toRecv : "
-        copy-type
-        "; BEGIN IF NOT "
-        port-typenam ".Recv( " m3-pname " , toRecv , cl ); "
+        copy-type".T; BEGIN IF NOT "
+        port-typenam ".Recv( " m3-pname "^ , toRecv , cl ) THEN RETURN FALSE END;"
         (m3-format-designator pc rhs) " := "
         (m3-compile-convert-type
          recv-class
          rhs-class
          "toRecv"
          )
-        " THEN RETURN FALSE END END"
+        " END"
         )
     )
   )
@@ -838,6 +912,11 @@
 
 (define *known-stmt-types* '(recv send assign eval goto local-if while))
 
+(define (m3-space-comments txt)
+  (CitTextUtils.Replace
+   (CitTextUtils.Replace txt "(*" "( *")
+   "*)" "* )"))
+
 (define (m3-compile-write-stmt w pc stmt)
   (let (
         (stmt-type (get-stmt-type stmt))
@@ -853,28 +932,36 @@
 
   
   
-    (iw "(* " (stringify stmt) " *)" dnl dnl)
+    (iw "(* " (m3-space-comments (stringify stmt)) " *)" dnl dnl)
     )
   )
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;
-;; The PROCESS CONTEXT pc contains three things:
-;; car   : a symtab built from the-decls
-;; cadr  : the cell-info
-;; caddr : the struct-tbl
-;;
 
 (define (m3-write-block w pc blk)
   (dis (get-block-label blk) dnl)
   (dis "m3-write-block : " blk dnl)
-  (let* ((btag (m3-ident (cadr (get-block-label blk))))
-         (bnam (string-append "Block_" btag))
-         (the-code (cddr (filter-out-var1s blk)))
+  (let* ((btag        (m3-ident (cadr (get-block-label blk))))
+         (bnam        (string-append "Block_" btag))
+         (the-code    (cddr (filter-out-var1s blk)))
+
+         (symtab      (car pc))
+         (the-scopes  (cadddr pc))
+         (refvar-ids  (find-referenced-vars blk))
+         (the-locals  (filter
+                       (lambda(id)(eq? 'block (the-scopes 'retrieve id)))
+                       refvar-ids))
+
+         (v1s         (map make-var1-decl
+                           the-locals
+                           (map (curry symtab 'retrieve) the-locals)))
          )
     ;; write decl.  We have to change this later for dynamic parallelism
     (w
      "PROCEDURE "bnam"(cl : Closure) : BOOLEAN =" dnl
+     "  VAR" dnl)
+
+    (map (lambda(dt) (w "    " dt dnl)) (map m3-convert-vardecl v1s))
+
+    (w
      "  BEGIN" dnl
      "    WITH frame = cl.frame DO" dnl)
     
@@ -892,6 +979,105 @@
   (map (curry m3-write-block w pc)
        (cdr the-blocks))
   )
+
+
+(define (m3-make-intf mkfile-write intf)
+  (dis "m3-make-intf : " intf dnl)
+  (let ((intf-kind  (car intf))
+        (intf-width (cdr intf)))
+    (cond ((member intf-kind '(UInt SInt))
+           (m3-write-int-intfs mkfile-write intf-kind intf-width))
+
+          (else 'skip)
+          )
+    )
+  )
+
+(define (build-dir) "build/src/")
+
+(define (m3-write-int-intfs mkfile-write intf-kind intf-width)
+  (let* ((inm    (sa (symbol->string intf-kind) (number->string intf-width)))
+         (intf   (cons intf-kind intf-width))
+         (iwr    (FileWr.Open (sa (build-dir) inm ".i3")))
+         (mwr    (FileWr.Open (sa (build-dir) inm ".m3")))
+         (type   (int-intf->type intf))
+         (native (m3-natively-representable-type? type))
+         )
+    
+    (define (iw . x) (Wr.PutText iwr (apply string-append x)))
+    (define (mw . x) (Wr.PutText mwr (apply string-append x)))
+
+    (mkfile-write "Smodule     (\"" inm "\")" dnl
+                  "Channel     (\"" inm "\" , \"" inm "\")" dnl
+                  "Node        (\"" inm "\" , \"" inm "\")" dnl
+                  "SchemeStubs (\"" inm "Chan\")" dnl
+                  )
+    
+    (iw "INTERFACE " inm ";" dnl
+       dnl)
+
+    (if native
+        (let* ((range (m3-get-intf-range intf))
+               (lo-txt (BigInt.FormatLiteral (car range)  16))
+               (hi-txt (BigInt.FormatLiteral (cadr range) 16))
+               ) 
+          (iw
+           "TYPE T = [ " lo-txt " .. " hi-txt " ];" dnl
+           dnl
+           "CONST MustCopy = FALSE;" dnl
+           dnl
+           "PROCEDURE Copy(READONLY from : T; VAR to : T);" dnl
+           dnl
+           "CONST Brand = \"" inm "\";" dnl
+           dnl
+           )
+        )
+
+        (iw
+         "IMPORT Word;" dnl
+         dnl
+         "TYPE T = ARRAY [ 0 .. " (ceiling (/ width 64) ) "-1 ] OF Word.T;" dnl
+         dnl
+         "CONST MustCopy = FALSE;" dnl
+         dnl
+         "PROCEDURE Copy(READONLY from : T; VAR to : T);" dnl
+         dnl
+         "CONST Brand = \"" inm "\";" dnl
+         dnl
+        )
+        )
+
+    (mw "MODULE " inm ";" dnl
+        dnl
+        "PROCEDURE Copy(READONLY from : T; VAR to : T) =" dnl
+        "  BEGIN" dnl
+        "    to := from" dnl
+        "  END Copy;" dnl
+        dnl
+        )
+
+    
+    (iw dnl
+       "END " inm "." dnl)
+    (mw dnl
+       "BEGIN END " inm "." dnl)
+    (Wr.Close iwr)
+    (Wr.Close mwr)
+    )
+  )
+
+(define (m3-get-intf-range intf)
+  (get-type-range (int-intf->type intf))
+  )
+
+(define (int-intf? intf)
+  (member (car intf) '(UInt SInt)))
+
+(define (int-intf->type intf)
+  (case (car intf)
+    ((UInt) (make-integer-type #f (cdr intf)))
+    ((SInt) (make-integer-type #t (cdr intf)))
+    (else (error))))
 
 (define (m3-make-scope-map the-blocks cell-info)
   ;; a bound identifier can have four types of scope:
@@ -932,29 +1118,160 @@
   res
   )
 
+(define (make-decls) (gen-decls text9 *proposed-types*))
+
+(define (truncate-file fn) (Wr.Close (FileWr.Open fn)))
+
+(define (append-text fn . text)
+  (let ((wr (FileWr.OpenAppend fn)))
+    (map (lambda(txt)(display txt wr)) text)
+    (Wr.Close wr)
+    )
+  'ok
+  )
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;; The PROCESS CONTEXT pc contains five things:
+;; car     : a symtab built from the-decls
+;; cadr    : the cell-info
+;; caddr   : the struct-tbl
+;; cadddr  : scopes for each variable
+;; caddddr : the port table
+;;
+
+(define (write-m3overrides!)
+  (let ((wr (FileWr.Open (sa (build-dir) "m3overrides"))))
+    (Wr.PutText wr (sa "include(\"" *m3utils*"/m3overrides\")" dnl))
+    (Wr.Close wr)
+    )
+  )
+
+(define *m3-standard-interfaces*
+  '("libm3"
+    "cit_util"
+    "parseparams"
+    "simpletoken"
+    "mscheme"
+    "modula3scheme"
+    "sstubgen"
+    "parseparams"
+    "cspsimlib"
+    )
+  )
+
+(define (write-m3makefile-header!)
+  (let ((wr (FileWr.Open (sa (build-dir) "m3makefile"))))
+
+    (map (curry Wr.PutText wr)
+         (map (lambda(intf)(sa "import(\"" intf "\")" dnl))
+              *m3-standard-interfaces*))
+
+    (Wr.PutChar wr dnl)
+    
+    (Wr.Close wr)
+    )
+  )
+
+(define (write-m3makefile-footer!)
+  (let ((wr (FileWr.OpenAppend (sa (build-dir) "m3makefile"))))
+    (Wr.PutChar wr dnl)
+    (Wr.PutText wr (sa "ExportSchemeStubs (\"sim\")" dnl))
+    (Wr.PutText wr (sa "importSchemeStubs ()" dnl))
+    (Wr.PutText wr (sa "implementation (\"Main\")" dnl))
+    (Wr.PutText wr (sa "program (\"sim\")" dnl))
+    (Wr.Close wr)
+    )
+  )
+
+
+(define (node->uint-intf intf)
+  (if (eq? 'Node (car intf))
+      (cons 'UInt (cdr intf))
+      intf)
+  )
+
 (define (do-m3!)
+  (define (mkfile-write . text)
+    (apply (curry append-text (sa (build-dir) "/m3makefile")) text)
+    )
+    
   (let* ((the-blocks text9)
          (cell-info  *cellinfo*)
          (port-tbl   *the-prt-tbl*)
          (the-decls  (gen-decls the-blocks *proposed-types*))
          (root       (m3-ident (string->symbol *the-proc-type-name*)))
-         (i3fn       (string-append "build/" root ".i3"))
+         (i3fn       (string-append (build-dir) root ".i3"))
          (i3wr       (FileWr.Open i3fn))
-         (m3fn       (string-append "build/" root ".m3"))
+         (m3fn       (string-append (build-dir) root ".m3"))
          (m3wr       (FileWr.Open m3fn))
          (the-scopes (m3-make-scope-map the-blocks cell-info))
+
+         (m3-port-data-intfs
+          (uniq equal?
+                (map m3-convert-port-type-build
+                     (map get-port-def-type
+                          (port-tbl 'values)))))
+
+         (m3-port-chan-intfs
+          (set-union
+;;           (map node->uint-intf
+           (filter (lambda(pt)(eq? 'Node (car pt))) m3-port-data-intfs)
+           ;;)
+           
+           (map (lambda(pt)(cons (symbol-append (car pt) 'Chan)
+                                 (cdr pt)
+                                 ))
+                
+                (filter (lambda(pt)(not (eq? 'Node (car pt))))
+                        m3-port-data-intfs))))
+
+         (m3-var-intfs
+          (filter
+           identity
+           (uniq equal?
+                 (map m3-map-declbuild
+                      (map get-decl1-type
+                           (map get-var1-decl1 the-decls))))))
+          
+
+         (all-intfs (set-union m3-port-data-intfs
+                               m3-var-intfs
+                               m3-port-chan-intfs))
+
+         ;; remove var1s and clean  up blocks
+         (the-varfree-blocks (map filter-out-var1s the-blocks))
+         (the-exec-blocks (remove-empty-blocks the-varfree-blocks))
          )
 
+    (set! text10 the-exec-blocks)
+
+    (dis "do-m3! : m3-port-data-intfs : " m3-port-data-intfs dnl)
+    (dis "do-m3! : m3-port-chan-intfs : " m3-port-chan-intfs dnl)
+    (dis "do-m3! : m3-var-intfs       : " m3-var-intfs dnl)
+    (dis "do-m3! : all-intfs          : " all-intfs dnl)
+    
+    (write-m3overrides!)
+    (write-m3makefile-header!)
+
+    ;; prepare needed custom interfaces
+
+    (set! *ai* all-intfs)
+    
+    (map (curry m3-make-intf mkfile-write)
+         (uniq equal? (map node->uint-intf all-intfs)))
+
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    
     (define (intf . x) (Wr.PutText i3wr (apply string-append x)))
     (define (modu . x) (Wr.PutText m3wr (apply string-append x)))
     ;; interface file
     
     (intf "INTERFACE " root ";" dnl dnl)
 
-    (m3-write-intf-imports intf)
+    (m3-write-imports intf m3-port-chan-intfs)
 
     (m3-write-build-decl intf cell-info)
-    
 
     (intf dnl "END " root "." dnl)
 
@@ -962,12 +1279,13 @@
 
     (modu "MODULE " root ";" dnl dnl)
 
-    (m3-write-modu-imports    modu)
-    (m3-write-proc-frame-decl modu port-tbl the-blocks cell-info the-decls)
+    (m3-write-imports    modu all-intfs)
+    (m3-write-proc-frame-decl modu port-tbl the-exec-blocks cell-info the-decls)
     (m3-write-block-decl      modu)
     (m3-write-closure-decl    modu)
-    (m3-write-build-defn      modu cell-info the-blocks)
+    (m3-write-build-defn      modu cell-info the-exec-blocks)
 
+    
     (let ((pc (list
                          (m3-make-symtab the-decls)
                          cell-info
@@ -975,14 +1293,20 @@
                          the-scopes
                          (make-port-table cell-info))))
       (set! *proc-context* pc)
-      (m3-write-blocks          modu the-blocks pc)
+      (m3-write-blocks          modu the-exec-blocks pc)
       )
     
     (modu dnl "BEGIN END " root "." dnl)
     
     (Wr.Close i3wr)
     (Wr.Close m3wr)
-    )
+
+    (mkfile-write "Smodule (\"" root "\")" dnl)
+
+    );;*tel
+  
+    
+  (write-m3makefile-footer!)
   )
 
 (define (m3-make-symtab the-decls)
@@ -1000,3 +1324,29 @@
         ((eq? id (get-var1-id (car decls))) (car decls))
         (else (find-decl (cdr decls) id)))
   )
+
+(define (test!)
+  (reload)
+  (loaddata! "tests/first_proc_false")
+  (compile!)
+  (do-m3!)
+  )
+
+;; the below is unused
+(define (m3-write-node-intf mkfile-write intf-width)
+  (let* ((inm (sa "Node" (number->string intf-width)))
+         (iwr (FileWr.Open (sa (build-dir) inm ".i3"))))
+    
+    (define (w . x) (Wr.PutText iwr (apply string-append x)))
+
+    (mkfile-write "Smodule (\"" inm "\")" dnl)
+    
+    (w "INTERFACE " inm ";" dnl)
+    (w dnl
+       "TYPE T = RECORD END;" dnl ;; what do we want here?
+       dnl)
+    (w "END " inm "." dnl)
+    (Wr.Close iwr)
+    )
+  )
+

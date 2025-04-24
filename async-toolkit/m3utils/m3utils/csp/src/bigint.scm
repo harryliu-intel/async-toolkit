@@ -4,7 +4,6 @@
   )
   
 
-(require-modules "fold.scm")
 
 (define *bigm1* (BigInt.New -1))
 (define *big0*  (BigInt.New  0))

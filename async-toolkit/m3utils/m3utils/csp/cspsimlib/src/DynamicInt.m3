@@ -28,8 +28,6 @@ PROCEDURE Xor(a, b : T) : T =
   BEGIN
     RETURN DoBitwiseOp(Word.Xor, a, b)
   END Xor;
-  
-
       
 PROCEDURE InitN(VAR s : NSeq; hintSize : CARDINAL) =
   BEGIN
@@ -119,9 +117,11 @@ PROCEDURE IsZero(a : T) : BOOLEAN = BEGIN RETURN Compare(a, Zero) = 0 END IsZero
 
 PROCEDURE IsOne(a : T) : BOOLEAN = BEGIN RETURN Compare(a, One) = 0 END IsOne;
 
-PROCEDURE Copy(t : T) : T =
-  (* Uniq makes no sense here really... *)
-  BEGIN RETURN t END Copy;
+PROCEDURE Copy(READONLY t : T; VAR u : T) =
+  BEGIN
+    u := t;
+    u.rep := CopyN(t.rep);
+  END Copy;
 
 PROCEDURE New(x : INTEGER) : T =
   VAR

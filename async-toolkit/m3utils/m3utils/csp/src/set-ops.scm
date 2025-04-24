@@ -5,8 +5,8 @@
 (define (set-diff lst0 lst1)
   (filter (lambda(x)(not (member? x lst1))) lst0))
 
-(define (set-union lst0 lst1)
-  (uniq eq? (append lst0 lst1)))
+(define (set-union . x)
+  (uniq equal? (apply append x)))
 
 (define (set-intersection lst0 lst1)
   (filter (lambda(x)(member? x lst1)) lst0))

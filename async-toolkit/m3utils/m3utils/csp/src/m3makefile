@@ -66,6 +66,8 @@ SchemeStubs ("SchemeUtils")
 SchemeStubs ("Fmt")
 SchemeStubs ("Atom")
 SchemeStubs ("Word")
+SchemeStubs ("Env")
+SchemeStubs ("CitTextUtils")
 
 ExportSchemeStubs ("cspc")
 importSchemeStubs()
