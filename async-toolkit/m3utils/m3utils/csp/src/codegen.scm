@@ -98,13 +98,17 @@
   )
 
 (define (get-block-label blk)
-  (if (not (sequence? blk))
-      (error "block is not a sequence : " blk))
-  (let ((first (cadr blk)))
-    (if (not (label? first))
-        (error "first statement in block is not a label : " first))
-    first
-    )
+  (cond ((label? blk) blk)
+        
+        ((sequence? blk)
+         (let ((first (cadr blk)))
+           (if (not (label? first))
+               (error "first statement in block is not a label : " first))
+           first
+           ))
+
+        (else          (error "block is not a sequence : " blk))
+        )
   )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

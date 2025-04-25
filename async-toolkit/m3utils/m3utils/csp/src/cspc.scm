@@ -1741,6 +1741,7 @@
   `((global          ,sequentialize-nonblocking-parallels-pass)
     (global          ,delete-unused-vars-pass)
     (global          ,simplify-stmt-pass)
+    (parallel-loop   ,unroll-parallel-loops)
     (sequential-loop ,unblock-loops)
 ;;    (*       ,fold-constants-*)
 ;;    (global  ,constantify-constant-vars-pass)

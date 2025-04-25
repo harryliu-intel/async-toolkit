@@ -3,7 +3,7 @@ module demo;
 // cosimulate first.SYSTEM {csp,subcells}
 
 int WIDTH = 32;
-int N     = 4 * 1024;
+int N     = 2 * 1024;
 
 int XADD = 13;
 int XMUL = 16807;

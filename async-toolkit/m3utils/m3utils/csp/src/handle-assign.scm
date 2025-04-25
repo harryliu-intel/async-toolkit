@@ -304,8 +304,8 @@
                            (cons 'sequence (append seq (list the-ass))))))
                     
                     (else a))))
-        (dbg "probe/recv-ex  : " op dnl)
-        (dbg "probe/recv-ex op : " op dnl)
+        (handle-assign-dbg "probe/recv-ex  : " op dnl)
+        (handle-assign-dbg "probe/recv-ex op : " op dnl)
         
         (handle-assign-dbg "probe/recv-ex -> " (stringify result) dnl)
         result

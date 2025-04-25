@@ -156,6 +156,57 @@
              (label END))
   )
 
+(define upl-result #f)
+
+(define (unroll-parallel-loops loop-stmt syms vals tg func-tbl struct-tbl cell-info)
+
+  ;; parallel-loop has to be unrolled
+
+  (define tg (make-name-generator "unroll-parallel-loops"))
+
+  (let* ((dummy         (get-loop-dummy loop-stmt))
+         (range         (get-loop-range loop-stmt))
+         (lo            (cadr  range))
+         (hi            (caddr range))
+         (literal-range (and (bigint? lo) (bigint? hi)))
+         (stmt          (get-loop-stmt  loop-stmt))
+         )
+
+    (dis "unroll-parallel-loops : dummy         : " dummy dnl)
+    (dis "unroll-parallel-loops : loop-stmt     : " loop-stmt dnl)
+    (dis "unroll-parallel-loops : literal-range : " literal-range dnl)
+
+    (define (one-iteration i)
+      (define (replace-dummy expr)
+        (if (and (ident? expr) (eq? dummy (cadr expr))) i expr))
+      
+      (visit-stmt stmt identity replace-dummy identity)
+      )
+    
+    (if literal-range
+        (if (xnum-< hi lo)
+            'skip
+            (let loop ((sofar '())
+                       (i      lo))
+              (if (xnum-= i hi)
+                  (let ((result (cons
+                                 'parallel
+                                 (reverse (cons
+                                           (one-iteration i)
+                                           sofar)))))
+                    (dis "unroll-parallel-loops : " (stringify result) dnl)
+                    (set! upl-result result)
+                    result
+                    )
+                         
+                  (loop (cons (one-iteration i) sofar) (xnum-+ i *big1*)))
+              );;tel
+            );;fi
+        loop-stmt
+        );;fi
+    );;*tel
+  )
+  
 (define (unblock-loops stmt syms vals tg func-tbl struct-tbl cell-info)
 
   ;; sequential-loop with a blocking statement have to be desugared
