@@ -477,9 +477,9 @@
           )
          )
   (begin
-    (dis dnl "=========  LOADING PARSE TREE FROM " nm ".scm ..." dnl)
+    (dis dnl "=========  LOADING PARSE TREE FROM " nm " ..." dnl)
 
-    (set! *cell*  (load-csp (string-append nm ".scm")))
+    (set! *cell*  (load-csp (string-append nm)))
     (set! *the-proc-type-name* (car *cell*))
     
     (set! *data* (cadr *cell*))       ;; the CSP code itself

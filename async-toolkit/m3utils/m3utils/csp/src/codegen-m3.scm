@@ -1425,6 +1425,6 @@
 (define (test!)
   (reload)
 
-  (compile-csp! "tests/first_proc_false" "tests/first_proc_true")
+  (compile-csp! "tests/first_proc_false.scm" "tests/first_proc_true.scm")
 
   )
