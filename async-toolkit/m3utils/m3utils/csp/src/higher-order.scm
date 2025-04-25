@@ -34,3 +34,10 @@
   (let ((res (f)))
     (if res (iterate-until-false f) res)))
 
+;; predicates
+ (define (exists? pred? lst)
+  (eval (apply or (map pred? lst)))) ;; why do we need eval?
+
+(define (forall? pred? lst)
+  (eval (apply and (map pred? lst)))) ;; why do we need eval?
+  

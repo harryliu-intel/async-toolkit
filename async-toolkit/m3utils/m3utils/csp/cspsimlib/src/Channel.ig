@@ -29,4 +29,6 @@ PROCEDURE Recv(VAR      c : T;
 
 PROCEDURE ChanDebug(READONLY chan : T) : TEXT;
 
+PROCEDURE New(nm : TEXT; slack : CARDINAL := 0) : REF T;
+  
 END Channel.

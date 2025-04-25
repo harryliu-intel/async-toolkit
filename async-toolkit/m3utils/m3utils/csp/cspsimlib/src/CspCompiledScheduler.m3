@@ -4,7 +4,7 @@ IMPORT Word;
 FROM Fmt IMPORT Int;
 IMPORT Debug;
 
-CONST doDebug = TRUE;
+CONST doDebug = FALSE;
       
 PROCEDURE Schedule(closure : Process.Closure) =
   BEGIN
@@ -34,6 +34,9 @@ VAR
   ap, np := 0;
   nexttime : Word.T := 0;
 
+PROCEDURE GetTime() : Word.T =
+  BEGIN RETURN nexttime END GetTime;
+  
 PROCEDURE Run() =
   BEGIN
     (* run *)

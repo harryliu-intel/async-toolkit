@@ -24,7 +24,9 @@ Module   ("NativeInt")
 Module ("CspCompiledProcess")
 Module ("CspCompiledScheduler")
 Interface ("CspBoolean")
-Interface ("CspText")
+Interface ("CspString")
+
+Module ("CspIntrinsics")
 
 Generic_module ("Channel")
 template ("channel")

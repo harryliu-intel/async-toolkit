@@ -4,7 +4,7 @@ IMPORT CspCompiledProcess AS Process;
 IMPORT CspCompiledScheduler AS Scheduler;
 FROM Fmt IMPORT Int, F, Bool;
 
-CONST doDebug = TRUE;
+CONST doDebug = FALSE;
 
 PROCEDURE SendProbe(VAR c : T; cl : Process.Closure) : BOOLEAN =
   BEGIN
@@ -197,4 +197,14 @@ PROCEDURE ChanDebug(READONLY chan : T) : TEXT =
     )
   END ChanDebug;
 
+PROCEDURE New(nm : TEXT; slack : CARDINAL) : REF T =
+  BEGIN
+    RETURN NEW(REF T,
+               nm    := nm,
+               slack := slack,
+               wr    := 0,
+               rd    := slack,
+               data  := NEW(REF Buff, slack + 1))
+  END New;
+  
 BEGIN END Channel.

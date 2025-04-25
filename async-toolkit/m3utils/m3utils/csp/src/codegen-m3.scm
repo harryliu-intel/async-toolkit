@@ -94,7 +94,7 @@
                   
 (define (m3-map-decltype type)
   ;; returns interface
-  (cond ((string-type?  type) "CspText")
+  (cond ((string-type?  type) "CspString")
         ((boolean-type? type) "CspBoolean")
         ((array-type?   type) (error "not done") )
         ((struct-type?  type) (error "not done") )
@@ -312,6 +312,8 @@
   
   (w "<*NOWARN*>IMPORT CspCompiledProcess AS Process;" dnl)
   (w "<*NOWARN*>IMPORT CspCompiledScheduler AS Scheduler;" dnl)
+  (w "<*NOWARN*>IMPORT CspString, Fmt;" dnl)
+  (w "<*NOWARN*>IMPORT CspIntrinsics;" dnl)
   (map (lambda(intf)(w "IMPORT " intf ";" dnl))
        (map format-intf-name intfs))
   )
@@ -533,12 +535,6 @@
        );;dna
   )
 
-(define (exists? pred? lst)
-  (eval (apply or (map pred? lst)))) ;; why do we need eval?
-
-(define (forall? pred? lst)
-  (eval (apply and (map pred? lst)))) ;; why do we need eval?
-  
 (define (m3-compile-scalar-int-assign pc stmt)
   (let* ((lhs (get-assign-lhs stmt))
          (lty (declared-type pc lhs)))
@@ -775,7 +771,7 @@
         ((string? x) (stringify x))
         
         ((+? x)      (string-append
-                      "Text.Cat( "
+                      "CspString.Cat( "
                       (m3-compile-string-expr pc (cadr x))
                       " , "
                       (m3-compile-string-expr pc (caddr x))
@@ -1192,10 +1188,6 @@
   )
 
 (define (do-m3!)
-  (define (mkfile-write . text)
-    (apply (curry append-text (sa (build-dir) "/m3makefile")) text)
-    )
-    
   (let* ((the-blocks text9)
          (cell-info  *cellinfo*)
          (port-tbl   *the-prt-tbl*)
@@ -1205,6 +1197,8 @@
          (i3wr       (FileWr.Open i3fn))
          (m3fn       (string-append (build-dir) root ".m3"))
          (m3wr       (FileWr.Open m3fn))
+         (ipfn       (string-append (build-dir) root ".imports"))
+         (ipwr       (FileWr.Open ipfn))
          (the-scopes (m3-make-scope-map the-blocks cell-info))
 
          (m3-port-data-intfs
@@ -1233,7 +1227,6 @@
                  (map m3-map-declbuild
                       (map get-decl1-type
                            (map get-var1-decl1 the-decls))))))
-          
 
          (all-intfs (set-union m3-port-data-intfs
                                m3-var-intfs
@@ -1251,20 +1244,25 @@
     (dis "do-m3! : m3-var-intfs       : " m3-var-intfs dnl)
     (dis "do-m3! : all-intfs          : " all-intfs dnl)
     
-    (write-m3overrides!)
-    (write-m3makefile-header!)
+;;    (write-m3overrides!)
+;;    (write-m3makefile-header!)
 
     ;; prepare needed custom interfaces
 
     (set! *ai* all-intfs)
-    
-    (map (curry m3-make-intf mkfile-write)
-         (uniq equal? (map node->uint-intf all-intfs)))
+
+    (let ((bld-intfs (uniq equal? (map node->uint-intf all-intfs))))
+      (dis "tobuild : " bld-intfs dnl)
+      (Wr.PutText ipwr (stringify bld-intfs))
+;;      (map (curry m3-make-intf mkfile-write) bld-intfs)
+      )
+
 
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     
     (define (intf . x) (Wr.PutText i3wr (apply string-append x)))
     (define (modu . x) (Wr.PutText m3wr (apply string-append x)))
+    (define (impo . x) (Wr.PutText ipwr (apply string-append x)))
     ;; interface file
     
     (intf "INTERFACE " root ";" dnl dnl)
@@ -1300,13 +1298,12 @@
     
     (Wr.Close i3wr)
     (Wr.Close m3wr)
-
-    (mkfile-write "Smodule (\"" root "\")" dnl)
-
+    (Wr.Close ipwr)
+    
     );;*tel
   
     
-  (write-m3makefile-footer!)
+;;  (write-m3makefile-footer!)
   )
 
 (define (m3-make-symtab the-decls)
@@ -1325,12 +1322,6 @@
         (else (find-decl (cdr decls) id)))
   )
 
-(define (test!)
-  (reload)
-  (loaddata! "tests/first_proc_false")
-  (compile!)
-  (do-m3!)
-  )
 
 ;; the below is unused
 (define (m3-write-node-intf mkfile-write intf-width)
@@ -1350,3 +1341,90 @@
     )
   )
 
+(define (find-filepaths dir pat)
+  ;; find files in the directory matching the regex pattern pat
+  ;; return them with the full relative path
+  (let ((files (FileFinder.Find dir pat)))
+    (map (curry string-append dir) files)
+    )
+  )
+  
+
+(define (m3-clear-build-area!)
+  (map FS.DeleteFile (find-filepaths (build-dir) "."))
+  'ok
+  )
+
+
+(define *imports-extension* "imports")
+
+(define (derive-mod-name imp-fn)
+  (let* ((len       (Text.Length imp-fn))
+         (pfx-len   (Text.Length (build-dir)))
+         (sfx-len   (+ 1 (Text.Length *imports-extension*))))
+    (Text.Sub imp-fn pfx-len (- len pfx-len sfx-len))
+    )
+  )
+
+(define (m3-write-makefile!)
+
+  (define (mkfile-write . text)
+    (apply (curry append-text (sa (build-dir) "/m3makefile")) text)
+    )
+  
+  ;; scan build directory for .imports files
+  ;; write the m3makefile
+  (let* ((im-files  (find-filepaths
+                     (build-dir)
+                     (sa "\\." *imports-extension* "$")))
+         ;; the imports files
+         
+         (mod-nams  (map derive-mod-name im-files))
+         ;; derive module names from the imports files
+         
+         (im-data   (map read-importlist im-files))
+         ;; load the actual imports we need to build
+         
+         (all-ims   (uniq equal? (apply append im-data)))
+         ;; and this is the cleaned up list of import interfaces to build
+         
+         )
+    
+    (dis "m3-write-makefile : im-files : " (stringify im-files) dnl)
+    (dis "m3-write-makefile : all-ims  : " all-ims dnl)
+
+    ;; write m3overrides
+    (write-m3overrides!)
+
+    ;; and now the m3makefile
+    (write-m3makefile-header!)
+
+    ;; make code for the requested types, as well as the m3makefile entries
+    (map (curry m3-make-intf mkfile-write) all-ims) 
+
+    ;; record the modules we need to compile
+    (map (lambda(root)
+           (mkfile-write "Smodule (\"" root "\")" dnl))
+         mod-nams)
+
+    ;; close out the m3makefile
+    (write-m3makefile-footer!)
+    )
+
+  'ok
+  )
+
+(define (compile-csp! . x)
+  (m3-clear-build-area!)
+  (map do-compile-m3! x)
+  (m3-write-makefile!)
+  (done-banner)
+  'ok
+  )
+
+(define (test!)
+  (reload)
+
+  (compile-csp! "tests/first_proc_false" "tests/first_proc_true")
+
+  )
