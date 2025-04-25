@@ -7,9 +7,9 @@ import ("modula3scheme")
 import ("sstubgen")
 import ("parseparams")
 
-%if defined("CM3_VERSION")
-%        m3_optimize("T")
-%end
+if defined("CM3_VERSION")
+	 m3_optimize("T")
+end
 
 Module   ("DynamicInt")
 

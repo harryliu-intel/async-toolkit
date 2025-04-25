@@ -1,6 +1,7 @@
 INTERFACE CspIntrinsics;
 IMPORT CspString;
+IMPORT CspCompiledProcess;
 
-PROCEDURE print(str : CspString.T) : BOOLEAN;
+PROCEDURE print(frame : CspCompiledProcess.Frame; str : CspString.T) : BOOLEAN;
 
 END CspIntrinsics.

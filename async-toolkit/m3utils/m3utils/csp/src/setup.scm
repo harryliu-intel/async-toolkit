@@ -100,6 +100,7 @@
 
 (define *the-prog-name* #f)
 (define inits1 #f)
+(define text0 #f)
 (define text1 #f)
 (define text2 #f)
 (define text3 #f)

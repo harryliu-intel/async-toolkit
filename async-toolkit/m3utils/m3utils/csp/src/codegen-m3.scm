@@ -209,7 +209,7 @@
 
 (define (m3-write-build-signature w cell-info)
   (w dnl
-     "PROCEDURE Build(" dnl)
+     "PROCEDURE Build( name : TEXT;" dnl)
   (m3-write-port-list w cell-info)
   (w ")")
   )
@@ -244,6 +244,7 @@
     (w " = " dnl)
     (w "  BEGIN" dnl)
     (w "    WITH frame = NEW(Frame," dnl
+       "                     name := name," dnl
        "                     id := Process.NextFrameId()" dnl)
 
     (let ((asslist (map m3-format-port-ass proc-ports)))
@@ -675,7 +676,7 @@
          (rhs (get-assign-rhs x)))
     (sa (m3-format-designator pc lhs) " := "
         (cond ((ident? rhs)
-               (force-native rhs))
+               (force-type pc 'native rhs))
         
               ((bigint? rhs)
                (BigInt.Format rhs 10))
@@ -900,7 +901,8 @@
 (define (m3-compile-intrinsic pc expr)
   (if (not (call-intrinsic? expr)) (error "not an intrinsic : " expr))
 
-  (sa "CspIntrinsics." (symbol->string (cadr expr)) "("
+  (sa "CspIntrinsics." (symbol->string (cadr expr)) "(frame, "
+      
       (m3-format-varid pc (cadaddr expr))
                        ")")
 

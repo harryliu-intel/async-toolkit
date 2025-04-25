@@ -496,6 +496,7 @@
          "=========  INITIAL SETUP COMPLETE : run (compile!) when ready" dnl
          reset-term dnl)
   )
+  (set! text0 *the-text*)
   '*the-text*
   )
 

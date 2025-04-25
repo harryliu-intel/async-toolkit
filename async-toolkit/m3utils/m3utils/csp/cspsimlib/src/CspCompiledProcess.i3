@@ -3,12 +3,13 @@ IMPORT Word;
 
 TYPE
   Frame = BRANDED OBJECT
-    id : CARDINAL;
+    name      : TEXT;
+    id        : CARDINAL;
   END;
 
   Closure = OBJECT
-    id : CARDINAL;
-    frameId : CARDINAL;
+    id        : CARDINAL;
+    frameId   : CARDINAL;
     scheduled : Word.T := -1; (* last time it was scheduled *)
   METHODS
     run();
