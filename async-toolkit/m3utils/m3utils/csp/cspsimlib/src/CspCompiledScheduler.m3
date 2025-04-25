@@ -28,6 +28,13 @@ PROCEDURE Schedule(closure : Process.Closure) =
     INC(np)
   END Schedule;
 
+PROCEDURE ScheduleFork(READONLY closures : ARRAY OF Process.Closure) : CARDINAL =
+  BEGIN
+    FOR i := FIRST(closures) TO LAST(closures) DO
+      Schedule(closures[i])
+    END;
+    RETURN NUMBER(closures)
+  END ScheduleFork;
 
 VAR
   active, next := NEW(REF ARRAY OF Process.Closure, 1);

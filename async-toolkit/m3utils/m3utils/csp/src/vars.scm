@@ -338,7 +338,7 @@
              ;;
              (begin
                (dis "delete-referencing-stmts : recv :   " s dnl)
-               `(recv (get-recv-lhs s) ())
+               `(recv ,(get-recv-lhs s) ())
                )
              s)))
 

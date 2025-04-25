@@ -41,3 +41,18 @@
 (define (forall? pred? lst)
   (eval (apply and (map pred? lst)))) ;; why do we need eval?
   
+
+(define (count-execute n f)
+  ;; given n, execute (f 0) .. (f (- n 1)
+
+  (let loop ((i 0)
+             (res '())
+             )
+    (if (= i n)
+        (reverse res)
+        (loop (+ i 1)
+              (cons (f i) res))
+        );;fi
+    );;tel
+  )
+  

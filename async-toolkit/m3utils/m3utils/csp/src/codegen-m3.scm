@@ -150,29 +150,62 @@
     )
   )
 
-(define (m3-write-process-closure-list w the-blocks)
+(define (m3-closure-type-text fork-count)
+
+  ;; pass #f or the pair of (L<x> . <cnt>)
+  (if fork-count
+      (sa "ARRAY [ 0 .. ("(cdr fork-count)" - 1) ] OF Process.Closure" )
+      "Closure")
+  )
+
+(define (m3-write-process-closure-list w the-blocks fork-counts)
   (w "    (* closures *)" dnl)
 
-  (map (lambda(blk)
-         (let* ((btag (m3-ident (cadr (get-block-label blk)))))
-           (w "    " (pad 40 btag "_Cl") " : Closure;" dnl)
+  (define (do-one-id lab-id)
+    (dis "do-one-id : " lab-id dnl)
+    (let* ((btag  (m3-ident lab-id))
+           (count (assoc lab-id fork-counts))
+           (type  (m3-closure-type-text count))
+           )
+      
+      (w "    " (pad 40 btag "_Cl") " : "type";" dnl)
+      );;*tel
+    )
+      
+  (let ((the-ids
+         (uniq eq? (map cadr (map get-block-label (cdr the-blocks))))))
+
+    (map do-one-id the-ids)
+    )
+  )
+
+(define (m3-write-process-fork-counters w fork-counts)
+  (w "    (* fork counters *)" dnl)
+
+  (map (lambda(fc)
+         (let* ((cvar (m3-ident (symbol-append 'fork-counter- (car fc)))))
+           (w "    " (pad 40 cvar) " : [ 0 .. " (cdr fc) " ];" dnl)
            );;*tel
          )
-       (cdr the-blocks)
+       fork-counts
        );;pam
   )
 
-(define (m3-write-proc-frame-decl w port-tbl the-blocks cell-info the-decls)
-  (w dnl
-     "TYPE" dnl)
-  (w "  Frame = Process.Frame OBJECT" dnl)
-  (m3-write-port-list w cell-info)
-  (w dnl)
-  (m3-write-shared-locals w the-blocks cell-info the-decls)
-  (w dnl)
-  (m3-write-process-closure-list w the-blocks)
-  (w dnl)
-  (w "  END;" dnl dnl)
+(define (m3-write-proc-frame-decl w port-tbl the-blocks cell-info the-decls fork-counts)
+    
+    (w dnl
+       "TYPE" dnl)
+    (w "  Frame = Process.Frame OBJECT" dnl)
+    (m3-write-port-list w cell-info)
+    (w dnl)
+    (m3-write-shared-locals w the-blocks cell-info the-decls)
+    (w dnl)
+    (m3-write-process-closure-list w the-blocks fork-counts)
+    (w dnl)
+    (m3-write-process-fork-counters w fork-counts)
+    (w dnl)
+    (w "  END;" dnl dnl)
+
   )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -182,6 +215,35 @@
      "TYPE Block = PROCEDURE (cl : Closure) : BOOLEAN;" dnl
      dnl)
   )
+
+(define (get-all-labels the-blocks)
+  (map cadr (filter identity(map (curry find-stmt  'label) the-blocks)))
+  )
+
+(define (get-fork-labels label-lst)
+  (multi label-lst)
+  )
+
+(define (count-occurrences eq? lst of)
+  (let loop ((p lst)
+             (cnt 0))
+    (cond ((null? p) cnt)
+          ((eq? of (car p)) (loop (cdr p) (+ cnt 1)))
+          (else             (loop (cdr p) cnt))
+          )
+    )
+  )
+
+(define (get-fork-label-counts the-blocks)
+  (let* ((labels       (get-all-labels the-blocks))
+         (fork-labels  (multi labels)))
+    (map (lambda(m) (cons m
+                          (count-occurrences eq? labels m)))
+         fork-labels)))
+         
+    
+
+  
   
 (define (m3-write-closure-decl w)
   (w dnl
@@ -238,7 +300,7 @@
 (define (channel-port? pdef) (eq? 'channel (car (cadddr pdef))))
 
 
-(define (m3-write-build-defn w cell-info the-blocks)
+(define (m3-write-build-defn w cell-info the-blocks fork-counts)
   (let ((proc-ports (get-ports cell-info)))
     (m3-write-build-signature w cell-info)
     (w " = " dnl)
@@ -277,20 +339,54 @@
 
       (w dnl)
 
-      (let* ((blk-labels (map m3-ident
-                              (map cadr
-                                   (map get-block-label (cdr the-blocks)))))
+      (let* ((blk-labels 
+              (uniq eq?
+                    (map cadr
+                         (map get-block-label (cdr the-blocks)))))
              (iiw (indent-writer iw (pad 22 "")))
              )
-        (map (lambda(m3lab)
-               (iw  (pad 22 "frame." m3lab "_Cl")
-                    " := NEW(Closure," dnl)
-               (iiw "        id      := Process.NextId()," dnl)
-               (iiw "        frameId := frame.id," dnl)
-               (iiw "        frame   := frame," dnl)
-               (iiw "        block   := Block_" m3lab ");" dnl dnl)
-               )
-             blk-labels)
+        (map
+
+         
+         (lambda(lab)
+           (let ((m3lab (m3-ident lab))
+                 (count (assoc lab fork-counts)))
+
+             (if count
+
+                 (begin ;; a fork
+                   (iw  (pad 22 "frame." m3lab "_Cl")
+                        " := " (m3-closure-type-text count) " { "dnl)
+                   (count-execute
+                    (cdr count)
+                    (lambda(i)
+                      (iw (pad 22 "") "   NEW(Closure," dnl)
+                      (iiw "       id      := Process.NextId()," dnl)
+                      (iiw "       frameId := frame.id," dnl)
+                      (iiw "       frame   := frame," dnl)
+                      (iiw "       block   := Block_" m3lab "_" i ")"
+                           (if (= i (- (cdr count) 1)) "" ",") ;; blah!
+                           dnl)
+                      
+                      )
+                    );;etucexe-tnuoc
+                   (iw "};" dnl dnl)
+                   )
+                 
+                 (begin  ;; not a fork
+                   (iw  (pad 22 "frame." m3lab "_Cl")
+                        " := NEW(Closure," dnl)
+                   (iiw "        id      := Process.NextId()," dnl)
+                   (iiw "        frameId := frame.id," dnl)
+                   (iiw "        frame   := frame," dnl)
+                   (iiw "        block   := Block_" m3lab ");" dnl dnl)
+                   )
+                 )
+             )
+           )
+
+         
+         blk-labels)
         );;*tel
 
       (iw "Scheduler.Schedule(frame." (m3-ident (cadar the-blocks))"_Cl);" dnl)
@@ -667,38 +763,52 @@
                                     (force-type pc op-type b))))
     (m3-compile-convert-type op-type tgt opx))
   )
-
   
 (define (m3-compile-native-int-assign pc x)
   (dis "m3-compile-native-int-assign : x : " x dnl)
   ;; assign when lhs is native
   (let* ((lhs (get-assign-lhs x))
-         (rhs (get-assign-rhs x)))
-    (sa (m3-format-designator pc lhs) " := "
-        (cond ((ident? rhs)
-               (force-type pc 'native rhs))
+         (rhs (get-assign-rhs x))
+         (comp-lhs 
+          (sa (m3-format-designator pc lhs) " := ")))
+    
+    (cond ((ident? rhs)
+           (sa comp-lhs (force-type pc 'native rhs)))
         
-              ((bigint? rhs)
-               (BigInt.Format rhs 10))
+          ((bigint? rhs)
+           (sa comp-lhs (BigInt.Format rhs 10)))
               
-              ((binary-expr? rhs)
-               (m3-compile-typed-binop pc 'native (car rhs) (cadr rhs) (caddr rhs)))
+          ((binary-expr? rhs)
+           (sa comp-lhs
+               (m3-compile-typed-binop pc
+                                       'native
+                                       (car rhs)
+                                       (cadr rhs)
+                                       (caddr rhs))))
               
-              ((unary-expr? rhs)
-               (m3-compile-native-unop pc rhs))
+          ((unary-expr? rhs)
+           (sa comp-lhs
+               (m3-compile-native-unop pc rhs)))
               
-              ((bits? rhs)
-               (m3-compile-native-bits pc rhs))
+          ((bits? rhs)
+           (sa comp-lhs
+               (m3-compile-native-bits pc rhs)))
 
-              (else (error "m3-compile-native-int-assign"))
-              );;dnoc
-        )
+          ((recv-expression? rhs)
+           (m3-compile-recv pc `(recv ,(cadr rhs) ,lhs)))
+              
+          (else (error "m3-compile-native-int-assign"))
+          );;dnoc
     );;*tel
+  )  
+
+(define (m3-compile-native-recv-expression pc rhs)
   )
 
 (define (m3-compile-stringify-integer-value pc x)
-  (if (bigint? x)
-      (BigInt.Format x 10)
+  (if (bigint? x) ;; are the quotes right here?
+      (sa "\"" (BigInt.Format x 10) "\"") 
+  
       (let ((type (declared-type pc x)))
         (cond
          
@@ -728,7 +838,7 @@
   )
 
 (define (m3-compile-integer-value pc x)
-  (define (err) (error "m3-compile-integer-value : can't map to string : " x))
+  (define (err) (error "m3-compile-integer-value : can't map to integer : " x))
   
   (cond ((ident? x)  
          (let ((type (declared-type pc x)))
@@ -777,6 +887,11 @@
                       " , "
                       (m3-compile-string-expr pc (caddr x))
                       " )"))
+
+        ((bigint? x)
+;;         (error) ;; shouldnt happen...
+         (sa "\"" (BigInt.Format x 10) "\""))
+        
         (else (err))
         );;dnoc
   )
@@ -824,10 +939,52 @@
 (define (m3-compile-goto pc stmt)
   (dis "m3-compile-goto" dnl)
 
-  (if (not (null? (cddr stmt))) (error "cant compile complex gotos yet"))
-  
-  (string-append "Scheduler.Release(cl.frame." (m3-ident (cadr stmt)) "_Cl);"
-  " RETURN TRUE")
+  (let* ((is-fork (and (not (null? (cddr stmt)))
+                       (eq? 'fork (caddr stmt))))
+         (is-join (and (not (null? (cddr stmt)))
+                       (eq? 'join (caddr stmt))))
+         )
+
+    (cond (is-fork (m3-compile-fork-goto  pc stmt))
+          (is-join (m3-compile-join-goto  pc stmt))
+          (else    (m3-compile-plain-goto pc stmt))
+          )
+    )
+  )
+
+(define  (m3-compile-plain-goto pc stmt)
+    (string-append "Scheduler.Release (cl.frame." (m3-ident (cadr stmt)) "_Cl);"
+                   " RETURN TRUE")
+    )
+
+(define  (m3-compile-fork-goto pc stmt)
+  (let* ((fork-counter (sa "frame."
+                           (m3-ident (symbol-append 'fork-counter-
+                                                    (cadr stmt)))))
+         (counter-lhs  (sa "<*ASSERT " fork-counter " = 0*> "
+                           fork-counter " := "))
+         )
+    (string-append "BEGIN "  counter-lhs
+
+                   "Scheduler.ReleaseFork(frame."
+                   (m3-ident (cadr stmt)) "_Cl);"
+                   " RETURN TRUE END")
+    )
+  )
+
+(define  (m3-compile-join-goto pc stmt)
+  (let* ((fork-counter (sa "frame."
+                           (m3-ident (symbol-append 'fork-counter-
+                                                    (cadddr stmt)))))
+         (counter-lhs  (sa "<*ASSERT " fork-counter " # 0*> "
+                           "DEC(" fork-counter ")"))
+         )
+    (string-append "IF " fork-counter " = 0 THEN "
+                   
+                   "Scheduler.Release(cl.frame."
+                   (m3-ident (cadr stmt)) "_Cl) END;"
+                   " RETURN TRUE")
+    )
   )
 
 (define (get-port-def-type pdef) (cadddr pdef))
@@ -860,35 +1017,46 @@
   )
 
 (define (m3-compile-recv pc stmt)
-  (let* ((port-tbl     (caddddr pc))
-
+  (dis "m3-compile-recv : " stmt dnl)
+  (let* (
          (port-des     (get-recv-lhs stmt)) ;; doesnt work for arrays/structs
          (rhs          (get-recv-rhs stmt))
+
          
+         (port-tbl     (caddddr pc))
          (port-id      (get-designator-id port-des))
          (port-def     (port-tbl 'retrieve port-id))
          (port-type    (get-port-def-type port-def))
          (port-typenam (m3-convert-port-type port-type))
          (copy-type    (m3-convert-port-ass-type port-type))
-         (recv-class   (classify-type pc (get-recv-rhs stmt)))
          
          (m3-pname     (m3-format-varid pc port-id))
          (port-class   (m3-convert-port-ass-category port-type))
-         (rhs-class    (classify-type pc rhs))
-
          )
+    (define (null-rhs)
+      (sa "VAR toRecv : "
+          copy-type".T; BEGIN IF NOT "
+          port-typenam ".Recv( " m3-pname "^ , toRecv , cl ) THEN RETURN FALSE END END")
+      )
 
-    (sa "VAR toRecv : "
-        copy-type".T; BEGIN IF NOT "
-        port-typenam ".Recv( " m3-pname "^ , toRecv , cl ) THEN RETURN FALSE END;"
-        (m3-format-designator pc rhs) " := "
-        (m3-compile-convert-type
-         recv-class
-         rhs-class
-         "toRecv"
-         )
-        " END"
+    (define (nonnull-rhs)
+      (let ((rhs-class    (classify-type pc rhs)))
+        (sa "VAR toRecv : "
+            copy-type".T; BEGIN IF NOT "
+            port-typenam ".Recv( " m3-pname "^ , toRecv , cl ) THEN RETURN FALSE END;"
+            (m3-format-designator pc rhs) " := "
+            (m3-compile-convert-type
+             port-class
+             rhs-class
+             "toRecv"
+             )
+            " END"
+            )
         )
+      )
+    
+
+    (if (null? rhs) (null-rhs) (nonnull-rhs))
     )
   )
 
@@ -934,10 +1102,33 @@
     )
   )
 
-(define (m3-write-block w pc blk)
+(define (number->symbol x) (string->symbol (number->string x)))
+
+(define (distinguish-labels label-lst)
+  ;; here label-lst is a list of strings (not symbols)
+  (let ((mls (multi label-lst)))
+    (if (null? mls)
+        label-lst
+        (let loop ((p label-lst)
+                   (res '())
+                   (i 0))
+          (cond ((null? p) (distinguish-labels (reverse res)))
+                ((equal? (car mls) (car p))
+                 (loop (cdr p)
+                       (cons (sa (car p) "_" (number->string i))
+                             res)
+                       (+ i 1)))
+                (else (loop (cdr p)
+                            (cons (car p) res)
+                            i))))
+        );; fi
+    )
+  )
+
+(define (m3-write-block w pc blk m3-label)
   (dis (get-block-label blk) dnl)
   (dis "m3-write-block : " blk dnl)
-  (let* ((btag        (m3-ident (cadr (get-block-label blk))))
+  (let* ((btag        m3-label)
          (bnam        (string-append "Block_" btag))
          (the-code    (cddr (filter-out-var1s blk)))
 
@@ -974,8 +1165,13 @@
   )
 
 (define (m3-write-blocks w the-blocks pc)
-  (map (curry m3-write-block w pc)
-       (cdr the-blocks))
+  (let* ((wr-blks      (cdr the-blocks)) ;; skip the entry point
+         (labs         (map cadr (map get-block-label wr-blks)))
+         (m3-labs      (map m3-ident labs))
+         (dist-m3-labs (distinguish-labels m3-labs))
+         )
+  (map (curry m3-write-block w pc) wr-blks dist-m3-labs)
+  )
   )
 
 
@@ -1201,6 +1397,7 @@
          (m3wr       (FileWr.Open m3fn))
          (ipfn       (string-append (build-dir) root ".imports"))
          (ipwr       (FileWr.Open ipfn))
+         (fork-counts (get-fork-label-counts the-blocks))
          (the-scopes (m3-make-scope-map the-blocks cell-info))
 
          (m3-port-data-intfs
@@ -1280,10 +1477,11 @@
     (modu "MODULE " root ";" dnl dnl)
 
     (m3-write-imports    modu all-intfs)
-    (m3-write-proc-frame-decl modu port-tbl the-exec-blocks cell-info the-decls)
+    (m3-write-proc-frame-decl modu port-tbl the-exec-blocks cell-info the-decls
+                              fork-counts)
     (m3-write-block-decl      modu)
     (m3-write-closure-decl    modu)
-    (m3-write-build-defn      modu cell-info the-exec-blocks)
+    (m3-write-build-defn      modu cell-info the-exec-blocks fork-counts)
 
     
     (let ((pc (list
@@ -1353,7 +1551,11 @@
   
 
 (define (m3-clear-build-area!)
-  (map FS.DeleteFile (find-filepaths (build-dir) "."))
+  (unwind-protect
+   (lambda()(map FS.DeleteFile (find-filepaths (build-dir) ".")))
+   identity
+   (dis "m3-clear-build-area! : warning : couldn't delete all files" dnl)
+   )
   'ok
   )
 

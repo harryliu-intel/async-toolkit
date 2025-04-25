@@ -80,22 +80,25 @@
   
   (define (s-visitor s)
 
-    (define (mark side . x)
-      (dis "mark " side " . " x dnl)
+    (define (mark side)
+      (dis "mark " side dnl)
 
       (define (lab . x) `((label ,(tg 'next) ,@x)))
       
-      (let* ((suffix (case side
-                       ((both)                  (apply lab (cons 'join x)))
-                       ((before)                    '())
-                       );;esac
-                     )
+      (let* (
+             (fork-lab (apply lab '(fork)))
 
-             (prefix (case side
-                       ((before)                (apply lab x))
-                       ((both)                  (apply lab (cons 'fork x)))
-                       );;esac
-                     )
+             (prefix   (case side
+                         ((before)        (lab))
+                         ((both)          fork-lab)
+                         );;esac
+                       );;xiferp
+
+             (suffix   (case side
+                         ((both)      (apply lab `(join ,(cadar fork-lab))))
+                         ((before)          '())
+                         );;esac
+                       );;xiffus
              
              (res (append '(sequence) prefix (list s) suffix))
              )
@@ -112,10 +115,24 @@
 
       ((parallel) (mark 'both))
 
-      ((parallel-loop) (mark 'both
-                             (get-loop-dummy s)
-                             (get-loop-range s)))
+      ((parallel-loop)
 
+       
+       ;;
+       ;; We can't support parallel loops without way more work!
+       ;;
+       ;; The main issue is that we would have to have a call stack
+       ;; and this would affect function calls and many other things.
+       ;;
+       ;; It would also slow down the resulting code.
+       ;;
+       
+       (error "this back-end does not support parallel loops")
+
+       (mark 'both
+             (get-loop-dummy s)
+             (get-loop-range s)))
+      
       ((while)
        (if (stmt-may-block? s)
            (let* ((lab (tg 'next))
@@ -149,11 +166,14 @@
              s))
        )
 
-      (else s)))
+      (else s)
+      );;esac
 
-  ;; label the entry and exit point also
-  `(sequence (label START) ,(visit-stmt prog s-visitor identity identity)
-             (label END))
+    );;enifed
+    
+    ;; label the entry and exit point also
+    `(sequence (label START) ,(visit-stmt prog s-visitor identity identity)
+               (label END))
   )
 
 (define upl-result #f)
@@ -189,11 +209,14 @@
             (let loop ((sofar '())
                        (i      lo))
               (if (xnum-= i hi)
-                  (let ((result (cons
-                                 'parallel
-                                 (reverse (cons
-                                           (one-iteration i)
-                                           sofar)))))
+                  (let* ((unrolled (cons
+                                    'parallel
+                                    (reverse (cons
+                                              (one-iteration i)
+                                              sofar))))
+
+                         (result (uniquify-stmt unrolled))
+                         )
                     (dis "unroll-parallel-loops : " (stringify result) dnl)
                     (set! upl-result result)
                     result

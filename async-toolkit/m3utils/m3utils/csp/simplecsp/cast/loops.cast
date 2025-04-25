@@ -146,7 +146,14 @@ define V()()
 define W()(bd(32) -L)
 {
   csp {
-    <,i:10:print("" + L? + i)> // will NOT turn into a sequential loop
+    <,i:2:print("" + L? + i)> // will NOT turn into a sequential loop
+  }
+}
+
+define WW()(bd(32) -L)
+{
+  csp {
+    <,i:3: L?y ; <,j:4:print("" + L? + i + 17 * j)> > // will NOT turn into a sequential loop
   }
 }
 
