@@ -156,6 +156,14 @@ define WW()(bd(32) -L)
     <,i:3: L?y ; <,j:4:print("" + L? + i + 17 * j)> > // will NOT turn into a sequential loop
   }
 }
+define WWW()(bd(32) -L)
+{
+  csp {
+    int(38) z;
+    
+    <, k : 10: <,i:3: L?y ; z += y; <,j:4:print("" + L? + i + 17 * j)> > >
+  }
+}
 
 define Wseq()(bd(32) -L)
 {
