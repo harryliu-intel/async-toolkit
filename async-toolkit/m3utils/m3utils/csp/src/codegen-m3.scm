@@ -60,8 +60,10 @@
                          (string->list (number->string (char->integer c))))
 
                   ,*us*))))
-        
-(define (m3-ident scm-ident) ;; Good grief
+
+(define m3-ident (compose M3Ident.Escape symbol->string))
+
+(define (oldm3-ident scm-ident) ;; Good grief
 
   ;; this just turns a Scheme symbol into a legal Modula-3 identifier
   
@@ -1632,3 +1634,101 @@
   (compile-csp! "tests/first_proc_false.scm" "tests/first_proc_true.scm")
 
   )
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;; the driver
+;;
+
+(define (drive! fn)
+
+  (define the-driver (obj-method-wrap
+                      (new-modula-object 'CspCompilerDriver.T)
+                      'CspCompilerDriver.T))
+
+  (the-driver 'init fn)
+
+  (let* ((proc-type-seq (obj-method-wrap (the-driver 'getProcTypes)
+                                         'TextSeq.T))
+         (the-modules   (count-execute
+                         (proc-type-seq 'size)
+                         (curry proc-type-seq 'get)))
+         (the-scms      (map (lambda(m)(sa m ".scm")) the-modules))
+         (the-port-tbl  (m3-make-module-intf-tbl the-modules))
+         );;*tel
+         
+
+    (dis "the-modules  : " (stringify the-modules) dnl)
+    (dis "the-port-tbl : " (stringify the-port-tbl) dnl)
+
+   ;; (apply compile-csp! the-scms)
+
+    (the-driver 'setProcessPorts (the-port-tbl '*m3*))
+
+    (the-driver 'genBuilder "BuildSimulation")
+
+;;    'ok
+    )
+
+  )
+
+;;(drive! "demo_46_SYSTEM.procs")
+
+(define (get-module-cellinfo mod-name)
+  (caddr (read-importlist (sa mod-name ".scm"))))
+
+(define (get-module-ports mod-name)
+  (caddddr (get-module-cellinfo mod-name)))
+
+(define ppp #f)
+
+(define (m3-make-csp-port pdef)
+  (set! ppp pdef)
+  (let ((ptype (cadddr pdef)))
+    (CspPort.New (get-port-id pdef)                       ;; name
+                 
+                 (convert-dir (port-direction pdef))      ;; direction
+                 
+                 (cond ((node-port?    pdef) 'Node)       ;; class
+                       ((channel-port? pdef) 'Channel)
+                       (else (error "m3-make-csp-port : " pdef)))
+                 
+                 (port-type-width ptype)                  ;; width (in bits)
+
+                 (if (channel-port? pdef)                 ;; type-name
+                     (cadr ptype)
+                     'node)
+
+                 )
+    )
+  )
+
+(define (m3-get-module-ports mod-name)
+  (let ((seq (init-seq 'CspPortSeq.T)))
+    (map (curry seq 'addhi)
+         (map m3-make-csp-port (get-module-ports mod-name)))
+    seq
+    )
+  )
+
+(define (m3-make-module-intf-tbl mod-lst)
+  (let ((the-port-tbl
+         (obj-method-wrap (new-modula-object 'TextCspPortSeqTbl.Default)
+                           'TextCspPortSeqTbl.Default))
+
+        (the-port-seqs
+         (map (lambda(x)(x '*m3*)) (map m3-get-module-ports mod-lst)))
+        )
+    (the-port-tbl 'init 100)
+    
+    (dis "m3-make-module-intf-tbl : mod-lst       : " mod-lst dnl)
+    (dis "m3-make-module-intf-tbl : the-port-seqs : " the-port-seqs dnl)
+    (map (curry the-port-tbl 'put) mod-lst the-port-seqs)
+
+    the-port-tbl
+  )
+)
+
+  
+    
+ 

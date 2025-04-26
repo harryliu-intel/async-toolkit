@@ -15,6 +15,9 @@ import ("cspsimlib")
 
 Module ("FileFinder")
 
+Smodule ("CspCompilerDriver")
+Smodule ("M3Ident")
+
 SchemeStubs ("CspExpression")
 SchemeStubs ("CspExpressionPublic")
 SchemeStubs ("CspExpressionSeq")
@@ -48,6 +51,11 @@ SchemeStubs ("CspStructDeclaratorSeq")
 
 SchemeStubs ("CspSyntax")
 
+SchemeStubs ("CspPort")
+SchemeStubs ("CspPortSeq")
+SchemeStubs ("AtomCspPortSeqTbl")
+SchemeStubs ("TextCspPortSeqTbl")
+
 SchemeStubs ("FiniteInterval")
 SchemeStubs ("VaryBits")
 
@@ -74,6 +82,7 @@ SchemeStubs ("CitTextUtils")
 SchemeStubs ("FS")
 SchemeStubs ("FileFinder")
 SchemeStubs ("RegEx")
+SchemeStubs ("TextSeq")
 
 ExportSchemeStubs ("cspc")
 importSchemeStubs()

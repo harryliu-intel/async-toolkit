@@ -281,9 +281,9 @@
 
 (define (convert-dir dir)
   (case dir
-    ((none) 'None)
-    ((in)   'In)
-    ((out)  'Out)
+    ((none)  'None)
+    ((in)    'In)
+    ((out)   'Out)
     ((inout) 'InOut)
     (else (error "convert-dir : unknown direction : " dir))
     )

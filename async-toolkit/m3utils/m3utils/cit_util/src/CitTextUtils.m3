@@ -177,6 +177,15 @@ PROCEDURE CheckSuffix(in, suffix : TEXT) : TEXT =
     END
   END CheckSuffix;
 
+PROCEDURE CheckPrefix(in, prefix : TEXT) : TEXT =
+  BEGIN
+    IF HavePrefix(in, prefix) THEN
+      RETURN RemovePrefix(in, prefix)
+    ELSE
+      RETURN NIL
+    END
+  END CheckPrefix;
+
 PROCEDURE RemoveSuffixes(fn : TEXT; READONLY exts : ARRAY OF TEXT) : TEXT =
   (* remove extension, if any from list *)
   BEGIN

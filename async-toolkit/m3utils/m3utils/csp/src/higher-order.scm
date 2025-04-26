@@ -43,7 +43,7 @@
   
 
 (define (count-execute n f)
-  ;; given n, execute (f 0) .. (f (- n 1)
+  ;; given n, execute (f 0) .. (f (- n 1) )
 
   (let loop ((i 0)
              (res '())
@@ -56,3 +56,5 @@
     );;tel
   )
   
+(define (compose f g)
+  (lambda r (f (apply g r))))

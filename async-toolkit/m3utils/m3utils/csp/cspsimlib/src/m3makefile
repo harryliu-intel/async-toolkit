@@ -6,6 +6,7 @@ import ("mscheme")
 import ("modula3scheme")
 import ("sstubgen")
 import ("parseparams")
+import ("cspgrammar")
 
 if defined("CM3_VERSION")
 	 m3_optimize("T")
@@ -33,6 +34,11 @@ template ("channel")
 
 Generic_interface ("Node")
 template ("node")
+
+Module ("CspPort")
+Sequence ("CspPort", "CspPort")
+Table("AtomCspPortSeq", "Atom", "CspPortSeq")
+Table("TextCspPortSeq", "Text", "CspPortSeq")
 
 library ("cspsimlib")
 

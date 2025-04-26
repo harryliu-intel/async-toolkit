@@ -5,9 +5,10 @@ IMPORT RegEx;
 IMPORT FS;
 IMPORT SchemeUtils;
 IMPORT SchemeString;
+IMPORT OSError;
 
 PROCEDURE Find(dirpath : Pathname.T; pattern : TEXT) : SchemePair.T
-  RAISES { RegEx.Error } =
+  RAISES { RegEx.Error, OSError.E } =
   VAR
     pat := RegEx.Compile(pattern);
     fsIter := FS.Iterate(dirpath);
