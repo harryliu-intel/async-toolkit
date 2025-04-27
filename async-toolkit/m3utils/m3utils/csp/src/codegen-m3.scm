@@ -1467,6 +1467,11 @@
     ;; interface file
     
     (intf "INTERFACE " root ";" dnl dnl)
+    (modu "(*" dnl
+          "FINGERPRINT " (fingerprint-string (stringify *cell*))  dnl
+          "*)" dnl
+          dnl
+          )
 
     (m3-write-imports intf m3-port-chan-intfs)
 
@@ -1477,6 +1482,11 @@
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
     (modu "MODULE " root ";" dnl dnl)
+    (modu "(*" dnl
+          "FINGERPRINT " (fingerprint-string (stringify *cell*))  dnl
+          "*)" dnl
+          dnl
+          )
 
     (m3-write-imports    modu all-intfs)
     (m3-write-proc-frame-decl modu port-tbl the-exec-blocks cell-info the-decls
@@ -1661,7 +1671,7 @@
     (dis "the-modules  : " (stringify the-modules) dnl)
     (dis "the-port-tbl : " (stringify the-port-tbl) dnl)
 
-   ;; (apply compile-csp! the-scms)
+    (apply compile-csp! the-scms)
 
     (the-driver 'setProcessPorts (the-port-tbl '*m3*))
 
@@ -1730,5 +1740,7 @@
 )
 
   
-    
+(define (fingerprint-string str)
+  (let ((fp (Fingerprint.FromText str)))
+    (apply + (map (lambda(x)(* (Math.pow 256 (car x)) (cdr x))) (cdar fp)))))
  

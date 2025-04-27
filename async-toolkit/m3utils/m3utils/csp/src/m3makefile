@@ -17,6 +17,7 @@ Module ("FileFinder")
 
 Smodule ("CspCompilerDriver")
 Smodule ("M3Ident")
+Smodule ("FingerprintFinder")
 
 SchemeStubs ("CspExpression")
 SchemeStubs ("CspExpressionPublic")
@@ -83,6 +84,7 @@ SchemeStubs ("FS")
 SchemeStubs ("FileFinder")
 SchemeStubs ("RegEx")
 SchemeStubs ("TextSeq")
+SchemeStubs ("Fingerprint")
 
 ExportSchemeStubs ("cspc")
 importSchemeStubs()

@@ -462,7 +462,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
-(define (loaddata! . nma)
+
+(define (loaddata0! . nma)
   ;; this ends up loading the program into *the-text*
 
   (let  ((nm
@@ -476,28 +477,34 @@
               )
           )
          )
-  (begin
     (dis dnl "=========  LOADING PARSE TREE FROM " nm " ..." dnl)
-
+    
     (set! *cell*  (load-csp nm))
     (set! *the-proc-type-name* (car *cell*))
-    
-    (set! *data* (cadr *cell*))       ;; the CSP code itself
-    (set! *cellinfo* (caddr *cell*))  ;; the CAST ports
-
-    (dis "=========  PARSE TREE LOADED SUCCESSFULLY " dnl dnl)
-
-    (dis "=========  " *the-proc-type-name* dnl dnl)
-    
-    (switch-proc! *data*)
     )
+  *the-proc-type-name*
+  )
 
+(define (loaddata1!)
+  (set! *data* (cadr *cell*))       ;; the CSP code itself
+  (set! *cellinfo* (caddr *cell*))  ;; the CAST ports
+  
+  (dis "=========  PARSE TREE LOADED SUCCESSFULLY " dnl dnl)
+  
+  (dis "=========  " *the-proc-type-name* dnl dnl)
+  
+  (switch-proc! *data*)
+  
   (dis   dnl go-grn-bold-term
          "=========  INITIAL SETUP COMPLETE : run (compile!) when ready" dnl
          reset-term dnl)
-  )
   (set! text0 *the-text*)
   '*the-text*
+  )
+
+(define (loaddata! . nma)
+  (apply loaddata0! nma)
+  (loaddata1!)
   )
 
 (define xxx #f)
