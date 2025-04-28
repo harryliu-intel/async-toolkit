@@ -482,7 +482,7 @@
     (set! *cell*  (load-csp nm))
     (set! *the-proc-type-name* (car *cell*))
     )
-  *the-proc-type-name*
+  (M3Ident.Escape *the-proc-type-name*)
   )
 
 (define (loaddata1!)
@@ -1165,13 +1165,6 @@
   (set! zz (inline-evals *the-inits* yy    *the-func-tbl* *the-struct-tbl* *cellinfo*))
   (set! tt (simplify-stmt zz))
   tt
-  )
-
-(define (do-compile-m3! nm)
-  (loaddata! nm)
-  (compile!)
-  (do-m3!)
-  'ok
   )
 
 (define (done-banner)

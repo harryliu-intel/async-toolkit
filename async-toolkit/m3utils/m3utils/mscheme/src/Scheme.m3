@@ -497,11 +497,11 @@ PROCEDURE EvalInternal(t   : T;
                 TRY
                   x := t.eval(protected,env)
                 FINALLY
-                  EVAL t.eval(cleanup,env)
+                  x := t.eval(cleanup,env)
                 END
               EXCEPT
                 E =>
-                EVAL t.eval(error,env)
+                x := t.eval(error,env)
               END
             END
           ELSIF fn = SYMbegin THEN

@@ -13,6 +13,9 @@ TYPE
 
   Class = { Node, Channel };
 
+CONST
+  ClassTypeNames = ARRAY Class OF TEXT { "Node", "UInt" };
+
 PROCEDURE  New( name     : Atom.T;
                 dir      : CspDirection.T;
                 class    : Class;

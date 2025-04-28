@@ -84,7 +84,7 @@
 (define (m3-write-port-decl w pdef)
   (w "    " (pad 40 (m3-ident (get-port-id pdef))) " : REF "
      (m3-convert-port-type (get-port-def-type pdef))
-     ".T;" dnl
+     ".T := NIL;" dnl
      )
   )
 
@@ -1374,7 +1374,7 @@
     (Wr.PutChar wr dnl)
     (Wr.PutText wr (sa "ExportSchemeStubs (\"sim\")" dnl))
     (Wr.PutText wr (sa "importSchemeStubs ()" dnl))
-    (Wr.PutText wr (sa "implementation (\"Main\")" dnl))
+    (Wr.PutText wr (sa "implementation (\"SimMain\")" dnl))
     (Wr.PutText wr (sa "program (\"sim\")" dnl))
     (Wr.Close wr)
     )
@@ -1467,7 +1467,7 @@
     ;; interface file
     
     (intf "INTERFACE " root ";" dnl dnl)
-    (modu "(*" dnl
+    (intf "(*" dnl
           "FINGERPRINT " (fingerprint-string (stringify *cell*))  dnl
           "*)" dnl
           dnl
@@ -1560,17 +1560,22 @@
     (map (curry string-append dir) files)
     )
   )
-  
 
 (define (m3-clear-build-area!)
-  (unwind-protect
-   (lambda()(map FS.DeleteFile (find-filepaths (build-dir) ".")))
-   identity
-   (dis "m3-clear-build-area! : warning : couldn't delete all files" dnl)
-   )
-  'ok
+  (define (clear)
+    (map FS.DeleteFile (find-filepaths (build-dir) "^[^.]")))
+  (define attempt
+    (unwind-protect
+     (clear)
+     (lambda()'ok)
+     (begin
+       (dis "m3-clear-build-area! : warning : couldn't delete all files" dnl)
+       (lambda()'fail)
+       )
+     )
+    )
+  (attempt)
   )
-
 
 (define *imports-extension* "imports")
 
@@ -1630,8 +1635,35 @@
   'ok
   )
 
+(define (do-compile-m3! nm . x)
+  (let* ((modname   (loaddata0! nm))
+         (loaded-fp (fingerprint-string (stringify *cell*)))
+         (old-fp    (FingerprintFinder.Find (sa (build-dir) "/" modname ".m3")))
+         )
+
+    (cond ((and (not (null? old-fp))
+                (equal? loaded-fp old-fp)
+                (or (null? x) (not eq? 'force (car x)))
+                )
+           (dis go-grn-bold-term
+                "=========  ALREADY UP-TO-DATE : " modname " , SKIPPING"
+                reset-term
+                dnl
+                dnl)
+           'skip)
+
+          (else
+           (loaddata1!)
+           (compile!)
+           (do-m3!)
+           'ok)
+           
+          );;dnoc
+    );;*tel
+  )
+
 (define (compile-csp! . x)
-  (m3-clear-build-area!)
+  ;;(m3-clear-build-area!)
   (map do-compile-m3! x)
   (m3-write-makefile!)
   (done-banner)
@@ -1650,8 +1682,11 @@
 ;; the driver
 ;;
 
-(define (drive! fn)
+(define (drive! fn . x)
 
+  (if (and (not (null? x)) (eq? 'force (car x)))
+      (m3-clear-build-area!))
+  
   (define the-driver (obj-method-wrap
                       (new-modula-object 'CspCompilerDriver.T)
                       'CspCompilerDriver.T))
@@ -1672,17 +1707,42 @@
     (dis "the-port-tbl : " (stringify the-port-tbl) dnl)
 
     (apply compile-csp! the-scms)
-
+    
     (the-driver 'setProcessPorts (the-port-tbl '*m3*))
 
-    (the-driver 'genBuilder "BuildSimulation")
+    (m3-write-main! (the-driver 'genBuilder "BuildSimulation"))
 
-;;    'ok
+    
+    'ok
     )
 
   )
 
 ;;(drive! "demo_46_SYSTEM.procs")
+
+(define (m3-write-main! builder-text)
+
+  (let ((mwr (FileWr.Open (sa (build-dir) "SimMain.m3"))))
+
+    (define (mw . x) (Wr.PutText mwr (apply string-append x)))
+
+    (mw "MODULE SimMain EXPORTS Main;" dnl)
+    (mw "IMPORT CspCompiledScheduler AS Scheduler;" dnl)
+
+    (mw dnl)
+
+    (mw builder-text)
+
+    (mw dnl)
+
+
+    (mw "BEGIN BuildSimulation() ; Scheduler.SchedulingLoop() END SimMain." dnl)
+
+    (Wr.Close mwr)
+    )
+
+ 'ok
+  )
 
 (define (get-module-cellinfo mod-name)
   (caddr (read-importlist (sa mod-name ".scm"))))
@@ -1742,5 +1802,5 @@
   
 (define (fingerprint-string str)
   (let ((fp (Fingerprint.FromText str)))
-    (apply + (map (lambda(x)(* (Math.pow 256 (car x)) (cdr x))) (cdar fp)))))
+    (number->string (apply + (map (lambda(x)(* (Math.pow 256 (car x)) (cdr x))) (cdar fp))))))
  

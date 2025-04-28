@@ -21,7 +21,7 @@ IMPORT M3Ident;
 
 <*FATAL Thread.Alerted*>
 
-CONST doDebug = TRUE;
+CONST doDebug = FALSE;
 
 REVEAL
   T = Public BRANDED Brand OBJECT
@@ -56,14 +56,14 @@ PROCEDURE Init(t : T; procGraphPath : Pathname.T) : T
              
              name    = reader.get(),
              ptype   = reader.get(),
-             ptypeE  = reader.get(),
+             ptypeE  = reader.get(), (* this is the name of the Java output *)
              chans   = reader.shatter(" \t", "", TRUE)
          DO
           EVAL t.ptypeEset.insert(ptypeE);
 
           t.insts.addhi(
                 NEW(REF Instance,
-                    name  := name,
+                    name   := name,
                     ptype  := ptype,
                     ptypeE := ptypeE,
                     chans  := chans)
@@ -97,7 +97,8 @@ PROCEDURE SetProcessPorts(t : T; tbl : TextCspPortSeqTbl.T) =
 PROCEDURE GenBuilder(t : T; builderName : TEXT) : TEXT =
 
   VAR chanTbl := NEW(TextAtomTbl.Default).init();
-    
+      chanTypes := NEW(TextSetDef.T).init();
+      
   PROCEDURE ExtractChannelInfo() =
     BEGIN
       FOR i := 0 TO t.insts.size() - 1 DO
@@ -109,16 +110,18 @@ PROCEDURE GenBuilder(t : T; builderName : TEXT) : TEXT =
             port  : CspPort.T;
           BEGIN
             found := t.ports.get(inst.ptypeE, pSeq);
-            Debug.Out(F("INSTANCE %s : ptypeE=%s found=%s",
-                        inst.name, inst.ptypeE, Bool(found)));
+            IF doDebug THEN
+              Debug.Out(F("INSTANCE %s : ptypeE=%s found=%s",
+                          inst.name, inst.ptypeE, Bool(found)))
+            END;
             <*ASSERT found*>
             WHILE p # NIL DO
-              Debug.Out(F("channel assign : %s", p.head));
+              IF doDebug THEN Debug.Out(F("channel assign : %s", p.head)) END;
               WITH reader = NEW(TextReader.T).init(p.head),
                    portNm = reader.nextE("="),
                    patom  = Atom.FromText(portNm),
                    global = reader.nextE("") DO
-                Debug.Out(F("port %s global %s", portNm, global));
+                IF doDebug THEN Debug.Out(F("port %s global %s", portNm, global)) END;
 
                 found := FALSE;
                 FOR i := 0 TO pSeq.size() - 1 DO
@@ -136,16 +139,22 @@ PROCEDURE GenBuilder(t : T; builderName : TEXT) : TEXT =
                 END;
 
                 VAR
+                  ntypeTxt := F("%s%sChan",
+                                CspPort.ClassTypeNames[port.class],
+                                Int(port.width));
+                  ntype : Atom.T := Atom.FromText(ntypeTxt);
                   ptype : Atom.T;
                 BEGIN
                   IF chanTbl.get(global, ptype) THEN
-                    IF ptype # port.typeName THEN
-                      Debug.Error(F("%s : port mismatch : %s # %s",
+                    IF ptype # ntype THEN
+                      Debug.Error(F("%s : port mismatch : %s # %s [%s]",
+                                    global,
                                     Atom.ToText(ptype),
                                     Atom.ToText(port.typeName)))
                     END
                   ELSE
-                    EVAL chanTbl.put(global, port.typeName)
+                    EVAL chanTbl.put(global, ntype);
+                    EVAL chanTypes.insert(ntypeTxt)
                   END
                 END;
                 
@@ -160,6 +169,23 @@ PROCEDURE GenBuilder(t : T; builderName : TEXT) : TEXT =
   PROCEDURE P(txt : TEXT) =
     BEGIN Wx.PutText(wx, txt) END P;
 
+  PROCEDURE WriteImports() =
+    VAR
+      iter := t.ptypeEset.iterate();
+      ptype, ctype : TEXT;
+    BEGIN
+      WHILE iter.next(ptype) DO
+        P(F("IMPORT m3__%s;\n", ptype))
+      END;
+
+      P("\n");
+      
+      iter := chanTypes.iterate();
+      WHILE iter.next(ctype) DO
+        P(F("IMPORT %s;\n", ctype))
+      END        
+    END WriteImports;
+
   PROCEDURE WriteChannelCreation() =
     VAR
       iter := chanTbl.iterate();
@@ -167,8 +193,8 @@ PROCEDURE GenBuilder(t : T; builderName : TEXT) : TEXT =
       ctype : Atom.T;
     BEGIN
       WHILE iter.next(cname, ctype) DO
-        Wx.PutText(wx, F(
-                           "    %s := %s.New(\"%s\")\n",
+        P(F(
+                           "    %s := %s.New(\"%s\");\n",
                            M3Ident.Escape(cname),
                            Atom.ToText(ctype),
                            cname)
@@ -182,10 +208,22 @@ PROCEDURE GenBuilder(t : T; builderName : TEXT) : TEXT =
     BEGIN
       FOR i := 0 TO t.insts.size() - 1 DO
         WITH inst = NARROW(t.insts.get(i), REF Instance)^ DO
-          Wx.PutText(wx, F(
-        "    %s.Build(\"%s\", \n",
-        M3Ident.Escape(inst.name),
-        inst.ptypeE)
+          P(F(
+                "    m3__%s.Build(\"%s\" \n",
+                (* 
+                   this is a hack!
+                   we need to map the names the same way that Java
+                   does it---for sure!
+
+                   Really, the Scheme part should set up a mapping table
+                   from Java escaped types (used for the input .scm files)
+                   to the M3 escaped types (used for the output .i3/m3 files)
+
+                   But for now, we are just guessing!
+                *)
+
+                             inst.ptypeE,
+                             M3Ident.Escape(inst.name))
           );
 
           VAR p := inst.chans; BEGIN
@@ -194,9 +232,9 @@ PROCEDURE GenBuilder(t : T; builderName : TEXT) : TEXT =
                    portNm = reader.nextE("="),
                    patom  = Atom.FromText(portNm),
                    global = reader.nextE("") DO
-                Wx.PutText(wx, F(
-        "    %s := %s,\n",                                   
-                M3Ident.Escape(portNm), M3Ident.Escape(global)));
+                P(F(
+        "      , %s := %s\n",                                   
+        M3Ident.Escape(portNm), M3Ident.Escape(global)));
                 p := p.tail
               END
             END
@@ -216,13 +254,14 @@ PROCEDURE GenBuilder(t : T; builderName : TEXT) : TEXT =
     wx := Wx.New();
   BEGIN
     ExtractChannelInfo();
+    WriteImports();
 
-    Wx.PutText(wx, F("PROCEDURE %s() =\n", builderName));
-    Wx.PutText(wx, F("  VAR\n"));
+    P(F("\n\nPROCEDURE %s() =\n", builderName));
+    P(F("  VAR\n"));
     WriteChannelCreation();
-    Wx.PutText(wx, F("  BEGIN\n"));
+    P(F("  BEGIN\n"));
     WriteProcessCreation();
-    Wx.PutText(wx, F("  END %s;\n", builderName));
+    P(F("  END %s;\n", builderName));
     RETURN Wx.ToText(wx);
   END GenBuilder;
 
