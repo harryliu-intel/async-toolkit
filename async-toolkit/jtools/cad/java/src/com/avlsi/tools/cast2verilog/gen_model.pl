@@ -65,36 +65,94 @@ my $cmd = ("cast2verilog --cast-path=\Q$cast_path\E " .
 
 system($cmd) == 0 || die "Error executing cast2verilog: $!";
 
+# Read 
+sub get_spar_from_verilog_string {
+  my ($vlog_file) = @_;
+  my @vlog_split = split(/\//, $vlog_file);
+  shift @vlog_split; #Remove GLS DIR
+  my $subtype = pop @vlog_split;
+  $subtype =~ s/\.vg//;
+  my $fqcn = join('.', @vlog_split, $subtype);
+  $fqcn = `echo '$fqcn' | fulcrum rename --type=cell --from=cast --to=mw 2>/dev/null`;
+  $fqcn =~ s/\n//; #chomp($fqcn); doesnt work
+  my $cell_name =  pop @vlog_split;
+  $cell_name = `echo '$cell_name' | fulcrum rename --type=cell --from=cast --to=cadence 2>/dev/null`;
+  $cell_name =~ s/\n//; #chomp($cell_name); doesnt work
+  push @vlog_split, $cell_name;
+  unshift @vlog_split, $spar_dir;
+  return join('/', @vlog_split), $fqcn;
+}
+
+sub get_spar_for_macro {
+  my ($macro) = @_;
+  my @macro_split = split(/_D_/, $macro);
+  my $subtype = pop @macro_split;
+  my $cell_name =  pop @macro_split;
+  $cell_name= `echo '$cell_name' | fulcrum rename --type=cell --from=mw --to=cadence 2>/dev/null`;
+  $cell_name =~ s/\n//; #chomp($cell_name); doesnt work
+  push @macro_split, $cell_name;
+  unshift @macro_split, $spar_dir;
+  return join('/', @macro_split);
+}
+
+sub get_verilog_path_for_macro {
+  my ($macro) = @_;
+  my @macro_split = split(/_D_/, $macro);
+  my $subtype = pop @macro_split;
+  my $cell_name =  pop @macro_split;
+  $cell_name= `echo '$cell_name' | fulcrum rename --type=cell --from=mw --to=cast 2>/dev/null`;
+  $cell_name =~ s/\n//; #chomp($cell_name); doesnt work
+  push @macro_split, $cell_name;
+  push @macro_split, $subtype.".vg";
+  unshift @macro_split, "\$GLS_DIR";
+  return "-v ".join('/', @macro_split);
+}
+
+sub get_macros {
+  my ($file) = @_;
+  die "ERROR: can't read $file\n" if (!-e $file);
+  my @macro_mw  = `grep -v '\\/\\/\\|i0s' $file`;
+  s/\n// for @macro_mw; #chomp(@macro_mw) doesnt work
+  return @macro_mw;
+}
+
+sub get_verilog_paths_for_macros {
+  my ($vlog_file) = @_;
+  $vlog_file =~ s/^\s*-v\s*//;
+  my ($spar_macro_dir,$file_prefix) = get_spar_from_verilog_string($vlog_file);
+  my $macro_list = "$spar_macro_dir/$file_prefix.macro.list";
+  return "" if (!-e $macro_list);
+  my @queue = get_macros($macro_list);
+  my @verilog_paths;
+  while (@queue) {
+    my $macro = pop @queue;
+    push @verilog_paths, get_verilog_path_for_macro($macro);
+    $spar_macro_dir =  get_spar_for_macro($macro);
+    $macro_list = "$spar_macro_dir/$macro.macro.list";
+    push @queue, get_macros($macro_list) if (-e $macro_list);
+  }
+  return join('\n', @verilog_paths);
+}
+
 # escape special characters in the filelist
 my $content;
+my @sdf_files;
 if (open(my $lh, $flist)) {
-    local $/;
-    $content = <$lh>;
-    close $lh;
-    if ($content =~ /[()]/) {
-        #print "Experiment-Not Escaping: \n$content\n";
-        #escape special characters in the filelist
-        $content =~ s/([()])/\\$1/g;
-        #print "Experiment-Escaped: \n$content\n";
-        #$content =~ s/([()])/\\\\\\$1/g;
-        #open($lh, '>', $flist);
-        #print $lh $content;
-        #close $lh;
-    }
+  local $/;
+  $content = <$lh>;
+  close $lh;
+  open($lh, '>', $flist);
+  foreach my $line (split(/\n/, $content)) {
+    chomp($line);
+    print $lh "$line\n";
+    print $lh get_verilog_paths_for_macros($line)."\n";
+  }
+  close $lh;
 }
-
-#count the number of lines from command output
-#my $num_lines = `fulcrum cast_query wc -l $flist`;
-#chomp($num_lines);
-#if ($num_lines > 0) {
-#    print "Found $num_lines files\n";
-#}
-#print "Found $num_lines files\n" if ($num_lines > 0);
 
 if ($perf) {
-    unshift @vcs_args, "-f \"\$CAST2VERILOG_RUNTIME/perf.vcfg\"";
+  unshift @vcs_args, "-f \"\$CAST2VERILOG_RUNTIME/perf.vcfg\"";
 }
-
 
 my $instdir = $ENV{'FULCRUM_PACKAGE_ROOT'};
 my $runtime = "$instdir/share/cast2verilog";
@@ -107,94 +165,81 @@ push @defines, "+define+FPGA_HIER_PATH=.\Q$fpga_path\E." if $fpga_path;
 
 my @args = ();
 if (-s $flist) {
-    push @args, '-f', $flist;
+  push @args, '-f', $flist;
 }
 
 my @sdf_args = ();
 my @crit_args = ();
 if (defined($gls_dir)) {
-    if ($sdf) {
-        push @args, '-f', '$CAST2VERILOG_RUNTIME/sdf.vcfg';
+  if ($sdf) {
+    push @args, '-f', '$CAST2VERILOG_RUNTIME/sdf.vcfg';
 
-        #Get SDF file corresponding to every netlist in the filelist
-        open(my $lh, $flist) || die "Can't open $flist: $!\n";
-        while (my $vlog_file = <$lh>) {
-            chomp $vlog_file;
-            #Split vlog_file to get design FQN
-            my @vlog_split = split(/\//, $vlog_file);
-            #Remove first, last elements
-            shift @vlog_split;
-            pop @vlog_split;
-            #Build up the correct path
-            #unshift @vlog_split, "$gls_dir";
-            unshift @vlog_split, "$ENV{SPAR_DIR}";
-            push @vlog_split, "vcs";
-            #Join elements
-            #dump @vlog_split;
-            my $sdf_dir = join('/', @vlog_split);
-            #glob to get SDF file
-            my @sdf_files = glob("$sdf_dir/*$sdf*.sdf.gz");
-            #Check if glob returned any files
-            if (!@sdf_files) {
-                print "WARNIG: No SDF files found for $vlog_file in directory $sdf_dir\n";
-                next;
-            }
-            #iterate over SDF files
-            foreach my $sdf_file (@sdf_files) {
-                #Get block name directly from SDF file
-                print "SDF file: $sdf_file\n";
-                my $block = `zgrep '(DESIGN ' $sdf_file`;
-                $block = substr((split(/ /, substr($block, 1, -2)))[1], 1, -1);
-                my $arg = "max:$block:$sdf_file";
-                push @sdf_args, "-sdf $arg";
-                #If performance is enabled, also include the history monitors
-                if ($perf) {
-                    my $bind_file = "$sdf_dir/${block}.bind_hist_mon.v";
-                    if (!-e $bind_file) {
-                        print "WARNIG: No history monitors found for $block in directory $sdf_dir\n";
-                        next;
-                    }
-                    push @sdf_args, "$bind_file";
-                    my $conn_file = "$sdf_dir/${block}.bd_conn.rpt";
-                    if (!-e $conn_file) {
-                        print "WARNIG: No connectivity file found for $block in directory $sdf_dir\n";
-                        next;
-                    }
-                    push @crit_args, "$conn_file";
-                }
-            }
+    #Get SDF file corresponding to every netlist in the filelist
+    open(my $lh, $flist) || die "Can't open $flist: $!\n";
+    while (my $vlog_file = <$lh>) {
+      chomp $vlog_file;
+      $vlog_file =~ s/^\s*-v\s*//;
+      my ($spar_macro_dir,$file_prefix) = get_spar_from_verilog_string($vlog_file);
+      my $sdf_dir = "$spar_macro_dir/vcs";
+      #Split vlog_file to get design FQN
+      my $sdf_file = (glob "$sdf_dir/$file_prefix*$sdf*.sdf.gz")[0];
+      #Check if glob returned any files
+      if (!-e $sdf_file) {
+        print "WARNIG: No SDF file found for $vlog_file in directory $sdf_dir\n";
+        next;
+      }
+      #Get block name directly from SDF file
+      my $block = `zgrep '(DESIGN ' $sdf_file`;
+      $block = substr((split(/ /, substr($block, 1, -2)))[1], 1, -1);
+      my $arg = "max:$block:$sdf_file";
+      push @sdf_args, "-sdf $arg";
+      #If performance is enabled, also include the history monitors
+      if ($perf) {
+        my $bind_file = "$sdf_dir/${block}.bind_hist_mon.v";
+        if (!-e $bind_file) {
+          print "WARNIG: No history monitors found for $block in directory $sdf_dir\n";
+          next;
         }
-        close $lh;
+        push @sdf_args, "$bind_file";
+        my $conn_file = "$sdf_dir/${block}.bd_conn.rpt";
+        if (!-e $conn_file) {
+          print "WARNIG: No connectivity file found for $block in directory $sdf_dir\n";
+          next;
+        }
+        push @crit_args, "$conn_file";
+      }
+    }
+    close $lh;
 
-        my $fh_tcl;
-        open $fh_tcl, ">run_workarounds.tcl" || die "Can't open run_workarounds.tcl: $!";
-        print $fh_tcl "source $runtime/sdf.tcl\n";
-        close $fh_tcl;
+    my $fh_tcl;
+    open $fh_tcl, ">run_workarounds.tcl" || die "Can't open run_workarounds.tcl: $!";
+    print $fh_tcl "source $runtime/sdf.tcl\n";
+    close $fh_tcl;
 
-        #foreach my $sdf (@sdf) {
-        #    my $arg = "max:$block:$sdf";
-        #    push(@sdf_args, ("-sdf $arg"));
-        #    print $fh_tcl "run_workarounds $block $sdf_dir/${block}_${minmax}\n";
-        #    if (open(my $fh1, '<', "$sdf_dir/$block.$minmax.bind_notifiers.sv")) {
-        #        while (<$fh1>) {
-        #            chomp;
-        #            $binds{$_} = 1;
-        #        }
-        #        close $fh1;
-        #    }
-        #}
+    #foreach my $sdf (@sdf) {
+    #    my $arg = "max:$block:$sdf";
+    #    push(@sdf_args, ("-sdf $arg"));
+    #    print $fh_tcl "run_workarounds $block $sdf_dir/${block}_${minmax}\n";
+    #    if (open(my $fh1, '<', "$sdf_dir/$block.$minmax.bind_notifiers.sv")) {
+    #        while (<$fh1>) {
+    #            chomp;
+    #            $binds{$_} = 1;
+    #        }
+    #        close $fh1;
+    #    }
+    #}
 
-        open $fh_tcl, ">sdf_reset.tcl" || die "Can't open sdf_reset.tcl: $!";
-        print $fh_tcl <<"EOF";
+    open $fh_tcl, ">sdf_reset.tcl" || die "Can't open sdf_reset.tcl: $!";
+    print $fh_tcl <<"EOF";
 source $runtime/sdf_workarounds.tcl
 reset_tcheck $reset_duration
 EOF
-        close $fh_tcl;
+    close $fh_tcl;
 
-    } else {
-        push @args, '-f', '$CAST2VERILOG_RUNTIME/gls.vcfg';
-    }
-    push @args, '-f', '$GLS_DIR/gls.vcfg';
+  } else {
+    push @args, '-f', '$CAST2VERILOG_RUNTIME/gls.vcfg';
+  }
+  push @args, '-f', '$GLS_DIR/gls.vcfg';
 }
 else { $gls_dir=""; }
 
@@ -259,7 +304,7 @@ export SPAR="$spar_dir"
 export CAST2VERILOG_RUNTIME="$runtime"
 export GLS_DIR="$gls_dir"
 export VCS_PRINT_INITREG_INITIALIZATION="1"
-export VCS_LIB=$ENV{"VCS_HOME"}/linux64/lib
+export VCS_LIB=\$VCS_HOME/linux64/lib
 EOF
 if ($axi) {
     print $fh_vcs <<EOF;
