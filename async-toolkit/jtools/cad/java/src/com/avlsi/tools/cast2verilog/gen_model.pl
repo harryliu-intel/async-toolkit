@@ -136,7 +136,6 @@ sub get_verilog_paths_for_macros {
 
 # escape special characters in the filelist
 my $content;
-my @sdf_files;
 if (open(my $lh, $flist)) {
   local $/;
   $content = <$lh>;
@@ -145,7 +144,8 @@ if (open(my $lh, $flist)) {
   foreach my $line (split(/\n/, $content)) {
     chomp($line);
     print $lh "$line\n";
-    print $lh get_verilog_paths_for_macros($line)."\n";
+    my $verilog_path = get_verilog_paths_for_macros($line);
+    print $lh $verilog_path."\n" if ($verilog_path ne "");
   }
   close $lh;
 }
