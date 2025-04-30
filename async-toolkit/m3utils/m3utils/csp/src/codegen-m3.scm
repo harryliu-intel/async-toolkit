@@ -15,9 +15,6 @@
   
   (string-append "ARRAY OF " (m3-expand-type (caddr type))))
 
-(define *big64* (bn 64))
-(define *big63* (bn 64))
-
 (define *target-word-size* 64) ;; word size of target machine
 (define *bwsz*    (bn *target-word-size*))
 (define *bwszm1*  (xnum-- *bwsz* *big1*))
@@ -412,6 +409,7 @@
   (w "<*NOWARN*>IMPORT CspCompiledScheduler AS Scheduler;" dnl)
   (w "<*NOWARN*>IMPORT CspString, Fmt;" dnl)
   (w "<*NOWARN*>IMPORT CspIntrinsics;" dnl)
+  (w "<*NOWARN*>IMPORT WideInt, NativeInt, DynamicInt;" dnl)
   (map (lambda(intf)(w "IMPORT " intf ";" dnl))
        (map format-intf-name intfs))
   )
@@ -604,7 +602,9 @@
   (and (integer-type? t) (not (caddr t)) (bigint? (cadddr t))))
 
 (define (m3-dynamic-int-type? t) ;; what's this?
-  (and (integer-type? t) (not (caddr t)) (not (bigint? (cadddr t)))))
+  (and (integer-type? t)
+       (not (caddr t))  ;; would be sint
+       (not (bigint? (cadddr t)))))
 
 (define (m3-int-type-width t)
   (if (m3-dynamic-int-type? t) (error) (BigInt.ToInteger (cadddr t))))
@@ -638,7 +638,7 @@
            (m3-compile-native-int-assign pc stmt))
 
           ((m3-dynamic-int-type? lty)
-           (m3-compile-wide-int-assign pc stmt))
+           (m3-compile-dynamic-int-assign pc stmt))
 
           ((m3-wide-int-type? lty)
            (m3-compile-wide-int-assign pc stmt))
@@ -660,8 +660,8 @@
 (define (classify-type pc expr)
   (let ((ty (operand-type pc expr)))
     (cond ((m3-natively-representable-type? ty) 'native)
-          ((m3-dynamic-int-type? ty) 'dynamic)
-          ((integer-type? ty) 'wide)
+          ((m3-dynamic-int-type? ty)            'dynamic)
+          ((integer-type? ty)                   'wide)
           (else (error "not an integer : " expr))
           )
     )
@@ -754,6 +754,7 @@
   )
 
 (define (m3-compile-typed-binop pc tgt op a b)
+  ;; this approach may only work for tgt = 'native
   (let* ((op-type (max-type tgt (classify-type pc a) (classify-type pc b)))
          (opx     (m3-compile-binop op-type
                                     op
@@ -826,7 +827,7 @@
          
          (else
           (string-append
-           "FixedBigInt.Format("
+           "WideInt.Format("
            (m3-compile-integer-value pc x)
            ", base := 10)"
            ))
@@ -1213,22 +1214,31 @@
                   "Channel     (\"" inm "\" , \"" inm "\")" dnl
                   "Node        (\"" inm "\" , \"" inm "\")" dnl
                   "SchemeStubs (\"" inm "Chan\")" dnl
+                  (if native
+                      "NarrowIntOps"
+                      "WideIntOps")  " (\"" inm "Ops\",\"" inm "\")" dnl
+                  "SchemeStubs (\"" inm "Ops\")" dnl
+                       
                   )
     
     (iw "INTERFACE " inm ";" dnl
+        "IMPORT Mpz;" dnl
+        "<*NOWARN*>IMPORT Word;" dnl
        dnl)
 
+    (iw "CONST Width    = " intf-width ";" dnl)
+    (iw "CONST Signed   = " (Fmt.Bool (eq? 'intf-kind 'SInt)) ";" dnl)
+    (iw "VAR(*CONST*)   Min, Max : Mpz.T;" dnl)
+    
     (if native
-        (let* ((range (m3-get-intf-range intf))
+        (let* ((range  (m3-get-intf-range intf))
                (lo-txt (BigInt.FormatLiteral (car range)  16))
                (hi-txt (BigInt.FormatLiteral (cadr range) 16))
                ) 
           (iw
            "TYPE T = [ " lo-txt " .. " hi-txt " ];" dnl
            dnl
-           "CONST MustCopy = FALSE;" dnl
-           dnl
-           "PROCEDURE Copy(READONLY from : T; VAR to : T);" dnl
+           "CONST Wide     = FALSE;" dnl
            dnl
            "CONST Brand = \"" inm "\";" dnl
            dnl
@@ -1236,33 +1246,48 @@
         )
 
         (iw
-         "IMPORT Word;" dnl
          dnl
-         "TYPE T = ARRAY [ 0 .. " (ceiling (/ width *target-word-size*) ) "-1 ] OF Word.T;" dnl
+         "TYPE T = ARRAY [ 0 .. " (ceiling (/ intf-width *target-word-size*) ) "-1 ] OF Word.T;" dnl
          dnl
-         "CONST MustCopy = FALSE;" dnl
-         dnl
-         "PROCEDURE Copy(READONLY from : T; VAR to : T);" dnl
+         "CONST Wide     = TRUE;" dnl
          dnl
          "CONST Brand = \"" inm "\";" dnl
          dnl
         )
         )
 
+    (iw dnl
+        "END " inm "." dnl)
     (mw "MODULE " inm ";" dnl
         dnl
-        "PROCEDURE Copy(READONLY from : T; VAR to : T) =" dnl
-        "  BEGIN" dnl
-        "    to := from" dnl
-        "  END Copy;" dnl
-        dnl
-        )
-
-    
-    (iw dnl
-       "END " inm "." dnl)
+        "IMPORT Mpz;" dnl
+        dnl)
+        
     (mw dnl
-       "BEGIN END " inm "." dnl)
+        "BEGIN" dnl
+        )
+    
+        (let* ((range  (m3-get-intf-range intf))
+               (lo-txt (BigInt.FormatLiteral (car range)  16))
+               (hi-txt (BigInt.FormatLiteral (cadr range) 16))
+               ) 
+          (if native
+              (begin
+                (mw "  Min := Mpz.New();" dnl)
+                (mw "  Max := Mpz.New();" dnl)
+                (mw "  Mpz.init_set_si(Min, " lo-txt ");" dnl)
+                (mw "  Mpz.init_set_si(Max, " hi-txt ");" dnl)
+                )
+              (begin
+                (mw "  Min := Mpz.New();" dnl)
+                (mw "  Max := Mpz.New();" dnl)
+                (mw "  EVAL Mpz.init_set_str(Min, \"" lo-txt "\", 16);" dnl)
+                (mw "  EVAL Mpz.init_set_str(Max, \"" hi-txt "\", 16);" dnl)
+                )
+              )
+          )
+        
+    (mw "END " inm "." dnl)
     (Wr.Close iwr)
     (Wr.Close mwr)
     )

@@ -1,0 +1,10 @@
+readonly proc _intOps (which, nm, of, vis) is
+        build_generic_intf(nm, which, [of], vis)        
+        build_generic_impl(nm, which, [of])
+end
+
+readonly proc WideIntOps (nm, of) is _intOps ("WideIntOps", nm, of, VISIBLE) end
+readonly proc wideIntOps (nm, of) is _intOps ("WideIntOps", nm, of, HIDDEN) end
+
+readonly proc NarrowIntOps (nm, of) is _intOps ("NarrowIntOps", nm, of, VISIBLE) end
+readonly proc narrowIntOps (nm, of) is _intOps ("NarrowIntOps", nm, of, HIDDEN) end

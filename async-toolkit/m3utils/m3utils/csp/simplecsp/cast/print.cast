@@ -34,10 +34,11 @@ define HEX()()
 {
   csp {
     string str;
-    int x;
+    int(32) x;
 
     x = 12;
-
+    x++;
+    
     str = hex(x);
 
     print("str = " + str)

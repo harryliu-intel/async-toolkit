@@ -218,7 +218,16 @@
 
 (define (get-id-range id)
   ;; based on the tables, what is the range for id?
-  (apply range-union (var-ass-range id *the-ass-tbl* *the-prt-tbl*))
+  ;; if there is more than one assignment, we just have to return
+  ;; its own declaration?
+  (let*( (dcl-range (*the-dcl-tbl* 'retrieve id))
+         (ass-range
+          (apply range-union (var-ass-range id *the-ass-tbl* *the-prt-tbl*)))
+         )
+    (if (eq? dcl-range '*hash-table-search-failed*)
+        ass-range
+        (range-intersection ass-range dcl-range))
+    )
   )
 
 (define (update-id-range! id rng-tbl)
@@ -231,12 +240,26 @@
         (id-range  (get-id-range id))
         
         (new-range
-         (if (eq? dcl-range '*hash-table-search-failed*)
-             id-range
-             (range-intersection dcl-range id-range))
-             )
-        
+         (cond ((eq? dcl-range '*hash-table-search-failed*)
+                ;; no declaration, we have to rely on assignments
+                id-range)
+
+               ((range-contains? dcl-range id-range)
+
+                ;; this is a bit tricky:
+                ;; if the computed range actually overruns the
+                ;; identifier range, we don't have a contracting range
+                ;; anymore, so therefore we can't just take the intersection
+                ;; -- in that case, we go to the else below.
+                
+                (range-intersection dcl-range id-range))
+         
+               (else
+                dcl-range)
+               )
+         )
         )
+        
     (if (range-empty? new-range)
         (error (string-append "update-id-range! : got empty range for : " id " : " new-range "( dcl-range = " dcl-range " ; old-range = " old-range " ; id-range = " id-range " )" )))
     
@@ -244,8 +267,6 @@
     (not (equal? old-range new-range))
     )
   )
-
-
 
 (define (update-id-ranges! rng-tbl)
   ;; on each iteration we have to re-evaluate the loop ranges, since
@@ -256,8 +277,14 @@
                )
         )
   )
+
+(define *max-range-iters* 10)
+
 (define (close-integer-ranges!)
-  (iterate-until-false (lambda()(update-id-ranges! *the-rng-tbl*)))
+  (iterate-until-false
+   (lambda()(update-id-ranges! *the-rng-tbl*))
+   *max-range-iters*
+   )
   (dis "=========  INTEGER RANGES COMPUTED :" dnl)
   (display-the-ranges)
   )

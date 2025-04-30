@@ -30,9 +30,19 @@
 (define (filter-or filter-p0 filter-p1)
   (lambda(x)(or (filter-p0 x) (filter-p1 x))))
                          
-(define (iterate-until-false f)
+(define (iterate-until-false f maxcnt)
   (let ((res (f)))
-    (if res (iterate-until-false f) res)))
+    (cond ((= 0 maxcnt)
+           (dis "iterate-until-false : giving up : " f dnl)
+           )
+
+          (res (iterate-until-false f (- maxcnt 1)))
+
+          (else res)
+          
+          );;dnoc
+    );;tel
+  )
 
 ;; predicates
  (define (exists? pred? lst)

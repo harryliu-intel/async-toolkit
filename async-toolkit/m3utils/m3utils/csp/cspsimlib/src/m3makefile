@@ -40,6 +40,10 @@ Sequence ("CspPort", "CspPort")
 Table("AtomCspPortSeq", "Atom", "CspPortSeq")
 Table("TextCspPortSeq", "Text", "CspPortSeq")
 
+Generic_module ("WideIntOps")
+Generic_module ("NarrowIntOps")
+template("intops")
+
 library ("cspsimlib")
 
 

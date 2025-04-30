@@ -135,11 +135,71 @@ define A()()
   }
 }
       
+define A12()()
+{
+  csp {
+    int(32) x;
+    x = 12;
+    x++;
+
+    print("x = " + x)
+  }
+}
+
+define AA12()()
+{
+  csp {
+    int(32) x;
+    x = 12;
+    t = x;
+    x = t + 1;
+
+    print("x = " + x)
+  }
+}
+      
+
+define A0()()
+{
+  csp {
+    int(32) x;
+
+    x++;
+
+    print("x = " + x)
+  }
+}
+
+define A00()()
+{
+  csp {
+    int(32) x;
+
+
+    print("x = " + x)
+  }
+}
+      
 
     
 define P00()()
 {
   csp {
     print(0**0);
+  }
+}
+
+
+define WIDE()(bd(64) -L)
+{
+  csp {
+    L?x ; print(x)
+  }
+}
+
+define NARROW()(bd(32) -L)
+{
+  csp {
+    L?x ; print(x)
   }
 }

@@ -487,39 +487,59 @@
              (assigned        '())
              (used-early      '()))
 ;;    (dis "visit-sequence loop p : " p dnl)
+
+    (define (get-unassigned stmt)
+      (let* ((cur-refs   (find-referenced-vars stmt))
+             (unassigned (set-diff cur-refs assigned)))
+        unassigned
+        )
+      )
+
+    (define (make-dummy-assign rhs)
+      `(assign (id _dummy) ,rhs)
+      )
+    
     (cond ((null? p)
            (dis "end of sequence : " dnl
                 "declared        : " declared dnl
                 "assigned        : " assigned dnl
                 "used-early      : " used-early dnl)
-
+           
            ;; a variable is suspicious if it has been used before
            ;; being assigned to or it has been declared but not assigned
            ;; to by end of sequence
            
-           (set-union used-early (set-diff declared assigned)))
+           (set-diff
+            (set-union used-early (set-diff declared assigned))
+            '(_dummy))
+           )
+    
 
           ((eq? 'var1 (get-stmt-type (car p)))
            (loop (cdr p)
                  (cons (get-var1-id (car p)) declared)
                  assigned
                  used-early))
-
+          
           ((eq? 'assign (get-stmt-type (car p)))
-           (loop (cdr p)
-                 declared
-                 (cons (get-designator-id (get-assign-lhs (car p))) assigned)
-                 used-early))
-
+           (let ((unassigned
+                  (get-unassigned
+                   (make-dummy-assign (get-assign-rhs (car p))))))
+             
+             (loop (cdr p)
+                   declared
+                   (cons (get-designator-id (get-assign-lhs (car p))) assigned)
+                   (append unassigned used-early))))
+          
           ((eq? 'recv (get-stmt-type (car p)))
            (loop (cdr p)
                  declared
                  (cons (get-designator-id (get-recv-rhs (car p))) assigned)
                  used-early))
-
+          
           (else
-           (let* ((cur-refs (find-referenced-vars (car p)))
-                  (unassigned (set-diff cur-refs assigned)))
+           ;; any other statement
+           (let ((unassigned (get-unassigned (car p))))
              (loop (cdr p)
                    declared
                    assigned
@@ -528,13 +548,13 @@
                        used-early
                        (begin
                          (dis "used early : " unassigned dnl)
-;;                         (dis "used early in : " (car p) " : " unassigned dnl)
                          (append unassigned used-early))
                        );;fi
                    );;pool
              );;*tel
+           
            );;esle
-         );;dnoc
+          );;dnoc
     );;tel
   );;enifed
 
