@@ -20,6 +20,27 @@
            `(call-intrinsic ,name ,arg))
        )
      )
+
+    ((string)
+     (let ((num  (car arg-list))
+           (base (cadr arg-list)))
+       (if (and (constant? num) (constant? base))
+           (let* ((cn (constant-value 'integer num))
+                  (cb (constant-value 'integer base))
+                  (result (CitTextUtils.ToLower
+                           (BigInt.Format cn
+                                          (BigInt.ToInteger cb)))))
+             (dis "performing intrinsic : (string " arg-list " <- " cn " " cb ") = " result dnl)
+             result
+             )
+             
+           `(call-intrinsic ,name ,@arg-list))
+       )
+     )
+             
+             
+           
+    
     (else (error "handle-intrinsic of " name)))
   )
 
@@ -413,7 +434,7 @@
           ((call-intrinsic? x)
            (let* ((nam (cadr x)))
 
-             (if (member nam '(log2))
+             (if (member nam '(log2 string))
                  (handle-intrinsic nam
                                    constant?
                                    constant-value

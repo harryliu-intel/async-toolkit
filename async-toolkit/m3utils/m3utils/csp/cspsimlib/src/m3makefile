@@ -7,6 +7,7 @@ import ("modula3scheme")
 import ("sstubgen")
 import ("parseparams")
 import ("cspgrammar")
+import ("mpz")
 
 if defined("CM3_VERSION")
 	 m3_optimize("T")
@@ -17,7 +18,6 @@ Module   ("DynamicInt")
 Module   ("FiniteInterval")
 Module   ("VaryBits")
 
-Table     ("DynIntDynInt", "DynamicInt", "DynamicInt")
 
 Module   ("WideInt")
 Module   ("NativeInt")

@@ -812,14 +812,14 @@
          
          ((m3-natively-representable-type? type)
           (string-append
-           "Fmt.Unsigned("
+           "NativeInt.Format("
            (m3-compile-integer-value pc x)
            ", base := 10)"
            ))
          
          ((m3-dynamic-int-type? type)
           (string-append
-           "DynamicInt.Fmt("
+           "DynamicInt.Format("
            (m3-compile-integer-value pc x)
            ", base := 10)"
            ))

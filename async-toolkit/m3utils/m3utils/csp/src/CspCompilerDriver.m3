@@ -223,7 +223,7 @@ PROCEDURE GenBuilder(t : T; builderName : TEXT) : TEXT =
                 *)
 
                              inst.ptypeE,
-                             M3Ident.Escape(inst.name))
+                             inst.name) (* the name should NOT be escaped *)
           );
 
           VAR p := inst.chans; BEGIN

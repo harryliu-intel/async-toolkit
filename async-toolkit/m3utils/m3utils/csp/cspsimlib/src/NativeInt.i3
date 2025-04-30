@@ -14,7 +14,7 @@ CONST And = Word.And;
 
 PROCEDURE Pow(a, b : T) : T;
 
-CONST Fmt = FmtIntf.Int;
+CONST Format = FmtIntf.Int;
 
 TYPE T = INTEGER;
 

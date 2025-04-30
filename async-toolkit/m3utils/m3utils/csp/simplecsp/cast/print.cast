@@ -27,4 +27,20 @@ define BOOL()()
 
     print(false);
   }
+
 }
+
+define HEX()()
+{
+  csp {
+    string str;
+    int x;
+
+    x = 12;
+
+    str = hex(x);
+
+    print("str = " + str)
+  }
+}
+    
