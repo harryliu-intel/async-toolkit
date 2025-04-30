@@ -26,3 +26,18 @@ define SYSTEM()()
     P1() p1(c);
   }
 }
+
+define SKIP()()
+{
+  csp {
+    skip
+  }
+}
+
+define HELLOWORLD()()
+{
+  csp {
+    print("hello, world!")
+  }
+}
+  

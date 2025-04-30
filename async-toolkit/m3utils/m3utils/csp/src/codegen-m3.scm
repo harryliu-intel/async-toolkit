@@ -18,11 +18,15 @@
 (define *big64* (bn 64))
 (define *big63* (bn 64))
 
-(define m3-word-min *big0*)
-(define m3-word-max (xnum--(xnum-<< *big1* *big64*) *big1*))
+(define *target-word-size* 64) ;; word size of target machine
+(define *bwsz*    (bn *target-word-size*))
+(define *bwszm1*  (xnum-- *bwsz* *big1*))
 
-(define m3-integer-min (xnum-- (xnum-<< *big1* *big63*)))
-(define m3-integer-max (xnum-- (xnum-<< *big1* *big63*) *big1*))
+(define m3-word-min *big0*)
+(define m3-word-max (xnum--(xnum-<< *big1* *bwsz*) *big1*))
+
+(define m3-integer-min (xnum-- (xnum-<< *big1* *bwszm1*)))
+(define m3-integer-max (xnum-- (xnum-<< *big1* *bwszm1*) *big1*))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -52,7 +56,7 @@
 
 (define *us* (char->integer #\_))
 
-(define (m3-char c)
+(define (m3-char c) ;; superseded by M3Ident.Escape
   (cond ((alpha-checker c) (list (char->integer c)))
         ((digit-checker c) (list (char->integer c)))
         (else  `(,*us* 
@@ -242,10 +246,6 @@
     (map (lambda(m) (cons m
                           (count-occurrences eq? labels m)))
          fork-labels)))
-         
-    
-
-  
   
 (define (m3-write-closure-decl w)
   (w dnl
@@ -300,7 +300,6 @@
 (define (node-port? pdef) (eq? 'node (car (cadddr pdef))))
 
 (define (channel-port? pdef) (eq? 'channel (car (cadddr pdef))))
-
 
 (define (m3-write-build-defn w cell-info the-blocks fork-counts)
   (let ((proc-ports (get-ports cell-info)))
@@ -477,7 +476,7 @@
     (BigInt.ToInteger (cadr stype))))
 
 (define (m3-convert-port-ass-category ptype)
-  (if (> (m3-convert-port-ass-bits ptype) 64) 'wide 'native))
+  (if (> (m3-convert-port-ass-bits ptype) *target-word-size*) 'wide 'native))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -617,19 +616,16 @@
   ;; a Modula-3 INTEGER, and that the operations do too
 
   ;; hmm there will be a very special case for operands that are
-  ;; unsigned and exactly 64 bits wide.
+  ;; unsigned and exactly 64 bits wide.  Actually, we can represent
+  ;; those as fixed wide integers, only exactly one word wide.
   
   (and (integer-type? t)
-       (or (and (m3-sint-type? t) (<= (m3-int-type-width t) 64))
-           (and (m3-uint-type? t) (<= (m3-int-type-width t) 63)))) ;; hmm.
+       (or (and (m3-sint-type? t) (<= (m3-int-type-width t) *target-word-size*))
+           (and (m3-uint-type? t) (<= (m3-int-type-width t) (- *target-word-size* 1))))) ;; hmm.
   )
 
-(define (m3-uint64-type? t) ;; 64-bit uint is a special case: rep : Word.T
-  (and (m3-uint-type? t) (= (m3-int-type-width t) 64))) 
-  
 (define (m3-wide-int-type? t)
   (and (not (m3-dynamic-int-type?            t))
-       (not (m3-uint64-type?                 t))
        (not (m3-natively-representable-type? t))
        );;dna
   )
@@ -1071,11 +1067,15 @@
 (define (m3-compile-intrinsic pc expr)
   (if (not (call-intrinsic? expr)) (error "not an intrinsic : " expr))
 
-  (sa "CspIntrinsics." (symbol->string (cadr expr)) "(frame, "
-      
-      (m3-format-varid pc (cadaddr expr))
-                       ")")
+  (let ((in-sym (cadr expr)))
 
+    ;; special handling for print
+    (sa "CspIntrinsics." (symbol->string in-sym) "(frame, "
+        
+        (m3-format-varid pc (cadaddr expr))
+        ")")
+    
+    )
   )
 
 (define *known-stmt-types* '(recv send assign eval goto local-if while))
@@ -1091,14 +1091,12 @@
         (iw        (indent-writer w "      "))
         )
 
-    (dis "m3-compile-write-stmt : stmt : " stmt dnl)
+    (dis "m3-compile-write-stmt : stmt : " (stringify stmt) dnl)
     
     (if (member stmt-type *known-stmt-types*)
         (iw ((eval (symbol-append 'm3-compile- stmt-type)) pc stmt) ";" dnl)
         (error "Unknown statement type in : " stmt)
         )          
-
-  
   
     (iw "(* " (m3-space-comments (stringify stmt)) " *)" dnl dnl)
     )
@@ -1128,8 +1126,15 @@
   )
 
 (define (m3-write-block w pc blk m3-label)
+
+  ;; use the write procedure w
+  ;; the process context pc
+  ;; write the block blk
+  ;; which is labelled m3-label, in Modula-3 code (a string)
+  
   (dis (get-block-label blk) dnl)
-  (dis "m3-write-block : " blk dnl)
+  (dis "m3-write-block : blk : " blk dnl)
+  (dis "m3-write-block : lab : " (stringify m3-label) dnl)
   (let* ((btag        m3-label)
          (bnam        (string-append "Block_" btag))
          (the-code    (cddr (filter-out-var1s blk)))
@@ -1160,7 +1165,8 @@
     (map (curry m3-compile-write-stmt w pc) the-code)
 
     (w 
-     "    END(*WITH*)" dnl
+     "    END(*WITH*);" dnl
+     "    RETURN TRUE;" dnl ;; in case it falls off the end
      "  END " bnam ";" dnl
      dnl)
     )
@@ -1232,7 +1238,7 @@
         (iw
          "IMPORT Word;" dnl
          dnl
-         "TYPE T = ARRAY [ 0 .. " (ceiling (/ width 64) ) "-1 ] OF Word.T;" dnl
+         "TYPE T = ARRAY [ 0 .. " (ceiling (/ width *target-word-size*) ) "-1 ] OF Word.T;" dnl
          dnl
          "CONST MustCopy = FALSE;" dnl
          dnl
@@ -1798,7 +1804,6 @@
     the-port-tbl
   )
 )
-
   
 (define (fingerprint-string str)
   (let ((fp (Fingerprint.FromText str)))

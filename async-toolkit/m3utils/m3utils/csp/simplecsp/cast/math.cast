@@ -123,3 +123,23 @@ define LOG2()()
     print("" + x);
   }
 }
+
+define A()()
+{
+  csp {
+    int(32) x;
+    x = 0xc0edbabe;
+    x++;
+
+    print("x = " + x)
+  }
+}
+      
+
+    
+define P00()()
+{
+  csp {
+    print(0**0);
+  }
+}

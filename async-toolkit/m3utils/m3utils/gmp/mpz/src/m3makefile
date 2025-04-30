@@ -21,7 +21,7 @@ Interface ("MpzP")
 interface ("MpzRep")
 
 Module ("Mpz")
-Module ("MpzOps")
+implementation ("MpzOps")
 
 library ("mpz")
 %implementation ("TestMpz")

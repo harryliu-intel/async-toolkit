@@ -52,7 +52,9 @@
       (map (curry Wx.PutText wx) x)
       )
     
-    (p "PROCEDURE " pfx (symbol->string (get-proto-nm proto)) " (")
+    (p "PROCEDURE "
+       pfx (remove-prefix "mpz_" (symbol->string (get-proto-nm proto)))
+       " (")
     
     (let loop ((fp (get-proto-ftypes proto))
                (i 0))
@@ -92,9 +94,16 @@
     )
   )
 
+(define (remove-prefix pfx from)
+  (if (CitTextUtils.HavePrefix from pfx)
+      (CitTextUtils.RemovePrefix from pfx)
+      from
+      )
+  )
+
 (define (m3-mpz-wrap-proto-impl proto)
   (let* ((rtype  (get-proto-rtype proto))
-         (nam    (symbol->string (get-proto-nm proto)))
+         (nam    (remove-prefix "mpz_" (symbol->string (get-proto-nm proto))))
          (ftypes (get-proto-ftypes proto))
          (fnames (map
                   (curry sa "f")
@@ -172,16 +181,16 @@
       (pi
        "(***** hand-coded functions *****)" dnl
        "<*EXTERNAL mpz_format_octal*>" dnl
-       "PROCEDURE mpz_format_octal(f0 : MpzPtrT) : Ctypes.const_char_star;" dnl
+       "PROCEDURE format_octal(f0 : MpzPtrT) : Ctypes.const_char_star;" dnl
        dnl
        "<*EXTERNAL mpz_format_decimal*>" dnl
-       "PROCEDURE mpz_format_decimal(f0 : MpzPtrT) : Ctypes.const_char_star;" dnl
+       "PROCEDURE format_decimal(f0 : MpzPtrT) : Ctypes.const_char_star;" dnl
        dnl
        "<*EXTERNAL mpz_format_hexadecimal*>" dnl
-       "PROCEDURE mpz_format_hexadecimal(f0 : MpzPtrT) : Ctypes.const_char_star;" dnl
+       "PROCEDURE format_hexadecimal(f0 : MpzPtrT) : Ctypes.const_char_star;" dnl
        dnl
        "<*EXTERNAL mpz_free_formatted*>" dnl
-       "PROCEDURE mpz_free_formatted(f0 : Ctypes.char_star);" dnl
+       "PROCEDURE free_formatted(f0 : Ctypes.char_star);" dnl
        dnl
 
        
@@ -199,25 +208,46 @@
       (Wr.Close pi3wr)
       )
 
-    (let ((i3wr (FileWr.Open "MpzOps.i3")))
+    (let ((i3wr (FileWr.Open "Mpz.i3")))
 
       (define (i . x)
         (map (curry Wr.PutText i3wr) (map force-string x)))
 
-      (i "INTERFACE MpzOps;" dnl
-         "IMPORT Mpz;" dnl
-;;         "IMPORT Ctypes;" dnl
-         "IMPORT Word;" dnl
-         dnl)
-
-      (i "TYPE T       = Mpz.T;" dnl
-         dnl)
-
+      (i
+       "(**** AUTOMATICALLY GENERATED -- DO NOT EDIT ****)" dnl
+       dnl
+       "INTERFACE Mpz;" dnl
+       "" dnl
+       "IMPORT Word;" dnl
+       dnl
+       "TYPE" dnl
+       "  T <: REFANY;" dnl
+       "" dnl
+       "PROCEDURE New() : T;" dnl
+       "" dnl
+       "CONST Brand = \"Mpz\";" dnl
+       "" dnl
+       "" dnl
+       "TYPE FormatBase = { Binary, Octal, Decimal, Hexadecimal };" dnl
+       "     " dnl
+       "PROCEDURE Format(t : T; base := FormatBase.Decimal) : TEXT;" dnl
+       "  " dnl
+       "PROCEDURE FormatDecimal(t : T) : TEXT;" dnl
+       "" dnl
+       "PROCEDURE FormatHexadecimal(t : T) : TEXT;" dnl
+       "" dnl
+       "PROCEDURE FormatOctal(t : T) : TEXT;" dnl
+       "" dnl
+       dnl)
         
+      (i
+       "(***** auto-generated functions *****)" dnl
+       dnl)
+      
 
       (map i (map m3-mpz-wrap-proto-decl the-procs))
       
-      (i "END MpzOps." dnl)
+      (i "END Mpz." dnl)
       
       
       (Wr.Close i3wr)
@@ -228,7 +258,7 @@
       (define (m . x)
         (map (curry Wr.PutText m3wr) (map force-string x)))
 
-      (m "UNSAFE MODULE MpzOps;" dnl
+      (m "UNSAFE MODULE MpzOps EXPORTS Mpz;" dnl
 ;;         "IMPORT Mpz;" dnl
          "IMPORT MpzRep;" dnl
          "IMPORT MpzP AS P;" dnl

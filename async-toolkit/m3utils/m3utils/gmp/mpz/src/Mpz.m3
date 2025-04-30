@@ -10,7 +10,7 @@ PROCEDURE New() : T =
   VAR
     res := NEW(T);
   BEGIN
-    P.c_mpz_init(LOOPHOLE(ADR(res.val), P.MpzPtrT));
+    P.c_init(LOOPHOLE(ADR(res.val), P.MpzPtrT));
     EVAL WeakRef.FromRef(res, CleanUp);
     RETURN res
   END New;
@@ -18,7 +18,7 @@ PROCEDURE New() : T =
 PROCEDURE CleanUp(<*UNUSED*>READONLY w : WeakRef.T; r : REFANY) =
   BEGIN
     WITH this = NARROW(r, T) DO
-      P.c_mpz_clear(ADR(this.val))
+      P.c_clear(ADR(this.val))
     END
   END CleanUp;
 
@@ -37,34 +37,34 @@ PROCEDURE Format(t : T; base := FormatBase.Decimal) : TEXT =
   
 PROCEDURE FormatDecimal(t : T) : TEXT =
   VAR
-    cs := P.mpz_format_decimal(ADR(t.val));
+    cs := P.format_decimal(ADR(t.val));
   BEGIN
     TRY
       RETURN M3toC.CopyStoT(cs)
     FINALLY
-      P.mpz_free_formatted(cs)
+      P.free_formatted(cs)
     END
   END FormatDecimal;
 
 PROCEDURE FormatHexadecimal(t : T) : TEXT =
   VAR
-    cs := P.mpz_format_hexadecimal(ADR(t.val));
+    cs := P.format_hexadecimal(ADR(t.val));
   BEGIN
     TRY
       RETURN M3toC.CopyStoT(cs)
     FINALLY
-      P.mpz_free_formatted(cs)
+      P.free_formatted(cs)
     END
   END FormatHexadecimal;
 
 PROCEDURE FormatOctal(t : T) : TEXT =
   VAR
-    cs := P.mpz_format_octal(ADR(t.val));
+    cs := P.format_octal(ADR(t.val));
   BEGIN
     TRY
       RETURN M3toC.CopyStoT(cs)
     FINALLY
-      P.mpz_free_formatted(cs)
+      P.free_formatted(cs)
     END
   END FormatOctal;
 

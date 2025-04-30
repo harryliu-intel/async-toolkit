@@ -1,623 +1,623 @@
-UNSAFE MODULE MpzOps;
+UNSAFE MODULE MpzOps EXPORTS Mpz;
 IMPORT MpzRep;
 IMPORT MpzP AS P;
 IMPORT Word;
 IMPORT M3toC;
 
-PROCEDURE mpz_abs (f0 : T; f1 : T) =
+PROCEDURE abs (f0 : T; f1 : T) =
   BEGIN
-    P.c_mpz_abs(ADR(f0.val),ADR(f1.val))
-  END mpz_abs;
+    P.c_abs(ADR(f0.val),ADR(f1.val))
+  END abs;
 
-PROCEDURE mpz_add (f0 : T; f1 : T; f2 : T) =
+PROCEDURE add (f0 : T; f1 : T; f2 : T) =
   BEGIN
-    P.c_mpz_add(ADR(f0.val),ADR(f1.val),ADR(f2.val))
-  END mpz_add;
+    P.c_add(ADR(f0.val),ADR(f1.val),ADR(f2.val))
+  END add;
 
-PROCEDURE mpz_add_ui (f0 : T; f1 : T; f2 : Word.T) =
+PROCEDURE add_ui (f0 : T; f1 : T; f2 : Word.T) =
   BEGIN
-    P.c_mpz_add_ui(ADR(f0.val),ADR(f1.val),f2)
-  END mpz_add_ui;
+    P.c_add_ui(ADR(f0.val),ADR(f1.val),f2)
+  END add_ui;
 
-PROCEDURE mpz_addmul (f0 : T; f1 : T; f2 : T) =
+PROCEDURE addmul (f0 : T; f1 : T; f2 : T) =
   BEGIN
-    P.c_mpz_addmul(ADR(f0.val),ADR(f1.val),ADR(f2.val))
-  END mpz_addmul;
+    P.c_addmul(ADR(f0.val),ADR(f1.val),ADR(f2.val))
+  END addmul;
 
-PROCEDURE mpz_addmul_ui (f0 : T; f1 : T; f2 : Word.T) =
+PROCEDURE addmul_ui (f0 : T; f1 : T; f2 : Word.T) =
   BEGIN
-    P.c_mpz_addmul_ui(ADR(f0.val),ADR(f1.val),f2)
-  END mpz_addmul_ui;
+    P.c_addmul_ui(ADR(f0.val),ADR(f1.val),f2)
+  END addmul_ui;
 
-PROCEDURE mpz_and (f0 : T; f1 : T; f2 : T) =
+PROCEDURE and (f0 : T; f1 : T; f2 : T) =
   BEGIN
-    P.c_mpz_and(ADR(f0.val),ADR(f1.val),ADR(f2.val))
-  END mpz_and;
+    P.c_and(ADR(f0.val),ADR(f1.val),ADR(f2.val))
+  END and;
 
-PROCEDURE mpz_bin_ui (f0 : T; f1 : T; f2 : Word.T) =
+PROCEDURE bin_ui (f0 : T; f1 : T; f2 : Word.T) =
   BEGIN
-    P.c_mpz_bin_ui(ADR(f0.val),ADR(f1.val),f2)
-  END mpz_bin_ui;
+    P.c_bin_ui(ADR(f0.val),ADR(f1.val),f2)
+  END bin_ui;
 
-PROCEDURE mpz_bin_uiui (f0 : T; f1 : Word.T; f2 : Word.T) =
+PROCEDURE bin_uiui (f0 : T; f1 : Word.T; f2 : Word.T) =
   BEGIN
-    P.c_mpz_bin_uiui(ADR(f0.val),f1,f2)
-  END mpz_bin_uiui;
+    P.c_bin_uiui(ADR(f0.val),f1,f2)
+  END bin_uiui;
 
-PROCEDURE mpz_cdiv_q (f0 : T; f1 : T; f2 : T) =
+PROCEDURE cdiv_q (f0 : T; f1 : T; f2 : T) =
   BEGIN
-    P.c_mpz_cdiv_q(ADR(f0.val),ADR(f1.val),ADR(f2.val))
-  END mpz_cdiv_q;
+    P.c_cdiv_q(ADR(f0.val),ADR(f1.val),ADR(f2.val))
+  END cdiv_q;
 
-PROCEDURE mpz_cdiv_q_2exp (f0 : T; f1 : T; f2 : Word.T) =
+PROCEDURE cdiv_q_2exp (f0 : T; f1 : T; f2 : Word.T) =
   BEGIN
-    P.c_mpz_cdiv_q_2exp(ADR(f0.val),ADR(f1.val),f2)
-  END mpz_cdiv_q_2exp;
+    P.c_cdiv_q_2exp(ADR(f0.val),ADR(f1.val),f2)
+  END cdiv_q_2exp;
 
-PROCEDURE mpz_cdiv_q_ui (f0 : T; f1 : T; f2 : Word.T) : Word.T =
+PROCEDURE cdiv_q_ui (f0 : T; f1 : T; f2 : Word.T) : Word.T =
   BEGIN
-    RETURN P.c_mpz_cdiv_q_ui(ADR(f0.val),ADR(f1.val),f2)
-  END mpz_cdiv_q_ui;
+    RETURN P.c_cdiv_q_ui(ADR(f0.val),ADR(f1.val),f2)
+  END cdiv_q_ui;
 
-PROCEDURE mpz_cdiv_qr (f0 : T; f1 : T; f2 : T; f3 : T) =
+PROCEDURE cdiv_qr (f0 : T; f1 : T; f2 : T; f3 : T) =
   BEGIN
-    P.c_mpz_cdiv_qr(ADR(f0.val),ADR(f1.val),ADR(f2.val),ADR(f3.val))
-  END mpz_cdiv_qr;
+    P.c_cdiv_qr(ADR(f0.val),ADR(f1.val),ADR(f2.val),ADR(f3.val))
+  END cdiv_qr;
 
-PROCEDURE mpz_cdiv_qr_ui (f0 : T; f1 : T; f2 : T; f3 : Word.T) : Word.T =
+PROCEDURE cdiv_qr_ui (f0 : T; f1 : T; f2 : T; f3 : Word.T) : Word.T =
   BEGIN
-    RETURN P.c_mpz_cdiv_qr_ui(ADR(f0.val),ADR(f1.val),ADR(f2.val),f3)
-  END mpz_cdiv_qr_ui;
+    RETURN P.c_cdiv_qr_ui(ADR(f0.val),ADR(f1.val),ADR(f2.val),f3)
+  END cdiv_qr_ui;
 
-PROCEDURE mpz_cdiv_r (f0 : T; f1 : T; f2 : T) =
+PROCEDURE cdiv_r (f0 : T; f1 : T; f2 : T) =
   BEGIN
-    P.c_mpz_cdiv_r(ADR(f0.val),ADR(f1.val),ADR(f2.val))
-  END mpz_cdiv_r;
+    P.c_cdiv_r(ADR(f0.val),ADR(f1.val),ADR(f2.val))
+  END cdiv_r;
 
-PROCEDURE mpz_cdiv_r_2exp (f0 : T; f1 : T; f2 : Word.T) =
+PROCEDURE cdiv_r_2exp (f0 : T; f1 : T; f2 : Word.T) =
   BEGIN
-    P.c_mpz_cdiv_r_2exp(ADR(f0.val),ADR(f1.val),f2)
-  END mpz_cdiv_r_2exp;
+    P.c_cdiv_r_2exp(ADR(f0.val),ADR(f1.val),f2)
+  END cdiv_r_2exp;
 
-PROCEDURE mpz_cdiv_r_ui (f0 : T; f1 : T; f2 : Word.T) : Word.T =
+PROCEDURE cdiv_r_ui (f0 : T; f1 : T; f2 : Word.T) : Word.T =
   BEGIN
-    RETURN P.c_mpz_cdiv_r_ui(ADR(f0.val),ADR(f1.val),f2)
-  END mpz_cdiv_r_ui;
+    RETURN P.c_cdiv_r_ui(ADR(f0.val),ADR(f1.val),f2)
+  END cdiv_r_ui;
 
-PROCEDURE mpz_cdiv_ui (f0 : T; f1 : Word.T) : Word.T =
+PROCEDURE cdiv_ui (f0 : T; f1 : Word.T) : Word.T =
   BEGIN
-    RETURN P.c_mpz_cdiv_ui(ADR(f0.val),f1)
-  END mpz_cdiv_ui;
+    RETURN P.c_cdiv_ui(ADR(f0.val),f1)
+  END cdiv_ui;
 
-PROCEDURE mpz_clear (f0 : T) =
+PROCEDURE clear (f0 : T) =
   BEGIN
-    P.c_mpz_clear(ADR(f0.val))
-  END mpz_clear;
+    P.c_clear(ADR(f0.val))
+  END clear;
 
-PROCEDURE mpz_clrbit (f0 : T; f1 : Word.T) =
+PROCEDURE clrbit (f0 : T; f1 : Word.T) =
   BEGIN
-    P.c_mpz_clrbit(ADR(f0.val),f1)
-  END mpz_clrbit;
+    P.c_clrbit(ADR(f0.val),f1)
+  END clrbit;
 
-PROCEDURE mpz_cmp (f0 : T; f1 : T) : INTEGER =
+PROCEDURE cmp (f0 : T; f1 : T) : INTEGER =
   BEGIN
-    RETURN P.c_mpz_cmp(ADR(f0.val),ADR(f1.val))
-  END mpz_cmp;
+    RETURN P.c_cmp(ADR(f0.val),ADR(f1.val))
+  END cmp;
 
-PROCEDURE mpz_cmp_d (f0 : T; f1 : LONGREAL) : INTEGER =
+PROCEDURE cmp_d (f0 : T; f1 : LONGREAL) : INTEGER =
   BEGIN
-    RETURN P.c_mpz_cmp_d(ADR(f0.val),f1)
-  END mpz_cmp_d;
+    RETURN P.c_cmp_d(ADR(f0.val),f1)
+  END cmp_d;
 
-PROCEDURE mpz_cmpabs (f0 : T; f1 : T) : INTEGER =
+PROCEDURE cmpabs (f0 : T; f1 : T) : INTEGER =
   BEGIN
-    RETURN P.c_mpz_cmpabs(ADR(f0.val),ADR(f1.val))
-  END mpz_cmpabs;
+    RETURN P.c_cmpabs(ADR(f0.val),ADR(f1.val))
+  END cmpabs;
 
-PROCEDURE mpz_cmpabs_d (f0 : T; f1 : LONGREAL) : INTEGER =
+PROCEDURE cmpabs_d (f0 : T; f1 : LONGREAL) : INTEGER =
   BEGIN
-    RETURN P.c_mpz_cmpabs_d(ADR(f0.val),f1)
-  END mpz_cmpabs_d;
+    RETURN P.c_cmpabs_d(ADR(f0.val),f1)
+  END cmpabs_d;
 
-PROCEDURE mpz_cmpabs_ui (f0 : T; f1 : Word.T) : INTEGER =
+PROCEDURE cmpabs_ui (f0 : T; f1 : Word.T) : INTEGER =
   BEGIN
-    RETURN P.c_mpz_cmpabs_ui(ADR(f0.val),f1)
-  END mpz_cmpabs_ui;
+    RETURN P.c_cmpabs_ui(ADR(f0.val),f1)
+  END cmpabs_ui;
 
-PROCEDURE mpz_com (f0 : T; f1 : T) =
+PROCEDURE com (f0 : T; f1 : T) =
   BEGIN
-    P.c_mpz_com(ADR(f0.val),ADR(f1.val))
-  END mpz_com;
+    P.c_com(ADR(f0.val),ADR(f1.val))
+  END com;
 
-PROCEDURE mpz_combit (f0 : T; f1 : Word.T) =
+PROCEDURE combit (f0 : T; f1 : Word.T) =
   BEGIN
-    P.c_mpz_combit(ADR(f0.val),f1)
-  END mpz_combit;
+    P.c_combit(ADR(f0.val),f1)
+  END combit;
 
-PROCEDURE mpz_congruent_p (f0 : T; f1 : T; f2 : T) : INTEGER =
+PROCEDURE congruent_p (f0 : T; f1 : T; f2 : T) : INTEGER =
   BEGIN
-    RETURN P.c_mpz_congruent_p(ADR(f0.val),ADR(f1.val),ADR(f2.val))
-  END mpz_congruent_p;
+    RETURN P.c_congruent_p(ADR(f0.val),ADR(f1.val),ADR(f2.val))
+  END congruent_p;
 
-PROCEDURE mpz_congruent_2exp_p (f0 : T; f1 : T; f2 : Word.T) : INTEGER =
+PROCEDURE congruent_2exp_p (f0 : T; f1 : T; f2 : Word.T) : INTEGER =
   BEGIN
-    RETURN P.c_mpz_congruent_2exp_p(ADR(f0.val),ADR(f1.val),f2)
-  END mpz_congruent_2exp_p;
+    RETURN P.c_congruent_2exp_p(ADR(f0.val),ADR(f1.val),f2)
+  END congruent_2exp_p;
 
-PROCEDURE mpz_congruent_ui_p (f0 : T; f1 : Word.T; f2 : Word.T) : INTEGER =
+PROCEDURE congruent_ui_p (f0 : T; f1 : Word.T; f2 : Word.T) : INTEGER =
   BEGIN
-    RETURN P.c_mpz_congruent_ui_p(ADR(f0.val),f1,f2)
-  END mpz_congruent_ui_p;
+    RETURN P.c_congruent_ui_p(ADR(f0.val),f1,f2)
+  END congruent_ui_p;
 
-PROCEDURE mpz_divexact (f0 : T; f1 : T; f2 : T) =
+PROCEDURE divexact (f0 : T; f1 : T; f2 : T) =
   BEGIN
-    P.c_mpz_divexact(ADR(f0.val),ADR(f1.val),ADR(f2.val))
-  END mpz_divexact;
+    P.c_divexact(ADR(f0.val),ADR(f1.val),ADR(f2.val))
+  END divexact;
 
-PROCEDURE mpz_divexact_ui (f0 : T; f1 : T; f2 : Word.T) =
+PROCEDURE divexact_ui (f0 : T; f1 : T; f2 : Word.T) =
   BEGIN
-    P.c_mpz_divexact_ui(ADR(f0.val),ADR(f1.val),f2)
-  END mpz_divexact_ui;
+    P.c_divexact_ui(ADR(f0.val),ADR(f1.val),f2)
+  END divexact_ui;
 
-PROCEDURE mpz_divisible_p (f0 : T; f1 : T) : INTEGER =
+PROCEDURE divisible_p (f0 : T; f1 : T) : INTEGER =
   BEGIN
-    RETURN P.c_mpz_divisible_p(ADR(f0.val),ADR(f1.val))
-  END mpz_divisible_p;
+    RETURN P.c_divisible_p(ADR(f0.val),ADR(f1.val))
+  END divisible_p;
 
-PROCEDURE mpz_divisible_ui_p (f0 : T; f1 : Word.T) : INTEGER =
+PROCEDURE divisible_ui_p (f0 : T; f1 : Word.T) : INTEGER =
   BEGIN
-    RETURN P.c_mpz_divisible_ui_p(ADR(f0.val),f1)
-  END mpz_divisible_ui_p;
+    RETURN P.c_divisible_ui_p(ADR(f0.val),f1)
+  END divisible_ui_p;
 
-PROCEDURE mpz_divisible_2exp_p (f0 : T; f1 : Word.T) : INTEGER =
+PROCEDURE divisible_2exp_p (f0 : T; f1 : Word.T) : INTEGER =
   BEGIN
-    RETURN P.c_mpz_divisible_2exp_p(ADR(f0.val),f1)
-  END mpz_divisible_2exp_p;
+    RETURN P.c_divisible_2exp_p(ADR(f0.val),f1)
+  END divisible_2exp_p;
 
-PROCEDURE mpz_dump (f0 : T) =
+PROCEDURE dump (f0 : T) =
   BEGIN
-    P.c_mpz_dump(ADR(f0.val))
-  END mpz_dump;
+    P.c_dump(ADR(f0.val))
+  END dump;
 
-PROCEDURE mpz_fac_ui (f0 : T; f1 : Word.T) =
+PROCEDURE fac_ui (f0 : T; f1 : Word.T) =
   BEGIN
-    P.c_mpz_fac_ui(ADR(f0.val),f1)
-  END mpz_fac_ui;
+    P.c_fac_ui(ADR(f0.val),f1)
+  END fac_ui;
 
-PROCEDURE mpz_fdiv_q (f0 : T; f1 : T; f2 : T) =
+PROCEDURE fdiv_q (f0 : T; f1 : T; f2 : T) =
   BEGIN
-    P.c_mpz_fdiv_q(ADR(f0.val),ADR(f1.val),ADR(f2.val))
-  END mpz_fdiv_q;
+    P.c_fdiv_q(ADR(f0.val),ADR(f1.val),ADR(f2.val))
+  END fdiv_q;
 
-PROCEDURE mpz_fdiv_q_2exp (f0 : T; f1 : T; f2 : Word.T) =
+PROCEDURE fdiv_q_2exp (f0 : T; f1 : T; f2 : Word.T) =
   BEGIN
-    P.c_mpz_fdiv_q_2exp(ADR(f0.val),ADR(f1.val),f2)
-  END mpz_fdiv_q_2exp;
+    P.c_fdiv_q_2exp(ADR(f0.val),ADR(f1.val),f2)
+  END fdiv_q_2exp;
 
-PROCEDURE mpz_fdiv_q_ui (f0 : T; f1 : T; f2 : Word.T) : Word.T =
+PROCEDURE fdiv_q_ui (f0 : T; f1 : T; f2 : Word.T) : Word.T =
   BEGIN
-    RETURN P.c_mpz_fdiv_q_ui(ADR(f0.val),ADR(f1.val),f2)
-  END mpz_fdiv_q_ui;
+    RETURN P.c_fdiv_q_ui(ADR(f0.val),ADR(f1.val),f2)
+  END fdiv_q_ui;
 
-PROCEDURE mpz_fdiv_qr (f0 : T; f1 : T; f2 : T; f3 : T) =
+PROCEDURE fdiv_qr (f0 : T; f1 : T; f2 : T; f3 : T) =
   BEGIN
-    P.c_mpz_fdiv_qr(ADR(f0.val),ADR(f1.val),ADR(f2.val),ADR(f3.val))
-  END mpz_fdiv_qr;
+    P.c_fdiv_qr(ADR(f0.val),ADR(f1.val),ADR(f2.val),ADR(f3.val))
+  END fdiv_qr;
 
-PROCEDURE mpz_fdiv_qr_ui (f0 : T; f1 : T; f2 : T; f3 : Word.T) : Word.T =
+PROCEDURE fdiv_qr_ui (f0 : T; f1 : T; f2 : T; f3 : Word.T) : Word.T =
   BEGIN
-    RETURN P.c_mpz_fdiv_qr_ui(ADR(f0.val),ADR(f1.val),ADR(f2.val),f3)
-  END mpz_fdiv_qr_ui;
+    RETURN P.c_fdiv_qr_ui(ADR(f0.val),ADR(f1.val),ADR(f2.val),f3)
+  END fdiv_qr_ui;
 
-PROCEDURE mpz_fdiv_r (f0 : T; f1 : T; f2 : T) =
+PROCEDURE fdiv_r (f0 : T; f1 : T; f2 : T) =
   BEGIN
-    P.c_mpz_fdiv_r(ADR(f0.val),ADR(f1.val),ADR(f2.val))
-  END mpz_fdiv_r;
+    P.c_fdiv_r(ADR(f0.val),ADR(f1.val),ADR(f2.val))
+  END fdiv_r;
 
-PROCEDURE mpz_fdiv_r_2exp (f0 : T; f1 : T; f2 : Word.T) =
+PROCEDURE fdiv_r_2exp (f0 : T; f1 : T; f2 : Word.T) =
   BEGIN
-    P.c_mpz_fdiv_r_2exp(ADR(f0.val),ADR(f1.val),f2)
-  END mpz_fdiv_r_2exp;
+    P.c_fdiv_r_2exp(ADR(f0.val),ADR(f1.val),f2)
+  END fdiv_r_2exp;
 
-PROCEDURE mpz_fdiv_r_ui (f0 : T; f1 : T; f2 : Word.T) : Word.T =
+PROCEDURE fdiv_r_ui (f0 : T; f1 : T; f2 : Word.T) : Word.T =
   BEGIN
-    RETURN P.c_mpz_fdiv_r_ui(ADR(f0.val),ADR(f1.val),f2)
-  END mpz_fdiv_r_ui;
+    RETURN P.c_fdiv_r_ui(ADR(f0.val),ADR(f1.val),f2)
+  END fdiv_r_ui;
 
-PROCEDURE mpz_fdiv_ui (f0 : T; f1 : Word.T) : Word.T =
+PROCEDURE fdiv_ui (f0 : T; f1 : Word.T) : Word.T =
   BEGIN
-    RETURN P.c_mpz_fdiv_ui(ADR(f0.val),f1)
-  END mpz_fdiv_ui;
+    RETURN P.c_fdiv_ui(ADR(f0.val),f1)
+  END fdiv_ui;
 
-PROCEDURE mpz_fib_ui (f0 : T; f1 : Word.T) =
+PROCEDURE fib_ui (f0 : T; f1 : Word.T) =
   BEGIN
-    P.c_mpz_fib_ui(ADR(f0.val),f1)
-  END mpz_fib_ui;
+    P.c_fib_ui(ADR(f0.val),f1)
+  END fib_ui;
 
-PROCEDURE mpz_fib2_ui (f0 : T; f1 : T; f2 : Word.T) =
+PROCEDURE fib2_ui (f0 : T; f1 : T; f2 : Word.T) =
   BEGIN
-    P.c_mpz_fib2_ui(ADR(f0.val),ADR(f1.val),f2)
-  END mpz_fib2_ui;
+    P.c_fib2_ui(ADR(f0.val),ADR(f1.val),f2)
+  END fib2_ui;
 
-PROCEDURE mpz_fits_sint_p (f0 : T) : INTEGER =
+PROCEDURE fits_sint_p (f0 : T) : INTEGER =
   BEGIN
-    RETURN P.c_mpz_fits_sint_p(ADR(f0.val))
-  END mpz_fits_sint_p;
+    RETURN P.c_fits_sint_p(ADR(f0.val))
+  END fits_sint_p;
 
-PROCEDURE mpz_fits_slong_p (f0 : T) : INTEGER =
+PROCEDURE fits_slong_p (f0 : T) : INTEGER =
   BEGIN
-    RETURN P.c_mpz_fits_slong_p(ADR(f0.val))
-  END mpz_fits_slong_p;
+    RETURN P.c_fits_slong_p(ADR(f0.val))
+  END fits_slong_p;
 
-PROCEDURE mpz_fits_sshort_p (f0 : T) : INTEGER =
+PROCEDURE fits_sshort_p (f0 : T) : INTEGER =
   BEGIN
-    RETURN P.c_mpz_fits_sshort_p(ADR(f0.val))
-  END mpz_fits_sshort_p;
+    RETURN P.c_fits_sshort_p(ADR(f0.val))
+  END fits_sshort_p;
 
-PROCEDURE mpz_fits_uint_p (f0 : T) : INTEGER =
+PROCEDURE fits_uint_p (f0 : T) : INTEGER =
   BEGIN
-    RETURN P.c_mpz_fits_uint_p(ADR(f0.val))
-  END mpz_fits_uint_p;
+    RETURN P.c_fits_uint_p(ADR(f0.val))
+  END fits_uint_p;
 
-PROCEDURE mpz_fits_ulong_p (f0 : T) : INTEGER =
+PROCEDURE fits_ulong_p (f0 : T) : INTEGER =
   BEGIN
-    RETURN P.c_mpz_fits_ulong_p(ADR(f0.val))
-  END mpz_fits_ulong_p;
+    RETURN P.c_fits_ulong_p(ADR(f0.val))
+  END fits_ulong_p;
 
-PROCEDURE mpz_fits_ushort_p (f0 : T) : INTEGER =
+PROCEDURE fits_ushort_p (f0 : T) : INTEGER =
   BEGIN
-    RETURN P.c_mpz_fits_ushort_p(ADR(f0.val))
-  END mpz_fits_ushort_p;
+    RETURN P.c_fits_ushort_p(ADR(f0.val))
+  END fits_ushort_p;
 
-PROCEDURE mpz_gcd (f0 : T; f1 : T; f2 : T) =
+PROCEDURE gcd (f0 : T; f1 : T; f2 : T) =
   BEGIN
-    P.c_mpz_gcd(ADR(f0.val),ADR(f1.val),ADR(f2.val))
-  END mpz_gcd;
+    P.c_gcd(ADR(f0.val),ADR(f1.val),ADR(f2.val))
+  END gcd;
 
-PROCEDURE mpz_gcd_ui (f0 : T; f1 : T; f2 : Word.T) : Word.T =
+PROCEDURE gcd_ui (f0 : T; f1 : T; f2 : Word.T) : Word.T =
   BEGIN
-    RETURN P.c_mpz_gcd_ui(ADR(f0.val),ADR(f1.val),f2)
-  END mpz_gcd_ui;
+    RETURN P.c_gcd_ui(ADR(f0.val),ADR(f1.val),f2)
+  END gcd_ui;
 
-PROCEDURE mpz_gcdext (f0 : T; f1 : T; f2 : T; f3 : T; f4 : T) =
+PROCEDURE gcdext (f0 : T; f1 : T; f2 : T; f3 : T; f4 : T) =
   BEGIN
-    P.c_mpz_gcdext(ADR(f0.val),ADR(f1.val),ADR(f2.val),ADR(f3.val),ADR(f4.val))
-  END mpz_gcdext;
+    P.c_gcdext(ADR(f0.val),ADR(f1.val),ADR(f2.val),ADR(f3.val),ADR(f4.val))
+  END gcdext;
 
-PROCEDURE mpz_get_d (f0 : T) : LONGREAL =
+PROCEDURE get_d (f0 : T) : LONGREAL =
   BEGIN
-    RETURN P.c_mpz_get_d(ADR(f0.val))
-  END mpz_get_d;
+    RETURN P.c_get_d(ADR(f0.val))
+  END get_d;
 
-PROCEDURE mpz_get_ui (f0 : T) : Word.T =
+PROCEDURE get_ui (f0 : T) : Word.T =
   BEGIN
-    RETURN P.c_mpz_get_ui(ADR(f0.val))
-  END mpz_get_ui;
+    RETURN P.c_get_ui(ADR(f0.val))
+  END get_ui;
 
-PROCEDURE mpz_hamdist (f0 : T; f1 : T) : Word.T =
+PROCEDURE hamdist (f0 : T; f1 : T) : Word.T =
   BEGIN
-    RETURN P.c_mpz_hamdist(ADR(f0.val),ADR(f1.val))
-  END mpz_hamdist;
+    RETURN P.c_hamdist(ADR(f0.val),ADR(f1.val))
+  END hamdist;
 
-PROCEDURE mpz_init (f0 : T) =
+PROCEDURE init (f0 : T) =
   BEGIN
-    P.c_mpz_init(ADR(f0.val))
-  END mpz_init;
+    P.c_init(ADR(f0.val))
+  END init;
 
-PROCEDURE mpz_init2 (f0 : T; f1 : Word.T) =
+PROCEDURE init2 (f0 : T; f1 : Word.T) =
   BEGIN
-    P.c_mpz_init2(ADR(f0.val),f1)
-  END mpz_init2;
+    P.c_init2(ADR(f0.val),f1)
+  END init2;
 
-PROCEDURE mpz_init_set (f0 : T; f1 : T) =
+PROCEDURE init_set (f0 : T; f1 : T) =
   BEGIN
-    P.c_mpz_init_set(ADR(f0.val),ADR(f1.val))
-  END mpz_init_set;
+    P.c_init_set(ADR(f0.val),ADR(f1.val))
+  END init_set;
 
-PROCEDURE mpz_init_set_d (f0 : T; f1 : LONGREAL) =
+PROCEDURE init_set_d (f0 : T; f1 : LONGREAL) =
   BEGIN
-    P.c_mpz_init_set_d(ADR(f0.val),f1)
-  END mpz_init_set_d;
+    P.c_init_set_d(ADR(f0.val),f1)
+  END init_set_d;
 
-PROCEDURE mpz_init_set_si (f0 : T; f1 : INTEGER) =
+PROCEDURE init_set_si (f0 : T; f1 : INTEGER) =
   BEGIN
-    P.c_mpz_init_set_si(ADR(f0.val),f1)
-  END mpz_init_set_si;
+    P.c_init_set_si(ADR(f0.val),f1)
+  END init_set_si;
 
-PROCEDURE mpz_init_set_str (f0 : T; f1 : TEXT; f2 : INTEGER) : INTEGER =
+PROCEDURE init_set_str (f0 : T; f1 : TEXT; f2 : INTEGER) : INTEGER =
   BEGIN
-    RETURN P.c_mpz_init_set_str(ADR(f0.val),M3toC.CopyTtoS(f1),f2)
-  END mpz_init_set_str;
+    RETURN P.c_init_set_str(ADR(f0.val),M3toC.CopyTtoS(f1),f2)
+  END init_set_str;
 
-PROCEDURE mpz_init_set_ui (f0 : T; f1 : Word.T) =
+PROCEDURE init_set_ui (f0 : T; f1 : Word.T) =
   BEGIN
-    P.c_mpz_init_set_ui(ADR(f0.val),f1)
-  END mpz_init_set_ui;
+    P.c_init_set_ui(ADR(f0.val),f1)
+  END init_set_ui;
 
-PROCEDURE mpz_invert (f0 : T; f1 : T; f2 : T) : INTEGER =
+PROCEDURE invert (f0 : T; f1 : T; f2 : T) : INTEGER =
   BEGIN
-    RETURN P.c_mpz_invert(ADR(f0.val),ADR(f1.val),ADR(f2.val))
-  END mpz_invert;
+    RETURN P.c_invert(ADR(f0.val),ADR(f1.val),ADR(f2.val))
+  END invert;
 
-PROCEDURE mpz_ior (f0 : T; f1 : T; f2 : T) =
+PROCEDURE ior (f0 : T; f1 : T; f2 : T) =
   BEGIN
-    P.c_mpz_ior(ADR(f0.val),ADR(f1.val),ADR(f2.val))
-  END mpz_ior;
+    P.c_ior(ADR(f0.val),ADR(f1.val),ADR(f2.val))
+  END ior;
 
-PROCEDURE mpz_jacobi (f0 : T; f1 : T) : INTEGER =
+PROCEDURE jacobi (f0 : T; f1 : T) : INTEGER =
   BEGIN
-    RETURN P.c_mpz_jacobi(ADR(f0.val),ADR(f1.val))
-  END mpz_jacobi;
+    RETURN P.c_jacobi(ADR(f0.val),ADR(f1.val))
+  END jacobi;
 
-PROCEDURE mpz_kronecker_ui (f0 : T; f1 : Word.T) : INTEGER =
+PROCEDURE kronecker_ui (f0 : T; f1 : Word.T) : INTEGER =
   BEGIN
-    RETURN P.c_mpz_kronecker_ui(ADR(f0.val),f1)
-  END mpz_kronecker_ui;
+    RETURN P.c_kronecker_ui(ADR(f0.val),f1)
+  END kronecker_ui;
 
-PROCEDURE mpz_ui_kronecker (f0 : Word.T; f1 : T) : INTEGER =
+PROCEDURE ui_kronecker (f0 : Word.T; f1 : T) : INTEGER =
   BEGIN
-    RETURN P.c_mpz_ui_kronecker(f0,ADR(f1.val))
-  END mpz_ui_kronecker;
+    RETURN P.c_ui_kronecker(f0,ADR(f1.val))
+  END ui_kronecker;
 
-PROCEDURE mpz_lcm (f0 : T; f1 : T; f2 : T) =
+PROCEDURE lcm (f0 : T; f1 : T; f2 : T) =
   BEGIN
-    P.c_mpz_lcm(ADR(f0.val),ADR(f1.val),ADR(f2.val))
-  END mpz_lcm;
+    P.c_lcm(ADR(f0.val),ADR(f1.val),ADR(f2.val))
+  END lcm;
 
-PROCEDURE mpz_lcm_ui (f0 : T; f1 : T; f2 : Word.T) =
+PROCEDURE lcm_ui (f0 : T; f1 : T; f2 : Word.T) =
   BEGIN
-    P.c_mpz_lcm_ui(ADR(f0.val),ADR(f1.val),f2)
-  END mpz_lcm_ui;
+    P.c_lcm_ui(ADR(f0.val),ADR(f1.val),f2)
+  END lcm_ui;
 
-PROCEDURE mpz_lucnum_ui (f0 : T; f1 : Word.T) =
+PROCEDURE lucnum_ui (f0 : T; f1 : Word.T) =
   BEGIN
-    P.c_mpz_lucnum_ui(ADR(f0.val),f1)
-  END mpz_lucnum_ui;
+    P.c_lucnum_ui(ADR(f0.val),f1)
+  END lucnum_ui;
 
-PROCEDURE mpz_lucnum2_ui (f0 : T; f1 : T; f2 : Word.T) =
+PROCEDURE lucnum2_ui (f0 : T; f1 : T; f2 : Word.T) =
   BEGIN
-    P.c_mpz_lucnum2_ui(ADR(f0.val),ADR(f1.val),f2)
-  END mpz_lucnum2_ui;
+    P.c_lucnum2_ui(ADR(f0.val),ADR(f1.val),f2)
+  END lucnum2_ui;
 
-PROCEDURE mpz_millerrabin (f0 : T; f1 : INTEGER) : INTEGER =
+PROCEDURE millerrabin (f0 : T; f1 : INTEGER) : INTEGER =
   BEGIN
-    RETURN P.c_mpz_millerrabin(ADR(f0.val),f1)
-  END mpz_millerrabin;
+    RETURN P.c_millerrabin(ADR(f0.val),f1)
+  END millerrabin;
 
-PROCEDURE mpz_mod (f0 : T; f1 : T; f2 : T) =
+PROCEDURE mod (f0 : T; f1 : T; f2 : T) =
   BEGIN
-    P.c_mpz_mod(ADR(f0.val),ADR(f1.val),ADR(f2.val))
-  END mpz_mod;
+    P.c_mod(ADR(f0.val),ADR(f1.val),ADR(f2.val))
+  END mod;
 
-PROCEDURE mpz_mul (f0 : T; f1 : T; f2 : T) =
+PROCEDURE mul (f0 : T; f1 : T; f2 : T) =
   BEGIN
-    P.c_mpz_mul(ADR(f0.val),ADR(f1.val),ADR(f2.val))
-  END mpz_mul;
+    P.c_mul(ADR(f0.val),ADR(f1.val),ADR(f2.val))
+  END mul;
 
-PROCEDURE mpz_mul_2exp (f0 : T; f1 : T; f2 : Word.T) =
+PROCEDURE mul_2exp (f0 : T; f1 : T; f2 : Word.T) =
   BEGIN
-    P.c_mpz_mul_2exp(ADR(f0.val),ADR(f1.val),f2)
-  END mpz_mul_2exp;
+    P.c_mul_2exp(ADR(f0.val),ADR(f1.val),f2)
+  END mul_2exp;
 
-PROCEDURE mpz_mul_ui (f0 : T; f1 : T; f2 : Word.T) =
+PROCEDURE mul_ui (f0 : T; f1 : T; f2 : Word.T) =
   BEGIN
-    P.c_mpz_mul_ui(ADR(f0.val),ADR(f1.val),f2)
-  END mpz_mul_ui;
+    P.c_mul_ui(ADR(f0.val),ADR(f1.val),f2)
+  END mul_ui;
 
-PROCEDURE mpz_neg (f0 : T; f1 : T) =
+PROCEDURE neg (f0 : T; f1 : T) =
   BEGIN
-    P.c_mpz_neg(ADR(f0.val),ADR(f1.val))
-  END mpz_neg;
+    P.c_neg(ADR(f0.val),ADR(f1.val))
+  END neg;
 
-PROCEDURE mpz_nextprime (f0 : T; f1 : T) =
+PROCEDURE nextprime (f0 : T; f1 : T) =
   BEGIN
-    P.c_mpz_nextprime(ADR(f0.val),ADR(f1.val))
-  END mpz_nextprime;
+    P.c_nextprime(ADR(f0.val),ADR(f1.val))
+  END nextprime;
 
-PROCEDURE mpz_perfect_power_p (f0 : T) : INTEGER =
+PROCEDURE perfect_power_p (f0 : T) : INTEGER =
   BEGIN
-    RETURN P.c_mpz_perfect_power_p(ADR(f0.val))
-  END mpz_perfect_power_p;
+    RETURN P.c_perfect_power_p(ADR(f0.val))
+  END perfect_power_p;
 
-PROCEDURE mpz_perfect_square_p (f0 : T) : INTEGER =
+PROCEDURE perfect_square_p (f0 : T) : INTEGER =
   BEGIN
-    RETURN P.c_mpz_perfect_square_p(ADR(f0.val))
-  END mpz_perfect_square_p;
+    RETURN P.c_perfect_square_p(ADR(f0.val))
+  END perfect_square_p;
 
-PROCEDURE mpz_popcount (f0 : T) : Word.T =
+PROCEDURE popcount (f0 : T) : Word.T =
   BEGIN
-    RETURN P.c_mpz_popcount(ADR(f0.val))
-  END mpz_popcount;
+    RETURN P.c_popcount(ADR(f0.val))
+  END popcount;
 
-PROCEDURE mpz_pow_ui (f0 : T; f1 : T; f2 : Word.T) =
+PROCEDURE pow_ui (f0 : T; f1 : T; f2 : Word.T) =
   BEGIN
-    P.c_mpz_pow_ui(ADR(f0.val),ADR(f1.val),f2)
-  END mpz_pow_ui;
+    P.c_pow_ui(ADR(f0.val),ADR(f1.val),f2)
+  END pow_ui;
 
-PROCEDURE mpz_powm (f0 : T; f1 : T; f2 : T; f3 : T) =
+PROCEDURE powm (f0 : T; f1 : T; f2 : T; f3 : T) =
   BEGIN
-    P.c_mpz_powm(ADR(f0.val),ADR(f1.val),ADR(f2.val),ADR(f3.val))
-  END mpz_powm;
+    P.c_powm(ADR(f0.val),ADR(f1.val),ADR(f2.val),ADR(f3.val))
+  END powm;
 
-PROCEDURE mpz_powm_ui (f0 : T; f1 : T; f2 : Word.T; f3 : T) =
+PROCEDURE powm_ui (f0 : T; f1 : T; f2 : Word.T; f3 : T) =
   BEGIN
-    P.c_mpz_powm_ui(ADR(f0.val),ADR(f1.val),f2,ADR(f3.val))
-  END mpz_powm_ui;
+    P.c_powm_ui(ADR(f0.val),ADR(f1.val),f2,ADR(f3.val))
+  END powm_ui;
 
-PROCEDURE mpz_probab_prime_p (f0 : T; f1 : INTEGER) : INTEGER =
+PROCEDURE probab_prime_p (f0 : T; f1 : INTEGER) : INTEGER =
   BEGIN
-    RETURN P.c_mpz_probab_prime_p(ADR(f0.val),f1)
-  END mpz_probab_prime_p;
+    RETURN P.c_probab_prime_p(ADR(f0.val),f1)
+  END probab_prime_p;
 
-PROCEDURE mpz_realloc2 (f0 : T; f1 : Word.T) =
+PROCEDURE realloc2 (f0 : T; f1 : Word.T) =
   BEGIN
-    P.c_mpz_realloc2(ADR(f0.val),f1)
-  END mpz_realloc2;
+    P.c_realloc2(ADR(f0.val),f1)
+  END realloc2;
 
-PROCEDURE mpz_remove (f0 : T; f1 : T; f2 : T) : Word.T =
+PROCEDURE remove (f0 : T; f1 : T; f2 : T) : Word.T =
   BEGIN
-    RETURN P.c_mpz_remove(ADR(f0.val),ADR(f1.val),ADR(f2.val))
-  END mpz_remove;
+    RETURN P.c_remove(ADR(f0.val),ADR(f1.val),ADR(f2.val))
+  END remove;
 
-PROCEDURE mpz_root (f0 : T; f1 : T; f2 : Word.T) : INTEGER =
+PROCEDURE root (f0 : T; f1 : T; f2 : Word.T) : INTEGER =
   BEGIN
-    RETURN P.c_mpz_root(ADR(f0.val),ADR(f1.val),f2)
-  END mpz_root;
+    RETURN P.c_root(ADR(f0.val),ADR(f1.val),f2)
+  END root;
 
-PROCEDURE mpz_rootrem (f0 : T; f1 : T; f2 : T; f3 : Word.T) =
+PROCEDURE rootrem (f0 : T; f1 : T; f2 : T; f3 : Word.T) =
   BEGIN
-    P.c_mpz_rootrem(ADR(f0.val),ADR(f1.val),ADR(f2.val),f3)
-  END mpz_rootrem;
+    P.c_rootrem(ADR(f0.val),ADR(f1.val),ADR(f2.val),f3)
+  END rootrem;
 
-PROCEDURE mpz_scan0 (f0 : T; f1 : Word.T) : Word.T =
+PROCEDURE scan0 (f0 : T; f1 : Word.T) : Word.T =
   BEGIN
-    RETURN P.c_mpz_scan0(ADR(f0.val),f1)
-  END mpz_scan0;
+    RETURN P.c_scan0(ADR(f0.val),f1)
+  END scan0;
 
-PROCEDURE mpz_scan1 (f0 : T; f1 : Word.T) : Word.T =
+PROCEDURE scan1 (f0 : T; f1 : Word.T) : Word.T =
   BEGIN
-    RETURN P.c_mpz_scan1(ADR(f0.val),f1)
-  END mpz_scan1;
+    RETURN P.c_scan1(ADR(f0.val),f1)
+  END scan1;
 
-PROCEDURE mpz_set (f0 : T; f1 : T) =
+PROCEDURE set (f0 : T; f1 : T) =
   BEGIN
-    P.c_mpz_set(ADR(f0.val),ADR(f1.val))
-  END mpz_set;
+    P.c_set(ADR(f0.val),ADR(f1.val))
+  END set;
 
-PROCEDURE mpz_set_d (f0 : T; f1 : LONGREAL) =
+PROCEDURE set_d (f0 : T; f1 : LONGREAL) =
   BEGIN
-    P.c_mpz_set_d(ADR(f0.val),f1)
-  END mpz_set_d;
+    P.c_set_d(ADR(f0.val),f1)
+  END set_d;
 
-PROCEDURE mpz_set_si (f0 : T; f1 : INTEGER) =
+PROCEDURE set_si (f0 : T; f1 : INTEGER) =
   BEGIN
-    P.c_mpz_set_si(ADR(f0.val),f1)
-  END mpz_set_si;
+    P.c_set_si(ADR(f0.val),f1)
+  END set_si;
 
-PROCEDURE mpz_set_str (f0 : T; f1 : TEXT; f2 : INTEGER) : INTEGER =
+PROCEDURE set_str (f0 : T; f1 : TEXT; f2 : INTEGER) : INTEGER =
   BEGIN
-    RETURN P.c_mpz_set_str(ADR(f0.val),M3toC.CopyTtoS(f1),f2)
-  END mpz_set_str;
+    RETURN P.c_set_str(ADR(f0.val),M3toC.CopyTtoS(f1),f2)
+  END set_str;
 
-PROCEDURE mpz_set_ui (f0 : T; f1 : Word.T) =
+PROCEDURE set_ui (f0 : T; f1 : Word.T) =
   BEGIN
-    P.c_mpz_set_ui(ADR(f0.val),f1)
-  END mpz_set_ui;
+    P.c_set_ui(ADR(f0.val),f1)
+  END set_ui;
 
-PROCEDURE mpz_setbit (f0 : T; f1 : Word.T) =
+PROCEDURE setbit (f0 : T; f1 : Word.T) =
   BEGIN
-    P.c_mpz_setbit(ADR(f0.val),f1)
-  END mpz_setbit;
+    P.c_setbit(ADR(f0.val),f1)
+  END setbit;
 
-PROCEDURE mpz_size (f0 : T) : CARDINAL =
+PROCEDURE size (f0 : T) : CARDINAL =
   BEGIN
-    RETURN P.c_mpz_size(ADR(f0.val))
-  END mpz_size;
+    RETURN P.c_size(ADR(f0.val))
+  END size;
 
-PROCEDURE mpz_sizeinbase (f0 : T; f1 : INTEGER) : CARDINAL =
+PROCEDURE sizeinbase (f0 : T; f1 : INTEGER) : CARDINAL =
   BEGIN
-    RETURN P.c_mpz_sizeinbase(ADR(f0.val),f1)
-  END mpz_sizeinbase;
+    RETURN P.c_sizeinbase(ADR(f0.val),f1)
+  END sizeinbase;
 
-PROCEDURE mpz_sqrt (f0 : T; f1 : T) =
+PROCEDURE sqrt (f0 : T; f1 : T) =
   BEGIN
-    P.c_mpz_sqrt(ADR(f0.val),ADR(f1.val))
-  END mpz_sqrt;
+    P.c_sqrt(ADR(f0.val),ADR(f1.val))
+  END sqrt;
 
-PROCEDURE mpz_sqrtrem (f0 : T; f1 : T; f2 : T) =
+PROCEDURE sqrtrem (f0 : T; f1 : T; f2 : T) =
   BEGIN
-    P.c_mpz_sqrtrem(ADR(f0.val),ADR(f1.val),ADR(f2.val))
-  END mpz_sqrtrem;
+    P.c_sqrtrem(ADR(f0.val),ADR(f1.val),ADR(f2.val))
+  END sqrtrem;
 
-PROCEDURE mpz_sub (f0 : T; f1 : T; f2 : T) =
+PROCEDURE sub (f0 : T; f1 : T; f2 : T) =
   BEGIN
-    P.c_mpz_sub(ADR(f0.val),ADR(f1.val),ADR(f2.val))
-  END mpz_sub;
+    P.c_sub(ADR(f0.val),ADR(f1.val),ADR(f2.val))
+  END sub;
 
-PROCEDURE mpz_sub_ui (f0 : T; f1 : T; f2 : Word.T) =
+PROCEDURE sub_ui (f0 : T; f1 : T; f2 : Word.T) =
   BEGIN
-    P.c_mpz_sub_ui(ADR(f0.val),ADR(f1.val),f2)
-  END mpz_sub_ui;
+    P.c_sub_ui(ADR(f0.val),ADR(f1.val),f2)
+  END sub_ui;
 
-PROCEDURE mpz_ui_sub (f0 : T; f1 : Word.T; f2 : T) =
+PROCEDURE ui_sub (f0 : T; f1 : Word.T; f2 : T) =
   BEGIN
-    P.c_mpz_ui_sub(ADR(f0.val),f1,ADR(f2.val))
-  END mpz_ui_sub;
+    P.c_ui_sub(ADR(f0.val),f1,ADR(f2.val))
+  END ui_sub;
 
-PROCEDURE mpz_submul (f0 : T; f1 : T; f2 : T) =
+PROCEDURE submul (f0 : T; f1 : T; f2 : T) =
   BEGIN
-    P.c_mpz_submul(ADR(f0.val),ADR(f1.val),ADR(f2.val))
-  END mpz_submul;
+    P.c_submul(ADR(f0.val),ADR(f1.val),ADR(f2.val))
+  END submul;
 
-PROCEDURE mpz_submul_ui (f0 : T; f1 : T; f2 : Word.T) =
+PROCEDURE submul_ui (f0 : T; f1 : T; f2 : Word.T) =
   BEGIN
-    P.c_mpz_submul_ui(ADR(f0.val),ADR(f1.val),f2)
-  END mpz_submul_ui;
+    P.c_submul_ui(ADR(f0.val),ADR(f1.val),f2)
+  END submul_ui;
 
-PROCEDURE mpz_swap (f0 : T; f1 : T) =
+PROCEDURE swap (f0 : T; f1 : T) =
   BEGIN
-    P.c_mpz_swap(ADR(f0.val),ADR(f1.val))
-  END mpz_swap;
+    P.c_swap(ADR(f0.val),ADR(f1.val))
+  END swap;
 
-PROCEDURE mpz_tdiv_ui (f0 : T; f1 : Word.T) : Word.T =
+PROCEDURE tdiv_ui (f0 : T; f1 : Word.T) : Word.T =
   BEGIN
-    RETURN P.c_mpz_tdiv_ui(ADR(f0.val),f1)
-  END mpz_tdiv_ui;
+    RETURN P.c_tdiv_ui(ADR(f0.val),f1)
+  END tdiv_ui;
 
-PROCEDURE mpz_tdiv_q (f0 : T; f1 : T; f2 : T) =
+PROCEDURE tdiv_q (f0 : T; f1 : T; f2 : T) =
   BEGIN
-    P.c_mpz_tdiv_q(ADR(f0.val),ADR(f1.val),ADR(f2.val))
-  END mpz_tdiv_q;
+    P.c_tdiv_q(ADR(f0.val),ADR(f1.val),ADR(f2.val))
+  END tdiv_q;
 
-PROCEDURE mpz_tdiv_q_2exp (f0 : T; f1 : T; f2 : Word.T) =
+PROCEDURE tdiv_q_2exp (f0 : T; f1 : T; f2 : Word.T) =
   BEGIN
-    P.c_mpz_tdiv_q_2exp(ADR(f0.val),ADR(f1.val),f2)
-  END mpz_tdiv_q_2exp;
+    P.c_tdiv_q_2exp(ADR(f0.val),ADR(f1.val),f2)
+  END tdiv_q_2exp;
 
-PROCEDURE mpz_tdiv_q_ui (f0 : T; f1 : T; f2 : Word.T) : Word.T =
+PROCEDURE tdiv_q_ui (f0 : T; f1 : T; f2 : Word.T) : Word.T =
   BEGIN
-    RETURN P.c_mpz_tdiv_q_ui(ADR(f0.val),ADR(f1.val),f2)
-  END mpz_tdiv_q_ui;
+    RETURN P.c_tdiv_q_ui(ADR(f0.val),ADR(f1.val),f2)
+  END tdiv_q_ui;
 
-PROCEDURE mpz_tdiv_qr (f0 : T; f1 : T; f2 : T; f3 : T) =
+PROCEDURE tdiv_qr (f0 : T; f1 : T; f2 : T; f3 : T) =
   BEGIN
-    P.c_mpz_tdiv_qr(ADR(f0.val),ADR(f1.val),ADR(f2.val),ADR(f3.val))
-  END mpz_tdiv_qr;
+    P.c_tdiv_qr(ADR(f0.val),ADR(f1.val),ADR(f2.val),ADR(f3.val))
+  END tdiv_qr;
 
-PROCEDURE mpz_tdiv_qr_ui (f0 : T; f1 : T; f2 : T; f3 : Word.T) : Word.T =
+PROCEDURE tdiv_qr_ui (f0 : T; f1 : T; f2 : T; f3 : Word.T) : Word.T =
   BEGIN
-    RETURN P.c_mpz_tdiv_qr_ui(ADR(f0.val),ADR(f1.val),ADR(f2.val),f3)
-  END mpz_tdiv_qr_ui;
+    RETURN P.c_tdiv_qr_ui(ADR(f0.val),ADR(f1.val),ADR(f2.val),f3)
+  END tdiv_qr_ui;
 
-PROCEDURE mpz_tdiv_r (f0 : T; f1 : T; f2 : T) =
+PROCEDURE tdiv_r (f0 : T; f1 : T; f2 : T) =
   BEGIN
-    P.c_mpz_tdiv_r(ADR(f0.val),ADR(f1.val),ADR(f2.val))
-  END mpz_tdiv_r;
+    P.c_tdiv_r(ADR(f0.val),ADR(f1.val),ADR(f2.val))
+  END tdiv_r;
 
-PROCEDURE mpz_tdiv_r_2exp (f0 : T; f1 : T; f2 : Word.T) =
+PROCEDURE tdiv_r_2exp (f0 : T; f1 : T; f2 : Word.T) =
   BEGIN
-    P.c_mpz_tdiv_r_2exp(ADR(f0.val),ADR(f1.val),f2)
-  END mpz_tdiv_r_2exp;
+    P.c_tdiv_r_2exp(ADR(f0.val),ADR(f1.val),f2)
+  END tdiv_r_2exp;
 
-PROCEDURE mpz_tdiv_r_ui (f0 : T; f1 : T; f2 : Word.T) : Word.T =
+PROCEDURE tdiv_r_ui (f0 : T; f1 : T; f2 : Word.T) : Word.T =
   BEGIN
-    RETURN P.c_mpz_tdiv_r_ui(ADR(f0.val),ADR(f1.val),f2)
-  END mpz_tdiv_r_ui;
+    RETURN P.c_tdiv_r_ui(ADR(f0.val),ADR(f1.val),f2)
+  END tdiv_r_ui;
 
-PROCEDURE mpz_tstbit (f0 : T; f1 : Word.T) : INTEGER =
+PROCEDURE tstbit (f0 : T; f1 : Word.T) : INTEGER =
   BEGIN
-    RETURN P.c_mpz_tstbit(ADR(f0.val),f1)
-  END mpz_tstbit;
+    RETURN P.c_tstbit(ADR(f0.val),f1)
+  END tstbit;
 
-PROCEDURE mpz_ui_pow_ui (f0 : T; f1 : Word.T; f2 : Word.T) =
+PROCEDURE ui_pow_ui (f0 : T; f1 : Word.T; f2 : Word.T) =
   BEGIN
-    P.c_mpz_ui_pow_ui(ADR(f0.val),f1,f2)
-  END mpz_ui_pow_ui;
+    P.c_ui_pow_ui(ADR(f0.val),f1,f2)
+  END ui_pow_ui;
 
-PROCEDURE mpz_xor (f0 : T; f1 : T; f2 : T) =
+PROCEDURE xor (f0 : T; f1 : T; f2 : T) =
   BEGIN
-    P.c_mpz_xor(ADR(f0.val),ADR(f1.val),ADR(f2.val))
-  END mpz_xor;
+    P.c_xor(ADR(f0.val),ADR(f1.val),ADR(f2.val))
+  END xor;
 
 PROCEDURE mpf_set_default_prec (f0 : Word.T) =
   BEGIN

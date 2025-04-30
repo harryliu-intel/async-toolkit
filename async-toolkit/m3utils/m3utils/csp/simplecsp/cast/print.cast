@@ -1,0 +1,30 @@
+module print;
+
+define HELLOWORLD()()
+{
+  csp {
+    print("hello, world!")
+  }
+}
+
+define INT()()
+{
+  csp {
+    int x=12;
+    print(x);
+
+    print(hex(x));
+
+    print(13);
+  }
+}
+
+define BOOL()()
+{
+  csp {
+    bool x=true;
+    print(x);
+
+    print(false);
+  }
+}

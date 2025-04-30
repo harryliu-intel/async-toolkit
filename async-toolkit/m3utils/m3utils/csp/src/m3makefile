@@ -95,8 +95,7 @@ SchemeStubs ("Mpfr")
 SchemeStubs ("Wx")
 
 SchemeStubs ("Mpz")
-SchemeStubs ("MpzOps")
-SchemeStubs ("MpzP")
+%SchemeStubs ("MpzP")
 
 ExportSchemeStubs ("cspc")
 importSchemeStubs()
