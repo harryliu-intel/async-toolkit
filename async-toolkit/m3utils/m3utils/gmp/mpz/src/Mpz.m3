@@ -3,7 +3,6 @@ UNSAFE MODULE Mpz;
 IMPORT MpzRep;
 
 IMPORT MpzP AS P;
-IMPORT Word;
 IMPORT WeakRef;
 IMPORT M3toC;
 
@@ -28,11 +27,11 @@ PROCEDURE Format(t : T; base := FormatBase.Decimal) : TEXT =
     CASE base OF
       FormatBase.Binary => <*ASSERT FALSE*>
     |
-      FormatBase.Octal => 
+      FormatBase.Octal =>  RETURN FormatOctal(t)
     |
-      FormatBase.Decimal => 
+      FormatBase.Decimal => RETURN FormatDecimal(t)
     |
-      FormatBase.Hexadecimal => 
+      FormatBase.Hexadecimal => RETURN FormatHexadecimal(t)
     END     
   END Format;
   
@@ -48,11 +47,25 @@ PROCEDURE FormatDecimal(t : T) : TEXT =
   END FormatDecimal;
 
 PROCEDURE FormatHexadecimal(t : T) : TEXT =
+  VAR
+    cs := P.mpz_format_hexadecimal(ADR(t.val));
   BEGIN
+    TRY
+      RETURN M3toC.CopyStoT(cs)
+    FINALLY
+      P.mpz_free_formatted(cs)
+    END
   END FormatHexadecimal;
 
 PROCEDURE FormatOctal(t : T) : TEXT =
+  VAR
+    cs := P.mpz_format_octal(ADR(t.val));
   BEGIN
+    TRY
+      RETURN M3toC.CopyStoT(cs)
+    FINALLY
+      P.mpz_free_formatted(cs)
+    END
   END FormatOctal;
 
 BEGIN END Mpz.
