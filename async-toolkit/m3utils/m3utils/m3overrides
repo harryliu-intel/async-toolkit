@@ -218,3 +218,7 @@ override("parseliberty", TOP & "/liberty")
 override("cspsimlib", TOP & "/csp")
 override("cspgrammar", TOP & "/csp")
 
+override("mpz", TOP & "/gmp")
+
+SYSTEM_LIBS{"MPZ"} = [ "-lgmp" ]
+SYSTEM_LIBORDER += [ "MPZ" ] % need this, too

@@ -9,7 +9,8 @@ IMPORT Debug;
 
 CONST doDebug = FALSE;
 
-CONST OK = SET OF CHAR { 'a'..'z' , 'A'..'Z' , '0'..'9' };
+CONST OK  = SET OF CHAR { 'a'..'z' , 'A'..'Z' , '0'..'9' };
+CONST OK_ = SET OF CHAR { 'a'..'z' , 'A'..'Z' , '0'..'9', '_' };
       
 CONST Prefix = "m3__";
 
@@ -26,6 +27,16 @@ PROCEDURE GetChars(str : TEXT) : REF ARRAY OF CHAR =
   END GetChars;
 
 PROCEDURE Escape(str : TEXT) : TEXT =
+  BEGIN
+    RETURN EscapeI(str, OK)
+  END Escape;
+
+PROCEDURE EscapeU(str : TEXT) : TEXT =
+  BEGIN
+    RETURN EscapeI(str, OK_)
+  END EscapeU;
+  
+PROCEDURE EscapeI(str : TEXT; ok : SET OF CHAR) : TEXT =
   VAR
     seq := NEW(CharSeq.T).init();
   BEGIN
@@ -34,7 +45,7 @@ PROCEDURE Escape(str : TEXT) : TEXT =
     END;
     FOR i := 0 TO Text.Length(str) - 1 DO
       WITH c = Text.GetChar(str, i) DO
-        IF c IN OK THEN
+        IF c IN ok THEN
           seq.addhi(c)
         ELSE
           seq.addhi('_');
@@ -48,7 +59,7 @@ PROCEDURE Escape(str : TEXT) : TEXT =
       END
     END;
     RETURN StuffCharSeq(seq)
-  END Escape;
+  END EscapeI;
 
 PROCEDURE StuffCharSeq(seq : CharSeq.T) : TEXT =
   VAR
@@ -59,8 +70,18 @@ PROCEDURE StuffCharSeq(seq : CharSeq.T) : TEXT =
     END;
     RETURN Text.FromChars(arr^)
   END StuffCharSeq;
-  
+
 PROCEDURE Unescape(str : TEXT) : TEXT RAISES { Error } =
+  BEGIN
+    RETURN UnescapeI(str, OK)
+  END Unescape;
+
+PROCEDURE UnescapeU(str : TEXT) : TEXT RAISES { Error } =
+  BEGIN
+    RETURN UnescapeI(str, OK_)
+  END UnescapeU;
+  
+PROCEDURE UnescapeI(str : TEXT; ok : SET OF CHAR) : TEXT RAISES { Error } =
   VAR
     seq := NEW(CharSeq.T).init();
     i := 0;
@@ -113,6 +134,6 @@ PROCEDURE Unescape(str : TEXT) : TEXT RAISES { Error } =
 
     RETURN StuffCharSeq(seq)
     
-  END Unescape;
+  END UnescapeI;
 
 BEGIN END M3Ident.

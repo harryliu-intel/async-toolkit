@@ -8,7 +8,12 @@ import ("sstubgen")
 import ("parseparams")
 import ("cspgrammar")
 import ("cspsimlib")
+import ("mpfr")
 
+%SYSTEM_LIBS{"MPZ"} = [ "-lgmp" ]
+%SYSTEM_LIBORDER += [ "MPZ" ] % need this, too
+
+import ("mpz")
 %if defined("CM3_VERSION")
 %        m3_optimize("T")
 %end
@@ -85,6 +90,13 @@ SchemeStubs ("FileFinder")
 SchemeStubs ("RegEx")
 SchemeStubs ("TextSeq")
 SchemeStubs ("Fingerprint")
+SchemeStubs ("Mpfr")
+
+SchemeStubs ("Wx")
+
+SchemeStubs ("Mpz")
+SchemeStubs ("MpzOps")
+SchemeStubs ("MpzP")
 
 ExportSchemeStubs ("cspc")
 importSchemeStubs()

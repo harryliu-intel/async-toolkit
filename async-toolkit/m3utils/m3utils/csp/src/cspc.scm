@@ -258,8 +258,10 @@
   (loadfile read-big-int fn)
   )
 
+(define (load-normal fn) (loadfile read fn))
+
 (define (read-importlist fn)
-  (loadfile read fn)
+  (load-normal fn)
   )
 
 

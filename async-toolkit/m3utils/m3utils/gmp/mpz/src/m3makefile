@@ -1,0 +1,28 @@
+import ("libm3")
+import ("m3core")
+import ("cit_util")
+
+% we should create this at the top level of the tree and use that
+% to control the build
+%
+%SYSTEM_LIBS{"MPZ"} = [ "-lgmp" ]
+%SYSTEM_LIBORDER += [ "MPZ" ] % need this, too
+
+if SYSTEM_LIBS contains "MPZ"
+        import_sys_lib ("MPZ")
+        c_source("MpzC")
+end
+
+foreach lib in SYSTEM_LIBS
+	write (" lib " & lib & " " & SYSTEM_LIBS{lib} & "\n")
+end
+
+Interface ("MpzP")
+interface ("MpzRep")
+
+Module ("Mpz")
+Module ("MpzOps")
+
+library ("mpz")
+%implementation ("TestMpz")
+%program ("mpz")

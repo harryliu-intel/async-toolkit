@@ -2,8 +2,6 @@ INTERFACE Mpfr;
 IMPORT MpfrRoundingMode;
 
 (*
- * Garbage collector support has not yet been added!  Will leak!!!
- *
  * Author : Mika Nystrom <mika.nystroem@intel.com> December 2020
  *)
 

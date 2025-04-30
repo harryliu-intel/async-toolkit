@@ -5,7 +5,8 @@
 mpfr_ptr 
 MpfrC__alloc(void)
 {
-  mpfr_ptr res=malloc(sizeof(mpfr_t));
+  mpfr_ptr res=malloc(sizeof(mpfr_t)); /* not sure it's safe to use malloc
+                                          from Modula-3 */
 
 #if 0
   printf("%s:%d making %x\n", __FILE__, __LINE__, res);
