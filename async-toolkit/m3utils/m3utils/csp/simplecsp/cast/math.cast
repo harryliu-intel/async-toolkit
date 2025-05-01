@@ -222,3 +222,37 @@ define NARROWSYS()()
     NARROWR r(c);
   }
 }
+
+define OVERFLOW()()
+{
+  csp {
+    function f(int(4) -+z) =
+    (
+     z++;
+     print("z = " + z);
+     );
+  
+    int(4) x;
+    x = 14;
+    f(x);
+    f(x);
+  }
+}
+
+define SOVERFLOW()()
+{
+  csp {
+    function f(sint(4) -+z) =
+    (
+     z++;
+     print("z = " + z);
+     );
+  
+    sint(4) x;
+    x = 6;
+    f(x);
+    f(x);
+    f(x);
+  }
+}
+    
