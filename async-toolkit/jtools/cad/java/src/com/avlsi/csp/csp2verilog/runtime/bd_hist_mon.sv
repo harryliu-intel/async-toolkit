@@ -59,6 +59,8 @@ always @( \R.q ) begin
   end
   else begin
     $display("%m: R.q fires @ %0t due to BOTH L.q and R.a @ %0t", $realtime, t_Lq);
+    //Picking L.q
+    histmon_add_transition({ModName,".\\R.q "}, $realtime, {ModName,".\\L.q "}, t_Lq, "ctrl_mon");
   end
 end
 
@@ -75,6 +77,8 @@ always @( \L.a ) begin
   end
   else begin
     $display("%m: L.a fires @ %0t due to BOTH L.q and R.a @ %0t", $realtime, t_Lq);
+    //Picking L.q
+    histmon_add_transition({ModName,".\\L.a "}, $realtime, {ModName,".\\L.q "}, t_Lq, "ctrl_mon");    
   end
 end
 
