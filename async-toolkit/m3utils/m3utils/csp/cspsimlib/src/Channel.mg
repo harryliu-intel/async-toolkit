@@ -3,6 +3,8 @@ IMPORT Debug;
 IMPORT CspCompiledProcess AS Process;
 IMPORT CspCompiledScheduler AS Scheduler;
 FROM Fmt IMPORT Int, F, Bool;
+IMPORT DynamicInt;
+IMPORT Mpz;
 
 CONST doDebug = FALSE;
 
@@ -12,7 +14,7 @@ PROCEDURE SendProbe(VAR c : T; cl : Process.Closure) : BOOLEAN =
   END SendProbe;
   
 PROCEDURE Send(VAR      c : T;
-               READONLY x : Type.T;
+               READONLY x : Item;
                cl         : Process.Closure) : BOOLEAN =
   BEGIN
     (* the buffer is always big enough to write into 
@@ -126,7 +128,7 @@ PROCEDURE RecvProbe(VAR c : T; cl : Process.Closure) : BOOLEAN =
   END RecvProbe;
   
 PROCEDURE Recv(VAR      c : T;
-               VAR      x : Type.T;
+               VAR      x : Item;
                cl         : Process.Closure) : BOOLEAN =
   BEGIN
     VAR
@@ -206,5 +208,58 @@ PROCEDURE New(nm : TEXT; slack : CARDINAL) : REF T =
                rd    := slack,
                data  := NEW(REF Buff, slack + 1))
   END New;
-  
+
+PROCEDURE SendNative(VAR c : T;
+                     x     : INTEGER;
+                     cl    : Process.Closure) : BOOLEAN =
+  VAR
+    toSend := Item { 0, .. };
+  BEGIN
+    toSend[0] := x;
+    IF x < 0 THEN
+      FOR i := 1 TO LAST(toSend) DO
+        toSend[i] := -1
+      END
+    END;
+    RETURN Send(c, toSend, cl)
+  END SendNative;
+
+PROCEDURE SendDynamic(VAR c : T;
+                      x     : DynamicInt.T;
+                      cl    : Process.Closure) : BOOLEAN =
+  VAR
+    toSend : Item;
+  BEGIN
+    Mpz.Export(toSend, x);
+    RETURN Send(c, toSend, cl)
+  END SendDynamic;
+
+PROCEDURE RecvNative(VAR      c : T;
+                     VAR      x : INTEGER;
+                     cl         : Process.Closure) : BOOLEAN =
+  VAR
+    toRecv : Item;
+  BEGIN
+    IF Recv(c, toRecv, cl) THEN
+      x := toRecv[0];
+      RETURN TRUE
+    ELSE
+      RETURN FALSE
+    END
+  END RecvNative;
+
+PROCEDURE RecvDynamic(VAR      c : T;
+                      x(*OUT*)   : DynamicInt.T;
+                      cl         : Process.Closure) : BOOLEAN =
+  VAR
+    toRecv : Item;
+  BEGIN
+    IF Recv(c, toRecv, cl) THEN
+      Mpz.Import(x, toRecv);
+      RETURN TRUE
+    ELSE
+      RETURN FALSE
+    END
+  END RecvDynamic;
+
 BEGIN END Channel.

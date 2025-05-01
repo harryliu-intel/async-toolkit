@@ -197,9 +197,28 @@ define WIDE()(bd(64) -L)
   }
 }
 
-define NARROW()(bd(32) -L)
+define NARROWR()(bd(32) -L)
 {
   csp {
-    L?x ; print(x)
+    L?x ;
+    //x++;
+    y = x + 12;
+    print("y = " + y)
+  }
+}
+
+define NARROWS()(bd(32) +R)
+{
+  csp {
+    R!12
+  }
+}
+
+define NARROWSYS()()
+{
+  subcells {
+    bd(32) c;
+    NARROWS s(c);
+    NARROWR r(c);
   }
 }

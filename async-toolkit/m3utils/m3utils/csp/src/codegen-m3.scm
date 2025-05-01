@@ -143,8 +143,24 @@
     )
   )
 
+;; we move all the locals to the process closure for now...
+;;(define m3-frame-variables get-shared-variables)
+(define (m3-frame-variables the-blocks the-decls cell-info)
+  (let* ((bvars (get-block-variables the-blocks cell-info))
+         (svars (get-shared-variables the-blocks cell-info))
+         (dvars
+          (map get-var1-id
+               (filter
+                (compose m3-dynamic-int-type? get-var1-type)
+                the-decls)))
+
+          )
+    (set-union svars dvars)
+    )
+  )
+
 (define (m3-write-shared-locals w the-blocks cell-info the-decls)
-  (let* ((shared-local-ids (get-shared-variables the-blocks cell-info))
+  (let* ((shared-local-ids (m3-frame-variables the-blocks the-decls cell-info))
          (v1s              (map (curry find-decl the-decls) shared-local-ids))
          )
     (w "    (* shared locals list *)" dnl)
@@ -298,7 +314,7 @@
 
 (define (channel-port? pdef) (eq? 'channel (car (cadddr pdef))))
 
-(define (m3-write-build-defn w cell-info the-blocks fork-counts)
+(define (m3-write-build-defn w cell-info the-blocks the-decls fork-counts)
   (let ((proc-ports (get-ports cell-info)))
     (m3-write-build-signature w cell-info)
     (w " = " dnl)
@@ -312,7 +328,14 @@
              (w "                     ," ass  dnl))
            asslist)
       );;tel
-    
+
+    (let ((dynamics (filter m3-dynamic-int-type?
+                            (map get-var1-type the-decls))))
+
+      ;; write in initialization of Mpz variables
+
+      )
+
     (w "      ) DO" dnl)
 
     ;; build body
@@ -770,7 +793,7 @@
          (rhs (get-assign-rhs x))
          (comp-lhs 
           (sa (m3-format-designator pc lhs) " := ")))
-    
+
     (cond ((ident? rhs)
            (sa comp-lhs (force-type pc 'native rhs)))
         
@@ -787,7 +810,7 @@
               
           ((unary-expr? rhs)
            (sa comp-lhs
-               (m3-compile-native-unop pc rhs)))
+               (m3-compile-native-unop pc rhs))) 
               
           ((bits? rhs)
            (sa comp-lhs
@@ -800,6 +823,23 @@
           );;dnoc
     );;*tel
   )  
+
+(define (m3-compile-dynamic-int-assign pc x)
+  (dis "m3-compile-dynamic-int-assign : x : " x dnl)
+
+  (let* ((lhs (get-assign-lhs x))
+         (rhs (get-assign-rhs x))
+         (comp-lhs (m3-format-designator pc lhs))
+         )
+
+    (cond ((ident? rhs)
+           (sa "Mpz.set(" comp-lhs ", " (force-type pc 'dynamic rhs)))
+
+          (else (error "m3-compile-dynamic-int-assign")))
+
+    )
+  
+ )
 
 (define (m3-compile-native-recv-expression pc rhs)
   )
@@ -1007,9 +1047,9 @@
          (literal      (literal? (get-send-rhs stmt)))
          )
 
-    (sa "VAR toSend : "
-        copy-type ".T := " (force-type pc port-class rhs)
-        "; BEGIN IF NOT "
+    (sa "VAR toSend := " ;; this isnt right, need to be more careful!
+        port-typenam ".Item  { " (force-type pc port-class rhs)
+        "} ; BEGIN IF NOT "
         port-typenam ".Send( " m3-pname "^ , toSend , cl ) THEN RETURN FALSE END END"
         )
     )
@@ -1034,20 +1074,20 @@
          )
     (define (null-rhs)
       (sa "VAR toRecv : "
-          copy-type".T; BEGIN IF NOT "
+          port-typenam".Item; BEGIN IF NOT "
           port-typenam ".Recv( " m3-pname "^ , toRecv , cl ) THEN RETURN FALSE END END")
       )
 
     (define (nonnull-rhs)
       (let ((rhs-class    (classify-type pc rhs)))
         (sa "VAR toRecv : "
-            copy-type".T; BEGIN IF NOT "
+            port-typenam".Item; BEGIN IF NOT "
             port-typenam ".Recv( " m3-pname "^ , toRecv , cl ) THEN RETURN FALSE END;"
             (m3-format-designator pc rhs) " := "
             (m3-compile-convert-type
              port-class
              rhs-class
-             "toRecv"
+             "toRecv[0]"
              )
             " END"
             )
@@ -1306,7 +1346,7 @@
     ((SInt) (make-integer-type #t (cdr intf)))
     (else (error))))
 
-(define (m3-make-scope-map the-blocks cell-info)
+(define (m3-make-scope-map the-blocks the-decls cell-info)
   ;; a bound identifier can have four types of scope:
   ;; 1. block local
   ;; 2. process local
@@ -1319,7 +1359,7 @@
 
   (map (make-add! 'port) (map get-port-id (get-ports cell-info)))
 
-  (map (make-add! 'process) (get-shared-variables the-blocks cell-info))
+  (map (make-add! 'process) (m3-frame-variables the-blocks the-decls cell-info))
 
   (map (make-add! 'parallel-dummy)
                   (apply append (map find-parallel-loop-dummies the-blocks)))
@@ -1431,7 +1471,7 @@
          (ipfn       (string-append (build-dir) root ".imports"))
          (ipwr       (FileWr.Open ipfn))
          (fork-counts (get-fork-label-counts the-blocks))
-         (the-scopes (m3-make-scope-map the-blocks cell-info))
+         (the-scopes (m3-make-scope-map the-blocks the-decls cell-info))
 
          (m3-port-data-intfs
           (uniq equal?
@@ -1524,7 +1564,7 @@
                               fork-counts)
     (m3-write-block-decl      modu)
     (m3-write-closure-decl    modu)
-    (m3-write-build-defn      modu cell-info the-exec-blocks fork-counts)
+    (m3-write-build-defn      modu cell-info the-exec-blocks the-decls fork-counts)
 
     
     (let ((pc (list

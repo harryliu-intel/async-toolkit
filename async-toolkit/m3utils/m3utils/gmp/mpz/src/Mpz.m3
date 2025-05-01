@@ -5,6 +5,7 @@ IMPORT MpzRep;
 IMPORT MpzP AS P;
 IMPORT WeakRef;
 IMPORT M3toC;
+IMPORT Word;
 
 PROCEDURE New() : T =
   VAR
@@ -67,5 +68,32 @@ PROCEDURE FormatOctal(t : T) : TEXT =
       P.free_formatted(cs)
     END
   END FormatOctal;
+
+PROCEDURE Import(t : T; READONLY data : ARRAY OF Word.T) =
+  BEGIN
+    P.import(ADR(t.val), NUMBER(data), -1, BYTESIZE(Word.T), 0, 0, ADR(data[0]))
+  END Import;
+
+PROCEDURE Export(VAR data : ARRAY OF Word.T; t : T) =
+  CONST
+    numb = BITSIZE(Word.T);
+  BEGIN
+    FOR i := FIRST(data) TO LAST(data) DO
+      data[i] := 0
+    END;
+    
+    WITH count = (P.c_sizeinbase(ADR(t), 2) + numb - 1) DIV numb DO
+      IF count <= NUMBER(data) THEN
+        VAR
+          ndata := NEW(REF ARRAY OF Word.T, count);
+        BEGIN
+          P.export(ADR(ndata[0]), NIL, -1, BYTESIZE(Word.T), 0, 0, ADR(t.val));
+          data := SUBARRAY(ndata^, 0, NUMBER(data))
+        END
+      ELSE
+        P.export(ADR(data[0]), NIL, -1, BYTESIZE(Word.T), 0, 0, ADR(t.val))
+      END
+    END
+  END Export;
 
 BEGIN END Mpz.

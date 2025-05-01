@@ -97,6 +97,15 @@
     )
   )
 
+(define (get-block-variables the-blocks cell-info)
+  (let* ((port-ids         (get-port-ids cell-info))
+         (var-refs         (map find-referenced-vars the-blocks))
+         (shared-ids       (uniq eq? (apply append var-refs)))
+         (shared-var-ids   (set-diff shared-ids port-ids)))
+    shared-var-ids
+    )
+  )
+
 (define (get-block-label blk)
   (cond ((label? blk) blk)
         

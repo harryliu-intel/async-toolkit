@@ -1,6 +1,7 @@
 INTERFACE MpzP;
 IMPORT Word;
 IMPORT Ctypes;
+IMPORT Cstddef;
 
 TYPE T       = MpzPtrT;
      MpzPtrT = ADDRESS;
@@ -17,6 +18,12 @@ PROCEDURE format_hexadecimal(f0 : MpzPtrT) : Ctypes.const_char_star;
 
 <*EXTERNAL mpz_free_formatted*>
 PROCEDURE free_formatted(f0 : Ctypes.char_star);
+
+<*EXTERNAL "__gmpz_import"*>
+PROCEDURE import(rop : MpzPtrT; count : Cstddef.size_t; order : Ctypes.int; size : Cstddef.size_t; endian : Ctypes.int; nails : Cstddef.size_t; op : ADDRESS);
+
+<*EXTERNAL "__gmpz_export"*>
+PROCEDURE export(rop : ADDRESS; count : ADDRESS; order : Ctypes.int; size : Cstddef.size_t; endian : Ctypes.int; nails : Cstddef.size_t; op : MpzPtrT);
 
 
 (***** auto-generated functions *****)

@@ -1,5 +1,7 @@
 GENERIC INTERFACE Channel(Type);
 IMPORT CspCompiledProcess AS Process;
+IMPORT Word;
+IMPORT DynamicInt;
 
 TYPE
   T = RECORD
@@ -11,21 +13,43 @@ TYPE
     writer, reader : Process.Frame;  (* used ONLY for assertions! *)
   END;
 
-  Buff = ARRAY OF Type.T;          (* size slack + 1 *)
+CONST
+  Bitwidth = Type.Width;
+  NWords   = (Type.Width - 1) DIV BITSIZE(Word.T) + 1;
+
+TYPE
+  Item     = ARRAY [ 0 .. NWords - 1 ] OF Word.T;
+  Buff     = ARRAY OF Item;          (* size slack + 1 *)
 
 CONST Brand = "Channel(" & Type.Brand & ")";
 
 PROCEDURE SendProbe(VAR c : T; cl : Process.Closure) : BOOLEAN;
 
 PROCEDURE Send(VAR      c : T;
-               READONLY x : Type.T;
+               READONLY x : Item;
                cl         : Process.Closure) : BOOLEAN;
 
+PROCEDURE SendNative(VAR c : T;
+                     x     : INTEGER;
+                     cl    : Process.Closure) : BOOLEAN;
+
+PROCEDURE SendDynamic(VAR c : T;
+                      x     : DynamicInt.T;
+                      cl    : Process.Closure) : BOOLEAN;
+  
 PROCEDURE RecvProbe(VAR c : T; cl : Process.Closure) : BOOLEAN;
     
 PROCEDURE Recv(VAR      c : T;
-               VAR      x : Type.T;
+               VAR      x : Item;
                cl         : Process.Closure) : BOOLEAN;
+
+PROCEDURE RecvNative(VAR      c : T;
+                     VAR      x : INTEGER;
+                     cl         : Process.Closure) : BOOLEAN;
+
+PROCEDURE RecvDynamic(VAR      c : T;
+                      x(*OUT*)   : DynamicInt.T;
+                      cl         : Process.Closure) : BOOLEAN;
 
 PROCEDURE ChanDebug(READONLY chan : T) : TEXT;
 

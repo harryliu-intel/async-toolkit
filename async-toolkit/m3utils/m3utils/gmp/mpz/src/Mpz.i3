@@ -22,6 +22,10 @@ PROCEDURE FormatHexadecimal(t : T) : TEXT;
 
 PROCEDURE FormatOctal(t : T) : TEXT;
 
+PROCEDURE Import(t : T; READONLY data : ARRAY OF Word.T);
+
+PROCEDURE Export(VAR data : ARRAY OF Word.T; t : T);
+
 
 (***** auto-generated functions *****)
 

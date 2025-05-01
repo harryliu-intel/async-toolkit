@@ -171,6 +171,7 @@
       (pi "INTERFACE MpzP;" dnl
           "IMPORT Word;" dnl
           "IMPORT Ctypes;" dnl
+          "IMPORT Cstddef;" dnl
           dnl)
 
       (pi "TYPE T       = MpzPtrT;" dnl
@@ -191,6 +192,12 @@
        dnl
        "<*EXTERNAL mpz_free_formatted*>" dnl
        "PROCEDURE free_formatted(f0 : Ctypes.char_star);" dnl
+       dnl
+       "<*EXTERNAL \"__gmpz_import\"*>" dnl
+       "PROCEDURE import(rop : MpzPtrT; count : Cstddef.size_t; order : Ctypes.int; size : Cstddef.size_t; endian : Ctypes.int; nails : Cstddef.size_t; op : ADDRESS);" dnl
+       dnl
+       "<*EXTERNAL \"__gmpz_export\"*>" dnl
+       "PROCEDURE export(rop : ADDRESS; count : ADDRESS; order : Ctypes.int; size : Cstddef.size_t; endian : Ctypes.int; nails : Cstddef.size_t; op : MpzPtrT);" dnl
        dnl
 
        
@@ -237,6 +244,10 @@
        "PROCEDURE FormatHexadecimal(t : T) : TEXT;" dnl
        "" dnl
        "PROCEDURE FormatOctal(t : T) : TEXT;" dnl
+       "" dnl
+       "PROCEDURE Import(t : T; READONLY data : ARRAY OF Word.T);" dnl
+       "" dnl
+       "PROCEDURE Export(VAR data : ARRAY OF Word.T; t : T);" dnl
        "" dnl
        dnl)
         
