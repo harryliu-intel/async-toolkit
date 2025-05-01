@@ -263,6 +263,8 @@ sim_block.pl FQCN:ENV [options]
    --simv          Specify the simv file to execute (skip compiling a new one)
    --tcl           Specify the tcl file to run. Defaults to run.tcl
    --t-run         Specify the run time. Defaults to 50us
+   --perf          Specify starting node and time for critical path analysis
+   --power         Specify name and node to monitor for PTPX power analysis
    --verdi         Run verdi after simulation (or open an existing FSDB)
    --fsdb          Specify the name of the FSDB file. Defaults to trace.fsdb
    --define        Override CAST variables; can be specified any number of times
