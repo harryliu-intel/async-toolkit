@@ -4,6 +4,7 @@ share/cast2verilog/GATE_Z_MIKE.v       GATE_Z_MIKE.v       644  p
 share/cast2verilog/bd_perf_mon.sv      bd_perf_mon.sv      644  p
 share/cast2verilog/bd_hist_mon.sv      bd_hist_mon.sv      644  p
 share/cast2verilog/bd_hist_mon.cc      bd_hist_mon.cc      644  p
+share/cast2verilog/power_mon.sv        power_mon.sv        644  p
 share/cast2verilog/bdnn.sv             bdnn.sv             644  p
 share/cast2verilog/bdtb.sv             bdtb.sv             644  p
 share/cast2verilog/beh.vcfg            beh.vcfg            644  p
