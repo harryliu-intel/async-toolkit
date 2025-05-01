@@ -22,7 +22,7 @@ die "ERROR: undefined \$SOURCE_VERILOG_DIR\n" unless (defined($ENV{SOURCE_VERILO
 my ($cell, $env, $level, $corner, $outdir, $simv, $tcl, $t_run, $perf, $depth,
     $fsdb, $verdi, @simv_args, $verbose, $help);
 # Command line options to pass through to gen_model
-my (@cast_defines, @c2v_args, @gen_args, @vcs_args);
+my (@cast_defines, @c2v_args, @gen_args, @vcs_args, @power);
 
 #Now collect the remaining options (if applicable)
 GetOptions("level=s"     => \$level,
@@ -32,6 +32,7 @@ GetOptions("level=s"     => \$level,
            "tcl=s"       => \$tcl,
            "t-run=s"     => \$t_run,
            "perf=s"      => \$perf,
+           "power=s"     => \@power,
            "depth=s"     => \$depth,
            "define=s"    => \@cast_defines,
            "c2v-args=s"  => \@c2v_args,
@@ -110,7 +111,7 @@ if ($level eq "hi") {
     $cosim= "{csp,subcells,prs-standard.attributes.prs_model{subcells,prs,csp}}";
 }
 elsif ($level eq "lo") {
-    $cosim= "{verilog.rtl,subcells,prs,csp-standard.attributes.csp_model{csp}-standard.attributes.verilog_model{verilog.rtl,verilog.gate,subcells,prs}-standard.attributes.prs_model{subcells,prs,csp}}";
+    $cosim= "{verilog.rtl,verilog.cast2rtl,subcells,prs,csp-standard.attributes.verilog_model{verilog.rtl,verilog.cast2rtl,verilog.gate,subcells,prs}-standard.attributes.csp_model{csp}-standard.attributes.prs_model{subcells,prs,csp}}";
 }
 elsif ($level eq "fpga") {
     $gls_dir= "$ENV{VERILOG_DIR}/fpga";
@@ -175,6 +176,9 @@ if (!$simv) {
         join('', map { "--c2v-args=\Q$_\E " } @c2v_args) .
         "--define=standard.attributes.bd_controller.ExtraTimingMargin:10000 " .
         "--define=standard.attributes.standard_cell.USE_LIBERTY_PRS:true " ;
+    if (@power) {
+        $gen_cmd .= join('', map { "--power=\Q$_\E " } @power);
+    }
     if ($gls_dir) {
         $gen_cmd .= "--gls-dir=$gls_dir ";
         if ($level eq "sdf") {
@@ -221,7 +225,7 @@ EOF
 
 #Run the simulation
 print "Running simulation...\n";
-my $sim_cmd = "verdi3 $simv -fgp=num_threads:4 +vcs+initreg+0 -ucli -do $tcl @simv_args >& sim.log";
+my $sim_cmd = "verdi3 $simv -fgp=num_threads:4 +vcs+initreg+0 +fsdb+delta -ucli -do $tcl @simv_args >& sim.log";
 print("$sim_cmd\n");
 system($sim_cmd)==0 or die "ERROR: Simulation failed in $wd\n";
 
