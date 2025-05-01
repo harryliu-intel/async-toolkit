@@ -9,7 +9,7 @@ use FindBin;
 use Cwd qw/abs_path/;
 
 my ($cast_path, $spar_dir, $gls_dir, $cell, $env, $cosim, @cast_defines);
-my ($beh, $fpga_path, @c2v_args, @vcs_args, $kdb, $sdf, $perf, $axi, $nolint, $help, $nodebug);
+my ($beh, $fpga_path, @c2v_args, @vcs_args, $kdb, $sdf, $perf, @power, $axi, $nolint, $help, $nodebug);
 my $width = 300;
 my $mem = '16G';
 my $reset_duration = '10ns';
@@ -30,6 +30,7 @@ GetOptions("cast-path=s" => \$cast_path,
            "no-debug!"   => \$nodebug,
            "sdf=s"       => \$sdf,
            "perf!"       => \$perf,
+           "power=s"     => \@power,
            "axi!"        => \$axi,
            "no-lint!"    => \$nolint,
            "help!"       => \$help) || pod2usage(2);
@@ -152,6 +153,21 @@ if (open(my $lh, $flist)) {
 
 if ($perf) {
   unshift @vcs_args, "-f \"\$CAST2VERILOG_RUNTIME/perf.vcfg\"";
+}
+
+if (@power) {
+  #iterate over @power
+  my $power_mon = "power_mons.sv";
+  open my $fh_power, ">$power_mon" || die "Can't open $power_mon: $!";
+  print $fh_power "module power_mons ();\n\n";
+  foreach my $power (@power) {
+    #split $power into name and path
+    my ($power_name, $power_path) = split(/:/, $power);
+    print $fh_power "power_mon #(\"$power_name\") mon_$power_name($power_path);\n"
+  }
+  print $fh_power "\nendmodule\n";
+  close $fh_power;
+  push @vcs_args, $power_mon;
 }
 
 my $instdir = $ENV{'FULCRUM_PACKAGE_ROOT'};
