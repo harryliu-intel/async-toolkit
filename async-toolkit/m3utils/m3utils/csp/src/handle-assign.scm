@@ -108,6 +108,45 @@
     )
   )
 
+(define (handle-assign-shortcircuit
+         the-inits prog func-tbl struct-tbl cell-info)
+
+  (define (visitor a)
+    (if (assign? a)
+    
+        (let ((lhs (get-assign-lhs a))
+              (rhs (get-assign-rhs a)))
+          
+          (define (do-it ze)
+            (let* ((c0 (cadr rhs))
+                   (c1 (caddr rhs))
+                   (res 
+                    `(if ((== ,c0 ,ze) (assign ,lhs ,ze))
+                         (else         (if ((== ,c1 ,ze) (assign ,lhs ,ze))
+                                           (else         (assign ,lhs ,(not ze))))))
+                    )
+                   )
+              (dis "handle-assign-shortcircuit : res : " (stringify res) dnl)
+              res
+              )
+            )
+          
+          (cond ((and (= 3 (length rhs)) (eq? '|| (car rhs)))
+                 (do-it #t))
+                ((and (= 3 (length rhs)) (eq? '&& (car rhs)))
+                 (do-it #f))
+                (else a))
+          );;tel
+        
+        a ;; not an assignment
+        );;fi
+    );;enifed
+
+  (visit-stmt prog visitor identity identity)
+  
+  )
+
+
 (define (handle-assign-rhs a syms vals tg func-tbl struct-tbl cell-info)
 
   (set! *har-ass* a)

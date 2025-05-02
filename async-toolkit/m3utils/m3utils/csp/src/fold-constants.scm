@@ -182,15 +182,18 @@
     (if (and (constant? a) (constant? b))
         (let* ((the-op-id (symbol-append 'boolean op)))
 
+          (let* ((aty   (derive-type a syms func-tbl struct-tbl cell-info))
+                 (bty   (derive-type b syms func-tbl struct-tbl cell-info))
+                 (types (list aty bty))
+                 (bool  (exists? boolean-type? types))
+                 (type  (if bool 'boolean (car aty))))
 
-          (if debug
-              (fold-constants-dbg "handle-boolean-binop   op : " op dnl)
-              (fold-constants-dbg "handle-boolean-binop   a  : " a dnl)
-              (fold-constants-dbg "handle-boolean-binop   b  : " b dnl)
-              )
-
-          (let* ((ty (derive-type a syms func-tbl struct-tbl cell-info))
-                 (type (car ty)))
+            (fold-constants-dbg "handle-boolean-binop   op   : " op dnl)
+            (fold-constants-dbg "handle-boolean-binop   a    : " a dnl)
+            (fold-constants-dbg "handle-boolean-binop   b    : " b dnl)
+            (fold-constants-dbg "handle-boolean-binop   aty  : " aty dnl)
+            (fold-constants-dbg "handle-boolean-binop   bty  : " bty dnl)
+            (fold-constants-dbg "handle-boolean-binop   type : " type dnl)
                      
             (let loop ((p *boolean-binops*))
               (let* ((bool-op   (caar p))

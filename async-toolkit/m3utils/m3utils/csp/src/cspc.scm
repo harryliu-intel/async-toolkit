@@ -1664,6 +1664,16 @@
   'text1
   )
 
+
+;;
+;; there are two different types of compiler passes:
+;; there are the statement-oriented passes, these are marked by statement
+;; type.  * matches all statement types.  These are all called from the
+;; syntax walker, which maintains an environment structure.
+;;
+;; the global passes have a different interface and are not called from
+;; the syntax walker.
+;;
 (define *the-passes-2* (list
                         (list 'assign handle-access-assign)
                         (list 'recv   handle-access-recv)
@@ -1672,6 +1682,7 @@
                         (list 'send   handle-send-rhs)
                         (list 'eval   handle-eval)
                         (list 'global inline-evals)
+                        (list 'global handle-assign-shortcircuit)
                         (list 'global global-simplify)
                         (list 'global remove-assign-operate)
                         (list 'global remove-do)
@@ -1852,7 +1863,8 @@
 
 (define (binary-op? op)
   (case op
-    ((+ / % * == != < > >= <= & && ^ == << >> ** | || ; |
+    ;; short-circuiting or and and have to be handled separately
+    ((+ / % * == != < > >= <= & ^ == << >> ** | ; |
         )
      #t)
     (else #f)))

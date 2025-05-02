@@ -1,0 +1,9 @@
+module time;
+
+define x()()
+{
+  csp {
+    <;i:1000:     print (simtime())>
+  }
+}
+

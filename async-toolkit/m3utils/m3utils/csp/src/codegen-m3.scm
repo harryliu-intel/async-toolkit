@@ -722,7 +722,6 @@
             lt))
       (declared-type pc expr)))
 
-
 (define (classify-type pc expr)
   (let ((ty (operand-type pc expr)))
     (cond ((m3-natively-representable-type? ty) 'native)
@@ -1101,6 +1100,13 @@
             ((string-type? type)
              (m3-format-varid pc (cadr x)))
 
+            ((boolean-type? type)
+             (sa "NativeInt.Format(CspBoolean.ToInteger("
+                 (m3-format-varid pc (cadr x))
+                 ") )"
+                 )
+             )
+
             (else (err))
             )
            )
@@ -1127,6 +1133,12 @@
   (cond ((boolean? x) #t)
         ((literal? x) #f)
         ((boolean-type? (declared-type pc x)))
+        (else #f)))
+
+(define (string-value? pc x)
+  (cond ((string? x) #t)
+        ((literal? x) #f)
+        ((string-type? (declared-type pc x)))
         (else #f)))
 
 (define (integer-value? pc x)
@@ -1285,7 +1297,7 @@
   )
 
 (define (m3-compile-assign pc stmt)
-  (dis "m3-compile-assign : " stmt dnl)
+  (dis "m3-compile-assign : " (stringify stmt) dnl)
   (let* ((lhs (get-assign-lhs stmt))
          (lty (declared-type pc lhs))
          (rhs (get-assign-rhs stmt)))
