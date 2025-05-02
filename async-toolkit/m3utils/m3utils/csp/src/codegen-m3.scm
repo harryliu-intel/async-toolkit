@@ -191,7 +191,11 @@
     (w "    (* shared locals list *)" dnl)
     (map (lambda(dt) (w "    " dt dnl))
          (map m3-convert-vardecl v1s))
-    )
+
+    (w dnl
+       "    (* dynamic scratchpad *)" dnl)
+    (w "    " (pad 40 "a, b, c") " : DynamicInt.T;" dnl)
+    );;*tel
   )
 
 (define (m3-closure-type-text fork-count)
@@ -323,6 +327,8 @@
 
 (define (indent-writer w by) (lambda x (apply w (cons by x))))
 
+(define (suffix-writer w by) (lambda x (apply w (append x (list by)))))
+
 (define (m3-mark-reader w m3id)
   (w "<*ASSERT " m3id ".reader = NIL*>" dnl)
   (w m3id ".reader := frame;" dnl
@@ -339,7 +345,13 @@
 
 (define (channel-port? pdef) (eq? 'channel (car (cadddr pdef))))
 
+(define td #f)
+
+(define (m3-format-mpz-new id)
+  (sa (M3Ident.Escape (symbol->string id)) " := Mpz.New()" dnl))
+
 (define (m3-write-build-defn w cell-info the-blocks the-decls fork-counts)
+  (define *comma-indent* "                     ,")
   (let ((proc-ports (get-ports cell-info)))
     (m3-write-build-signature w cell-info)
     (w " = " dnl)
@@ -350,15 +362,26 @@
 
     (let ((asslist (map m3-format-port-ass proc-ports)))
       (map (lambda(ass)
-             (w "                     ," ass  dnl))
+             (w *comma-indent* ass  dnl))
            asslist)
       );;tel
 
-    (let ((dynamics (filter m3-dynamic-int-type?
-                            (map get-var1-type the-decls))))
+    (let ((dynamics (filter (compose m3-dynamic-int-type? get-var1-type)
+                            the-decls)))
 
+      (set! td the-decls)
       ;; write in initialization of Mpz variables
+      (dis "dynamics : " dynamics dnl)
 
+      (let ((iw (indent-writer w *comma-indent*)))
+        (map iw
+             (map m3-format-mpz-new (map get-var1-id dynamics)))
+
+        (iw "a := Mpz.New()" dnl)
+        (iw "b := Mpz.New()" dnl)
+        (iw "c := Mpz.New()" dnl)
+      
+        )
       )
 
     (w "      ) DO" dnl)
@@ -443,19 +466,13 @@
     )
   )
 
-;; note that the block closures need to be extended!
-;; some block closures will have pointers to parallel-loop indices
-
-(define (m3-write-text w the-blocks cell-info)
-
-  )
-
 (define (m3-write-imports w intfs)
   (dis "m3-write-imports : intfs : " intfs dnl)
   
   (w "<*NOWARN*>IMPORT CspCompiledProcess AS Process;" dnl)
   (w "<*NOWARN*>IMPORT CspCompiledScheduler AS Scheduler;" dnl)
   (w "<*NOWARN*>IMPORT CspString, Fmt;" dnl)
+  (w "<*NOWARN*>IMPORT CspBoolean;" dnl)
   (w "<*NOWARN*>IMPORT CspIntrinsics;" dnl)
   (w "<*NOWARN*>IMPORT NativeInt, DynamicInt;" dnl)
   (w "<*NOWARN*>IMPORT Word;" dnl)
@@ -632,17 +649,14 @@
 ;; narrow uint (0..64)
 ;; narrow sint (0..64)
 ;;
-;; There are wider integers than 64 bits, which are stored as
-;; multiple words of Word.T and a sign bit (sign-magnitude), for fixed
-;; widths.
+;; Wider integers than 64 bits are stored as dynamic integers, see below.
+;; Assignments are range-checked and truncated as needed.
 ;;
 ;; wide uint (65..??)
 ;; wide sint (65..??)
 ;;
-;; Finally, there are dynamic integers, which are stored with a master
-;; record containing a single word (the LSW) plus control information,
-;; and any higher-order words in an auxiliary heap-allocated array of
-;; Word.T
+;; Finally, there are dynamic integers, which are stored as instances of
+;; Mpz.T (GNU MP mpz_t C type wrapper).
 ;;
 ;; dynamic int (0 .. +inf)
 ;;
@@ -687,7 +701,7 @@
          (lty (declared-type pc lhs)))
 
     (cond ((m3-natively-representable-type? lty)
-           (m3-compile-native-int-assign pc stmt))
+           (m3-compile-native-int-assign  pc stmt))
 
           ((m3-dynamic-int-type? lty)
            (m3-compile-dynamic-int-assign pc stmt))
@@ -794,6 +808,7 @@
     );; esac
   )
 
+(define m3-unary-ops '(-))
 
 (define (m3-compile-binop cat op a-arg b-arg)
   (cond ((and (eq? 'native cat) (member op m3-binary-infix-ops))
@@ -814,7 +829,24 @@
                                     (force-type pc op-type b))))
     (m3-compile-convert-type op-type tgt opx))
   )
-  
+
+(define (m3-compile-unop cat op a-arg)
+  (cond ((and (eq? 'native cat) (member op m3-unary-ops))
+         (sa "( " (m3-map-symbol-op op) " " a-arg " )"))
+        (else (sa (get-m3-int-intf cat) "." (m3-map-named-op op) "( "
+                   a-arg " )"))
+        )
+  )
+
+(define (m3-compile-typed-unop pc tgt op a)
+  ;; this approach may only work for tgt = 'native
+  (let* ((op-type (max-type tgt (classify-type pc a)))
+         (opx     (m3-compile-unop op-type
+                                   op
+                                   (force-type pc op-type a))))
+    (m3-compile-convert-type op-type tgt opx))
+  )
+
 (define (m3-compile-native-int-assign pc x)
   (dis "m3-compile-native-int-assign : x : " x dnl)
   ;; assign when lhs is native
@@ -831,14 +863,15 @@
                  (BigInt.Format rhs 10))
                 
                 ((binary-expr? rhs)
-                 (m3-compile-typed-binop pc
-                                         'native
+                 (m3-compile-typed-binop pc 'native
                                          (car rhs)
                                          (cadr rhs)
                                          (caddr rhs)))
                 
                 ((unary-expr? rhs)
-                 (m3-compile-native-unop pc rhs))
+                 (m3-compile-typed-unop pc 'native
+                                        (car rhs)
+                                        (cadr rhs)))
                 
                 ((bits? rhs)
                  (m3-compile-native-bits pc rhs))
@@ -878,18 +911,119 @@
          (an-ass  (car (*the-ass-tbl* 'retrieve tgt))))
     `(,ass-stmt ,(cadr an-ass) ,(caddr an-ass) ,(cadddr an-ass))))
 
+(define (make-dynamic-constant! pc bigint)
+  (let ((nam (M3Ident.Escape (sa "constant" (stringify bigint)))))
+    ((get-pc-constants pc) 'update-entry! nam bigint)
+    nam
+    )
+  )
+
+(define (m3-mpz-op op)
+  (case op
+    ((+)  "Mpz.add")
+    ((-)  "Mpz.sub")
+    ((*)  "Mpz.mul")
+    ((/)  "Mpz.tdiv_q")
+    ((%)  "Mpz.tdiv_r")
+    ((&)  "Mpz.and")
+    ((|)  "Mpz.ior") ;|))
+    ((^)  "Mpz.xor")
+    ((**) "Mpz.pow")
+    (else (error))
+    )
+  )
+
+(define (test-mpz op a b)
+  (let ((ma (Mpz.New))
+        (mb (Mpz.New))
+        (mc (Mpz.New))
+        (mpz-op (eval (string->symbol (m3-mpz-op op)))))
+    
+    (Mpz.init_set_si ma a)
+    (Mpz.init_set_si mb b)
+
+    (mpz-op mc ma mb)
+    (Mpz.Format mc 'Decimal)
+    )
+  )
+
+(define (dynamic-type-expr? pc expr)
+  (eq? 'dynamic (classify-type pc expr)))
+
+(define (native-type-expr? pc expr)
+  (eq? 'native (classify-type pc expr)))
+
+(define (m3-set-dynamic-value pc m3id expr)
+  (cond ((bigint? expr)
+         (sa "Mpz.set(" m3id ", " (make-dynamic-constant! pc expr) ")"))
+
+        ((and (ident? expr) (dynamic-type-expr? pc expr)) #f)
+
+        ((and (ident? expr) (native-type-expr? pc expr))
+         (sa "Mpz.set_si(" m3id ", " (m3-ident (cadr expr)) ")")
+         )
+
+        (else (error "can't set dynamic value : " m3id " <- " expr))
+        )
+  )
+
+(define (m3-compile-dynamic-binop lhs pc mpz-op a b)
+  (let* ((a-stmt (m3-set-dynamic-value pc "frame.a" a))
+         (b-stmt (m3-set-dynamic-value pc "frame.b" b))
+         (res
+          (sa (if a-stmt (sa a-stmt "; ") "")
+              (if b-stmt (sa b-stmt "; ") "")
+              mpz-op
+              "("
+              lhs
+              " , "
+              (if a-stmt "frame.a" (m3-format-designator pc a))
+              " , "
+              (if b-stmt "frame.b" (m3-format-designator pc b))
+              ")"
+              ))
+         )
+
+    (dis "m3-compile-dynamic-binop : " res dnl)
+;;    (error)
+    
+    res
+    )      
+  )
+
 (define (m3-compile-dynamic-int-assign pc x)
   (dis "m3-compile-dynamic-int-assign : x : " x dnl)
 
   (let* ((lhs (get-assign-lhs x))
          (rhs (get-assign-rhs x))
          (comp-lhs (m3-format-designator pc lhs))
+         (ass-rng  (assignment-range (make-ass x) (get-pc-port-tbl pc)))
+
+         (des      (get-designator-id lhs))
+         (tgt-type ((get-pc-symtab pc) 'retrieve des))
+         (tgt-rng  (get-type-range tgt-type))
+                  
+         (in-range (range-contains? tgt-rng ass-rng))
+
+         ;; here we can add a call to push the result in range if it is wide
+         ;; but not fully dynamic
          )
 
-    (cond ((ident? rhs)
-           (sa "Mpz.set(" comp-lhs ", " (force-type pc 'dynamic rhs)))
+    (cond
+     ((bigint? rhs)
+      (sa "Mpz.set(" comp-lhs ", " (make-dynamic-constant! pc rhs) ")")
+      )
+               
+     ((ident? rhs)
+      (sa "Mpz.set(" comp-lhs ", " (force-type pc 'dynamic rhs) ")")
+      )
 
-          (else (error "m3-compile-dynamic-int-assign")))
+     ((binary-expr? rhs)
+      (m3-compile-dynamic-binop
+       comp-lhs pc (m3-mpz-op (car rhs)) (cadr rhs) (caddr rhs))
+      )
+     
+     (else (error "m3-compile-dynamic-int-assign")))
 
     )
   
@@ -916,7 +1050,7 @@
           (string-append
            "DynamicInt.Format("
            (m3-compile-integer-value pc x)
-           ", base := 10)"
+           ", base := Mpz.FormatBase.Decimal)"
            ))
          
          (else
@@ -989,7 +1123,166 @@
         );;dnoc
   )
 
-(define sa string-append)
+(define (boolean-value? pc x)
+  (cond ((boolean? x) #t)
+        ((literal? x) #f)
+        ((boolean-type? (declared-type pc x)))
+        (else #f)))
+
+(define (integer-value? pc x)
+  (cond ((bigint? x) #t)
+        ((literal? x) #f)
+        ((integer-type? (declared-type pc x)))
+        (else #f)))
+
+(define (m3-compile-value pc int-class x)
+  (cond ((string? x) (stringify x))
+
+        ((and (bigint? x) (eq? int-class 'native))
+         (sa "16_" (BigInt.Format x 16)))
+
+        ((and (bigint? x) (eq? int-class 'dynamic))
+         (make-dynamic-constant! pc x))
+
+        ((and (boolean? x) x)        "TRUE")
+
+        ((and (boolean? x) (not x)) "FALSE")
+
+        ((designator? x) (m3-format-designator pc x))
+
+        (else (error "cannot compile value : " x))
+        )
+  )
+
+(define (native-integer-value? pc x)
+  (and (integer-value? pc x)
+       (eq? 'native (classify-type pc x))))
+
+(define (dynamic-integer-value? pc x)
+  (and (integer-value? pc x)
+       (not (native-integer-value? pc x))))
+
+(define (m3-compile-equals pc m3-lhs a b)
+  ;; this is special, as operands can be boolean or integer
+
+  (let* ((do-int (integer-value? pc a)))
+    (cond (do-int ;; integer comparison
+           (m3-compile-comparison pc m3-lhs "=" a b)
+           
+           );;tni-od
+          
+          (else   ;; not integer comparison, so boolean comparison
+
+           (sa m3-lhs
+               "( " (m3-compile-value pc 'x a)
+               " = " (m3-compile-value pc 'x b)  " )" )
+
+           )
+
+          )
+    )
+  )
+
+(define (m3-compile-comparison pc m3-lhs m3-cmp a b)
+  ;; where cmp is one of '> '< '= '>= '<=
+
+  (cond ((forall? (curry native-integer-value? pc) (list a b))
+         ;; native int comparison
+         (sa m3-lhs
+             "( "  (m3-compile-value pc 'native a)
+             " " m3-cmp " "
+             (m3-compile-value pc 'native b) " )")
+         )
+        
+        (else ;; do it dynamic
+         
+         (let* ((a-stmt (m3-set-dynamic-value pc "frame.a" a))
+                
+                (b-stmt (m3-set-dynamic-value pc "frame.b" b))
+                
+                (res
+                 (sa (if a-stmt (sa a-stmt "; ") "")
+                     (if b-stmt (sa b-stmt "; ") "")
+                     m3-lhs
+                     "(Mpz.cmp("
+                     (if a-stmt "frame.a" (m3-format-designator pc a))
+                     " , "
+                     (if b-stmt "frame.b" (m3-format-designator pc b))
+                     ") " m3-cmp "  0)"
+                     ));;ser
+                )
+           res);;*tel
+         );;esle
+        );; dnoc
+  )
+
+(define (m3-compile-boolean-numeric-binop pc m3-lhs op a b)
+  (let ((m3-cmp (caddr (assoc op *boolean-numeric-binops*))))
+    (m3-compile-comparison pc m3-lhs m3-cmp a b)
+    )
+  )
+
+(define (m3-compile-boolean-logical-binop pc m3-lhs op a b)
+  (let ((av    (m3-compile-value pc 'x a))
+        (bv    (m3-compile-value pc 'x a))
+        (m3-op (caddr (assoc op *boolean-logical-binops*))))
+    (sa m3-lhs "( (" av ") " m3-op " (" bv ") )")
+    );;tel
+  )
+
+(define *boolean-binop-map*
+  '(
+    (!= numeric "#" )
+    (<  numeric "<" )
+    (>  numeric ">" )
+    (>= numeric ">=")
+    (<= numeric "<=")
+    (&  logical "AND")
+    (|  logical "OR") ;;|)
+    (&& logical "AND")
+    (|| logical "OR") ;;|)
+    (^  logical "#")
+    )
+  )
+  
+(define *boolean-numeric-binops*
+  (filter (compose (curry eq? 'numeric) cadr) *boolean-binop-map*)
+  )
+
+(define *boolean-logical-binops*
+  (filter (compose (curry eq? 'logical) cadr) *boolean-binop-map*)
+  )
+
+;; note that CSP (oddly) does not allow != between booleans.
+
+(define (m3-compile-boolean-assign pc lhs x)
+  (let ((m3-lhs (sa (m3-format-designator pc lhs) " := ")))
+    (cond ((boolean? x)
+           (sa m3-lhs (if x "TRUE" "FALSE")))
+          
+          ((ident? x) ;; should cover arrays and structs, too
+           (sa m3-lhs (m3-format-designator pc x)))
+          
+          ((and (pair? x) (eq? (car x) 'not))
+           (sa m3-lhs "(NOT ( " (m3-compile-value pc rhs) " ) )"))
+          
+          ((and (pair? x) (eq? (car x) '==))
+           (m3-compile-equals pc m3-lhs (cadr x) (caddr x)))
+          
+          ((and (pair? x)
+                (= 3 (length x))
+                (member (car x) (map car *boolean-numeric-binops*)))
+           (m3-compile-boolean-numeric-binop pc m3-lhs (car x) (cadr x) (caddr x)))
+          
+          ((and (pair? x)
+                (= 3 (length x))
+                (member (car x) (map car *boolean-logical-binops*)))
+           (m3-compile-boolean-logical-binop pc m3-lhs (car x) (cadr x) (caddr x)))
+
+          (else (error "m3-compile-boolean-assign : don't understand " x))
+        );;dnoc
+    );;tel
+  )
 
 (define (m3-compile-assign pc stmt)
   (dis "m3-compile-assign : " stmt dnl)
@@ -1002,8 +1295,7 @@
     (dis "m3-compile-assign : rhs : " (stringify rhs) dnl)
 
     (cond ((boolean-type? lty)
-           (sa (m3-format-designator pc lhs) " := "
-              (m3-compile-boolean-expr rhs)))
+           (m3-compile-boolean-assign pc lhs rhs))
 
           ((string-type? lty)
            (sa (m3-format-designator pc lhs) " := "
@@ -1147,19 +1439,61 @@
             )
         )
       )
-    
 
     (if (null? rhs) (null-rhs) (nonnull-rhs))
     )
   )
 
 (define (m3-compile-eval pc stmt)
+  (dis "m3-compile-eval : " stmt dnl)
   (let ((expr (cadr stmt)))
     (string-append "EVAL " (m3-compile-intrinsic pc expr))
     )
   )
 
+(define (m3-compile-print-value pc x)
+  ;; the rules for printing a value are different from
+  ;; the rules for adding a value to a string
+  (cond ((string? x) (stringify x))
+        
+        ((bigint? x)
+         (sa "\"0x" (CitTextUtils.ToLower (BigInt.Format x 16)) "\""))
+        
+        ((and (boolean? x) x)       (m3-compile-print-value pc *bigm1*))
+        
+        ((and (boolean? x) (not x)) (m3-compile-print-value pc *big0*))
+
+        ;; if we get here, x is not a literal
+        ;;
+        ;; we can print variables of the following CSP types:
+        ;; bool, string, int
+
+        ((boolean-value? pc x)
+         (sa "\"0x\" & NativeInt.Format(CspBoolean.ToInteger(" (m3-format-designator pc x) "), 16)")
+         )
+
+        ((string-value? pc x)
+         (m3-format-designator pc x)
+         )
+        
+        ;; if we get here, x must be a number, and it is either native or
+        ;; dynamic
+        
+
+        ((native-integer-value? pc x)
+         (sa "\"0x\" & NativeInt.Format(" (m3-format-designator pc x) ", 16)")
+         )
+        
+        ((dynamic-integer-value? pc x)
+         (sa "\"0x\" & DynamicInt.FormatHexadecimal(" (m3-format-designator pc x) ")")
+         )
+        
+        (else (error "cannot compile print-value : " x))
+        )
+  )
+
 (define (m3-compile-intrinsic pc expr)
+  (dis "m3-compile-instrinsic : " expr dnl)
   (if (not (call-intrinsic? expr)) (error "not an intrinsic : " expr))
 
   (let ((in-sym (cadr expr)))
@@ -1167,13 +1501,63 @@
     ;; special handling for print
     (sa "CspIntrinsics." (symbol->string in-sym) "(frame, "
         
-        (m3-format-varid pc (cadaddr expr))
+        (m3-compile-print-value pc (caddr expr))
         ")")
     
     )
   )
 
-(define *known-stmt-types* '(recv send assign eval goto local-if while))
+(define (m3-compile-sequence pc stmt)
+  (define wx (Wx.New))
+
+  (define (w . x) (Wx.PutText wx (apply string-append x)))
+
+  (let ((writer  (suffix-writer (indent-writer w "  ") "")))
+    (w "BEGIN" dnl)
+
+    (map (curry m3-compile-write-stmt writer pc) (cdr stmt))
+    (w "END" dnl)
+    )
+
+  (Wx.ToText wx)
+  )
+
+  
+(define (m3-compile-local-if pc stmt)
+
+  (dis  dnl
+        "m3-compile-local-if : " stmt dnl
+        dnl)
+
+  (define wx (Wx.New))
+
+  (define (w . x) (Wx.PutText wx (apply string-append x)))
+  
+  (w "IF FALSE THEN" dnl)
+  (let loop ((p (cdr stmt)))
+
+    (define (command)
+      (m3-compile-write-stmt (indent-writer w "  ") pc (cadar p)))
+
+    (cond ((null? p) (w "END") (Wx.ToText wx)
+           )
+          
+          ((eq? (caar p) 'else)
+           (w "ELSE" dnl)
+           (command)
+           (loop (cdr p))
+           )
+          
+          (else          
+           (w "ELSIF " (m3-compile-value pc 'x (caar p)) " THEN" dnl)
+           (command)
+           (loop (cdr p))
+           )
+          );;dnoc
+        );;tel
+    )
+
+(define *known-stmt-types* '(recv send assign eval goto local-if while sequence))
 
 (define (m3-space-comments txt)
   (CitTextUtils.Replace
@@ -1189,7 +1573,7 @@
     (dis "m3-compile-write-stmt : stmt : " (stringify stmt) dnl)
     
     (if (member stmt-type *known-stmt-types*)
-        (iw ((eval (symbol-append 'm3-compile- stmt-type)) pc stmt) ";" dnl)
+        (iw ((eval (symbol-append 'm3-compile- stmt-type)) pc stmt) ";(*m3cws*)" dnl)
         (error "Unknown statement type in : " stmt)
         )          
   
@@ -1228,7 +1612,7 @@
   ;; which is labelled m3-label, in Modula-3 code (a string)
   
   (dis (get-block-label blk) dnl)
-  (dis "m3-write-block : blk : " blk dnl)
+  (dis "m3-write-block : blk : " (stringify blk) dnl)
   (dis "m3-write-block : lab : " (stringify m3-label) dnl)
   (let* ((btag        m3-label)
          (bnam        (string-append "Block_" btag))
@@ -1262,7 +1646,7 @@
     (w 
      "    END(*WITH*);" dnl
      "    RETURN TRUE;" dnl ;; in case it falls off the end
-     "  END " bnam ";" dnl
+     "  END " bnam ";(*m3wb*)" dnl
      dnl)
     )
   )
@@ -1463,11 +1847,12 @@
 ;; caddddr : the port table
 ;;
 
-(define get-pc-symtab     car)
-(define get-pc-cell-info  cadr)
-(define get-pc-struct-tbl caddr)
-(define get-pc-scopes     cadddr)
-(define get-pc-port-tbl   caddddr)
+(define get-pc-symtab      car)
+(define get-pc-cell-info   cadr)
+(define get-pc-struct-tbl  caddr)
+(define get-pc-scopes      cadddr)
+(define get-pc-port-tbl    caddddr)
+(define get-pc-constants   cadddddr)
 
 (define (write-m3overrides!)
   (let ((wr (FileWr.Open (sa (build-dir) "m3overrides"))))
@@ -1634,6 +2019,8 @@
           )
 
     (m3-write-imports    modu all-intfs)
+    (modu "IMPORT Mpz;" dnl
+          dnl)
     (m3-write-proc-frame-decl modu port-tbl the-exec-blocks cell-info the-decls
                               fork-counts)
     (m3-write-block-decl      modu)
@@ -1646,10 +2033,19 @@
                          cell-info
                          *the-struct-tbl*
                          the-scopes
-                         (make-port-table cell-info))))
+                         (make-port-table cell-info)
+                         (make-hash-table 100 Text.Hash)
+                         )))
       (set! *proc-context* pc)
       (m3-write-blocks          modu the-exec-blocks pc)
-      )
+
+      (map modu
+           (map m3-gen-constant-init 
+                ((get-pc-constants pc) 'keys)
+                ((get-pc-constants pc) 'values)
+                )
+           )
+    );;tel
     
     (modu dnl "BEGIN END " root "." dnl)
     
@@ -1662,6 +2058,12 @@
     
 ;;  (write-m3makefile-footer!)
   )
+
+(define (m3-gen-constant-init m3-ident bigint)
+  (sa "VAR "
+      m3-ident " := Mpz.InitScan(\"" (BigInt.Format bigint 16) "\", 16);" dnl)
+  )
+
 
 (define (m3-make-symtab the-decls)
   (define tbl (make-hash-table 100 atom-hash))

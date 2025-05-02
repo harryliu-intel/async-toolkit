@@ -1,0 +1,125 @@
+module overflow;
+
+define OVERFLOW()()
+{
+  csp {
+    function f(int(4) -+z) =
+    (
+     z++;
+     print("z = " + z);
+     );
+  
+    int(4) x;
+    x = 14;
+    f(x);
+    f(x);
+  }
+}
+
+define SOVERFLOW()()
+{
+  csp {
+    function f(sint(4) -+z) =
+    (
+     z++;
+     print("z = " + z);
+     );
+  
+    sint(4) x;
+    x = 6;
+    f(x);
+    f(x);
+    f(x);
+  }
+}
+
+define WRAP()()
+{
+  int W = 4;
+
+  csp {
+    function f(int(W) -+z) =
+    (
+     z--;
+     print("z = " + z);
+     );
+
+    int(W) x;
+    x = 2;
+    f(x);
+    f(x);
+    f(x);
+  }
+}
+
+define WRAP63()()
+{
+  int W = 63;
+
+  csp {
+    function f(int(W) -+z) =
+    (
+     z--;
+     print("z = " + z);
+     );
+
+    int(W) x;
+    x = 2;
+    f(x);
+    f(x);
+    f(x);
+  }
+}
+      
+define WRAP64()()
+{
+  int W = 64;
+
+  csp {
+    function f(int(W) -+z) =
+    (
+     z--;
+     print("z = " + z);
+     );
+
+    int(W) x;
+    x = 2;
+    f(x);
+    f(x);
+    f(x);
+  }
+}
+
+define x64()()
+{
+  csp {
+    int(64) x;
+    x++;
+    print("x = " + x)
+  }
+}
+
+define x()()
+{
+  csp {
+    int(4) y; // native
+    int x;    // dynamic
+    y++;
+    x = x + y;
+    print("x = " + x)
+  }
+}
+
+define xm1()()
+{
+  csp {
+    int x;    // dynamic
+    print("x = " + x);
+    x++;
+    print("x = " + x);
+    x--;
+    print("x = " + x);
+    x--;
+    print("x = " + x)
+  }
+}

@@ -347,7 +347,6 @@
 
   (visit-stmt prog visitor identity identity)
   )
-  
 
 (define (delete-unused-vars-pass  the-inits prog func-tbl struct-tbl cell-info)
   (let* ((ass-tbl
@@ -375,12 +374,10 @@
     )
   )
 
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define (recv? x)(and (pair? x)(eq? 'recv (car x))))
 (define (assign? x)(and (pair? x)(eq? 'assign (car x))))
-
 
 (define gctbw #f)
 
@@ -561,13 +558,31 @@
 (define (initialize-sequence seq vars)
   (let loop ((p       (cdr seq))
              (output '()))
-    (cond ((null? p) (cons 'sequence (reverse output)))
+    (cond ((null? p)
+           (let ((res (cons 'sequence (reverse output))))
+             (dis "initialize-sequence : " (stringify res) dnl)
+             res
+             )
+           )
 
           ((eq? 'var1 (get-stmt-type (car p)))
-           (let ((tgt (get-var1-id (car p))))
+           (let ((tgt (get-var1-id   (car p)))
+                 (typ (get-var1-type (car p)))
+                 )
+
+             (define (default-value) 
+               (cond ((string-type? typ)  "")
+                     ((integer-type? typ) *big0*)
+                     ((boolean-type? typ) #f)
+                     (else (error "No default value for type : " typ))
+                     );;dnoc
+               )
+             
+             (dis "var1-type : " typ dnl)
+             
              (if (member tgt vars)
                  (loop (cdr p)
-                       (cons `(assign (id ,tgt) ,*big0*)
+                       (cons `(assign (id ,tgt) ,(default-value))
                              (cons (car p)
                                    output)))
 

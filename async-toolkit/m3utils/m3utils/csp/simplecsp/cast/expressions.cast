@@ -164,3 +164,27 @@ define LOG2()()
     <;i:-32..32:print("log2(" + i  +") = " + log2(i))>
       }
 }
+
+define BOOL()()
+{
+  csp {
+    bool a, b;
+    int x;
+    x = 9;
+
+    x++;
+    
+    a = x > 11;
+
+    x++;
+    x++;
+    
+    b = x < 13;
+
+    [ a == b -> print("same") [] else -> skip ];
+
+    print( choose(a^b,1,0) );
+
+    choose(true, 0, 1);
+  }
+}

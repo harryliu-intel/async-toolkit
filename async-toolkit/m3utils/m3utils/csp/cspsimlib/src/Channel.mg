@@ -141,6 +141,10 @@ PROCEDURE Recv(VAR      c : T;
       ELSE
         nxtRd := c.rd + 1
       END;
+
+      IF c.writer = NIL THEN
+        Debug.Error("Receiving on an unconnected channel : " & c.nm)
+      END;
       
       IF c.wr = nxtRd AND c.waiter = NIL THEN
         (* channel is empty -- just block *)

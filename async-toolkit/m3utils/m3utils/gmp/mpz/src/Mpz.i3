@@ -22,10 +22,15 @@ PROCEDURE FormatHexadecimal(t : T) : TEXT;
 
 PROCEDURE FormatOctal(t : T) : TEXT;
 
+PROCEDURE FormatBased(t : T; base : [-2..62]) : TEXT;
+
 PROCEDURE Import(t : T; READONLY data : ARRAY OF Word.T);
 
 PROCEDURE Export(VAR data : ARRAY OF Word.T; t : T);
 
+PROCEDURE InitScan(txt : TEXT; base : CARDINAL) : T;
+
+PROCEDURE pow(p, b, x : T);
 
 (***** auto-generated functions *****)
 
@@ -142,6 +147,8 @@ PROCEDURE gcd_ui (f0 : T; f1 : T; f2 : Word.T) : Word.T;
 PROCEDURE gcdext (f0 : T; f1 : T; f2 : T; f3 : T; f4 : T);
 
 PROCEDURE get_d (f0 : T) : LONGREAL;
+
+PROCEDURE get_si (f0 : T) : INTEGER;
 
 PROCEDURE get_ui (f0 : T) : Word.T;
 

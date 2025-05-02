@@ -94,7 +94,7 @@ SchemeStubs ("Mpfr")
 
 SchemeStubs ("Wx")
 
-%SchemeStubs ("Mpz")
+SchemeStubs ("Mpz")
 %SchemeStubs ("MpzP")
 
 ExportSchemeStubs ("cspc")

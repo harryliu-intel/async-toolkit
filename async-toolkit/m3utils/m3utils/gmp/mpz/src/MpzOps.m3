@@ -289,6 +289,11 @@ PROCEDURE get_d (f0 : T) : LONGREAL =
     RETURN P.c_get_d(ADR(f0.val))
   END get_d;
 
+PROCEDURE get_si (f0 : T) : INTEGER =
+  BEGIN
+    RETURN P.c_get_si(ADR(f0.val))
+  END get_si;
+
 PROCEDURE get_ui (f0 : T) : Word.T =
   BEGIN
     RETURN P.c_get_ui(ADR(f0.val))

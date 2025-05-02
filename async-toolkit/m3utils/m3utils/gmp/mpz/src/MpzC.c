@@ -39,3 +39,9 @@ mpz_format_octal(const mpz_t z)
   return format_one("%Zo", z);
 }
 
+char *
+mpz_format_based(const mpz_t z, int base)
+{
+  return mpz_get_str(NULL, base, z);
+}
+    

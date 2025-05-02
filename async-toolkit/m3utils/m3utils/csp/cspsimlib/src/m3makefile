@@ -24,7 +24,7 @@ Module   ("NativeInt")
 
 Module ("CspCompiledProcess")
 Module ("CspCompiledScheduler")
-Interface ("CspBoolean")
+Module ("CspBoolean")
 Interface ("CspString")
 
 Module ("CspIntrinsics")

@@ -7,6 +7,16 @@ define HELLOWORLD()()
   }
 }
 
+define INT0()()
+{
+  csp {
+    int x=12;
+    print(x);
+
+    print(13);
+  }
+}
+
 define INT()()
 {
   csp {
@@ -22,8 +32,13 @@ define INT()()
 define BOOL()()
 {
   csp {
-    bool x=true;
-    print(x);
+    bool b;
+    int x;
+    x++;
+
+    b = x == 1;
+    
+    print(b);
 
     print(false);
   }
@@ -45,3 +60,39 @@ define HEX()()
   }
 }
     
+define BUG()()
+{
+  csp {
+    int x;
+    x = -1;
+
+    print(x);
+    print(hex(x));
+  }
+}
+   
+define HEX0()()
+{
+  csp {
+    string s;
+    s = hex(0);
+    print(s);
+  }
+}
+
+define SIMPLE()()
+{
+  csp {
+    print(string(0,10));
+  }
+}
+
+
+define UNINIT()()
+{
+  csp {
+    string s;
+    print (s)
+  }
+}
+

@@ -5,7 +5,9 @@
 (define (convert-type cty)
   (case cty
     ((unsigned-long unsigned-long-int)     "Word.T")
-    ((int signed-long-int)                 "INTEGER")
+    ((signed-long-int
+      /*-signed-*/-long-int)               "INTEGER")
+    ((int)                                 "Ctypes.int")
     ((mpz_ptr mpz_srcptr)                  "MpzPtrT")
     ((const-char-*)                        "Ctypes.const_char_star")
     ((double)                              "LONGREAL")
@@ -19,6 +21,7 @@
   (case cty
     ((mpz_ptr mpz_srcptr)   "T")
     ((const-char-*)         "TEXT")
+    ((int)                  "INTEGER")
     (else                   (convert-type cty))
     )
   )
@@ -182,13 +185,16 @@
       (pi
        "(***** hand-coded functions *****)" dnl
        "<*EXTERNAL mpz_format_octal*>" dnl
-       "PROCEDURE format_octal(f0 : MpzPtrT) : Ctypes.const_char_star;" dnl
+       "PROCEDURE format_octal(z : MpzPtrT) : Ctypes.const_char_star;" dnl
        dnl
        "<*EXTERNAL mpz_format_decimal*>" dnl
-       "PROCEDURE format_decimal(f0 : MpzPtrT) : Ctypes.const_char_star;" dnl
+       "PROCEDURE format_decimal(z : MpzPtrT) : Ctypes.const_char_star;" dnl
        dnl
        "<*EXTERNAL mpz_format_hexadecimal*>" dnl
-       "PROCEDURE format_hexadecimal(f0 : MpzPtrT) : Ctypes.const_char_star;" dnl
+       "PROCEDURE format_hexadecimal(z : MpzPtrT) : Ctypes.const_char_star;" dnl
+       dnl
+       "<*EXTERNAL mpz_format_based*>" dnl
+       "PROCEDURE format_based(z : MpzPtrT; base : Ctypes.int) : Ctypes.const_char_star;" dnl
        dnl
        "<*EXTERNAL mpz_free_formatted*>" dnl
        "PROCEDURE free_formatted(f0 : Ctypes.char_star);" dnl
@@ -245,10 +251,15 @@
        "" dnl
        "PROCEDURE FormatOctal(t : T) : TEXT;" dnl
        "" dnl
+       "PROCEDURE FormatBased(t : T; base : [-2..62]) : TEXT;" dnl
+       "" dnl
        "PROCEDURE Import(t : T; READONLY data : ARRAY OF Word.T);" dnl
        "" dnl
        "PROCEDURE Export(VAR data : ARRAY OF Word.T; t : T);" dnl
        "" dnl
+       "PROCEDURE InitScan(txt : TEXT; base : CARDINAL) : T;" dnl
+       dnl
+       "PROCEDURE pow(p, b, x : T);" dnl
        dnl)
         
       (i

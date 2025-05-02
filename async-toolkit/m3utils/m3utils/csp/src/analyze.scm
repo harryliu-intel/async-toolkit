@@ -60,7 +60,9 @@
     (set-diff (set-diff used declared) portids)))
                
 (define (find-declared-vars lisp) ;; set of declared vars
-  (uniq eq? (append (find-loop-indices lisp) (map cadr (map cadadr (find-var1-stmts lisp))))))
+  (uniq eq?
+        (append (find-loop-indices lisp)
+                (map cadr (map cadadr (find-var1-stmts lisp))))))
 
 (define (find-declaration-vars lisp) ;; multiset of declarations
   (map cadr (map cadadr (find-var1-stmts lisp))))

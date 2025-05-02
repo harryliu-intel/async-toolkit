@@ -2,6 +2,10 @@
 ;; generic higher-order Scheme stuff
 ;; 
 
+(define (caddddr x) (car (cddddr x)))
+(define (cadaddr x) (car (cdaddr x)))
+(define (cadddddr x) (caddr (cdddr x)))
+
 (define (identity x) x)
 
 (define (curry1 f x) (lambda(y)(f x y)))

@@ -27,9 +27,15 @@
        (if (and (constant? num) (constant? base))
            (let* ((cn (constant-value 'integer num))
                   (cb (constant-value 'integer base))
-                  (result (CitTextUtils.ToLower
-                           (BigInt.Format cn
-                                          (BigInt.ToInteger cb)))))
+
+                  (result (sa (CitTextUtils.ToLower
+                                    (BigInt.Format
+                                     cn
+                                     (BigInt.ToInteger cb)))
+                              )
+                          );;tluser
+                  
+                  )
              (dis "performing intrinsic : (string " arg-list " <- " cn " " cb ") = " result dnl)
              result
              )

@@ -215,6 +215,7 @@
 (load "sensitivity.scm")
 (load "selection.scm")          
 (load "do.scm")
+(load "choose.scm")
 (load "dead.scm")  
 (load "fold-constants.scm")
 (load "vars.scm")
@@ -240,10 +241,9 @@
 
 (define nonblocking-intrinsics '(string print pack unpack))
 
-(define (caddddr x) (car (cddddr x)))
-(define (cadaddr x) (car (cdaddr x)))
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define sa string-append)
 
 (define (loadfile reader fn)
 
@@ -1675,6 +1675,7 @@
                         (list 'global global-simplify)
                         (list 'global remove-assign-operate)
                         (list 'global remove-do)
+                        (list 'global remove-choose)
                         (list 'global simplify-if)
                         (list 'global convert-waiting-ifs-pass)
                         (list 'global unfold-loop-ranges-pass)

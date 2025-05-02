@@ -22,6 +22,14 @@
 (define s-bt #f)
 (define s-sd #f)
 
+(define *special-return-funcs*
+  `(
+;; these are intrinsics that don't return int    
+;;   fname    return-type    
+    (string ,*default-string-type*)
+    )
+  )
+
 (define (derive-type x syms func-tbl struct-tbl cell-info)
   (cond  ((ident? x)
           ;;
@@ -60,11 +68,18 @@
                 ((apply? x)
                  (dis "derive-type of apply : " x dnl)
                  
-                 (let* ((fnam (get-apply-funcname x))
-                        (fdef (func-tbl 'retrieve fnam))
-                        (failed (eq? fdef '*hash-table-search-failed*))
+                 (let* (
+                        (fnam         (get-apply-funcname x))
+                        (fdef         (func-tbl 'retrieve fnam))
+                        (failed       (eq? fdef '*hash-table-search-failed*))
+                        (special-func (assoc fnam *special-return-funcs*))
                         (res
-                         (if failed *default-int-type* (get-function-return fdef))))
+                         (cond
+                          (special-func (cadr special-func))
+                          (failed *default-int-type*)
+                          (else (get-function-return fdef)))
+                         )
+                        )
                    
                    (dis "derive-type of apply : result : " res dnl)
                    res

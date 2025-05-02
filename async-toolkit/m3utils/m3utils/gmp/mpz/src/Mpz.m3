@@ -69,6 +69,17 @@ PROCEDURE FormatOctal(t : T) : TEXT =
     END
   END FormatOctal;
 
+PROCEDURE FormatBased(t : T; base : [-2..62]) : TEXT =
+  VAR
+    cs := P.format_based(ADR(t.val), base);
+  BEGIN
+    TRY
+      RETURN M3toC.CopyStoT(cs)
+    FINALLY
+      P.free_formatted(cs)
+    END
+  END FormatBased;
+
 PROCEDURE Import(t : T; READONLY data : ARRAY OF Word.T) =
   BEGIN
     P.import(ADR(t.val), NUMBER(data), -1, BYTESIZE(Word.T), 0, 0, ADR(data[0]))
@@ -95,5 +106,21 @@ PROCEDURE Export(VAR data : ARRAY OF Word.T; t : T) =
       END
     END
   END Export;
+
+PROCEDURE InitScan(txt : TEXT; base : CARDINAL) : T =
+  VAR
+    res := NEW(T);
+  BEGIN
+    EVAL init_set_str(res, txt, base);
+    RETURN res
+  END InitScan;
+
+PROCEDURE pow(p, b, x : T) =
+  VAR
+    xui := get_ui(x);
+  BEGIN
+    <*ASSERT fits_ulong_p(x) = 1*>
+    pow_ui(p, b, xui);
+  END pow;
 
 BEGIN END Mpz.

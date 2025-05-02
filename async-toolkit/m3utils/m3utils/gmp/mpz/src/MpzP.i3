@@ -8,13 +8,16 @@ TYPE T       = MpzPtrT;
 
 (***** hand-coded functions *****)
 <*EXTERNAL mpz_format_octal*>
-PROCEDURE format_octal(f0 : MpzPtrT) : Ctypes.const_char_star;
+PROCEDURE format_octal(z : MpzPtrT) : Ctypes.const_char_star;
 
 <*EXTERNAL mpz_format_decimal*>
-PROCEDURE format_decimal(f0 : MpzPtrT) : Ctypes.const_char_star;
+PROCEDURE format_decimal(z : MpzPtrT) : Ctypes.const_char_star;
 
 <*EXTERNAL mpz_format_hexadecimal*>
-PROCEDURE format_hexadecimal(f0 : MpzPtrT) : Ctypes.const_char_star;
+PROCEDURE format_hexadecimal(z : MpzPtrT) : Ctypes.const_char_star;
+
+<*EXTERNAL mpz_format_based*>
+PROCEDURE format_based(z : MpzPtrT; base : Ctypes.int) : Ctypes.const_char_star;
 
 <*EXTERNAL mpz_free_formatted*>
 PROCEDURE free_formatted(f0 : Ctypes.char_star);
@@ -86,19 +89,19 @@ PROCEDURE c_clear (f0 : MpzPtrT);
 PROCEDURE c_clrbit (f0 : MpzPtrT; f1 : Word.T);
 
 <*EXTERNAL "__gmpz_cmp" *>
-PROCEDURE c_cmp (f0 : MpzPtrT; f1 : MpzPtrT) : INTEGER;
+PROCEDURE c_cmp (f0 : MpzPtrT; f1 : MpzPtrT) : Ctypes.int;
 
 <*EXTERNAL "__gmpz_cmp_d" *>
-PROCEDURE c_cmp_d (f0 : MpzPtrT; f1 : LONGREAL) : INTEGER;
+PROCEDURE c_cmp_d (f0 : MpzPtrT; f1 : LONGREAL) : Ctypes.int;
 
 <*EXTERNAL "__gmpz_cmpabs" *>
-PROCEDURE c_cmpabs (f0 : MpzPtrT; f1 : MpzPtrT) : INTEGER;
+PROCEDURE c_cmpabs (f0 : MpzPtrT; f1 : MpzPtrT) : Ctypes.int;
 
 <*EXTERNAL "__gmpz_cmpabs_d" *>
-PROCEDURE c_cmpabs_d (f0 : MpzPtrT; f1 : LONGREAL) : INTEGER;
+PROCEDURE c_cmpabs_d (f0 : MpzPtrT; f1 : LONGREAL) : Ctypes.int;
 
 <*EXTERNAL "__gmpz_cmpabs_ui" *>
-PROCEDURE c_cmpabs_ui (f0 : MpzPtrT; f1 : Word.T) : INTEGER;
+PROCEDURE c_cmpabs_ui (f0 : MpzPtrT; f1 : Word.T) : Ctypes.int;
 
 <*EXTERNAL "__gmpz_com" *>
 PROCEDURE c_com (f0 : MpzPtrT; f1 : MpzPtrT);
@@ -107,13 +110,13 @@ PROCEDURE c_com (f0 : MpzPtrT; f1 : MpzPtrT);
 PROCEDURE c_combit (f0 : MpzPtrT; f1 : Word.T);
 
 <*EXTERNAL "__gmpz_congruent_p" *>
-PROCEDURE c_congruent_p (f0 : MpzPtrT; f1 : MpzPtrT; f2 : MpzPtrT) : INTEGER;
+PROCEDURE c_congruent_p (f0 : MpzPtrT; f1 : MpzPtrT; f2 : MpzPtrT) : Ctypes.int;
 
 <*EXTERNAL "__gmpz_congruent_2exp_p" *>
-PROCEDURE c_congruent_2exp_p (f0 : MpzPtrT; f1 : MpzPtrT; f2 : Word.T) : INTEGER;
+PROCEDURE c_congruent_2exp_p (f0 : MpzPtrT; f1 : MpzPtrT; f2 : Word.T) : Ctypes.int;
 
 <*EXTERNAL "__gmpz_congruent_ui_p" *>
-PROCEDURE c_congruent_ui_p (f0 : MpzPtrT; f1 : Word.T; f2 : Word.T) : INTEGER;
+PROCEDURE c_congruent_ui_p (f0 : MpzPtrT; f1 : Word.T; f2 : Word.T) : Ctypes.int;
 
 <*EXTERNAL "__gmpz_divexact" *>
 PROCEDURE c_divexact (f0 : MpzPtrT; f1 : MpzPtrT; f2 : MpzPtrT);
@@ -122,13 +125,13 @@ PROCEDURE c_divexact (f0 : MpzPtrT; f1 : MpzPtrT; f2 : MpzPtrT);
 PROCEDURE c_divexact_ui (f0 : MpzPtrT; f1 : MpzPtrT; f2 : Word.T);
 
 <*EXTERNAL "__gmpz_divisible_p" *>
-PROCEDURE c_divisible_p (f0 : MpzPtrT; f1 : MpzPtrT) : INTEGER;
+PROCEDURE c_divisible_p (f0 : MpzPtrT; f1 : MpzPtrT) : Ctypes.int;
 
 <*EXTERNAL "__gmpz_divisible_ui_p" *>
-PROCEDURE c_divisible_ui_p (f0 : MpzPtrT; f1 : Word.T) : INTEGER;
+PROCEDURE c_divisible_ui_p (f0 : MpzPtrT; f1 : Word.T) : Ctypes.int;
 
 <*EXTERNAL "__gmpz_divisible_2exp_p" *>
-PROCEDURE c_divisible_2exp_p (f0 : MpzPtrT; f1 : Word.T) : INTEGER;
+PROCEDURE c_divisible_2exp_p (f0 : MpzPtrT; f1 : Word.T) : Ctypes.int;
 
 <*EXTERNAL "__gmpz_dump" *>
 PROCEDURE c_dump (f0 : MpzPtrT);
@@ -170,22 +173,22 @@ PROCEDURE c_fib_ui (f0 : MpzPtrT; f1 : Word.T);
 PROCEDURE c_fib2_ui (f0 : MpzPtrT; f1 : MpzPtrT; f2 : Word.T);
 
 <*EXTERNAL "__gmpz_fits_sint_p" *>
-PROCEDURE c_fits_sint_p (f0 : MpzPtrT) : INTEGER;
+PROCEDURE c_fits_sint_p (f0 : MpzPtrT) : Ctypes.int;
 
 <*EXTERNAL "__gmpz_fits_slong_p" *>
-PROCEDURE c_fits_slong_p (f0 : MpzPtrT) : INTEGER;
+PROCEDURE c_fits_slong_p (f0 : MpzPtrT) : Ctypes.int;
 
 <*EXTERNAL "__gmpz_fits_sshort_p" *>
-PROCEDURE c_fits_sshort_p (f0 : MpzPtrT) : INTEGER;
+PROCEDURE c_fits_sshort_p (f0 : MpzPtrT) : Ctypes.int;
 
 <*EXTERNAL "__gmpz_fits_uint_p" *>
-PROCEDURE c_fits_uint_p (f0 : MpzPtrT) : INTEGER;
+PROCEDURE c_fits_uint_p (f0 : MpzPtrT) : Ctypes.int;
 
 <*EXTERNAL "__gmpz_fits_ulong_p" *>
-PROCEDURE c_fits_ulong_p (f0 : MpzPtrT) : INTEGER;
+PROCEDURE c_fits_ulong_p (f0 : MpzPtrT) : Ctypes.int;
 
 <*EXTERNAL "__gmpz_fits_ushort_p" *>
-PROCEDURE c_fits_ushort_p (f0 : MpzPtrT) : INTEGER;
+PROCEDURE c_fits_ushort_p (f0 : MpzPtrT) : Ctypes.int;
 
 <*EXTERNAL "__gmpz_gcd" *>
 PROCEDURE c_gcd (f0 : MpzPtrT; f1 : MpzPtrT; f2 : MpzPtrT);
@@ -198,6 +201,9 @@ PROCEDURE c_gcdext (f0 : MpzPtrT; f1 : MpzPtrT; f2 : MpzPtrT; f3 : MpzPtrT; f4 :
 
 <*EXTERNAL "__gmpz_get_d" *>
 PROCEDURE c_get_d (f0 : MpzPtrT) : LONGREAL;
+
+<*EXTERNAL "__gmpz_get_si" *>
+PROCEDURE c_get_si (f0 : MpzPtrT) : INTEGER;
 
 <*EXTERNAL "__gmpz_get_ui" *>
 PROCEDURE c_get_ui (f0 : MpzPtrT) : Word.T;
@@ -221,25 +227,25 @@ PROCEDURE c_init_set_d (f0 : MpzPtrT; f1 : LONGREAL);
 PROCEDURE c_init_set_si (f0 : MpzPtrT; f1 : INTEGER);
 
 <*EXTERNAL "__gmpz_init_set_str" *>
-PROCEDURE c_init_set_str (f0 : MpzPtrT; f1 : Ctypes.const_char_star; f2 : INTEGER) : INTEGER;
+PROCEDURE c_init_set_str (f0 : MpzPtrT; f1 : Ctypes.const_char_star; f2 : Ctypes.int) : Ctypes.int;
 
 <*EXTERNAL "__gmpz_init_set_ui" *>
 PROCEDURE c_init_set_ui (f0 : MpzPtrT; f1 : Word.T);
 
 <*EXTERNAL "__gmpz_invert" *>
-PROCEDURE c_invert (f0 : MpzPtrT; f1 : MpzPtrT; f2 : MpzPtrT) : INTEGER;
+PROCEDURE c_invert (f0 : MpzPtrT; f1 : MpzPtrT; f2 : MpzPtrT) : Ctypes.int;
 
 <*EXTERNAL "__gmpz_ior" *>
 PROCEDURE c_ior (f0 : MpzPtrT; f1 : MpzPtrT; f2 : MpzPtrT);
 
 <*EXTERNAL "__gmpz_jacobi" *>
-PROCEDURE c_jacobi (f0 : MpzPtrT; f1 : MpzPtrT) : INTEGER;
+PROCEDURE c_jacobi (f0 : MpzPtrT; f1 : MpzPtrT) : Ctypes.int;
 
 <*EXTERNAL "__gmpz_kronecker_ui" *>
-PROCEDURE c_kronecker_ui (f0 : MpzPtrT; f1 : Word.T) : INTEGER;
+PROCEDURE c_kronecker_ui (f0 : MpzPtrT; f1 : Word.T) : Ctypes.int;
 
 <*EXTERNAL "__gmpz_ui_kronecker" *>
-PROCEDURE c_ui_kronecker (f0 : Word.T; f1 : MpzPtrT) : INTEGER;
+PROCEDURE c_ui_kronecker (f0 : Word.T; f1 : MpzPtrT) : Ctypes.int;
 
 <*EXTERNAL "__gmpz_lcm" *>
 PROCEDURE c_lcm (f0 : MpzPtrT; f1 : MpzPtrT; f2 : MpzPtrT);
@@ -254,7 +260,7 @@ PROCEDURE c_lucnum_ui (f0 : MpzPtrT; f1 : Word.T);
 PROCEDURE c_lucnum2_ui (f0 : MpzPtrT; f1 : MpzPtrT; f2 : Word.T);
 
 <*EXTERNAL "__gmpz_millerrabin" *>
-PROCEDURE c_millerrabin (f0 : MpzPtrT; f1 : INTEGER) : INTEGER;
+PROCEDURE c_millerrabin (f0 : MpzPtrT; f1 : Ctypes.int) : Ctypes.int;
 
 <*EXTERNAL "__gmpz_mod" *>
 PROCEDURE c_mod (f0 : MpzPtrT; f1 : MpzPtrT; f2 : MpzPtrT);
@@ -275,10 +281,10 @@ PROCEDURE c_neg (f0 : MpzPtrT; f1 : MpzPtrT);
 PROCEDURE c_nextprime (f0 : MpzPtrT; f1 : MpzPtrT);
 
 <*EXTERNAL "__gmpz_perfect_power_p" *>
-PROCEDURE c_perfect_power_p (f0 : MpzPtrT) : INTEGER;
+PROCEDURE c_perfect_power_p (f0 : MpzPtrT) : Ctypes.int;
 
 <*EXTERNAL "__gmpz_perfect_square_p" *>
-PROCEDURE c_perfect_square_p (f0 : MpzPtrT) : INTEGER;
+PROCEDURE c_perfect_square_p (f0 : MpzPtrT) : Ctypes.int;
 
 <*EXTERNAL "__gmpz_popcount" *>
 PROCEDURE c_popcount (f0 : MpzPtrT) : Word.T;
@@ -293,7 +299,7 @@ PROCEDURE c_powm (f0 : MpzPtrT; f1 : MpzPtrT; f2 : MpzPtrT; f3 : MpzPtrT);
 PROCEDURE c_powm_ui (f0 : MpzPtrT; f1 : MpzPtrT; f2 : Word.T; f3 : MpzPtrT);
 
 <*EXTERNAL "__gmpz_probab_prime_p" *>
-PROCEDURE c_probab_prime_p (f0 : MpzPtrT; f1 : INTEGER) : INTEGER;
+PROCEDURE c_probab_prime_p (f0 : MpzPtrT; f1 : Ctypes.int) : Ctypes.int;
 
 <*EXTERNAL "__gmpz_realloc2" *>
 PROCEDURE c_realloc2 (f0 : MpzPtrT; f1 : Word.T);
@@ -302,7 +308,7 @@ PROCEDURE c_realloc2 (f0 : MpzPtrT; f1 : Word.T);
 PROCEDURE c_remove (f0 : MpzPtrT; f1 : MpzPtrT; f2 : MpzPtrT) : Word.T;
 
 <*EXTERNAL "__gmpz_root" *>
-PROCEDURE c_root (f0 : MpzPtrT; f1 : MpzPtrT; f2 : Word.T) : INTEGER;
+PROCEDURE c_root (f0 : MpzPtrT; f1 : MpzPtrT; f2 : Word.T) : Ctypes.int;
 
 <*EXTERNAL "__gmpz_rootrem" *>
 PROCEDURE c_rootrem (f0 : MpzPtrT; f1 : MpzPtrT; f2 : MpzPtrT; f3 : Word.T);
@@ -323,7 +329,7 @@ PROCEDURE c_set_d (f0 : MpzPtrT; f1 : LONGREAL);
 PROCEDURE c_set_si (f0 : MpzPtrT; f1 : INTEGER);
 
 <*EXTERNAL "__gmpz_set_str" *>
-PROCEDURE c_set_str (f0 : MpzPtrT; f1 : Ctypes.const_char_star; f2 : INTEGER) : INTEGER;
+PROCEDURE c_set_str (f0 : MpzPtrT; f1 : Ctypes.const_char_star; f2 : Ctypes.int) : Ctypes.int;
 
 <*EXTERNAL "__gmpz_set_ui" *>
 PROCEDURE c_set_ui (f0 : MpzPtrT; f1 : Word.T);
@@ -335,7 +341,7 @@ PROCEDURE c_setbit (f0 : MpzPtrT; f1 : Word.T);
 PROCEDURE c_size (f0 : MpzPtrT) : CARDINAL;
 
 <*EXTERNAL "__gmpz_sizeinbase" *>
-PROCEDURE c_sizeinbase (f0 : MpzPtrT; f1 : INTEGER) : CARDINAL;
+PROCEDURE c_sizeinbase (f0 : MpzPtrT; f1 : Ctypes.int) : CARDINAL;
 
 <*EXTERNAL "__gmpz_sqrt" *>
 PROCEDURE c_sqrt (f0 : MpzPtrT; f1 : MpzPtrT);
@@ -389,7 +395,7 @@ PROCEDURE c_tdiv_r_2exp (f0 : MpzPtrT; f1 : MpzPtrT; f2 : Word.T);
 PROCEDURE c_tdiv_r_ui (f0 : MpzPtrT; f1 : MpzPtrT; f2 : Word.T) : Word.T;
 
 <*EXTERNAL "__gmpz_tstbit" *>
-PROCEDURE c_tstbit (f0 : MpzPtrT; f1 : Word.T) : INTEGER;
+PROCEDURE c_tstbit (f0 : MpzPtrT; f1 : Word.T) : Ctypes.int;
 
 <*EXTERNAL "__gmpz_ui_pow_ui" *>
 PROCEDURE c_ui_pow_ui (f0 : MpzPtrT; f1 : Word.T; f2 : Word.T);

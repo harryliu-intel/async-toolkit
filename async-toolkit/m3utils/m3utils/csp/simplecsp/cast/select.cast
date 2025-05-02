@@ -9,6 +9,18 @@ import lib.bd.6T.ecc.ecc;
 int WIDTH = 32;
 int N     = 4 * 1024;
 
+define IF()()
+{
+  csp {
+    int x = 13;
+    x++;
+    
+    [  x == 14 -> print ("fourteen")
+    [] else    -> print ("not fourteen")
+    ]
+  }
+}
+
 define DRIVE()(bd(WIDTH) +R0, +R1, -L)
 {
   csp {
