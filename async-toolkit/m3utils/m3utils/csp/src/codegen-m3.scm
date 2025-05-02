@@ -1872,6 +1872,9 @@
 
   (define (make-add! tag) (lambda(id)(tbl 'add-entry! id tag)))
 
+  (map (make-add! 'block)
+       (apply append (map get-loop-dummies the-blocks)))
+  
   (map (make-add! 'port) (map get-port-id (get-ports cell-info)))
 
   (map (make-add! 'process) (m3-frame-variables the-blocks the-decls cell-info))

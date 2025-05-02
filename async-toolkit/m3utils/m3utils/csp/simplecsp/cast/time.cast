@@ -3,7 +3,14 @@ module time;
 define x()()
 {
   csp {
-    <;i:1000:     print ("simtime=" + simtime() + " walltime=" + walltime())>
+    <;i:1000:     print ("hi")>
+  }
+}
+
+define y()()
+{
+  csp {
+    <;i:1000:     print ("i=" + i + " simtime=" + simtime() + " walltime=" + walltime())>
   }
 }
 
