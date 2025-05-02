@@ -43,10 +43,6 @@
            `(call-intrinsic ,name ,@arg-list))
        )
      )
-             
-             
-           
-    
     (else (error "handle-intrinsic of " name)))
   )
 
@@ -109,7 +105,6 @@
                        res)
                      )
               (list op ca cb))))
-          
         x
         )
     )
@@ -137,7 +132,6 @@
                        res)
                      )
               (list op ca))))
-          
         x
         )
     )

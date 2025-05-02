@@ -136,6 +136,23 @@ define U()()
   }
 }
 
+define UU()()
+{
+  csp {
+    int N = 1000;
+    <,i:N .. N + 10:print("" + i)> // will turn into a sequential loop
+  }
+}
+
+define UUU()()
+{
+  csp {
+    int N = 999;
+    N++;
+    <,i:1000 .. N + 10:print("" + i)> // will turn into a sequential loop
+  }
+}
+
 define V()()
 {
   csp {

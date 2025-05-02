@@ -1534,6 +1534,50 @@
   (Wx.ToText wx)
   )
 
+(define (m3-compile-sequential-loop pc seqloop)
+
+  (let* ((dummy (get-loop-dummy seqloop))
+         (range (get-loop-range seqloop))
+         (stmt  (get-loop-stmt  seqloop))
+         (desig (m3-format-designator pc `(id, dummy)))
+         (native (native-type-expr? pc `(id ,dummy)))
+         )
+
+    (define (compile-stmt)
+      (define wx (Wx.New))
+      
+      (define (w . x) (Wx.PutText wx (apply string-append x)))
+      
+      (m3-compile-write-stmt w pc stmt)
+      
+      (Wx.ToText wx)
+      )
+    
+    (if native
+        (sa ;; native integer FOR loop
+         "FOR " desig
+         " := " (m3-compile-value pc 'native (cadr range))
+         " TO " (m3-compile-value pc 'native (caddr range))
+         " DO" dnl
+         (compile-stmt) dnl
+         "END" dnl
+         )
+
+        (sa ;; dynamic integer FOR loop
+         "BEGIN(*sequential-loop*)  Mpz.set("
+         desig
+         "," (m3-compile-value pc 'dynamic (cadr range)) "); "
+         " WHILE Mpz.cmp( " desig " , "
+         (m3-compile-value pc 'dynamic (caddr range)) ") # 1 DO " dnl
+         (compile-stmt) dnl
+         "Mpz.add_ui(" desig " , " desig " , 1)" dnl
+         "END END(*sequential-loop*)" dnl
+         )
+
+        )
+    )
+  )
+
   
 (define (m3-compile-local-if pc stmt)
 
@@ -1569,7 +1613,26 @@
         );;tel
     )
 
-(define *known-stmt-types* '(recv send assign eval goto local-if while sequence))
+(define (convert-sequential-loop-to-while seqloop)
+  ;; unused for now (we can't call it from code generation---that's too late
+  (let* ((dummy (get-loop-dummy seqloop))
+         (range (get-loop-range seqloop))
+         (stmt  (get-loop-stmt  seqloop)))
+    `(sequence
+       (assign (id ,dummy) ,(cadr range))
+       (while (<= (id ,dummy) ,(caddr range))
+              (sequence
+                ,stmt
+                (assign (id ,dummy) (+ ,*big1* (id ,dummy)))
+                )
+              )
+       )
+    )
+  )
+
+(define *known-stmt-types*
+  '(recv send assign eval goto local-if while sequence sequential-loop)
+  )
 
 (define (m3-space-comments txt)
   (CitTextUtils.Replace
