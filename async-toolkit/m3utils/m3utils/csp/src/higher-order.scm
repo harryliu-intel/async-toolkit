@@ -5,6 +5,12 @@
 (define (caddddr x) (car (cddddr x)))
 (define (cadaddr x) (car (cdaddr x)))
 (define (cadddddr x) (caddr (cdddr x)))
+(define (caddddddr x) (caddr (cddddr x)))
+(define (cadadadr x) (cadr (cadadr x)))
+(define (cdaadadr x) (cdar (cadadr x)))
+(define (caadadr x) (car (cadadr x)))
+(define (caddadr x) (caddr (cadr x)))
+
 
 (define (identity x) x)
 

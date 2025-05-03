@@ -59,6 +59,17 @@ define common attributes {
   }
 }
 
+define SIMPLE()()
+{
+  csp {
+    int x[2];
+    x[0] = 12;
+    x[1] =  3;
+    print(x[1]);
+  }
+  
+}
+
 define P0()(bd(WIDTH) +R[0..1]) <+ common
 {
 

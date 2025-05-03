@@ -8,13 +8,18 @@
 (define *maximum-uint-range* (make-uint-range *maximum-size*))
 
 (define (make-intdecls prog)
+
+  ;; return a table of all the integer type declarations
+  ;; if a type is an array type, we store the element type, not the array type
+  ;; itself
+  
   (define tbl (make-hash-table 100 atom-hash))
   
   (define (s-visitor s)
     (case (get-stmt-type s)
       ((var1)
        (let ((id (get-var1-id s))
-             (ty (get-var1-type s)))
+             (ty (get-var1-base-type s)))
 
              (if (integer-type? ty)
 
@@ -25,6 +30,29 @@
       ;; more about their ranges than we do about declared variables
       ;; (which we only know widths for)
       
+      );;esac
+    s
+    )
+  (visit-stmt prog s-visitor identity identity)
+  tbl
+  )
+
+(define (make-arrdecls prog)
+
+  ;; return a table of all the array type declarations
+  
+  (define tbl (make-hash-table 100 atom-hash))
+  
+  (define (s-visitor s)
+    (case (get-stmt-type s)
+      ((var1)
+       (let ((id (get-var1-id s))
+             (ty (get-var1-type s)))
+
+             (if (array-type? ty) (tbl 'add-entry! id ty))
+             );;tel
+       )
+
       );;esac
     s
     )

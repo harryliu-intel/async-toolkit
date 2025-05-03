@@ -4,9 +4,9 @@
   ;; but leave the base type untouched
 
   (if (array-type? of)
-      (make-array-type (get-array-extent with)
-                       (replace-array-sizes (get-array-elem-type of)
-                                            (get-array-elem-type with)))
+      (make-array-type (array-extent with)
+                       (replace-array-sizes (array-elemtype of)
+                                            (array-elemtype with)))
       of
       )
   )

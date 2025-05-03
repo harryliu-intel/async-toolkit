@@ -89,16 +89,22 @@
 (define (array-access? x)
   (and (pair? x)(eq? 'array-access (car x))))
 
-(define (peel-array t)
-  (if (or (not (pair? t))
-          (not (eq? 'array (car t))))
-      (error "not an array type " t)
-      (caddr t)))
-
 (define (array-accessee x)
   (if (not (array-access? x))
       (error "array-accessee : not an array access : " x)
       (cadr x)))
+
+(define (array-accessor x)
+  (if (not (array-access? x))
+      (error "array-accessor : not an array access : " x)
+      (caddr x)))
+
+(define (peel-array t)
+  (if (or (not (pair? t))
+          (not (eq? 'array (car t))))
+      (error "peel-array : not an array type " t)
+      (caddr t)))
+
 
 (define (member-access? x)
   (and (pair? x)(eq? 'member-access (car x))))

@@ -449,6 +449,7 @@
                        prog *cellinfo* *the-inits* '() *the-struct-tbl*))
   (set! *the-use-tbl* (make-uses prog))
   (set! *the-dcl-tbl* (make-intdecls prog))            ;; declared ranges
+  (set! *the-arr-tbl* (make-arrdecls prog))            ;; arrays
   (set! *the-rng-tbl* (make-hash-table 100 atom-hash)) ;; derived ranges
   (set! *the-prt-tbl* (make-port-table *cellinfo*))
   (set! *the-loop-indices* (get-all-loop-indices prog))

@@ -30,6 +30,12 @@ PROCEDURE Export(VAR data : ARRAY OF Word.T; t : T);
 
 PROCEDURE InitScan(txt : TEXT; base : CARDINAL) : T;
 
+PROCEDURE ToInteger(t : T) : INTEGER;
+(* checked runtime error to be out of range *)
+
+PROCEDURE ToWord(t : T) : Word.T;
+(* checked runtime error to be out of range *)
+
 PROCEDURE pow(p, b, x : T);
 
 (***** auto-generated functions *****)

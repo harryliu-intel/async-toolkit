@@ -672,19 +672,11 @@
 
 (define *last-var* #f)
 
-(define (cadadadr x) (cadr (cadadr x)))
-(define (cdaadadr x) (cdar (cadadr x)))
-(define (caadadr x) (car (cadadr x)))
-(define (caddadr x) (caddr (cadr x)))
+(define (get-decl1-id d) (cadadr d))
 
-(define (get-decl1-id d)
-  (cadadr d))
+(define (get-decl1-type d) (caddr d))
 
-(define (get-decl1-type d)
-  (caddr d))
-
-(define (get-decl1-dir d)
-  (cadddr d))
+(define (get-decl1-dir d) (cadddr d))
   
 (define (check-var1 s)
   (if (not (and (eq? 'var1 (get-stmt-type s)) (eq? 'id (caadadr s))))
@@ -699,6 +691,16 @@
 
 (define (get-var1-type s)
   (get-decl1-type (get-var1-decl1 s)))
+
+(define (get-var1-base-type s)
+  ;; get the type of the variable declared by s,
+  ;; unless it is an array, in which case get the type of the element
+  (let ((ty (get-var1-type s)))
+    (if (array-type? ty)
+        (array-base-type ty)
+        ty)
+    )
+  )
 
 (define (convert-var-stmt s)
   (set! *last-var* s)
@@ -1656,7 +1658,20 @@
 (define-simple-pass 'simplify-stmt)
 (define-simple-pass 'unfold-loop-ranges)
 (define-simple-pass 'convert-waiting-ifs)
-          
+
+(define (clear-texts!)
+  (set! text1 #f)
+  (set! text2 #f)
+  (set! text3 #f)
+  (set! text4 #f)
+  (set! text5 #f)
+  (set! text6 #f)
+  (set! text7 #f)
+  (set! text8 #f)
+  (set! text9 #f)
+  'ok
+  )
+
 (define (compile1!)
   ;; unquify the loops before doing ANYTHING else
   (set! text1

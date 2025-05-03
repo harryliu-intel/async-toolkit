@@ -259,6 +259,12 @@
        "" dnl
        "PROCEDURE InitScan(txt : TEXT; base : CARDINAL) : T;" dnl
        dnl
+       "PROCEDURE ToInteger(t : T) : INTEGER;" dnl
+       "(* checked runtime error to be out of range *)" dnl
+       dnl
+       "PROCEDURE ToWord(t : T) : Word.T;" dnl
+       "(* checked runtime error to be out of range *)" dnl
+       dnl
        "PROCEDURE pow(p, b, x : T);" dnl
        dnl)
         

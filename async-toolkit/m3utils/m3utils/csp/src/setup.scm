@@ -114,7 +114,8 @@
 
 (define *the-ass-tbl* #f)
 (define *the-use-tbl* #f)
-(define *the-dcl-tbl* #f)
+(define *the-dcl-tbl* #f) ;; declared base types (arrays peeled)
+(define *the-arr-tbl* #f) ;; declared array types
 (define *the-prt-tbl* #f)
 (define *the-rng-tbl* #f)
 (define *the-loop-indices* #f)

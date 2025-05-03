@@ -41,8 +41,12 @@
 (define (sequence-length seq) (length (cdr seq)))
 
 (define (gen-decls the-blocks prop-types)
+  ;;
   ;; generate all program declarations
   ;; prefer prop-types over the declared types
+  ;; 
+  ;; but apply the array declaration from declared types in any case
+  ;; 
   (let* ((decl-var1s  (apply append (map (curry1 find-stmts 'var1) the-blocks)))
 
          (prop-syms  (prop-types 'keys))
@@ -59,9 +63,25 @@
          
          (chosen-decls
           (map
-           (lambda(id) (if (member id prop-vars)
-                           (retrieve-var1 prop-var1s id)
-                           (retrieve-var1 decl-var1s id)))
+           (lambda(id) (let ((have-prop (member id prop-vars))
+                             (have-decl (member id decl-vars)))
+                         (cond
+                          ((and have-prop have-decl)
+                           (smush-type
+                            (retrieve-var1 decl-var1s id)
+                            (retrieve-var1 prop-var1s id)
+                            ))
+
+                          (have-prop
+                           (retrieve-var1 prop-var1s id))
+
+                          (have-decl
+                           (retrieve-var1 decl-var1s id))
+
+                          (else (error "gen-decls : no type for : " id))
+                          );;dnoc
+                         );;tel
+                  )
            all-vars))
          
          )
@@ -70,6 +90,17 @@
     )
   )
 
+
+(define (smush-type type other)
+  ;; if type is an element type and other is an array type,
+  ;; return the type that is the array with the extent of other
+  ;; but with the base type type
+  (if (array-type? other)
+      (make-array-type (array-extent other)
+                       (smush-type type (array-elemtype other)))
+      type)
+  )
+                    
 (define (visit-blocks blk-list v)
   (map (lambda(blk)(visit-stmt blk v identity identity)) blk-list))
 
@@ -120,6 +151,11 @@
         )
   )
 
+(define (array-dims type)
+  (if (not (array-type? type))
+      0
+      (+ 1 (array-dims (peel-array type)))))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 ;; the following will need to be enhanced for structured ports
@@ -130,3 +166,4 @@
 
 (define (input-port? pdef) (eq? 'in (port-direction pdef)))
 (define (output-port? pdef) (eq? 'out (port-direction pdef)))
+

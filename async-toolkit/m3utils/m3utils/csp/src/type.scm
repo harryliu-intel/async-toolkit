@@ -8,10 +8,16 @@
 (define *default-string-type* '(string #f))
 (define *const-string-type* '(string #t))
 
+(define (make-array-type extent elemtype) `(array ,extent ,elemtype))
+
 (define (array-type? t) (and (pair? t) (eq? 'array (car t))))
 
-(define (get-array-extent      at)  (cadr at))
-(define (get-array-elem-type   at)  (caddr at))
+(define (array-extent      at)  (cadr at))
+(define (array-elemtype    at)  (caddr at))
+
+(define (array-base-type   at)
+  (let ((et (array-elemtype at)))
+    (if (array-type? et) (array-base-type et) et)))
 
 (define (make-array-type extent elem-type)
   `(array ,extent ,elem-type))

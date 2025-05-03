@@ -305,17 +305,30 @@
 
 (define (get-type-range declared-type)
   (set! gtr-dt declared-type)
-  (if (not (integer-type? declared-type))
-      (error "get-type-range : not an integer type : " declared-type))
+  (cond
 
-  (let ((bitsiz (cadddr declared-type))
-        (sint   (caddr  declared-type)))
-    
-    (cond ((null? bitsiz) *range-complete*)
-          
-          (sint        (make-sint-range bitsiz))
-          (else        (make-uint-range bitsiz)))
-    
+   ((array-type? declared-type)
+    (get-type-range (peel-array declared-type))
     )
+   
+   ((integer-type? declared-type)
+    (let ((bitsiz (cadddr declared-type))
+          (sint   (caddr  declared-type)))
+      
+      (cond ((null? bitsiz) *range-complete*)
+            
+            (sint        (make-sint-range bitsiz))
+            (else        (make-uint-range bitsiz)))
+      
+      )
+    )
+
+
+   (else
+    (error "get-type-range : not an rangeable type : " declared-type))
+
+   )
   )
+
+
 
