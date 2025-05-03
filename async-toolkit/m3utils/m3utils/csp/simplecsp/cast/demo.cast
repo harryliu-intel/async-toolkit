@@ -21,19 +21,29 @@ define func attributes {
   }
 }
 
+int MAXCNT=1000;
+
 define PROC(bool DOSTART)(bd(WIDTH) -L, +R) <+ func
 {
 
   csp {
    int(WIDTH) i;
-   [ DOSTART -> i=0; R!0 [] ~DOSTART -> skip ];
+   int start;
+
+   [ DOSTART -> i=0; R!0; start = walltime() [] ~DOSTART -> skip ];
    
-   *[ L?x ;
+   *[ ~DOSTART || i < MAXCNT -> L?x ;
 
       [ DOSTART -> print("i = " + i + " x = " + x); i++ [] ~DOSTART -> skip ];
       
       R!fz(x)
-    ]
+      ];
+
+   #[ DOSTART ->
+        int stop = walltime();
+      print ("" + (stop - start)/1000/1000 + " milliseconds");
+      ]
+
   }
 }
 

@@ -67,11 +67,15 @@
                              (have-decl (member id decl-vars)))
                          (cond
                           ((and have-prop have-decl)
-                           (smush-type
-                            (retrieve-var1 decl-var1s id)
-                            (retrieve-var1 prop-var1s id)
-                            ))
-
+                           (let
+                               ((type
+                                 (smush-type
+                                  (get-var1-type (retrieve-var1 decl-var1s id))
+                                  (get-var1-type (retrieve-var1 prop-var1s id))
+                                  )))
+                             (make-var1-decl id type)
+                             ))
+                             
                           (have-prop
                            (retrieve-var1 prop-var1s id))
 
@@ -90,15 +94,16 @@
     )
   )
 
-
-(define (smush-type type other)
-  ;; if type is an element type and other is an array type,
-  ;; return the type that is the array with the extent of other
-  ;; but with the base type type
-  (if (array-type? other)
-      (make-array-type (array-extent other)
-                       (smush-type type (array-elemtype other)))
-      type)
+(define (smush-type decl prop)
+  ;; if decl is an element type and prop is an array type,
+  ;; return the type that is the array with the extent of prop
+  ;; but with the base type decl
+  (dis "smush-type : decl : " decl dnl)
+  (dis "smush-type : prop : " prop dnl)
+  (if (array-type? decl)
+      (make-array-type (array-extent decl)
+                       (smush-type (array-elemtype decl) prop))
+      prop)
   )
                     
 (define (visit-blocks blk-list v)

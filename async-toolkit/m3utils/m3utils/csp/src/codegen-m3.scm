@@ -409,7 +409,6 @@
     
     )
   )
-
        
 (define (m3-write-build-defn w
                              cell-info the-blocks the-decls fork-counts
@@ -944,7 +943,9 @@
           (sa (m3-format-designator pc lhs) " := "))
 
          (comp-rhs
-          (cond ((ident? rhs)
+          (cond ((or
+                  (ident? rhs)
+                  (array-access? rhs))
                  (m3-force-type pc 'native rhs))
         
                 ((bigint? rhs)
@@ -1132,7 +1133,8 @@
       (sa "Mpz.set(" comp-lhs ", " (make-dynamic-constant! pc rhs) ")")
       )
                
-     ((or (ident? rhs) (array-access? rhs))
+     ((or (ident? rhs)
+          (array-access? rhs))
       (sa "Mpz.set(" comp-lhs ", " (m3-force-type pc 'dynamic rhs) ")")
       )
 
@@ -1311,6 +1313,7 @@
         (else #f)))
 
 (define (m3-compile-value pc int-class x)
+  (dis "m3-compile-value " int-class " x : " (stringify x) dnl)
   (cond ((string? x) (stringify x))
 
         ((and (bigint? x) (eq? int-class 'native))
@@ -1443,31 +1446,33 @@
 
 ;; note that CSP (oddly) does not allow != between booleans.
 
-(define (m3-compile-boolean-assign pc lhs x)
+(define (m3-compile-boolean-assign pc lhs rhs)
+  (dis "m3-compile-boolean-assign : lhs : " lhs dnl)
+  (dis "m3-compile-boolean-assign : rhs : " rhs dnl)
   (let ((m3-lhs (sa (m3-format-designator pc lhs) " := ")))
-    (cond ((boolean? x)
-           (sa m3-lhs (if x "TRUE" "FALSE")))
+    (cond ((boolean? rhs)
+           (sa m3-lhs (if rhs "TRUE" "FALSE")))
           
-          ((ident? x) ;; should cover arrays and structs, too
-           (sa m3-lhs (m3-format-designator pc x)))
+          ((ident? rhs) ;; should cover arrays and structs, too
+           (sa m3-lhs (m3-format-designator pc rhs)))
           
-          ((and (pair? x) (eq? (car x) 'not))
-           (sa m3-lhs "(NOT ( " (m3-compile-value pc rhs) " ) )"))
+          ((and (pair? rhs) (eq? (car rhs) 'not))
+           (sa m3-lhs "(NOT ( " (m3-compile-value pc 'x (cadr rhs)) " ) )"))
           
-          ((and (pair? x) (eq? (car x) '==))
-           (m3-compile-equals pc m3-lhs (cadr x) (caddr x)))
+          ((and (pair? rhs) (eq? (car rhs) '==))
+           (m3-compile-equals pc m3-lhs (cadr rhs) (caddr rhs)))
           
-          ((and (pair? x)
-                (= 3 (length x))
-                (member (car x) (map car *boolean-numeric-binops*)))
-           (m3-compile-boolean-numeric-binop pc m3-lhs (car x) (cadr x) (caddr x)))
+          ((and (pair? rhs)
+                (= 3 (length rhs))
+                (member (car rhs) (map car *boolean-numeric-binops*)))
+           (m3-compile-boolean-numeric-binop pc m3-lhs (car rhs) (cadr rhs) (caddr rhs)))
           
-          ((and (pair? x)
-                (= 3 (length x))
-                (member (car x) (map car *boolean-logical-binops*)))
-           (m3-compile-boolean-logical-binop pc m3-lhs (car x) (cadr x) (caddr x)))
+          ((and (pair? rhs)
+                (= 3 (length rhs))
+                (member (car rhs) (map car *boolean-logical-binops*)))
+           (m3-compile-boolean-logical-binop pc m3-lhs (car rhs) (cadr rhs) (caddr rhs)))
 
-          (else (error "m3-compile-boolean-assign : don't understand " x))
+          (else (error "m3-compile-boolean-assign : don't understand " rhs))
         );;dnoc
     );;tel
   )

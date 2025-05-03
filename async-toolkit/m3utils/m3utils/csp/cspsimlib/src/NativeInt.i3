@@ -1,6 +1,7 @@
 INTERFACE NativeInt;
 IMPORT Word;
 IMPORT Fmt AS FmtIntf;
+IMPORT Mpz;
 
 (* these are native operations on INTEGERs *)
 (* the system excludes Word.T with the MSB set, as they have different
@@ -22,5 +23,7 @@ CONST One  = 1;
       Zero = 0;
 
 PROCEDURE Hex(a : T) : TEXT;
+
+CONST ConvertDynamicInt = Mpz.ToInteger;
   
 END NativeInt.
