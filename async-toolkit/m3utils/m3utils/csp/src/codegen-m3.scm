@@ -1,3 +1,4 @@
+(define *default-slack* 1)
 
 (define (m3-expand-type type)
   (cond ((boolean-type? type) "BOOLEAN")
@@ -2595,7 +2596,7 @@
     
     (the-driver 'setProcessPorts (the-port-tbl '*m3*))
 
-    (m3-write-main! (the-driver 'genBuilder "BuildSimulation"))
+    (m3-write-main! (the-driver 'genBuilder "BuildSimulation" *default-slack*))
     
     'ok
     )

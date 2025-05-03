@@ -6,7 +6,6 @@ IMPORT FileRd;
 IMPORT TextReader;
 IMPORT TextSet, TextSetDef;
 IMPORT Wx;
-IMPORT Text;
 IMPORT TextSeq;
 IMPORT TextList;
 IMPORT Debug;
@@ -94,7 +93,7 @@ PROCEDURE SetProcessPorts(t : T; tbl : TextCspPortSeqTbl.T) =
     t.ports := tbl;
   END SetProcessPorts;
 
-PROCEDURE GenBuilder(t : T; builderName : TEXT) : TEXT =
+PROCEDURE GenBuilder(t : T; builderName : TEXT; defSlack : CARDINAL) : TEXT =
 
   VAR chanTbl := NEW(TextAtomTbl.Default).init();
       chanTypes := NEW(TextSetDef.T).init();
@@ -194,10 +193,11 @@ PROCEDURE GenBuilder(t : T; builderName : TEXT) : TEXT =
     BEGIN
       WHILE iter.next(cname, ctype) DO
         P(F(
-                           "    %s := %s.New(\"%s\");\n",
+                           "    %s := %s.New(\"%s\", slack := %s);\n",
                            M3Ident.Escape(cname),
                            Atom.ToText(ctype),
-                           cname)
+                           cname,
+                           Int(defSlack))
         )
 
       END

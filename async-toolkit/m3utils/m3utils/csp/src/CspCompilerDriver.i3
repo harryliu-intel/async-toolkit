@@ -20,7 +20,7 @@ TYPE
     setProcessPorts(tbl : TextCspPortSeqTbl.T);
     (* Phase 2. pass in a table of the process port lists *)
 
-    genBuilder(named : TEXT) : TEXT;
+    genBuilder(named : TEXT; defaultSlack : CARDINAL) : TEXT;
     (* generate a PROCEDURE that will build the process graph as
        required *)
   END;
