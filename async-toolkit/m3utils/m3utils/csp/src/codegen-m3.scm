@@ -391,10 +391,29 @@
 
 (define td #f)
 
-(define (m3-format-mpz-new id)
-  (sa (M3Ident.Escape (symbol->string id)) " := Mpz.New()" dnl))
+(define (m3-format-mpz-new arr-tbl id)
+  (let* ((arrdef    (arr-tbl 'retrieve id))
+         (arrdims   (if (eq? arrdef '*hash-table-search-failed*)
+                        0
+                        (array-dims arrdef))))
+    
+    (sa
+     (m3-initialize-array
+      (lambda(stuff) (sa stuff  " := Mpz.New()"))
+      (sa "frame." (M3Ident.Escape (symbol->string id)))
+      arrdims
+      'i
+      )
+     ";" dnl
+     )
+    
+    )
+  )
 
-(define (m3-write-build-defn w cell-info the-blocks the-decls fork-counts)
+       
+(define (m3-write-build-defn w
+                             cell-info the-blocks the-decls fork-counts
+                             arr-tbl)
   (define *comma-indent* "                     ,")
   (let ((proc-ports (get-ports cell-info)))
     (m3-write-build-signature w cell-info)
@@ -410,26 +429,31 @@
            asslist)
       );;tel
 
-    (let ((dynamics (filter (compose m3-dynamic-int-type? get-var1-type)
-                            the-decls)))
+    (set! td the-decls)
+    
+    (let ((iw (indent-writer w *comma-indent*)))
+      (iw "a := Mpz.New()" dnl)
+      (iw "b := Mpz.New()" dnl)
+      (iw "c := Mpz.New()" dnl)
+      )
+    
+  
+    (w "      ) DO" dnl
+       dnl)
 
-      (set! td the-decls)
+    (let ((dynamics (filter (compose m3-dynamic-int-type? get-var1-type)
+
+                            the-decls))
+          )
+
       ;; write in initialization of Mpz variables
       (dis "dynamics : " dynamics dnl)
-
-      (let ((iw (indent-writer w *comma-indent*)))
-        (map iw
-             (map m3-format-mpz-new (map get-var1-id dynamics)))
-
-        (iw "a := Mpz.New()" dnl)
-        (iw "b := Mpz.New()" dnl)
-        (iw "c := Mpz.New()" dnl)
       
-        )
-      )
-
-    (w "      ) DO" dnl)
-
+      (map w
+           (map (curry m3-format-mpz-new arr-tbl) (map get-var1-id dynamics)))
+      );;tel
+    
+    
     ;; build body
     (let ((iw (indent-writer w "     ")))
 
@@ -1141,7 +1165,7 @@
   ;; code currently BROKEN
   
   (let loop ((i 0)
-             (proto name)
+             (what name)
              (index "")
              (indent "")
              (prefix "")
@@ -1150,15 +1174,15 @@
     (cond ((= i dims) (sa prefix indent (format-init (sa name index)) suffix))
 
           (else
-           (let ((frst (sa "FIRST(" proto ")")))
+           (let ((frst (sa "FIRST(" what ")")))
              (loop
               (+ i 1)
-              (sa name "[" frst "]")
+              (sa what "[" frst "]")
               (sa index "[" (symbol->string dummy) i "]")
               (sa indent "  ")
               (sa prefix 
                   indent "FOR "(symbol->string dummy) i
-                  " :=  FIRST(" proto ") TO LAST(" proto ") DO" dnl)
+                  " :=  FIRST(" what ") TO LAST(" what ") DO" dnl)
               (sa dnl indent "END"
                   suffix))
              );;tel
@@ -2330,7 +2354,8 @@
     (m3-write-block-decl      modu)
     (m3-write-closure-decl    modu)
     (m3-write-build-defn      modu
-                              cell-info the-exec-blocks the-decls fork-counts)
+                              cell-info the-exec-blocks the-decls fork-counts
+                              *the-arr-tbl*)
 
     
     (let ((pc (make-proc-context
