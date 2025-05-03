@@ -14,3 +14,18 @@ define y()()
   }
 }
 
+define z()()
+{
+  csp {
+    int(32) x;
+    int start = walltime();
+    
+    <;i:100000000:     x++ >;
+
+    int stop = walltime();
+
+    print ("" + (stop - start)/1000/1000 + " milliseconds");
+    
+  }
+}
+

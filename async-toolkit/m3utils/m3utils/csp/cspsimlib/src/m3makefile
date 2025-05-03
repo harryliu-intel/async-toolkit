@@ -27,7 +27,9 @@ Module ("CspCompiledScheduler")
 Module ("CspBoolean")
 Interface ("CspString")
 
-Module ("CspIntrinsics")
+Module   ("CspIntrinsics")
+c_source ("CspIntrinsicsC")
+interface("CspIntrinsicsP")
 
 Generic_module ("Channel")
 template ("channel")

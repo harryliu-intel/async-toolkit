@@ -56,6 +56,19 @@ define HEX()()
     
     str = hex(x);
 
+    hex(x);
+
+    print("str = " + str)
+  }
+}
+
+define BHEX()()
+{
+  csp {
+    string str;
+    int x;
+    x++;
+    str = hex(x);
     print("str = " + str)
   }
 }

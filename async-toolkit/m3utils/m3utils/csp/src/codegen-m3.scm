@@ -919,15 +919,20 @@
 
 (define (m3-mpz-op op)
   (case op
-    ((+)  "Mpz.add")
-    ((-)  "Mpz.sub")
-    ((*)  "Mpz.mul")
-    ((/)  "Mpz.tdiv_q")
-    ((%)  "Mpz.tdiv_r")
-    ((&)  "Mpz.and")
-    ((|)  "Mpz.ior") ;|))
-    ((^)  "Mpz.xor")
-    ((**) "Mpz.pow")
+    ;; binary ops:
+    ((+)    "Mpz.add")
+    ((-)    "Mpz.sub")
+    ((*)    "Mpz.mul")
+    ((/)    "Mpz.tdiv_q")
+    ((%)    "Mpz.tdiv_r")
+    ((&)    "Mpz.and")
+    ((|)    "Mpz.ior") ;|))
+    ((^)    "Mpz.xor")
+    ((**)   "Mpz.pow")
+
+    ;; unary ops: 
+    ((uneg) "Mpz.neg")
+    ((~)    "Mpz.com")
     (else (error))
     )
   )
@@ -990,6 +995,26 @@
     )      
   )
 
+(define (m3-compile-dynamic-unop lhs pc mpz-op a)
+  (let* ((a-stmt (m3-set-dynamic-value pc "frame.a" a))
+         (res
+          (sa (if a-stmt (sa a-stmt "; ") "")
+              mpz-op
+              "("
+              lhs
+              " , "
+              (if a-stmt "frame.a" (m3-format-designator pc a))
+              ")"
+              ))
+         )
+
+    (dis "m3-compile-dynamic-unop : " res dnl)
+;;    (error)
+    
+    res
+    )      
+  )
+
 (define (m3-compile-dynamic-int-assign pc x)
   (dis "m3-compile-dynamic-int-assign : x : " x dnl)
 
@@ -1020,6 +1045,15 @@
      ((binary-expr? rhs)
       (m3-compile-dynamic-binop
        comp-lhs pc (m3-mpz-op (car rhs)) (cadr rhs) (caddr rhs))
+      )
+
+     ((unary-expr? rhs)
+      (let* ((op     (car rhs))
+             (map-op (if (eq? '- op) 'uneg op))
+             (m3-op  (m3-mpz-op map-op))
+             )
+        (m3-compile-dynamic-unop comp-lhs pc m3-op (cadr rhs))
+        );;*tel
       )
      
      (else (error "m3-compile-dynamic-int-assign")))
@@ -1296,6 +1330,37 @@
     );;tel
   )
 
+(define (m3-compile-intrinsic-assign pc lhs lty rhs)
+  (if (integer-type? lty)
+      (begin
+        ;; if LHS is integer, we need to ensure we can type-convert return
+        ;; value
+
+        (sa "WITH retval = " (m3-compile-intrinsic pc rhs) " DO" dnl
+
+            (cond ((m3-dynamic-int-type? lty)
+                   (sa
+                    "  Mpz.set_ui(" (m3-format-designator pc lhs) " , retval)")
+                   )
+
+                  ((m3-native-int-type? lty)
+
+                   (sa "  " (m3-format-designator pc lhs) " := retval")
+                   )
+
+                  (else (error "m3-compile-intrinsic-assign : don't know type " lty))
+                  )
+            dnl
+            "END" dnl)
+        
+        )
+
+      ;; not an integer, a simple assignment will do
+      (sa (m3-format-designator pc lhs) " := "
+          (m3-compile-intrinsic pc rhs))
+      )
+  )
+
 (define (m3-compile-assign pc stmt)
   (dis "m3-compile-assign : " (stringify stmt) dnl)
   (let* ((lhs (get-assign-lhs stmt))
@@ -1306,7 +1371,10 @@
     (dis "m3-compile-assign : lty : " lty dnl)
     (dis "m3-compile-assign : rhs : " (stringify rhs) dnl)
 
-    (cond ((boolean-type? lty)
+    (cond ((call-intrinsic? rhs)
+           (m3-compile-intrinsic-assign pc lhs lty rhs))
+          
+          ((boolean-type? lty)
            (m3-compile-boolean-assign pc lhs rhs))
 
           ((string-type? lty)
@@ -1505,18 +1573,50 @@
   )
 
 (define (m3-compile-intrinsic pc expr)
-  (dis "m3-compile-instrinsic : " expr dnl)
+  (dis "m3-compile-intrinsic : " expr dnl)
   (if (not (call-intrinsic? expr)) (error "not an intrinsic : " expr))
 
   (let ((in-sym (cadr expr)))
 
-    ;; special handling for print
-    (sa "CspIntrinsics." (symbol->string in-sym) "(frame, "
-        
-        (m3-compile-print-value pc (caddr expr))
-        ")")
+    (case in-sym
+      ((print)
+       (sa "CspIntrinsics.print(frame, "
+           (m3-compile-print-value pc (caddr expr))
+           ")")
+
+       )
+
+      ((walltime simtime)
+       (sa  "CspIntrinsics." (symbol->string in-sym) "(frame)"))
+
+      ((string)
+       ;; first convert base to native
+       (let* ((val         (caddr expr))
+              (base        (cadddr expr))
+              (native-base (m3-compile-value pc 'native base)))
+         (cond ((native-integer-value? pc val)
+                (sa "CspIntrinsics.string_native(frame, "
+                    (m3-compile-value pc 'native val) " , "
+                    native-base
+                    ")" )
+                )
+
+               ((dynamic-integer-value? pc val)
+                (sa "CspIntrinsics.string_dynamic(frame, "
+                    (m3-compile-value pc 'dynamic val) " , "
+                    native-base
+                    ")" )
+                )
+
+               (else (error)))
+         );;*tel
+       )
+
+      (else (error "unknown intrinsic : " expr))
+      
+      );;esac
     
-    )
+    );;tel
   )
 
 (define (m3-compile-sequence pc stmt)
@@ -1533,6 +1633,8 @@
 
   (Wx.ToText wx)
   )
+
+(define (m3-compile-skip pc skip) "BEGIN (*skip*) END"  )
 
 (define (m3-compile-sequential-loop pc seqloop)
 
@@ -1631,7 +1733,7 @@
   )
 
 (define *known-stmt-types*
-  '(recv send assign eval goto local-if while sequence sequential-loop)
+  '(recv send assign eval goto local-if while sequence sequential-loop skip)
   )
 
 (define (m3-space-comments txt)
