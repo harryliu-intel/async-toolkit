@@ -2211,7 +2211,7 @@
     (map (curry Wr.PutText wr)
          (map (lambda(intf)(sa "import(\"" intf "\")" dnl))
               *m3-standard-interfaces*))
-
+    (Wr.PutText wr (sa "m3_optimize(\"T\")" dnl))
     (Wr.PutChar wr dnl)
     
     (Wr.Close wr)
