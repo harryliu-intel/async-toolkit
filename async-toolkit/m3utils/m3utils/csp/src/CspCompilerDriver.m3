@@ -17,10 +17,12 @@ FROM Fmt IMPORT F, Int, Bool;
 IMPORT Atom;
 IMPORT TextAtomTbl;
 IMPORT M3Ident;
+IMPORT Text;
+IMPORT TextTextTbl;
 
 <*FATAL Thread.Alerted*>
 
-CONST doDebug = FALSE;
+CONST doDebug = TRUE;
 
 REVEAL
   T = Public BRANDED Brand OBJECT
@@ -93,12 +95,130 @@ PROCEDURE SetProcessPorts(t : T; tbl : TextCspPortSeqTbl.T) =
     t.ports := tbl;
   END SetProcessPorts;
 
+PROCEDURE Unarray(designator : TEXT) : TEXT =
+  (* return only the ID part of ID[..][..] *)
+  BEGIN
+    WITH pos = Text.FindChar(designator, '[', 1) DO
+      IF pos = -1 THEN
+        RETURN designator
+      ELSE
+        RETURN Text.Sub(designator, 0, pos)
+      END
+    END
+  END Unarray;
+
+PROCEDURE Unid(designator : TEXT) : TEXT =
+  (* return only the [..][..] part of ID[..][..] *)
+  BEGIN
+    WITH pos = Text.FindChar(designator, '[', 1) DO
+      IF pos = -1 THEN
+        RETURN ""
+      ELSE
+        RETURN Text.Sub(designator, pos)
+      END
+    END
+  END Unid;
+
+PROCEDURE MapFailed(map : TextTextTbl.T; what : TEXT) =
+  VAR
+    existing := "";
+    iter := map.iterate();
+    k, v : TEXT;
+  BEGIN
+    WHILE iter.next(k, v) DO
+      existing := existing & F("%s -> %s\n", k, v)
+    END;
+    Debug.Error(F("Not found : %s, existing=\n%s",
+                  what,
+                  existing))
+  END MapFailed;
+  
+PROCEDURE DumpMap(map : TextTextTbl.T) =
+  VAR
+    existing := "";
+    iter := map.iterate();
+    k, v : TEXT;
+  BEGIN
+    WHILE iter.next(k, v) DO
+      existing := existing & F("%s -> %s\n", k, v)
+    END;
+    Debug.Out(F("MAP : \n%s", existing))
+  END DumpMap;
+  
+PROCEDURE BuildPortBinding(lhs  : TEXT;
+                           port : CspPort.T;
+                           map  : TextTextTbl.T (* map R[0][1] -> chanxyz *)
+  ) : TEXT =
+  VAR
+    g : TEXT;
+    chanName := M3Ident.Escape(Atom.ToText(port.name));
+  BEGIN
+    IF ISTYPE(port.def, CspPort.Scalar) THEN
+      WITH found = map.get(chanName, g) DO
+        IF NOT found THEN
+          RETURN lhs & F("NIL (* not found : %s *)", chanName)
+        END;
+        RETURN lhs & g
+      END
+    ELSE
+      RETURN lhs & DefBinding(port.def, map, chanName)
+    END
+  END BuildPortBinding;
+
+PROCEDURE DefBinding(def    : CspPort.Channel;
+                     map    : TextTextTbl.T;
+                     chan   : TEXT) : TEXT =
+
+  PROCEDURE Recurse(def    : CspPort.Channel;
+                    prefix : TEXT) : TEXT =
+    BEGIN
+      IF ISTYPE(def, CspPort.Scalar) THEN
+        VAR
+          g : TEXT;
+          search := chan & prefix & "]";
+          found := map.get(search, g);
+        BEGIN
+          IF NOT found THEN
+            MapFailed(map, search)
+          END;
+          RETURN g
+        END
+      ELSE
+        WITH arr  = NARROW(def, CspPort.Array),
+             decl = CspPort.M3ChanDecl(def),
+             wx   = Wx.New() DO
+          Wx.PutText(wx, F("%s { ", decl));
+          FOR i := arr.range.min TO arr.range.max DO
+            VAR
+              newPrefix := prefix & F("%s", Int(i));
+            BEGIN
+              IF ISTYPE(arr.elem, CspPort.Array) THEN
+                newPrefix := newPrefix & ","
+              END;
+              
+              Wx.PutText(wx, Recurse(arr.elem, newPrefix));
+              IF i # arr.range.max THEN Wx.PutText(wx, ", ") END
+            END
+          END;
+          Wx.PutText(wx, " }");
+          RETURN Wx.ToText(wx)
+        END
+      END
+    END Recurse;
+
+  BEGIN
+    RETURN Recurse(def, "[")
+  END DefBinding;
+  
 PROCEDURE GenBuilder(t : T; builderName : TEXT; defSlack : CARDINAL) : TEXT =
 
   VAR chanTbl := NEW(TextAtomTbl.Default).init();
       chanTypes := NEW(TextSetDef.T).init();
       
   PROCEDURE ExtractChannelInfo() =
+    (* this takes all the channels mentioned in the .procs file and
+       figures out the type of each channel, so that we may proceed
+       with channel creation *)
     BEGIN
       FOR i := 0 TO t.insts.size() - 1 DO
         WITH inst = NARROW(t.insts.get(i), REF Instance)^ DO
@@ -117,7 +237,7 @@ PROCEDURE GenBuilder(t : T; builderName : TEXT; defSlack : CARDINAL) : TEXT =
             WHILE p # NIL DO
               IF doDebug THEN Debug.Out(F("channel assign : %s", p.head)) END;
               WITH reader = NEW(TextReader.T).init(p.head),
-                   portNm = reader.nextE("="),
+                   portNm = Unarray(reader.nextE("=")),
                    patom  = Atom.FromText(portNm),
                    global = reader.nextE("") DO
                 IF doDebug THEN Debug.Out(F("port %s global %s", portNm, global)) END;
@@ -138,9 +258,11 @@ PROCEDURE GenBuilder(t : T; builderName : TEXT; defSlack : CARDINAL) : TEXT =
                 END;
 
                 VAR
+                  baseChanType := CspPort.BaseChanType(port.def);
+                  
                   ntypeTxt := F("%s%sChan",
-                                CspPort.ClassTypeNames[port.class],
-                                Int(port.width));
+                                CspPort.ClassTypeNames[baseChanType.class],
+                                Int(baseChanType.width));
                   ntype : Atom.T := Atom.FromText(ntypeTxt);
                   ptype : Atom.T;
                 BEGIN
@@ -149,7 +271,7 @@ PROCEDURE GenBuilder(t : T; builderName : TEXT; defSlack : CARDINAL) : TEXT =
                       Debug.Error(F("%s : port mismatch : %s # %s [%s]",
                                     global,
                                     Atom.ToText(ptype),
-                                    Atom.ToText(port.typeName)))
+                                    Atom.ToText(baseChanType.typeName)))
                     END
                   ELSE
                     EVAL chanTbl.put(global, ntype);
@@ -226,25 +348,54 @@ PROCEDURE GenBuilder(t : T; builderName : TEXT; defSlack : CARDINAL) : TEXT =
                              inst.name) (* the name should NOT be escaped *)
           );
 
-          VAR p := inst.chans; BEGIN
+          VAR
+            p    := inst.chans;
+            map  := NEW(TextTextTbl.Default).init();
+            pSeq : CspPortSeq.T;
+            found := t.ports.get(inst.ptypeE, pSeq);
+          BEGIN
+            <*ASSERT found*>
             WHILE p # NIL DO
-              WITH reader = NEW(TextReader.T).init(p.head),
-                   portNm = reader.nextE("="),
-                   patom  = Atom.FromText(portNm),
-                   global = reader.nextE("") DO
-                P(F(
-        "      , %s := %s\n",                                   
-        M3Ident.Escape(portNm), M3Ident.Escape(global)));
+              WITH reader  = NEW(TextReader.T).init(p.head),
+                   portNm  = reader.nextE("="),
+                   portId  = Unarray(portNm),
+                   portIdx = Unid(portNm),
+                   global  = reader.nextE("") DO
+                EVAL map.put(M3Ident.Escape(portId) & portIdx,
+                             M3Ident.Escape(global));
                 p := p.tail
-              END
-            END
-          END(*VAR*);
+              END;
+              
+            END;(*WHILE*)
 
-          (* now hook up the Node ports too *)
+            DumpMap(map);
 
-          Wx.PutText(wx,
-       "    );\n"                     
-          );
+            VAR
+              iter := map.iterate();
+              p, g : TEXT;
+            BEGIN
+              (* start with the channels *)
+              FOR i := 0 TO pSeq.size() - 1 DO
+                WITH port = pSeq.get(i) DO
+                  WITH lhs = F(", %s := ",
+                               M3Ident.Escape(Atom.ToText(port.name))) DO
+                    Wx.PutText(wx, F("      %s\n",
+                                     BuildPortBinding(lhs, port, map)))
+                  END;
+                  
+                  Wx.PutText(wx, F("      (* port %s *)\n",
+                                   Atom.ToText(port.name)))
+                END
+              END;
+              
+              (* now hook up the Node ports too *)
+              
+              Wx.PutText(wx,
+                         "    );\n"                     
+              )
+            END;
+            
+          END(*VAR*)
           
         END          
       END

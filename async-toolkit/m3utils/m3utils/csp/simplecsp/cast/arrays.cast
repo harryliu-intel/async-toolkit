@@ -78,13 +78,70 @@ define P0()(bd(WIDTH) +R[0..1]) <+ common
   }
 }
 
-define P1P(int Q)(bd(WIDTH) -L[0..1]) <+ common
+define SINK()(bd(WIDTH) -L)
 {
   csp {
-    bool q;
-     
+    *[ L?x ; print(x) ]
   }
 }
+
+define P0SINK()()
+{
+  subcells {
+    bd(WIDTH) c0, c1;
+
+    P0 p0({c0, c1});
+    SINK sink0(c0);
+    SINK sink1(c1);
+  }
+}
+
+define P1P()(bd(WIDTH) -L[0..1]) <+ common
+{
+  csp {
+    *[ L[0]?x; L[1]?x ]
+  }
+}
+
+define P0P1P()()
+{
+  subcells {
+    bd(WIDTH) c0, c1;
+
+    P0  p0({c0, c1});
+    P1P p1({c0, c1});
+  }
+}
+
+
+//////////////////////////////////////////////////////////////////////
+
+define Q0()(bd(WIDTH) +R[0..1,0..2]) <+ common
+{
+
+  csp {
+    <i:2:<j:3: R[i][j] ! (i * 25 + j) > >
+  }
+}
+
+define Q1()(bd(WIDTH) -L[0..1,0..2]) <+ common
+{
+  csp {
+    <i:2:<j:3: print(L[i][j]?) >>
+  }
+}
+
+define Q0Q1()()
+{
+  subcells {
+    bd(WIDTH) c[0..1,0..2];
+
+    Q0 q0(c);
+    Q1 q1(c);
+  }
+}
+
+//////////////////////////////////////////////////////////////////////
 
 define P1(int R) <: P1P(2 * R)
 {

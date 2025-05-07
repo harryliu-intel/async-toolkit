@@ -18,6 +18,15 @@ define P1()(bd(WIDTH) -L)
   }
 }
 
+define P0P1()()
+{
+  subcells {
+    bd(WIDTH) c;
+    P0 p0(c);
+    P1 p1(c);
+  }
+}
+
 define SYSTEM()()
 {
   subcells {

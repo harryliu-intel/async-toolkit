@@ -1,0 +1,177 @@
+module collatz;
+
+int NWORKERS = 1;
+int W        = 63;
+
+int STATUSW = 128 + 2 * W; // why can't this go in attributes cell?
+int INTERVAL = 1000;
+
+define common attributes {
+  csp {
+    
+    structure longest_so_far =
+      (
+       int(W) num;
+       int(W) length;
+       );
+
+    structure status =
+      (
+       int(128) ops;
+       longest_so_far l;
+       );
+
+    function even(int -n) : bool =
+      ( even = ((n & 1) == 0) );
+
+    function odd(int -n) : bool =
+      ( odd = ~even(n) );
+
+  }
+}
+
+define WORKER(int id)(bd(W) -STRT; bd(STATUSW) +STATUS) <+ common
+{
+  csp {
+
+    function sendStatus(int -len, -num, -steps) =
+      (
+       //       print ("sendStatus : sending len=" + len + " num=" + num  + " steps=" + steps);
+       status s;
+       s::l::length = len;
+       s::l::num    = num;
+       s::ops       = steps;
+
+       STATUS!(pack(s));
+       steps = 0;
+       );
+
+    int(W) i;
+    int(W) steps  = 0;
+    int(W) maxlen = 0;
+
+    STRT?i;
+    
+    *[
+      int(W) idx = i * NWORKERS + id; // this is the index of the odd number
+      int(W) num = 2 * idx + 1;       // this is the actual number we shall work on
+      int(W) len = 0;
+      int    snum = num;
+      
+      // do the Collatz loop
+      *[ num != 1 ->
+         [  odd(num) -> num = 3 * num + 1
+         [] even(num) -> num = num / 2
+         ];
+         len++
+       ]
+      ;
+      assert(num == 1);
+      steps += len;
+      
+      [  len > maxlen ->
+         maxlen = len;
+         sendStatus(len, snum, steps)
+         
+      [] (len <= maxlen) && (i % 1000 == 0)    ->
+         sendStatus(0, 0, steps)
+
+      [] else -> skip   
+      ];
+      i++
+    ]
+    }
+}
+
+define MANAGER()(bd(W) +STRT[0..NWORKERS-1]; bd(STATUSW) -STATUS) <+ common
+{
+  csp {
+    <,i:NWORKERS: STRT[i]!0>
+      ;
+    status save;
+    
+    *[ STATUS?x ;
+       status s;
+
+       unpack(s,x);
+
+       #[ s::l::num != 0 -> save = s ];
+       
+       print ("STATUS? ( ops = " + s::ops +
+              " ; num = " + save::l::num +
+              " ; chain = " + save::l::length) ]
+  }
+
+}
+
+define SMERGE()(bd(STATUSW) -L[0..1], +R) <+ common
+{
+  csp {
+    
+    function recv(int which; status +-s) =
+      (
+       L[which]?xs;
+
+       status q;
+       unpack(q, xs);
+
+       #[ q::l::length > s::l::length ->
+          s::l = q::l
+        ];
+
+       s::ops += q::ops;
+       );
+
+    function checksend(status -os, -s) =
+      (
+       #[ (os::ops % INTERVAL != s::ops % INTERVAL)
+          ||
+          os::l::length != s::l::length ->
+          R!s; s::ops = 0
+          ]
+       );
+      
+
+    status s;
+    
+    *[
+      status os = s;
+      [
+       #L[0] && #L[1] -> recv(0,s); recv(1,s)
+       :
+       #L[0] -> recv(0,s)
+       :
+       #L[1] -> recv(1,s)
+       ];
+
+      checksend(os, s)
+      ]
+  }
+}
+
+define STATUS_TREE(int N)(bd(STATUSW) -L[0..N-1], +R)  <+ common
+{
+  [ N == 1 -> subcells { L[0] = R; } ]
+  [ N == 2 -> subcells { SMERGE m(L, R); } ]
+    [ N > 2  ->
+      subcells {
+        bd(STATUSW) X[0..(N+1)/2 - 1];
+        <i : 0.. N / 2 - 1 :SMERGE m[i]({L[2*i], L[2*i + 1]}, X[i]); >
+        STATUS_TREE((N+1)/2) tree(X, R);
+
+        <i: N/2 .. (N+1)/2 - 1 : L[2*i] = X[i];>
+    }
+
+      ]
+}
+
+define COLLATZ()()  <+ common
+{
+  subcells {
+    bd(W) STRT[0..NWORKERS-1];
+    bd(STATUSW) WSTATUS[0..NWORKERS-1], STATUS;
+    MANAGER mgr(STRT, STATUS);
+    <i:0..NWORKERS-1: WORKER(i) wrkr[i](STRT[i], WSTATUS[i]);>
+    STATUS_TREE(NWORKERS) tree(WSTATUS, STATUS);
+  }
+}

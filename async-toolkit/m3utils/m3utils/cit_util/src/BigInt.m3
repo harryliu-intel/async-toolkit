@@ -876,6 +876,7 @@ PROCEDURE ToLongReal(a : T) : LONGREAL =
 
 PROCEDURE ToInteger(a : T) : INTEGER RAISES { OutOfRange } =
   BEGIN
+    <*ASSERT a # NIL*>
     IF Compare(a, FirstInt) = -1 OR
       Compare(a, LastInt) = +1 THEN
       RAISE OutOfRange

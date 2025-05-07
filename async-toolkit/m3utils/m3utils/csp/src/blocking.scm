@@ -262,7 +262,8 @@
                  
                  (newbdecl (make-var1-decl newbnam *default-boolean-type*))
                  
-                 (bupdate  (make-assign `(id ,newbnam) `(<= (id ,newbnam ,lmax))))
+                 (bupdate  (make-assign `(id ,newbnam)
+                                        `(<= (id ,nam) ,lmax)))
                  
                  (the-loop `(while (id ,newbnam) (sequence ,(get-loop-stmt s)
                                                            ,incstmt
@@ -560,15 +561,17 @@
 
 (define (find-empty-label-remap blk-lst)
   ;; find the remapping map to get rid of empty blocks
-  (map (lambda(blk)
-         (if (sequence? blk)
-             (cons (label-label (cadr blk))
-                   (goto-label  (last blk)))
+  (reverse
+   (map (lambda(blk)
+          (if (sequence? blk)
+              (cons (label-label (cadr blk))
+                    (goto-label  (last blk)))
              #f
              )
-         )
-       (filter identity (find-empty-blocks blk-lst))
-       )
+          )
+        (filter identity (find-empty-blocks blk-lst))
+        )
+   )
   )
 
 (define (remap-label blk from to)

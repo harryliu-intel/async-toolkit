@@ -57,3 +57,13 @@ define SYSTEM()()
   } 
 }
 
+define SMALL()()
+{
+  int M = 3;
+  subcells {
+    bd(WIDTH) chan[0..M-1];
+  
+    <i:M: PROC(i == 0) p[i] (chan[i],chan[(i+1)%M]); >
+  } 
+}
+

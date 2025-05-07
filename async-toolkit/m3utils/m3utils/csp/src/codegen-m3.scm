@@ -84,10 +84,14 @@
 ;;
 
 (define (m3-write-port-decl w pdef)
-  (w "    " (pad 40 (m3-ident (get-port-id pdef))) " : REF "
-     (m3-convert-port-type (get-port-def-type pdef))
-     ".T := NIL;" dnl
+  (w "    " (pad 40 (m3-ident (get-port-id pdef)))
+     " : "
+     (m3-convert-port-type-array (get-port-def-type pdef))
+     " REF "
+     (m3-convert-port-type-scalar (get-port-def-type pdef))
+     ".T (*:= NIL*) ;" dnl
      )
+  (w "    " "(*" (stringify pdef) "*)" dnl)
   )
 
 (define (m3-format-port-ass pdef)
@@ -175,6 +179,10 @@
         );;dnoc
   )
 
+(define (m3-make-array-decl lo hi of)
+  (sa "ARRAY [ " lo " .. " hi " ] OF " of )
+  )
+
 (define (m3-type type)
   (let ((decltype (m3-map-decltype type)))
     (cond
@@ -182,9 +190,12 @@
           ((array-type? type)
            (let ((extent (array-extent type))
                  (elem   (array-elemtype type)))
-             (sa "ARRAY [ " (m3-native-literal (cadr extent))
-                 " .. "     (m3-native-literal (caddr extent))
-                 " ] OF (" (m3-type elem) ")")
+
+             (m3-make-array-decl 
+              (m3-native-literal (cadr extent))
+              (m3-native-literal (caddr extent))
+              (m3-type elem))
+             
              );;tel
            )
 
@@ -374,21 +385,86 @@
 
 (define (suffix-writer w by) (lambda x (apply w (append x (list by)))))
 
-(define (m3-mark-reader w m3id)
-  (w "<*ASSERT " m3id ".reader = NIL*>" dnl)
-  (w m3id ".reader := frame;" dnl
-     dnl)
+
+;; XXX unfinished:
+;; we need to fix these up to assign each element of the array
+;; use  (array-dims (get-port-channel <port-def>))
+;; then use m3-initialize-array
+
+(define (m3-mark-reader-writer whch w pc id)
+    ;;  (w "<*ASSERT " m3id ".reader = NIL*>" dnl)
+  (let* ((cell-info (pc-cell-info pc))
+         (port-tbl  (pc-port-tbl pc))
+         (port-def  (port-tbl 'retrieve id))
+         (m3id      (m3-ident id))
+         (is-array  (array-port? port-def))
+         )
+
+    (if is-array
+        (let ((dims (array-dims (get-port-channel port-def))))
+          (dis "dims : " dims dnl)
+          (w (m3-initialize-array
+           (lambda(txt) (sa txt "." whch " := frame" dnl))
+           m3id
+           dims
+           'i))
+          )
+        
+        (w m3id "." whch " := frame" dnl)
+
+        )
+
+        (w     ";"       dnl)
+  )
   )
 
-(define (m3-mark-writer w m3id)
-  (w "<*ASSERT " m3id ".writer = NIL*>" dnl)
-  (w m3id ".writer := frame;" dnl
-     dnl)
+
+(define (m3-mark-reader w pc id)
+  (m3-mark-reader-writer "reader" w pc id))
+
+(define (m3-mark-writer w pc id)
+  (m3-mark-reader-writer "writer" w pc id))
+
+(define (get-port-channel pdef)
+   (cadddr pdef))
+
+(define (node-port? pdef)
+  (or 
+   (eq? 'node (car (get-port-channel pdef)))
+   (and (array-port? pdef)
+        (eq? 'node (car (array-channel-base (get-port-channel pdef)))))))
+   
+
+(define (array-channel-base cdef)
+  (if (eq? 'array (car cdef))
+      (array-channel-base (caddr cdef))
+      cdef)
   )
 
-(define (node-port? pdef) (eq? 'node (car (cadddr pdef))))
+(define (channel-port? pdef)
+  (or 
+   (eq? 'channel (car (get-port-channel pdef)))
+   (and (array-port? pdef)
+        (eq? 'channel (car (array-channel-base (get-port-channel pdef)))))))
+  
+(define (array-port? pdef)
+  (eq? 'array (car (get-port-channel pdef))))
 
-(define (channel-port? pdef) (eq? 'channel (car (cadddr pdef))))
+(define (m3-make-csp-channel cdef)
+  (dis "m3-make-csp-channel : cdef : " cdef dnl)
+  (cond ((eq? 'array (car cdef))
+         (CspPort.NewArray
+          (CspPort.NewRange (cadadr cdef) (caddadr cdef))
+          (m3-make-csp-channel (caddr cdef))))
+
+        ((eq? 'node (car cdef))
+         (CspPort.NewScalar 'Node (caddr cdef) 'node))
+
+        ((eq? 'channel (car cdef))
+         (CspPort.NewScalar 'Channel (caaddr cdef) (cadr cdef)))
+
+        (else (error "m3-make-csp-channel : " cdef)))
+  )
 
 (define td #f)
 
@@ -413,7 +489,8 @@
        
 (define (m3-write-build-defn w
                              cell-info the-blocks the-decls fork-counts
-                             arr-tbl)
+                             arr-tbl
+                             pc)
   (define *comma-indent* "                     ,")
   (let ((proc-ports (get-ports cell-info)))
     (m3-write-build-signature w cell-info)
@@ -461,16 +538,16 @@
       ;; mark channels as read and written by us
       
       (let* ((inlist (filter channel-port? (filter input-port? proc-ports)))
-             (ids    (map m3-ident (map get-port-id inlist)))
+             (ids    (map get-port-id inlist))
              )
-        (map (curry m3-mark-reader iw) ids)
+        (map (curry m3-mark-reader iw pc) ids)
         )
       (w dnl)
       
       (let* ((outlist (filter channel-port? (filter output-port? proc-ports)))
-             (ids    (map m3-ident (map get-port-id outlist)))
+             (ids    (map get-port-id outlist))
              )
-        (map (curry m3-mark-writer iw) ids)
+        (map (curry m3-mark-writer iw pc) ids)
         )
       
 
@@ -572,43 +649,88 @@
     )
   )
 
-(define (m3-convert-port-type ptype)
+(define (m3-convert-port-type-array ptype)
   ;; return string name of interface that defines the channel type
   ;; requested by the CSP code
-  (let ((stype (port-type-short ptype)))
-    (case (car stype)
-      ((node) (string-append "Node" (BigInt.Format (cadr stype) 10)))
-      ((bd)   (string-append "UInt" (BigInt.Format (cadr stype) 10) "Chan"))
-      (else (error))
-      )
-    )
+
+  (dis "m3-convert-port-type-array " ptype dnl)
+
+  (if (array? ptype)
+      (let ((extent (array-extent   ptype))
+            (base   (array-elemtype ptype)))
+        (m3-make-array-decl
+         (m3-native-literal (cadr extent))
+         (m3-native-literal (caddr extent))
+         (m3-convert-port-type-array base)))
+      "")
   )
 
-(define (m3-convert-port-type-build ptype)
-  (let ((stype (port-type-short ptype)))
-    (case (car stype)
-      ((node) (cons 'Node (BigInt.ToInteger (cadr stype))))
-      ((bd)   (cons 'UInt (BigInt.ToInteger (cadr stype))))
-      (else (error))
+(define (m3-convert-port-type-scalar ptype)
+  ;; return string name of interface that defines the channel type
+  ;; requested by the CSP code
+
+  (dis "m3-convert-port-type-scalar " ptype dnl)
+
+  (if (array? ptype)
+      (m3-convert-port-type-scalar (caddr ptype))
+      
+      (let ((stype (port-type-short ptype)))
+        (case (car stype)
+          ((node) (string-append "Node" (BigInt.Format (cadr stype) 10)))
+          ((bd)   (string-append "UInt" (BigInt.Format (cadr stype) 10) "Chan"))
+          (else (error))
+          )
+        )
       )
-    )
+  )
+
+(define (m3-convert-port-type ptype)
+  (sa (m3-convert-port-type-array ptype) (m3-convert-port-type-scalar ptype)))
+
+(define cptbt #f)
+
+(define (m3-convert-port-type-build ptype)
+  (set! cptbt ptype)
+  (dis "m3-convert-port-type-build : " ptype dnl)
+  (if (array? ptype)
+      (m3-convert-port-type-build (caddr ptype))
+      (let ((stype (port-type-short ptype)))
+        (case (car stype)
+          ((node)  (cons 'Node (BigInt.ToInteger (cadr stype))))
+          ((bd)    (cons 'UInt (BigInt.ToInteger (cadr stype))))
+          (else (error))
+          )
+        )
+      );;fi
   )
 
 (define (m3-convert-port-ass-type ptype)
   ;; return string name of interface that defines the assignable data
   ;; on a port requested by the CSP code
-  (let ((stype (port-type-short ptype)))
-    (case (car stype)
-      ((node) (string-append "UInt" (BigInt.Format (cadr stype) 10)))
-      ((bd)   (string-append "UInt" (BigInt.Format (cadr stype) 10)))
-      (else (error))
+  (dis "m3-convert-port-ass-type : " ptype dnl)
+  (if (array? ptype)
+      (m3-convert-port-ass-type (caddr ptype))
+
+      (let ((stype (port-type-short ptype)))
+        (case (car stype)
+          ((node) (string-append "UInt" (BigInt.Format (cadr stype) 10)))
+          ((bd)   (string-append "UInt" (BigInt.Format (cadr stype) 10)))
+          (else (error))
+          )
+        )
       )
-    )
   )
 
 (define (m3-convert-port-ass-bits ptype)
-  (let ((stype (port-type-short ptype)))
-    (BigInt.ToInteger (cadr stype))))
+  (dis "m3-convert-port-ass-bits ptype " ptype dnl)
+  (if (array? ptype)
+      (m3-convert-port-ass-bits (caddr ptype))
+      (let ((stype (port-type-short ptype)))
+        (if (not (pair? stype))
+            (error "m3-convert-port-ass-bits : bad type " ptype))
+        (dis "m3-convert-port-ass-bits stype " stype dnl)
+        (BigInt.ToInteger (cadr stype))))
+  )
 
 (define (m3-convert-port-ass-category ptype)
   (if (> (m3-convert-port-ass-bits ptype) *target-word-size*) 'wide 'native))
@@ -1609,11 +1731,11 @@
          (port-id      (get-designator-id port-des))
          (port-def     (port-tbl 'retrieve port-id))
          (port-type    (get-port-def-type port-def))
-         (port-typenam (m3-convert-port-type port-type))
+         (port-typenam (m3-convert-port-type-scalar port-type))
          (copy-type    (m3-convert-port-ass-type port-type))
          (send-class   (classify-type pc (get-send-rhs stmt)))
          
-         (m3-pname     (m3-format-varid pc port-id))
+         (m3-pname     (m3-format-designator pc port-des))
          (port-class   (m3-convert-port-ass-category port-type))
 
          (literal      (literal? (get-send-rhs stmt)))
@@ -1621,7 +1743,7 @@
 
     (sa "VAR toSend := " ;; this isnt right, need to be more careful!
         port-typenam ".Item  { " (m3-force-type pc port-class rhs)
-        "} ; BEGIN IF NOT "
+        " } ; BEGIN IF NOT "
         port-typenam ".Send( " m3-pname "^ , toSend , cl ) THEN RETURN FALSE END END"
         )
     )
@@ -1638,10 +1760,10 @@
          (port-id      (get-designator-id port-des))
          (port-def     (port-tbl 'retrieve port-id))
          (port-type    (get-port-def-type port-def))
-         (port-typenam (m3-convert-port-type port-type))
+         (port-typenam (m3-convert-port-type-scalar port-type))
          (copy-type    (m3-convert-port-ass-type port-type))
          
-         (m3-pname     (m3-format-varid pc port-id))
+         (m3-pname     (m3-format-designator pc port-des))
          (port-class   (m3-convert-port-ass-category port-type))
          )
     (define (null-rhs)
@@ -2359,9 +2481,6 @@
     
     (m3-write-block-decl      modu)
     (m3-write-closure-decl    modu)
-    (m3-write-build-defn      modu
-                              cell-info the-exec-blocks the-decls fork-counts
-                              *the-arr-tbl*)
 
     
     (let ((pc (make-proc-context
@@ -2374,6 +2493,10 @@
                          *the-arr-tbl*
                          )))
       (set! *proc-context* pc)
+      (m3-write-build-defn      modu
+                                cell-info the-exec-blocks the-decls fork-counts
+                                *the-arr-tbl*
+                                pc)
       (m3-write-blocks          modu the-exec-blocks pc)
 
       (map modu
@@ -2568,6 +2691,8 @@
 ;; the driver
 ;;
 
+(define tpt #f)
+
 (define (drive! fn . x)
 
   (if (and (not (null? x)) (eq? 'force (car x)))
@@ -2588,7 +2713,8 @@
          (the-port-tbl  (m3-make-module-intf-tbl the-modules))
          );;*tel
          
-
+    (set! tpt the-port-tbl)
+    
     (dis "the-modules  : " (stringify the-modules) dnl)
     (dis "the-port-tbl : " (stringify the-port-tbl) dnl)
 
@@ -2644,16 +2770,8 @@
                  
                  (convert-dir (port-direction pdef))      ;; direction
                  
-                 (cond ((node-port?    pdef) 'Node)       ;; class
-                       ((channel-port? pdef) 'Channel)
-                       (else (error "m3-make-csp-port : " pdef)))
+                 (m3-make-csp-channel (get-port-channel pdef))
                  
-                 (port-type-width ptype)                  ;; width (in bits)
-
-                 (if (channel-port? pdef)                 ;; type-name
-                     (cadr ptype)
-                     'node)
-
                  )
     )
   )
@@ -2674,6 +2792,7 @@
         (the-port-seqs
          (map (lambda(x)(x '*m3*)) (map m3-get-module-ports mod-lst)))
         )
+    (dis "m3-make-module-intf-tbl : mod-lst : " mod-lst dnl)
     (the-port-tbl 'init 100)
     
     (dis "m3-make-module-intf-tbl : mod-lst       : " mod-lst dnl)
