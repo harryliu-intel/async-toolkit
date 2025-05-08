@@ -1,3 +1,7 @@
+(define (type-dbg . x)
+  (apply dis x)
+  )
+
 (define (boolean-type? t) (eq? 'boolean (car t)))
 
 (define *default-boolean-type* '(boolean #f))
@@ -22,7 +26,13 @@
 (define (make-array-type extent elem-type)
   `(array ,extent ,elem-type))
 
-(define (struct-type? t) (and (pair? t) (eq? 'struct (car t))))
+(define (struct-type? t) (and (pair? t) (eq? 'structure (car t))))
+(define (struct-type-name t)
+  (if (not (struct-type? t))
+      (error "not a struct type : " t)
+      (caddr t)
+      )
+  )
 
 (define s-x  #f)
 (define s-bt #f)
@@ -37,6 +47,8 @@
   )
 
 (define (derive-type x syms func-tbl struct-tbl cell-info)
+  (type-dbg "derive-type : x : " x dnl)
+  
   (cond  ((ident? x)
           ;;
           ;; this part is very tricky!

@@ -114,6 +114,7 @@ define P0P1P()()
 }
 
 
+
 //////////////////////////////////////////////////////////////////////
 
 define Q0()(bd(WIDTH) +R[0..1,0..2]) <+ common
@@ -356,5 +357,25 @@ define ci()(bd(32) -L[0..1])
     int y= 0;
     print (x[0]);
     print (L[y]?);
+  }
+}
+
+define Z()()
+{
+  csp {
+    int x[20];
+
+    print (x[10]);
+  }
+}
+
+define ZZ()()
+{
+  csp {
+    int(32) x[20];
+
+    int y = x[10];
+    
+    print (y);
   }
 }

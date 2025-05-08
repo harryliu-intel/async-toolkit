@@ -575,7 +575,8 @@
                (cond ((string-type? typ)  "")
                      ((integer-type? typ) *big0*)
                      ((boolean-type? typ) #f)
-                     (else (error "No default value for type : " typ))
+                     (else 'fail)
+;;                     (else (error "No default value for type : " typ))
                      );;dnoc
                )
              
@@ -583,9 +584,15 @@
              
              (if (member tgt vars)
                  (loop (cdr p)
-                       (cons `(assign (id ,tgt) ,(default-value))
-                             (cons (car p)
-                                   output)))
+                       (let ((def (default-value)))
+                         (if (eq? def 'fail)
+                             (cons (car p) output)
+                             
+                             (cons `(assign (id ,tgt) ,(default-value))
+                                   (cons (car p)
+                                         output)))
+                         )
+                       )
 
                  (loop (cdr p)
                        (cons (car p) output)));;fi

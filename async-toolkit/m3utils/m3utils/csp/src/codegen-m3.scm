@@ -64,6 +64,7 @@
                   ,*us*))))
 
 (define m3-ident (compose M3Ident.Escape symbol->string))
+(define m3-struct (compose (curry sa "struct_") m3-ident))
 
 (define (oldm3-ident scm-ident) ;; Good grief
 
@@ -119,7 +120,7 @@
         
         
         ((struct-type?  type)
-         '() ;; dont need interfaces for structs
+         #f
          )
         
         ((integer-type? type)
@@ -187,6 +188,7 @@
   (let ((decltype (m3-map-decltype type)))
     (cond
 
+     
           ((array-type? type)
            (let ((extent (array-extent type))
                  (elem   (array-elemtype type)))
@@ -199,6 +201,9 @@
              );;tel
            )
 
+          ((struct-type? type)
+           (m3-struct (struct-type-name type)))
+
           (decltype (sa decltype ".T"))
           
           (else (error))
@@ -210,7 +215,7 @@
   (let ((id (get-var1-id v1))
         (ty (get-decl1-type (get-var1-decl1 v1)))
         )
-    (string-append (pad 40 (m3-ident id)) " : " (m3-type ty) ";")
+    (string-append (pad 40 (m3-ident id)) " : " (m3-type ty) " (*" (stringify v1) "*);")
     )
   )
 
@@ -739,6 +744,8 @@
 
 (define (declared-type pc expr)
 
+  (dis "declared-type : expr " expr dnl)
+  
   ;;
   ;; This is similar to derive-type in the front-end;
   ;; the difference is that derive-type actually ignores declared bit
@@ -764,7 +771,7 @@
                                 pc (member-accessee expr) ))
                     (struct-def (struct-tbl 'retrieve (get-struct-name base-type)))
                     (struct-flds (get-struct-decl-fields struct-def))
-                        (accesser   (member-accesser x))
+                        (accesser   (member-accesser expr))
                         )
                (get-struct-decl-field-type struct-def accesser)
                )
@@ -810,6 +817,11 @@
          )
 
         ;; need to add struct here
+
+        ((member-access? designator)
+         (sa (m3-format-designator pc (member-accessee designator))
+             "."
+             (m3-ident (member-accesser designator))))
         
         (else (error "m3-format-designator : not yet"))))
 
@@ -964,6 +976,7 @@
       
       (sa (get-m3-int-intf to) ".Convert" (get-m3-int-intf from)
           "("
+          (if (eq? to 'dynamic) "frame.a, " "")
           arg
           ")"
           )
@@ -1840,7 +1853,10 @@
         )
   )
 
+(define *ix* #f)
+  
 (define (m3-compile-intrinsic pc expr)
+  (set! *ix* expr)
   (dis "m3-compile-intrinsic : " expr dnl)
   (if (not (call-intrinsic? expr)) (error "not an intrinsic : " expr))
 
@@ -1856,6 +1872,30 @@
 
       ((walltime simtime)
        (sa  "CspIntrinsics." (symbol->string in-sym) "(frame)"))
+
+      ((unpack)
+       (let* ((lhs    (caddr expr))
+              (rhs    (cadddr expr))
+              (ty     (declared-type pc lhs))
+              (snm    (struct-type-name ty))
+              (m3snm  (m3-struct snm))
+              (sfx    (classify-type pc rhs))
+              (rhsstr
+
+               (cond ((and (eq? sfx 'dynamic) (bigint? rhs))
+                      (make-dynamic-constant! pc rhs))
+
+                     ((and (eq? sfx 'native) (bigint? rhs))
+                      (sa "16_" (BigInt.Format rhs)))
+
+                     (else
+                      (m3-format-designator pc rhs))))
+              )
+
+         (sa m3snm "_unpack_" (symbol->string sfx) "( "(m3-ident (cadr lhs)) " , " rhsstr " )" )
+         
+         )
+       )
 
       ((string)
        ;; first convert base to native

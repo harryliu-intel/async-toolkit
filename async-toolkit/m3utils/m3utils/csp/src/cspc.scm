@@ -724,6 +724,11 @@
       ;; trivial initialization is used for boolean, int, and string
       ;;
       ;; but (slightly) non-trivial initialization can be used for structs
+      ;;
+      ;; actually, I think we need to leave the initialization of structs
+      ;; for the back-end.  At least that seems the smarter approach at
+      ;; the moment.
+      ;;
       
       (if (and (eq? (car decl) 'decl) (not (null? init-val)))
           (let ((assign-result

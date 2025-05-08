@@ -25,10 +25,16 @@ define common attributes {
   }
 }
 
-define SYSTEM()() <+ common
+define PACK()() <+ common
 {
   csp {
-    struct0 x;
+  structure structp =
+    (int(32) a;
+     bool b;
+     );
+
+
+    structp x;
     print(pack(x))
       }
 }
@@ -42,6 +48,38 @@ define P()() <+ common
 
     print(y);
    }
+}
+
+int NW=32;
+int NA=7;
+
+define ARRAYS()()
+{
+  csp {
+    structure structa =
+      (int x = NW * 0xc0edbabe + NA;
+       );
+    
+    structure structp =
+      (int(NW) a[NA];
+       bool b;
+       );
+
+    structure structq =
+      (int(128) b[25];
+       structp  p[18];
+      );
+
+    structq x;              
+
+    int y = 0xc0edbabf ** 0x2f;
+
+    unpack (x, y);
+
+    int z = x::p[7]::a[3];
+    print (y);
+    print (z)
+  }
 }
 
 define Q()() <+ common

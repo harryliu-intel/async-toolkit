@@ -221,8 +221,13 @@
   ;; if there is more than one assignment, we just have to return
   ;; its own declaration?
   (let*( (dcl-range (*the-dcl-tbl* 'retrieve id))
+         (id-ranges (var-ass-range id *the-ass-tbl* *the-prt-tbl*))
          (ass-range
-          (apply range-union (var-ass-range id *the-ass-tbl* *the-prt-tbl*)))
+          (if (null? id-ranges)
+              *range-complete*
+              (apply range-union id-ranges)
+              );;fi
+          )
          )
     (if (eq? dcl-range '*hash-table-search-failed*)
         ass-range
