@@ -375,7 +375,8 @@
        );;pam
   )
 
-(define (m3-write-proc-frame-decl w port-tbl the-blocks cell-info the-decls fork-counts)
+(define (m3-write-proc-frame-decl
+         w port-tbl the-blocks cell-info the-decls fork-counts)
     
     (w dnl
        "TYPE" dnl)
@@ -609,7 +610,19 @@
       (map w
            (map (curry m3-format-mpz-new arr-tbl) (map get-var1-id dynamics)))
       );;tel
-    
+
+    ;; initialize structs
+    (let* ((frame-vars (m3-frame-variables text9 *the-decls* *cellinfo*))
+           (structs  (filter (compose (yrruc member frame-vars)
+                                      get-var1-id)
+                             (filter (compose struct-type? get-var1-type)
+                                     the-decls))))
+      (dis "frame-structs : " structs dnl)
+      (map w (map m3-format-struct-init
+                  (map get-var1-id structs)
+                  (map get-var1-type structs)))
+                  
+      );;*tel
     
     ;; build body
     (let ((iw (indent-writer w "     ")))
@@ -2259,12 +2272,19 @@
          (the-locals  (filter
                        (lambda(id)(eq? 'block (the-scopes 'retrieve id)))
                        refvar-ids))
-
+         (structs (filter
+                   (compose (yrruc member the-locals)
+                            get-var1-id)
+                   (filter (compose struct-type? get-var1-type)
+                             *the-decls*)))
          (v1s         (map make-var1-decl
                            the-locals
                            (map (curry symtab 'retrieve) the-locals)))
-         )
-    ;; write decl.  We have to change this later for dynamic parallelism
+         );;*tel
+
+    (dis "m3-write-block : the-locals : " the-locals dnl)
+    (dis "m3-write-block : structs    : " structs dnl)
+
     (w
      "PROCEDURE "bnam"(cl : Closure) : BOOLEAN =" dnl
      "  VAR" dnl)
@@ -2274,7 +2294,12 @@
     (w
      "  BEGIN" dnl
      "    WITH frame = cl.frame DO" dnl)
-    
+
+    ;; init local structs
+    (map w (map m3-format-struct-init
+                (map get-var1-id structs)
+                (map get-var1-type structs)))
+                  
     ;; the block text goes here
     (map (curry m3-compile-write-stmt w pc) the-code)
 
@@ -2576,6 +2601,18 @@
 (define (base-type type)
   (if (array-type? type) (array-base-type type) type))
 
+(define (m3-format-struct-init id stype)
+  (let* ((snm   (struct-type-name stype))
+         (m3snm (m3-struct snm))
+         (m3id  (m3-ident id)))
+
+    (sa "      " m3snm "_initialize( " m3id " );" dnl)
+    )
+  )
+
+
+(define *the-decls* #f)
+
 (define (do-m3!)
   (let* ((the-blocks text9)
          (cell-info  *cellinfo*)
@@ -2639,6 +2676,7 @@
          (the-exec-blocks (remove-empty-blocks the-varfree-blocks))
          )
 
+    (set! *the-decls* the-decls)
     (set! text10 the-exec-blocks)
 
     (dis "do-m3! : m3-port-data-intfs : " m3-port-data-intfs dnl)
