@@ -1,5 +1,32 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-           
+
+(define (convert-structure-decl s)
+  (let ((ident  (cadr s))
+        (fields (map car (caddr s)))
+        (seq    (init-seq 'CspStructDeclaratorSeq.T)))
+
+    (map (curry seq 'addhi) (map convert-field-decl fields))
+
+    seq
+    (CspAst.StructureDeclaration ident (seq '*m3*))
+    )
+    
+  )
+
+(define (convert-field-decl fd)
+  (let ((fn   (cadadr fd))
+        (ty   (caddr fd))
+        (dir  (cadddr fd))
+        (init (caddddr fd))
+        )
+    (CspAst.StructDeclarator
+     fn
+     (convert-type ty)
+     (if (null? init) '() (convert-expr init))
+     (convert-dir dir))
+    )
+  )
+
 (define (convert-stmt s . last)
   (set! *s* s)
   (set! *last* last)
@@ -102,6 +129,10 @@
 
             ((var1) ;; this is a simplified declaration
              (convert-var1-stmt s))
+
+            ((structure-decl)
+             (convert-structure-decl s)
+             )
 
             ((recv)
              ;; null receive is OK (just completes the handshake)

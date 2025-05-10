@@ -5,6 +5,7 @@ IMPORT CspDeclarator;
 IMPORT CspSyntax;
 IMPORT Atom;
 IMPORT CspRange;
+IMPORT CspStructDeclaratorSeq;
 
 TYPE
   Expr = CspExpression.T;
@@ -88,6 +89,12 @@ TYPE
 
   Comment <: T OBJECT
     string : TEXT;
+  END;
+
+  Structure <: T OBJECT 
+    (* was in CspStructDeclarator, but is analogous to Var *)
+    name  : Atom.T;
+    decls : CspStructDeclaratorSeq.T;
   END;
 
 CONST Brand = "CspStatement";

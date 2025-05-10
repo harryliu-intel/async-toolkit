@@ -272,9 +272,9 @@ PROCEDURE FunctionDeclaration(funcName   : Atom.T;
   END FunctionDeclaration;
 
 PROCEDURE StructureDeclaration(name  : Atom.T;
-                               decls : CspStructDeclaratorSeq.T;) : Decl =
+                               decls : CspStructDeclaratorSeq.T;) : Stmt =
   BEGIN
-    RETURN NEW(D.Structure, name := name, decls := decls)
+    RETURN NEW(S.Structure, name := name, decls := decls)
   END StructureDeclaration;
   
 (**********************************************************************)  

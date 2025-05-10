@@ -70,13 +70,17 @@ define ARRAYS()()
        structp  p[18];
       );
 
-    structq x;              
+    structq x;
+    int xx[3];
 
     int y = 0xc0edbabf ** 0x2f;
 
     unpack (x, y);
 
     int z = x::p[7]::a[3];
+    xx[0] = z;
+    z = xx[0];
+
     print (y);
     print (z)
   }

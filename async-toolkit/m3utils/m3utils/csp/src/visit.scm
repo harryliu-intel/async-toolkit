@@ -110,6 +110,12 @@
         ((car advance-continue-callback) s))
     x
     )
+  (define (visit-struct-decl decl)
+    (prepostvisit-declarator decl
+                             stmt-previsit stmt-postvisit
+                             expr-previsit expr-postvisit
+                             type-previsit type-postvisit)
+    )
   
   (define (continue s)
     ;; this procedure does most of the work, it is called after stmt-previsit
@@ -188,6 +194,12 @@
                     ((assign-operate)
                      (list (car args) (expr (cadr args)) (expr (caddr args))))
 
+                    ((structdecl)
+                     (cons
+                      (car args)
+                      (map visit-struct-decl (cdr args)))
+                     )
+
                     ((parallel-loop sequential-loop)
                      ;; what happens if stmt returns 'delete?
                      (let ((new-stmt (stmt (caddr args))))
@@ -251,6 +263,8 @@
            (stmt-postvisit pre-result))))
     )
   )
+
+
   
 (define (filter-delete stmt) ;; use to filter out 'delete
   (not (eq? 'delete stmt)))
@@ -466,16 +480,30 @@
   (if (not (equal? 'decl1 (car d)))
       (error "prepostvisit-declarator : not a desugared declarator : " d))
 
-   (let ((ident (cadr d))
-         (type  (caddr d))
-         (dir   (cadddr d)))
-     (list (car d)
-           ident
-           (prepostvisit-type type 
-                              stmt-previsit stmt-postvisit
-                              expr-previsit expr-postvisit
-                              type-previsit type-postvisit)
-           dir)
+   (let ((ident   (cadr d))
+         (type    (caddr d))
+         (dir     (cadddr d))
+         (initlst (cddddr d))
+         )
+     (append
+      (list (car d)
+            ident
+            (prepostvisit-type type 
+                               stmt-previsit stmt-postvisit
+                               expr-previsit expr-postvisit
+                               type-previsit type-postvisit)
+            dir)
+      (if (null? initlst)
+          '()
+          (list
+           (prepostvisit-expr
+            (car initlst)
+            stmt-previsit stmt-postvisit
+            expr-previsit expr-postvisit
+            type-previsit type-postvisit)
+           )
+          )
+      )
      )
    )
   

@@ -297,11 +297,15 @@
     )
   )
 
-(define *fold-stmts* '(var1 assign
-                            sequential-loop parallel-loop
-                            eval
-                            local-if
-                            while))
+(define *fold-stmts* '(var1
+                       assign
+                       sequential-loop parallel-loop
+                       eval
+                       local-if
+                       while
+                       structdecl
+                       )
+  )
 
 (define (constant-type? t)
   (and (pair? t)
@@ -546,6 +550,11 @@
          (fold-constants-dbg "var1 : returning " res dnl)
          res
          )
+       )
+
+      ((structdecl)
+       (fold-constants-dbg "structdecl : visiting  " s dnl)
+       (visit-stmt s identity expr-visitor identity)
        )
 
       ((loop-expression)

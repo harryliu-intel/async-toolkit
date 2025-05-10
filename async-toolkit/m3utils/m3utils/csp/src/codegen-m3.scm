@@ -184,7 +184,10 @@
   (sa "ARRAY [ " lo " .. " hi " ] OF " of )
   )
 
+(define *m3t* #f)
+                     
 (define (m3-type type)
+  (set! *m3t* type)
   (let ((decltype (m3-map-decltype type)))
     (cond
 
@@ -212,12 +215,51 @@
   )
            
 (define (m3-convert-vardecl v1)
+  (dis "m3-convert-vardecl : v1 : " v1 dnl)
   (let ((id (get-var1-id v1))
         (ty (get-decl1-type (get-var1-decl1 v1)))
         )
     (string-append (pad 40 (m3-ident id)) " : " (m3-type ty) " (*" (stringify v1) "*);")
     )
   )
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define get-field-id cadadr)
+
+(define get-field-type caddr)
+
+(define get-field-dir cadddr) ;; shd. return 'none
+
+(define get-field-init cddddr) ;; returns a list of one elem or '()
+
+(define (m3-convert-fielddecl fd)
+  (dis "m3-convert-fielddecl : fd : " fd dnl)
+  (let ((id (get-field-id   fd))
+        (ty (get-field-type fd))
+        )
+    (string-append (pad 40 (m3-ident id)) " : " (m3-type ty) " (*" (stringify fd) "*);")
+    )
+  )
+
+
+(define (m3-convert-structdecl sd)
+  (dis "m3-convert-structdecl : sd : " sd dnl)
+  (let ((nm  (cadr sd))
+        (fds (cddr sd))
+        (wx  (Wx.New))
+        )
+    (define (w . x) (Wx.PutText wx (apply string-append x)))
+
+    (w "TYPE " (m3-struct nm) " = RECORD" dnl)
+    (map (yrruc (curry w "  ") dnl)
+         (map m3-convert-fielddecl fds))
+    (w "END;" dnl)
+    (Wx.ToText wx)
+    )
+  )
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define (m3-frame-variables the-blocks the-decls cell-info)
 
@@ -2041,7 +2083,8 @@
   )
 
 (define *known-stmt-types*
-  '(recv send assign eval goto local-if while sequence sequential-loop skip)
+  '(recv send assign eval goto local-if while sequence sequential-loop skip
+         structdecl)
   )
 
 (define (m3-space-comments txt)
@@ -2064,6 +2107,10 @@
   
     (iw "(* " (m3-space-comments (stringify stmt)) " *)" dnl dnl)
     )
+  )
+
+(define (m3-compile-structdecl pc stmt)
+  "BEGIN END" ;; nothing for now
   )
 
 (define (number->symbol x) (string->symbol (number->string x)))
@@ -2186,13 +2233,12 @@
     
     (iw "INTERFACE " inm ";" dnl
         "IMPORT Mpz;" dnl
+        "IMPORT NativeInt, DynamicInt;" dnl
         "<*NOWARN*>IMPORT Word;" dnl
        dnl)
 
     (iw "CONST Width    = " intf-width ";" dnl)
     (iw "CONST Signed   = " (Fmt.Bool (eq? intf-kind 'SInt)) ";" dnl)
-    (iw "CONST Mask     = Word.Minus(Word.Shift(1, Width), 1);" dnl)
-    (iw "CONST NotMask  = Word.Not(Mask);" dnl)
     (iw "VAR(*CONST*)   Min, Max : Mpz.T;" dnl)
     
     (if native
@@ -2205,27 +2251,31 @@
            dnl
            "CONST Wide     = FALSE;" dnl
            dnl
-           "CONST Brand = \"" inm "\";" dnl
-           dnl
            )
+           (iw "CONST Mask     = Word.Minus(Word.Shift(1, Width), 1);" dnl)
+           (iw "CONST NotMask  = Word.Not(Mask);" dnl)
         )
 
         (iw
          dnl
-         "TYPE T = ARRAY [ 0 .. " (ceiling (/ intf-width *target-word-size*) ) "-1 ] OF Word.T;" dnl
+         "TYPE T = DynamicInt.T;" dnl
          dnl
          "CONST Wide     = TRUE;" dnl
          dnl
-         "CONST Brand = \"" inm "\";" dnl
+         "VAR(*CONST*) Mask, NotMask : Mpz.T;" dnl
          dnl
         )
         )
+
+    (iw "CONST Brand = \"" inm "\";" dnl
+        dnl)
 
     (iw dnl
         "END " inm "." dnl)
     (mw "MODULE " inm ";" dnl
         dnl
         "IMPORT Mpz;" dnl
+        "IMPORT NativeInt, DynamicInt;" dnl
         dnl)
         
     (mw dnl
@@ -2248,6 +2298,13 @@
                 (mw "  Max := Mpz.New();" dnl)
                 (mw "  EVAL Mpz.init_set_str(Min, \"" lo-txt "\", 16);" dnl)
                 (mw "  EVAL Mpz.init_set_str(Max, \"" hi-txt "\", 16);" dnl)
+                (mw "  Mask := Mpz.New();" dnl)
+                (mw "  Mpz.set_ui   (Mask, 1);" dnl)
+                (mw "  Mpz.LeftShift(Mask, Width);" dnl)
+                (mw "  Mpz.sub_ui   (Mask, 1);" dnl)
+                (mw "  Mpz.com      (NotMask, Mask);" dnl
+                    dnl)
+
                 )
               )
           )
@@ -2515,6 +2572,12 @@
     (m3-write-imports    modu all-intfs)
     (modu "IMPORT Mpz;" dnl
           dnl)
+
+
+    (let ((structs  (apply append (map (curry find-stmts 'structdecl) text10))))
+      (map (yrruc modu dnl) (map m3-convert-structdecl structs))
+      )
+
     (m3-write-proc-frame-decl modu
                               port-tbl the-exec-blocks cell-info the-decls
                               fork-counts)
@@ -2522,7 +2585,6 @@
     (m3-write-block-decl      modu)
     (m3-write-closure-decl    modu)
 
-    
     (let ((pc (make-proc-context
                          (m3-make-symtab the-decls *the-arr-tbl*)
                          cell-info
@@ -2849,3 +2911,7 @@
      (apply +
             (map (lambda(x)(* (Math.pow 256 (car x)) (cdr x))) (cdar fp))))))
  
+
+(define (fs type)
+  (apply append (map (curry find-stmts type) text9))
+  )

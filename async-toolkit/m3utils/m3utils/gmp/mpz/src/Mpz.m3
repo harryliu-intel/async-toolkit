@@ -13,6 +13,7 @@ PROCEDURE New() : T =
   BEGIN
     P.c_init(LOOPHOLE(ADR(res.val), P.MpzPtrT));
     EVAL WeakRef.FromRef(res, CleanUp);
+    set_ui(res, 0);
     RETURN res
   END New;
 
@@ -93,5 +94,24 @@ PROCEDURE FormatBased(t : T; base : [-2..62]) : TEXT =
       P.free_formatted(cs)
     END
   END FormatBased;
+
+PROCEDURE LeftShift(f0 : T; f1 : T; amt : CARDINAL) =
+  BEGIN
+    mul_2exp(f0, f1, amt)
+  END LeftShift;
+
+PROCEDURE RightShift(f0 : T; f1 : T; amt : CARDINAL) =
+  BEGIN
+    fdiv_q_2exp(f0, f1, amt)
+  END RightShift;
+
+PROCEDURE Shift(f0 : T; f1 : T; amt : INTEGER) =
+  BEGIN
+    IF amt < 0 THEN
+      RightShift(f0, f1, -amt)
+    ELSE
+      LeftShift(f0, f1, amt)
+    END
+  END Shift;
 
 BEGIN END Mpz.

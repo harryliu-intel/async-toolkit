@@ -2,6 +2,8 @@ GENERIC MODULE NarrowIntOps(Type);
 IMPORT Word;
 IMPORT Debug;
 FROM Fmt IMPORT F, Int, Unsigned;
+IMPORT DynamicInt, NativeInt;
+IMPORT Mpz;
 
 CONST doDebug = FALSE;
       
@@ -33,5 +35,37 @@ PROCEDURE SignExtend(w : Word.T) : INTEGER =
       RETURN w
     END
   END SignExtend;
+  
+PROCEDURE unpack_dynamic(VAR t : T; x, scratch : DynamicInt.T) : DynamicInt.T =
+  BEGIN
+    Mpz.and(scratch, x, Type.Mask);
+    t := Mpz.ToInteger(x);
+    Mpz.RightShift(x, x, Type.Width);
+    RETURN x
+  END unpack_dynamic;
+
+PROCEDURE unpack_native(VAR t : T; x : NativeInt.T) : NativeInt.T =
+  BEGIN
+    t := Word.And(x, Type.Mask);
+    x := Word.RightShift(x, Type.Width);
+    RETURN x
+  END unpack_native;
+
+PROCEDURE pack_dynamic(x, scratch : DynamicInt.T; READONLY t : T) : DynamicInt.T =
+  BEGIN
+    Mpz.set_ui(scratch, t);
+    Mpz.LeftShift(x, x, Type.Width);
+    Mpz.ior(x, x, scratch);
+    RETURN x
+  END pack_dynamic;
+
+PROCEDURE pack_native(x : NativeInt.T; READONLY t : T) : NativeInt.T =
+  VAR
+    res : NativeInt.T;
+  BEGIN
+    res := Word.Shift(x, Type.Width);
+    res := Word.Or(res, t);
+    RETURN res
+  END pack_native;
 
 BEGIN END NarrowIntOps.

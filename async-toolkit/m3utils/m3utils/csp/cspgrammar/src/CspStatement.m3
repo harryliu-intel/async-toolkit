@@ -15,6 +15,9 @@ IMPORT BigInt;
 IMPORT CspDeclarator;
 IMPORT CspRange;
 IMPORT CspExpression;
+IMPORT Atom;
+IMPORT CspStructDeclarator;
+IMPORT CspStructDeclaratorSeq;
 
 CONST Sym = SchemeSymbol.FromText;
 
@@ -112,6 +115,18 @@ REVEAL
     lisp := VarLisp;
   END;
 
+TYPE
+  PubStructure = T OBJECT 
+    name  : Atom.T;
+    decls : CspStructDeclaratorSeq.T;
+  END;
+
+REVEAL
+  Structure = PubStructure BRANDED Brand & " Structure" OBJECT
+  OVERRIDES
+    lisp := StructureLisp;
+  END;
+
 TYPE  
   PubExpression = T OBJECT
     expr : Expr;
@@ -166,7 +181,19 @@ PROCEDURE VarLisp(self : Var) : SchemeObject.T =
     RETURN List2(Sym("var1"),
                  CspDeclarator.Lisp(self.decl))
   END VarLisp;
-  
+
+PROCEDURE StructureLisp(t : Structure) : SchemeObject.T =
+  VAR
+    p : SchemePair.T := NIL;
+  BEGIN
+    FOR i := t.decls.size() - 1 TO 0 BY -1 DO
+      p := Cons(CspStructDeclarator.Lisp(t.decls.get(i)), p)
+    END;
+    p := Cons(t.name, p);
+    p := Cons(Sym("structdecl"), p);
+    RETURN p
+  END StructureLisp;
+
 PROCEDURE RecvLisp(self : Recv) : SchemeObject.T =
   BEGIN
     RETURN List3(Sym("recv"), Lisp(self.chan), Lisp(self.val))

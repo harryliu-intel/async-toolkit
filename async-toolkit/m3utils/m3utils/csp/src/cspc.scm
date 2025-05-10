@@ -224,6 +224,9 @@
 (load "convert.scm")
 (load "ports.scm")
 (load "codegen.scm")
+
+(define sa string-append)
+
 (load "codegen-m3.scm")
 
 (define *reload-name*   "cspc.scm")
@@ -243,7 +246,6 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define sa string-append)
 
 (define (loadfile reader fn)
 
@@ -524,6 +526,8 @@
   (dis (pad  23 "Defined " sym) " : " )
   (dis (padr 10 (stringify (count-atoms (eval sym)))) " atoms" dnl))
 
+(define *struct-text* #f)
+
 (define (switch-proc! data)
 
   (print-atomsize '*data*)
@@ -550,7 +554,19 @@
      )
    )
 
-  (set! *the-text* (simplify-stmt (desugar-stmt (close-text data))))
+  (set! *the-structs* (map cadr (merge-all get-structs append data)))
+
+  (print-atomsize '*the-structs*)
+
+  (define struct-text
+    `(sequence
+       ,@*the-structs*
+       ,(close-text data))
+    )
+
+  (set! *struct-text* struct-text)
+  
+  (set! *the-text* (simplify-stmt (desugar-stmt struct-text)))
 
   (print-atomsize '*the-text*)
   
@@ -559,10 +575,6 @@
                       (merge-all get-funcs append data)))
 
   (print-atomsize '*the-funcs*)
-
-  (set! *the-structs* (map cadr (merge-all get-structs append data)))
-
-  (print-atomsize '*the-structs*)
 
   (set! *the-inits*   (remove-duplicate-inits
                        (simplify-stmt
@@ -1679,8 +1691,10 @@
 
 (define (compile1!)
   ;; unquify the loops before doing ANYTHING else
+  ;; and add the struct decls
   (set! text1
-        (uniquify-loop-dummies *the-text*))
+        
+           (uniquify-loop-dummies *the-text*))
   'text1
   )
 

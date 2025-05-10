@@ -38,6 +38,13 @@ PROCEDURE ToWord(t : T) : Word.T;
 
 PROCEDURE pow(p, b, x : T);
 
+PROCEDURE LeftShift(f0 : T; f1 : T; amt : CARDINAL);
+
+PROCEDURE RightShift(f0 : T; f1 : T; amt : CARDINAL);
+
+PROCEDURE Shift(f0 : T; f1 : T; amt : INTEGER);
+  (* negative -> right shift; positive -> left shift *)
+
 (***** auto-generated functions *****)
 
 PROCEDURE abs (f0 : T; f1 : T);

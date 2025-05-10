@@ -1,19 +1,18 @@
 MODULE CspStructDeclarator;
 IMPORT SchemePair;
 IMPORT SchemeSymbol;
-FROM SchemeUtils IMPORT Cons;
+FROM SchemeUtils IMPORT Cons, Reverse;
 IMPORT CspSyntax;
 IMPORT CspDeclarator;
-
-CONST Sym = SchemeSymbol.FromText;
+IMPORT SchemeObject;
 
 PROCEDURE Lisp(READONLY t : T) : SchemePair.T =
   VAR
     declLisp := CspDeclarator.Lisp(t.decl);
+    initLisp := CspSyntax.Lisp(t.init);
   BEGIN
-    declLisp.first := CspSyntax.Lisp(t.init);
-    RETURN Cons(Sym("structdecl"),
-                    declLisp)
+    RETURN Reverse(Cons(initLisp,
+                        Reverse(declLisp)))
   END Lisp;
 
 BEGIN END CspStructDeclarator.

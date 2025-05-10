@@ -20,6 +20,8 @@
 
 (define (curry f . x) (lambda r (apply f (append x r))))
 
+(define (yrruc f . x) (lambda r (apply f (append r x))))
+
 (define (make-fixpoint-func f)
 
   (define (iterate x)

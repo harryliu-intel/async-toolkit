@@ -151,7 +151,7 @@ PROCEDURE FunctionDeclaration(funcName   : Atom.T;
                               returnType : CspType.T;) : Decl;
 
 PROCEDURE StructureDeclaration(name  : Atom.T;
-                               decls : CspStructDeclaratorSeq.T;) : Decl;
+                               decls : CspStructDeclaratorSeq.T;) : Stmt;
   
 (**********************************************************************)  
 

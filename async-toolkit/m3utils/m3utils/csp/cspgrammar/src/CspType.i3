@@ -45,6 +45,7 @@ TYPE
   String <: MayBeConst;
   
   PubStructure = MayBeConst OBJECT
+    (* this is an INSTANCE of a structure *)
     name    : TEXT;
   END;
 
