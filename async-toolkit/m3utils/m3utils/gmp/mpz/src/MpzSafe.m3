@@ -52,6 +52,22 @@ PROCEDURE ToWord(t : T) : Word.T =
     RETURN get_ui(t)
   END ToWord;
 
+PROCEDURE NewInt(int : INTEGER) : T =
+  VAR
+    res := NEW(T);
+  BEGIN
+    init_set_si(res, int);
+    RETURN res
+  END NewInt;
+
+PROCEDURE NewWord(w : Word.T) : T =
+  VAR
+    res := NEW(T);
+  BEGIN
+    init_set_ui(res, w);
+    RETURN res
+  END NewWord;
+  
 VAR
   MinInt  := NEW(T);
   MaxInt  := NEW(T);

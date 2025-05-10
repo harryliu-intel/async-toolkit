@@ -9,6 +9,10 @@ TYPE
 
 PROCEDURE New() : T;
 
+PROCEDURE NewInt(int : INTEGER) : T;
+
+PROCEDURE NewWord(w : Word.T) : T;
+  
 CONST Brand = "Mpz";
 
 

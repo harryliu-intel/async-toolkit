@@ -38,7 +38,7 @@ PROCEDURE SignExtend(w : Word.T) : INTEGER =
   
 PROCEDURE unpack_dynamic(VAR t : T; x, scratch : DynamicInt.T) : DynamicInt.T =
   BEGIN
-    Mpz.and(scratch, x, Type.Mask);
+    Mpz.and(scratch, x, MpzMask);
     t := Mpz.ToInteger(x);
     Mpz.RightShift(x, x, Type.Width);
     RETURN x
@@ -68,4 +68,6 @@ PROCEDURE pack_native(x : NativeInt.T; READONLY t : T) : NativeInt.T =
     RETURN res
   END pack_native;
 
+VAR
+  MpzMask := Mpz.NewWord(Mask);
 BEGIN END NarrowIntOps.
