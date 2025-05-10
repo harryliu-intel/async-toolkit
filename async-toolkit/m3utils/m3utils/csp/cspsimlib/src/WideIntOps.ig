@@ -1,4 +1,4 @@
-GENERIC INTERFACE WideIntOps(type);
+GENERIC INTERFACE WideIntOps(Type);
 IMPORT DynamicInt, NativeInt;
 
 TYPE T = Type.T;

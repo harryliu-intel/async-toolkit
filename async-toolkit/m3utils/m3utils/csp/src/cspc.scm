@@ -401,27 +401,46 @@
 ;;
 ;; structs
 ;;
-
+;;
 ;; struct-decl is a definition of a struct type
+;; for now, we support both desugared and "raw" struct decls
+;; the (weak) reason is that we need to do a lot of constant folding, etc.,
+;; to know what the actual types are, since they can be parameterized.
+;;
+
 (define (struct-decl? struct-decl)
   (and (pair? struct-decl)
        (eq? 'structure-decl (car struct-decl))))
+
+(define (structdecl? struct-decl)  ;; desugared version
+  (and (pair? struct-decl)
+       (eq? 'structdecl (car struct-decl))))
 
 (define (check-is-struct-decl struct-decl)
   (if (not (struct-decl? struct-decl))
       (error "not a struct-decl : " struct-decl)))
 
 (define (get-struct-decl-name struct-decl)
-  (check-is-struct-decl struct-decl)
-  (cadr struct-decl))
+  (cond ((struct-decl? struct-decl) (cadr struct-decl))
+
+        ((structdecl? struct-decl) (cadr struct-decl))
+
+        (else (error "not a struct-decl : " struct-decl)))
+  )
 
 (define (get-struct-decl-fields struct-decl)
-  (check-is-struct-decl struct-decl)
-  
-  ;; struct decls are unconverted, so desugar declarators
-  (map CspDeclarator.Lisp
-       (map convert-declarator
-            (apply append (caddr struct-decl)))))
+  (cond ((struct-decl? struct-decl)
+         ;; unconverted, so desugar declarators
+         (map CspDeclarator.Lisp
+              (map convert-declarator
+                   (apply append (caddr struct-decl)))))
+
+        ((structdecl? struct-decl) (cddr struct-decl))
+
+        
+        (else (error "not a struct-decl : " struct-decl))
+        );;dnoc
+  )
 
 (define (get-struct-decl-field-type struct-decl fld)
   (define (recurse p)
@@ -1168,25 +1187,6 @@
   )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(define xx #f)
-(define yy #f)
-(define zz #f)
-(define tt #f)
-
-(define (xxxx) (run-one "arraytypes_p"))
-
-(define (run-one nm)
-  (reload)
-  (loaddata! nm)
-  (run-compiler *the-text* *cellinfo* *the-inits* *the-func-tbl* *the-struct-tbl*)
-  (find-applys text2)
-  (set! xx (inline-evals *the-inits* text2 *the-func-tbl* *the-struct-tbl* *cellinfo*))
-  (set! yy (inline-evals *the-inits* xx    *the-func-tbl* *the-struct-tbl* *cellinfo*))
-  (set! zz (inline-evals *the-inits* yy    *the-func-tbl* *the-struct-tbl* *cellinfo*))
-  (set! tt (simplify-stmt zz))
-  tt
-  )
 
 (define (done-banner)
   (dis go-grn-bold-term (run-command "banner **DONE**") reset-term dnl))

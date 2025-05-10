@@ -806,24 +806,37 @@
     (let* ((declared-id (get-designator-id expr))
            (id-type     (symtab 'retrieve declared-id)))
       (cond ((array-access? expr)
-             (peel-array (declared-type pc (array-accessee expr))))
+             (let ((res
+                    (peel-array (declared-type pc (array-accessee expr)))))
+               (dis "declared-type array-access : res : " res dnl)
+               res
+               )
+             )
 
             ((member-access? expr)
              (let* ((base-type (declared-type
                                 pc (member-accessee expr) ))
-                    (struct-def (struct-tbl 'retrieve (get-struct-name base-type)))
+                    (struct-def
+                     (struct-tbl 'retrieve (get-struct-name base-type)))
+                    
                     (struct-flds (get-struct-decl-fields struct-def))
-                        (accesser   (member-accesser expr))
-                        )
-               (get-struct-decl-field-type struct-def accesser)
+                    (accesser   (member-accesser expr))
+                    (res
+                     (get-struct-decl-field-type struct-def accesser))
+                    )
+               (dis "declared-type member-access : res : " res dnl)
+               res
                )
              )
 
             ((bits? expr) (error) )  ;; do we support LHS bits?  I forget...
 
-            (else id-type))
-         )
-    )
+            (else
+             (dis "declared-type id-type : " id-type dnl)
+             id-type)
+            );;dnoc
+         );;*let
+    );;tel
   )
 
 (define (m3-derive-type pc expr)
@@ -2412,7 +2425,7 @@
     )
   )
 
-(define *m3-standard-interfaces*
+(define *m3-standard-packages*
   '("libm3"
     "cit_util"
     "parseparams"
@@ -2430,7 +2443,7 @@
 
     (map (curry Wr.PutText wr)
          (map (lambda(intf)(sa "import(\"" intf "\")" dnl))
-              *m3-standard-interfaces*))
+              *m3-standard-packages*))
     (Wr.PutText wr (sa "m3_optimize(\"T\")" dnl))
     (Wr.PutChar wr dnl)
     
@@ -2466,6 +2479,12 @@
            intfs)
           )
   )
+
+(define (find-structdecls blks)
+  (apply append (map (curry find-stmts 'structdecl) blks)))
+
+(define (base-type type)
+  (if (array-type? type) (array-base-type type) type))
 
 (define (do-m3!)
   (let* ((the-blocks text9)
@@ -2509,9 +2528,20 @@
                       (map get-decl1-type
                            (map get-var1-decl1 the-decls))))))
 
+         ;; find the necessary interfaces from struct declarations:
+         (sdecls    (find-structdecls the-blocks))
+         (sfields   (apply append (map cddr sdecls)))
+         (sbases    (map base-type (map get-decl1-type sfields)))
+         (m3-struct-intfs
+          (filter identity (map m3-map-declbuild sbases)))
+
+         ;; all-intfs0 is all the types we need to generate interfaces for
          (all-intfs0 (set-union m3-port-data-intfs
                                 m3-var-intfs
-                                m3-port-chan-intfs))
+                                m3-port-chan-intfs
+                                m3-struct-intfs))
+
+         ;; but we also need the Ops generics to be built:
          (all-intfs  (set-union all-intfs0 (ops-intfs all-intfs0)))
 
          ;; remove var1s and clean  up blocks
@@ -2574,7 +2604,7 @@
           dnl)
 
 
-    (let ((structs  (apply append (map (curry find-stmts 'structdecl) text10))))
+    (let ((structs  (find-structdecls the-blocks)))
       (map (yrruc modu dnl) (map m3-convert-structdecl structs))
       )
 
@@ -2588,7 +2618,8 @@
     (let ((pc (make-proc-context
                          (m3-make-symtab the-decls *the-arr-tbl*)
                          cell-info
-                         *the-struct-tbl*
+                         (make-object-hash-table get-struct-decl-name
+                                                 (find-structdecls the-blocks))
                          the-scopes
                          (make-port-table cell-info)
                          (make-hash-table 100 Text.Hash)
