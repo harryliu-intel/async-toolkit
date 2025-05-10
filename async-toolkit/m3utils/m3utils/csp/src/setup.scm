@@ -124,6 +124,8 @@
 (define *the-globals* #f)
 (define *the-global-ranges* #f)
 
+(define *the-struct-decls* #f)
+
 ;; back-end data structures
 (define *proc-context* #f) 
 

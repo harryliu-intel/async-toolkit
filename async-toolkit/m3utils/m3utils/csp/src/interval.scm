@@ -1,5 +1,5 @@
 (define (interval-dbg . x)
-;;  (apply dis x)
+  (apply dis x)
   )
 
 (define (make-binop op lst)
@@ -28,6 +28,26 @@
                 (res (range-intersection rng dcl glb))
                )
            res)
+         )
+
+        ((call-intrinsic? expr)
+
+         (if (eq? 'pack (cadr expr))
+             (let* ((struct (caddr expr))
+                    (id     (cadr struct))
+                    (ty     (retrieve-defn id syms))
+                    (sdecl  (lookup-struct-decl (caddr ty)))
+                    )
+
+               (dis "call-intrinsic pack : sdecl : " sdecl dnl)
+
+               (make-uint-range (structdecl-width sdecl))
+
+               )
+
+             *range-complete*
+             )
+         
          )
 
         ((binary-expr? expr)

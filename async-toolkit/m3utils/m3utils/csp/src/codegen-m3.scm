@@ -190,8 +190,6 @@
   (set! *m3t* type)
   (let ((decltype (m3-map-decltype type)))
     (cond
-
-     
           ((array-type? type)
            (let ((extent (array-extent type))
                  (elem   (array-elemtype type)))
@@ -242,19 +240,54 @@
     )
   )
 
-
 (define (m3-convert-structdecl sd)
   (dis "m3-convert-structdecl : sd : " sd dnl)
-  (let ((nm  (cadr sd))
-        (fds (cddr sd))
-        (wx  (Wx.New))
-        )
+  (let* ((nm   (cadr sd))
+         (m3nm (m3-struct nm))
+         (fds  (cddr sd))
+         (wx   (Wx.New))
+         )
     (define (w . x) (Wx.PutText wx (apply string-append x)))
 
-    (w "TYPE " (m3-struct nm) " = RECORD" dnl)
+    (w "TYPE " m3nm " = RECORD" dnl)
     (map (yrruc (curry w "  ") dnl)
          (map m3-convert-fielddecl fds))
-    (w "END;" dnl)
+    (w "END;" dnl
+       dnl)
+
+    (w "PROCEDURE " m3nm "_unpack_dynamic(VAR s : " m3nm "; x, scratch : DynamicInt.T) : DynamicInt.T =" dnl
+       "  BEGIN" dnl
+       "  END " m3nm "_unpack_dynamic;" dnl
+       dnl
+       )
+    
+    (w "PROCEDURE " m3nm "_unpack_native(VAR s : " m3nm "; x : NativeInt.T) : NativeInt.T =" dnl
+       "  BEGIN" dnl
+       "  END " m3nm "_unpack_native;" dnl
+       dnl
+       )
+
+    
+    (w "PROCEDURE " m3nm "_pack_dynamic(x, scratch : DynamicInt.T; READONLY s : " m3nm ") : DynamicInt.T =" dnl
+       "  BEGIN" dnl
+       "  END " m3nm "_pack_dynamic;" dnl
+       dnl
+       )
+
+    (w "PROCEDURE " m3nm "_pack_native(x : NativeInt.T; READONLY s : " m3nm ") : NativeInt.T =" dnl
+       "  BEGIN" dnl
+       "  END " m3nm "_pack_native;" dnl
+       dnl
+       )
+
+    (w "PROCEDURE " m3nm "_initialize(VAR s : " m3nm ") = " dnl
+       "  BEGIN" dnl
+       "  END " m3nm "_initialize;" dnl
+       dnl
+       )
+       
+ 
+    
     (Wx.ToText wx)
     )
   )
@@ -1001,7 +1034,7 @@
             lt))
       (declared-type pc expr)))
 
-(define (classify-type pc expr)
+(define (classify-expr-type pc expr)
   (let ((ty (operand-type pc expr)))
     (cond ((m3-natively-representable-type? ty) 'native)
           ((m3-dynamic-int-type? ty)            'dynamic)
@@ -1056,7 +1089,7 @@
 (define (m3-force-type pc cat x)
   (if (literal? x)
       (format-int-literal cat x)
-      (let ((x-category (classify-type pc x)))
+      (let ((x-category (classify-expr-type pc x)))
         (m3-compile-convert-type x-category
                                  cat
                                  (m3-format-designator pc x)
@@ -1100,7 +1133,7 @@
 
 (define (m3-compile-typed-binop pc tgt op a b)
   ;; this approach may only work for tgt = 'native
-  (let* ((op-type (max-type tgt (classify-type pc a) (classify-type pc b)))
+  (let* ((op-type (max-type tgt (classify-expr-type pc a) (classify-expr-type pc b)))
          (opx     (m3-compile-binop op-type
                                     op
                                     (m3-force-type pc op-type a)
@@ -1118,7 +1151,7 @@
 
 (define (m3-compile-typed-unop pc tgt op a)
   ;; this approach may only work for tgt = 'native
-  (let* ((op-type (max-type tgt (classify-type pc a)))
+  (let* ((op-type (max-type tgt (classify-expr-type pc a)))
          (opx     (m3-compile-unop op-type
                                    op
                                    (m3-force-type pc op-type a))))
@@ -1233,10 +1266,10 @@
   )
 
 (define (dynamic-type-expr? pc expr)
-  (eq? 'dynamic (classify-type pc expr)))
+  (eq? 'dynamic (classify-expr-type pc expr)))
 
 (define (native-type-expr? pc expr)
-  (eq? 'native (classify-type pc expr)))
+  (eq? 'native (classify-expr-type pc expr)))
 
 (define (m3-set-dynamic-value pc m3id expr)
   (cond ((bigint? expr)
@@ -1540,7 +1573,7 @@
 
 (define (native-integer-value? pc x)
   (and (integer-value? pc x)
-       (eq? 'native (classify-type pc x))))
+       (eq? 'native (classify-expr-type pc x))))
 
 (define (dynamic-integer-value? pc x)
   (and (integer-value? pc x)
@@ -1668,33 +1701,86 @@
     );;tel
   )
 
+(define *rhs* #f)
+(define *lhs* #f)
+(define *lty* #f)
+
+(define (m3-compile-pack-assign pc lhs lty rhs)
+  (set! *rhs* rhs)
+  (set! *lhs* lhs)
+  (set! *lty* lty)
+  (dis "m3-compile-pack-assign " lhs " := " rhs dnl)
+  (let*((class (classify-expr-type pc lhs))
+        (s     (caddr rhs))
+        (sty   (declared-type pc s))
+        (snm   (struct-type-name sty))
+        (m3snm (m3-struct snm))
+        (m3lhs (m3-format-designator pc lhs))
+        (m3rhs (m3-format-designator pc s))
+        (zero-stmt
+         (if (eq? 'native class)
+             (sa m3lhs " := 0")
+             (sa "Mpz.set_ui(" m3lhs ",0)")
+             )
+         )
+
+        (scratch ;; Mpz scratchpad
+         (if (eq? 'native class) "" "frame.a, ")
+         )
+        
+        (res
+         (sa 
+          zero-stmt ";" dnl
+          "      " m3lhs
+          " := "
+          m3snm "_pack_" (symbol->string class) "("
+          m3lhs ", "
+          scratch
+          m3rhs
+          ")"
+          )
+         )
+        )
+
+    (dis "m3-compile-pack-assign : res : " res dnl)
+    res
+;;    (error)
+    )  
+  )
+
 (define (m3-compile-intrinsic-assign pc lhs lty rhs)
-  (if (integer-type? lty)
-      (begin
-        ;; if LHS is integer, we need to ensure we can type-convert return
-        ;; value
-
-        (sa "WITH retval = " (m3-compile-intrinsic pc rhs) " DO" dnl
-
+  (cond ((eq? 'pack (cadr rhs))
+         (m3-compile-pack-assign pc lhs lty rhs))
+  
+        ((integer-type? lty)
+         ;; if not pack we assume it returns a native int
+         ;;
+         ;; if LHS is integer, we need to ensure we can type-convert return
+         ;; value
+         
+         (sa "WITH retval = " (m3-compile-intrinsic pc rhs) " DO" dnl
+             
             (cond ((m3-dynamic-int-type? lty)
                    (sa
                     "  Mpz.set_ui(" (m3-format-designator pc lhs) " , retval)")
                    )
-
-                  ((m3-native-int-type? lty)
-
+                  
+                  ((native-type-expr? pc lhs)
+                   
                    (sa "  " (m3-format-designator pc lhs) " := retval")
                    )
-
+                  
                   (else (error "m3-compile-intrinsic-assign : don't know type " lty))
                   )
             dnl
             "END" dnl)
-        )
-      ;; not an integer, a simple assignment will do
-      (sa (m3-format-designator pc lhs) " := "
-          (m3-compile-intrinsic pc rhs))
-      )
+         )
+
+        (else
+         ;; not an integer, a simple assignment will do
+         (sa (m3-format-designator pc lhs) " := "
+             (m3-compile-intrinsic pc rhs)))
+      );;dnoc
   )
 
 (define (m3-compile-assign pc stmt)
@@ -1801,7 +1887,7 @@
          (port-type    (get-port-def-type port-def))
          (port-typenam (m3-convert-port-type-scalar port-type))
          (copy-type    (m3-convert-port-ass-type port-type))
-         (send-class   (classify-type pc (get-send-rhs stmt)))
+         (send-class   (classify-expr-type pc (get-send-rhs stmt)))
          
          (m3-pname     (m3-format-designator pc port-des))
          (port-class   (m3-convert-port-ass-category port-type))
@@ -1841,7 +1927,7 @@
       )
 
     (define (nonnull-rhs)
-      (let ((rhs-class    (classify-type pc rhs)))
+      (let ((rhs-class    (classify-expr-type pc rhs)))
         (sa "VAR toRecv : "
             port-typenam".Item; BEGIN IF NOT "
             port-typenam ".Recv( " m3-pname "^ , toRecv , cl ) THEN RETURN FALSE END;"
@@ -1934,7 +2020,7 @@
               (ty     (declared-type pc lhs))
               (snm    (struct-type-name ty))
               (m3snm  (m3-struct snm))
-              (sfx    (classify-type pc rhs))
+              (sfx    (classify-expr-type pc rhs))
               (rhsstr
 
                (cond ((and (eq? sfx 'dynamic) (bigint? rhs))
@@ -1950,6 +2036,10 @@
          (sa m3snm "_unpack_" (symbol->string sfx) "( "(m3-ident (cadr lhs)) " , " rhsstr " )" )
          
          )
+       )
+
+      ((pack)
+       "0"
        )
 
       ((string)
@@ -2529,7 +2619,7 @@
                            (map get-var1-decl1 the-decls))))))
 
          ;; find the necessary interfaces from struct declarations:
-         (sdecls    (find-structdecls the-blocks))
+         (sdecls    *the-struct-decls*)
          (sfields   (apply append (map cddr sdecls)))
          (sbases    (map base-type (map get-decl1-type sfields)))
          (m3-struct-intfs

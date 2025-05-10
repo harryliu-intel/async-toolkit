@@ -416,6 +416,51 @@
   (and (pair? struct-decl)
        (eq? 'structdecl (car struct-decl))))
 
+(define (structdecl-width struct-decl)
+  (let* ((fields (cddr struct-decl))
+         (ftypes (map get-decl1-type fields))
+         (widths (map get-type-width ftypes))
+         )
+    (apply + widths)
+    )
+  )
+
+(define (struct-field-width fd)
+  (let ((ty (get-decl1-type fd)))
+    (get-type-width ty)))
+
+(define (get-type-width ty)
+  (cond ((boolean-type? ty) 1)
+        
+        ((integer-type? ty)
+         (let ((bw (cadddr ty)))
+           (if (null? bw)
+               (error "can't pack field " fd)
+               (BigInt.ToInteger bw))))
+        
+        ((array-type? ty)
+         (let* ((extent (array-extent ty))
+                (min (cadr extent))
+                (max (caddr extent))
+                (ok (and (bigint? min) (bigint? max))))
+           (if ok (* (BigInt.ToInteger (big- max min))
+                     (get-type-width (array-elemtype ty))))))
+
+        ((struct-type? ty)
+         (let* ((snm  (caddr ty))
+                (sdef (lookup-struct-decl snm))
+                )
+           (structdecl-width sdef)))
+
+        (else (error "can't pack type " ty))
+        );;dnoc
+  )
+
+(define (lookup-struct-decl id)
+  (dis "lookup-struct-decl : id : " id dnl)
+  (cons 'structdecl
+        (assoc id (map cdr *the-struct-decls*))))
+
 (define (check-is-struct-decl struct-decl)
   (if (not (struct-decl? struct-decl))
       (error "not a struct-decl : " struct-decl)))
@@ -1807,7 +1852,9 @@
             *the-inits*
             *the-func-tbl*
             *the-struct-tbl*)))
-;;  (display-success-2)
+    ;;  (display-success-2)
+
+    (set! *the-struct-decls* (find-structdecls text5))
   'text5
   )
 

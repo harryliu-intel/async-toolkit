@@ -69,5 +69,5 @@ PROCEDURE pack_native(x : NativeInt.T; READONLY t : T) : NativeInt.T =
   END pack_native;
 
 VAR
-  MpzMask := Mpz.NewWord(Mask);
+  MpzMask := Mpz.NewWord(Type.Mask);
 BEGIN END NarrowIntOps.

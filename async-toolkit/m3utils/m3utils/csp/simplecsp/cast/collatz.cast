@@ -1,6 +1,6 @@
 module collatz;
 
-int NWORKERS = 1;
+int NWORKERS = 15;
 int W        = 63;
 
 int STATUSW = 128 + 2 * W; // why can't this go in attributes cell?
@@ -30,7 +30,7 @@ define common attributes {
   }
 }
 
-define WORKER(int id)(bd(W) -STRT; bd(STATUSW) +STATUS) <+ common
+define WORKER()(bd(W) -STRT; bd(STATUSW) +STATUS) <+ common
 {
   csp {
 
@@ -50,7 +50,10 @@ define WORKER(int id)(bd(W) -STRT; bd(STATUSW) +STATUS) <+ common
     int(W) steps  = 0;
     int(W) maxlen = 0;
 
-    STRT?i;
+    int(W) id;
+    
+    STRT?id;
+    print ("id = " + id);
     
     *[
       int(W) idx = i * NWORKERS + id; // this is the index of the odd number
@@ -83,11 +86,10 @@ define WORKER(int id)(bd(W) -STRT; bd(STATUSW) +STATUS) <+ common
     }
 }
 
-define MANAGER()(bd(W) +STRT[0..NWORKERS-1]; bd(STATUSW) -STATUS) <+ common
+define MANAGER()(bd(W) +STRT; bd(STATUSW) -STATUS) <+ common
 {
   csp {
-    <,i:NWORKERS: STRT[i]!0>
-      ;
+    STRT!0;
     status save;
     
     *[ STATUS?x ;
@@ -153,7 +155,7 @@ define STATUS_TREE(int N)(bd(STATUSW) -L[0..N-1], +R)  <+ common
 {
   [ N == 1 -> subcells { L[0] = R; } ]
   [ N == 2 -> subcells { SMERGE m(L, R); } ]
-    [ N > 2  ->
+  [ N > 2  ->
       subcells {
         bd(STATUSW) X[0..(N+1)/2 - 1];
         <i : 0.. N / 2 - 1 :SMERGE m[i]({L[2*i], L[2*i + 1]}, X[i]); >
@@ -168,10 +170,39 @@ define STATUS_TREE(int N)(bd(STATUSW) -L[0..N-1], +R)  <+ common
 define COLLATZ()()  <+ common
 {
   subcells {
-    bd(W) STRT[0..NWORKERS-1];
+    bd(W) S, STRT[0..NWORKERS-1];
     bd(STATUSW) WSTATUS[0..NWORKERS-1], STATUS;
-    MANAGER mgr(STRT, STATUS);
-    <i:0..NWORKERS-1: WORKER(i) wrkr[i](STRT[i], WSTATUS[i]);>
-    STATUS_TREE(NWORKERS) tree(WSTATUS, STATUS);
+    MANAGER mgr(S, STATUS);
+    START_TREE(0, NWORKERS) start_tree(S, STRT);
+    <i:0..NWORKERS-1: WORKER() wrkr[i](STRT[i], WSTATUS[i]);>
+    STATUS_TREE(NWORKERS) status_tree(WSTATUS, STATUS);
   }
 }
+
+define STARTSPLIT(int level)(bd(W) -L, +R[0..1]) <+ common
+{
+  csp {
+    L?i; R[0]!i, R[1]!(i + 2**level)
+  }
+}
+
+define START_TREE(int level, N)(bd(W) -L, +R[0..N-1]) <+ common
+// level is the level of the output of the tree
+{
+    [ N==1 -> subcells { L = R[0]; } ]
+      [ N==2 -> subcells { STARTSPLIT(level) s(L, R); } ]
+    [ N > 2 ->
+      subcells {
+        bd(W) X[0..(N+1)/2 - 1];
+        <i : 0.. N / 2 - 1 : STARTSPLIT(level)
+           s[i](X[i], {R[2*i], R[2*i + 1]}); >
+           
+        START_TREE(level + 1, (N+1)/2) tree(L, X);
+
+        <i: N/2 .. (N+1)/2 - 1 : R[2*i] = X[i];>
+           }
+    ]
+}
+
+
+      

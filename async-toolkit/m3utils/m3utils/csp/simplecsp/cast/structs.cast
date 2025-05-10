@@ -25,18 +25,25 @@ define common attributes {
   }
 }
 
+int TT = 32;
+
 define PACK()() <+ common
 {
   csp {
   structure structp =
-    (int(32) a;
-     bool b;
+    (int(TT) a = 0xc0edbabe;
+          bool b;
+          bool c;
+          bool d;
+          bool e;
      );
 
 
     structp x;
-    print(pack(x))
-      }
+    int y;
+    y = pack(x);
+    print(y)
+  }
 }
 
 define P()() <+ common
