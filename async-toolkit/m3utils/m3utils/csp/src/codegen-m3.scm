@@ -256,14 +256,22 @@
        dnl)
 
     (w "PROCEDURE " m3nm "_unpack_dynamic(VAR s : " m3nm "; x, scratch : DynamicInt.T) : DynamicInt.T =" dnl
-       "  BEGIN" dnl
-       "  END " m3nm "_unpack_dynamic;" dnl
+       "  BEGIN" dnl)
+    (map (yrruc w ";" dnl)
+         (m3-make-pack-body 'dynamic "x" "s" sd))
+    (w
+     "    RETURN x" dnl
+     "  END " m3nm "_unpack_dynamic;" dnl
        dnl
        )
     
     (w "PROCEDURE " m3nm "_unpack_native(VAR s : " m3nm "; x : NativeInt.T) : NativeInt.T =" dnl
-       "  BEGIN" dnl
-       "  END " m3nm "_unpack_native;" dnl
+       "  BEGIN" dnl)
+    (map (yrruc w ";" dnl)
+         (m3-make-pack-body 'native "x" "s" sd))
+    (w
+     "    RETURN x" dnl
+     "  END " m3nm "_unpack_native;" dnl
        dnl
        )
 
@@ -275,7 +283,8 @@
          (m3-make-pack-body 'dynamic "x" "s" sd))
 
     (w
-       "  END " m3nm "_pack_dynamic;" dnl
+     "    RETURN x" dnl
+     "  END " m3nm "_pack_dynamic;" dnl
        dnl
        )
 
@@ -284,7 +293,8 @@
        (map (yrruc w ";" dnl)
             (m3-make-pack-body 'native "x" "s" sd))
        (w
-        "  END " m3nm "_pack_native;" dnl
+     "    RETURN x" dnl
+     "  END " m3nm "_pack_native;" dnl
        dnl
        )
 
@@ -300,6 +310,11 @@
     )
   )
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;; pack/unpack
+;;
+
 (define *sd* #f)
 
 (define (m3-make-pack-field class m3tgt m3src fd)
@@ -310,7 +325,7 @@
 
          (id     (get-decl1-id fd))
          (m3id   (m3-ident id))
-         (packer (m3-type-packer (if aty aty ty) class))
+         (packer (m3-type-packer "pack" class (if aty aty ty)))
          (scrtch (if (eq? 'dynamic class) "scratch , " ""))
          )
     ;; If it is an array, we need to build the array calls
@@ -326,16 +341,40 @@
     )
   )
 
-(define (m3-type-packer type class)
+(define (m3-make-unpack-field class m3tgt m3src fd)
+  (let* ((ty     (get-decl1-type fd))
+
+         (aty    (array-base-type ty))
+         (adims  (array-dims ty))
+
+         (id     (get-decl1-id fd))
+         (m3id   (m3-ident id))
+         (packer (m3-type-packer "unpack" class (if aty aty ty)))
+         (scrtch (if (eq? 'dynamic class) "scratch , " ""))
+         )
+    ;; If it is an array, we need to build the array calls
+    ;; using the code from m3-initialize-array
+
+    (m3-initialize-array
+     (lambda(txt)
+       (sa m3src " := " packer "(" m3tgt " , " scrtch txt  ")"))
+     (sa m3tgt "." m3id)
+     adims
+     'i
+     )
+    )
+  )
+
+(define (m3-type-packer whch class type)
   (let ((sfx (symbol->string class)))
     (cond ((integer-type? type)
-           (sa (m3-map-decltype type) "Ops.pack_" sfx))
+           (sa (m3-map-decltype type) "Ops." whch "_" sfx))
           
           ((boolean-type? type)
-           (sa (m3-map-decltype type) ".pack_" sfx))
+           (sa (m3-map-decltype type) "." whch "_" sfx))
           
           ((struct-type? type)
-           (sa (m3-struct (caddr type) "_pack_" sfx)))
+           (sa (m3-struct (caddr type) "_" whch "_" sfx)))
 
           (else (error "m3-type-packer : no proc for packing " type))
           
@@ -346,16 +385,22 @@
 (define (m3-make-pack-body class m3tgt m3src sd)
   (set! *sd* sd)
   (dis "m3-make-pack-body : sd : " (stringify sd) dnl)
-  
-  (let* ((wx     (Wx.New))
-         (fields (cddr sd)))
-    (define (w . x) (Wx.PutText wx (apply string-append x)))
-
+  (let ((fields (cddr sd)))
     ;; here we want to walk the fields, calling the type packer for
     ;; each field. (m3-make-pack-field)
-
+    
     (map (curry m3-make-pack-field class m3tgt m3src) fields)
+    )
+  )
 
+(define (m3-make-unpack-body class m3tgt m3src sd)
+  (set! *sd* sd)
+  (dis "m3-make-unpack-body : sd : " (stringify sd) dnl)
+  (let ((fields (cddr sd)))
+    ;; here we want to walk the fields, calling the type packer for
+    ;; each field. (m3-make-pack-field)
+    
+    (map (curry m3-make-unpack-field class m3tgt m3src) fields)
     )
   )
 
@@ -2372,7 +2417,7 @@
 
     (w 
      "    END(*WITH*);" dnl
-     "    RETURN TRUE;" dnl ;; in case it falls off the end
+     "    <*NOWARN*>RETURN TRUE(*handle fall-thru*)" dnl
      "  END " bnam ";(*m3wb*)" dnl
      dnl)
     )
