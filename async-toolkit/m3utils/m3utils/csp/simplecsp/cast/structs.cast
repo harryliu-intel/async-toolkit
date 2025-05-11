@@ -93,6 +93,20 @@ define ARRAYS()()
   }
 }
 
+define A0()()
+{
+  csp {
+    structure s =
+      (int(NW) x[3][4];
+       int(NW) y;
+       );
+
+    s z;
+
+    print (z::x[0][1])
+  }
+}
+
 define Q()() <+ common
 {
   csp {

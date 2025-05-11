@@ -269,14 +269,22 @@
 
     
     (w "PROCEDURE " m3nm "_pack_dynamic(x, scratch : DynamicInt.T; READONLY s : " m3nm ") : DynamicInt.T =" dnl
-       "  BEGIN" dnl
+       "  BEGIN" dnl)
+
+    (map (yrruc w ";" dnl)
+         (m3-make-pack-body 'dynamic "x" "s" sd))
+
+    (w
        "  END " m3nm "_pack_dynamic;" dnl
        dnl
        )
 
     (w "PROCEDURE " m3nm "_pack_native(x : NativeInt.T; READONLY s : " m3nm ") : NativeInt.T =" dnl
-       "  BEGIN" dnl
-       "  END " m3nm "_pack_native;" dnl
+       "  BEGIN" dnl)
+       (map (yrruc w ";" dnl)
+            (m3-make-pack-body 'native "x" "s" sd))
+       (w
+        "  END " m3nm "_pack_native;" dnl
        dnl
        )
 
@@ -289,6 +297,65 @@
  
     
     (Wx.ToText wx)
+    )
+  )
+
+(define *sd* #f)
+
+(define (m3-make-pack-field class m3tgt m3src fd)
+  (let* ((ty     (get-decl1-type fd))
+
+         (aty    (array-base-type ty))
+         (adims  (array-dims ty))
+
+         (id     (get-decl1-id fd))
+         (m3id   (m3-ident id))
+         (packer (m3-type-packer (if aty aty ty) class))
+         (scrtch (if (eq? 'dynamic class) "scratch , " ""))
+         )
+    ;; If it is an array, we need to build the array calls
+    ;; using the code from m3-initialize-array
+
+    (m3-initialize-array
+     (lambda(txt)
+       (sa m3tgt " := " packer "(" m3tgt " , " scrtch txt  ")"))
+     (sa m3src "." m3id)
+     adims
+     'i
+     )
+    )
+  )
+
+(define (m3-type-packer type class)
+  (let ((sfx (symbol->string class)))
+    (cond ((integer-type? type)
+           (sa (m3-map-decltype type) "Ops.pack_" sfx))
+          
+          ((boolean-type? type)
+           (sa (m3-map-decltype type) ".pack_" sfx))
+          
+          ((struct-type? type)
+           (sa (m3-struct (caddr type) "_pack_" sfx)))
+
+          (else (error "m3-type-packer : no proc for packing " type))
+          
+          );;dnoc
+    );;tel
+  )
+
+(define (m3-make-pack-body class m3tgt m3src sd)
+  (set! *sd* sd)
+  (dis "m3-make-pack-body : sd : " (stringify sd) dnl)
+  
+  (let* ((wx     (Wx.New))
+         (fields (cddr sd)))
+    (define (w . x) (Wx.PutText wx (apply string-append x)))
+
+    ;; here we want to walk the fields, calling the type packer for
+    ;; each field. (m3-make-pack-field)
+
+    (map (curry m3-make-pack-field class m3tgt m3src) fields)
+
     )
   )
 
@@ -1398,7 +1465,7 @@
 (define (m3-initialize-array format-init name dims dummy)
   ;; name is the text name in m3 format
   ;; dims is the number of dimensions
-  ;; dummy is the prefix of the dummy
+  ;; dummy is the (symbol) prefix of the dummy
   ;; format-init takes one parameter, the name of the object to initialize
 
   ;; code currently BROKEN
