@@ -11,6 +11,9 @@ TYPE
     data           : REF Buff;       (* indirect is so can be part of several *)
     waiter         : Process.Closure;
     writer, reader : Process.Frame;  (* used ONLY for assertions! *)
+
+    (* locking *)
+    lockwr, lockrd : CARDINAL;
   END;
 
 CONST
@@ -54,5 +57,11 @@ PROCEDURE RecvDynamic(VAR      c : T;
 PROCEDURE ChanDebug(READONLY chan : T) : TEXT;
 
 PROCEDURE New(nm : TEXT; slack : CARDINAL := 0) : REF T;
+
+PROCEDURE Lock  (VAR c : T);
+PROCEDURE Unlock(VAR c : T);
+PROCEDURE Ready (VAR c : T) : BOOLEAN;
+PROCEDURE Wait  (VAR c : T; cl : Process.Closure);
+PROCEDURE Unwait(VAR c : T; cl : Process.Closure);
   
 END Channel.

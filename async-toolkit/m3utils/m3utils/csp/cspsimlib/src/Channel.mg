@@ -266,4 +266,18 @@ PROCEDURE RecvDynamic(VAR      c : T;
     END
   END RecvDynamic;
 
+PROCEDURE Lock  (VAR c : T) =
+  BEGIN c.lockwr := c.wr; c.lockrd := c.rd END Lock;
+  
+PROCEDURE Unlock(<*UNUSED*>VAR c : T) = BEGIN (* NOP *) END Unlock;
+  
+PROCEDURE Ready (VAR c : T) : BOOLEAN =
+  BEGIN RETURN c.lockwr # c.wr OR c.lockrd # c.rd END Ready;
+  
+PROCEDURE Wait  (VAR c : T; cl : Process.Closure) =
+  BEGIN c.waiter := cl END Wait;
+  
+PROCEDURE Unwait  (VAR c : T; cl : Process.Closure) =
+  BEGIN <*ASSERT c.waiter = cl*> c.waiter := NIL END Unwait;
+  
 BEGIN END Channel.

@@ -1279,16 +1279,13 @@
       )
   )
 
-(define (format-int-literal cat x)
+(define (format-int-literal pc cat x)
   (case cat
     ((native)
      (Fmt.Int (BigInt.ToInteger x) 10))
 
-    ((wide) ;; we need to dump it out in 64-bit chunks
-     (error "not yet"))
-
-    ((dynamic)
-     (sa "DynamicInt.FromWideInt(" (format-int-literal 'wide x) ")"))
+    ((dynamic wide)
+     (make-dynamic-constant! pc x))
 
     (else (error))
     )
@@ -1296,7 +1293,7 @@
 
 (define (m3-force-type pc cat x)
   (if (literal? x)
-      (format-int-literal cat x)
+      (format-int-literal pc cat x)
       (let ((x-category (classify-expr-type pc x)))
         (m3-compile-convert-type x-category
                                  cat
@@ -2399,6 +2396,68 @@
     )
   )
 
+
+(define (m3-compile-lock-unlock whch pc stmt)
+  (let* (
+         (port-tbl     (pc-port-tbl pc))
+         (ports        (cdr stmt))
+         )
+
+    (let loop ((p ports)
+               (res (sa "BEGIN " dnl)))
+    
+        (if (null? p)
+            (sa res "END" dnl)
+            (let* ((port-des `(id ,(car p)))
+                   (port-id      (get-designator-id port-des))
+                   (port-def     (port-tbl 'retrieve port-id))
+                   (port-type    (get-port-def-type port-def))
+                   (m3-pname     (m3-format-designator pc port-des))
+                   (port-typenam (m3-convert-port-type-scalar port-type)))
+              (loop (cdr p)
+                    (sa res
+                        port-typenam "." whch "(" m3-pname "^);" dnl))
+              );;*tel
+            );;fi
+        );;tel
+    );;*tel
+  )
+
+(define (m3-compile-waitfor pc stmt)
+  (let* (
+         (port-tbl     (pc-port-tbl pc))
+         (ports        (cdr stmt))
+         )
+
+    (let loop ((p ports)
+               (res (sa "VAR ready := 0; BEGIN " dnl)))
+    
+        (if (null? p)
+            (sa res
+                "IF ready = 0 THEN" dnl
+                "  RETURN FALSE" dnl
+                "ELSE" dnl
+                (m3-compile-unlock pc `(unlock ,@ports))
+                "END" dnl
+                "END" dnl)
+            (let* ((port-des `(id ,(car p)))
+                   (port-id      (get-designator-id port-des))
+                   (port-def     (port-tbl 'retrieve port-id))
+                   (port-type    (get-port-def-type port-def))
+                   (m3-pname     (m3-format-designator pc port-des))
+                   (port-typenam (m3-convert-port-type-scalar port-type)))
+              (loop (cdr p)
+                    (sa res
+                        "IF " port-typenam ".Ready(" m3-pname "^) THEN INC(ready) END;" dnl))
+              );;*tel
+            );;fi
+        );;tel
+    );;*tel
+  )
+
+(define m3-compile-lock (curry m3-compile-lock-unlock "Lock"))
+
+(define m3-compile-unlock (curry m3-compile-lock-unlock "Unlock"))
   
 (define (m3-compile-local-if pc stmt)
 
@@ -2453,7 +2512,7 @@
 
 (define *known-stmt-types*
   '(recv send assign eval goto local-if while sequence sequential-loop skip
-         structdecl)
+         structdecl lock unlock waitfor)
   )
 
 (define (m3-space-comments txt)

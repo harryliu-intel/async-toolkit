@@ -1,5 +1,5 @@
 (define (blocking-dbg . x)
-  ;; (apply dis x)
+   (apply dis x)
   )
 
 (define (stmt-may-block? stmt)
@@ -10,11 +10,11 @@
   
   (define (s-visitor s)
     ;; statements that on their own introduce blocking
-;;7    (blocking-dbg "s-visitor " (stringify s) dnl)
+7    (blocking-dbg "s-visitor " (stringify s) dnl)
     (if result
         'cut
         (case (get-stmt-type s)
-          ((recv send)               (yes))
+          ((recv send waitfor)       (yes))
           ((if nondet-if waiting-if) (yes))
           (else                          s)
           )
@@ -107,7 +107,7 @@
       )
     
     (case (get-stmt-type s)
-      ((recv send) (mark 'before))
+      ((recv send waitfor) (mark 'before))
 
       ((waiting-if) (mark 'before))
 
