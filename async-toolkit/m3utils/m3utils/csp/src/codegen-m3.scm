@@ -1928,6 +1928,35 @@
                 (member (car rhs) (map car *boolean-logical-binops*)))
            (m3-compile-boolean-logical-binop pc m3-lhs (car rhs) (cadr rhs) (caddr rhs)))
 
+
+          ((probe? rhs)
+           (let* (
+                  (port-des     (get-probe-port rhs)) ;; doesnt work for arrays/structs
+
+         
+                  (port-tbl     (pc-port-tbl pc))
+                  (port-id      (get-designator-id port-des))
+                  (port-def     (port-tbl 'retrieve port-id))
+                  (port-dir     (get-port-def-dir port-def))
+
+                  (m3probe-side (case port-dir
+                                  ((in) "RecvProbe")
+                                  ((out) "SendProbe")
+                                  (else (error port-dir))))
+                  
+                  (port-type    (get-port-def-type port-def))
+                  (port-typenam (m3-convert-port-type-scalar port-type))
+                  
+                  (m3-pname     (m3-format-designator pc port-des))
+                  )
+
+             (dis "port-id  : " port-id dnl)
+             (dis "port-def : " port-def dnl)
+
+             (sa m3-lhs port-typenam "." m3probe-side "(" m3-pname "^ , cl)")
+             );;*tel             
+           )
+          
           (else (error "m3-compile-boolean-assign : don't understand " rhs))
         );;dnoc
     );;tel
@@ -2033,13 +2062,18 @@
 
           ((string-type? lty)
            (sa (m3-format-designator pc lhs) " := "
-              (m3-compile-string-expr pc rhs)))
+               (m3-compile-string-expr pc rhs))
+           )
 
           ((array-type? lty)
-           (error "not yet"))
+           (sa (m3-format-designator pc lhs) " := "
+               (m3-format-designator pc rhs))
+          )
 
           ((struct-type? lty)
-           (error "not yet"))
+           (sa (m3-format-designator pc lhs) " := "
+               (m3-format-designator pc rhs))
+          )
           
           ((integer-type? lty)
            (m3-compile-scalar-int-assign pc stmt))
@@ -2106,6 +2140,7 @@
   )
 
 (define (get-port-def-type pdef) (cadddr pdef))
+(define (get-port-def-dir pdef) (caddr pdef))
 
 (define (m3-compile-send pc stmt)
   (let* ((port-tbl     (pc-port-tbl pc))

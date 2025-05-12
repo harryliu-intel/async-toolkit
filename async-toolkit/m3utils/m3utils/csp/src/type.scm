@@ -68,9 +68,10 @@
          
          ((bigint? x) *default-int-type*)
          ((boolean? x) *default-boolean-type*)
+         ((probe? x) *default-boolean-type*)
          ((string? x) *default-string-type*)
 
-         ((or (probe? x)(recv-expression? x))
+         ((or (recv-expression? x) (peek? x))
           (let* ((port-tbl  (make-port-table cell-info)) ;; hrmph, slow
                  (channel-designator (cadr x))
                  (id        (get-designator-id channel-designator))

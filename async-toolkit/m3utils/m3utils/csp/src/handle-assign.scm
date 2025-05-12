@@ -6,6 +6,8 @@
 (define (probe?           x)  (and (pair? x) (eq? 'probe (car x))))
 (define (recv-expression? x)  (and (pair? x) (eq? 'recv-expression (car x))))
 
+(define get-probe-port cadr)
+
 (define (handle-access-assign ass syms vals tg func-tbl struct-tbl cell-info)
 
   (set! *has-ass* ass)
