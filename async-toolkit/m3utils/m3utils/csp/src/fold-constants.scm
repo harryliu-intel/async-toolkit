@@ -179,7 +179,7 @@
           (let* ((aty   (derive-type a syms func-tbl struct-tbl cell-info))
                  (bty   (derive-type b syms func-tbl struct-tbl cell-info))
                  (types (list aty bty))
-                 (bool  (exists? boolean-type? types))
+                 (bool  (exists boolean-type? types))
                  (type  (if bool 'boolean (car aty))))
 
             (fold-constants-dbg "handle-boolean-binop   op   : " op dnl)

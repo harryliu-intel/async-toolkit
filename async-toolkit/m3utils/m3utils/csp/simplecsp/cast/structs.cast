@@ -107,6 +107,40 @@ define A0()()
   }
 }
 
+define A1()()
+{
+  csp {
+    structure s =
+      (int(NW) x[3][4];
+       string  y[1][2][3];
+       int     z = 2;
+       string  str = "hello, world!";
+       bool    b = true;
+       );
+
+    s z;
+
+    print (z::x[0][1]  + z::z)
+  }
+}
+
+define A1p()()
+{
+  csp {
+    structure s =
+      (int(NW) x[3][4];
+       string  y[1][2][3];
+       int(8)  z = 2;
+       string  str = "hello, world!";
+       bool    b = true;
+       );
+
+    s z;
+
+    print (z::x[0][1]  + z::z)
+  }
+}
+
 define Q()() <+ common
 {
   csp {

@@ -20,8 +20,12 @@
 (define (array-elemtype    at)  (caddr at))
 
 (define (array-base-type   at)
-  (let ((et (array-elemtype at)))
-    (if (array-type? et) (array-base-type et) et)))
+  (let* ((res
+          (if (array-type? at) (array-base-type (array-elemtype at)) at)))
+    (dis "array-base-type : " at " -> " res dnl)
+    res
+    )
+  )
 
 (define (make-array-type extent elem-type)
   `(array ,extent ,elem-type))

@@ -421,7 +421,10 @@
          (ftypes (map get-decl1-type fields))
          (widths (map get-type-width ftypes))
          )
-    (apply + widths)
+    (if (exists (curry > 1) widths)
+        -1 ;; if any component is negative, the whole thing is -1
+        (apply + widths)
+        )
     )
   )
 
@@ -435,7 +438,7 @@
         ((integer-type? ty)
          (let ((bw (cadddr ty)))
            (if (null? bw)
-               (error "can't pack field " fd)
+               -1
                (BigInt.ToInteger bw))))
         
         ((array-type? ty)
@@ -452,7 +455,7 @@
                 )
            (structdecl-width sdef)))
 
-        (else (error "can't pack type " ty))
+        (else -1)
         );;dnoc
   )
 
@@ -748,11 +751,10 @@
 
 (define *last-var* #f)
 
-(define (get-decl1-id d) (cadadr d))
-
+(define (get-decl1-id   d) (cadadr d))
 (define (get-decl1-type d) (caddr d))
-
-(define (get-decl1-dir d) (cadddr d))
+(define (get-decl1-dir  d) (cadddr d))
+(define (get-decl1-init d) (caddddr d))
   
 (define (check-var1 s)
   (if (not (and (eq? 'var1 (get-stmt-type s)) (eq? 'id (caadadr s))))

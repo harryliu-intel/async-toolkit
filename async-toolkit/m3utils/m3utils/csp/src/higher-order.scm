@@ -57,11 +57,15 @@
   )
 
 ;; predicates
- (define (exists? pred? lst)
+(define (exists pred? lst)
   (eval (apply or (map pred? lst)))) ;; why do we need eval?
 
-(define (forall? pred? lst)
+(define Exists exists)
+
+(define (forall pred? lst)
   (eval (apply and (map pred? lst)))) ;; why do we need eval?
+
+(define Forall forall)
 
 (define (count-execute n f)
   ;; given n, execute (f 0) .. (f (- n 1) )

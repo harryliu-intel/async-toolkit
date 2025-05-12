@@ -240,21 +240,7 @@
     )
   )
 
-(define (m3-convert-structdecl sd)
-  (dis "m3-convert-structdecl : sd : " sd dnl)
-  (let* ((nm   (cadr sd))
-         (m3nm (m3-struct nm))
-         (fds  (cddr sd))
-         (wx   (Wx.New))
-         )
-    (define (w . x) (Wx.PutText wx (apply string-append x)))
-
-    (w "TYPE " m3nm " = RECORD" dnl)
-    (map (yrruc (curry w "  ") dnl)
-         (map m3-convert-fielddecl fds))
-    (w "END;" dnl
-       dnl)
-
+(define (m3-convert-pack-unpack w m3nm sd)
     (w "PROCEDURE " m3nm "_unpack_dynamic(VAR s : " m3nm "; x, scratch : DynamicInt.T) : DynamicInt.T =" dnl
        "  BEGIN" dnl)
     (map (yrruc w ";" dnl)
@@ -297,15 +283,38 @@
      "  END " m3nm "_pack_native;" dnl
        dnl
        )
+)
+
+(define (m3-convert-structdecl pc sd)
+  (dis "m3-convert-structdecl : sd    : " sd dnl)
+  (let* ((nm    (cadr sd))
+         (m3nm  (m3-struct nm))
+         (fds   (cddr sd))
+         (wx    (Wx.New))
+         (width (structdecl-width sd))
+         )
+    (define (w . x) (Wx.PutText wx (apply string-append x)))
+
+    (dis "m3-convert-structdecl : width : " width dnl)
+
+    (w "TYPE " m3nm " = RECORD" dnl)
+    (map (yrruc (curry w "  ") dnl)
+         (map m3-convert-fielddecl fds))
+    (w "END;" dnl
+       dnl)
+
+    (if (> width 0)
+        (m3-convert-pack-unpack w m3nm sd))
 
     (w "PROCEDURE " m3nm "_initialize(VAR s : " m3nm ") = " dnl
-       "  BEGIN" dnl
+       "  BEGIN" dnl)
+    (map (yrruc w ";" dnl)
+         (m3-make-init-body pc "s" sd))
+    
+    (w
        "  END " m3nm "_initialize;" dnl
        dnl
        )
-       
- 
-    
     (Wx.ToText wx)
     )
   )
@@ -403,6 +412,86 @@
     (map (curry m3-make-unpack-field class m3tgt m3src) fields)
     )
   )
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (m3-make-init-field pc m3tgt fd)
+  (let* ((ty     (get-decl1-type fd))
+         (id     (get-decl1-id fd))
+         (m3id   (m3-ident id))
+         )
+    (if (struct-type? ty)
+
+        (let* ((snm    (struct-type-name ty))
+               (m3snm  (m3-struct snm))
+               )
+          (sa m3snm "_initialize(" m3tgt "." m3id ")")
+          );;tel*
+
+        
+        (let* (
+               (iv     (get-decl1-init fd))
+               
+               (aty    (array-base-type ty))
+               (adims  (array-dims ty))
+               
+               
+               (m3init (sa
+                        (if (null? iv)
+                            (m3-default-init-value aty)
+                            (cond ((string-type? ty) (sa "\"" iv "\""))
+                                  ((boolean-type? ty)
+                                   (if iv "TRUE" "FALSE"))
+                                  ((m3-natively-representable-type? ty)
+                                   (m3-native-literal iv))
+                                  ((integer-type? ty)
+                                   (make-dynamic-constant! pc iv))
+                                  
+                                  (else (error "m3-make-init-field : can't initialize type : " ty dnl))
+                                  );;dnoc
+                            )
+
+                        " (*" (stringify aty) "*)"))
+               )
+          ;; If it is an array, we need to build the array calls
+          ;; using the code from m3-initialize-array
+          
+          (m3-initialize-array
+           (lambda(txt)
+             (sa txt " := " m3init))
+           (sa m3tgt "." m3id)
+           adims
+           'i
+           )
+          );;*tel
+        
+        );;fi
+    );;*tel
+  )
+
+(define (m3-default-init-value type)
+  (cond ((string-type? type)  "\"\"")
+        ((boolean-type? type) "FALSE")
+        ((m3-natively-representable-type? type)
+         "0")
+        ((integer-type? type)
+         "Mpz.NewInt(0)"
+         )
+        (else (error "m3-default-init-value : unknown type : " type))
+        )
+  )
+
+(define (m3-make-init-body pc m3tgt sd)
+  (set! *sd* sd)
+  (dis "m3-make-unpack-body : sd : " (stringify sd) dnl)
+  (let ((fields (cddr sd)))
+    ;; here we want to walk the fields, calling the type packer for
+    ;; each field. (m3-make-pack-field)
+    
+    (map (curry m3-make-init-field pc m3tgt) fields)
+    )
+  )
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -578,7 +667,6 @@
 
 (define (suffix-writer w by) (lambda x (apply w (append x (list by)))))
 
-
 ;; XXX unfinished:
 ;; we need to fix these up to assign each element of the array
 ;; use  (array-dims (get-port-channel <port-def>))
@@ -608,9 +696,8 @@
         )
 
         (w     ";"       dnl)
+        )
   )
-  )
-
 
 (define (m3-mark-reader w pc id)
   (m3-mark-reader-writer "reader" w pc id))
@@ -626,7 +713,6 @@
    (eq? 'node (car (get-port-channel pdef)))
    (and (array-port? pdef)
         (eq? 'node (car (array-channel-base (get-port-channel pdef)))))))
-   
 
 (define (array-channel-base cdef)
   (if (eq? 'array (car cdef))
@@ -676,7 +762,6 @@
       )
      ";" dnl
      )
-    
     )
   )
        
@@ -706,7 +791,6 @@
       (iw "b := Mpz.New()" dnl)
       (iw "c := Mpz.New()" dnl)
       )
-    
   
     (w "      ) DO" dnl
        dnl)
@@ -754,7 +838,6 @@
              )
         (map (curry m3-mark-writer iw pc) ids)
         )
-      
 
       (w dnl)
 
@@ -765,8 +848,6 @@
              (iiw (indent-writer iw (pad 22 "")))
              )
         (map
-
-         
          (lambda(lab)
            (let ((m3lab (m3-ident lab))
                  (count (assoc lab fork-counts)))
@@ -803,8 +884,6 @@
                  )
              )
            )
-
-         
          blk-labels)
         );;*tel
 
@@ -1160,12 +1239,16 @@
       (declared-type pc expr)))
 
 (define (classify-expr-type pc expr)
-  (let ((ty (operand-type pc expr)))
-    (cond ((m3-natively-representable-type? ty) 'native)
-          ((m3-dynamic-int-type? ty)            'dynamic)
-          ((integer-type? ty)                   'wide)
-          (else (error "not an integer : " expr))
-          )
+  (let* ((ty (operand-type pc expr))
+         (res (cond ((m3-natively-representable-type? ty) 'native)
+                    ((m3-dynamic-int-type? ty)            'dynamic)
+                    ((integer-type? ty)                   'wide)
+                    (else (error "not an integer : " expr))
+                    )
+              )
+         )
+    (dis "classify-expr-type : " expr " -> " res dnl)
+    res
     )
   )
 
@@ -1246,79 +1329,66 @@
 
 (define m3-unary-ops '(-))
 
-(define (m3-compile-binop cat op a-arg b-arg)
+(define (m3-compile-native-binop cat builder op a-arg b-arg)
+  (dis "m3-compile-native-binop : " cat " " op " " a-arg " " b-arg dnl)
   (cond ((and (eq? 'native cat) (member op m3-binary-infix-ops))
-         (sa "( " a-arg " " (m3-map-symbol-op op) " " b-arg " )"))
+         (builder (sa "( " a-arg " " (m3-map-symbol-op op) " " b-arg " )")))
+        
         ((and (eq? 'native cat) (eq? '>> op))
-         (sa "NativeInt.Shift( " a-arg " , -( " b-arg " ) )"))
-        (else (sa (get-m3-int-intf cat) "." (m3-map-named-op op) "( "
-                  a-arg " , " b-arg " )"))
+         (builder (sa "NativeInt.Shift( " a-arg " , -( " b-arg " ) )")))
+        
+        (else (sa (m3-mpz-op op)
+                  "( frame.c , "
+                  a-arg " , " b-arg
+                  " ); " (builder "Mpz.ToInteger(frame.c)") ))
         )
   )
 
-(define (m3-compile-typed-binop pc tgt op a b)
-  ;; this approach may only work for tgt = 'native
-  (let* ((op-type (max-type tgt (classify-expr-type pc a) (classify-expr-type pc b)))
-         (opx     (m3-compile-binop op-type
-                                    op
-                                    (m3-force-type pc op-type a)
-                                    (m3-force-type pc op-type b))))
-    (m3-compile-convert-type op-type tgt opx))
+(define (m3-compile-typed-binop pc builder op a b)
+  ;; native only
+  (dis "m3-compile-typed-binop : <- (" op " " a " " b ")" dnl)
+  (let* ((op-type
+          (max-type 'native
+                    (classify-expr-type pc a)
+                    (classify-expr-type pc b)))
+         (opx     (m3-compile-native-binop op-type
+                                           builder
+                                           op
+                                           (m3-force-type pc op-type a)
+                                           (m3-force-type pc op-type b))))
+    opx
+    )
   )
 
-(define (m3-compile-unop cat op a-arg)
-  (cond ((and (eq? 'native cat) (member op m3-unary-ops))
+(define (m3-compile-native-unop cat builder op a-arg)
+  (cond ((member op m3-unary-ops)
          (sa "( " (m3-map-symbol-op op) " " a-arg " )"))
-        (else (sa (get-m3-int-intf cat) "." (m3-map-named-op op) "( "
-                   a-arg " )"))
+        (else (sa (m3-mpz-op op) "( frame.c , "
+                   a-arg " ); " (builder "Mpz.ToInteger(frame.c)")))
         )
   )
 
-(define (m3-compile-typed-unop pc tgt op a)
-  ;; this approach may only work for tgt = 'native
+(define (m3-compile-typed-unop pc builder tgt op a)
+  ;; native only
   (let* ((op-type (max-type tgt (classify-expr-type pc a)))
-         (opx     (m3-compile-unop op-type
-                                   op
-                                   (m3-force-type pc op-type a))))
-    (m3-compile-convert-type op-type tgt opx))
+         (opx     (m3-compile-native-unop op-type
+                                          builder
+                                          op
+                                          (m3-force-type pc op-type a))))
+    opx
+    )
   )
 
 (define (m3-compile-native-int-assign pc x)
   (dis "m3-compile-native-int-assign : x : " x dnl)
   ;; assign when lhs is native
-  (let* ((lhs (get-assign-lhs x))
-         (rhs (get-assign-rhs x))
-         (comp-lhs 
-          (sa (m3-format-designator pc lhs) " := "))
+  (let ((lhs (get-assign-lhs x))
+        (rhs (get-assign-rhs x)))
+    
+    (if (recv-expression? rhs) ;; special case
+        (m3-compile-recv pc `(recv ,(cadr rhs) ,lhs))
 
-         (comp-rhs
-          (cond ((or
-                  (ident? rhs)
-                  (array-access? rhs))
-                 (m3-force-type pc 'native rhs))
-        
-                ((bigint? rhs)
-                 (BigInt.Format rhs 10))
-                
-                ((binary-expr? rhs)
-                 (m3-compile-typed-binop pc 'native
-                                         (car rhs)
-                                         (cadr rhs)
-                                         (caddr rhs)))
-                
-                ((unary-expr? rhs)
-                 (m3-compile-typed-unop pc 'native
-                                        (car rhs)
-                                        (cadr rhs)))
-                
-                ((bits? rhs)
-                 (m3-compile-native-bits pc rhs))
-                
-                ((recv-expression? rhs) 'recv) ;; this is an exception
-                
-                (else (error "m3-compile-native-int-assign"))
-                );;dnoc
-          )
+        (let* (
 
          (ass-rng  (assignment-range (make-ass x) (pc-port-tbl pc)))
 
@@ -1327,21 +1397,60 @@
          (tgt-rng  (get-type-range tgt-type))
                   
          (in-range (range-contains? tgt-rng ass-rng))
+
+         (comp-lhs 
+          (sa (m3-format-designator pc lhs) " := "))
+
+         (builder
+          (lambda(rhs)
+            (if in-range
+                (sa comp-lhs rhs)
+                (sa comp-lhs (m3-mask-native-assign tgt-type rhs))
+                )))
+         
+         (result
+          (cond ((or
+                  (ident? rhs)
+                  (member-access? rhs)
+                  (array-access? rhs))
+                 (builder (m3-force-type pc 'native rhs)))
+        
+                ((bigint? rhs)
+                 (builder (BigInt.Format rhs 10)))
+                
+                ((binary-expr? rhs)
+                 (m3-compile-typed-binop pc
+                                         builder
+                                         (car rhs)
+                                         (cadr rhs)
+                                         (caddr rhs)
+                                         ))
+                
+                ((unary-expr? rhs)
+                 (m3-compile-typed-unop pc
+                                        builder
+                                        (car rhs)
+                                        (cadr rhs)))
+                
+                ((bits? rhs)
+                 (builder (m3-compile-native-bits pc rhs)))
+                
+                (else (error "m3-compile-native-int-assign"))
+                );;dnoc
+          )
+
          )
 
-    (dis "m3-compile-native-int-assign : x        : " x dnl)
-    (dis "m3-compile-native-int-assign : ass-rng  : " ass-rng dnl)
-    (dis "m3-compile-native-int-assign : in-range : " in-range dnl)
-    
+          (dis "m3-compile-native-int-assign : x        : " x dnl)
+          (dis "m3-compile-native-int-assign : ass-rng  : " ass-rng dnl)
+          (dis "m3-compile-native-int-assign : in-range : " in-range dnl)
+          (dis "m3-compile-native-int-assign : result   : " result dnl)
 
-    (if (eq? comp-rhs 'recv)
-        (m3-compile-recv pc `(recv ,(cadr rhs) ,lhs))
-        (if in-range
-            (sa comp-lhs comp-rhs)
-            (sa comp-lhs (m3-mask-native-assign tgt-type comp-rhs))
-            )
-        )
-    );;*tel
+          result
+
+          );;*tel
+        );;fi
+    );;tel
   )
 
 (define (make-ass ass-stmt)
@@ -1483,6 +1592,7 @@
       )
                
      ((or (ident? rhs)
+          (member-access? rhs)
           (array-access? rhs))
       (sa "Mpz.set(" comp-lhs ", " (m3-force-type pc 'dynamic rhs) ")")
       )
@@ -1502,19 +1612,16 @@
       )
      
      (else (error "m3-compile-dynamic-int-assign : dunno RHS object : " rhs)))
-
     )
-  
  )
 
 (define (m3-initialize-array format-init name dims dummy)
+  ;;
   ;; name is the text name in m3 format
   ;; dims is the number of dimensions
   ;; dummy is the (symbol) prefix of the dummy
   ;; format-init takes one parameter, the name of the object to initialize
-
-  ;; code currently BROKEN
-  
+  ;;
   (let loop ((i 0)
              (what name)
              (index "")
@@ -1726,7 +1833,7 @@
 (define (m3-compile-comparison pc m3-lhs m3-cmp a b)
   ;; where cmp is one of '> '< '= '>= '<=
 
-  (cond ((forall? (curry native-integer-value? pc) (list a b))
+  (cond ((forall (curry native-integer-value? pc) (list a b))
          ;; native int comparison
          (sa m3-lhs
              "( "  (m3-compile-value pc 'native a)
@@ -1939,13 +2046,12 @@
 
           (else
            (error "???")))
-    
     )
   )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-;; goto -- not complete yet
+;; goto 
 ;; 
 
 (define (m3-compile-goto pc stmt)
@@ -2844,9 +2950,6 @@
           dnl)
 
 
-    (let ((structs  (find-structdecls the-blocks)))
-      (map (yrruc modu dnl) (map m3-convert-structdecl structs))
-      )
 
     (m3-write-proc-frame-decl modu
                               port-tbl the-exec-blocks cell-info the-decls
@@ -2866,6 +2969,11 @@
                          *the-arr-tbl*
                          )))
       (set! *proc-context* pc)
+
+      (let ((structs  (find-structdecls the-blocks)))
+        (map (yrruc modu dnl) (map (curry m3-convert-structdecl pc) structs))
+        )
+
       (m3-write-build-defn      modu
                                 cell-info the-exec-blocks the-decls fork-counts
                                 *the-arr-tbl*
@@ -3118,7 +3226,6 @@
     (mw builder-text)
 
     (mw dnl)
-
 
     (mw "BEGIN BuildSimulation() ; Scheduler.SchedulingLoop() END SimMain." dnl)
 
