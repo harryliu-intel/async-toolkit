@@ -2079,11 +2079,15 @@
            )
 
           ((array-type? lty)
+           (error "not yet")
+           ;; need to copy Mpzs 
            (sa (m3-format-designator pc lhs) " := "
                (m3-format-designator pc rhs))
           )
 
           ((struct-type? lty)
+           (error "not yet")
+           ;; need to copy Mpzs 
            (sa (m3-format-designator pc lhs) " := "
                (m3-format-designator pc rhs))
           )
