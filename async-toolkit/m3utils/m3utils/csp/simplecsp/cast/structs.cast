@@ -118,8 +118,10 @@ define A1()()
        bool    b = true;
        );
 
-    s z;
+    s z, zz;
 
+    z = zz;
+    
     print (z::x[0][1]  + z::z)
   }
 }

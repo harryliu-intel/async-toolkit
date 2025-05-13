@@ -310,9 +310,17 @@
        "  BEGIN" dnl)
     (map (yrruc w ";" dnl)
          (m3-make-init-body pc "s" sd))
-    
     (w
        "  END " m3nm "_initialize;" dnl
+       dnl
+       )
+    
+    (w "PROCEDURE " m3nm "_assign(VAR tgt : " m3nm " ; READONLY src : " m3nm " ) = " dnl
+       "  BEGIN" dnl)
+    (map (yrruc w ";" dnl)
+         (m3-make-assign-body pc "tgt" "src" sd))
+    (w
+       "  END " m3nm "_assign;" dnl
        dnl
        )
     (Wx.ToText wx)
@@ -435,7 +443,6 @@
                (aty    (array-base-type ty))
                (adims  (array-dims ty))
                
-               
                (m3init (sa
                         (if (null? iv)
                             (m3-default-init-value aty)
@@ -469,6 +476,59 @@
     );;*tel
   )
 
+(define (m3-make-assign-field pc m3tgt m3src fd)
+  (let* ((ty     (get-decl1-type fd))
+         (id     (get-decl1-id fd))
+         (m3id   (m3-ident id))
+         )
+    (if (struct-type? ty)
+
+        (let* ((snm    (struct-type-name ty))
+               (m3snm  (m3-struct snm))
+               )
+          (sa m3snm "_assign(" m3tgt "." m3id " , " m3src "." m3id  ")")
+          );;tel*
+
+        
+        (let* (
+               (iv     (get-decl1-init fd))
+               
+               (aty    (array-base-type ty))
+               (adims  (array-dims ty))
+               
+               (m3init (sa
+                        (cond ((and
+                                (integer-type? ty)
+                                (not 
+                                 (m3-natively-representable-type? ty)))
+                               
+                               (sa "Mpz.set(tgt." m3id " , src." m3id ")"))
+                              
+                              (else (sa "tgt." m3id " := src." m3id))
+                              );;dnoc
+                            )
+
+                       " (*" (stringify aty) "*)"
+                       )
+                       
+               )
+               
+          ;; If it is an array, we need to build the array calls
+          ;; using the code from m3-initialize-array
+          
+          (m3-initialize-array
+           (lambda(txt)
+             (sa (CitTextUtils.ReplacePrefix txt m3src m3tgt ) " := " txt))
+           (sa "src." m3id)
+           adims
+           'i
+           )
+          );;*tel
+        
+        );;fi
+    );;*tel
+  )
+
 (define (m3-default-init-value type)
   (cond ((string-type? type)  "\"\"")
         ((boolean-type? type) "FALSE")
@@ -483,12 +543,23 @@
 
 (define (m3-make-init-body pc m3tgt sd)
   (set! *sd* sd)
-  (dis "m3-make-unpack-body : sd : " (stringify sd) dnl)
+  (dis "m3-make-init-body : sd : " (stringify sd) dnl)
   (let ((fields (cddr sd)))
     ;; here we want to walk the fields, calling the type packer for
     ;; each field. (m3-make-pack-field)
     
     (map (curry m3-make-init-field pc m3tgt) fields)
+    )
+  )
+
+(define (m3-make-assign-body pc m3tgt m3src sd)
+  (set! *sd* sd)
+  (dis "m3-make-assign-body : sd : " (stringify sd) dnl)
+  (let ((fields (cddr sd)))
+    ;; here we want to walk the fields, calling the type packer for
+    ;; each field. (m3-make-pack-field)
+    
+    (map (curry m3-make-assign-field pc m3tgt m3src) fields)
     )
   )
 
@@ -520,9 +591,14 @@
                (filter
                 (compose array-type? get-var1-type)
                 the-decls)))
+         (tvars
+          (map get-var1-id
+               (filter
+                (compose struct-type? get-var1-type)
+                the-decls)))
 
           )
-    (set-union svars dvars wvars avars)
+    (set-union svars dvars wvars avars tvars)
     )
   )
 
@@ -811,7 +887,9 @@
           )
 
       ;; write in initialization of Mpz variables
-      (dis "mpzs : " mpzs dnl)
+      (dis "dynamics : " dynamics dnl)
+      (dis "wides    : " wides dnl)
+      (dis "mpzs     : " mpzs dnl)
       
       (map w
            (map (curry m3-format-mpz-new arr-tbl) (map get-var1-id mpzs)))
@@ -823,13 +901,14 @@
                                       get-var1-id)
                              (filter (compose struct-type? get-var1-type)
                                      the-decls))))
+      (dis "frame-vars    : " frame-vars dnl)
       (dis "frame-structs : " structs dnl)
       (map w (map m3-format-struct-init
                   (map get-var1-id structs)
                   (map get-var1-type structs)))
                   
       );;*tel
-    
+
     ;; build body
     (let ((iw (indent-writer w "     ")))
 
@@ -1217,7 +1296,8 @@
   )
 
 (define (m3-wide-int-type? t)
-  (and (not (m3-dynamic-int-type?            t))
+  (and (integer-type? t)
+       (not (m3-dynamic-int-type?            t))
        (not (m3-natively-representable-type? t))
        );;dna
   )
@@ -2103,11 +2183,16 @@
           )
 
           ((struct-type? lty)
-           (error "not yet")
-           ;; need to copy Mpzs 
-           (sa (m3-format-designator pc lhs) " := "
-               (m3-format-designator pc rhs))
-          )
+           (let* ((snm    (struct-type-name lty))
+                  (m3snm  (m3-struct snm))
+                  )
+             (sa m3snm "_assign("
+                 (m3-format-designator pc lhs)
+                 " , "
+                 (m3-format-designator pc rhs)
+                 ")")        
+                 )
+           )
           
           ((integer-type? lty)
            (m3-compile-scalar-int-assign pc stmt))
@@ -2794,8 +2879,8 @@
               (begin
                 (mw "  Min := Mpz.New();" dnl)
                 (mw "  Max := Mpz.New();" dnl)
-                (mw "  Mpz.init_set_si(Min, " lo-txt ");" dnl)
-                (mw "  Mpz.init_set_si(Max, " hi-txt ");" dnl)
+                (mw "  Mpz.init_set_si(Min, 16_" lo-txt ");" dnl)
+                (mw "  Mpz.init_set_si(Max, 16_" hi-txt ");" dnl)
                 (mw "  One := 1;" dnl)
                 )
               (begin
@@ -2984,7 +3069,7 @@
          (m3snm (m3-struct snm))
          (m3id  (m3-ident id)))
 
-    (sa "      " m3snm "_initialize( " m3id " );" dnl)
+    (sa "      " m3snm "_initialize( frame." m3id " );" dnl)
     )
   )
 
