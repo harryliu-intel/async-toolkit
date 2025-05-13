@@ -509,6 +509,11 @@
                (filter
                 (compose m3-dynamic-int-type? get-var1-type)
                 the-decls)))
+         (wvars
+          (map get-var1-id
+               (filter
+                (compose m3-wide-int-type? get-var1-type)
+                the-decls)))
 
          (avars
           (map get-var1-id
@@ -517,7 +522,7 @@
                 the-decls)))
 
           )
-    (set-union svars dvars avars)
+    (set-union svars dvars wvars avars)
     )
   )
 
@@ -795,16 +800,21 @@
     (w "      ) DO" dnl
        dnl)
 
-    (let ((dynamics (filter (compose m3-dynamic-int-type? get-var1-type)
+    (let*((dynamics (filter (compose m3-dynamic-int-type? get-var1-type)
 
                             the-decls))
+          (wides (filter (compose m3-wide-int-type? get-var1-type)
+
+                         the-decls))
+
+          (mpzs (set-union dynamics wides))
           )
 
       ;; write in initialization of Mpz variables
-      (dis "dynamics : " dynamics dnl)
+      (dis "mpzs : " mpzs dnl)
       
       (map w
-           (map (curry m3-format-mpz-new arr-tbl) (map get-var1-id dynamics)))
+           (map (curry m3-format-mpz-new arr-tbl) (map get-var1-id mpzs)))
       );;tel
 
     ;; initialize structs
@@ -1222,8 +1232,8 @@
           ((m3-dynamic-int-type? lty)
            (m3-compile-dynamic-int-assign pc stmt))
 
-          ((m3-wide-int-type? lty)
-           (m3-compile-wide-int-assign pc stmt))
+          ((m3-wide-int-type? lty) ;; this may work because it re-checks type
+           (m3-compile-dynamic-int-assign pc stmt))
 
           (else
            (error)))
@@ -1499,6 +1509,10 @@
 (define (dynamic-type-expr? pc expr)
   (eq? 'dynamic (classify-expr-type pc expr)))
 
+;; wide expressions are represented as dynamic but have a specific bit width
+(define (wide-type-expr? pc expr) 
+  (eq? 'wide (classify-expr-type pc expr)))
+
 (define (native-type-expr? pc expr)
   (eq? 'native (classify-expr-type pc expr)))
 
@@ -1507,6 +1521,8 @@
          (sa "Mpz.set(" m3id ", " (make-dynamic-constant! pc expr) ")"))
 
         ((and (ident? expr) (dynamic-type-expr? pc expr)) #f)
+
+        ((and (ident? expr) (wide-type-expr? pc expr)) #f)
 
         ((and (ident? expr) (native-type-expr? pc expr))
          (sa "Mpz.set_si(" m3id ", " (m3-ident (cadr expr)) ")")
@@ -2667,7 +2683,7 @@
                   (if native
                       "NarrowIntOps"
                       "WideIntOps")  " (\"" inm "Ops\",\"" inm "\")" dnl
-                  "SchemeStubs (\"" inm "Ops\")" dnl
+;;                  "SchemeStubs (\"" inm "Ops\")" dnl ;; CM3 issue #1205
                        
                   )
     
@@ -2739,9 +2755,10 @@
                 (mw "  EVAL Mpz.init_set_str(Min, \"" lo-txt "\", 16);" dnl)
                 (mw "  EVAL Mpz.init_set_str(Max, \"" hi-txt "\", 16);" dnl)
                 (mw "  Mask := Mpz.New();" dnl)
+                (mw "  NotMask := Mpz.New();" dnl)
                 (mw "  Mpz.set_ui   (Mask, 1);" dnl)
-                (mw "  Mpz.LeftShift(Mask, Width);" dnl)
-                (mw "  Mpz.sub_ui   (Mask, 1);" dnl)
+                (mw "  Mpz.LeftShift(Mask, Mask, Width);" dnl)
+                (mw "  Mpz.sub_ui   (Mask, Mask, 1);" dnl)
                 (mw "  Mpz.com      (NotMask, Mask);" dnl
                     dnl)
 

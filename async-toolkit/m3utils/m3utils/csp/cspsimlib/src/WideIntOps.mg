@@ -1,5 +1,7 @@
 GENERIC MODULE WideIntOps(Type);
 IMPORT DynamicInt, NativeInt;
+IMPORT Mpz;
+IMPORT Word;
 
 PROCEDURE unpack_dynamic(VAR t : T; x, scratch : DynamicInt.T) : DynamicInt.T =
   BEGIN

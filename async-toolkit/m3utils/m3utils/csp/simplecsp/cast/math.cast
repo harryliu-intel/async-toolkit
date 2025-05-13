@@ -256,3 +256,23 @@ define SOVERFLOW()()
   }
 }
     
+define XW(int W)()
+{
+  csp {
+    int(W) x;
+    x = 2**W-1;
+    print(x);
+    x++;
+    print(x);
+    x = -3;
+    print(x);
+
+    sint(W) y;
+    y = 2**W-1;
+    print(y);
+    y++;
+    print(y);
+    y = -3;
+    print(y);
+  }
+}
