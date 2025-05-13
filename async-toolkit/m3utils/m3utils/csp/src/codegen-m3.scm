@@ -1577,13 +1577,6 @@
   )
 
 (define (m3-compile-dynamic-int-assign pc x)
-  ;;
-  ;; this approach should work for arrays and structs, but will
-  ;; it work for "bits"?
-  ;;
-  
-  (dis "m3-compile-dynamic-int-assign : x : " x dnl)
-
   (let* ((lhs      (get-assign-lhs x))
          (rhs      (get-assign-rhs x))
          (comp-lhs (m3-format-designator pc lhs))
@@ -1592,6 +1585,36 @@
          (des      (get-designator-id lhs))
          (tgt-type ((pc-symtab pc) 'retrieve des))
          (tgt-rng  (get-type-range tgt-type))
+         (m3-type  (m3-map-decltype tgt-type))
+
+         (code     (cond
+                    ((bigint? rhs)
+                     (sa "Mpz.set(" comp-lhs ", " (make-dynamic-constant! pc rhs) ")")
+                     )
+                    
+                    ((or (ident? rhs)
+                         (member-access? rhs)
+                         (array-access? rhs))
+                     (sa "Mpz.set(" comp-lhs ", " (m3-force-type pc 'dynamic rhs) ")")
+                     )
+                    
+                    ((binary-expr? rhs)
+                     (m3-compile-dynamic-binop
+                      comp-lhs pc (m3-mpz-op (car rhs)) (cadr rhs) (caddr rhs))
+                     )
+                    
+                    ((unary-expr? rhs)
+                     (let* ((op     (car rhs))
+                            (map-op (if (eq? '- op) 'uneg op))
+                            (m3-op  (m3-mpz-op map-op))
+                            )
+                       (m3-compile-dynamic-unop comp-lhs pc m3-op (cadr rhs))
+                       );;*tel
+                     )
+     
+                    (else (error "m3-compile-dynamic-int-assign : dunno RHS object : " rhs))
+                    );;dnoc
+                   )
                   
          (in-range (range-contains? tgt-rng ass-rng))
 
@@ -1599,32 +1622,24 @@
          ;; but not fully dynamic
          )
 
-    (cond
-     ((bigint? rhs)
-      (sa "Mpz.set(" comp-lhs ", " (make-dynamic-constant! pc rhs) ")")
-      )
+    (let ((final-result
+           (if in-range
+               code
                
-     ((or (ident? rhs)
-          (member-access? rhs)
-          (array-access? rhs))
-      (sa "Mpz.set(" comp-lhs ", " (m3-force-type pc 'dynamic rhs) ")")
-      )
+               (sa "BEGIN" dnl
+                   code ";" dnl
+                   
+                   m3-type ".ForceRange(" comp-lhs " , " comp-lhs ")" dnl
+                   "END" dnl)
+               )
+           ))
 
-     ((binary-expr? rhs)
-      (m3-compile-dynamic-binop
-       comp-lhs pc (m3-mpz-op (car rhs)) (cadr rhs) (caddr rhs))
-      )
+      (dis "m3-compile-dynamic-int-assign : x        : " x dnl)
+      (dis "m3-compile-dynamic-int-assign : in-range : " in-range dnl)
+      (dis "m3-compile-dynamic-int-assign : final    : " final-result dnl)
 
-     ((unary-expr? rhs)
-      (let* ((op     (car rhs))
-             (map-op (if (eq? '- op) 'uneg op))
-             (m3-op  (m3-mpz-op map-op))
-             )
-        (m3-compile-dynamic-unop comp-lhs pc m3-op (cadr rhs))
-        );;*tel
+      final-result
       )
-     
-     (else (error "m3-compile-dynamic-int-assign : dunno RHS object : " rhs)))
     )
  )
 
@@ -2071,9 +2086,11 @@
            (m3-compile-intrinsic-assign pc lhs lty rhs))
           
           ((boolean-type? lty)
+           ;; value type, this is OK
            (m3-compile-boolean-assign pc lhs rhs))
 
           ((string-type? lty)
+           ;; strings are immutable, so this is OK
            (sa (m3-format-designator pc lhs) " := "
                (m3-compile-string-expr pc rhs))
            )
@@ -2728,23 +2745,50 @@
         )
 
     (iw "CONST Brand = \"" inm "\";" dnl
-        dnl)
+        dnl
+        "PROCEDURE ForceRange(VAR tgt : T;  src : T);" dnl
+        dnl
+        )
 
     (iw dnl
         "END " inm "." dnl)
     (mw "MODULE " inm ";" dnl
         dnl
         "IMPORT Mpz;" dnl
+        "IMPORT Word;" dnl
         "IMPORT NativeInt, DynamicInt;" dnl
         dnl)
+
+    (if native
+        (mw "PROCEDURE ForceRange(VAR tgt : T; src : T) =" dnl
+            "  BEGIN tgt := Word.And(src, Mask) END ForceRange;" dnl
+            dnl
+            )
         
+        (mw "PROCEDURE ForceRange(VAR tgt : T; src : T) =" dnl
+            "  BEGIN" dnl
+            "    Mpz.and(tgt, src, Mask);" dnl
+            (if (eq? 'SInt intf-kind)
+                (sa
+                 "    IF Mpz.tstbit(tgt, Width - 1) = 1 THEN" dnl
+                 "      Mpz.com(tgt, tgt);" dnl
+                 "      Mpz.and(tgt, tgt, Mask);" dnl
+                 "      Mpz.sub(tgt, tgt, One)" dnl
+                 "    END" dnl)
+                ""
+                )
+            "  END ForceRange;" dnl
+            dnl)
+        )
+
     (mw dnl
+        "VAR One : T;" dnl
         "BEGIN" dnl
         )
     
         (let* ((range  (m3-get-intf-range intf))
-               (lo-txt (BigInt.FormatLiteral (car range)  16))
-               (hi-txt (BigInt.FormatLiteral (cadr range) 16))
+               (lo-txt (BigInt.Format (car range)  16))
+               (hi-txt (BigInt.Format (cadr range) 16))
                ) 
           (if native
               (begin
@@ -2752,6 +2796,7 @@
                 (mw "  Max := Mpz.New();" dnl)
                 (mw "  Mpz.init_set_si(Min, " lo-txt ");" dnl)
                 (mw "  Mpz.init_set_si(Max, " hi-txt ");" dnl)
+                (mw "  One := 1;" dnl)
                 )
               (begin
                 (mw "  Min := Mpz.New();" dnl)
@@ -2763,13 +2808,13 @@
                 (mw "  Mpz.set_ui   (Mask, 1);" dnl)
                 (mw "  Mpz.LeftShift(Mask, Mask, Width);" dnl)
                 (mw "  Mpz.sub_ui   (Mask, Mask, 1);" dnl)
-                (mw "  Mpz.com      (NotMask, Mask);" dnl
+                (mw "  Mpz.com      (NotMask, Mask);" dnl)
+                (mw "  One := Mpz.NewInt(1);" dnl
                     dnl)
-
-                )
+                        
               )
           )
-        
+        )
     (mw "END " inm "." dnl)
     (Wr.Close iwr)
     (Wr.Close mwr)
