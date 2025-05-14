@@ -379,3 +379,33 @@ define ZZ()()
     print (y);
   }
 }
+
+define COPY()()
+{
+  csp {
+    int x[10], y[10];
+
+    x[0]++;
+
+    y = x;
+    print(y[0]);
+
+    y[0]--;
+    
+    print(y[0]);
+    print(x[0]);
+  }
+}
+
+define SLICE()()
+{
+  csp {
+    int x[2][10], y[10];
+
+    x[1][0]++;
+
+    y = x[1];
+    x[1] = y;
+    print(y[0]);
+  }
+}

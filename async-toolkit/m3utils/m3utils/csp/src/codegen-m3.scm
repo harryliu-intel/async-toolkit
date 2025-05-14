@@ -2152,6 +2152,55 @@
       );;dnoc
   )
 
+(define (m3-compile-array-assign pc lhs rhs)
+  (let* ((lty     (declared-type pc lhs))
+         (lhs-des (m3-format-designator pc lhs))
+         (rty     (declared-type pc rhs))
+         (rhs-des (m3-format-designator pc rhs))
+         (adims   (array-dims lty))
+         )
+
+    (dis "m3-compile-array-assign " lhs " := " rhs dnl)
+    (dis "m3-compile-array-assign {" lty "} := {" rty "}" dnl)
+    (dis "m3-compile-array-assign \"" lhs-des "\" := \"" rhs-des "\"" dnl)
+    (dis "m3-compile-array-assign adims " adims dnl)
+    (m3-initialize-array
+     (lambda(txt)
+       (m3-element-assignment lty rty
+                             (CitTextUtils.ReplacePrefix txt rhs-des lhs-des)
+                             txt)
+       )
+     rhs-des
+     adims
+     'i
+     )
+    )
+  )
+
+(define (m3-element-assignment lty rty lhs-txt rhs-txt)
+  (define (simple)
+    (sa lhs-txt " := " rhs-txt)
+    )
+
+  (cond ((boolean-type? lty) (simple))
+        ((string-type? lty) (simple))
+        ((m3-natively-representable-type? lty) (simple))
+        ((m3-dynamic-int-type? lty)
+         (sa "Mpz.set( " lhs-txt " , " rhs-txt ")")
+         )
+
+        ((struct-type? lty)
+         (let* ((snm    (struct-type-name lty))
+                (m3snm  (m3-struct snm))
+               )
+          (sa m3snm "_assign(" lhs-txt " , " rhs-txt ")")
+          );;tel*
+         )
+        
+         (else (error "can't assign to array element " lhs-txt " of type " lty))
+        )
+  )
+
 (define (m3-compile-assign pc stmt)
   (dis "m3-compile-assign : " (stringify stmt) dnl)
   (let* ((lhs (get-assign-lhs stmt))
@@ -2176,11 +2225,7 @@
            )
 
           ((array-type? lty)
-           (error "not yet")
-           ;; need to copy Mpzs 
-           (sa (m3-format-designator pc lhs) " := "
-               (m3-format-designator pc rhs))
-          )
+           (m3-compile-array-assign pc lhs rhs))
 
           ((struct-type? lty)
            (let* ((snm    (struct-type-name lty))
