@@ -353,7 +353,7 @@
        (sa m3tgt " := " packer "(" m3tgt " , " scrtch txt  ")"))
      (sa m3src "." m3id)
      adims
-     'i
+     'pack_field
      )
     )
   )
@@ -377,7 +377,7 @@
        (sa m3src " := " packer "(" m3tgt " , " scrtch txt  ")"))
      (sa m3tgt "." m3id)
      adims
-     'i
+     'unpack_field
      )
     )
   )
@@ -468,7 +468,7 @@
              (sa txt " := " m3init))
            (sa m3tgt "." m3id)
            adims
-           'i
+           'init_field
            )
           );;*tel
         
@@ -521,7 +521,7 @@
              (sa (CitTextUtils.ReplacePrefix txt m3src m3tgt ) " := " txt))
            (sa "src." m3id)
            adims
-           'i
+           'assign_field
            )
           );;*tel
         
@@ -769,7 +769,8 @@
            (lambda(txt) (sa txt "." whch " := frame" dnl))
            m3id
            dims
-           'i))
+           'mark_rw
+           ))
           )
         
         (w m3id "." whch " := frame" dnl)
@@ -839,7 +840,7 @@
       (lambda(stuff) (sa stuff  " := Mpz.New()"))
       (sa "frame." (M3Ident.Escape (symbol->string id)))
       arrdims
-      'i
+      'mpz_new
       )
      ";" dnl
      )
@@ -899,13 +900,16 @@
     (let* ((frame-vars (m3-frame-variables text9 *the-decls* *cellinfo*))
            (structs  (filter (compose (yrruc member frame-vars)
                                       get-var1-id)
-                             (filter (compose struct-type? get-var1-type)
+                             (filter (compose struct-type?
+                                              (compose array-base-type get-var1-type))
                                      the-decls))))
       (dis "frame-vars    : " frame-vars dnl)
       (dis "frame-structs : " structs dnl)
+      (w "BEGIN" dnl)
       (map w (map m3-format-struct-init
                   (map get-var1-id structs)
                   (map get-var1-type structs)))
+      (w " END;" dnl)
                   
       );;*tel
 
@@ -2172,7 +2176,7 @@
        )
      rhs-des
      adims
-     'i
+     'array_assign
      )
     )
   )
@@ -2751,10 +2755,15 @@
          (the-locals  (filter
                        (lambda(id)(eq? 'block (the-scopes 'retrieve id)))
                        refvar-ids))
-         (structs (filter
+         (structs
+
+          ;; I think we have removed the structs from the blocks
+
+          (filter  
                    (compose (yrruc member the-locals)
                             get-var1-id)
-                   (filter (compose struct-type? get-var1-type)
+                   (filter (compose struct-type? (compose array-base-type
+                                                          get-var1-type))
                              *the-decls*)))
          (v1s         (map make-var1-decl
                            the-locals
@@ -3110,11 +3119,20 @@
   (if (array-type? type) (array-base-type type) type))
 
 (define (m3-format-struct-init id stype)
-  (let* ((snm   (struct-type-name stype))
+  (let* ((snm   (struct-type-name (base-type stype)))
+         (adims (array-dims stype))
          (m3snm (m3-struct snm))
          (m3id  (m3-ident id)))
 
-    (sa "      " m3snm "_initialize( frame." m3id " );" dnl)
+    (sa "(*struct-init "m3id"*)" dnl
+    (m3-initialize-array
+     (lambda(txt)
+       (sa "      " m3snm "_initialize( " txt " );" dnl))
+     (sa "frame." m3id)
+     adims
+     'struct_init
+     )
+    )
     )
   )
 
