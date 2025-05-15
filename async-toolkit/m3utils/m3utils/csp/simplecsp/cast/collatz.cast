@@ -151,6 +151,19 @@ define SMERGE()(bd(STATUSW) -L[0..1], +R) <+ common
   }
 }
 
+define TEST()() <+ common
+{
+  csp {
+    status s, q;
+
+    q::ops += 1;
+    
+    s::ops += q::ops;
+
+    print(s::ops)
+  }
+}
+
 define STATUS_TREE(int N)(bd(STATUSW) -L[0..N-1], +R)  <+ common
 {
   [ N == 1 -> subcells { L[0] = R; } ]

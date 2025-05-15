@@ -128,7 +128,8 @@
 (define *the-struct-decls* #f)
 
 ;; back-end data structures
-(define *proc-context* #f) 
+(define *proc-context* #f)
+(define *stage* #f)
 
 (dis "  ===  TO RUN COMPILER: " dnl)
 (dis "  ===  (loaddata! <csp-prefix>)" dnl)

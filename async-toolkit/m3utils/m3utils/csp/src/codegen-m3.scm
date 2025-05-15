@@ -244,7 +244,7 @@
     (w "PROCEDURE " m3nm "_unpack_dynamic(VAR s : " m3nm "; x, scratch : DynamicInt.T) : DynamicInt.T =" dnl
        "  BEGIN" dnl)
     (map (yrruc w ";" dnl)
-         (m3-make-pack-body 'dynamic "x" "s" sd))
+         (m3-make-unpack-body 'dynamic "s" "x" sd))
     (w
      "    RETURN x" dnl
      "  END " m3nm "_unpack_dynamic;" dnl
@@ -254,7 +254,7 @@
     (w "PROCEDURE " m3nm "_unpack_native(VAR s : " m3nm "; x : NativeInt.T) : NativeInt.T =" dnl
        "  BEGIN" dnl)
     (map (yrruc w ";" dnl)
-         (m3-make-pack-body 'native "x" "s" sd))
+         (m3-make-unpack-body 'native "s" "x" sd))
     (w
      "    RETURN x" dnl
      "  END " m3nm "_unpack_native;" dnl
@@ -374,7 +374,7 @@
 
     (m3-initialize-array
      (lambda(txt)
-       (sa m3src " := " packer "(" m3tgt " , " scrtch txt  ")"))
+       (sa m3src " := " packer "(" txt" , " scrtch "x"  ")"))
      (sa m3tgt "." m3id)
      adims
      'unpack_field
@@ -391,7 +391,7 @@
            (sa (m3-map-decltype type) "." whch "_" sfx))
           
           ((struct-type? type)
-           (sa (m3-struct (caddr type) "_" whch "_" sfx)))
+           (sa (m3-struct (caddr type)) "_" whch "_" sfx))
 
           (else (error "m3-type-packer : no proc for packing " type))
           
@@ -1665,13 +1665,15 @@
   )
 
 (define (m3-compile-dynamic-int-assign pc x)
+  (dis "m3-compile-dynamic-int-assign : x : " x dnl)
   (let* ((lhs      (get-assign-lhs x))
          (rhs      (get-assign-rhs x))
          (comp-lhs (m3-format-designator pc lhs))
          (ass-rng  (assignment-range (make-ass x) (pc-port-tbl pc)))
 
          (des      (get-designator-id lhs))
-         (tgt-type ((pc-symtab pc) 'retrieve des))
+;;         (tgt-type ((pc-symtab pc) 'retrieve des))
+         (tgt-type (declared-type pc lhs))
          (tgt-rng  (get-type-range tgt-type))
          (m3-type  (m3-map-decltype tgt-type))
 
@@ -2840,7 +2842,8 @@
     (define (iw . x) (Wr.PutText iwr (apply string-append x)))
     (define (mw . x) (Wr.PutText mwr (apply string-append x)))
 
-    (mkfile-write "Smodule     (\"" inm "\")" dnl
+    (mkfile-write "Module      (\"" inm "\")" dnl
+;;                  "SchemeStubs (\"" inm "\")" dnl
                   "Channel     (\"" inm "\" , \"" inm "\")" dnl
                   "Node        (\"" inm "\" , \"" inm "\")" dnl
                   "SchemeStubs (\"" inm "Chan\")" dnl
@@ -3145,6 +3148,7 @@
 (define *the-var-intfs* #f)
 
 (define (do-m3!)
+  (set! *stage* 'do-m3!)
   (let* ((the-blocks text9)
          (cell-info  *cellinfo*)
          (port-tbl   *the-prt-tbl*)
@@ -3458,6 +3462,7 @@
            'skip)
 
           (else
+           (set! *stage* 'loaddata!)
            (loaddata1!)
            (compile!)
            (do-m3!)

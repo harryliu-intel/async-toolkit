@@ -1774,6 +1774,7 @@
                         (list 'assign remove-loop-expression)))
 
 (define (compile2!)
+  (set! *stage* 'compile2!)
   (set! text2
         (uniquify-loop-dummies
          (run-compiler *the-passes-2*
@@ -1791,6 +1792,7 @@
   )
 
 (define (compile3!)
+  (set! *stage* 'compile3!)
   (set! *the-globals* (construct-globals-tbl *the-inits*))
   (set! text3
         (uniquify-loop-dummies
@@ -1816,6 +1818,8 @@
   )
 
 (define (compile4!)
+  (set! *stage* 'compile4!)
+
   (set! text4
         (uniquify-loop-dummies
          (run-compiler  
@@ -1845,6 +1849,7 @@
 
   
 (define (compile5!)
+  (set! *stage* 'compile5!)
     (set! text5
           (uniquify-loop-dummies
            (run-compiler
@@ -1863,6 +1868,7 @@
 (define fixpoint-simplify-stmt (make-fixpoint-func simplify-stmt))
 
 (define (compile6!)
+  (set! *stage* 'compile6!)
   (set! text5.1
         (simplify-stmt
          `(sequence
@@ -1880,6 +1886,7 @@
   )
 
 (define (compile7!)
+  (set! *stage* 'compile7!)
   (set! text7
         (fixpoint-simplify-stmt (insert-block-labels text6))
         (dis "=========  PROGRAM LABELS INSERTED" dnl)
@@ -1888,6 +1895,7 @@
   )
 
 (define (compile8!)
+  (set! *stage* 'compile8!)
   (set! text8
         (map fixpoint-simplify-stmt  (scan-stmt text7) ) )
   'text8
@@ -1895,6 +1903,7 @@
 
 
 (define (compile9!)
+  (set! *stage* 'compile9!)
   (set! text9
         (remove-empty-blocks text8) )
         (dis "=========  PROGRAM BLOCKS GENERATED" dnl)

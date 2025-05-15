@@ -13,5 +13,7 @@ CONST FormatHexadecimal = Mpz.FormatHexadecimal;
    and return it *)
 PROCEDURE ConvertNativeInt(scratch : T; native : INTEGER) : T;
 PROCEDURE ConvertNativeWord(scratch : T; native : Word.T) : T;
+
+PROCEDURE ConvertWideInt(scratch : T; wide : T) : T;
       
 END DynamicInt.
