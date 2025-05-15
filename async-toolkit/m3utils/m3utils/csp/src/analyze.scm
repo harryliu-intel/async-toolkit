@@ -75,3 +75,20 @@
                     (get-loop-dummies prog)
                     (get-loopex-dummies prog))))
 
+(define (get-global-stmts prog initvars)
+  (let* ((textids    (find-referenced-vars prog))
+         (globalids  (set-intersection textids initvars))
+         (var1s      (filter (compose (yrruc member globalids) get-var1-id)
+                             (find-stmts 'var1 *the-inits*)))
+         (assigns    (filter
+                      (compose (yrruc member globalids)
+                               (compose cadr
+                                        (compose
+                                         array-access-base
+                                         get-assign-lhs)))
+                      (find-stmts 'assign *the-inits*)))
+         )
+
+    (append var1s assigns)
+    )
+  )

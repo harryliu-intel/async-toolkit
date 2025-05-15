@@ -99,6 +99,11 @@
       (error "array-accessor : not an array access : " x)
       (caddr x)))
 
+(define (array-access-base x)
+  (if (array-access? x)
+      (array-access-base (array-accessee x))
+      x))
+
 (define (peel-array t)
   (if (or (not (pair? t))
           (not (eq? 'array (car t))))

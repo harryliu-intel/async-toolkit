@@ -608,7 +608,7 @@
          )
     (w "    (* shared locals list *)" dnl)
     (map (lambda(dt) (w "    " dt dnl))
-         (map m3-convert-vardecl v1s))
+         (map m3-convert-vardecl (filter identity v1s)))
 
     (w dnl
        "    (* dynamic scratchpad *)" dnl)
@@ -1274,7 +1274,7 @@
   
   (or
    (and (integer-type? t)
-        (not (caddr t))  ;; would be sint 
+        ;;(not (caddr t))  ;; would be sint  ;; can have signed big ints from CAST
         (not (bigint? (cadddr t))))
    (and (array-type? t)
         (m3-dynamic-int-type? (array-elemtype t)))
@@ -1295,6 +1295,7 @@
   ;; those as fixed wide integers, only exactly one word wide.
   
   (and (integer-type? t)
+       (not (m3-dynamic-int-type? t))
        (or (and (m3-sint-type? t) (<= (m3-int-type-width t) *target-word-size*))
            (and (m3-uint-type? t) (<= (m3-int-type-width t) (- *target-word-size* 1))))) ;; hmm.
   )
@@ -1307,8 +1308,11 @@
   )
 
 (define (m3-compile-scalar-int-assign pc stmt)
+  (dis "m3-compile-scalar-int-assign : " stmt dnl)
   (let* ((lhs (get-assign-lhs stmt))
          (lty (declared-type pc lhs)))
+    (dis "m3-compile-scalar-int-assign : lhs : " lhs dnl)
+    (dis "m3-compile-scalar-int-assign : lty : " lty dnl)
 
     (cond ((m3-natively-representable-type? lty)
            (m3-compile-native-int-assign  pc stmt))
@@ -2157,6 +2161,7 @@
   )
 
 (define (m3-compile-array-assign pc lhs rhs)
+  (dis "m3-compile-array-assign " lhs " := " rhs dnl)
   (let* ((lty     (declared-type pc lhs))
          (lhs-des (m3-format-designator pc lhs))
          (rty     (declared-type pc rhs))
@@ -2164,7 +2169,6 @@
          (adims   (array-dims lty))
          )
 
-    (dis "m3-compile-array-assign " lhs " := " rhs dnl)
     (dis "m3-compile-array-assign {" lty "} := {" rty "}" dnl)
     (dis "m3-compile-array-assign \"" lhs-des "\" := \"" rhs-des "\"" dnl)
     (dis "m3-compile-array-assign adims " adims dnl)
@@ -2777,7 +2781,7 @@
      "PROCEDURE "bnam"(cl : Closure) : BOOLEAN =" dnl
      "  VAR" dnl)
 
-    (map (lambda(dt) (w "    " dt dnl)) (map m3-convert-vardecl v1s))
+    (map (lambda(dt) (w "    " dt dnl)) (map m3-convert-vardecl (filter identity v1s)))
 
     (w
      "  BEGIN" dnl
@@ -3138,6 +3142,7 @@
 
 
 (define *the-decls* #f)
+(define *the-var-intfs* #f)
 
 (define (do-m3!)
   (let* ((the-blocks text9)
@@ -3178,8 +3183,9 @@
            identity
            (uniq equal?
                  (map m3-map-declbuild
-                      (map get-decl1-type
-                           (map get-var1-decl1 the-decls))))))
+                      (map array-base-type
+                           (map get-decl1-type
+                                (map get-var1-decl1 the-decls)))))))
 
          ;; find the necessary interfaces from struct declarations:
          (sdecls    *the-struct-decls*)
@@ -3203,6 +3209,7 @@
          )
 
     (set! *the-decls* the-decls)
+    (set! *the-var-intfs* m3-var-intfs)
     (set! text10 the-exec-blocks)
 
     (dis "do-m3! : m3-port-data-intfs : " m3-port-data-intfs dnl)

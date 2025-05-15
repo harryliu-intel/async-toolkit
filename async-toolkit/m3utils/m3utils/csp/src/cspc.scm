@@ -1863,11 +1863,19 @@
 (define fixpoint-simplify-stmt (make-fixpoint-func simplify-stmt))
 
 (define (compile6!)
-  (make-the-tables text5)
+  (set! text5.1
+        (simplify-stmt
+         `(sequence
+            ,@(get-global-stmts text5 *the-initvars*)
+            ,text5
+            )
+         )
+        )
+  (make-the-tables text5.1)
   (seed-integer-ranges!)
   (close-integer-ranges!)
   (propose-types!)
-  (set! text6 text5)
+  (set! text6 text5.1)
   'text6
   )
 

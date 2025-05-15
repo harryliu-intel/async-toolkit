@@ -292,10 +292,28 @@ define stuff(int W_P) attributes
 
   int TWOD[0..1, 0..1] = {{1, 2}, {3, 4}};
 
+  int QQQ=12;
+
   csp {
       structure struct0 =
     (int(32) a = 17;);
 
+  }
+}
+
+define qqq() <+ stuff(10)
+{
+  csp {
+    print(QQQ)
+  }
+}
+
+define ggg() <+ stuff(10)
+{
+  csp {
+    int x = 2;
+    x++;
+    print(GRAYCODE[x])
   }
 }
 
