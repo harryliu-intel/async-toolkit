@@ -68,6 +68,19 @@ PROCEDURE pack_native(x : NativeInt.T; READONLY t : T) : NativeInt.T =
     RETURN res
   END pack_native;
 
+PROCEDURE FromWordArray(VAR t : T; READONLY a : ARRAY OF Word.T) =
+  BEGIN
+    t := Word.And(a[0], Type.Mask)
+  END FromWordArray;
+
+PROCEDURE ToWordArray(READONLY t : T; VAR a : ARRAY OF Word.T) =
+  BEGIN
+    a[0] := t;
+    FOR i := 1 TO LAST(a) DO
+      a[i] := 0
+    END
+  END ToWordArray;
+
 VAR
   MpzMask := Mpz.NewWord(Type.Mask);
 BEGIN END NarrowIntOps.

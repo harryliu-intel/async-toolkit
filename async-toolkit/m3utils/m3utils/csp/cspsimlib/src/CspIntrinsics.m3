@@ -11,6 +11,8 @@ IMPORT CspString;
 IMPORT NativeInt;
 IMPORT DynamicInt;
 
+IMPORT Debug;
+
 PROCEDURE print(frame : Process.Frame; str : CspString.T) : BOOLEAN =
   BEGIN
     IO.Put(F("%s: %s: %s\n",
@@ -41,5 +43,12 @@ PROCEDURE walltime(<*UNUSED*>frame : Frame) : NativeInt.T =
 
 PROCEDURE simtime(<*UNUSED*>frame : Frame) : NativeInt.T =
   BEGIN RETURN CspCompiledScheduler.GetTime() END simtime;
+
+PROCEDURE assert(x : BOOLEAN; text : TEXT) =
+  BEGIN
+    IF NOT x THEN
+      Debug.Error("Assertion failed : " & text)
+    END
+  END assert;
   
 BEGIN END CspIntrinsics.

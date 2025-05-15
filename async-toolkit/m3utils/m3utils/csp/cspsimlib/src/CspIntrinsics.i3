@@ -16,5 +16,7 @@ PROCEDURE string_dynamic(frame : Frame;
 PROCEDURE walltime(frame : Frame) : NativeInt.T;
 
 PROCEDURE simtime(frame : Frame) : NativeInt.T;
+
+PROCEDURE assert(x : BOOLEAN; text : TEXT);
   
 END CspIntrinsics.

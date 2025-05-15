@@ -18,4 +18,8 @@ PROCEDURE pack_dynamic(x, scratch : DynamicInt.T; READONLY t : T) : DynamicInt.T
 
 PROCEDURE pack_native(x : NativeInt.T; READONLY t : T) : NativeInt.T;
 
+PROCEDURE FromWordArray(VAR t : T; READONLY a : ARRAY OF Word.T);
+
+PROCEDURE ToWordArray(READONLY t : T; VAR a : ARRAY OF Word.T);
+  
 END NarrowIntOps.

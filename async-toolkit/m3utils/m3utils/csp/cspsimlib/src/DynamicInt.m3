@@ -20,6 +20,19 @@ PROCEDURE ConvertWideInt(scratch : T; wide : T) : T =
     RETURN scratch
   END ConvertWideInt;
 
+PROCEDURE FromWordArray(VAR t : T; READONLY a : ARRAY OF Word.T) =
+  BEGIN
+    Mpz.Import(t, a);
+  END FromWordArray;
+
+PROCEDURE ToWordArray(READONLY t : T; VAR a : ARRAY OF Word.T) =
+  BEGIN
+    FOR i := 0 TO LAST(a) DO
+      a[i] := 0
+    END;
+    Mpz.Export(a, t)
+  END ToWordArray;
+  
 BEGIN END DynamicInt.
 
 

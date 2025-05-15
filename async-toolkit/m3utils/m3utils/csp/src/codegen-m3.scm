@@ -997,6 +997,7 @@
   (w "<*NOWARN*>IMPORT CspBoolean;" dnl)
   (w "<*NOWARN*>IMPORT CspIntrinsics;" dnl)
   (w "<*NOWARN*>IMPORT NativeInt, DynamicInt;" dnl)
+  (w "<*NOWARN*>IMPORT NativeInt AS NativeIntOps, DynamicInt AS DynamicIntOps;" dnl)
   (w "<*NOWARN*>IMPORT Word;" dnl)
   (map (lambda(intf)(w "IMPORT " intf ";" dnl))
        (map format-intf-name intfs))
@@ -2322,6 +2323,8 @@
 
          (port-des     (get-send-lhs stmt)) ;; doesnt work for arrays/structs
          (rhs          (get-send-rhs stmt))
+         (rhs-type     (declared-type pc rhs))
+         (m3-rhs-type  (m3-map-decltype rhs-type))
          
          (port-id      (get-designator-id port-des))
          (port-def     (port-tbl 'retrieve port-id))
@@ -2336,23 +2339,24 @@
          (literal      (literal? (get-send-rhs stmt)))
          )
 
-    (sa "VAR toSend := " ;; this isnt right, need to be more careful!
-        port-typenam ".Item  { " (m3-force-type pc port-class rhs)
-        " } ;" dnl
-        "BEGIN" dnl
-        "IF NOT "
-        port-typenam ".Send( " m3-pname "^ , toSend , cl ) THEN RETURN FALSE END" dnl
+    (sa "VAR toSend : " 
+        port-typenam ".Item; BEGIN" dnl
+        m3-rhs-type "Ops.ToWordArray(" (m3-format-designator pc rhs) " , "
+        "toSend);" dnl
+        "IF NOT " port-typenam ".Send( " m3-pname "^ , toSend , cl ) THEN RETURN FALSE END" dnl
         "END"
         )
     )
   )
 
+(define *rs* #f)
+
 (define (m3-compile-recv pc stmt)
   (dis "m3-compile-recv : " stmt dnl)
+  (set! *rs* stmt)
   (let* (
          (port-des     (get-recv-lhs stmt)) ;; doesnt work for arrays/structs
          (rhs          (get-recv-rhs stmt))
-
          
          (port-tbl     (pc-port-tbl pc))
          (port-id      (get-designator-id port-des))
@@ -2373,17 +2377,13 @@
       )
 
     (define (nonnull-rhs)
-      (let ((rhs-class    (classify-expr-type pc rhs)))
+      (let* ((rhs-type     (declared-type pc rhs))
+             (m3-rhs-type  (m3-map-decltype rhs-type)))
         (sa "VAR toRecv : "
             port-typenam".Item; BEGIN IF NOT "
-            port-typenam ".Recv( " m3-pname "^ , toRecv , cl ) THEN RETURN FALSE END;"
-            (m3-format-designator pc rhs) " := "
-            (m3-compile-convert-type
-             port-class
-             rhs-class
-             "toRecv[0]"
-             )
-            " END"
+            port-typenam ".Recv( " m3-pname "^ , toRecv , cl ) THEN RETURN FALSE END;" dnl
+            m3-rhs-type "Ops.FromWordArray(" (m3-format-designator pc rhs) " , "
+            "toRecv) END"
             )
         )
       )
@@ -2457,6 +2457,13 @@
 
        )
 
+      ((assert)
+       (sa "CspIntrinsics.assert("
+           (m3-compile-value pc 'x (caddr expr))
+           ","
+           "\"" (stringify expr) "\")")
+       )
+           
       ((walltime simtime)
        (sa  "CspIntrinsics." (symbol->string in-sym) "(frame)"))
 
@@ -2583,7 +2590,6 @@
 
 (define (m3-compile-lock-unlock whch pc stmt)
   (let* (
-         (port-tbl     (pc-port-tbl pc))
          (ports        (cdr stmt))
          )
 
@@ -2592,19 +2598,39 @@
     
         (if (null? p)
             (sa res "END" dnl)
-            (let* ((port-des `(id ,(car p)))
-                   (port-id      (get-designator-id port-des))
-                   (port-def     (port-tbl 'retrieve port-id))
-                   (port-type    (get-port-def-type port-def))
-                   (m3-pname     (m3-format-designator pc port-des))
-                   (port-typenam (m3-convert-port-type-scalar port-type)))
+            
               (loop (cdr p)
                     (sa res
-                        port-typenam "." whch "(" m3-pname "^);" dnl))
-              );;*tel
-            );;fi
+                        (m3-compile-lock-unlock-port whch pc (car p)) ";" dnl)
+                    )
+              );;fi
         );;tel
     );;*tel
+  )
+
+(define *pd* #f)
+
+(define (m3-compile-lock-unlock-port whch pc id)
+  (dis "m3-compile-lock-unlock-port : whch : " whch dnl)
+  (dis "m3-compile-lock-unlock-port : id   : " id dnl)
+  (let* ((port-des     `(id ,id))
+         (port-tbl     (pc-port-tbl pc))
+         (port-id      (get-designator-id port-des))
+         (port-def     (port-tbl 'retrieve port-id))
+         (port-type    (get-port-def-type port-def))
+         (m3-pname     (m3-format-designator pc port-des))
+         (port-typenam (m3-convert-port-type-scalar port-type))
+         (adims        (array-dims port-type))
+         )
+    (set! *pd* port-def)
+
+    (m3-initialize-array
+     (lambda(txt) (sa port-typenam "." whch "(" txt "^)"))
+     m3-pname
+     adims
+     'lock
+     )
+    )
   )
 
 (define (m3-compile-waitfor pc stmt)
@@ -2621,7 +2647,7 @@
                 "IF ready = 0 THEN" dnl
                 "  RETURN FALSE" dnl
                 "ELSE" dnl
-                (m3-compile-unlock pc `(unlock ,@ports))
+                (m3-compile-unlock pc `(unlock ,@ports)) dnl
                 "END" dnl
                 "END" dnl)
             (let* ((port-des `(id ,(car p)))
@@ -2632,11 +2658,37 @@
                    (port-typenam (m3-convert-port-type-scalar port-type)))
               (loop (cdr p)
                     (sa res
-                        "IF " port-typenam ".Ready(" m3-pname "^) THEN INC(ready) END;" dnl))
-              );;*tel
-            );;fi
-        );;tel
-    );;*tel
+                        (m3-compile-ready-port pc port-id) ";" dnl
+                        )
+                    )
+              )
+            )
+        )
+    )
+  )
+
+(define (m3-compile-ready-port pc id)
+  (dis "m3-compile-ready-port : id   : " id dnl)
+  (let* ((port-des     `(id ,id))
+         (port-tbl     (pc-port-tbl pc))
+         (port-id      (get-designator-id port-des))
+         (port-def     (port-tbl 'retrieve port-id))
+         (port-type    (get-port-def-type port-def))
+         (m3-pname     (m3-format-designator pc port-des))
+         (port-typenam (m3-convert-port-type-scalar port-type))
+         (adims        (array-dims port-type))
+         )
+    (set! *pd* port-def)
+
+    (m3-initialize-array
+     (lambda(txt)
+       (sa "IF " port-typenam ".Ready(" txt "^) THEN INC(ready) END" dnl)
+       )
+     m3-pname
+     adims
+     'lock
+     )
+    )
   )
 
 (define m3-compile-lock (curry m3-compile-lock-unlock "Lock"))
@@ -2677,6 +2729,21 @@
         );;tel
     )
 
+(define (m3-compile-while pc stmt)
+  (dis  dnl
+        "m3-compile-while : " stmt dnl
+        dnl)
+  (define wx (Wx.New))
+
+  (define (w . x) (Wx.PutText wx (apply string-append x)))
+
+  (w (m3-compile-value pc 'x (cadr stmt)))
+  (m3-compile-write-stmt (indent-writer w "  ") pc (caddr stmt))
+
+  (Wx.ToText wx)
+  )
+
+               
 (define (convert-sequential-loop-to-while seqloop)
   ;; unused for now (we can't call it from code generation---that's too late
   (let* ((dummy (get-loop-dummy seqloop))
