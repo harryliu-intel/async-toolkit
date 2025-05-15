@@ -44,11 +44,12 @@ PROCEDURE walltime(<*UNUSED*>frame : Frame) : NativeInt.T =
 PROCEDURE simtime(<*UNUSED*>frame : Frame) : NativeInt.T =
   BEGIN RETURN CspCompiledScheduler.GetTime() END simtime;
 
-PROCEDURE assert(x : BOOLEAN; text : TEXT) =
+PROCEDURE assert(x : BOOLEAN; text : TEXT) : NativeInt.T =
   BEGIN
     IF NOT x THEN
       Debug.Error("Assertion failed : " & text)
-    END
+    END;
+    RETURN 0
   END assert;
   
 BEGIN END CspIntrinsics.

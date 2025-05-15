@@ -16,6 +16,8 @@ PROCEDURE ConvertNativeWord(scratch : T; native : Word.T) : T;
 
 PROCEDURE ConvertWideInt(scratch : T; wide : T) : T;
 
+CONST ConvertDynamicInt = ConvertWideInt; (* dumb *)
+
 PROCEDURE FromWordArray(VAR t : T; READONLY a : ARRAY OF Word.T);
 
 PROCEDURE ToWordArray(READONLY t : T; VAR a : ARRAY OF Word.T);

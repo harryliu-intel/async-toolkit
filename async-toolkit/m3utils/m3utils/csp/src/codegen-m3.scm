@@ -1373,19 +1373,19 @@
 (define (get-m3-int-intf t)
   (case t
     ((dynamic) "DynamicInt")
-    ((wide)    "WideInt")
+    ((wide)    "DynamicInt")
     ((native)  "NativeInt")
     (else (error "get-m3-int-intf : " t))
     )
   )
 
-(define (m3-compile-convert-type from to arg)
+(define (m3-compile-convert-type from to m3scratch arg)
   (if (eq? from to)
       arg
       
       (sa (get-m3-int-intf to) ".Convert" (get-m3-int-intf from)
           "("
-          (if (eq? to 'dynamic) "frame.a, " "")
+          (if (member to '(dynamic wide)) (sa m3scratch ", ") "")
           arg
           ")"
           )
@@ -1404,17 +1404,31 @@
     )
   )
 
-(define (m3-force-type pc cat x)
+(define (m3-force-type pc cat m3scratch x)
   (if (literal? x)
       (format-int-literal pc cat x)
       (let ((x-category (classify-expr-type pc x)))
         (m3-compile-convert-type x-category
                                  cat
+                                 m3scratch
                                  (m3-format-designator pc x)
                                  ))))
 
-(define m3-binary-infix-ops '(+ / % * -))
+(define m3-binary-infix-ops '(+ / % * - 
+                                )
+  )
 
+(define m3-binary-word-ops '(& ^ | ;;|
+                               )
+  )
+
+(define (m3-map-word-op op)
+  (case op
+    ((&) "Word.And")
+    ((|) "Word.Or") ;;|))
+    ((^) "Word.Xor")
+    )
+  )
 (define (m3-map-symbol-op op)
   (case op
     ((/) "DIV")
@@ -1446,6 +1460,9 @@
         
         ((and (eq? 'native cat) (eq? '>> op))
          (builder (sa "NativeInt.Shift( " a-arg " , -( " b-arg " ) )")))
+
+        ((and (eq? 'native cat) (member op m3-binary-word-ops))
+         (builder (sa (m3-map-word-op op) "( " a-arg " , " b-arg " )")))
         
         (else (sa (m3-mpz-op op)
                   "( frame.c , "
@@ -1464,8 +1481,8 @@
          (opx     (m3-compile-native-binop op-type
                                            builder
                                            op
-                                           (m3-force-type pc op-type a)
-                                           (m3-force-type pc op-type b))))
+                                           (m3-force-type pc op-type "frame.a" a)
+                                           (m3-force-type pc op-type "frame.b" b))))
     opx
     )
   )
@@ -1484,7 +1501,7 @@
          (opx     (m3-compile-native-unop op-type
                                           builder
                                           op
-                                          (m3-force-type pc op-type a))))
+                                          (m3-force-type pc op-type a "frame.a"))))
     opx
     )
   )
@@ -1524,7 +1541,7 @@
                   (ident? rhs)
                   (member-access? rhs)
                   (array-access? rhs))
-                 (builder (m3-force-type pc 'native rhs)))
+                 (builder (m3-force-type pc 'native "frame.a" rhs)))
         
                 ((bigint? rhs)
                  (builder (BigInt.Format rhs 10)))
@@ -1629,7 +1646,7 @@
         ((and (ident? expr) (wide-type-expr? pc expr)) #f)
 
         ((and (ident? expr) (native-type-expr? pc expr))
-         (sa "Mpz.set_si(" m3id ", " (m3-ident (cadr expr)) ")")
+         (sa "Mpz.set_si(" m3id ", " (m3-format-designator pc expr) ")")
          )
 
         (else (error "can't set dynamic value : " m3id " <- " expr))
@@ -1701,7 +1718,7 @@
                     ((or (ident? rhs)
                          (member-access? rhs)
                          (array-access? rhs))
-                     (sa "Mpz.set(" comp-lhs ", " (m3-force-type pc 'dynamic rhs) ")")
+                     (sa "Mpz.set(" comp-lhs ", " (m3-force-type pc 'dynamic "frame.a" rhs) ")")
                      )
                     
                     ((binary-expr? rhs)
@@ -1809,9 +1826,9 @@
          
          (else
           (string-append
-           "WideInt.Format("
+           "DynamicInt.Format("
            (m3-compile-integer-value pc x)
-           ", base := 10)"
+           ", base := Mpz.FormatBase.Decimal)"
            ))
          )
         )
@@ -2779,9 +2796,11 @@
 
   (define (w . x) (Wx.PutText wx (apply string-append x)))
 
-  (w (m3-compile-value pc 'x (cadr stmt)))
+  (w "WHILE " (m3-compile-value pc 'x (cadr stmt)) " DO" dnl)
   (m3-compile-write-stmt (indent-writer w "  ") pc (caddr stmt))
-
+  (w dnl
+     "END(*WHILE*)")
+     
   (Wx.ToText wx)
   )
 
