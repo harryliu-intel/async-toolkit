@@ -78,7 +78,7 @@
   (if (range-infinite? range)
       *default-int-type*
       (let ((bits (xnum-clog2 (xnum-+ (range-max range) *big1*))))
-        (make-integer-type #f bits))))
+        (make-integer-type #f (max 1 bits)))))
 
 (define (make-sint-type range)
   (if (range-infinite? range)
@@ -96,5 +96,5 @@
              (mmax (xnum-max max0 max1))
 
              (bits (xnum-+ *big1* (xnum-clog2 (xnum-+ mmax *big1*)))))
-        (make-integer-type #t bits))))
+        (make-integer-type #t (max 1 bits)))))
 

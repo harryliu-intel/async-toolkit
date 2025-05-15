@@ -232,7 +232,7 @@
        )
 
       ((eval)
-       (let* ((expr (cadr s))
+       (let* ((expr      (cadr s))
               (expr-type (car expr)))
          (if (not (eq? 'call-intrinsic expr-type))
              (error "make-assignments-tbl called on non-inlined code : " s))

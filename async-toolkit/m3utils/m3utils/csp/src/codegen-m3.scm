@@ -1488,7 +1488,8 @@
          (ass-rng  (assignment-range (make-ass x) (pc-port-tbl pc)))
 
          (des      (get-designator-id lhs))
-         (tgt-type ((pc-symtab pc) 'retrieve des))
+;;         (tgt-type ((pc-symtab pc) 'retrieve des))
+         (tgt-type (declared-type pc lhs))
          (tgt-rng  (get-type-range tgt-type))
                   
          (in-range (range-contains? tgt-rng ass-rng))
@@ -2337,8 +2338,11 @@
 
     (sa "VAR toSend := " ;; this isnt right, need to be more careful!
         port-typenam ".Item  { " (m3-force-type pc port-class rhs)
-        " } ; BEGIN IF NOT "
-        port-typenam ".Send( " m3-pname "^ , toSend , cl ) THEN RETURN FALSE END END"
+        " } ;" dnl
+        "BEGIN" dnl
+        "IF NOT "
+        port-typenam ".Send( " m3-pname "^ , toSend , cl ) THEN RETURN FALSE END" dnl
+        "END"
         )
     )
   )
@@ -2362,8 +2366,10 @@
          )
     (define (null-rhs)
       (sa "VAR toRecv : "
-          port-typenam".Item; BEGIN IF NOT "
-          port-typenam ".Recv( " m3-pname "^ , toRecv , cl ) THEN RETURN FALSE END END")
+          port-typenam".Item; BEGIN " dnl
+          "IF NOT "
+          port-typenam ".Recv( " m3-pname "^ , toRecv , cl ) THEN RETURN FALSE END" dnl
+          "END")
       )
 
     (define (nonnull-rhs)
@@ -2461,6 +2467,7 @@
               (snm    (struct-type-name ty))
               (m3snm  (m3-struct snm))
               (sfx    (classify-expr-type pc rhs))
+              (scrtch (if (eq? 'dynamic sfx) "frame.c , " ""))
               (rhsstr
 
                (cond ((and (eq? sfx 'dynamic) (bigint? rhs))
@@ -2473,7 +2480,7 @@
                       (m3-format-designator pc rhs))))
               )
 
-         (sa m3snm "_unpack_" (symbol->string sfx) "( "(m3-ident (cadr lhs)) " , " rhsstr " )" )
+         (sa m3snm "_unpack_" (symbol->string sfx) "( frame."(m3-ident (cadr lhs))  " , " scrtch rhsstr " )(*m3-compile-intrinsic*)" )
          
          )
        )

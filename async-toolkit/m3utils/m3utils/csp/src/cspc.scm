@@ -224,6 +224,7 @@
 (load "convert.scm")
 (load "ports.scm")
 (load "codegen.scm")
+(load "comms.scm")
 
 (define sa string-append)
 
@@ -1787,7 +1788,10 @@
   )
 
 (define *the-passes-3*
-  `((*       ,fold-constants-*)
+  `(
+    (send    ,convert-send-struct)
+    (recv    ,convert-recv-struct)
+    (*       ,fold-constants-*)
     )
   )
 

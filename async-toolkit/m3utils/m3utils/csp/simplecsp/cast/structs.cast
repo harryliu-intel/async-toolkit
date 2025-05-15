@@ -155,3 +155,34 @@ define Q()() <+ common
    }
 }
   
+define SEND()(bd(32) +R)
+{
+  csp {
+    structure s =
+      (int(32) x;
+       );
+
+    s z;
+
+    z::x = 12;
+
+    R!z
+  }
+}      
+
+define RECV()(bd(32) -L)
+{
+  csp {
+    structure s =
+      (int(32) x;
+       );
+
+    s z;
+
+    L?z;
+
+    print(z::x)
+
+    
+  }
+}      
