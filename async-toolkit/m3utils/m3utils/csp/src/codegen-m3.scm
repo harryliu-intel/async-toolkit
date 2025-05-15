@@ -1351,6 +1351,20 @@
     )
   )
 
+(define (classify-operand-type pc ty)
+  (let* (
+         (res (cond ((m3-natively-representable-type? ty) 'native)
+                    ((m3-dynamic-int-type? ty)            'dynamic)
+                    ((integer-type? ty)                   'wide)
+                    (else (error "not an integer : " expr))
+                    )
+              )
+         )
+    (dis "classify-operand-type : " ty " -> " res dnl)
+    res
+    )
+  )
+
 (define (max-type . x)
   (cond ((member 'dynamic x) 'dynamic)
         ((member 'wide    x) 'wide)
@@ -2318,14 +2332,13 @@
 (define (get-port-def-type pdef) (cadddr pdef))
 (define (get-port-def-dir pdef) (caddr pdef))
 
+(define *ss-rhs* #f)
+
 (define (m3-compile-send pc stmt)
   (let* ((port-tbl     (pc-port-tbl pc))
 
          (port-des     (get-send-lhs stmt)) ;; doesnt work for arrays/structs
          (rhs          (get-send-rhs stmt))
-         (rhs-type     (declared-type pc rhs))
-         (m3-rhs-type  (m3-map-decltype rhs-type))
-         
          (port-id      (get-designator-id port-des))
          (port-def     (port-tbl 'retrieve port-id))
          (port-type    (get-port-def-type port-def))
@@ -2339,14 +2352,43 @@
          (literal      (literal? (get-send-rhs stmt)))
          )
 
-    (sa "VAR toSend : " 
-        port-typenam ".Item; BEGIN" dnl
-        m3-rhs-type "Ops.ToWordArray(" (m3-format-designator pc rhs) " , "
-        "toSend);" dnl
-        "IF NOT " port-typenam ".Send( " m3-pname "^ , toSend , cl ) THEN RETURN FALSE END" dnl
-        "END"
-        )
-    )
+    (set! *ss-rhs* rhs)
+    
+    (if literal
+        (sa "IF NOT " port-typenam
+            (let* ((ty    (operand-type pc rhs))
+                   (int   (integer-type? ty))
+                   (class (if int (classify-operand-type pc ty) #f)))
+              (cond ((eq? class 'native)
+                     (sa ".SendNative( " m3-pname "^, "
+                         (m3-compile-value pc 'native rhs)))
+                    
+                    ((eq? class 'dynamic)
+                     (sa ".SendDynamic( " m3-pname "^, "
+                         (m3-compile-value pc 'native rhs)))
+                    
+                    ((boolean? rhs)
+                     (sa ".SendBoolean( " m3-pname "^, "
+                         (m3-compile-value pc 'x rhs)))
+                    
+                    (else (error "can't send on channel: literal " rhs dnl))
+                    );;dnoc
+              );;*tel
+            " , cl) THEN RETURN FALSE END"
+            )
+        
+        (let* ((rhs-type     (declared-type pc rhs))
+               (m3-rhs-type  (m3-map-decltype rhs-type)))
+          (sa "VAR toSend : " 
+              port-typenam ".Item; BEGIN" dnl
+              m3-rhs-type "Ops.ToWordArray(" (m3-format-designator pc rhs) " , "
+              "toSend);" dnl
+              "IF NOT " port-typenam ".Send( " m3-pname "^ , toSend , cl ) THEN RETURN FALSE END" dnl
+              "END"
+              );;as
+          );;tel
+        );;fi
+    );;*tel
   )
 
 (define *rs* #f)
