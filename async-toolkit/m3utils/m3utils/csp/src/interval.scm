@@ -1,5 +1,5 @@
 (define (interval-dbg . x)
-  (apply dis x)
+;;  (apply dis x)
   )
 
 (define (make-binop op lst)

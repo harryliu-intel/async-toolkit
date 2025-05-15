@@ -2,7 +2,7 @@
 ;; inputs can be polymorphic
 
 (define (fold-constants-dbg . x)
-  (apply dis x) ;; comment this out to make it quiet
+;;  (apply dis x) ;; comment this out to make it quiet
   )
 
 (define (handle-intrinsic name constant? constant-value arg-list)

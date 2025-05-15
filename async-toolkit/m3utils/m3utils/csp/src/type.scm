@@ -1,5 +1,5 @@
 (define (type-dbg . x)
-  (apply dis x)
+;;  (apply dis x)
   )
 
 (define (boolean-type? t) (eq? 'boolean (car t)))
