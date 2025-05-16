@@ -38,12 +38,13 @@ PROCEDURE Export(VAR data : ARRAY OF Word.T; t : T) =
     END;
     
     WITH count = (P.c_sizeinbase(ADR(t), 2) + numb - 1) DIV numb DO
-      IF count <= NUMBER(data) THEN
+      IF count > NUMBER(data) THEN
+        (* number is too big, truncate it *)
         VAR
           ndata := NEW(REF ARRAY OF Word.T, count);
         BEGIN
           P.export(ADR(ndata[0]), NIL, -1, BYTESIZE(Word.T), 0, 0, ADR(t.val));
-          data := SUBARRAY(ndata^, 0, NUMBER(data))
+          data := SUBARRAY(ndata^, 0, NUMBER(data));
         END
       ELSE
         P.export(ADR(data[0]), NIL, -1, BYTESIZE(Word.T), 0, 0, ADR(t.val))
