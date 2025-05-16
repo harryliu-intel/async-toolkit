@@ -4,7 +4,7 @@
 (load "debug.scm")
 
 (define (vars-dbg . x)
-;;  (apply dis x)
+  (apply dis x)
   )
 
 (define (make-assignments-tbl prog cell-info the-inits func-tbl struct-tbl)
@@ -463,7 +463,9 @@
   (let ((tbl (make-hash-table 100 atom-hash)))
     (map
      (lambda(id)
+       (vars-dbg "proposing smallest type for : " id dnl)
        (tbl 'add-entry! id
+
             (get-smallest-type
              (*the-rng-tbl* 'retrieve id))))
      (*the-rng-tbl* 'keys))

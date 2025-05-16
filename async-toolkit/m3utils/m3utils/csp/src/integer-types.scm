@@ -83,18 +83,20 @@
 (define (make-sint-type range)
   (if (range-infinite? range)
       *default-int-type*
-      (let* ((max (range-max range))
-             (min (range-min range))
+      (let* ((rmax (range-max range))
+             (rmin (range-min range))
              
              (max0
-              (if (xnum-< min *big0*)
-                  (xnum-- (xnum-abs min) *big1*) ;; need one less value for neg
-                  (xnum-abs min)))
+              (if (xnum-< rmin *big0*)
+                  (xnum-- (xnum-abs rmin) *big1*) ;; need one less value for neg
+                  (xnum-abs rmin)))
              
-             (max1 (xnum-abs max))
+             (max1 (xnum-abs rmax))
 
              (mmax (xnum-max max0 max1))
 
-             (bits (xnum-+ *big1* (xnum-clog2 (xnum-+ mmax *big1*)))))
+             (bits (+ 1 (xnum-clog2 (xnum-+ mmax *big1*)))))
+
+        
         (make-integer-type #t (max 1 bits)))))
 

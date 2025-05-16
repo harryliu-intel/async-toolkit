@@ -3068,15 +3068,15 @@
         )
     
         (let* ((range  (m3-get-intf-range intf))
-               (lo-txt (BigInt.Format (car range)  16))
-               (hi-txt (BigInt.Format (cadr range) 16))
+               (lo-txt (BigInt.FormatLiteral (car range)  16))
+               (hi-txt (BigInt.FormatLiteral (cadr range) 16))
                ) 
           (if native
               (begin
                 (mw "  Min := Mpz.New();" dnl)
                 (mw "  Max := Mpz.New();" dnl)
-                (mw "  Mpz.init_set_si(Min, 16_" lo-txt ");" dnl)
-                (mw "  Mpz.init_set_si(Max, 16_" hi-txt ");" dnl)
+                (mw "  Mpz.init_set_si(Min, " lo-txt ");" dnl)
+                (mw "  Mpz.init_set_si(Max, " hi-txt ");" dnl)
                 (mw "  One := 1;" dnl)
                 )
               (begin

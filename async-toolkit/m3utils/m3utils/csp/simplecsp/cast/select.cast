@@ -1,6 +1,4 @@
 module select;
-import core.noc.router.forward.mesh_forward;
-import core.noc.router.forward.fix_int0;
 import lib.bd.6T.ecc.ecc_constants;
 import lib.bd.6T.ecc.ecc;
 
