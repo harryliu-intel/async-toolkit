@@ -1,4 +1,4 @@
-GENERIC MODULE Channel(Type);
+GENERIC MODULE Channel(Type, CspDebug);
 IMPORT Debug;
 IMPORT CspCompiledProcess AS Process;
 IMPORT CspCompiledScheduler AS Scheduler;
@@ -6,11 +6,21 @@ FROM Fmt IMPORT Int, F, Bool;
 IMPORT DynamicInt;
 IMPORT Mpz;
 
-CONST doDebug = FALSE;
-
+CONST sendDebug = CspDebug.DebugSend;
+CONST recvDebug = CspDebug.DebugRecv;
+CONST probDebug = CspDebug.DebugProbe;
+      
 PROCEDURE SendProbe(VAR c : T; cl : Process.Closure) : BOOLEAN =
   BEGIN
-    RETURN c.wr # c.rd OR c.waiter = cl
+    WITH res = c.wr # c.rd OR c.waiter = cl DO
+      IF probDebug THEN
+        Debug.Out(F("%s : %s SendProbe : return %s state %s",
+                    Int(cl.frameId), c.nm, 
+                    Bool(res),
+                    ChanDebug(c)))
+      END;
+      RETURN res
+    END
   END SendProbe;
   
 PROCEDURE Send(VAR      c : T;
@@ -36,17 +46,21 @@ PROCEDURE Send(VAR      c : T;
       *)
 
       IF c.waiter = NIL THEN
-        IF doDebug THEN Debug.Out(Int(cl.frameId) & " Send : wait") END;
+        IF sendDebug THEN
+          Debug.Out(F("%s : %s Send wait", Int(cl.frameId), c.nm))
+        END;
         
         <*ASSERT c.waiter = NIL OR c.waiter = cl*>
         c.waiter := cl;
         RETURN FALSE
       ELSIF c.waiter # cl THEN
         (* tell reader to proceed *)
-        IF doDebug THEN
-          Debug.Out(Int(cl.frameId) &
-            " Send : schedule reader " &
-            Int(c.waiter.id))
+        IF sendDebug THEN
+          Debug.Out(
+              F("%s : %s Send schedule reader %s",
+                Int(cl.frameId), c.nm, 
+                Int(c.waiter.id))
+          )
         END;
         Scheduler.Schedule(c.waiter);
         c.waiter := cl;
@@ -55,8 +69,10 @@ PROCEDURE Send(VAR      c : T;
         (* c.waiter.frame = cl *)
         INC(c.wr);
         IF c.wr = c.slack + 1 THEN c.wr := 0 END;
-        IF doDebug THEN
-          Debug.Out(Int(cl.frameId) & " Send/full go : " & ChanDebug(c))
+        IF sendDebug THEN
+          Debug.Out(F("%s : %s Send/full go : %s",
+                      Int(cl.frameId), c.nm, 
+                      ChanDebug(c)))
         END;
 
         c.waiter := NIL; (* end of handshake *)
@@ -68,17 +84,20 @@ PROCEDURE Send(VAR      c : T;
       INC(c.wr);
       IF c.wr = c.slack + 1 THEN c.wr := 0 END;
 
-      IF doDebug THEN
-        Debug.Out(Int(cl.frameId) & " Send go : " & ChanDebug(c))
+      IF sendDebug THEN
+          Debug.Out(F("%s : %s Send go : %s",
+                      Int(cl.frameId), c.nm, 
+                      ChanDebug(c)))
       END;
 
       (* if anyone is sleeping on the channel (i.e., the channel was
          empty and the receiver got here before us), wake them up *)
       IF c.waiter # NIL THEN
         <*ASSERT c.waiter.frameId = c.reader.id*>
-        IF doDebug THEN
-          Debug.Out(Int(cl.frameId) & " Send : schedule " &
-            Int(c.waiter.frameId))
+        IF sendDebug THEN
+          Debug.Out(F("%s : %s Send schedule : %s",
+                      Int(cl.frameId), c.nm, 
+                      Int(c.waiter.frameId)))
         END;
         Scheduler.Schedule(c.waiter);
         c.waiter := NIL
@@ -118,8 +137,11 @@ PROCEDURE RecvProbe(VAR c : T; cl : Process.Closure) : BOOLEAN =
     *)
     WITH res = c.wr # nxtRd OR (c.waiter # NIL AND c.waiter.frameId = c.writer.id) DO
       
-      IF doDebug THEN
-        Debug.Out(Int(cl.frameId) & " RecvProbe : return " & Bool(res) & " state " & ChanDebug(c))
+      IF probDebug THEN
+        Debug.Out(F("%s : %s RecvProbe : return %s state %s",
+                    Int(cl.frameId), c.nm, 
+                    Bool(res),
+                    ChanDebug(c)))
       END;
 
       RETURN res
@@ -148,8 +170,10 @@ PROCEDURE Recv(VAR      c : T;
       
       IF c.wr = nxtRd AND c.waiter = NIL THEN
         (* channel is empty -- just block *)
-        IF doDebug THEN
-          Debug.Out(Int(cl.frameId) & " Recv : wait " & ChanDebug(c))
+        IF recvDebug THEN
+          Debug.Out(F("%s : %s Recv : wait %s",
+                      Int(cl.frameId), c.nm, 
+                      ChanDebug(c)))
         END;
 
         c.waiter := cl;
@@ -159,8 +183,10 @@ PROCEDURE Recv(VAR      c : T;
         x := c.data[nxtRd];
         c.rd := nxtRd;
 
-        IF doDebug THEN
-          Debug.Out(Int(cl.frameId) & " Recv go : " & ChanDebug(c))
+        IF recvDebug THEN
+          Debug.Out(F("%s : %s Recv go : %s",
+                      Int(cl.frameId), c.nm, 
+                      ChanDebug(c)))
         END;
 
         IF c.waiter # NIL THEN
@@ -169,10 +195,11 @@ PROCEDURE Recv(VAR      c : T;
              Wake them up.
           *)
           <*ASSERT c.waiter.frameId = c.writer.id *>
-          IF doDebug THEN
-            Debug.Out(Int(cl.frameId) &
-              " Recv : schedule " &
-              Int(c.waiter.frameId)) END;
+          IF recvDebug THEN
+            Debug.Out(F("%s : %s Recv : schedule %s",
+                        Int(cl.frameId), c.nm, 
+                        Int(c.waiter.frameId)))
+          END;
           Scheduler.Schedule(c.waiter);
         END;
 
@@ -221,7 +248,7 @@ PROCEDURE SendNative(VAR c : T;
   BEGIN
     toSend[0] := x;
     IF x < 0 THEN
-      FOR i := 1 TO LAST(toSend) DO
+      <*NOWARN*>FOR i := 1 TO LAST(toSend) DO
         toSend[i] := -1
       END
     END;

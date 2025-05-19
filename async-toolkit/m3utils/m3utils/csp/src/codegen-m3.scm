@@ -1518,11 +1518,9 @@
 (define (m3-compile-native-int-assign pc x)
   (dis "m3-compile-native-int-assign : x : " x dnl)
   ;; assign when lhs is native
-  (let ((lhs (get-assign-lhs x))
-        (rhs (get-assign-rhs x)))
+  (let* ((lhs (get-assign-lhs x))
+         (rhs (get-assign-rhs x))
     
-        (let* (
-
          (ass-rng  (assignment-range (make-ass x) (pc-port-tbl pc)))
 
          (des      (get-designator-id lhs))
@@ -1572,18 +1570,16 @@
                 (else (error "m3-compile-native-int-assign"))
                 );;dnoc
           )
-
          )
 
-          (dis "m3-compile-native-int-assign : x        : " x dnl)
-          (dis "m3-compile-native-int-assign : ass-rng  : " ass-rng dnl)
-          (dis "m3-compile-native-int-assign : in-range : " in-range dnl)
-          (dis "m3-compile-native-int-assign : result   : " result dnl)
-
-          result
-
-          );;*tel
-    );;tel
+    (dis "m3-compile-native-int-assign : x        : " x dnl)
+    (dis "m3-compile-native-int-assign : ass-rng  : " ass-rng dnl)
+    (dis "m3-compile-native-int-assign : in-range : " in-range dnl)
+    (dis "m3-compile-native-int-assign : result   : " result dnl)
+    
+    result
+    
+    );;*tel
   )
 
 (define (make-ass ass-stmt)
@@ -2027,7 +2023,7 @@
 
 (define (m3-compile-boolean-logical-binop pc m3-lhs op a b)
   (let ((av    (m3-compile-value pc 'x a))
-        (bv    (m3-compile-value pc 'x a))
+        (bv    (m3-compile-value pc 'x b))
         (m3-op (caddr (assoc op *boolean-logical-binops*))))
     (sa m3-lhs "( (" av ") " m3-op " (" bv ") )")
     );;tel
@@ -2077,12 +2073,14 @@
           ((and (pair? rhs)
                 (= 3 (length rhs))
                 (member (car rhs) (map car *boolean-numeric-binops*)))
-           (m3-compile-boolean-numeric-binop pc m3-lhs (car rhs) (cadr rhs) (caddr rhs)))
+           (m3-compile-boolean-numeric-binop pc m3-lhs
+                                             (car rhs) (cadr rhs) (caddr rhs)))
           
           ((and (pair? rhs)
                 (= 3 (length rhs))
                 (member (car rhs) (map car *boolean-logical-binops*)))
-           (m3-compile-boolean-logical-binop pc m3-lhs (car rhs) (cadr rhs) (caddr rhs)))
+           (m3-compile-boolean-logical-binop pc m3-lhs
+                                             (car rhs) (cadr rhs) (caddr rhs)))
 
 
           ((probe? rhs)
@@ -3296,6 +3294,7 @@
         "CONST DebugSelect = FALSE;" dnl
         "CONST DebugRecv = FALSE;" dnl
         "CONST DebugSend = FALSE;" dnl
+        "CONST DebugProbe = FALSE;" dnl
         "END CspDebug." dnl
         )
 )
