@@ -1311,21 +1311,29 @@
 (define (m3-compile-scalar-int-assign pc stmt)
   (dis "m3-compile-scalar-int-assign : " stmt dnl)
   (let* ((lhs (get-assign-lhs stmt))
-         (lty (declared-type pc lhs)))
+         (lty (declared-type pc lhs))
+         (rhs (get-assign-rhs stmt))
+         )
     (dis "m3-compile-scalar-int-assign : lhs : " lhs dnl)
     (dis "m3-compile-scalar-int-assign : lty : " lty dnl)
+    (dis "m3-compile-scalar-int-assign : rhs : " rhs dnl)
 
-    (cond ((m3-natively-representable-type? lty)
-           (m3-compile-native-int-assign  pc stmt))
+    (if (recv-expression? rhs) ;; special case
+        (m3-compile-recv pc `(recv ,(cadr rhs) ,lhs))
 
-          ((m3-dynamic-int-type? lty)
-           (m3-compile-dynamic-int-assign pc stmt))
 
-          ((m3-wide-int-type? lty) ;; this may work because it re-checks type
-           (m3-compile-dynamic-int-assign pc stmt))
-
-          (else
-           (error)))
+        (cond ((m3-natively-representable-type? lty)
+               (m3-compile-native-int-assign  pc stmt))
+              
+              ((m3-dynamic-int-type? lty)
+               (m3-compile-dynamic-int-assign pc stmt))
+              
+              ((m3-wide-int-type? lty) ;; this may work because it re-checks type
+               (m3-compile-dynamic-int-assign pc stmt))
+              
+              (else
+               (error)))
+        )
     )
   )
 
@@ -1512,9 +1520,6 @@
   (let ((lhs (get-assign-lhs x))
         (rhs (get-assign-rhs x)))
     
-    (if (recv-expression? rhs) ;; special case
-        (m3-compile-recv pc `(recv ,(cadr rhs) ,lhs))
-
         (let* (
 
          (ass-rng  (assignment-range (make-ass x) (pc-port-tbl pc)))
@@ -1577,7 +1582,6 @@
           result
 
           );;*tel
-        );;fi
     );;tel
   )
 

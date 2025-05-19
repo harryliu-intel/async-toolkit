@@ -1865,8 +1865,8 @@
             *the-struct-tbl*)))
     ;;  (display-success-2)
 
-    (set! *the-struct-decls* (find-structdecls text5))
-  'text5
+    (set! *the-struct-decls* (find-structdecls (list text5)))
+    'text5
   )
 
 (define fixpoint-simplify-stmt (make-fixpoint-func simplify-stmt))
