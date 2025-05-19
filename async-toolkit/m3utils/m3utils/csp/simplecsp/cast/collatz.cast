@@ -1,6 +1,6 @@
 module collatz;
 
-int NWORKERS = 15;
+int NWORKERS = 2;
 int W        = 63;
 
 int STATUSW = 128 + 2 * W; // why can't this go in attributes cell?
@@ -137,6 +137,7 @@ define SMERGE()(bd(STATUSW) -L[0..1], +R) <+ common
     status s;
     
     *[
+      print("stsrt");
       status os = s;
       [
        #L[0] && #L[1] -> recv(0,s); recv(1,s)
@@ -145,7 +146,7 @@ define SMERGE()(bd(STATUSW) -L[0..1], +R) <+ common
        :
        #L[1] -> recv(1,s)
        ];
-
+      print("received");
       checksend(os, s)
       ]
   }

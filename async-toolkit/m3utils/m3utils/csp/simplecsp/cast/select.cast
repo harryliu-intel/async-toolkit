@@ -195,13 +195,13 @@ define SYSTEM(int C)()
     bd(WIDTH) c[0..1], cx, m;
     node n = Vdd;
   
-    DRIVE() drive(c[0], c[1], cx);
     [ C==0 -> SELECT() select(c[0], c[1], cx); ]
     [ C==1 -> P() select(c, m, cx, n); BITGEN bitgen(m); ]
     [ C==2 -> Q0() select(c, m, cx, n); BITGEN bitgen(m); ]
     [ C==3 -> P1() select(c, m, cx, n); BITGEN bitgen(m); ]
     [ C==4 -> P2() select(c, m, cx, n); BITGEN bitgen(m); ]
     [ C==5 -> P3() select(c, m, cx, n); BITGEN bitgen(m); ]
+    DRIVE() drive(c[0], c[1], cx);
   } 
 }
 
