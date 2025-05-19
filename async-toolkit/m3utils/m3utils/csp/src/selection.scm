@@ -248,8 +248,10 @@
 
          (lock         `(lock ,@sensit))
          (unlock       `(unlock ,@sensit))
+         (exec-unlock  `(sequence ,unlock ,wif-clauses-lif))
          (waitfor      `(waitfor ,@sensit))
-         (done-lif     `(local-if (,ndone-id ,waitfor) (else ,unlock)))
+         (done-lif     `(local-if (,ndone-id ,waitfor)
+                                  (else ,exec-unlock)))
 
          (the-loop     `(while ,ndone-id
                                (sequence
@@ -257,7 +259,6 @@
                                  ,lock
                                  ,guardeval
                                  ,ndone-assign
-                                 ,wif-clauses-lif
                                  ,done-lif)))
          (res          `(sequence ,ndone-decl
                                   ,ndone-init

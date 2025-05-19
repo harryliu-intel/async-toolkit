@@ -996,6 +996,7 @@
   (w "<*NOWARN*>IMPORT CspString, Fmt;" dnl)
   (w "<*NOWARN*>IMPORT CspBoolean;" dnl)
   (w "<*NOWARN*>IMPORT CspIntrinsics;" dnl)
+  (w "<*NOWARN*>IMPORT CspDebug, Debug;" dnl)
   (w "<*NOWARN*>IMPORT NativeInt, DynamicInt;" dnl)
   (w "<*NOWARN*>IMPORT NativeInt AS NativeIntOps, DynamicInt AS DynamicIntOps;" dnl)
   (w "<*NOWARN*>IMPORT Word;" dnl)
@@ -3041,6 +3042,7 @@
         dnl
         "IMPORT Mpz;" dnl
         "IMPORT Word;" dnl
+        "IMPORT CspDebug, Debug;" dnl
         "IMPORT NativeInt, DynamicInt;" dnl
         dnl)
 
@@ -3223,6 +3225,7 @@
          (map (lambda(intf)(sa "import(\"" intf "\")" dnl))
               *m3-standard-packages*))
     (Wr.PutText wr (sa "m3_optimize(\"T\")" dnl))
+    (Wr.PutText wr (sa "interface(\"CspDebug\")" dnl))
     (Wr.PutChar wr dnl)
     
     (Wr.Close wr)
@@ -3286,6 +3289,17 @@
 (define *the-decls* #f)
 (define *the-var-intfs* #f)
 
+(define (m3-write-debug-template di3wr)
+  (define (intf . x) (Wr.PutText di3wr (apply string-append x)))
+
+  (intf "INTERFACE CspDebug;" dnl
+        "CONST DebugSelect = FALSE;" dnl
+        "CONST DebugRecv = FALSE;" dnl
+        "CONST DebugSend = FALSE;" dnl
+        "END CspDebug." dnl
+        )
+)
+
 (define (do-m3!)
   (set! *stage* 'do-m3!)
   (let* ((the-blocks text9)
@@ -3295,6 +3309,8 @@
          (root       (m3-ident (string->symbol *the-proc-type-name*)))
          (i3fn       (string-append (build-dir) root ".i3"))
          (i3wr       (FileWr.Open i3fn))
+         (di3fn      (string-append (build-dir) "CspDebug" ".i3"))
+         (di3wr      (FileWr.Open di3fn))
          (m3fn       (string-append (build-dir) root ".m3"))
          (m3wr       (FileWr.Open m3fn))
          (ipfn       (string-append (build-dir) root ".imports"))
@@ -3388,6 +3404,8 @@
           dnl
           )
 
+    (m3-write-debug-template di3wr)
+    
     (m3-write-imports intf m3-port-chan-intfs)
 
     (m3-write-build-decl intf cell-info)
@@ -3448,6 +3466,7 @@
     
     (modu dnl "BEGIN END " root "." dnl)
     
+    (Wr.Close di3wr)
     (Wr.Close i3wr)
     (Wr.Close m3wr)
     (Wr.Close ipwr)
