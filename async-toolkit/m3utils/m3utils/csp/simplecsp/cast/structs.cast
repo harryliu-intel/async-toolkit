@@ -186,3 +186,32 @@ define RECV()(bd(32) -L)
     
   }
 }      
+
+define PU(int W)()
+{
+  csp {
+    structure struct0 =
+      (
+       int(W) a;
+       int(W) b;
+       );
+
+    struct0 s, t;
+
+    s::a = 13;
+    s::b = 17;
+    
+    int(43) x;
+
+    x = pack(s);
+    print("x=" + hex(x));
+    print("s=" + s::a + " " + s::b);
+
+    unpack(t, x);
+    print("t=" + t::a + " " + t::b);
+
+    x = pack(t);
+    print("x=" + hex(x));
+  }
+}
+    

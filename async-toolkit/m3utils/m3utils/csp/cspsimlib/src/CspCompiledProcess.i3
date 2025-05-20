@@ -8,6 +8,7 @@ TYPE
   END;
 
   Closure = OBJECT
+    name      : TEXT;
     id        : CARDINAL;
     frameId   : CARDINAL;
     scheduled : Word.T := -1; (* last time it was scheduled *)

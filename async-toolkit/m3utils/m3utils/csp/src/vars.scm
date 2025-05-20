@@ -81,6 +81,41 @@
   tbl
   )
 
+(define *unpack* #f)
+
+(define (insert-unpack-copies prog)
+  (define tg (make-name-generator "unpack-copy"))
+  
+  (define (visitor s)
+    (if (eq? 'eval (get-stmt-type s))
+        (let* ((expr (cadr s))
+               (expr-type (car expr)))
+          (dis "visitor : eval : " s dnl)
+          (if (not (eq? 'call-intrinsic expr-type))
+              (error "make-assignments-tbl called on non-inlined code : " s))
+          
+          (let ((inam (cadr expr)))
+            (if (eq? inam 'unpack)
+                (let* ((newid (tg 'next))
+                       (decl  (make-var1-decl newid *default-int-type*))
+                       (ass   `(assign (id ,newid) ,(cadddadr s)))
+                       (seq   `(sequence ,decl
+                                         ,ass
+                                         (eval (call-intrinsic
+                                                unpack
+                                                ,(caddadr s)
+                                                (id ,newid)))))
+                       )
+                  (set! *unpack* s)
+                  seq)
+                s))
+          );;*tel
+        s);;fi
+    )
+  
+  (visit-stmt prog visitor identity identity)
+  )
+
 (define (make-asses prog)
   (make-assignments-tbl prog *cellinfo* *the-inits* '() *the-struct-tbl*))
          

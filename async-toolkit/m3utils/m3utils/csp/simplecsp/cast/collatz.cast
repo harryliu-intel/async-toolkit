@@ -1,6 +1,6 @@
 module collatz;
 
-int NWORKERS = 2;
+int NWORKERS = 1;
 int W        = 63;
 
 int STATUSW = 128 + 2 * W; // why can't this go in attributes cell?
@@ -21,6 +21,30 @@ define common attributes {
        longest_so_far l;
        );
 
+    function fmtStatus(status -s) : string =
+      (
+       fmtStatus = "{len=" + s::ops + " num=" + s::l::num  + " length=" + s::l::length + "}"
+      );
+    
+    function sendStatus(int -len, -num, -steps) =
+      (
+       status s;
+       s::l::length = len;
+       s::l::num    = num;
+       s::ops       = steps;
+
+       int p = pack(s);
+       print ("sendStatus : sending status=" + fmtStatus(s) + " pack=" + hex(p)); 
+
+       status t;
+       unpack(t, p);
+
+       print("sendStatus : unpack p : t=" + fmtStatus(t));
+       
+       STATUS!(p);
+       steps = 0;
+       );
+
     function even(int -n) : bool =
       ( even = ((n & 1) == 0) );
 
@@ -30,21 +54,65 @@ define common attributes {
   }
 }
 
+define PACK()(bd(STATUSW) +STATUS) <+ common
+{
+  csp {
+    sendStatus(7, 3, 7)
+  }
+}
+
+define UNPACK()(bd(STATUSW) -STATUS) <+ common
+{
+  csp {
+    STATUS?x ;
+    status s;
+    
+    unpack(s,x);
+    
+    print ("STATUS? x=" + hex(x) + " ( ops = " + s::ops +
+           " ; num = " + s::l::num +
+           " ; chain = " + s::l::length + " )")
+    }
+}
+
+define PU()()
+{
+  subcells {
+    bd(STATUSW) c;
+    PACK   pack  (c);
+    UNPACK unpack(c);
+  }
+}
+
+define SIMPLE()() <+ common
+{
+  csp {
+    status s, t;
+    int x;
+    s::l::length =  7;
+    s::l::num    = 13;
+    s::ops       = 17;
+
+    print ("s=" + fmtStatus(s));
+    x = pack(s);
+    print ("x=" + hex(x));
+    print ("s=" + fmtStatus(s));
+    print ("t=" + fmtStatus(t));
+    
+    unpack(t, x);
+    print ("x=" + hex(x));
+    print ("s=" + fmtStatus(s));
+    print ("t=" + fmtStatus(t));
+
+    x = pack(t);
+    print ("x=" + hex(x));
+      
+  }
+}
+ 
 define WORKER()(bd(W) -STRT; bd(STATUSW) +STATUS) <+ common
 {
   csp {
-
-    function sendStatus(int -len, -num, -steps) =
-      (
-       //       print ("sendStatus : sending len=" + len + " num=" + num  + " steps=" + steps);
-       status s;
-       s::l::length = len;
-       s::l::num    = num;
-       s::ops       = steps;
-
-       STATUS!(pack(s));
-       steps = 0;
-       );
 
     int(W) i;
     int(W) steps  = 0;
@@ -101,7 +169,7 @@ define MANAGER()(bd(W) +STRT; bd(STATUSW) -STATUS) <+ common
        
        print ("STATUS? ( ops = " + s::ops +
               " ; num = " + save::l::num +
-              " ; chain = " + save::l::length) ]
+              " ; chain = " + save::l::length + " )") ]
   }
 
 }

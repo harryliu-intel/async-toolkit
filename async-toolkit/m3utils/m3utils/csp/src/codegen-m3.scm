@@ -954,6 +954,7 @@
                     (cdr count)
                     (lambda(i)
                       (iw (pad 22 "") "   NEW(Closure," dnl)
+                      (iiw "       name    := \"" lab "\"," dnl)
                       (iiw "       id      := Process.NextId()," dnl)
                       (iiw "       frameId := frame.id," dnl)
                       (iiw "       frame   := frame," dnl)
@@ -969,6 +970,7 @@
                  (begin  ;; not a fork
                    (iw  (pad 22 "frame." m3lab "_Cl")
                         " := NEW(Closure," dnl)
+                   (iiw "        name    := \"" lab "\"," dnl)
                    (iiw "        id      := Process.NextId()," dnl)
                    (iiw "        frameId := frame.id," dnl)
                    (iiw "        frame   := frame," dnl)
@@ -1498,19 +1500,20 @@
 
 (define (m3-compile-native-unop cat builder op a-arg)
   (cond ((member op m3-unary-ops)
-         (sa "( " (m3-map-symbol-op op) " " a-arg " )"))
+         (builder (sa "( " (m3-map-symbol-op op) " " a-arg " )")))
         (else (sa (m3-mpz-op op) "( frame.c , "
                    a-arg " ); " (builder "Mpz.ToInteger(frame.c)")))
         )
   )
 
-(define (m3-compile-typed-unop pc builder tgt op a)
+(define (m3-compile-typed-unop pc builder op a)
   ;; native only
-  (let* ((op-type (max-type tgt (classify-expr-type pc a)))
+  (dis "m3-compile-typed-unop : <- (" op " " a ")" dnl)
+  (let* ((op-type (max-type 'native (classify-expr-type pc a)))
          (opx     (m3-compile-native-unop op-type
                                           builder
                                           op
-                                          (m3-force-type pc op-type a "frame.a"))))
+                                          (m3-force-type pc op-type "frame.a" a))))
     opx
     )
   )
@@ -2539,10 +2542,12 @@
               (scrtch (if (eq? 'dynamic sfx) "frame.c , " ""))
               (rhsstr
 
-               (cond ((and (eq? sfx 'dynamic) (bigint? rhs))
+               (cond ((and (eq? sfx 'dynamic)
+                           (bigint? rhs))
                       (make-dynamic-constant! pc rhs))
 
-                     ((and (eq? sfx 'native) (bigint? rhs))
+                     ((and (eq? sfx 'native)
+                           (bigint? rhs))
                       (sa "16_" (BigInt.Format rhs)))
 
                      (else
@@ -2642,7 +2647,7 @@
          (m3-compile-value pc 'dynamic (caddr range)) ") # 1 DO " dnl
          (compile-stmt) dnl
          "Mpz.add_ui(" desig " , " desig " , 1)" dnl
-         "END END(*sequential-loop*)" dnl
+         "END(*WHILE*) END(*sequential-loop*)" dnl
          )
 
         )
@@ -3622,6 +3627,7 @@
            (set! *stage* 'loaddata!)
            (loaddata1!)
            (compile!)
+           (write-object (sa (build-dir) "/" modname ".text9.scm") text9)
            (do-m3!)
            'ok)
            

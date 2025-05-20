@@ -10,6 +10,7 @@
 (define (cdaadadr x) (cdar (cadadr x)))
 (define (caadadr x) (car (cadadr x)))
 (define (caddadr x) (caddr (cadr x)))
+(define (cadddadr x) (cadddr (cadr x)))
 
 
 (define (identity x) x)

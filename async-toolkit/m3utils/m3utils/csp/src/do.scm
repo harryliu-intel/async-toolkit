@@ -50,13 +50,18 @@
                    (the-if (cons 'if if-grds))
 
                    (the-body
-                    `(sequence ,@assigns ,ndone-assign ,the-if))
+                    `(sequence  ,the-if ,@assigns ,ndone-assign))
 
                    (the-loop
                     `(while ,ndone-id ,the-body))
 
                    (res
-                    `(sequence ,ndone-decl ,@decls ,@assigns ,ndone-assign ,the-loop))
+                    `(sequence ,ndone-decl
+                               ,@decls
+                               ,@assigns
+                               ,ndone-assign
+                               ,the-loop
+                               ))
                    )
 
               ;; we could insert a check for two guards for

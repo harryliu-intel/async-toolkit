@@ -1881,11 +1881,14 @@
             )
          )
         )
-  (make-the-tables text5.1)
+  (set! text5.2
+        (simplify-stmt (insert-unpack-copies text5.1))
+        )
+  (make-the-tables text5.2)
   (seed-integer-ranges!)
   (close-integer-ranges!)
   (propose-types!)
-  (set! text6 text5.1)
+  (set! text6 text5.2)
   'text6
   )
 
