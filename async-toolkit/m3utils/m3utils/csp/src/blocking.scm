@@ -81,7 +81,7 @@
   (define (s-visitor s)
 
     (define (mark side)
-      (dis "mark " side dnl)
+      (blocking-dbg "mark " side dnl)
 
       (define (lab . x) `((label ,(tg 'next) ,@x)))
       
@@ -150,8 +150,8 @@
                               `(local-if (,G   ,true-clause )
                                          (else ,false-clause))))))
                   )
-             (dis "while may block : lab = " lab dnl)
-             (dis "while may block : " res dnl)
+             (blocking-dbg "while may block : lab = " lab dnl)
+             (blocking-dbg "while may block : " res dnl)
              res
              )
            s))
@@ -192,9 +192,9 @@
          (stmt          (get-loop-stmt  loop-stmt))
          )
 
-    (dis "unroll-parallel-loops : dummy         : " dummy dnl)
-    (dis "unroll-parallel-loops : loop-stmt     : " loop-stmt dnl)
-    (dis "unroll-parallel-loops : literal-range : " literal-range dnl)
+    (blocking-dbg "unroll-parallel-loops : dummy         : " dummy dnl)
+    (blocking-dbg "unroll-parallel-loops : loop-stmt     : " loop-stmt dnl)
+    (blocking-dbg "unroll-parallel-loops : literal-range : " literal-range dnl)
 
     (define (one-iteration i)
       (define (replace-dummy expr)
@@ -356,8 +356,8 @@
          (stmts    (map cadr (cdr lif)))
          (mstmts   (map (lambda(cmd)(extend-open-end cmd coda))
                         stmts)))
-    (dis "stuff-open-lif-clauses lif  = " lif dnl)
-    (dis "stuff-open-lif-clauses coda = " coda dnl)
+    (blocking-dbg "stuff-open-lif-clauses lif  = " lif dnl)
+    (blocking-dbg "stuff-open-lif-clauses coda = " coda dnl)
 
     (cons 'local-if (map list guards mstmts))
     

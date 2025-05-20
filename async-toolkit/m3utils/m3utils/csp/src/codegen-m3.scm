@@ -376,7 +376,7 @@
      (lambda(txt)
        (sa m3src " := " packer "(" txt" , " scrtch "x"  ")"))
      (sa m3tgt "." m3id)
-     adims
+     (- adims)
      'unpack_field
      )
     )
@@ -417,7 +417,7 @@
     ;; here we want to walk the fields, calling the type packer for
     ;; each field. (m3-make-pack-field)
     
-    (map (curry m3-make-unpack-field class m3tgt m3src) fields)
+    (map (curry m3-make-unpack-field class m3tgt m3src) (reverse fields))
     )
   )
 
@@ -1770,37 +1770,46 @@
     )
  )
 
-(define (m3-initialize-array format-init name dims dummy)
+(define (m3-initialize-array format-init name dimsarg dummy)
   ;;
   ;; name is the text name in m3 format
   ;; dims is the number of dimensions
   ;; dummy is the (symbol) prefix of the dummy
   ;; format-init takes one parameter, the name of the object to initialize
   ;;
-  (let loop ((i 0)
-             (what name)
-             (index "")
-             (indent "")
-             (prefix "")
-             (suffix "")
-             )
-    (cond ((= i dims) (sa prefix indent (format-init (sa name index)) suffix))
+  (let* ((dims (abs dimsarg))
+         (dir  (if (= dims dimsarg) 1 -1)))
 
-          (else
-           (let ((frst (sa "FIRST(" what ")")))
-             (loop
-              (+ i 1)
-              (sa what "[" frst "]")
-              (sa index "[" (symbol->string dummy) i "]")
-              (sa indent "  ")
-              (sa prefix 
-                  indent "FOR "(symbol->string dummy) i
-                  " :=  FIRST(" what ") TO LAST(" what ") DO" dnl)
-              (sa dnl indent "END"
-                  suffix))
-             );;tel
-           );;esle
-          );;dnoc
+    (let loop ((i 0)
+               (what name)
+               (index "")
+               (indent "")
+               (prefix "")
+               (suffix "")
+               )
+      (cond ((= i dims) (sa prefix indent (format-init (sa name index)) suffix))
+            
+            (else
+             (let ((frst (sa "FIRST(" what ")")))
+               (loop
+                (+ i 1)
+                (sa what "[" frst "]")
+                (sa index "[" (symbol->string dummy) i "]")
+                (sa indent "  ")
+                (sa prefix 
+                    indent "FOR "(symbol->string dummy) i
+                    (if (= dir 1)
+                        (sa " :=  FIRST(" what ") TO LAST(" what ") DO"
+                            dnl)
+                        (sa " :=  LAST(" what ") TO FIRST(" what ") BY -1 DO"
+                            dnl))
+                    )
+                (sa dnl indent "END"
+                    suffix))
+               );;tel
+             );;esle
+            );;dnoc
+      );;tel
     );;tel
   )
 

@@ -193,22 +193,24 @@ define PU(int W)()
     structure struct0 =
       (
        int(W) a;
-       int(W) b;
+       int(W) b[3];
        );
 
     struct0 s, t;
 
     s::a = 13;
-    s::b = 17;
+    s::b[0] = 17;
+    s::b[1] = 19;
+    s::b[2] = 23;
     
-    int(43) x;
+    int(62) x;
 
     x = pack(s);
     print("x=" + hex(x));
-    print("s=" + s::a + " " + s::b);
+    print("s=" + s::a + " " + s::b[0] + "," + s::b[1] + "," + s::b[2]);
 
     unpack(t, x);
-    print("t=" + t::a + " " + t::b);
+    print("t=" + t::a + " " + t::b[0] + "," + t::b[1] + "," + t::b[2]);
 
     x = pack(t);
     print("x=" + hex(x));
