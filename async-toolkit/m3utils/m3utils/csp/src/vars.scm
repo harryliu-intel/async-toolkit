@@ -399,6 +399,17 @@
              )
            s))
 
+      ((eval)
+       (if (and (eq? 'call-intrinsic (caadr s))
+                (eq? 'unpack (cadadr s))
+                (member (get-designator-id (caddadr s)) ids))
+           (begin
+             (dis "delete-referencing-stmts : unpack   : " s dnl)
+             'skip
+             )
+           s)
+       )
+      
       ((recv)
        (let ((rhs (get-recv-rhs s)))
          (if (and (not (null? rhs))
