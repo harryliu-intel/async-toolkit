@@ -116,6 +116,42 @@
   (visit-stmt prog visitor identity identity)
   )
 
+(define *pack* #f)
+
+(define (insert-pack-copies prog)
+  (define tg (make-name-generator "pack-copy"))
+  
+  (define (visitor s)
+    (if (eq? 'assign (get-stmt-type s))
+        (let* ((lhs (get-assign-lhs s))
+               (rhs (get-assign-rhs s)))
+          
+          (dis "visitor : eval : " s dnl)
+          (if (and (list? rhs)
+                   (eq? 'call-intrinsic (car rhs))
+                   (eq? 'pack (cadr rhs)))
+
+              (let* ((src   (caddr rhs))
+                     (newid (tg 'next))
+                     (decl  (make-var1-decl newid *default-int-type*))
+                     (ass   `(assign ,lhs (id ,newid)))
+                     (seq   `(sequence ,decl
+                                       (assign (id ,newid)
+                                               (call-intrinsic pack ,src))
+                                       ,ass)))
+
+                (set! *pack* s)
+                seq)
+
+              s
+              );;fi
+          );;*tel
+        s);;fi
+    )
+  
+  (visit-stmt prog visitor identity identity)
+  )
+
 (define (make-asses prog)
   (make-assignments-tbl prog *cellinfo* *the-inits* '() *the-struct-tbl*))
          

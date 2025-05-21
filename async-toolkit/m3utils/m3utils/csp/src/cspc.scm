@@ -1882,7 +1882,7 @@
          )
         )
   (set! text5.2
-        (simplify-stmt (insert-unpack-copies text5.1))
+        (simplify-stmt (insert-pack-copies (insert-unpack-copies text5.1)))
         )
   (make-the-tables text5.2)
   (seed-integer-ranges!)

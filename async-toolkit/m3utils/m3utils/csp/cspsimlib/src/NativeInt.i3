@@ -24,6 +24,6 @@ CONST One  = 1;
 
 PROCEDURE Hex(a : T) : TEXT;
 
-CONST ConvertDynamicInt = Mpz.ToInteger;
+PROCEDURE ConvertDynamicInt(scratch, from : Mpz.T) : T;
   
 END NativeInt.

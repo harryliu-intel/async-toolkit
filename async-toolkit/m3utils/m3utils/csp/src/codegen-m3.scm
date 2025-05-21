@@ -248,7 +248,9 @@
     (w
      "    RETURN x" dnl
      "  END " m3nm "_unpack_dynamic;" dnl
-       dnl
+     dnl
+     "CONST " m3nm "_unpack_wide = " m3nm "_unpack_dynamic;" dnl
+     dnl
        )
     
     (w "PROCEDURE " m3nm "_unpack_native(VAR s : " m3nm "; x : NativeInt.T) : NativeInt.T =" dnl
@@ -271,7 +273,9 @@
     (w
      "    RETURN x" dnl
      "  END " m3nm "_pack_dynamic;" dnl
-       dnl
+     dnl
+     "CONST " m3nm "_pack_wide = " m3nm "_pack_dynamic;" dnl
+     dnl
        )
 
     (w "PROCEDURE " m3nm "_pack_native(x : NativeInt.T; READONLY s : " m3nm ") : NativeInt.T =" dnl
@@ -1396,7 +1400,7 @@
       
       (sa (get-m3-int-intf to) ".Convert" (get-m3-int-intf from)
           "("
-          (if (member to '(dynamic wide)) (sa m3scratch ", ") "")
+          (sa m3scratch ", ") 
           arg
           ")"
           )
@@ -1778,7 +1782,7 @@
   ;; format-init takes one parameter, the name of the object to initialize
   ;;
   (let* ((dims (abs dimsarg))
-         (dir  (if (= dims dimsarg) 1 -1)))
+         (dir  (if (= dims dimsarg) -1 1)))
 
     (let loop ((i 0)
                (what name)
@@ -3022,7 +3026,10 @@
                (hi-txt (BigInt.FormatLiteral (cadr range) 16))
                ) 
           (iw
-           "TYPE T = [ " lo-txt " .. " hi-txt " ];" dnl
+           (if (and (eq? intf-kind 'SInt) (= intf-width 64))
+               (sa "TYPE T = INTEGER;" dnl)
+               (sa "TYPE T = [ " lo-txt " .. " hi-txt " ];" dnl)
+               )
            dnl
            "CONST Wide     = FALSE;" dnl
            dnl

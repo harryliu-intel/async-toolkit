@@ -202,10 +202,13 @@ define PU(int W)()
     s::b[0] = 17;
     s::b[1] = 19;
     s::b[2] = 23;
-    
+
+    int y;
     int(62) x;
 
+    y = pack(s);
     x = pack(s);
+    print("y=" + hex(y));
     print("x=" + hex(x));
     print("s=" + s::a + " " + s::b[0] + "," + s::b[1] + "," + s::b[2]);
 
@@ -217,3 +220,53 @@ define PU(int W)()
   }
 }
     
+define NARROW()()
+{
+  int W = 32;
+  csp {
+    structure struct0 =
+      (
+       int(W) a;
+       int(W) b[3];
+       );
+    
+    struct0 s;
+    
+    s::a = 13;
+    s::b[0] = 17;
+    s::b[1] = 19;
+    s::b[2] = 23;
+
+    int(63) x;
+
+    x = pack(s);
+
+    print("x=" + hex(x));
+  }
+}
+
+define NARROWER()()
+{
+  int W = 12;
+  csp {
+    structure struct0 =
+      (
+       int(W) a;
+       int(W) b[3];
+       );
+    
+    struct0 s;
+    
+    s::a = 13;
+    s::b[0] = 17;
+    s::b[1] = 19;
+    s::b[2] = 23;
+
+    int(62) x;
+
+    x = pack(s);
+
+    print("x=" + hex(x));
+  }
+}
+        
