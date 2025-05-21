@@ -429,107 +429,100 @@
 
 (define (m3-make-init-field pc m3tgt fd)
   (let* ((ty     (get-decl1-type fd))
+         (aty    (array-base-type ty))
          (id     (get-decl1-id fd))
          (m3id   (m3-ident id))
+         (iv     (get-decl1-init fd))
+         (adims  (array-dims ty))
          )
-    (if (struct-type? ty)
-
-        (let* ((snm    (struct-type-name ty))
+          
+    (define (m3init t)
+      (cond
+       ((struct-type? aty)
+        (let* ((snm    (struct-type-name aty))
                (m3snm  (m3-struct snm))
                )
-          (sa m3snm "_initialize(" m3tgt "." m3id ")")
+          (sa m3snm "_initialize(" t ")")
           );;tel*
+        )
+       
+       ((null? iv) ;; iv is *always* null for arrays 
+        (sa t ":= " (m3-default-init-value aty)))
 
-        
-        (let* (
-               (iv     (get-decl1-init fd))
-               
-               (aty    (array-base-type ty))
-               (adims  (array-dims ty))
-               
-               (m3init (sa
-                        (if (null? iv)
-                            (m3-default-init-value aty)
-                            (cond ((string-type? ty) (sa "\"" iv "\""))
-                                  ((boolean-type? ty)
-                                   (if iv "TRUE" "FALSE"))
-                                  ((m3-natively-representable-type? ty)
-                                   (m3-native-literal iv))
-                                  ((integer-type? ty)
-                                   (make-dynamic-constant! pc iv))
-                                  
-                                  (else (error "m3-make-init-field : can't initialize type : " ty dnl))
-                                  );;dnoc
-                            )
-
-                        " (*" (stringify aty) "*)"))
-               )
-          ;; If it is an array, we need to build the array calls
-          ;; using the code from m3-initialize-array
-          
-          (m3-initialize-array
-           (lambda(txt)
-             (sa txt " := " m3init))
-           (sa m3tgt "." m3id)
-           adims
-           'init_field
-           )
-          );;*tel
-        
-        );;fi
-    );;*tel
+       ;; below here, not an array, so aty = ty
+       ((string-type? ty) (sa t ":= \"" iv "\""))
+       
+       ((boolean-type? ty)
+        (sa t " := " (if iv "TRUE" "FALSE")))
+       
+       ((m3-natively-representable-type? ty)
+        (sa t " := " (m3-native-literal iv)))
+       
+       ((integer-type? ty)
+        (sa t " := Mpz.New(); "
+            "Mpz.set(" t ", " (make-dynamic-constant! pc iv) ")"))
+       
+       (else (error "m3-make-init-field : can't initialize type : " ty dnl))
+       );;dnoc
+      );;enifed
+    
+  
+  ;; If it is an array, we need to build the array calls
+  ;; using the code from m3-initialize-array
+  
+  (m3-initialize-array
+   m3init
+   (sa m3tgt "." m3id)
+   adims
+   'init_field
+   )
+  );;*tel
   )
 
 (define (m3-make-assign-field pc m3tgt m3src fd)
+  (dis "m3-make-assign-field : m3tgt : " m3tgt dnl)
+  (dis "m3-make-assign-field : m3src : " m3src dnl)
+  (dis "m3-make-assign-field : fd    : " fd dnl)
   (let* ((ty     (get-decl1-type fd))
+         (aty    (array-base-type ty))
          (id     (get-decl1-id fd))
          (m3id   (m3-ident id))
+         (iv     (get-decl1-init fd))
+         (adims  (array-dims ty))
          )
-    (if (struct-type? ty)
-
-        (let* ((snm    (struct-type-name ty))
+    
+    (define (m3ass t s)
+      (cond
+       ((struct-type? aty)
+        
+        (let* ((snm    (struct-type-name aty))
                (m3snm  (m3-struct snm))
                )
-          (sa m3snm "_assign(" m3tgt "." m3id " , " m3src "." m3id  ")")
+          (sa m3snm "_assign(" t " , " s ")")
           );;tel*
-
+        )
+       
+       ((and
+         (integer-type? aty)
+         (not 
+          (m3-natively-representable-type? aty)))
         
-        (let* (
-               (iv     (get-decl1-init fd))
-               
-               (aty    (array-base-type ty))
-               (adims  (array-dims ty))
-               
-               (m3init (sa
-                        (cond ((and
-                                (integer-type? ty)
-                                (not 
-                                 (m3-natively-representable-type? ty)))
-                               
-                               (sa "Mpz.set(tgt." m3id " , src." m3id ")"))
-                              
-                              (else (sa "tgt." m3id " := src." m3id))
-                              );;dnoc
-                            )
-
-                       " (*" (stringify aty) "*)"
-                       )
-                       
-               )
-               
-          ;; If it is an array, we need to build the array calls
-          ;; using the code from m3-initialize-array
-          
-          (m3-initialize-array
-           (lambda(txt)
-             (sa (CitTextUtils.ReplacePrefix txt m3src m3tgt ) " := " txt))
-           (sa "src." m3id)
-           adims
-           'assign_field
-           )
-          );;*tel
-        
-        );;fi
+        (sa "Mpz.set(" t " , " s ")"))
+       
+       (else (sa t " := " s ))
+       );;dnoc
+      );;enifed
+    
+    ;; If it is an array, we need to build the array calls
+    ;; using the code from m3-initialize-array
+    
+    (m3-initialize-array
+     (lambda(txt)
+       (m3ass (CitTextUtils.ReplacePrefix txt m3src m3tgt) txt))
+     (sa m3src "." m3id)
+     adims
+     'assign_field
+     )
     );;*tel
   )
 
@@ -1596,8 +1589,15 @@
          (an-ass  (car (*the-ass-tbl* 'retrieve tgt))))
     `(,ass-stmt ,(cadr an-ass) ,(caddr an-ass) ,(cadddr an-ass))))
 
+(define dynamic-constant-count 0)
+
 (define (make-dynamic-constant! pc bigint)
-  (let ((nam (M3Ident.Escape (sa "constant" (stringify bigint)))))
+  (let ((nam
+         (M3Ident.Escape (sa "constant"
+                             (let ((id dynamic-constant-count))
+                               (set! dynamic-constant-count
+                                     (+ 1 dynamic-constant-count))
+                               id)))))
     ((pc-constants pc) 'update-entry! nam bigint)
     nam
     )

@@ -12,7 +12,7 @@ PROCEDURE ToInteger(t : T) : INTEGER =
 PROCEDURE unpack_dynamic(VAR t : T; x, scratch : DynamicInt.T) : DynamicInt.T =
   BEGIN
     Mpz.and(scratch, x, MpzMask);
-    t := Mpz.ToInteger(x) = 1;
+    t := Mpz.ToInteger(scratch) = 1;
     Mpz.RightShift(x, x, Width);
     RETURN x
   END unpack_dynamic;

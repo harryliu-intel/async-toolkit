@@ -136,7 +136,7 @@ define WORKER()(bd(W) -STRT; bd(STATUSW) +STATUS) <+ common
     STRT?id;
     print ("id = " + id);
     
-    *[
+    *[ id == 0 ->
       int(W) idx = i * NWORKERS + id; // this is the index of the odd number
       int(W) num = 2 * idx + 1;       // this is the actual number we shall work on
       int(W) len = 0;
@@ -221,15 +221,18 @@ define SMERGE()(bd(STATUSW) -L[0..1], +R) <+ common
 
     function checksend(status +-os, +-s) =
       (
-       print ("checksend : os-interval " + (os::ops % INTERVAL) +
-              " s-interval " + (s::ops % INTERVAL) + " os-length " +
-              os::l::length + " s-length " + s::l::length);
+       //       print ("in checksend s::ops=" + s::ops + " os::ops=" + os::ops);
+       //       print ("checksend : os-interval " + (os::ops % INTERVAL) +
+       //              " s-interval " + (s::ops % INTERVAL) + " os-length " +
+       //              os::l::length + " s-length " + s::l::length);
 
        #[ (os::ops % INTERVAL != s::ops % INTERVAL)
           ||
           os::l::length != s::l::length ->
        print ("sending s : " + fmtStatus(s));
-       R!s; s::ops = 0, os = s
+       R!s; s::ops = 0; os = s;
+
+       //       print ("s::ops=" + s::ops + " os::ops=" + os::ops);
           ]
        );
       
@@ -239,15 +242,18 @@ define SMERGE()(bd(STATUSW) -L[0..1], +R) <+ common
     *[
       //      print("start");
       status os = s;
+      print ("at start s::ops=" + s::ops + " os::ops=" + os::ops);
       [
-       #L[0] & #L[1] -> recv(0,s); recv(1,s)
-       :
+       //       #L[0] & #L[1] -> recv(0,s); recv(1,s)
+       //       :
        #L[0] -> recv(0,s)
-       :
-       #L[1] -> recv(1,s)
+       //       :
+       //       #L[1] -> recv(1,s)
        ];
       //      print("received");
-      checksend(os, s)
+      print ("pre checksend s::ops=" + s::ops + " os::ops=" + os::ops);
+      checksend(os, s);
+      
       ]
   }
 }
