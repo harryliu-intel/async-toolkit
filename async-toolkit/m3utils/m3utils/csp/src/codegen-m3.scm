@@ -961,6 +961,7 @@
                       (iiw "       name    := \"" lab "\"," dnl)
                       (iiw "       id      := Process.NextId()," dnl)
                       (iiw "       frameId := frame.id," dnl)
+                      (iiw "       fr      := frame," dnl)
                       (iiw "       frame   := frame," dnl)
                       (iiw "       block   := Block_" m3lab "_" i ")"
                            (if (= i (- (cdr count) 1)) "" ",") ;; blah!
@@ -977,6 +978,7 @@
                    (iiw "        name    := \"" lab "\"," dnl)
                    (iiw "        id      := Process.NextId()," dnl)
                    (iiw "        frameId := frame.id," dnl)
+                   (iiw "        fr      := frame," dnl)
                    (iiw "        frame   := frame," dnl)
                    (iiw "        block   := Block_" m3lab ");" dnl dnl)
                    )
@@ -2705,7 +2707,7 @@
     (set! *pd* port-def)
 
     (m3-initialize-array
-     (lambda(txt) (sa port-typenam "." whch "(" txt "^)"))
+     (lambda(txt) (sa port-typenam "." whch "(" txt "^ , cl)"))
      m3-pname
      adims
      'lock
@@ -2762,7 +2764,7 @@
 
     (m3-initialize-array
      (lambda(txt)
-       (sa "IF " port-typenam ".Ready(" txt "^) THEN INC(ready) END" dnl)
+       (sa "IF " port-typenam ".Ready(" txt "^ , cl) THEN INC(ready) END" dnl)
        )
      m3-pname
      adims

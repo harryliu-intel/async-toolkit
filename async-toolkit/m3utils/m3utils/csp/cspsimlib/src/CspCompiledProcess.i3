@@ -10,6 +10,7 @@ TYPE
   Closure = OBJECT
     name      : TEXT;
     id        : CARDINAL;
+    fr        : Frame; (* non-specific -- subtype includes subtyped Frame *)
     frameId   : CARDINAL;
     scheduled : Word.T := -1; (* last time it was scheduled *)
   METHODS

@@ -367,8 +367,34 @@ define Y()(bd(32) -L[0..1])
 {
   csp {
     *[  #L[0] -> print ( L[0]? )
-     [] #L[0] -> print ( L[1]? )
+     [] #L[1] -> print ( L[1]? )
      ]
+  }
+}
+
+define YY()(bd(WIDTH) -L[0..1])
+{
+  csp {
+    *[[  #L[0] -> print ( L[0]? )
+      :  #L[1] -> print ( L[1]? )
+     ]]
+  }
+}
+
+define GEN(int i)(bd(WIDTH) +R)
+{
+  csp { *[ R!i ] }
+}
+
+define YYS()()
+{
+  subcells {
+    bd(WIDTH) c[0..1];
+
+    YY     yy(c);
+    GEN(0) g0(c[0]);
+    GEN(1) g1(c[1]);
+
   }
 }
     

@@ -1,6 +1,6 @@
 module collatz;
 
-int NWORKERS = 1;
+int NWORKERS = 2;
 int W        = 61;
 
 int STATUSW = 128 + 2 * W; // why can't this go in attributes cell?

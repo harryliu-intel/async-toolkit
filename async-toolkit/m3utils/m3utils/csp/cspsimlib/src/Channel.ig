@@ -58,9 +58,9 @@ PROCEDURE ChanDebug(READONLY chan : T) : TEXT;
 
 PROCEDURE New(nm : TEXT; slack : CARDINAL := 0) : REF T;
 
-PROCEDURE Lock  (VAR c : T);
-PROCEDURE Unlock(VAR c : T);
-PROCEDURE Ready (VAR c : T) : BOOLEAN;
+PROCEDURE Lock  (VAR c : T; cl : Process.Closure);
+PROCEDURE Unlock(VAR c : T; cl : Process.Closure);
+PROCEDURE Ready (VAR c : T; cl : Process.Closure) : BOOLEAN;
 PROCEDURE Wait  (VAR c : T; cl : Process.Closure);
 PROCEDURE Unwait(VAR c : T; cl : Process.Closure);
   
