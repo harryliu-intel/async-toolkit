@@ -2727,9 +2727,11 @@
         (if (null? p)
             (sa res
                 "IF ready = 0 THEN" dnl
+                (m3-compile-wait pc `(XXX ,@ports)) ";" dnl
                 "  RETURN FALSE" dnl
                 "ELSE" dnl
-                (m3-compile-unlock pc `(unlock ,@ports)) dnl
+                (m3-compile-unwait pc `(XXX ,@ports)) ";" dnl
+                (m3-compile-unlock pc `(XXX ,@ports)) dnl
                 "END" dnl
                 "END" dnl)
             (let* ((port-des `(id ,(car p)))
@@ -2773,9 +2775,15 @@
     )
   )
 
-(define m3-compile-lock (curry m3-compile-lock-unlock "Lock"))
+(define m3-compile-lock   (curry m3-compile-lock-unlock "Lock"))
 
 (define m3-compile-unlock (curry m3-compile-lock-unlock "Unlock"))
+
+(define m3-compile-wait   (curry m3-compile-lock-unlock "Wait"))
+
+(define m3-compile-unwait (curry m3-compile-lock-unlock "Unwait"))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   
 (define (m3-compile-local-if pc stmt)
 
@@ -2909,7 +2917,8 @@
   (dis (get-block-label blk) dnl)
   (dis "m3-write-block : blk : " (stringify blk) dnl)
   (dis "m3-write-block : lab : " (stringify m3-label) dnl)
-  (let* ((btag        m3-label)
+  (let* ((lab         (cadr (get-block-label blk)))
+         (btag        m3-label)
          (bnam        (string-append "Block_" btag))
          (the-code    (cddr (filter-out-var1s blk)))
 
@@ -2945,8 +2954,11 @@
 
     (w
      "  BEGIN" dnl
-     "    WITH frame = cl.frame DO" dnl)
-
+     "    WITH frame = cl.frame DO" dnl
+     "      IF CspDebug.DebugSchedule THEN" dnl
+     "         Debug.Out(Fmt.F(\"start %s:"lab"\" , frame.name))" dnl
+     "      END;" dnl
+     )
     ;; init local structs
     (map w (map m3-format-struct-init
                 (map get-var1-id structs)
@@ -3318,6 +3330,7 @@
         "CONST DebugRecv = FALSE;" dnl
         "CONST DebugSend = FALSE;" dnl
         "CONST DebugProbe = FALSE;" dnl
+        "CONST DebugSchedule = FALSE;" dnl
         "END CspDebug." dnl
         )
 )

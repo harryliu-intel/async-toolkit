@@ -221,7 +221,7 @@ define SMERGE()(bd(STATUSW) -L[0..1], +R) <+ common
       print("stsrt");
       status os = s;
       [
-       #L[0] && #L[1] -> recv(0,s); recv(1,s)
+       #L[0] & #L[1] -> recv(0,s); recv(1,s)
        :
        #L[0] -> recv(0,s)
        :

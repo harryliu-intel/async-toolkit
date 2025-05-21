@@ -1943,12 +1943,10 @@
 
 (define (write-object fn obj)
   (let* ((wr (FileWr.Open fn)))
-    (dis (stringify obj) wr)
+    (display (stringify obj) wr)
     (Wr.Close wr)
     )
   )
-  
-
 
 (define (mn) (make-name-generator "t"))
 

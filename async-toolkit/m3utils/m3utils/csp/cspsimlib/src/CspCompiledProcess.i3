@@ -22,6 +22,5 @@ CONST Brand = "CspCompiledProcess";
 PROCEDURE NextId() : CARDINAL;
 
 PROCEDURE NextFrameId() : CARDINAL;
-
       
 END CspCompiledProcess.

@@ -39,7 +39,7 @@ PROCEDURE Send(VAR      c : T;
        (it's one bigger than the slack)  *)
       IF sendDebug THEN
         Debug.Out(F("%s : %s Send called : %s",
-                    Int(cl.frameId), c.nm,
+                    DebugClosure(cl), c.nm,
                     ChanDebug(c)))
         END;
        
@@ -60,7 +60,7 @@ PROCEDURE Send(VAR      c : T;
 
       IF c.waiter = NIL THEN
         IF sendDebug THEN
-          Debug.Out(F("%s : %s Send wait", Int(cl.frameId), c.nm))
+          Debug.Out(F("%s : %s Send wait", DebugClosure(cl), c.nm))
         END;
         
         <*ASSERT c.waiter = NIL OR c.waiter = cl*>
@@ -71,8 +71,8 @@ PROCEDURE Send(VAR      c : T;
         IF sendDebug THEN
           Debug.Out(
               F("%s : %s Send schedule reader %s",
-                Int(cl.frameId), c.nm, 
-                Int(c.waiter.id))
+                DebugClosure(cl), c.nm, 
+                DebugClosure(c.waiter))
           )
         END;
         Scheduler.Schedule(c.waiter);
@@ -84,7 +84,7 @@ PROCEDURE Send(VAR      c : T;
         IF c.wr = c.slack + 1 THEN c.wr := 0 END;
         IF sendDebug THEN
           Debug.Out(F("%s : %s Send/full go : %s",
-                      Int(cl.frameId), c.nm, 
+                      DebugClosure(cl), c.nm, 
                       ChanDebug(c)))
         END;
 
@@ -99,7 +99,7 @@ PROCEDURE Send(VAR      c : T;
 
       IF sendDebug THEN
           Debug.Out(F("%s : %s Send go : %s",
-                      Int(cl.frameId), c.nm, 
+                      DebugClosure(cl), c.nm, 
                       ChanDebug(c)))
       END;
 
@@ -109,8 +109,8 @@ PROCEDURE Send(VAR      c : T;
         <*ASSERT c.waiter.frameId = c.reader.id*>
         IF sendDebug THEN
           Debug.Out(F("%s : %s Send schedule : %s",
-                      Int(cl.frameId), c.nm, 
-                      Int(c.waiter.frameId)))
+                      DebugClosure(cl), c.nm, 
+                      DebugClosure(c.waiter)))
         END;
         Scheduler.Schedule(c.waiter);
         c.waiter := NIL
@@ -124,6 +124,18 @@ PROCEDURE Send(VAR      c : T;
      Schedule = we know it CAN run
      Release  = we know it MAY run
   *)
+
+PROCEDURE DebugClosure(cl : Process.Closure) : TEXT =
+  BEGIN
+    IF cl = NIL THEN
+      RETURN "NIL"
+    ELSE
+      RETURN F("%s %s:%s",
+               Int(cl.frameId),
+               cl.fr.name,
+               cl.name)
+    END
+  END DebugClosure;
   
 PROCEDURE RecvProbe(VAR c : T; cl : Process.Closure) : BOOLEAN =
   VAR
@@ -152,7 +164,7 @@ PROCEDURE RecvProbe(VAR c : T; cl : Process.Closure) : BOOLEAN =
       
       IF probDebug THEN
         Debug.Out(F("%s : %s RecvProbe : return %s state %s",
-                    Int(cl.frameId), c.nm, 
+                    DebugClosure(cl), c.nm, 
                     Bool(res),
                     ChanDebug(c)))
       END;
@@ -184,7 +196,7 @@ PROCEDURE Recv(VAR      c : T;
         (* channel is empty -- just block *)
         IF recvDebug THEN
           Debug.Out(F("%s : %s Recv : wait %s",
-                      Int(cl.frameId), c.nm, 
+                      DebugClosure(cl), c.nm, 
                       ChanDebug(c)))
         END;
 
@@ -197,7 +209,7 @@ PROCEDURE Recv(VAR      c : T;
 
         IF recvDebug THEN
           Debug.Out(F("%s : %s Recv go : %s",
-                      Int(cl.frameId), c.nm, 
+                      DebugClosure(cl), c.nm, 
                       ChanDebug(c)))
         END;
 
@@ -211,8 +223,8 @@ PROCEDURE Recv(VAR      c : T;
           <*ASSERT c.waiter.frameId = c.writer.id *>
           IF recvDebug THEN
             Debug.Out(F("%s : %s Recv : schedule %s",
-                        Int(cl.frameId), c.nm, 
-                        Int(c.waiter.frameId)))
+                        DebugClosure(cl), c.nm, 
+                        DebugClosure(c.waiter)))
           END;
           Scheduler.Schedule(c.waiter);
           c.waiter := NIL 
@@ -230,9 +242,9 @@ PROCEDURE ChanDebug(READONLY chan : T) : TEXT =
     IF chan.waiter = NIL THEN
       waiterStr := "NIL"
     ELSIF chan.waiter.frameId = chan.writer.id THEN
-      waiterStr := "writer " & chan.waiter.fr.name
+      waiterStr := "writer " & chan.waiter.fr.name & ":" & chan.waiter.name
     ELSIF chan.waiter.frameId = chan.reader.id THEN
-      waiterStr := "reader " & chan.waiter.fr.name
+      waiterStr := "reader " & chan.waiter.fr.name & ":" & chan.waiter.name
     ELSE
       Debug.Error("Interloper waiting on channel : " & chan.waiter.fr.name)
     END;
@@ -313,7 +325,7 @@ PROCEDURE Lock  (VAR c : T; cl : Process.Closure) =
   BEGIN
     IF seleDebug THEN
       Debug.Out(F("%s : %s Lock %s",
-                  Int(cl.frameId), c.nm, 
+                  DebugClosure(cl), c.nm, 
                   cl.name))
     END;
     c.lockwr := c.wr; c.lockrd := c.rd
@@ -323,7 +335,7 @@ PROCEDURE Unlock(VAR c : T; cl : Process.Closure) =
   BEGIN
     IF seleDebug THEN
       Debug.Out(F("%s : %s Unlock %s",
-                  Int(cl.frameId), c.nm, 
+                  DebugClosure(cl), c.nm, 
                   cl.name))
     END;
 
@@ -334,11 +346,12 @@ PROCEDURE Ready (VAR c : T; cl : Process.Closure) : BOOLEAN =
   BEGIN
     WITH res = c.lockwr # c.wr OR c.lockrd # c.rd DO
       IF seleDebug THEN
-        Debug.Out(FN("%s : %s Ready %s : lockwr = %s wr = %s ; lockrd = %s rd = %s",
-                    TA{Int(cl.frameId), c.nm, 
+        Debug.Out(FN("%s : %s Ready %s : lockwr = %s wr = %s ; lockrd = %s rd = %s -> res = %s",
+                    TA{DebugClosure(cl), c.nm, 
                        cl.name,
                        Int(c.lockwr), Int(c.wr),
-                       Int(c.lockrd), Int(c.rd) }
+                       Int(c.lockrd), Int(c.rd),
+                       Bool(res)}
                        ))
       END;
       RETURN res
@@ -349,7 +362,7 @@ PROCEDURE Wait  (VAR c : T; cl : Process.Closure) =
   BEGIN
     IF seleDebug THEN
       Debug.Out(F("%s : %s Wait %s",
-                  Int(cl.frameId), c.nm, 
+                  DebugClosure(cl), c.nm, 
                   cl.name))
     END;
     c.waiter := cl
@@ -359,10 +372,10 @@ PROCEDURE Unwait  (VAR c : T; cl : Process.Closure) =
   BEGIN
     IF seleDebug THEN
       Debug.Out(F("%s : %s Unwait %s",
-                  Int(cl.frameId), c.nm, 
+                  DebugClosure(cl), c.nm, 
                   cl.name))
     END;
-    <*ASSERT c.waiter = cl*> c.waiter := NIL
+    <*ASSERT c.waiter = NIL OR c.waiter = cl*> c.waiter := NIL
   END Unwait;
   
 BEGIN END Channel.
