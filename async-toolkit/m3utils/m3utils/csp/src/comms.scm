@@ -10,12 +10,15 @@
               (let*
                   ((tempnam (tg 'next))
                    (newvar  (make-var1-decl tempnam *default-int-type*))
-                   (newass  `(eval (call-intrinsic pack (id ,tempnam) ,rhs)))
+                   (newass  `(assign (id ,tempnam)
+                                     (call-intrinsic pack ,rhs)))
                    (newsend (make-send lhs `(id ,tempnam)))
+                   (res     (list 'sequence newvar newass newsend))
                    )
                    
                 (define-var! syms tempnam *default-int-type*)
-                (list 'sequence newvar newass newsend)
+                (dis "convert-send-struct : " s " -> " res dnl)
+                res
                 )
               s
               )
@@ -37,12 +40,14 @@
               (let*
                   ((tempnam (tg 'next))
                    (newvar  (make-var1-decl tempnam *default-int-type*))
-                   (newass  `(eval (call-intrinsic unpack ,rhs (id ,tempnam))))
                    (newrecv `(recv ,lhs (id ,tempnam)))
+                   (newass  `(eval (call-intrinsic unpack ,rhs (id ,tempnam))))
+                   (res     (list 'sequence newvar newrecv newass))
                    )
                    
                 (define-var! syms tempnam *default-int-type*)
-                (list 'sequence newvar newrecv newass)
+                (dis "convert-recv-struct : " s " -> " res dnl)
+                res
                 )
               s
               )

@@ -21,5 +21,9 @@ CONST ConvertDynamicInt = ConvertWideInt; (* dumb *)
 PROCEDURE FromWordArray(VAR t : T; READONLY a : ARRAY OF Word.T);
 
 PROCEDURE ToWordArray(READONLY t : T; VAR a : ARRAY OF Word.T);
-     
+
+(* CSP style division defines that x/0 is zero and x%0 is x, implement blo: *)
+PROCEDURE Remainder (f0 : T; f1 : T; f2 : T);
+PROCEDURE Quotient (f0 : T; f1 : T; f2 : T);
+
 END DynamicInt.

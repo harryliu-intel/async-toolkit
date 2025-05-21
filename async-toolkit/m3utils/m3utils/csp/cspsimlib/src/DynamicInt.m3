@@ -32,8 +32,29 @@ PROCEDURE ToWordArray(READONLY t : T; VAR a : ARRAY OF Word.T) =
     END;
     Mpz.Export(a, t)
   END ToWordArray;
+
+PROCEDURE Remainder (f0 : T; f1 : T; f2 : T) =
+  BEGIN
+    IF Mpz.cmp(f2, Zero) = 0 THEN
+      Mpz.set(f0, f1)
+    ELSE
+      Mpz.tdiv_r(f0, f1, f2)
+    END
+  END Remainder;
   
-BEGIN END DynamicInt.
+PROCEDURE Quotient (f0 : T; f1 : T; f2 : T) =
+  BEGIN
+    IF Mpz.cmp(f2, Zero) = 0 THEN
+      Mpz.set(f0, Zero)
+    ELSE
+      Mpz.tdiv_r(f0, f1, f2)
+    END
+  END Quotient;
+
+VAR
+  Zero := Mpz.NewInt(0);
+BEGIN
+END DynamicInt.
 
 
 

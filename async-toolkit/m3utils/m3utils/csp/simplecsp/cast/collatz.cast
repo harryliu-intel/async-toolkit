@@ -4,7 +4,7 @@ int NWORKERS = 2;
 int W        = 61;
 
 int STATUSW = 128 + 2 * W; // why can't this go in attributes cell?
-int INTERVAL = 1000;
+int INTERVAL = 10000;
 
 define common attributes {
   csp {
@@ -155,10 +155,12 @@ define WORKER()(bd(W) -STRT; bd(STATUSW) +STATUS) <+ common
       
       [  len > maxlen ->
          maxlen = len;
-         sendStatus(len, snum, steps)
+         sendStatus(len, snum, steps);
+         steps = 0
          
       [] (len <= maxlen) && (i % 1000 == 0)    ->
-         sendStatus(0, 0, steps)
+         sendStatus(0, 0, steps);
+         steps = 0
 
       [] else -> skip   
       ];
@@ -170,8 +172,11 @@ define WORKER()(bd(W) -STRT; bd(STATUSW) +STATUS) <+ common
 define MANAGER()(bd(W) +STRT; bd(STATUSW) -STATUS) <+ common
 {
   csp {
+    int ops;
     STRT!0;
     status save;
+
+    int start = walltime();
     
     *[ STATUS?x ;
        status s;
@@ -180,9 +185,17 @@ define MANAGER()(bd(W) +STRT; bd(STATUSW) -STATUS) <+ common
 
        #[ s::l::num != 0 -> save = s ];
        
-       print ("STATUS? ( ops = " + s::ops +
+       print ("STATUS? " + fmtStatus(s) + " ( ops = " + s::ops +
               " ; num = " + save::l::num +
-              " ; chain = " + save::l::length + " )") ]
+              " ; chain = " + save::l::length + " )");
+
+       ops += s::ops;
+
+       int runtime = walltime() - start;
+       int runtime_s = runtime / (1000*1000*1000);
+       
+       print("total ops = " + ops + " ops/s = " + (ops/runtime_s))
+       ]
   }
 
 }
@@ -197,6 +210,7 @@ define SMERGE()(bd(STATUSW) -L[0..1], +R) <+ common
 
        status q;
        unpack(q, xs);
+       print ("recv " + fmtStatus(q));
 
        #[ q::l::length > s::l::length ->
           s::l = q::l
@@ -205,12 +219,17 @@ define SMERGE()(bd(STATUSW) -L[0..1], +R) <+ common
        s::ops += q::ops;
        );
 
-    function checksend(status -os, -s) =
+    function checksend(status +-os, +-s) =
       (
+       print ("checksend : os-interval " + (os::ops % INTERVAL) +
+              " s-interval " + (s::ops % INTERVAL) + " os-length " +
+              os::l::length + " s-length " + s::l::length);
+
        #[ (os::ops % INTERVAL != s::ops % INTERVAL)
           ||
           os::l::length != s::l::length ->
-          R!s; s::ops = 0
+       print ("sending s : " + fmtStatus(s));
+       R!s; s::ops = 0, os = s
           ]
        );
       
@@ -218,7 +237,7 @@ define SMERGE()(bd(STATUSW) -L[0..1], +R) <+ common
     status s;
     
     *[
-      print("stsrt");
+      //      print("start");
       status os = s;
       [
        #L[0] & #L[1] -> recv(0,s); recv(1,s)
@@ -227,9 +246,49 @@ define SMERGE()(bd(STATUSW) -L[0..1], +R) <+ common
        :
        #L[1] -> recv(1,s)
        ];
-      print("received");
+      //      print("received");
       checksend(os, s)
       ]
+  }
+}
+
+define SEND()(bd(STATUSW) +R) <+ common
+{
+  csp {
+    status s;
+    s::ops       = 11;
+    s::l::num    = 13;
+    s::l::length = 17;
+
+    R!s;
+
+    int x;
+    x = pack(s);
+
+    R!x
+  }
+}
+
+define RECV()(bd(STATUSW) -L) <+ common
+{
+  csp {
+    *[
+    int x;
+    L?x;
+    status s;
+    unpack(s, x);
+    print(fmtStatus(s));
+    ]
+  }
+}
+
+define SYS()()
+{
+  subcells {
+    bd(STATUSW) c;
+
+    SEND send(c);
+    RECV recv(c);
   }
 }
 
