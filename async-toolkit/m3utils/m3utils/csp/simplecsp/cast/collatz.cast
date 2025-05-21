@@ -169,33 +169,49 @@ define WORKER()(bd(W) -STRT; bd(STATUSW) +STATUS) <+ common
     }
 }
 
+int Billion = 1000**3;
+int printstep = 4;
+
 define MANAGER()(bd(W) +STRT; bd(STATUSW) -STATUS) <+ common
 {
   csp {
+      
     int ops;
     STRT!0;
     status save;
 
     int start = walltime();
+    int last  = start; // last time for a print
     
     *[ STATUS?x ;
        status s;
-
+       bool doprint = false;
+       
        unpack(s,x);
 
-       #[ s::l::num != 0 -> save = s ];
+       #[ s::l::num != save::l::num -> save = s ; doprint = true ];
        
-       print ("STATUS? " + fmtStatus(s) + " ( ops = " + s::ops +
-              " ; num = " + save::l::num +
-              " ; chain = " + save::l::length + " )");
+       //       print ("STATUS? " + fmtStatus(s) + " ( ops = " + s::ops +
+       //              " ; num = " + save::l::num +
+       //              " ; chain = " + save::l::length + " )");
 
        ops += s::ops;
 
-       int runtime = walltime() - start;
-       int runtime_s = runtime / (1000*1000*1000);
+       int now       = walltime();
+       int runtime   = now - start;
+       int runtime_s = runtime / Billion + 1;
+
+       doprint |= (now > (lastprint + printstep * Billion));
        
-       print("total ops = " + ops + " ops/s = " + (ops/runtime_s))
+       #[ doprint ->
+
+          print("num = " + save::l::num + " ; chain = " + save::l::length + 
+                " : total ops = " + ops + " wall = " + runtime_s + " kops/s = " + (ops/runtime_s/1000));
+
+          lastprint = now
        ]
+       
+     ]
   }
 
 }
@@ -210,7 +226,7 @@ define SMERGE()(bd(STATUSW) -L[0..1], +R) <+ common
 
        status q;
        unpack(q, xs);
-       print ("recv " + fmtStatus(q));
+       //print ("recv " + fmtStatus(q));
 
        #[ q::l::length > s::l::length ->
           s::l = q::l
@@ -229,7 +245,7 @@ define SMERGE()(bd(STATUSW) -L[0..1], +R) <+ common
        #[ (os::ops % INTERVAL != s::ops % INTERVAL)
           ||
           os::l::length != s::l::length ->
-       print ("sending s : " + fmtStatus(s));
+       // print ("sending s : " + fmtStatus(s));
        R!s; s::ops = 0; os = s;
 
        //       print ("s::ops=" + s::ops + " os::ops=" + os::ops);
@@ -242,16 +258,16 @@ define SMERGE()(bd(STATUSW) -L[0..1], +R) <+ common
     *[
       //      print("start");
       status os = s;
-      print ("at start s::ops=" + s::ops + " os::ops=" + os::ops);
+      //print ("at start s::ops=" + s::ops + " os::ops=" + os::ops);
       [
-       //       #L[0] & #L[1] -> recv(0,s); recv(1,s)
-       //       :
+       #L[0] & #L[1] -> recv(0,s); recv(1,s)
+       :
        #L[0] -> recv(0,s)
-       //       :
-       //       #L[1] -> recv(1,s)
+       :
+       #L[1] -> recv(1,s)
        ];
       //      print("received");
-      print ("pre checksend s::ops=" + s::ops + " os::ops=" + os::ops);
+      // print ("pre checksend s::ops=" + s::ops + " os::ops=" + os::ops);
       checksend(os, s);
       
       ]

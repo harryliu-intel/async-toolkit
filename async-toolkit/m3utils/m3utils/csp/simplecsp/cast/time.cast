@@ -20,10 +20,12 @@ define z()()
     int(32) x;
     int start = walltime();
     
-    <;i:100000000:     x++ >;
+    <;i:1000000000:     x++ >;
 
     int stop = walltime();
 
+    print ("start = " + start);
+    print ("stop  = " + stop);
     print ("" + (stop - start)/1000/1000 + " milliseconds");
     
   }

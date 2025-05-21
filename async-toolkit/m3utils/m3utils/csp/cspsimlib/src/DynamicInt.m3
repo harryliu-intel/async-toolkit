@@ -47,7 +47,7 @@ PROCEDURE Quotient (f0 : T; f1 : T; f2 : T) =
     IF Mpz.cmp(f2, Zero) = 0 THEN
       Mpz.set(f0, Zero)
     ELSE
-      Mpz.tdiv_r(f0, f1, f2)
+      Mpz.tdiv_q(f0, f1, f2)
     END
   END Quotient;
 

@@ -2078,6 +2078,9 @@
   (let ((m3-lhs (sa (m3-format-designator pc lhs) " := ")))
     (cond ((boolean? rhs)
            (sa m3-lhs (if rhs "TRUE" "FALSE")))
+
+          ((bigint? rhs)
+           (sa m3-lhs (if (big= rhs *big0*) "FALSE" "TRUE")))
           
           ((ident? rhs) ;; should cover arrays and structs, too
            (sa m3-lhs (m3-format-designator pc rhs)))
