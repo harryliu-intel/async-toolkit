@@ -39,7 +39,7 @@ PROCEDURE SignExtend(w : Word.T) : INTEGER =
 PROCEDURE unpack_dynamic(VAR t : T; x, scratch : DynamicInt.T) : DynamicInt.T =
   BEGIN
     Mpz.and(scratch, x, MpzMask);
-    t := Mpz.ToInteger(x);
+    t := Mpz.ToInteger(scratch);
     Mpz.RightShift(x, x, Type.Width);
     RETURN x
   END unpack_dynamic;

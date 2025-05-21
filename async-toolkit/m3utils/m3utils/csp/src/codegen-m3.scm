@@ -371,14 +371,14 @@
          (id     (get-decl1-id fd))
          (m3id   (m3-ident id))
          (packer (m3-type-packer "unpack" class (if aty aty ty)))
-         (scrtch (if (eq? 'dynamic class) "scratch , " ""))
+         (scrtch (if (eq? 'dynamic class) ", scratch " ""))
          )
     ;; If it is an array, we need to build the array calls
     ;; using the code from m3-initialize-array
 
     (m3-initialize-array
      (lambda(txt)
-       (sa m3src " := " packer "(" txt" , " scrtch "x"  ")"))
+       (sa m3src " := " packer "(" txt" , x " scrtch ")"))
      (sa m3tgt "." m3id)
      (- adims)
      'unpack_field
@@ -2552,7 +2552,7 @@
               (snm    (struct-type-name ty))
               (m3snm  (m3-struct snm))
               (sfx    (classify-expr-type pc rhs))
-              (scrtch (if (eq? 'dynamic sfx) "frame.c , " ""))
+              (scrtch (if (eq? 'dynamic sfx) " , frame.c " ""))
               (rhsstr
 
                (cond ((and (eq? sfx 'dynamic)
@@ -2567,7 +2567,7 @@
                       (m3-format-designator pc rhs))))
               )
 
-         (sa m3snm "_unpack_" (symbol->string sfx) "( frame."(m3-ident (cadr lhs))  " , " scrtch rhsstr " )(*m3-compile-intrinsic*)" )
+         (sa m3snm "_unpack_" (symbol->string sfx) "( frame."(m3-ident (cadr lhs))  " , " rhsstr scrtch " )(*m3-compile-intrinsic*)" )
          
          )
        )

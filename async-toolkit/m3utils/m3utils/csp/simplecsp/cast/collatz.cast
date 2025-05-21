@@ -1,7 +1,7 @@
 module collatz;
 
 int NWORKERS = 1;
-int W        = 63;
+int W        = 61;
 
 int STATUSW = 128 + 2 * W; // why can't this go in attributes cell?
 int INTERVAL = 1000;
@@ -34,12 +34,12 @@ define common attributes {
        s::ops       = steps;
 
        int p = pack(s);
-       print ("sendStatus : sending status=" + fmtStatus(s) + " pack=" + hex(p)); 
+       //       print ("sendStatus : sending status=" + fmtStatus(s) + " pack=" + hex(p)); 
 
        status t;
        unpack(t, p);
 
-       print("sendStatus : unpack p : t=" + fmtStatus(t));
+       //       print("sendStatus : unpack p : t=" + fmtStatus(t));
        
        STATUS!(p);
        steps = 0;
@@ -107,6 +107,19 @@ define SIMPLE()() <+ common
     x = pack(t);
     print ("x=" + hex(x));
       
+  }
+}
+
+define DUMB()() <+ common
+{
+  csp {
+    int x = 0x440000000000000068000000000000007;
+    x++;
+    x--;
+
+    status t;
+    unpack(t, x);
+    print ("t=" + fmtStatus(t));
   }
 }
  
