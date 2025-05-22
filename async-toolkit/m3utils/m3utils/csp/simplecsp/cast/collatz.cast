@@ -144,7 +144,7 @@ define WORKER()(bd(W) -STRT; bd(STATUSW) +STATUS) <+ common
       
       // do the Collatz loop
       *[ num != 1 ->
-         [  odd(num) -> num = 3 * num + 1
+         [  odd(num)  -> num = 3 * num + 1
          [] even(num) -> num = num / 2
          ];
          len++
@@ -206,7 +206,7 @@ define MANAGER()(bd(W) +STRT; bd(STATUSW) -STATUS) <+ common
        #[ doprint ->
 
           print("num = " + save::l::num + " ; chain = " + save::l::length + 
-                " : total ops = " + ops + " wall = " + runtime_s + " kops/s = " + (ops/runtime_s/1000));
+                " : total steps = " + ops + " wall = " + runtime_s + " ksteps/s = " + (ops/runtime_s/1000));
 
           lastprint = now
        ]
