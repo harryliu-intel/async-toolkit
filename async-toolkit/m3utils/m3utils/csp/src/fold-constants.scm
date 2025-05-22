@@ -333,7 +333,7 @@
 (define (constant-simple? x syms)
   
   (fold-constants-dbg "constant? " x dnl)
-  (fold-constants-dbg "symbols : " (map (lambda(tbl)(tbl 'keys)) syms) dnl)
+  ;;(fold-constants-dbg "symbols : " (map (lambda(tbl)(tbl 'keys)) syms) dnl)
 
   ;; this has to return a list containing the value
   ;; #f is a constant
