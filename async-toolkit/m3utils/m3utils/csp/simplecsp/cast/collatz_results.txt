@@ -1,0 +1,237 @@
+
+/* 
+ Collatz loop above:
+
+int W        = 61;
+// 2^62 < (2 ^ 61 - 1) * 3 + 1  < 2^63
+// we need an extra bit for the sign bit
+
+    function even(int -n) : bool =
+      ( even = ((n & 1) == 0) );
+
+    function odd(int -n) : bool =
+      ( odd = ~even(n) );
+
+      int(W) num;
+      
+      *[ num != 1 ->
+         [  odd(num)  -> num = 3 * num + 1
+         [] even(num) -> num = num / 2
+         ];
+         len++
+       ]
+
+ compiles to:
+
+(text1):
+ (do
+     ((!= (id num) <BigInt.T>1)
+         (sequence
+             (if
+                 ((apply (id odd) (id num))
+                     (assign (id num) (+ (* <BigInt.T>3 (id num)) <BigInt.T>1))
+                 )
+                 ((apply (id even) (id num))
+                     (assign (id num) (/ (id num) <BigInt.T>2))
+                 )
+             )
+             (assign-operate + (id len) <BigInt.T>1)
+         )
+     )
+ )
+
+(text9):
+
+(while
+    (id do-not-done-remove-do208)
+    (sequence
+        (var1 (decl1 (id implement-local-if214) (boolean #f) none))
+        (var1 (decl1 (id implement-local-if215) (boolean #f) none))
+        (assign (id implement-local-if214) (not (id do-not-done-remove-do208)))
+        (assign (id implement-local-if215) (id remove-do209))
+        (local-if
+            ((id implement-local-if214)
+                skip
+            )
+            ((id implement-local-if215)
+                (sequence
+                    (var1 (decl1 (id implement-local-if212) (boolean #f) none))
+                    (var1 (decl1 (id implement-local-if213) (boolean #f) none))
+                    (var1 (decl1 (id n-inline-func-body224) (integer #f #f () ()) none))
+                    (assign (id n-inline-func-body224) (id num))
+                    (var1 (decl1 (id odd-inline-func-body224) (boolean #f) none))
+                    (var1 (decl1 (id run-pass-temp228) (boolean #f) none))
+                    (var1 (decl1 (id n-inline-func-body237) (integer #f #f () ()) none))
+                    (assign (id n-inline-func-body237) (id n-inline-func-body224))
+                    (var1 (decl1 (id even-inline-func-body237) (boolean #f) none))
+                    (var1 (decl1 (id run-pass-temp238) (integer #f #f () ()) none))
+                    (assign (id run-pass-temp238) (& (id n-inline-func-body237) <BigInt.T>1))
+                    (assign (id even-inline-func-body237) (== (id run-pass-temp238) <BigInt.T>0))
+                    (assign (id run-pass-temp228) (id even-inline-func-body237))
+                    (assign (id odd-inline-func-body224) (not (id run-pass-temp228)))
+                    (assign (id implement-local-if212) (id odd-inline-func-body224))
+                    (var1 (decl1 (id n-inline-func-body225) (integer #f #f () ()) none))
+                    (assign (id n-inline-func-body225) (id num))
+                    (var1 (decl1 (id even-inline-func-body225) (boolean #f) none))
+                    (var1 (decl1 (id run-pass-temp229) (integer #f #f () ()) none))
+                    (assign (id run-pass-temp229) (& (id n-inline-func-body225) <BigInt.T>1))
+                    (assign (id even-inline-func-body225) (== (id run-pass-temp229) <BigInt.T>0))
+                    (assign (id implement-local-if213) (id even-inline-func-body225))
+                    (local-if
+                        ((id implement-local-if212)
+                            (sequence
+                                (var1 (decl1 (id run-pass-temp197) (integer #f #f () ()) none))
+                                (assign (id run-pass-temp197) (* <BigInt.T>3 (id num)))
+                                (assign (id num) (+ (id run-pass-temp197) <BigInt.T>1))
+                            )
+                        )
+                        ((id implement-local-if213)
+                            (assign (id num) (/ (id num) <BigInt.T>2))
+                        )
+                    )
+                    (assign (id len) (+ (id len) <BigInt.T>1))
+                )
+            )
+        )
+        (assign (id remove-do209) (!= (id num) <BigInt.T>1))
+        (assign (id do-not-done-remove-do208) (id remove-do209))
+    )
+)
+
+
+Modula-3:
+
+
+        WHILE m3__do_45_not_45_done_45_remove_45_do137 DO
+        BEGIN
+        m3__implement_45_local_45_if143 := (NOT ( m3__do_45_not_45_done_45_remove_45_do137 ) );(*m3cws*)
+        (* (assign (id implement-local-if143) (not (id do-not-done-remove-do137))) *)
+
+        m3__implement_45_local_45_if144 := m3__remove_45_do138;(*m3cws*)
+        (* (assign (id implement-local-if144) (id remove-do138)) *)
+
+        IF FALSE THEN
+ELSIF m3__implement_45_local_45_if143 THEN
+        BEGIN (*skip*) END;(*m3cws*)
+        (* skip *)
+
+ELSIF m3__implement_45_local_45_if144 THEN
+        BEGIN
+        m3__n_45_inline_45_func_45_body153 := m3__num;(*m3cws*)
+        (* (assign (id n-inline-func-body153) (id num)) *)
+
+        m3__n_45_inline_45_func_45_body166 := m3__n_45_inline_45_func_45_body153;(*m3cws*)
+        (* (assign (id n-inline-func-body166) (id n-inline-func-body153)) *)
+
+        m3__run_45_pass_45_temp167 := Word.And( m3__n_45_inline_45_func_45_body166 , 1 );(*m3cws*)
+        (* (assign (id run-pass-temp167) (& (id n-inline-func-body166) <BigInt.T>1)) *)
+
+        m3__even_45_inline_45_func_45_body166 := ( m3__run_45_pass_45_temp167 = 0 );(*m3cws*)
+        (* (assign (id even-inline-func-body166) (== (id run-pass-temp167) <BigInt.T>0)) *)
+
+        m3__run_45_pass_45_temp157 := m3__even_45_inline_45_func_45_body166;(*m3cws*)
+        (* (assign (id run-pass-temp157) (id even-inline-func-body166)) *)
+
+        m3__odd_45_inline_45_func_45_body153 := (NOT ( m3__run_45_pass_45_temp157 ) );(*m3cws*)
+        (* (assign (id odd-inline-func-body153) (not (id run-pass-temp157))) *)
+
+        m3__implement_45_local_45_if141 := m3__odd_45_inline_45_func_45_body153;(*m3cws*)
+        (* (assign (id implement-local-if141) (id odd-inline-func-body153)) *)
+
+        m3__n_45_inline_45_func_45_body154 := m3__num;(*m3cws*)
+        (* (assign (id n-inline-func-body154) (id num)) *)
+
+        m3__run_45_pass_45_temp158 := Word.And( m3__n_45_inline_45_func_45_body154 , 1 );(*m3cws*)
+        (* (assign (id run-pass-temp158) (& (id n-inline-func-body154) <BigInt.T>1)) *)
+
+        m3__even_45_inline_45_func_45_body154 := ( m3__run_45_pass_45_temp158 = 0 );(*m3cws*)
+        (* (assign (id even-inline-func-body154) (== (id run-pass-temp158) <BigInt.T>0)) *)
+
+        m3__implement_45_local_45_if142 := m3__even_45_inline_45_func_45_body154;(*m3cws*)
+        (* (assign (id implement-local-if142) (id even-inline-func-body154)) *)
+
+        IF FALSE THEN
+ELSIF m3__implement_45_local_45_if141 THEN
+        BEGIN
+        m3__run_45_pass_45_temp126 := ( 3 * m3__num );(*m3cws*)
+        (* (assign (id run-pass-temp126) ( * <BigInt.T>3 (id num))) *)
+
+        m3__num := (Word.And(( m3__run_45_pass_45_temp126 + 1 ) , UInt61.Mask)) ;(*m3cws*)
+        (* (assign (id num) (+ (id run-pass-temp126) <BigInt.T>1)) *)
+
+END
+;(*m3cws*)
+        (* (sequence (assign (id run-pass-temp126) ( * <BigInt.T>3 (id num))) (assign (id num) (+ (id run-pass-temp126) <BigInt.T>1))) *)
+
+ELSIF m3__implement_45_local_45_if142 THEN
+        m3__num := ( m3__num DIV 2 );(*m3cws*)
+        (* (assign (id num) (/ (id num) <BigInt.T>2)) *)
+
+END;(*m3cws*)
+        (* (local-if ((id implement-local-if141) (sequence (assign (id run-pass-temp126) ( * <BigInt.T>3 (id num))) (assign (id num) (+ (id run-pass-temp126) <BigInt.T>1)))) ((id implement-local-if142) (assign (id num) (/ (id num) <BigInt.T>2)))) *)
+
+        m3__len := (Word.And(( m3__len + 1 ) , UInt61.Mask)) ;(*m3cws*)
+        (* (assign (id len) (+ (id len) <BigInt.T>1)) *)
+
+END
+;(*m3cws*)
+        (* (sequence (assign (id n-inline-func-body153) (id num)) (assign (id n-inline-func-body166) (id n-inline-func-body153)) (assign (id run-pass-temp167) (& (id n-inline-func-body166) <BigInt.T>1)) (assign (id even-inline-func-body166) (== (id run-pass-temp167) <BigInt.T>0)) (assign (id run-pass-temp157) (id even-inline-func-body166)) (assign (id odd-inline-func-body153) (not (id run-pass-temp157))) (assign (id implement-local-if141) (id odd-inline-func-body153)) (assign (id n-inline-func-body154) (id num)) (assign (id run-pass-temp158) (& (id n-inline-func-body154) <BigInt.T>1)) (assign (id even-inline-func-body154) (== (id run-pass-temp158) <BigInt.T>0)) (assign (id implement-local-if142) (id even-inline-func-body154)) (local-if ((id implement-local-if141) (sequence (assign (id run-pass-temp126) ( * <BigInt.T>3 (id num))) (assign (id num) (+ (id run-pass-temp126) <BigInt.T>1)))) ((id implement-local-if142) (assign (id num) (/ (id num) <BigInt.T>2)))) (assign (id len) (+ (id len) <BigInt.T>1))) *)
+
+END;(*m3cws*)
+        (* (local-if ((id implement-local-if143) skip) ((id implement-local-if144) (sequence (assign (id n-inline-func-body153) (id num)) (assign (id n-inline-func-body166) (id n-inline-func-body153)) (assign (id run-pass-temp167) (& (id n-inline-func-body166) <BigInt.T>1)) (assign (id even-inline-func-body166) (== (id run-pass-temp167) <BigInt.T>0)) (assign (id run-pass-temp157) (id even-inline-func-body166)) (assign (id odd-inline-func-body153) (not (id run-pass-temp157))) (assign (id implement-local-if141) (id odd-inline-func-body153)) (assign (id n-inline-func-body154) (id num)) (assign (id run-pass-temp158) (& (id n-inline-func-body154) <BigInt.T>1)) (assign (id even-inline-func-body154) (== (id run-pass-temp158) <BigInt.T>0)) (assign (id implement-local-if142) (id even-inline-func-body154)) (local-if ((id implement-local-if141) (sequence (assign (id run-pass-temp126) ( * <BigInt.T>3 (id num))) (assign (id num) (+ (id run-pass-temp126) <BigInt.T>1)))) ((id implement-local-if142) (assign (id num) (/ (id num) <BigInt.T>2)))) (assign (id len) (+ (id len) <BigInt.T>1))))) *)
+
+        m3__remove_45_do138 := ( m3__num # 16_1 );(*m3cws*)
+        (* (assign (id remove-do138) (!= (id num) <BigInt.T>1)) *)
+
+        m3__do_45_not_45_done_45_remove_45_do137 := m3__remove_45_do138;(*m3cws*)
+        (* (assign (id do-not-done-remove-do137) (id remove-do138)) *)
+
+END
+;(*m3cws*)
+
+
+AMD64 (x86_64) machine code:
+
+/nfs/site/disks/or_lhdk75_disk0037/w137/gorda/mnystroe/simplecsp/build/AMD64_LINUX/../src/m3__collatz_46_WORKER.m3:475
+    1128:       84 d2                   test   %dl,%dl
+    112a:       74 3e                   je     116a <m3__collatz_46_WORKER__Block_m3__L184+0x1da>
+/nfs/site/disks/or_lhdk75_disk0037/w137/gorda/mnystroe/simplecsp/build/AMD64_LINUX/../src/m3__collatz_46_WORKER.m3:479
+    112c:       84 db                   test   %bl,%bl
+    112e:       74 3a                   je     116a <m3__collatz_46_WORKER__Block_m3__L184+0x1da>
+/nfs/site/disks/or_lhdk75_disk0037/w137/gorda/mnystroe/simplecsp/build/AMD64_LINUX/../src/m3__collatz_46_WORKER.m3:515
+    1130:       a8 01                   test   $0x1,%al
+    1132:       74 2c                   je     1160 <m3__collatz_46_WORKER__Block_m3__L184+0x1d0>
+/nfs/site/disks/or_lhdk75_disk0037/w137/gorda/mnystroe/simplecsp/build/AMD64_LINUX/../src/m3__collatz_46_WORKER.m3:517
+    1134:       4c 8d 3c 40             lea    (%rax,%rax,2),%r15
+    1138:       4d 85 ff                test   %r15,%r15
+    113b:       79 13                   jns    1150 <m3__collatz_46_WORKER__Block_m3__L184+0x1c0>
+    113d:       bf a1 40 00 00          mov    $0x40a1,%edi
+    1142:       e8 39 fe ff ff          call   f80 <_m3_fault>
+    1147:       66 0f 1f 84 00 00 00    nopw   0x0(%rax,%rax,1)
+    114e:       00 00 
+/nfs/site/disks/or_lhdk75_disk0037/w137/gorda/mnystroe/simplecsp/build/AMD64_LINUX/../src/m3__collatz_46_WORKER.m3:520
+    1150:       49 8d 47 01             lea    0x1(%r15),%rax
+    1154:       4c 21 f0                and    %r14,%rax
+    1157:       eb 0a                   jmp    1163 <m3__collatz_46_WORKER__Block_m3__L184+0x1d3>
+    1159:       0f 1f 80 00 00 00 00    nopl   0x0(%rax)
+/nfs/site/disks/or_lhdk75_disk0037/w137/gorda/mnystroe/simplecsp/build/AMD64_LINUX/../src/m3__collatz_46_WORKER.m3:528
+    1160:       48 d1 f8                sar    %rax
+/nfs/site/disks/or_lhdk75_disk0037/w137/gorda/mnystroe/simplecsp/build/AMD64_LINUX/../src/m3__collatz_46_WORKER.m3:534
+    1163:       49 83 c4 01             add    $0x1,%r12
+    1167:       4d 21 f4                and    %r14,%r12
+/nfs/site/disks/or_lhdk75_disk0037/w137/gorda/mnystroe/simplecsp/build/AMD64_LINUX/../src/m3__collatz_46_WORKER.m3:544
+    116a:       48 83 f8 01             cmp    $0x1,%rax
+/nfs/site/disks/or_lhdk75_disk0037/w137/gorda/mnystroe/simplecsp/build/AMD64_LINUX/../src/m3__collatz_46_WORKER.m3:466
+    116e:       0f 95 c2                setne  %dl
+    1171:       75 b5                   jne    1128 <m3__collatz_46_WORKER__Block_m3__L184+0x198>
+
+Total 22 instructions.
+
+Execution is 21 instructions (3 x + 1) or 20 instructions (x / 2), average
+20.5 instructions (let's say).
+
+Loop executes ~520M times per second (measured for large numbers).
+
+Total # of instructions per second is ~10.7G / s .
+
+*/
