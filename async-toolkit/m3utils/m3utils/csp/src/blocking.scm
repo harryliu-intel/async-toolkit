@@ -1,16 +1,42 @@
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;; blocking.scm
+;;
+;; Break a CSP program into executable blocks.
+;;
+;; The overall idea is that the first statement in a block can block,
+;; that is, not succeed, causing the entire block to be retried at a
+;; later time.
+;;
+;; We take a CSP program and turn it into blocks as follows.
+;;
+;; First, potentially blocking statements are labelled.
+;; The labels are then broken into goto and label.
+;; Then the blocks are generated using an algorithm that can generate
+;; an exponential number of blocks in the presence of parallelism and if
+;; statements.
+;;
+;; The code below never merges things post an if.  Instead the "coda" of the
+;; if is continued to the end of the program text.  It might be better to
+;; merge at some point.
+;;
+
 (define (blocking-dbg . x)
 ;;   (apply dis x)
   )
 
 (define (stmt-may-block? stmt)
-
+  ;;
+  ;; can stmt block anywhere internally?
+  ;;
+  
   (define result #f)
 
   (define (yes) (set! result #t) 'cut)
   
   (define (s-visitor s)
     ;; statements that on their own introduce blocking
-7    (blocking-dbg "s-visitor " (stringify s) dnl)
+    (blocking-dbg "s-visitor " (stringify s) dnl)
     (if result
         'cut
         (case (get-stmt-type s)
@@ -22,7 +48,7 @@
     )
 
   (define (x-visitor x)
-    ;; expressions that introduce blocking
+    ;; expressions that on their own introduce blocking
 ;;    (blocking-dbg "x-visitor " (stringify x) dnl)
     (if result
         'cut
@@ -30,6 +56,8 @@
           ((apply)                    (yes)) ;; shouldnt happen in compiled
 
           ((call-intrinsic)
+           ;; this is the only call-intrinsic that can block
+           ;; maybe we should add a yield() ?
            (if (eq? (cadr x) 'wait)   (yes) x))
 
           ((recv-expression peek)     (yes))
@@ -116,7 +144,6 @@
       ((parallel) (mark 'both))
 
       ((parallel-loop)
-
        
        ;;
        ;; We can't support parallel loops without way more work!
@@ -125,6 +152,11 @@
        ;; and this would affect function calls and many other things.
        ;;
        ;; It would also slow down the resulting code.
+       ;;
+       ;; Instead, for now, we support only statically sized parallel
+       ;; loops.  These are turned into commas earlier in compilation
+       ;; (see unroll-parallel-loops below in this file), so we do not
+       ;; need to worry about them here.
        ;;
        
        (error "this back-end does not support parallel loops")
@@ -178,7 +210,8 @@
 
 (define upl-result #f)
 
-(define (unroll-parallel-loops loop-stmt syms vals tg func-tbl struct-tbl cell-info)
+(define (unroll-parallel-loops
+         loop-stmt syms vals tg func-tbl struct-tbl cell-info)
 
   ;; parallel-loop has to be unrolled
 
@@ -254,9 +287,9 @@
                  
                  (newddecl (make-var1-decl nam newtype))
                  
-                 (newdinit  (make-assign `(id ,nam) lmin))
+                 (newdinit (make-assign `(id ,nam) lmin))
                  
-                 (incstmt   (make-assign `(id ,nam) `(+ (id, nam) ,*big1*)))
+                 (incstmt  (make-assign `(id ,nam) `(+ (id, nam) ,*big1*)))
                  
                  (newbnam  (tg 'next))
                  
@@ -281,7 +314,9 @@
     (visit-stmt stmt s-visitor identity identity)
     )
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+;; the following things look like tests
 (define ts '(sequence (label L0)
                       (assign X Y)
                       (assign Y Z)
@@ -303,6 +338,8 @@
                       (assign Y Z)
                       )
   )
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define (loose-end? seq) ;; a block has a loose end if it doesn't end in goto
   (and (not (goto? seq)) (not (and (sequence? seq) (goto? (last seq))))))
@@ -334,8 +371,12 @@
 (define (scan-parallel stmt)
   (apply append (map scan-stmt (cdr stmt))))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (define (label? x) (and (pair? x) (eq? 'label (car x))))
+
 (define (goto? x) (and (pair? x) (eq? 'goto (car x))))
+
 (define (skip? x) (eq? 'skip x))
 
 (define (sequence? x) (and (pair? x) (member (car x) '(seq sequence))))
@@ -343,6 +384,8 @@
 (define (parallel? x) (and (pair? x) (member (car x) '(parallel pll))))
 
 (define (local-if? x) (and (pair? x) (eq? 'local-if (car x))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define (add-prefix pfx) (lambda(lst)(cons pfx lst)))
 
@@ -352,6 +395,9 @@
       stmt))
 
 (define (stuff-open-lif-clauses lif coda)
+
+  ;; continue the open clauses of a local-if...
+  
   (let* ((guards   (map car (cdr lif)))
          (stmts    (map cadr (cdr lif)))
          (mstmts   (map (lambda(cmd)(extend-open-end cmd coda))
@@ -394,6 +440,10 @@
 
 (define (scan-sequence sequence)
 
+  ;;
+  ;; this is the main part of the block generation
+  ;;
+  
   (define first-result #f)
   
   (define result '()) ;; hold finished blocks here
@@ -518,7 +568,6 @@
 ;; any blocks that aren't closed should be closed with the coda within
 ;; the enclosing statement
 
-
 (define (label->goto x) `(goto ,(cadr x) ,@(cddr x)))
 
 (define (scan-parallel-loop ploop)
@@ -528,8 +577,8 @@
   )
 
 (define scan-pll           scan-parallel)  ;; shorthand
+
 (define scan-seq           scan-sequence)  ;; shorthand
-        
 
 (define (sequence-length seq) (length (cdr seq)))
 
@@ -557,6 +606,7 @@
 (define (find-empty-blocks blk-lst) (filter empty-block? blk-lst))
 
 (define label-label cdr)
+
 (define goto-label cdr)
 
 (define (find-empty-label-remap blk-lst)
@@ -598,6 +648,7 @@
 
   ;; remove all the empty blocks from the blk-lst,
   ;; and patching the labels so control flow remains
+  ;; This can be trickier than it looks!
   
   (let ((remap     (find-empty-label-remap blk-lst))
         (short-lst (filter (filter-not empty-block?) blk-lst))
