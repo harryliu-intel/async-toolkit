@@ -2,6 +2,14 @@
 ;;
 ;; interval.scm -- interval arithmetic on CSP programs
 ;;
+;; Most of the interval arithmetic is straightforward, even if some
+;; of it is a bit messy.
+;;
+;; Interval arithmetic on bitwise operators is not entirely
+;; straightforward, and some of the intervals used here may not be
+;; tight.  It is however believed they are all sound as coded.
+;;
+;; If in doubt, 
 
 (define (interval-dbg . x)
 ;;  (apply dis x)
@@ -207,7 +215,6 @@
     )
   )
 
-
 (define (get-loop-range-range stmt syms)
   ;; I think maybe we don't need this...
   (let* ((lr      (get-loop-range stmt))
@@ -357,6 +364,69 @@
 
    )
   )
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;; code for validating the range operations above in this file
+;;
+;; call as follows:
+;;
+;; (validate-range-binop '+ 100 (make-range (bn -100) (bn +100))
+;;                              (make-range (bn -100) (bn +100)))
+;;
+
+(define (validate-range-binop op count rra rrb)
+  ;; random testing of the range code
+
+  (define xnum-op (eval (symbol-append 'xnum- op)))
+
+  (define range-op (eval (symbol-append 'range- op)))
+  
+  (define (validate-specific ra rb rc count)
+    ;; when the input ranges are ra, rb, draw some values and check them
+
+    (if (= 0 count)
+        'ok
+        (begin
+          (let* ((a (xnum-random ra))
+                 (b (xnum-random rb))
+                 (c (xnum-op a b)))
+            (if (not (range-member? c rc))
+                (begin
+                  (set! *fail-op* xnum-op)
+                  (set! *fail-ra* ra)
+                  (set! *fail-rb* rb)
+                  (set! *fail-a*  a)
+                  (set! *fail-b*  b)
+                  (set! *fail-rc* rc)
+                  (set! *fail-c*  c)
+                  
+                  (error
+                   (string-append
+                    "not in range : (" xnum-op " " a " " b ") = " c
+                    " NOT IN (" range-op " " ra " " rb ") = " rc))
+                  )
+                )
+            )
+
+          (validate-specific ra rb rc (- count 1))
+          )
+        )
+    )
+
+  
+  (if (= 0 count)
+      'ok
+      (begin
+        (let* ((ra    (make-random-range rra))
+               (rb    (make-random-range rrb))
+               (rc    (range-op ra rb))
+               )
+
+          (bigint-dbg "validate-specific " ra rb rc count dnl)
+          (validate-specific ra rb rc count))
+        (validate-range-binop op (- count 1) rra rrb))))
+
 
 
 

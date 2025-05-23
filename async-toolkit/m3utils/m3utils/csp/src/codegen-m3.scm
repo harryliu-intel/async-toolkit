@@ -1500,6 +1500,8 @@
     );; esac
   )
 
+(define (shift-op? op) (member op '(>> <<)))
+
 (define m3-unary-ops '(-))
 
 (define (m3-compile-native-binop cat builder op a-arg b-arg)
@@ -1655,6 +1657,8 @@
     ((|)    "Mpz.ior") ;|))
     ((^)    "Mpz.xor")
     ((**)   "Mpz.pow")
+    ((<<)   "Mpz.ShiftMpz")
+    ((>>)   "Mpz.ShiftNegMpz")
 
     ;; unary ops: 
     ((uneg) "Mpz.neg")

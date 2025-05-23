@@ -238,6 +238,10 @@
        "" dnl
        "PROCEDURE New() : T;" dnl
        "" dnl
+       "PROCEDURE NewInt(int : INTEGER) : T;" dnl
+       dnl
+       "PROCEDURE NewWord(w : Word.T) : T;" dnl
+       dnl
        "CONST Brand = \"Mpz\";" dnl
        "" dnl
        "" dnl
@@ -266,8 +270,22 @@
        "(* checked runtime error to be out of range *)" dnl
        dnl
        "PROCEDURE pow(p, b, x : T);" dnl
-       dnl)
-        
+       dnl
+       "PROCEDURE LeftShift(f0 : T; f1 : T; amt : CARDINAL);" dnl
+       dnl
+       "PROCEDURE RightShift(f0 : T; f1 : T; amt : CARDINAL);" dnl
+       dnl
+       "PROCEDURE Shift(f0 : T; f1 : T; amt : INTEGER);" dnl
+       "  (* negative -> right shift; positive -> left shift *)" dnl
+       dnl
+       "PROCEDURE ShiftMpz(f0 : T; f1 : T; amt : T);" dnl
+       "  (* negative -> right shift; positive -> left shift *)" dnl
+       dnl
+       "PROCEDURE ShiftNegMpz(f0 : T; f1 : T; amt : T);" dnl
+       "  (* negative -> left shift; positive -> right shift *)" dnl
+       dnl
+       )
+
       (i
        "(***** auto-generated functions *****)" dnl
        dnl)

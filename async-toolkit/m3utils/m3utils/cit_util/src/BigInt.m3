@@ -1089,8 +1089,12 @@ PROCEDURE DoBitwiseOp(op : BitProc; a, b : T) : T =
      Word ops, then build a new number with the correct layout *)
 
   VAR
-    repBits  := MAX(GetAbsMsb(a), GetAbsMsb(b)) + 2; (* do we need two extra? *)
-    repWords := (repBits - 1) DIV BITSIZE(Word.T) + 1;
+    repBits  := MAX(GetAbsMsb(a), GetAbsMsb(b)) + 3;
+    (* do we need two extra? *)
+
+    repWords := (repBits - 1) DIV BITSIZE(Word.T) + 2;
+    (* we need an extra word for not.. for some reason!!! *)
+    
     aa, ba, ca := NEW(REF ARRAY OF Word.T, repWords);
   BEGIN
     GetTheBits(a, aa^);

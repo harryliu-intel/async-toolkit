@@ -12,13 +12,34 @@
 ;;
 ;; First, potentially blocking statements are labelled.
 ;; The labels are then broken into goto and label.
+;; The beginning of the program is also labelled START and the end labelled END.
+;; (END need not be actually reachable in the code)
+;;
 ;; Then the blocks are generated using an algorithm that can generate
 ;; an exponential number of blocks in the presence of parallelism and if
 ;; statements.
 ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
 ;; The code below never merges things post an if.  Instead the "coda" of the
 ;; if is continued to the end of the program text.  It might be better to
 ;; merge at some point.
+;;
+;; A normal block of code is "closed" on both ends.
+;; This means that it starts with a label, contains possibly a single
+;; blocking statement (before any state updates), then a sequence of
+;; non-blocking statements, and finally ends in a goto statement.
+;;
+;; We say that a block has an open beginning if it does NOT start in a label.
+;; We say that a block has an open end of it does NOT end in a goto.
+;;
+;; See scan-sequence -> recurse for details on how the blocks are built
+;; up in memory.
+;;
+;; The general idea is that multiple blocks can be extended at once,
+;; so we work on a set of blocks and append statements from the
+;; currently-being-converted block to each of the active (open)
+;; blocks.  Blocks are closed out when a goto is reached.
 ;;
 
 (define (blocking-dbg . x)

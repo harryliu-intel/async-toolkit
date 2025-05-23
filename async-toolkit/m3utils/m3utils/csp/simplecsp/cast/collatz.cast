@@ -2,6 +2,8 @@ module collatz;
 
 int NWORKERS = 2;
 int W        = 61;
+// 2^62 < (2 ^ 61 - 1) * 3 + 1  < 2^63
+// we need an extra bit for the sign bit
 
 int STATUSW = 128 + 2 * W; // why can't this go in attributes cell?
 int INTERVAL = 10000;
@@ -142,10 +144,10 @@ define WORKER()(bd(W) -STRT; bd(STATUSW) +STATUS) <+ common
       int(W) len = 0;
       int    snum = num;
       
-      // do the Collatz loop
+      // do the Collatz loop -- see below for assembly
       *[ num != 1 ->
          [  odd(num)  -> num = 3 * num + 1
-         [] even(num) -> num = num / 2
+         [] even(num) -> num = num >> 1
          ];
          len++
        ]

@@ -12,7 +12,7 @@ PROCEDURE New() : T;
 PROCEDURE NewInt(int : INTEGER) : T;
 
 PROCEDURE NewWord(w : Word.T) : T;
-  
+
 CONST Brand = "Mpz";
 
 
@@ -48,6 +48,12 @@ PROCEDURE RightShift(f0 : T; f1 : T; amt : CARDINAL);
 
 PROCEDURE Shift(f0 : T; f1 : T; amt : INTEGER);
   (* negative -> right shift; positive -> left shift *)
+
+PROCEDURE ShiftMpz(f0 : T; f1 : T; amt : T);
+  (* negative -> right shift; positive -> left shift *)
+
+PROCEDURE ShiftNegMpz(f0 : T; f1 : T; amt : T);
+  (* negative -> left shift; positive -> right shift *)
 
 (***** auto-generated functions *****)
 

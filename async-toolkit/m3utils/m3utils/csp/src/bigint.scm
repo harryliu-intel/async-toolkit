@@ -610,6 +610,9 @@
 (define (negate-range r)
   (list (xnum-uneg (cadr r)) (xnum-uneg (car r))))
 
+(define (invert-range r)
+  (list (xnum-~ (cadr r)) (xnum-~ (car r))))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (define range-+ (make-simple-range-binop xnum-+))
 
@@ -709,11 +712,13 @@
   (let ((pos<< (make-simple-range-binop xnum-<<)))
     (cond ((range-extends? a *big0*)
            (let* ((alist (split-range a *big0*))
-                  (rlist (map (lambda(a)(range-<< a b)) alist)))
-             (apply range-union rlist)))
+                  (rlist (map (lambda(a)(range-<< a b)) alist))
+                  (ilist (map invert-range rlist)))
+             (apply range-union (append rlist ilist (list (pos<< a b))))))
 
-          ((range-neg? a) (negate-range (range-<< (negate-range a) b)))
-
+          ((range-neg? a) (range-union
+                           (pos<< a b)
+                           (invert-range (range-<< (invert-range a) b))))
 
           ((and (eq? a *range-zero*) (eq? b *range-zero*))
            (pos<< a b ))
@@ -963,61 +968,6 @@
 (define *fail-b*  #f)
 (define *fail-rc* #f)
 (define *fail-c*  #f)
-
-(define (validate-range-binop op count rra rrb)
-  ;; random testing of the range code
-
-  (define xnum-op (eval (symbol-append 'xnum- op)))
-
-  (define range-op (eval (symbol-append 'range- op)))
-  
-  (define (validate-specific ra rb rc count)
-    ;; when the input ranges are ra, rb, draw some values and check them
-
-    (if (= 0 count)
-        'ok
-        (begin
-          (let* ((a (xnum-random ra))
-                 (b (xnum-random rb))
-                 (c (xnum-op a b)))
-            (if (not (range-member? c rc))
-                (begin
-                  (set! *fail-op* xnum-op)
-                  (set! *fail-ra* ra)
-                  (set! *fail-rb* rb)
-                  (set! *fail-a*  a)
-                  (set! *fail-b*  b)
-                  (set! *fail-rc* rc)
-                  (set! *fail-c*  c)
-                  
-                  (error
-                   (string-append
-                    "not in range : (" xnum-op " " a " " b ") = " c
-                    " NOT IN (" range-op " " ra " " rb ") = " rc))
-                  )
-                )
-            )
-
-          (validate-specific ra rb rc (- count 1))
-          )
-        )
-    )
-
-  
-  (if (= 0 count)
-      'ok
-      (begin
-        (let* ((ra    (make-random-range rra))
-               (rb    (make-random-range rrb))
-               (rc    (range-op ra rb))
-               )
-
-          (bigint-dbg "validate-specific " ra rb rc count dnl)
-          (validate-specific ra rb rc count))
-        (validate-range-binop op (- count 1) rra rrb))))
-
-
-
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
