@@ -1,17 +1,33 @@
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;; bigint.scm
+;;
+;; Manipulate BigInt.T from Karl Papadantonakis's unlimited-precision
+;; arithmetic library.
+;;
+;; Note that these types are only used internally in the compiler.
+;; The Modula-3 generating back-end uses GNU's gmp/mpz format for the
+;; generated code.
+;;
 
 (define (bigint-dbg . x)
 ;;    (apply dis x)
   )
   
 
+;;
+;; fundamental constants
+;;
 
 (define *bigm1* (BigInt.New -1))
 (define *big0*  (BigInt.New  0))
 (define *big1*  (BigInt.New  1))
 (define *big2*  (BigInt.New  2))
-(define *bigtc* (rttype-typecode *big1*))
+
+(define *bigtc* (rttype-typecode *big1*)) ;; typecode of BigInt.T
 
 (define (bigint? x)
+  ;; test for bigint-ness
   (cond ((null? x) #f)
         ((pair? x) #f)
         ((= *bigtc* (rttype-typecode x)) #t)
@@ -163,6 +179,10 @@
 ;;
 ;; it is intended to represent any integer from the number line,
 ;; extended with +-inf and not-a-number.
+;;
+;; xnums are used in the interval arithmetic to determine the potential
+;; range of values resulting from a particular arithmetic expression
+;; in the source code
 ;;
 
 ;; the following defs allow us to (eval x) for any xnum x
@@ -445,13 +465,28 @@
      (else (BigInt.Not a))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;; The interval code itself.
+;; We somewhat illiterately call the intervals "ranges" (which is a bit
+;; confusing, sorry).
+;;
+;; ranges run from a minimum xnum to a maximum xnum.
+;; either end of the range or both can be infinite.
+;;
+;; A range is empty if its min exceeds its max.
+;;
+;; Since we only worry about integers, all ranges are countable and the
+;; issue of open vs. closed intervals does not come up.
+;;
 
 (define (make-range min max)
   (check-xnum min)
   (check-xnum max)
   (list min max))
 
-(define (make-point-range x) (list x x))
+(define (make-point-range x)
+  ;; a point-range is a range of a single value
+  (list x x))
 
 (define *range1* (make-point-range *big1*))
 (define *rangem1* (make-point-range *bigm1*))
@@ -491,7 +526,6 @@
 (define *range-unsigned-byte* `(,*big0* ,(BigInt.New 255)))
 
 ;; natural, pos, and neg DO NOT include zero.
-
 (define *range-natural*    `(,*big1*     +inf))
 (define *range-pos* *range-natural*)
 (define *range-neg*        `(-inf    ,*bigm1* ))
@@ -510,6 +544,8 @@
   (and (xnum-<= (range-min a) (range-min b))
        (xnum->= (range-max a) (range-max b))))
 
+;; operate on ranges in the default way (take cartesian product of
+;; results on extreme values)
 (define (make-simple-range-binop op)
   (lambda (a b)
     (bigint-dbg "simple-range-binop " op " " a " " b dnl)
@@ -748,7 +784,6 @@
 (define (range-not a)
   (negate-range (range-- a *range1*)))
 
-
 (define (range-pos-& a b)
   ;; a and b are positive ranges
   (make-range *big0* (xnum-min (range-max a) (range-max b))))
@@ -786,6 +821,7 @@
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (define (xnum-bits x lo hi)
   (cond ((eq? x *big0*) *big0*)
         ((eq? lo +inf) *big0*)

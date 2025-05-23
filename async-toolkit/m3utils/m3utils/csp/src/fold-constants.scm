@@ -1,3 +1,33 @@
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;                                        ;
+;; fold-constants.scm
+;;
+;; constant folding for the CSP compiler.
+;;
+;; Constant folding isn't just an optimization.  It is necessary,
+;; because types may be dependent on constants, and these constants
+;; aren't folded in by any prior stage.
+;;
+;; Note also that a common pattern in CSP is that functions are
+;; specified using dynamic "int" types.  Generated code efficiency
+;; would suffer unless those types were reduced to fixed widths at
+;; some point.  In other words, the present module works together with
+;; the interval arithmetic for expressions in the following way.
+;;
+;; Constants are discovered in the program.  If a variable is assigned
+;; to only once, and by something already known to be constant, it is
+;; known to be constant.  We thus mark the declaration of that
+;; variable as a constant (same as the initial marking of the CAST
+;; variables passed in from the Java parser).  A subsequent pass then
+;; takes these variables and folds in any results from sets of
+;; variables that are constant.  We then scan the code again for new
+;; constants that may have appeared, and repeat, until we reach a
+;; fixed point.
+;;
+;; Constant folding is performed in stages 3 and 4 of the compiler.
+;; 
+;; 
+
 ;; handle-XXX-binop handles an operation that RETURNS an XXX
 ;; inputs can be polymorphic
 
@@ -607,13 +637,9 @@
 
                )
            ) 
-
-         
          )
        )
-
       (else s)
-      
       )
     )
 
@@ -636,4 +662,6 @@
   )
 
 (define (fold-constants prog)
-  (run-pass (list '* fold-constants-*) prog *cellinfo* *the-inits* *the-func-tbl* *the-struct-tbl*))
+  (run-pass
+   (list '* fold-constants-*)
+   prog *cellinfo* *the-inits* *the-func-tbl* *the-struct-tbl*))

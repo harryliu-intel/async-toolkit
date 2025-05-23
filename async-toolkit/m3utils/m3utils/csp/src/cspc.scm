@@ -1,3 +1,4 @@
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
 ;; cspc.scm
 ;;
@@ -5,6 +6,32 @@
 ;;
 ;; Author : Mika Nystrom <mika.nystroem@intel.com>
 ;; March, 2025
+;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;; This is the main file of the compiler
+;; BUT this is NOT the file you load into your scheme interpreter.
+;; Instead, please load "setup.scm" in the same directory.
+;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;; The CSP compiler in brief
+;; =========================
+;;
+;; The source language is "Fulcrum-CSP", Fulcrum/Intel's dialect of
+;; Martin's Communicating Hardware Processes (CHP) language (Martin
+;; 1986).
+;; 
+;; The target is machine language.  The intermediate form output by
+;; this compiler is standard Modula-3 code referencing certain
+;; constructs from the Intel m3utils package.  The code generation
+;; part is kept in a separate (large) module called codegen-m3.scm to
+;; simplify the porting of the compiler to generate another target
+;; language, such as ANSI C99.
+;;
+;;
+;; Technical description of the compiler
+;; =====================================
 ;;
 ;; General strategy: Java has been enhanced to emit scheme-compatible
 ;; S-expressions.  We parse the S-expressions, convert to the Modula-3
@@ -16,7 +43,6 @@
 ;; 1. desugaring
 ;;    a. x++ and x += c are desugared into x = x + 1 and x = x + c
 ;;    b. int x=5, y; are desugared to int x; x = 5; int y;
-;;
 ;;
 ;;    uniquifying block variable names
 ;;
@@ -41,7 +67,27 @@
 ;;    -- liveness of temporaries to be computed: local to block or
 ;;       visible across blocks?
 ;;
-;; 7. code generation
+;; 7. code generation (see codegen-m3.scm)
+;;
+;; Many details have been left out above.
+;;
+;; A good place to start understanding this code is by reviewing the
+;; routine compile! below and do-m3! in codegen-m3.scm.  A normal compilation
+;; proceeds through three major steps:
+;;
+;; loaddata!  -- load S-expression from the filesystem
+;; compile!   -- run the compiler front-end
+;; do-m3!     -- run the compiler back-end (code generator)
+;;
+;; The expected result is Modula-3 code in a buildable directory, together
+;; with an m3makefile.  If your system is set up correctly, the steps after
+;; compiling will be
+;;
+;; cd <build-dir>
+;; cm3 -x
+;; ../<derived-dir>/sim
+;;
+;; normally, on an amd64 Linux system, <derived-dir> is AMD64_LINUX
 ;;
 ;;
 ;; PROCESS SUSPENSION AND REACTIVATION
@@ -62,6 +108,12 @@
 ;; if can only be suspended on probes, since there are no global
 ;; variables shared between processes (other than point-to-point channels).
 ;; (This is a fundamental design feature of CSP.)
+;;
+;; (Actually it is not 100% true that we can only suspend on probes.
+;; We can also suspenend on bare "Node"s.  This allows, e.g., the
+;; implementation of HSE in CSP.  This type of action is not currently
+;; supported, but will be soon.  However, it will never be supported
+;; in an efficient way.  This is simply not the right way of using CSP.)
 ;;
 ;; Since only probes can cause a suspended if to wake up, we can
 ;; evaluate an if by thinking of it as a fork in the code that, based on
@@ -89,6 +141,9 @@
 ;; iii - we could implement else as its own special expression object.
 ;;       I think this is the approach we will choose.
 ;;
+;; See the accompanying file selection.txt for more information on ifs,
+;; dos.
+;;
 ;;
 ;; UNDECLARED VARIABLES
 ;; ====================
@@ -108,6 +163,9 @@
 ;;            range -2^(N-1) .. 2^(N-1) - 1
 ;;
 ;; Note that "int" is more like a "sint(N)" than it is like an "int(N)"
+;;
+;; A key aspect of the CSP language is that N can be any value---wide
+;; integers are fully supported by the language.
 ;;
 ;;
 ;; FUNCTION-CALL INLINING
@@ -137,15 +195,16 @@
 ;; ===============
 ;;
 ;; The Java S-expression generator generates a parse tree basically
-;; replicating the Java AST types from the com/avlsi/csp/ast directory.
-;; These types contain quite a bit of syntactic sugar.  We desugar the
-;; tree in a seemingly roundabout way: convert the tree to Modula-3
-;; types using the CspAst interface, then dump out a new S-expression
-;; by calling the .lisp() method of the CspSyntax interface.  Part of
-;; the reason to do this is to avail ourselves of the strict typechecking
-;; of Modula-3 but also to allow future, faster implementations, closer
-;; to machine language than the very flexible but likely quite slow
-;; code that we have here in the Scheme environment.
+;; replicating the Java AST types from the com/avlsi/csp/ast
+;; directory.  These types contain quite a bit of syntactic sugar.  We
+;; desugar the tree in a seemingly roundabout way: convert the tree to
+;; Modula-3 types using the CspAst interface, then dump out a new
+;; S-expression by calling the .lisp() method of the CspSyntax
+;; interface.  Part of the reason to do this is to avail ourselves of
+;; the strict typechecking of Modula-3 but also to allow future,
+;; faster implementations, closer to machine language than the very
+;; flexible but likely quite slow code that we have here in the Scheme
+;; environment.
 ;;
 ;;
 ;; GENERALLY HAIRY STUFF
@@ -160,7 +219,14 @@
 ;; time.  Otherwise, the block structure of the program, including
 ;; branching and joining of the locus/loci of control, is known at
 ;; compile time.  But the parallel loop introduces dynamic
-;; parallelism.
+;; parallelism, and dynamic memory allocation.
+;;
+;; Currently, we handle the parallel loop expression simply, through
+;; an implementation restriction.  We handle parallel loops ONLY for
+;; the cases where lo and hi are known at compile time.  We handle
+;; these loops then simply by unrolling (and uniquification of any
+;; variables introduced into scopes created inside the loop
+;; statement).
 ;;
 ;; The sequential loop can be desugared to a regular do loop.  The
 ;; variable scoping rules imply that the dummy index can be declared
@@ -169,34 +235,44 @@
 ;;
 ;; Loop expressions can be desugared during expression unfolding.
 ;;
-;;
 ;; The multiple steps listed above interact in a way that requires
 ;; them to be called multiple times until a fixpoint is reached, which
 ;; ought to be the finished program, ready for code generation.
 ;;
 ;; Well, let's hope it works!
+;;
+;; THINGS NOT YET DONE (AS OF 5/22/2025)
+;; =====================================
+;;
+;; 1. Structured channels -- only bd(N) is supported at the moment
+;; 2. Interface Nodes (getting the value of, setting the value of, waiting on)
+;; 3. Slack directives in the CSP (I don't even know where to find them)
+;;
+;; END OF TECHNICAL DESCRIPTION
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; the following are the basic Scheme modules we need.
 
 (require-modules "basic-defs" "m3" "hashtable" "set"
                  "display" "symbol-append.scm" "clarify.scm")
 (require-modules "fold.scm")
 
+(define sa string-append)
+;; we use this a LOT, let's have shorthand  -- it's needed in some modules
+;; so we can't move it down
 
-;;            } else if (name.equals("string")) {
-;;               preamble.add(createVarStatement(temp, new StringType()));
-;;            } else if (name.equals("print") || name.equals("assert") ||
-;;                       name.equals("cover") || name.equals("unpack")) {
-;;                noReturn = true;
-;;            } else if (name.equals("pack")) {
-;;                preamble.add(createVarStatement(temp,
-;;                                                new TemporaryIntegerType())); 
-;;            }
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;; component Scheme modules to load:
+;; 
 
-;; also see com/avlsi/csp/util/RefinementResolver.java
+(load "higher-order.scm")     ;; basic higher order functions
+(load "name-generator.scm")   ;; name generation
+(load "set-ops.scm")          ;; sets of atoms
+(load "pp.scm")               ;; pretty printing
 
-(load "higher-order.scm")
-(load "name-generator.scm")
-(load "set-ops.scm")
-(load "pp.scm")
+;; the following are components of the compiler itself
+;; refer to the individual component files for more information 
 
 (load "bigint.scm")
 (load "loops.scm")
@@ -219,6 +295,7 @@
 (load "dead.scm")  
 (load "fold-constants.scm")
 (load "vars.scm")
+(load "pack.scm")
 (load "blocking.scm")
 (load "globals.scm")
 (load "convert.scm")
@@ -226,13 +303,27 @@
 (load "codegen.scm")
 (load "comms.scm")
 
-(define sa string-append)
-
 (load "codegen-m3.scm")
 
 (define *reload-name*   "cspc.scm")
 
 (define (reload) (load *reload-name*))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;; some relevant code from the Java version of the system:
+;;
+;;            } else if (name.equals("string")) {
+;;               preamble.add(createVarStatement(temp, new StringType()));
+;;            } else if (name.equals("print") || name.equals("assert") ||
+;;                       name.equals("cover") || name.equals("unpack")) {
+;;                noReturn = true;
+;;            } else if (name.equals("pack")) {
+;;                preamble.add(createVarStatement(temp,
+;;                                                new TemporaryIntegerType())); 
+;;            }
+;;
+;; also see com/avlsi/csp/util/RefinementResolver.java
 
 (define special-functions     ;; these are special functions per Harry
   '(string
@@ -731,7 +822,6 @@
         (else 1)))
 
 (define (skip) )
-
 
 (define (make-var name type)
   (cons name type))

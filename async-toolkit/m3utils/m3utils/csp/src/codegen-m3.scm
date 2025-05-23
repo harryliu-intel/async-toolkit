@@ -1,20 +1,20 @@
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; 
+;; Code generator for CSP compiler.
+;;
+;; Generates Modula-3 code for CM3 (Critical Mass Modula-3) with
+;; Modula-Scheme package installed.
+;;
+;; Target is a 64-bit machine of any architecture.  Detailed
+;; architecture or endianness should not matter.
+;;
+;; Author : mika.nystroem@intel.com
+;; May, 2025
+;;
+
 (define *default-slack* 1)
-
-(define (m3-expand-type type)
-  (cond ((boolean-type? type) "BOOLEAN")
-        ((string-type? type)  "TEXT")
-        ((integer-type? type) (m3-expand-int-type type))
-        ((array-type? type)   (m3-expand-array-type type))
-        ((struct-type? type)  (m3-expand-struct-type type)) ;; hmm
-        (else (error "Unknown type " type))
-        )
-  )
-
-(define (m3-expand-array-type type)
-  ;; this isnt right, this is just an open array
-  ;; -- we need the range.
-  
-  (string-append "ARRAY OF " (m3-expand-type (caddr type))))
+;; we should get slack from the CSP source code, but for now we don't,
+;; so we do it this way
 
 (define *target-word-size* 64) ;; word size of target machine
 (define *bwsz*    (bn *target-word-size*))
@@ -25,6 +25,23 @@
 
 (define m3-integer-min (xnum-- (xnum-<< *big1* *bwszm1*)))
 (define m3-integer-max (xnum-- (xnum-<< *big1* *bwszm1*) *big1*))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (m3-expand-type type)
+  (cond ((boolean-type? type) "BOOLEAN")
+        ((string-type?  type) "TEXT")
+        ((integer-type? type) (m3-expand-int-type type))
+        ((array-type?   type) (m3-expand-array-type type))
+        ((struct-type?  type) (m3-expand-struct-type type)) ;; hmm
+        (else (error "Unknown type " type))
+        )
+  )
+
+(define (m3-expand-array-type type)
+  ;; this isnt right, this is just an open array
+  ;; -- we often need the range.
+  (string-append "ARRAY OF " (m3-expand-type (caddr type))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
@@ -39,45 +56,11 @@
   ;; single character symbol sym1
   (string->integer (symbol->string sym1)))
 
+(define m3-ident
+  ;; this particular piece of code is implemented in M3 for efficiency
+  (compose M3Ident.Escape symbol->string))
 
-(define (make-char-in-range? lo hi)
-  (lambda(ch)
-    (and (>= (char->integer ch) (string->integer lo))
-         (<= (char->integer ch) (string->integer hi)))))
-
-(define alpha-checker
-  (filter-or (make-char-in-range? "a" "z")
-             (make-char-in-range? "A" "Z")))
-
-(define digit-checker
-  (make-char-in-range? "0" "9"))
-
-(define *us* (char->integer #\_))
-
-(define (m3-char c) ;; superseded by M3Ident.Escape
-  (cond ((alpha-checker c) (list (char->integer c)))
-        ((digit-checker c) (list (char->integer c)))
-        (else  `(,*us* 
-                  ,@(map char->integer
-                         (string->list (number->string (char->integer c))))
-
-                  ,*us*))))
-
-(define m3-ident (compose M3Ident.Escape symbol->string))
 (define m3-struct (compose (curry sa "struct_") m3-ident))
-
-(define (oldm3-ident scm-ident) ;; Good grief
-
-  ;; this just turns a Scheme symbol into a legal Modula-3 identifier
-  
-;;  (dis "m3-ident : " scm-ident dnl)
-  (string-append "m3__"
-                 (list->string
-                  (map integer->char
-                       (apply append
-                              (map m3-char
-                                   (string->list
-                                    (symbol->string scm-ident))))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; 
@@ -101,7 +84,9 @@
     )
   )
 
-(define (bf x) (BigInt.Format x 10))
+(define (bf x)
+  ;; format a BigInt.T in base 10
+  (BigInt.Format x 10))
 
 (define (m3-native-literal expr)
   (if (not (bigint? expr))
@@ -241,6 +226,8 @@
   )
 
 (define (m3-convert-pack-unpack w m3nm sd)
+  ;; generate the routines for packing/unpacking structs
+  
     (w "PROCEDURE " m3nm "_unpack_dynamic(VAR s : " m3nm "; x, scratch : DynamicInt.T) : DynamicInt.T =" dnl
        "  BEGIN" dnl)
     (map (yrruc w ";" dnl)
@@ -290,6 +277,15 @@
 )
 
 (define (m3-convert-structdecl pc sd)
+  ;;
+  ;; make all the routines associated with a struct type
+  ;;
+  ;; That is:
+  ;; -- pack/unpack
+  ;; -- initialization
+  ;; -- assignment
+  ;;
+  
   (dis "m3-convert-structdecl : sd    : " sd dnl)
   (let* ((nm    (cadr sd))
          (m3nm  (m3-struct nm))
@@ -333,7 +329,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;
-;; pack/unpack
+;; struct pack/unpack details
 ;;
 
 (define *sd* #f)
@@ -426,6 +422,9 @@
   )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;; struct initialization details
+;;
 
 (define (m3-make-init-field pc m3tgt fd)
   (let* ((ty     (get-decl1-type fd))
@@ -478,6 +477,11 @@
    )
   );;*tel
   )
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;; struct assignment details
+;;
 
 (define (m3-make-assign-field pc m3tgt m3src fd)
   (dis "m3-make-assign-field : m3tgt : " m3tgt dnl)
@@ -562,6 +566,9 @@
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;; variable placement for the process
+;;
 
 (define (m3-frame-variables the-blocks the-decls cell-info)
 
@@ -681,7 +688,7 @@
   )
 
 (define (get-all-labels the-blocks)
-  (map cadr (filter identity(map (curry find-stmt  'label) the-blocks)))
+  (map cadr (filter identity (map (curry find-stmt 'label) the-blocks)))
   )
 
 (define (get-fork-labels label-lst)
@@ -744,11 +751,6 @@
 (define (indent-writer w by) (lambda x (apply w (cons by x))))
 
 (define (suffix-writer w by) (lambda x (apply w (append x (list by)))))
-
-;; XXX unfinished:
-;; we need to fix these up to assign each element of the array
-;; use  (array-dims (get-port-channel <port-def>))
-;; then use m3-initialize-array
 
 (define (m3-mark-reader-writer whch w pc id)
     ;;  (w "<*ASSERT " m3id ".reader = NIL*>" dnl)
@@ -1246,19 +1248,53 @@
 ;; and the operations distinguish between Word.T and INTEGER.
 ;; This only really matters for integers exactly 64 bits wide.
 ;;
-;; narrow uint (0..64)
+;; The present version of the compiler simplifies things a little bit
+;; by representing unsigned 64-bit integers as wide integers, rather
+;; than special-casing this specific type to be represented by an
+;; INTEGER in memory (that's the way that the Word interface does it).
+;;
+;; So for native types, we have:
+;;
+;; narrow uint (0..63)
 ;; narrow sint (0..64)
+;;
+;; sint(64) is somewhat special, as it is just Modula-3's INTEGER type.
+;; The other types are all represented as Modula-3 integer subranges.
 ;;
 ;; Wider integers than 64 bits are stored as dynamic integers, see below.
 ;; Assignments are range-checked and truncated as needed.
 ;;
-;; wide uint (65..??)
+;; wide uint (64..??)
 ;; wide sint (65..??)
 ;;
-;; Finally, there are dynamic integers, which are stored as instances of
-;; Mpz.T (GNU MP mpz_t C type wrapper).
+;; Finally, there are dynamic integers, which are stored as instances
+;; of Mpz.T (GNU MP mpz_t C type wrapper).  These are not
+;; range-checked or truncated when assigned, since they are specified
+;; to grow without bound.
 ;;
 ;; dynamic int (0 .. +inf)
+;;
+;; The routines below classify the above types as either:
+;;
+;; 'native
+;; 'wide
+;; 'dynamic
+;; 
+;; Actual operations are the same between 'wide and 'dynamic ; what differs
+;; is assginments with 'wide as lvalue.
+;;
+;; There's a further subtlety that's not fully captured by the
+;; compiler: The widths of integers come from two sources: either an
+;; integer variable is declared to be a specific width by the user, OR
+;; the integer variable's width is inferred through interval arithmetic
+;; (see interval.scm).  In the former case, it can happen that the compiled
+;; code assigns a wider result to the narrow variable, and truncation is
+;; to happen as per standard CSP rules (derived from C)---so masking is
+;; part of the assignment operation.  But in the latter case, the width is
+;; known in advance, and masking is not necessary---if masking is ever
+;; necessary that is because of a bug in this compiler.  (So we could
+;; use an assertion instead.)  I don't think we distinguish adequately
+;; between the two cases, unfortunately.
 ;;
 
 (define (m3-sint-type? t)
@@ -1296,11 +1332,14 @@
   ;; hmm there will be a very special case for operands that are
   ;; unsigned and exactly 64 bits wide.  Actually, we can represent
   ;; those as fixed wide integers, only exactly one word wide.
+  ;; But for now, we don't do that!
   
   (and (integer-type? t)
        (not (m3-dynamic-int-type? t))
-       (or (and (m3-sint-type? t) (<= (m3-int-type-width t) *target-word-size*))
-           (and (m3-uint-type? t) (<= (m3-int-type-width t) (- *target-word-size* 1))))) ;; hmm.
+       (or (and (m3-sint-type? t)
+                (<= (m3-int-type-width t) *target-word-size*))
+           (and (m3-uint-type? t)
+                (<= (m3-int-type-width t) (- *target-word-size* 1))))) ;; hmm.
   )
 
 (define (m3-wide-int-type? t)
@@ -1488,11 +1527,12 @@
           (max-type 'native
                     (classify-expr-type pc a)
                     (classify-expr-type pc b)))
-         (opx     (m3-compile-native-binop op-type
-                                           builder
-                                           op
-                                           (m3-force-type pc op-type "frame.a" a)
-                                           (m3-force-type pc op-type "frame.b" b))))
+         (opx
+          (m3-compile-native-binop op-type
+                                   builder
+                                   op
+                                   (m3-force-type pc op-type "frame.a" a)
+                                   (m3-force-type pc op-type "frame.b" b))))
     opx
     )
   )
@@ -1817,9 +1857,6 @@
             );;dnoc
       );;tel
     );;tel
-  )
-
-(define (m3-compile-native-recv-expression pc rhs)
   )
 
 (define (m3-compile-stringify-integer-value pc x)
@@ -3339,6 +3376,16 @@
 )
 
 (define (do-m3!)
+  ;;
+  ;; This is the main entry point for Modula-3 code generation.  We
+  ;; assume that the whole compiler front-end has run (through
+  ;; compile9!) and generated its results in text9.
+  ;;
+  ;; Here we generate the Modula-3 code for the process and write the
+  ;; output into the appropriate .i3 and .m3 files.  We also edit the
+  ;; m3makefile to include these files as necessary.
+  ;;
+  
   (set! *stage* 'do-m3!)
   (let* ((the-blocks text9)
          (cell-info  *cellinfo*)
@@ -3429,6 +3476,8 @@
 
 
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+    ;;
+    ;; writers for the process files
     
     (define (intf . x) (Wr.PutText i3wr (apply string-append x)))
     (define (modu . x) (Wr.PutText m3wr (apply string-append x)))
@@ -3641,6 +3690,19 @@
   )
 
 (define (do-compile-m3! nm . x)
+  ;;
+  ;; This is a helper routine that runs the entire compiler for a single
+  ;; process.
+  ;;
+  ;; -- It first loads the process data from disk using loaddata1!
+  ;; 
+  ;; -- Then, it runs the compiler front end using compile!
+  ;;
+  ;; -- Next, it writes debug info in the form of .text9.scm
+  ;;
+  ;; -- Finally, it runs the code-generation stage that this file is mostly
+  ;; dedicated to.
+  ;;
   (let* ((modname   (loaddata0! nm))
          (loaded-fp (fingerprint-string (stringify *cell*)))
          (old-fp    (FingerprintFinder.Find (sa (build-dir) "/" modname ".m3")))
@@ -3688,6 +3750,8 @@
 ;;
 ;; the driver
 ;;
+;; This is what the user would normally run.
+;;
 
 (define tpt #f)
 
@@ -3727,10 +3791,10 @@
 
   )
 
-;;(drive! "demo_46_SYSTEM.procs")
-
 (define (m3-write-main! builder-text)
-
+  ;;
+  ;; write the simulator Main: the entry point of the compiled program
+  ;;
   (let ((mwr (FileWr.Open (sa (build-dir) "SimMain.m3"))))
 
     (define (mw . x) (Wr.PutText mwr (apply string-append x)))
@@ -3801,12 +3865,19 @@
 )
   
 (define (fingerprint-string str)
+  ;;
+  ;; A cryptographically secure "fingerprint" of a string.  From the
+  ;; DECSRC Vesta software management system.  See the DECSRC Modula-3
+  ;; documentation for more details.
+  ;; 
   (let ((fp (Fingerprint.FromText str)))
     (number->string
      (apply +
             (map (lambda(x)(* (Math.pow 256 (car x)) (cdr x))) (cdar fp))))))
- 
 
 (define (fs type)
+  ;; a little bit of interactive debugging help.
+  ;; (fs '<stmt-type>) will list all statements of type <stmt-type>
+  ;; in text9.
   (apply append (map (curry find-stmts type) text9))
   )

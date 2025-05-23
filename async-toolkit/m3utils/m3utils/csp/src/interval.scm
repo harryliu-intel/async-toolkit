@@ -1,3 +1,8 @@
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;; interval.scm -- interval arithmetic on CSP programs
+;;
+
 (define (interval-dbg . x)
 ;;  (apply dis x)
   )
@@ -118,7 +123,6 @@
       (make-range (range-min (expr-range min-expr syms))
                   (range-max (expr-range max-expr syms)))))
       
-
   (define (get-bits-interval bs)
 
     (interval-dbg "get-bits-interval : bs : " bs dnl)
@@ -136,7 +140,6 @@
 ;;      *range-complete*
       )
     )
-  
   
   (let* ((ass-stmt   (car ass))
          (is-recv    (recv?   ass-stmt))
@@ -313,6 +316,7 @@
   (dis "=========  INTEGER RANGES COMPUTED :" dnl)
   (display-the-ranges)
   )
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define (make-sint-range bits)
@@ -347,7 +351,6 @@
       
       )
     )
-
 
    (else
     (error "get-type-range : not an rangeable type : " declared-type))
