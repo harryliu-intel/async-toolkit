@@ -3301,8 +3301,15 @@
     (map (curry Wr.PutText wr)
          (map (lambda(intf)(sa "import(\"" intf "\")" dnl))
               *m3-standard-packages*))
-    (Wr.PutText wr (sa "m3_optimize(\"T\")" dnl))
-    (Wr.PutText wr (sa "interface(\"CspDebug\")" dnl))
+
+    (define (w . x) (Wr.PutText wr (apply string-append x)))
+
+    (w "m3_optimize(\"T\")" dnl)
+    (w "interface(\"CspDebug\")" dnl)
+    (w "build_generic_intf(\"CspChannelOps1\", \"CspChannelOps\", [], VISIBLE)" dnl)
+    (w "build_generic_impl(\"CspChannelOps1\", \"CspChannelOps\", [\"CspDebug\"])" dnl)
+
+    (w dnl)
     (Wr.PutChar wr dnl)
     
     (Wr.Close wr)

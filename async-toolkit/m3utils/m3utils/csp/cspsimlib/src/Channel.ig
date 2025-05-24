@@ -1,4 +1,6 @@
 GENERIC INTERFACE Channel(Type);
+IMPORT CspChannel;
+IMPORT CspChannelOps1 AS CspChannelOps;
 IMPORT CspCompiledProcess AS Process;
 IMPORT Word;
 IMPORT DynamicInt;
@@ -6,16 +8,8 @@ IMPORT DynamicInt;
 TYPE
   Ref = T;
   
-  T = OBJECT
-    nm             : TEXT;
-    slack          : CARDINAL;
-    wr, rd         : CARDINAL;       (* write, read pointers *)
+  T = CspChannel.T BRANDED Brand OBJECT
     data           : REF Buff;       (* indirect is so can be part of several *)
-    waiter         : Process.Closure;
-    writer, reader : Process.Frame;  (* used ONLY for assertions! *)
-
-    (* locking *)
-    lockwr, lockrd : CARDINAL;
   END;
 
 CONST
@@ -60,10 +54,11 @@ PROCEDURE ChanDebug(chan : T) : TEXT;
 
 PROCEDURE New(nm : TEXT; slack : CARDINAL := 0) : Ref;
 
-PROCEDURE Lock  (c : T; cl : Process.Closure);
-PROCEDURE Unlock(c : T; cl : Process.Closure);
-PROCEDURE Ready (c : T; cl : Process.Closure) : BOOLEAN;
-PROCEDURE Wait  (c : T; cl : Process.Closure);
-PROCEDURE Unwait(c : T; cl : Process.Closure);
-  
+(* the following could ACTUALLY be moved out of here. *)
+CONST Lock   = CspChannelOps.Lock;
+CONST Unlock = CspChannelOps.Unlock;
+CONST Ready  = CspChannelOps.Ready;
+CONST Wait   = CspChannelOps.Wait;
+CONST Unwait = CspChannelOps.Unwait;
+
 END Channel.

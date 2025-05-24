@@ -38,6 +38,11 @@ Generic_interface ("Node")
 template ("node")
 
 Module ("CspPort")
+Interface ("CspPortObject")
+Interface ("CspNode")
+Interface ("CspChannel")
+Generic_module ("CspChannelOps")
+
 Sequence ("CspPort", "CspPort")
 Table("AtomCspPortSeq", "Atom", "CspPortSeq")
 Table("TextCspPortSeq", "Text", "CspPortSeq")

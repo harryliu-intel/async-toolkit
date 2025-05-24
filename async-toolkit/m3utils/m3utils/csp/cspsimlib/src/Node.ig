@@ -1,10 +1,10 @@
 GENERIC INTERFACE Node(Type);
+IMPORT CspNode;
 
 TYPE
-  Ref = REF T;
+  Ref = T;
   
-  T = RECORD
-    nm   : TEXT;
+  T = CspNode.T OBJECT
     data : Type.T;
   END;
 

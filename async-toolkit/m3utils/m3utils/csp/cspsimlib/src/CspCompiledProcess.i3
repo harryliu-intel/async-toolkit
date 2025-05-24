@@ -22,5 +22,7 @@ CONST Brand = "CspCompiledProcess";
 PROCEDURE NextId() : CARDINAL;
 
 PROCEDURE NextFrameId() : CARDINAL;
-      
+
+PROCEDURE DebugClosure(cl : Closure) : TEXT;
+
 END CspCompiledProcess.

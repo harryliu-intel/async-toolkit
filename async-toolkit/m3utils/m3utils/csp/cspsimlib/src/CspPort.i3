@@ -1,4 +1,7 @@
 INTERFACE CspPort;
+
+(* is this used at all? *)
+
 IMPORT Atom;
 IMPORT CspDirection;
 
