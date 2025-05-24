@@ -13,7 +13,7 @@ CONST seleDebug = CspDebug.DebugSelect;
 
 TYPE TA = ARRAY OF TEXT;
       
-PROCEDURE SendProbe(VAR c : T; cl : Process.Closure) : BOOLEAN =
+PROCEDURE SendProbe(c : T; cl : Process.Closure) : BOOLEAN =
   BEGIN
     WITH res = c.wr # c.rd OR c.waiter = cl DO
       IF probDebug THEN
@@ -26,12 +26,12 @@ PROCEDURE SendProbe(VAR c : T; cl : Process.Closure) : BOOLEAN =
     END
   END SendProbe;
 
-PROCEDURE Full(READONLY c : T) : BOOLEAN =
+PROCEDURE Full(c : T) : BOOLEAN =
   BEGIN
     RETURN c.wr = c.rd
   END Full;
   
-PROCEDURE Send(VAR      c : T;
+PROCEDURE Send(         c : T;
                READONLY x : Item;
                cl         : Process.Closure) : BOOLEAN =
   BEGIN
@@ -137,7 +137,7 @@ PROCEDURE DebugClosure(cl : Process.Closure) : TEXT =
     END
   END DebugClosure;
   
-PROCEDURE RecvProbe(VAR c : T; cl : Process.Closure) : BOOLEAN =
+PROCEDURE RecvProbe(c : T; cl : Process.Closure) : BOOLEAN =
   VAR
     nxtRd : CARDINAL;
   BEGIN
@@ -173,7 +173,7 @@ PROCEDURE RecvProbe(VAR c : T; cl : Process.Closure) : BOOLEAN =
     END
   END RecvProbe;
   
-PROCEDURE Recv(VAR      c : T;
+PROCEDURE Recv(     c : T;
                VAR      x : Item;
                cl         : Process.Closure) : BOOLEAN =
   BEGIN
@@ -235,7 +235,7 @@ PROCEDURE Recv(VAR      c : T;
     END
   END Recv;
 
-PROCEDURE ChanDebug(READONLY chan : T) : TEXT =
+PROCEDURE ChanDebug(chan : T) : TEXT =
   VAR
     waiterStr : TEXT;
   BEGIN
@@ -258,9 +258,9 @@ PROCEDURE ChanDebug(READONLY chan : T) : TEXT =
     )
   END ChanDebug;
 
-PROCEDURE New(nm : TEXT; slack : CARDINAL) : REF T =
+PROCEDURE New(nm : TEXT; slack : CARDINAL) : Ref =
   BEGIN
-    RETURN NEW(REF T,
+    RETURN NEW(Ref,
                nm    := nm,
                slack := slack,
                wr    := 0,
@@ -268,7 +268,7 @@ PROCEDURE New(nm : TEXT; slack : CARDINAL) : REF T =
                data  := NEW(REF Buff, slack + 1))
   END New;
 
-PROCEDURE SendNative(VAR c : T;
+PROCEDURE SendNative(c     : T;
                      x     : INTEGER;
                      cl    : Process.Closure) : BOOLEAN =
   VAR
@@ -283,7 +283,7 @@ PROCEDURE SendNative(VAR c : T;
     RETURN Send(c, toSend, cl)
   END SendNative;
 
-PROCEDURE SendDynamic(VAR c : T;
+PROCEDURE SendDynamic(c : T;
                       x     : DynamicInt.T;
                       cl    : Process.Closure) : BOOLEAN =
   VAR
@@ -293,7 +293,7 @@ PROCEDURE SendDynamic(VAR c : T;
     RETURN Send(c, toSend, cl)
   END SendDynamic;
 
-PROCEDURE RecvNative(VAR      c : T;
+PROCEDURE RecvNative(     c : T;
                      VAR      x : INTEGER;
                      cl         : Process.Closure) : BOOLEAN =
   VAR
@@ -307,7 +307,7 @@ PROCEDURE RecvNative(VAR      c : T;
     END
   END RecvNative;
 
-PROCEDURE RecvDynamic(VAR      c : T;
+PROCEDURE RecvDynamic(     c : T;
                       x(*OUT*)   : DynamicInt.T;
                       cl         : Process.Closure) : BOOLEAN =
   VAR
@@ -321,7 +321,7 @@ PROCEDURE RecvDynamic(VAR      c : T;
     END
   END RecvDynamic;
 
-PROCEDURE Lock  (VAR c : T; cl : Process.Closure) =
+PROCEDURE Lock  (c : T; cl : Process.Closure) =
   BEGIN
     IF seleDebug THEN
       Debug.Out(F("%s : %s Lock %s",
@@ -331,7 +331,7 @@ PROCEDURE Lock  (VAR c : T; cl : Process.Closure) =
     c.lockwr := c.wr; c.lockrd := c.rd
   END Lock;
   
-PROCEDURE Unlock(VAR c : T; cl : Process.Closure) =
+PROCEDURE Unlock(c : T; cl : Process.Closure) =
   BEGIN
     IF seleDebug THEN
       Debug.Out(F("%s : %s Unlock %s",
@@ -342,7 +342,7 @@ PROCEDURE Unlock(VAR c : T; cl : Process.Closure) =
     (* NOP *)
   END Unlock;
   
-PROCEDURE Ready (VAR c : T; cl : Process.Closure) : BOOLEAN =
+PROCEDURE Ready (c : T; cl : Process.Closure) : BOOLEAN =
   BEGIN
     WITH res = c.lockwr # c.wr OR c.lockrd # c.rd DO
       IF seleDebug THEN
@@ -358,7 +358,7 @@ PROCEDURE Ready (VAR c : T; cl : Process.Closure) : BOOLEAN =
     END
   END Ready;
   
-PROCEDURE Wait  (VAR c : T; cl : Process.Closure) =
+PROCEDURE Wait  (c : T; cl : Process.Closure) =
   BEGIN
     IF seleDebug THEN
       Debug.Out(F("%s : %s Wait %s",
@@ -368,7 +368,7 @@ PROCEDURE Wait  (VAR c : T; cl : Process.Closure) =
     c.waiter := cl
   END Wait;
   
-PROCEDURE Unwait  (VAR c : T; cl : Process.Closure) =
+PROCEDURE Unwait  (c : T; cl : Process.Closure) =
   BEGIN
     IF seleDebug THEN
       Debug.Out(F("%s : %s Unwait %s",

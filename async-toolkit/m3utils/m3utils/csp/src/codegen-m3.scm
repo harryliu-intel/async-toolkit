@@ -71,9 +71,9 @@
   (w "    " (pad 40 (m3-ident (get-port-id pdef)))
      " : "
      (m3-convert-port-type-array (get-port-def-type pdef))
-     " REF "
+     " "
      (m3-convert-port-type-scalar (get-port-def-type pdef))
-     ".T (*:= NIL*) ;" dnl
+     ".Ref (*:= NIL*) ;" dnl
      )
   (w "    " "(*" (stringify pdef) "*)" dnl)
   )
@@ -1510,7 +1510,7 @@
          (builder (sa "( " a-arg " " (m3-map-symbol-op op) " " b-arg " )")))
         
         ((and (eq? 'native cat) (eq? '>> op))
-         (builder (sa "NativeInt.Shift( " a-arg " , -( " b-arg " ) )")))
+         (builder (sa "Word.Shift( " a-arg " , -( " b-arg " ) )")))
 
         ((and (eq? 'native cat) (member op m3-binary-word-ops))
          (builder (sa (m3-map-word-op op) "( " a-arg " , " b-arg " )")))
@@ -2169,7 +2169,7 @@
              (dis "port-id  : " port-id dnl)
              (dis "port-def : " port-def dnl)
 
-             (sa m3-lhs port-typenam "." m3probe-side "(" m3-pname "^ , cl)")
+             (sa m3-lhs port-typenam "." m3probe-side "(" m3-pname " , cl)")
              );;*tel             
            )
           
@@ -2442,15 +2442,15 @@
                    (int   (integer-type? ty))
                    (class (if int (classify-operand-type pc ty) #f)))
               (cond ((eq? class 'native)
-                     (sa ".SendNative( " m3-pname "^, "
+                     (sa ".SendNative( " m3-pname ", "
                          (m3-compile-value pc 'native rhs)))
                     
                     ((eq? class 'dynamic)
-                     (sa ".SendDynamic( " m3-pname "^, "
+                     (sa ".SendDynamic( " m3-pname ", "
                          (m3-compile-value pc 'native rhs)))
                     
                     ((boolean? rhs)
-                     (sa ".SendBoolean( " m3-pname "^, "
+                     (sa ".SendBoolean( " m3-pname ", "
                          (m3-compile-value pc 'x rhs)))
                     
                     (else (error "can't send on channel: literal " rhs dnl))
@@ -2465,7 +2465,7 @@
               port-typenam ".Item; BEGIN" dnl
               m3-rhs-type "Ops.ToWordArray(" (m3-format-designator pc rhs) " , "
               "toSend);" dnl
-              "IF NOT " port-typenam ".Send( " m3-pname "^ , toSend , cl ) THEN RETURN FALSE END" dnl
+              "IF NOT " port-typenam ".Send( " m3-pname " , toSend , cl ) THEN RETURN FALSE END" dnl
               "END"
               );;as
           );;tel
@@ -2496,7 +2496,7 @@
       (sa "VAR toRecv : "
           port-typenam".Item; BEGIN " dnl
           "IF NOT "
-          port-typenam ".Recv( " m3-pname "^ , toRecv , cl ) THEN RETURN FALSE END" dnl
+          port-typenam ".Recv( " m3-pname " , toRecv , cl ) THEN RETURN FALSE END" dnl
           "END")
       )
 
@@ -2505,7 +2505,7 @@
              (m3-rhs-type  (m3-map-decltype rhs-type)))
         (sa "VAR toRecv : "
             port-typenam".Item; BEGIN IF NOT "
-            port-typenam ".Recv( " m3-pname "^ , toRecv , cl ) THEN RETURN FALSE END;" dnl
+            port-typenam ".Recv( " m3-pname " , toRecv , cl ) THEN RETURN FALSE END;" dnl
             m3-rhs-type "Ops.FromWordArray(" (m3-format-designator pc rhs) " , "
             "toRecv) END"
             )
@@ -2751,7 +2751,7 @@
     (set! *pd* port-def)
 
     (m3-initialize-array
-     (lambda(txt) (sa port-typenam "." whch "(" txt "^ , cl)"))
+     (lambda(txt) (sa port-typenam "." whch "(" txt " , cl)"))
      m3-pname
      adims
      'lock
@@ -2810,7 +2810,7 @@
 
     (m3-initialize-array
      (lambda(txt)
-       (sa "IF " port-typenam ".Ready(" txt "^ , cl) THEN INC(ready) END" dnl)
+       (sa "IF " port-typenam ".Ready(" txt " , cl) THEN INC(ready) END" dnl)
        )
      m3-pname
      adims

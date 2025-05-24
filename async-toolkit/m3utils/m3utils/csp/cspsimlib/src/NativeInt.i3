@@ -12,7 +12,8 @@ CONST And = Word.And;
       Xor = Word.Xor;
       Shl = Word.Shift; (* right shift is done by negating the shift amount *)
 
-
+      Shift = Word.Shift;
+      
 PROCEDURE Pow(a, b : T) : T;
 
 CONST Format = FmtIntf.Int;

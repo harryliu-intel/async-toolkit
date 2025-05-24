@@ -47,7 +47,7 @@ PROCEDURE M3ChanDecl(chan : Channel) : TEXT =
   BEGIN
     TYPECASE chan OF
       Scalar(s) =>
-      RETURN F("REF %s%sChan.T", ClassTypeNames[s.class], Int(s.width))
+      RETURN F("%s%sChan.Ref", ClassTypeNames[s.class], Int(s.width))
     |
       Array(a) =>
       RETURN F("ARRAY [ 16_%s .. 16_%s ] OF %s",

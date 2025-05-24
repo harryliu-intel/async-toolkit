@@ -4,7 +4,9 @@ IMPORT Word;
 IMPORT DynamicInt;
 
 TYPE
-  T = RECORD
+  Ref = T;
+  
+  T = OBJECT
     nm             : TEXT;
     slack          : CARDINAL;
     wr, rd         : CARDINAL;       (* write, read pointers *)
@@ -26,42 +28,42 @@ TYPE
 
 CONST Brand = "Channel(" & Type.Brand & ")";
 
-PROCEDURE SendProbe(VAR c : T; cl : Process.Closure) : BOOLEAN;
+PROCEDURE SendProbe(c : T; cl : Process.Closure) : BOOLEAN;
 
-PROCEDURE Send(VAR      c : T;
+PROCEDURE Send(         c : T;
                READONLY x : Item;
                cl         : Process.Closure) : BOOLEAN;
 
-PROCEDURE SendNative(VAR c : T;
+PROCEDURE SendNative(    c : T;
                      x     : INTEGER;
                      cl    : Process.Closure) : BOOLEAN;
 
-PROCEDURE SendDynamic(VAR c : T;
+PROCEDURE SendDynamic(    c : T;
                       x     : DynamicInt.T;
                       cl    : Process.Closure) : BOOLEAN;
   
-PROCEDURE RecvProbe(VAR c : T; cl : Process.Closure) : BOOLEAN;
+PROCEDURE RecvProbe(c : T; cl : Process.Closure) : BOOLEAN;
     
-PROCEDURE Recv(VAR      c : T;
+PROCEDURE Recv(         c : T;
                VAR      x : Item;
                cl         : Process.Closure) : BOOLEAN;
 
-PROCEDURE RecvNative(VAR      c : T;
+PROCEDURE RecvNative(         c : T;
                      VAR      x : INTEGER;
                      cl         : Process.Closure) : BOOLEAN;
 
-PROCEDURE RecvDynamic(VAR      c : T;
+PROCEDURE RecvDynamic(         c : T;
                       x(*OUT*)   : DynamicInt.T;
                       cl         : Process.Closure) : BOOLEAN;
 
-PROCEDURE ChanDebug(READONLY chan : T) : TEXT;
+PROCEDURE ChanDebug(chan : T) : TEXT;
 
-PROCEDURE New(nm : TEXT; slack : CARDINAL := 0) : REF T;
+PROCEDURE New(nm : TEXT; slack : CARDINAL := 0) : Ref;
 
-PROCEDURE Lock  (VAR c : T; cl : Process.Closure);
-PROCEDURE Unlock(VAR c : T; cl : Process.Closure);
-PROCEDURE Ready (VAR c : T; cl : Process.Closure) : BOOLEAN;
-PROCEDURE Wait  (VAR c : T; cl : Process.Closure);
-PROCEDURE Unwait(VAR c : T; cl : Process.Closure);
+PROCEDURE Lock  (c : T; cl : Process.Closure);
+PROCEDURE Unlock(c : T; cl : Process.Closure);
+PROCEDURE Ready (c : T; cl : Process.Closure) : BOOLEAN;
+PROCEDURE Wait  (c : T; cl : Process.Closure);
+PROCEDURE Unwait(c : T; cl : Process.Closure);
   
 END Channel.
