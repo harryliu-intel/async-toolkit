@@ -1,8 +1,12 @@
 GENERIC MODULE Channel(Type, CspDebug);
+
+IMPORT CspChannel;
+IMPORT CspChannelRep;
+
 IMPORT Debug;
 IMPORT CspCompiledProcess AS Process;
 FROM CspCompiledProcess IMPORT DebugClosure;
-IMPORT CspCompiledScheduler AS Scheduler;
+IMPORT CspCompiledScheduler1 AS Scheduler;
 FROM Fmt IMPORT Int, F, FN, Bool;
 IMPORT DynamicInt;
 IMPORT Mpz;
@@ -13,7 +17,15 @@ CONST probDebug = CspDebug.DebugProbe;
 CONST seleDebug = CspDebug.DebugSelect;
 
 TYPE TA = ARRAY OF TEXT;
-      
+
+TYPE
+  Buff     = ARRAY OF Item;         
+
+REVEAL
+  T = CspChannel.T BRANDED Brand OBJECT
+    data           : REF Buff;       (* size slack + 1 *)
+  END;
+
 PROCEDURE SendProbe(c : T; cl : Process.Closure) : BOOLEAN =
   BEGIN
     WITH res = c.wr # c.rd OR c.waiter = cl DO
@@ -38,13 +50,20 @@ PROCEDURE Send(         c : T;
   BEGIN
     (* the buffer is always big enough to write into 
        (it's one bigger than the slack)  *)
-      IF sendDebug THEN
-        Debug.Out(F("%s : %s Send called : %s",
-                    DebugClosure(cl), c.nm,
-                    ChanDebug(c)))
-        END;
-       
+    IF sendDebug THEN
+      Debug.Out(F("%s : %s Send called : %s",
+                  DebugClosure(cl), c.nm,
+                  ChanDebug(c)))
+    END;
+    
     c.data[c.wr] := x;
+
+    IF c.selecter # NIL THEN
+      IF sendDebug THEN
+        Debug.Out(F("%s : %s Send unlock select : %s", DebugClosure(cl), c.nm, DebugClosure(c.selecter)))
+      END;
+     Scheduler.Schedule(c.selecter)
+    END;
     
     IF c.wr = c.rd THEN
       (* channel is full, we check if the other end has caught up.
@@ -130,6 +149,13 @@ PROCEDURE RecvProbe(c : T; cl : Process.Closure) : BOOLEAN =
   VAR
     nxtRd : CARDINAL;
   BEGIN
+    IF probDebug THEN
+      Debug.Out(F("%s : %s RecvProbe %s",
+                  DebugClosure(cl), c.nm, 
+                  ChanDebug(c)))
+    END;
+
+    <*ASSERT c.waiter = NIL OR c.waiter.frameId # c.reader.id*>
     
     IF c.rd = c.slack THEN
       nxtRd := 0
@@ -166,6 +192,11 @@ PROCEDURE Recv(     c : T;
                VAR      x : Item;
                cl         : Process.Closure) : BOOLEAN =
   BEGIN
+    IF c.selecter # NIL THEN
+      Debug.Out(F("%s : %s Recv unlock select : %s", DebugClosure(cl), c.nm, DebugClosure(c.selecter)));
+      Scheduler.Schedule(c.selecter)
+    END;
+    
     VAR
       nxtRd : CARDINAL;
     BEGIN

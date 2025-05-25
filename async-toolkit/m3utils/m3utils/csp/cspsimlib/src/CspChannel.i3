@@ -3,14 +3,11 @@ IMPORT CspPortObject;
 IMPORT CspCompiledProcess AS Process;
 
 TYPE
-  T = CspPortObject.T BRANDED Brand OBJECT
-    slack          : CARDINAL;
-    wr, rd         : CARDINAL;       (* write, read pointers *)
-    waiter         : Process.Closure;
-    writer, reader : Process.Frame;  (* used ONLY for assertions! *)
+  T <: Public;
 
-    (* locking *)
-    lockwr, lockrd : CARDINAL;
+  Public = CspPortObject.T  OBJECT
+    slack          : (*CONST*) CARDINAL;
+    writer, reader : (*CONST*) Process.Frame;
   END;
 
 CONST Brand = "CspChannel";

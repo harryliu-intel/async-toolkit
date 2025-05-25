@@ -7,10 +7,8 @@ IMPORT DynamicInt;
 
 TYPE
   Ref = T;
-  
-  T = CspChannel.T BRANDED Brand OBJECT
-    data           : REF Buff;       (* indirect is so can be part of several *)
-  END;
+
+  T <: CspChannel.T;
 
 CONST
   Bitwidth = Type.Width;
@@ -18,7 +16,6 @@ CONST
 
 TYPE
   Item     = ARRAY [ 0 .. NWords - 1 ] OF Word.T;
-  Buff     = ARRAY OF Item;          (* size slack + 1 *)
 
 CONST Brand = "Channel(" & Type.Brand & ")";
 

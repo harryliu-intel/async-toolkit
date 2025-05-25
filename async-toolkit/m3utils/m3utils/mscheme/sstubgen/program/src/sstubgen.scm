@@ -594,7 +594,7 @@
 (define (format-type t env)
   (unwind-protect
    (unprotected-format-type t env)
-   '() ;; finally-clause
+   () ;; finally-clause
    (begin
      (set! bad-type t) ;; remember for debugging
      (error "format-type caught error formatting " t dnl dnl))))
@@ -3078,7 +3078,7 @@
         (unwind-protect
          (set! stale (< (apply min (map fs-status-modificationtime tgts))
                         (apply max (map fs-status-modificationtime srcs))))
-         '()
+         ()
          (set! stale #t))
         stale)
       #t))
@@ -3087,7 +3087,9 @@
   (define (cmp-files-safely fn1 fn2)
     (let ((res #f))
       (unwind-protect
-       (set! res (cmp-files fn1 fn2)) #f #f)
+       (begin (set! res (cmp-files fn1 fn2)) res)
+       ()
+       #f)
       res))
 
   (define (rename-file-if-different fn1 fn2)

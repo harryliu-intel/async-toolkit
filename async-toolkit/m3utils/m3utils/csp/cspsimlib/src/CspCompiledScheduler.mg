@@ -1,15 +1,27 @@
-MODULE CspCompiledScheduler;
+GENERIC MODULE CspCompiledScheduler(CspDebug);
 IMPORT CspCompiledProcess AS Process;
 IMPORT Word;
-FROM Fmt IMPORT Int;
+FROM Fmt IMPORT Int, F;
 IMPORT Debug;
+IMPORT CspScheduler;
 
-CONST doDebug = FALSE;
+CONST doDebug = CspDebug.DebugSchedule;
       
 PROCEDURE Schedule(closure : Process.Closure) =
   BEGIN
     <*ASSERT closure # NIL*>
 
+    IF doDebug THEN
+      IF running = NIL THEN
+        Debug.Out(F("NIL : NIL scheduling %s : %s to run",
+                  Int(closure.frameId), closure.name))
+      ELSE
+        Debug.Out(F("%s : %s scheduling %s : %s to run",
+                    Int(running.frameId), running.name,
+                    Int(closure.frameId), closure.name))
+      END
+    END;
+    
     IF closure.scheduled = nexttime THEN
       IF doDebug THEN
         Debug.Out(Int(closure.id) & " already scheduled at " & Int(nexttime))
@@ -43,13 +55,16 @@ VAR
 
 PROCEDURE GetTime() : Word.T =
   BEGIN RETURN nexttime END GetTime;
+
+VAR
+  running : Process.Closure := NIL;
   
 PROCEDURE Run() =
   BEGIN
     (* run *)
 
     LOOP
-      IF doDebug THEN Debug.Out("Scheduling loop : np = " & Int(np)) END;
+      IF doDebug THEN Debug.Out("=====  Scheduling loop : np = " & Int(np)) END;
 
       IF np = 0 THEN
         Debug.Error("DEADLOCK!")
@@ -59,9 +74,9 @@ PROCEDURE Run() =
         temp := active;
       BEGIN
         active := next;
-        ap := np;
-        next := temp;
-        np := 0;
+        ap     := np;
+        next   := temp;
+        np     := 0;
       END;
 
       INC(nexttime);
@@ -69,7 +84,17 @@ PROCEDURE Run() =
       FOR i := 0 TO ap - 1 DO
         WITH cl      = active[i] DO
           <*ASSERT cl # NIL*>
+          IF doDebug THEN
+            Debug.Out(F("Scheduler switch to %s : %s",
+                        Int(cl.frameId), cl.name));
+            running := cl
+          END;
           cl.run();
+          IF doDebug THEN
+            Debug.Out(F("Scheduler switch from %s : %s",
+                        Int(cl.frameId), cl.name));
+            running := NIL
+          END;
           (*IF NOT success THEN Schedule(cl) END*)
         END
       END
@@ -78,4 +103,6 @@ PROCEDURE Run() =
   
 (**********************************************************************)
 
-BEGIN END CspCompiledScheduler.
+BEGIN
+  CspScheduler.GetTime := GetTime;
+END CspCompiledScheduler.

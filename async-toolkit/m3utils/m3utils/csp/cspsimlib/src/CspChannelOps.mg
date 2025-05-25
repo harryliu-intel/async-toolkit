@@ -1,4 +1,5 @@
 GENERIC MODULE CspChannelOps(CspDebug);
+IMPORT CspChannelRep;
 IMPORT CspCompiledProcess AS Process;
 FROM CspCompiledProcess IMPORT DebugClosure;
 IMPORT Debug;
@@ -8,25 +9,30 @@ CONST sendDebug = CspDebug.DebugSend;
 CONST recvDebug = CspDebug.DebugRecv;
 CONST probDebug = CspDebug.DebugProbe;
 CONST seleDebug = CspDebug.DebugSelect;
+CONST lockDebug = CspDebug.DebugLock;
 
 TYPE TA = ARRAY OF TEXT;
 
 PROCEDURE Lock  (c : T; cl : Process.Closure) =
   BEGIN
-    IF seleDebug THEN
+    IF seleDebug OR lockDebug THEN
       Debug.Out(F("%s : %s Lock %s",
                   DebugClosure(cl), c.nm, 
-                  cl.name))
+                  cl.name));
+      <*ASSERT c.locker = NIL*>
+      c.locker := cl
     END;
     c.lockwr := c.wr; c.lockrd := c.rd
   END Lock;
   
 PROCEDURE Unlock(c : T; cl : Process.Closure) =
   BEGIN
-    IF seleDebug THEN
+    IF seleDebug OR lockDebug THEN
       Debug.Out(F("%s : %s Unlock %s",
                   DebugClosure(cl), c.nm, 
-                  cl.name))
+                  cl.name));
+      <*ASSERT c.locker = cl*>
+      c.locker := NIL
     END;
 
     (* NOP *)
@@ -55,7 +61,7 @@ PROCEDURE Wait  (c : T; cl : Process.Closure) =
                   DebugClosure(cl), c.nm, 
                   cl.name))
     END;
-    c.waiter := cl
+    c.selecter := cl
   END Wait;
   
 PROCEDURE Unwait  (c : T; cl : Process.Closure) =
@@ -65,8 +71,7 @@ PROCEDURE Unwait  (c : T; cl : Process.Closure) =
                   DebugClosure(cl), c.nm, 
                   cl.name))
     END;
-    <*ASSERT c.waiter = NIL OR c.waiter = cl*> c.waiter := NIL
+    <*ASSERT c.selecter = cl*> c.selecter := NIL
   END Unwait;
-
 
 BEGIN END CspChannelOps.

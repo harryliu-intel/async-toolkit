@@ -18,5 +18,11 @@ PROCEDURE walltime(frame : Frame) : NativeInt.T;
 PROCEDURE simtime(frame : Frame) : NativeInt.T;
 
 PROCEDURE assert(x : BOOLEAN; text : TEXT) : NativeInt.T;
+
+PROCEDURE random_native(bits : NativeInt.T) : NativeInt.T;
+
+PROCEDURE random_dynamic(x : DynamicInt.T; bits : NativeInt.T) : DynamicInt.T;
+
+CONST random_wide = random_dynamic;
   
 END CspIntrinsics.

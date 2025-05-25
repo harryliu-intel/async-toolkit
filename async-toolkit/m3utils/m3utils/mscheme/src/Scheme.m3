@@ -497,7 +497,9 @@ PROCEDURE EvalInternal(t   : T;
                 TRY
                   x := t.eval(protected,env)
                 FINALLY
-                  x := t.eval(cleanup,env)
+                  IF cleanup # NIL THEN
+                    x := t.eval(cleanup,env)
+                  END
                 END
               EXCEPT
                 E =>

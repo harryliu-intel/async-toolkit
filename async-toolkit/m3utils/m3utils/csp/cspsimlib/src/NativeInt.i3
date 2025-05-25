@@ -26,5 +26,8 @@ CONST One  = 1;
 PROCEDURE Hex(a : T) : TEXT;
 
 PROCEDURE ConvertDynamicInt(scratch, from : Mpz.T) : T;
-  
+
+CONST Min = FIRST(INTEGER);
+      Max = LAST(INTEGER);
+      
 END NativeInt.

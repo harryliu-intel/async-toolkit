@@ -138,7 +138,7 @@ define WORKER()(bd(W) -STRT; bd(STATUSW) +STATUS) <+ common
     STRT?id;
     print ("id = " + id);
     
-    *[ id == 0 ->
+    *[ //id == 0 ->
       int(W) idx = i * NWORKERS + id; // this is the index of the odd number
       int(W) num = 2 * idx + 1;       // this is the actual number we shall work on
       int(W) len = 0;
@@ -222,7 +222,7 @@ define SMERGE()(bd(STATUSW) -L[0..1], +R) <+ common
 {
   csp {
     
-    function recv(int which; status +-s) =
+    function recv(int -which; status +-s) =
       (
        L[which]?xs;
 
@@ -262,8 +262,8 @@ define SMERGE()(bd(STATUSW) -L[0..1], +R) <+ common
       status os = s;
       //print ("at start s::ops=" + s::ops + " os::ops=" + os::ops);
       [
-       #L[0] & #L[1] -> recv(0,s); recv(1,s)
-       :
+       //       #L[0] & #L[1] -> recv(0,s); recv(1,s) // BUG
+       //       :
        #L[0] -> recv(0,s)
        :
        #L[1] -> recv(1,s)

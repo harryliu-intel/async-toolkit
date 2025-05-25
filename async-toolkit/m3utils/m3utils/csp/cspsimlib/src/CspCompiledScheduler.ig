@@ -1,4 +1,4 @@
-INTERFACE CspCompiledScheduler;
+GENERIC INTERFACE CspCompiledScheduler();
 IMPORT CspCompiledProcess AS Process;
 IMPORT Word;
 

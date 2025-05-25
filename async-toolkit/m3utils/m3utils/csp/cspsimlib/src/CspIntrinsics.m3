@@ -1,6 +1,6 @@
 MODULE CspIntrinsics;
 IMPORT IO;
-IMPORT CspCompiledScheduler;
+FROM CspScheduler IMPORT GetTime;
 IMPORT CspCompiledProcess AS Process;
 FROM CspCompiledProcess IMPORT Frame;
 FROM Fmt IMPORT Unsigned, F, Int;
@@ -12,11 +12,13 @@ IMPORT NativeInt;
 IMPORT DynamicInt;
 
 IMPORT Debug;
+IMPORT Random;
+IMPORT Word;
 
 PROCEDURE print(frame : Process.Frame; str : CspString.T) : BOOLEAN =
   BEGIN
     IO.Put(F("%s: %s: %s\n",
-             Unsigned(CspCompiledScheduler.GetTime(), base := 10),
+             Unsigned(GetTime(), base := 10),
              frame.name,
              str));
     RETURN TRUE
@@ -42,7 +44,7 @@ PROCEDURE walltime(<*UNUSED*>frame : Frame) : NativeInt.T =
   END walltime;
 
 PROCEDURE simtime(<*UNUSED*>frame : Frame) : NativeInt.T =
-  BEGIN RETURN CspCompiledScheduler.GetTime() END simtime;
+  BEGIN RETURN GetTime() END simtime;
 
 PROCEDURE assert(x : BOOLEAN; text : TEXT) : NativeInt.T =
   BEGIN
@@ -51,5 +53,33 @@ PROCEDURE assert(x : BOOLEAN; text : TEXT) : NativeInt.T =
     END;
     RETURN 0
   END assert;
-  
+
+PROCEDURE random_native(bits : NativeInt.T) : NativeInt.T =
+  VAR
+    x := rand.integer();
+  BEGIN
+    IF bits = BITSIZE(Word.T) - 1 THEN
+      RETURN Word.And(x, NativeInt.Max)
+    ELSE
+      WITH mask = Word.Shift(1, bits) - 1 DO
+        RETURN Word.And(x, mask)
+      END
+    END
+  END random_native;
+
+PROCEDURE random_dynamic(x : DynamicInt.T; bits : NativeInt.T) : DynamicInt.T =
+  BEGIN
+    Mpz.set_ui(x, 0);
+    WHILE bits # 0 DO
+      WITH b = MIN(BITSIZE(Word.T) - 1, bits) DO
+        Mpz.LeftShift(x, x, b);
+        Mpz.add_ui(x, x, random_native(b));
+        DEC(bits, b)
+      END
+    END;
+    RETURN x
+  END random_dynamic;
+
+VAR
+  rand := NEW(Random.Default).init(TRUE);
 BEGIN END CspIntrinsics.

@@ -446,7 +446,7 @@
 (define (format-type t env)
   (unwind-protect
    (unprotected-format-type t env)
-   '() ;; finally-clause
+   () ;; finally-clause
    (begin
      (set! bad-type t) ;; remember for debugging
      (error "format-type caught error formatting " t dnl dnl))))

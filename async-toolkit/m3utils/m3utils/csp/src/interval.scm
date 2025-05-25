@@ -12,7 +12,7 @@
 ;; If in doubt, 
 
 (define (interval-dbg . x)
-;;  (apply dis x)
+  (apply dis x)
   )
 
 (define (make-binop op lst)
@@ -24,9 +24,24 @@
         (else `(,op ,(car lst) ,(make-binop op (cdr lst)))))
   )
 
+(define er-expr #f)
+(define er-syms #f)
+
+(define (bit-range b)
+  ;; the range of a word of b bits
+  ;; not sure what a negative number of bits means
+  (range-intersection
+   (range-extend (range-- (range-<< *range1* b) *range1*) *big0*)
+   *range-nonneg*
+   )
+  )
+
+
 (define (expr-range expr syms)
   ;; should remove globals here...
   (interval-dbg "expr-range : expr : " (stringify expr) dnl)
+  (set! er-expr expr)
+  (set! er-syms syms)
   
   (cond ((bigint? expr) (make-point-range expr))
 
@@ -45,22 +60,26 @@
 
         ((call-intrinsic? expr)
 
-         (if (eq? 'pack (cadr expr))
-             (let* ((struct (caddr expr))
-                    (id     (cadr struct))
-                    (ty     (retrieve-defn id syms))
-                    (sdecl  (lookup-struct-decl (caddr ty)))
-                    )
+         (cond
+          ((eq? 'pack (cadr expr))
+           (let* ((struct (caddr expr))
+                  (id     (cadr struct))
+                  (ty     (retrieve-defn id syms))
+                  (sdecl  (lookup-struct-decl (caddr ty)))
+                  )
+             
+             (dis "call-intrinsic pack : sdecl : " sdecl dnl)
+             
+             (make-uint-range (structdecl-width sdecl))
+             ))
 
-               (dis "call-intrinsic pack : sdecl : " sdecl dnl)
-
-               (make-uint-range (structdecl-width sdecl))
-
-               )
-
-             *range-complete*
-             )
-         
+          ((eq? 'random (cadr expr))
+           (let* ((argrange (expr-range (caddr expr) syms)))
+             (bit-range argrange))
+           )
+          
+          (else *range-complete*)
+          );;dnoc
          )
 
         ((binary-expr? expr)
@@ -84,11 +103,10 @@
                 (source-range   (expr-range bexpr syms)) ;; range of source
 
                 (extract-mask-range ;; range of extraction
-                 (range-extend
-                  (range-- (range-<< *range1* bmax) *range1*)
-                  *big0*)))
+                 (bit-range bmax))
+                )
 
-                 (range-& source-range extract-mask-range)))
+           (range-& source-range extract-mask-range)))
 
         ((array-access? expr)
          (expr-range (cadr expr) syms))

@@ -27,7 +27,7 @@
 (define (cmp-files-safely fn1 fn2)
   (let ((res #f))
     (unwind-protect
-     (set! res (cmp-files fn1 fn2)) #f #f)
+     (set! res (cmp-files fn1 fn2)) () #f)
     res))
 
 (define (rename-file-if-different fn1 fn2)

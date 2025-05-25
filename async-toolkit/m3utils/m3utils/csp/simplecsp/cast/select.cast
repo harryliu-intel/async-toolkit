@@ -27,6 +27,21 @@ define DRIVE()(bd(WIDTH) +R0, +R1, -L)
   }
 }
 
+define RANDOMP()(bd(WIDTH) +R0, +R1, -L)
+{
+  csp {
+
+    int x;
+    *[ int r = random(1);
+       print(r);
+       [  r == 0 -> R0!(x + 13)
+       [] r == 1 -> R1!(x * 17)
+       ];
+       L?x
+     ]
+  }
+}
+
 define SELECT()(bd(WIDTH) -L0, -L1, +R)
 {
 
@@ -38,6 +53,19 @@ define SELECT()(bd(WIDTH) -L0, -L1, +R)
        ];
        #[ i % 10000 == 0 -> print ("i/10000 = " + i/10000 + " x = " + x) ];
        i++;
+       R!x
+      ]
+   }
+}
+
+define SIMPLE()(bd(WIDTH) -L0, -L1, +R)
+{
+  csp {
+     int i, x;
+     
+     *[[  #L0 -> L0?x
+       [] #L1 -> L1?x
+       ];
        R!x
       ]
    }
@@ -201,7 +229,10 @@ define SYSTEM(int C)()
     [ C==3 -> P1() select(c, m, cx, n); BITGEN bitgen(m); ]
     [ C==4 -> P2() select(c, m, cx, n); BITGEN bitgen(m); ]
     [ C==5 -> P3() select(c, m, cx, n); BITGEN bitgen(m); ]
-    DRIVE() drive(c[0], c[1], cx);
+    [ C==6 -> SIMPLE() select(c[0], c[1], cx); ]
+
+    [ C!=6 -> DRIVE() drive(c[0], c[1], cx); ]
+    [ C==6 -> RANDOMP() drive(c[0], c[1], cx); ]
   } 
 }
 

@@ -6,7 +6,8 @@
 
   (unwind-protect
    (begin(typecode-table 'update-entry! (rtbrand-getname max-tc) max-tc) #t)
-   '() '())
+   ()
+   ())
 
   (if (>= max-tc 0)
       (make-typecode-table (- max-tc 1))))

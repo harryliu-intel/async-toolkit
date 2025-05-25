@@ -277,3 +277,21 @@ define XW(int W)()
     print(y); // -3
   }
 }
+
+define RANDOM()()
+{
+  csp {
+    print(random(1));
+
+    x = random(8);
+
+    print(x);
+    
+    y = random(128);
+
+    print(y);
+
+    print(random(255));
+
+  }
+}

@@ -23,7 +23,8 @@ Module   ("WideInt")
 Module   ("NativeInt")
 
 Module ("CspCompiledProcess")
-Module ("CspCompiledScheduler")
+Interface ("CspScheduler")
+Generic_module ("CspCompiledScheduler")
 Module ("CspBoolean")
 Interface ("CspString")
 
@@ -37,10 +38,12 @@ template ("channel")
 Generic_interface ("Node")
 template ("node")
 
-Module ("CspPort")
+Module    ("CspPort")
 Interface ("CspPortObject")
 Interface ("CspNode")
-Interface ("CspChannel")
+Module    ("CspChannel")
+Interface ("CspChannelRep") % needs to be VISIBLE
+
 Generic_module ("CspChannelOps")
 
 Sequence ("CspPort", "CspPort")

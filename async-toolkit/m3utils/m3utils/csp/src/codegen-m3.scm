@@ -995,7 +995,7 @@
   (dis "m3-write-imports : intfs : " intfs dnl)
   
   (w "<*NOWARN*>IMPORT CspCompiledProcess AS Process;" dnl)
-  (w "<*NOWARN*>IMPORT CspCompiledScheduler AS Scheduler;" dnl)
+  (w "<*NOWARN*>IMPORT CspCompiledScheduler1 AS Scheduler;" dnl)
   (w "<*NOWARN*>IMPORT CspString, Fmt;" dnl)
   (w "<*NOWARN*>IMPORT CspBoolean;" dnl)
   (w "<*NOWARN*>IMPORT CspIntrinsics;" dnl)
@@ -2225,12 +2225,49 @@
     )  
   )
 
+(define (m3-compile-random-assign pc lhs lty rhs)
+  (set! *rhs* rhs)
+  (set! *lhs* lhs)
+  (set! *lty* lty)
+  (dis "m3-compile-random-assign " lhs " := " rhs dnl)
+  (let*((lclass (classify-expr-type pc lhs))
+        (b      (caddr rhs)) ;; # of bits requested
+        (bclass (classify-expr-type pc b))
+        (m3lhs  (m3-format-designator pc lhs))
+        (m3lhs1 (if (eq? 'native lclass)
+                    ""
+                    (sa m3lhs ", ")))
+                
+        (m3b    (m3-force-type pc 'native "frame.a" b))
+
+        
+        (res
+         (sa 
+          "      " m3lhs
+          " := "
+          "CspIntrinsics.random_" (symbol->string lclass) "("
+          m3lhs1 
+          m3b
+          ")"
+          )
+         )
+        )
+
+    (dis "m3-compile-random-assign : res : " res dnl)
+    res
+;;    (error)
+    )  
+  )
+
 (define (m3-compile-intrinsic-assign pc lhs lty rhs)
   (cond ((eq? 'pack (cadr rhs))
          (m3-compile-pack-assign pc lhs lty rhs))
+
+        ((eq? 'random (cadr rhs))
+         (m3-compile-random-assign pc lhs lty rhs))
   
         ((integer-type? lty)
-         ;; if not pack we assume it returns a native int
+         ;; if not pack or random we assume it returns a native int
          ;;
          ;; if LHS is integer, we need to ensure we can type-convert return
          ;; value
@@ -2765,6 +2802,15 @@
          (ports        (cdr stmt))
          )
 
+
+    ;; the idea here is this..
+    ;;
+    ;; the waitfor is in a block of its own (it must be)
+    ;; a single process can't wait on a channel twice concurrently
+    ;;
+    ;; entering the waitfor, we must have locked the ports of interest.
+    ;; 
+    
     (let loop ((p ports)
                (res (sa "VAR ready := 0; BEGIN " dnl)))
     
@@ -3308,6 +3354,8 @@
     (w "interface(\"CspDebug\")" dnl)
     (w "build_generic_intf(\"CspChannelOps1\", \"CspChannelOps\", [], VISIBLE)" dnl)
     (w "build_generic_impl(\"CspChannelOps1\", \"CspChannelOps\", [\"CspDebug\"])" dnl)
+    (w "build_generic_intf(\"CspCompiledScheduler1\", \"CspCompiledScheduler\", [], VISIBLE)" dnl)
+    (w "build_generic_impl(\"CspCompiledScheduler1\", \"CspCompiledScheduler\", [\"CspDebug\"])" dnl)
 
     (w dnl)
     (Wr.PutChar wr dnl)
@@ -3377,11 +3425,12 @@
   (define (intf . x) (Wr.PutText di3wr (apply string-append x)))
 
   (intf "INTERFACE CspDebug;" dnl
-        "CONST DebugSelect = FALSE;" dnl
-        "CONST DebugRecv = FALSE;" dnl
-        "CONST DebugSend = FALSE;" dnl
-        "CONST DebugProbe = FALSE;" dnl
+        "CONST DebugSelect   = FALSE;" dnl
+        "CONST DebugRecv     = FALSE;" dnl
+        "CONST DebugSend     = FALSE;" dnl
+        "CONST DebugProbe    = FALSE;" dnl
         "CONST DebugSchedule = FALSE;" dnl
+        "CONST DebugLock     = FALSE;" dnl
         "END CspDebug." dnl
         )
 )
@@ -3811,7 +3860,7 @@
     (define (mw . x) (Wr.PutText mwr (apply string-append x)))
 
     (mw "MODULE SimMain EXPORTS Main;" dnl)
-    (mw "IMPORT CspCompiledScheduler AS Scheduler;" dnl)
+    (mw "IMPORT CspCompiledScheduler1 AS Scheduler;" dnl)
 
     (mw dnl)
 

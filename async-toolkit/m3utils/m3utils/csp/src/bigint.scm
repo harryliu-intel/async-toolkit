@@ -526,10 +526,12 @@
 (define *range-unsigned-byte* `(,*big0* ,(BigInt.New 255)))
 
 ;; natural, pos, and neg DO NOT include zero.
-(define *range-natural*    `(,*big1*     +inf))
+(define *range-natural*    `(,*big1*     +inf ))
 (define *range-pos* *range-natural*)
+
 (define *range-neg*        `(-inf    ,*bigm1* ))
-(define *range-nonneg*     `(,*big0*     +inf))
+(define *range-nonneg*     `(,*big0*     +inf ))
+(define *range-nonpos*     `(-inf    ,*big0*  ))
 
 ;; the entire number line:
 (define *range-complete*   '(-inf        +inf))
@@ -708,23 +710,39 @@
 (define (range->> a b)
   (range-<< a (negate-range b)))
 
+(define r-shl-a #f)
+(define r-shl-b #f)
+
 (define (range-<< a b)
+
+  (set! r-shl-a a)
+  (set! r-shl-b b)
+
+;;  (error)
+  
   (let ((pos<< (make-simple-range-binop xnum-<<)))
-    (cond ((range-extends? a *big0*)
-           (let* ((alist (split-range a *big0*))
-                  (rlist (map (lambda(a)(range-<< a b)) alist))
-                  (ilist (map invert-range rlist)))
-             (apply range-union (append rlist ilist (list (pos<< a b))))))
+    (cond
+     ((range-infinite? a) a)
 
-          ((range-neg? a) (range-union
-                           (pos<< a b)
-                           (invert-range (range-<< (invert-range a) b))))
+     ((range-is-zero? a) a)
 
-          ((and (eq? a *range-zero*) (eq? b *range-zero*))
-           (pos<< a b ))
-          
-          (else (pos<< a b))
-          )
+     ((range-infinite? b) *range-complete*)
+     
+     ((range-extends? a *big0*)
+      (let* ((alist (split-range a *big0*))
+             (rlist (map (lambda(a)(range-<< a b)) alist))
+             (ilist (map invert-range rlist)))
+        (apply range-union (append rlist ilist (list (pos<< a b))))))
+     
+     ((range-neg? a) (range-union
+                      (pos<< a b)
+                      (invert-range (range-<< (invert-range a) b))))
+     
+     ((and (eq? a *range-zero*) (eq? b *range-zero*))
+      (pos<< a b ))
+     
+     (else (pos<< a b))
+     );;dnoc
     );tel
   )
 
