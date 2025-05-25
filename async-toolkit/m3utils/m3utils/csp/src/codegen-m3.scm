@@ -3785,11 +3785,15 @@
            (compile!)
            (write-object (sa (build-dir) "/" modname ".text9.scm") text9)
            (do-m3!)
+           (pickle-globals! (sa (build-dir) "/" modname))
            'ok)
            
           );;dnoc
     );;*tel
   )
+
+(define (restore-session! modname)
+  (unpickle-globals! (sa (build-dir) "/" modname)))
 
 (define (compile-csp! . x)
   ;;(m3-clear-build-area!)

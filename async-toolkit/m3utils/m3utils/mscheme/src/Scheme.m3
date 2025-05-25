@@ -24,6 +24,10 @@ IMPORT SchemeDefsBundle, Bundle;
 IMPORT SchemeProfiler;
 IMPORT SchemeUnixDeps;
 IMPORT SchemeEnvironmentBinding;
+IMPORT SchemeEnvironmentInstanceRep; (* for pickling *)
+IMPORT Pickle;
+IMPORT TextWr;
+FROM Fmt IMPORT F;
 
 TYPE Binding = SchemeEnvironmentBinding.T;
 
@@ -74,6 +78,9 @@ REVEAL
     initCopy          := InitCopy;
     clearErrorEnvironment  := ClearErrorEnvironment;
     getErrorEvalX     := GetErrorEvalX;
+
+    pickleGlobalEnv   := PickleGlobalEnv;
+    unpickleGlobalEnv := UnpickleGlobalEnv;
   END;
 
 PROCEDURE GetErrorEvalX(t : T) : Object =
@@ -849,6 +856,61 @@ PROCEDURE IsSpecialForm(s : Symbol) : BOOLEAN =
       s =  SYMrip OR 
       s =  SYMunwindProtect 
   END IsSpecialForm;
+
+PROCEDURE PickleGlobalEnv(self : T; to : Wr.T)
+  RAISES { Wr.Failure } =
+  <*FATAL E*>
+  VAR
+    env  : SchemeEnvironment.Instance := self.globalEnvironment;
+    vars := env.getLocalNames();
+    p    := vars;
+  BEGIN
+    WHILE p # NIL DO
+      (* here we should check for some forbidden types I think *)
+      WITH nm  = p.head,
+           val = env.lookup(nm)
+       DO
+        
+
+        IF Debug.GetLevel() >= 20 THEN
+          Debug.Out(F("PickleGlobalEnv : %s = \n%s\n",
+                      Stringify(nm),
+                      Stringify(val)))
+        END;
+
+        WITH twr = TextWr.New() DO
+          TRY
+            Pickle.Write(twr, nm);
+            Pickle.Write(twr, val);
+            Debug.Out("Pickle OK : " & (Stringify(nm)));
+            Wr.PutText(to, TextWr.ToText(twr))
+          EXCEPT
+            Pickle.Error =>
+            Debug.Out("Couldn't pickle.")
+          END
+        END;
+        p := p.tail
+      END
+    END
+  END PickleGlobalEnv;
+
+PROCEDURE UnpickleGlobalEnv(self : T; from : Rd.T)
+  RAISES { Rd.Failure, Pickle.Error } =
+  VAR
+    env : SchemeEnvironment.Instance := self.globalEnvironment;
+  BEGIN
+    TRY
+      LOOP
+        WITH
+          nm  = Pickle.Read(from),
+          val = Pickle.Read(from) DO
+          EVAL env.define(nm, val)
+        END
+      END
+    EXCEPT
+      Rd.EndOfFile => RETURN
+    END
+  END UnpickleGlobalEnv;
 
 BEGIN 
   EnvDisablesTracebacks := Env.Get("NOMSCHEMETRACEBACKS") # NIL;

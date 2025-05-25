@@ -266,6 +266,7 @@
 ;; component Scheme modules to load:
 ;; 
 
+(load "pickle.scm")           ;; dump/restore environment
 (load "higher-order.scm")     ;; basic higher order functions
 (load "name-generator.scm")   ;; name generation
 (load "set-ops.scm")          ;; sets of atoms

@@ -319,6 +319,8 @@
     
     (cond (have-nan 'nan)
 
+          ((eq? b xnum-1) a)
+
           ;; { no nan }
           (have-neg (xnum-* (make-xnum sgn)
                             (apply xnum-/ (map xnum-abs both))))

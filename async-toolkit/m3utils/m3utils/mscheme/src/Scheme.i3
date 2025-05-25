@@ -12,6 +12,7 @@ IMPORT SchemeSymbol;
 IMPORT SchemeVector;
 IMPORT Pathname;
 IMPORT Rd, Wr;
+IMPORT Pickle;
 
 EXCEPTION E(TEXT);
  (* This declaration is, unfortunately, a source of trouble.
@@ -136,6 +137,10 @@ TYPE
 
     getErrorEvalX() : Object;
     (* get object last evaluated to create an error *)
+
+    pickleGlobalEnv(to : Wr.T) RAISES { Pickle.Error, Wr.Failure } ;
+
+    unpickleGlobalEnv(from : Rd.T) RAISES { Pickle.Error, Rd.Failure, Rd.EndOfFile };
   END;
 
 TYPE Interrupter = OBJECT METHODS interrupt() : BOOLEAN; END;

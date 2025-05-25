@@ -45,6 +45,7 @@ IMPORT XTime AS Time;
 IMPORT RefRecord;
 IMPORT SchemeClosure;
 IMPORT BigInt;
+IMPORT Pickle, Rd;
 
 <* FATAL Thread.Alerted *>
 
@@ -142,7 +143,9 @@ TYPE
 
         Cosh, Sinh, Tanh, Acosh, Asinh, Atanh,
 
-        ChangeGlobalEnv, GetParentEnv
+        ChangeGlobalEnv, GetParentEnv,
+
+        DumpEnvironment, LoadEnvironment
   };
 
 REVEAL 
@@ -491,6 +494,8 @@ PROCEDURE InstallDefaultExtendedPrimitives(dd : Definer;
     .defPrim("set-rt-error-mapping!", ORD(P.SetRTErrorMapping), dd, 1, 1)
     .defPrim("change-global-environment!", ORD(P.ChangeGlobalEnv), dd, 1, 1)
     .defPrim("get-parent-environment", ORD(P.GetParentEnv), dd, 1, 1)
+    .defPrim("dump-environment", ORD(P.DumpEnvironment), dd, 1, 1)
+    .defPrim("load-environment!", ORD(P.LoadEnvironment), dd, 1, 1)
     ;
     RETURN env;
 
@@ -1196,9 +1201,54 @@ PROCEDURE Prims(t          : T;
         P.ChangeGlobalEnv => RETURN ChangeGlobalEnv(interp, x)
       |
         P.GetParentEnv => RETURN GetParentEnv(x)
+      |
+        P.DumpEnvironment => RETURN DumpEnvironment(interp, x)
+      |
+        P.LoadEnvironment => RETURN LoadEnvironment(interp, x)
       END
     END
   END Prims;
+
+PROCEDURE DumpEnvironment( interp : Scheme.T; x : Object ) : Object 
+  RAISES { E } =
+  BEGIN
+    IF x = NIL OR NOT ISTYPE(x, Wr.T) OR Wr.Closed(x) THEN
+      RAISE E ("not an open Wr.T : " & Stringify(x))
+    END;
+
+    TRY
+      interp.pickleGlobalEnv(x);
+      RETURN x
+    EXCEPT
+      Wr.Failure(e) =>
+      RAISE E ("Wr.Failure : " & AL.Format(e))
+    |
+      Pickle.Error =>
+      RAISE E ("Pickle.Error")
+    END
+  END DumpEnvironment;
+
+PROCEDURE LoadEnvironment( interp : Scheme.T; x : Object ) : Object 
+  RAISES { E } =
+  BEGIN
+    IF x = NIL OR NOT ISTYPE(x, Rd.T) OR Rd.Closed(x) THEN
+      RAISE E ("not an open Rd.T : " & Stringify(x))
+    END;
+
+    TRY
+      interp.unpickleGlobalEnv(x);
+      RETURN x
+    EXCEPT
+      Rd.Failure(e) =>
+      RAISE E ("Rd.Failure : " & AL.Format(e))
+    |
+      Rd.EndOfFile =>
+      RAISE E ("Rd.EndOfFile")
+    |
+      Pickle.Error =>
+      RAISE E ("Pickle.Error")
+    END
+  END LoadEnvironment;
 
 PROCEDURE GetParentEnv(   x      : Object) : Object
   RAISES { E } =
