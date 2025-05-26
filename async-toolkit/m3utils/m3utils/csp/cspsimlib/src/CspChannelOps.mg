@@ -71,7 +71,7 @@ PROCEDURE Unwait  (c : T; cl : Process.Closure) =
                   DebugClosure(cl), c.nm, 
                   cl.name))
     END;
-    <*ASSERT c.selecter = cl*> c.selecter := NIL
+    <*ASSERT c.selecter = NIL OR c.selecter = cl*> c.selecter := NIL
   END Unwait;
 
 BEGIN END CspChannelOps.

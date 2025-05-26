@@ -174,10 +174,14 @@ and code the selection as follows
 
        done := < | : i : N : gi > ;
 
-       [  ~done -> waitfor(R)
+       [  ~done ->
+          { locked }
+          waitfor(R)
+          { unlocked }
        []  done ->
           [ <[] : N : gi -> Si > ];
           unlock(R)
+          { unlocked }
        ]
 
      ]

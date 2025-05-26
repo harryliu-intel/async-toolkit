@@ -2809,21 +2809,31 @@
     ;; a single process can't wait on a channel twice concurrently
     ;;
     ;; entering the waitfor, we must have locked the ports of interest.
+    ;;
+    ;; if we don't need to wait, we unlock and proceed
+    ;;
+    ;; if we do need to wait, we ... unlock and wait (atomically)
+    ;; when we are awoken from wait, it is this same block, so we unwait
+    ;; at the start (OK to unwait without waiting first)
+    ;;
+    ;; when we depart the waitfor, the ports must be locked and unwaited
     ;; 
     
     (let loop ((p ports)
                (res (sa "VAR ready := 0; BEGIN " dnl)))
     
         (if (null? p)
-            (sa res
-                "IF ready = 0 THEN" dnl
-                (m3-compile-wait pc `(XXX ,@ports)) ";" dnl
-                "  RETURN FALSE" dnl
-                "ELSE" dnl
-                (m3-compile-unwait pc `(XXX ,@ports)) ";" dnl
-                (m3-compile-unlock pc `(XXX ,@ports)) dnl
-                "END" dnl
-                "END" dnl)
+            (sa
+             (m3-compile-unwait pc `(XXX ,@ports)) ";" dnl
+             res
+             "IF ready = 0 THEN" dnl
+             (m3-compile-unlock pc `(XXX ,@ports)) ";" dnl
+             (m3-compile-wait pc `(XXX ,@ports)) ";" dnl
+             "  RETURN FALSE" dnl
+             "ELSE" dnl
+             (m3-compile-unlock pc `(XXX ,@ports)) dnl
+             "END" dnl
+             "END" dnl)
             (let* ((port-des `(id ,(car p)))
                    (port-id      (get-designator-id port-des))
                    (port-def     (port-tbl 'retrieve port-id))
