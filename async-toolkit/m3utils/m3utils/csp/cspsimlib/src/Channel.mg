@@ -7,16 +7,15 @@ IMPORT Debug;
 IMPORT CspCompiledProcess AS Process;
 FROM CspCompiledProcess IMPORT DebugClosure;
 IMPORT CspCompiledScheduler1 AS Scheduler;
-FROM Fmt IMPORT Int, F, FN, Bool;
+FROM Fmt IMPORT Int, F, Bool;
 IMPORT DynamicInt;
 IMPORT Mpz;
+IMPORT CspPortObject;
 
 CONST sendDebug = CspDebug.DebugSend;
 CONST recvDebug = CspDebug.DebugRecv;
 CONST probDebug = CspDebug.DebugProbe;
-CONST seleDebug = CspDebug.DebugSelect;
-
-TYPE TA = ARRAY OF TEXT;
+(*CONST seleDebug = CspDebug.DebugSelect;*)
 
 TYPE
   Buff     = ARRAY OF Item;         
@@ -24,7 +23,39 @@ TYPE
 REVEAL
   T = CspChannel.T BRANDED Brand OBJECT
     data           : REF Buff;       (* size slack + 1 *)
+  OVERRIDES
+    makeSurrogate := MakeSurrogate;
   END;
+
+TYPE
+  Surrogate = T OBJECT
+    underlying : T;
+  END;
+
+PROCEDURE MakeSurrogate(t : T) : CspPortObject.T =
+  VAR
+    res := NEW(Surrogate,
+               surrogate  := TRUE,
+
+               slack      := t.slack,
+               writer     := t.writer,
+               reader     := t.reader,
+
+               wr         := t.wr,
+               rd         := t.rd,
+ 
+               waiter     := NIL,
+               selecter   := NIL,
+               
+               lockwr     := t.lockwr,
+               lockrd     := t.lockrd,
+
+               locker     := t.locker,
+               
+               underlying := t);
+  BEGIN
+    RETURN res
+  END MakeSurrogate;
 
 PROCEDURE SendProbe(c : T; cl : Process.Closure) : BOOLEAN =
   BEGIN
@@ -62,7 +93,7 @@ PROCEDURE Send(         c : T;
       IF sendDebug THEN
         Debug.Out(F("%s : %s Send unlock select : %s", DebugClosure(cl), c.nm, DebugClosure(c.selecter)))
       END;
-     Scheduler.Schedule(c.selecter)
+     Scheduler.ScheduleOther(cl, c.selecter)
     END;
     
     IF c.wr = c.rd THEN
@@ -95,7 +126,7 @@ PROCEDURE Send(         c : T;
                 DebugClosure(c.waiter))
           )
         END;
-        Scheduler.Schedule(c.waiter);
+        Scheduler.ScheduleOther(cl, c.waiter);
         c.waiter := cl;
         RETURN FALSE
       ELSE
@@ -132,7 +163,7 @@ PROCEDURE Send(         c : T;
                       DebugClosure(cl), c.nm, 
                       DebugClosure(c.waiter)))
         END;
-        Scheduler.Schedule(c.waiter);
+        Scheduler.ScheduleOther(cl, c.waiter);
         c.waiter := NIL
       END;
       
@@ -194,7 +225,7 @@ PROCEDURE Recv(     c : T;
   BEGIN
     IF c.selecter # NIL THEN
       Debug.Out(F("%s : %s Recv unlock select : %s", DebugClosure(cl), c.nm, DebugClosure(c.selecter)));
-      Scheduler.Schedule(c.selecter)
+      Scheduler.ScheduleOther(cl, c.selecter)
     END;
     
     VAR
@@ -246,7 +277,7 @@ PROCEDURE Recv(     c : T;
                         DebugClosure(cl), c.nm, 
                         DebugClosure(c.waiter)))
           END;
-          Scheduler.Schedule(c.waiter);
+          Scheduler.ScheduleOther(cl, c.waiter);
           c.waiter := NIL 
         END;
 
@@ -280,12 +311,15 @@ PROCEDURE ChanDebug(chan : T) : TEXT =
 
 PROCEDURE New(nm : TEXT; slack : CARDINAL) : Ref =
   BEGIN
-    RETURN NEW(Ref,
-               nm    := nm,
-               slack := slack,
-               wr    := 0,
-               rd    := slack,
-               data  := NEW(REF Buff, slack + 1))
+    WITH res = NEW(Ref,
+                   nm    := nm,
+                   slack := slack,
+                   wr    := 0,
+                   rd    := slack,
+                   data  := NEW(REF Buff, slack + 1)) DO
+      Scheduler.RegisterEdge(res);
+      RETURN res
+    END
   END New;
 
 PROCEDURE SendNative(c     : T;

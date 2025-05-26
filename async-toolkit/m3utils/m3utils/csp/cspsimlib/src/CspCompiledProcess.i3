@@ -1,10 +1,12 @@
 INTERFACE CspCompiledProcess;
+IMPORT CspScheduler;
 IMPORT Word;
 
 TYPE
   Frame = BRANDED OBJECT
     name      : TEXT;
     id        : CARDINAL;
+    affinity  : CspScheduler.T;
   END;
 
   Closure = OBJECT

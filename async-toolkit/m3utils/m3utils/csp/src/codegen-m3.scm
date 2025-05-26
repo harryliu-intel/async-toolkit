@@ -874,6 +874,8 @@
       )
   
     (w "      ) DO" dnl
+       dnl
+       "Scheduler.RegisterProcess(frame);" dnl
        dnl)
 
     (let*((dynamics (filter (compose m3-dynamic-int-type? get-var1-type)
@@ -2802,7 +2804,7 @@
          (ports        (cdr stmt))
          )
 
-
+    ;;
     ;; the idea here is this..
     ;;
     ;; the waitfor is in a block of its own (it must be)

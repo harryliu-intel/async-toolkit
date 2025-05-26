@@ -8,7 +8,10 @@ INTERFACE CspPortObject;
 
 TYPE
   T = OBJECT
-    nm : TEXT;
+    nm        : TEXT;
+    surrogate         := FALSE;
+  METHODS
+    makeSurrogate() : T;
   END;
 
 CONST Brand = "CspPortObject";

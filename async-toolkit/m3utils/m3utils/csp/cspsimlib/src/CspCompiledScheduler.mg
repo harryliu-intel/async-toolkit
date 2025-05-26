@@ -4,20 +4,48 @@ IMPORT Word;
 FROM Fmt IMPORT Int, F;
 IMPORT Debug;
 IMPORT CspScheduler;
+IMPORT CspPortObject;
 
 CONST doDebug = CspDebug.DebugSchedule;
+
+TYPE
+  T = CspScheduler.T OBJECT
+    id           : CARDINAL;
+    active, next : REF ARRAY OF Process.Closure;
+    ap, np       : CARDINAL;
+    running      : Process.Closure;
+  END;
+
+PROCEDURE ScheduleOther(from, toSchedule : Process.Closure) =
+  BEGIN
+    IF from.fr.affinity = toSchedule.fr.affinity THEN
+      (* the source and target are in the same scheduler, we can 
+         schedule them same as if they were local *)
+      Schedule(toSchedule)
+    ELSE
+      (* if the target block is running under another scheduler,
+         we do not schedule it directly.  Instead, we put it in the 
+         appropriate outbox for our scheduler to handle at the end of the
+         timestep *)
       
+      <*ASSERT FALSE*> (* not yet *)
+      
+    END
+  END ScheduleOther;
+  
 PROCEDURE Schedule(closure : Process.Closure) =
+  VAR
+    t : T := closure.fr.affinity;
   BEGIN
     <*ASSERT closure # NIL*>
 
     IF doDebug THEN
-      IF running = NIL THEN
+      IF t.running = NIL THEN
         Debug.Out(F("NIL : NIL scheduling %s : %s to run",
                   Int(closure.frameId), closure.name))
       ELSE
         Debug.Out(F("%s : %s scheduling %s : %s to run",
-                    Int(running.frameId), running.name,
+                    Int(t.running.frameId), t.running.name,
                     Int(closure.frameId), closure.name))
       END
     END;
@@ -29,15 +57,15 @@ PROCEDURE Schedule(closure : Process.Closure) =
       RETURN 
     END;
     
-    IF np > LAST(next^) THEN
-      WITH new = NEW(REF ARRAY OF Process.Closure, NUMBER(next^) * 2) DO
-        SUBARRAY(new^, 0, NUMBER(next^)) := next^;
-        next := new
+    IF t.np > LAST(t.next^) THEN
+      WITH new = NEW(REF ARRAY OF Process.Closure, NUMBER(t.next^) * 2) DO
+        SUBARRAY(new^, 0, NUMBER(t.next^)) := t.next^;
+        t.next := new
       END
     END;
-    next[np] := closure;
+    t.next[t.np] := closure;
     closure.scheduled := nexttime;
-    INC(np)
+    INC(t.np)
   END Schedule;
 
 PROCEDURE ScheduleFork(READONLY closures : ARRAY OF Process.Closure) : CARDINAL =
@@ -48,57 +76,76 @@ PROCEDURE ScheduleFork(READONLY closures : ARRAY OF Process.Closure) : CARDINAL 
     RETURN NUMBER(closures)
   END ScheduleFork;
 
-VAR
-  active, next := NEW(REF ARRAY OF Process.Closure, 1);
-  ap, np := 0;
-  nexttime : Word.T := 0;
-
 PROCEDURE GetTime() : Word.T =
   BEGIN RETURN nexttime END GetTime;
 
 VAR
-  running : Process.Closure := NIL;
-  
-PROCEDURE Run() =
+  nexttime : Word.T := 0;
+
+PROCEDURE RegisterProcess(fr : Process.Frame) =
+  BEGIN
+    fr.affinity := theScheduler
+  END RegisterProcess;
+
+PROCEDURE RegisterEdge(edge : CspPortObject.T) =
+  BEGIN
+  END RegisterEdge;
+
+PROCEDURE Run1(t : T) =
   BEGIN
     (* run *)
 
     LOOP
-      IF doDebug THEN Debug.Out("=====  Scheduling loop : np = " & Int(np)) END;
+      IF doDebug THEN
+        Debug.Out(F("=====  Scheduling loop %s: np = %s", Int(t.id), Int(t.np))) 
+      END;
 
-      IF np = 0 THEN
+      IF t.np = 0 THEN
         Debug.Error("DEADLOCK!")
       END;
       
       VAR
-        temp := active;
+        temp := t.active;
       BEGIN
-        active := next;
-        ap     := np;
-        next   := temp;
-        np     := 0;
+        t.active := t.next;
+        t.ap     := t.np;
+        t.next   := temp;
+        t.np     := 0;
       END;
 
       INC(nexttime);
 
-      FOR i := 0 TO ap - 1 DO
-        WITH cl      = active[i] DO
+      FOR i := 0 TO t.ap - 1 DO
+        WITH cl      = t.active[i] DO
           <*ASSERT cl # NIL*>
           IF doDebug THEN
             Debug.Out(F("Scheduler switch to %s : %s",
                         Int(cl.frameId), cl.name));
-            running := cl
+            t.running := cl
           END;
           cl.run();
           IF doDebug THEN
             Debug.Out(F("Scheduler switch from %s : %s",
                         Int(cl.frameId), cl.name));
-            running := NIL
+            t.running := NIL
           END;
           (*IF NOT success THEN Schedule(cl) END*)
         END
       END
     END
+  END Run1;
+
+VAR
+  theScheduler := NEW(T,
+                      id     := 0,
+                      active := NEW(REF ARRAY OF Process.Closure, 1),
+                      next   := NEW(REF ARRAY OF Process.Closure, 1),
+                      ap     := 0,
+                      np     := 0);
+  
+PROCEDURE Run() =
+  BEGIN
+    Run1(theScheduler);
   END Run;
   
 (**********************************************************************)
