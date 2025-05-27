@@ -5,8 +5,11 @@ IMPORT Word;
 TYPE
   Frame = BRANDED OBJECT
     name      : TEXT;
+    typeName  : TEXT;
     id        : CARDINAL;
     affinity  : CspScheduler.T;
+  METHODS
+    start(); (* schedule start block to run *)
   END;
 
   Closure = OBJECT

@@ -12,14 +12,21 @@ IMPORT TextFrameTbl;
 IMPORT TextPortTbl;
 IMPORT CspChannel;
 
+(* The following invariant must always be maintained: 
+
+   a single CSP process is tied to a specific Scheduler, 
+
+   -- denoted by the "affinity" field in the Process Frame 
+ *)
+
 PROCEDURE Schedule(closure : Process.Closure);
-  (* schedule a closure in the current process to run *)
+  (* schedule a closure in the current CSP process to run *)
   
 PROCEDURE ScheduleFork(READONLY closures : ARRAY OF Process.Closure) : CARDINAL;
   (* schedule a list of closures, for a fork, in the current process to run *)
 
 PROCEDURE ScheduleOther(from, toSchedule : Process.Closure);
-  (* schedule a block in another process to run *)
+  (* schedule a block in another CSP process to run *)
     
 PROCEDURE Run();
 
@@ -38,10 +45,10 @@ PROCEDURE GetProcTbl() : TextFrameTbl.T;
 
 PROCEDURE GetPortTbl() : TextPortTbl.T;
 
-PROCEDURE ReadDirty(chan : CspChannel.T);
+PROCEDURE ReadDirty(chan : CspChannel.T; cl : Process.Closure);
   (* a channel with a surrogate has been read from *)
   
-PROCEDURE WriteDirty(surrogate : CspChannel.T);
+PROCEDURE WriteDirty(chan : CspChannel.T; cl : Process.Closure);
   (* a channel surrogate has been written to *)
   
 END CspCompiledScheduler.

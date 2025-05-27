@@ -687,6 +687,8 @@
     (w dnl)
     (m3-write-process-fork-counters w fork-counts)
     (w dnl)
+    (w "  OVERRIDES" dnl)
+    (w "    start := Start;" dnl)
     (w "  END;" dnl dnl)
 
   )
@@ -752,11 +754,21 @@
   (w dnl
      "PROCEDURE Build( name : TEXT;" dnl)
   (m3-write-port-list w cell-info)
-  (w ")")
+  (w ") : Frame ")
+  )
+
+(define (m3-write-start-signature w cell-info)
+  (w dnl
+     "PROCEDURE Start(frame : Frame)")
   )
 
 (define (m3-write-build-decl w cell-info)
   (m3-write-build-signature w cell-info)
+  (w ";" dnl dnl)
+  )
+
+(define (m3-write-start-decl w cell-info)
+  (m3-write-start-signature w cell-info)
   (w ";" dnl dnl)
   )
 
@@ -857,6 +869,16 @@
      )
     )
   )
+
+(define (m3-write-start-defn w cell-info the-blocks)
+  (m3-write-start-signature w cell-info)
+  (w " = " dnl)
+  (w "  BEGIN" dnl)
+  (w "    Scheduler.Schedule(frame." (m3-ident (cadar the-blocks))"_Cl)" dnl)
+  (w "  END Start;" dnl
+     dnl
+     )
+  )
        
 (define (m3-write-build-defn w
                              cell-info the-blocks the-decls fork-counts
@@ -868,6 +890,7 @@
     (w " = " dnl)
     (w "  BEGIN" dnl)
     (w "    WITH frame = NEW(Frame," dnl
+       "                     typeName := Brand," dnl
        "                     name := name," dnl
        "                     id := Process.NextFrameId()" dnl)
 
@@ -997,9 +1020,9 @@
          blk-labels)
         );;*tel
 
-      (iw "Scheduler.Schedule(frame." (m3-ident (cadar the-blocks))"_Cl);" dnl)
       );;tel (iw)
     
+    (w "      RETURN frame" dnl)
     (w "    END(*WITH*)" dnl)
     (w "  END Build;" dnl dnl)
     )
@@ -3627,6 +3650,8 @@
 
     (m3-write-build-decl intf cell-info)
 
+    (m3-write-start-decl intf cell-info)
+
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
     (modu "MODULE " root ";" dnl dnl)
@@ -3673,6 +3698,8 @@
                                 cell-info the-exec-blocks the-decls fork-counts
                                 *the-arr-tbl*
                                 pc)
+      (m3-write-start-defn      modu
+                                cell-info the-exec-blocks)
       (m3-write-blocks          modu the-exec-blocks pc)
 
       (map modu

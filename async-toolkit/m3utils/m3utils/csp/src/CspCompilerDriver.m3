@@ -331,7 +331,7 @@ PROCEDURE GenBuilder(t : T; builderName : TEXT; defSlack : CARDINAL) : TEXT =
       FOR i := 0 TO t.insts.size() - 1 DO
         WITH inst = NARROW(t.insts.get(i), REF Instance)^ DO
           P(F(
-                "    m3__%s.Build(\"%s\" \n",
+                "    EVAL m3__%s.Build(\"%s\" \n",
                 (* 
                    this is a hack!
                    we need to map the names the same way that Java

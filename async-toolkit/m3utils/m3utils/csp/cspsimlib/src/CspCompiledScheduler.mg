@@ -14,9 +14,22 @@ CONST doDebug = CspDebug.DebugSchedule;
 
 TYPE
   T = CspScheduler.T OBJECT
+
+    (* we should probably consider promoting many of the fields to the
+       CspScheduler interface (or adding another private one) so that
+       everyone can see them and not have to take the overhead of a 
+       NARROW() check so much below *)
+    
     id           : CARDINAL;
+
     active, next : REF ARRAY OF Process.Closure;
-    ap, np       : CARDINAL;
+    (* this is double-buffered.
+       
+       The "active" closures are the ones we are running on this iteration;
+       the "next" closures are the ones we are scheduling for the next iteration
+    *)
+    
+    np           : CARDINAL;
     running      : Process.Closure;
 
     outbox       : REF ARRAY OF ClosureSeq.T;
@@ -24,17 +37,37 @@ TYPE
        to their ids *)
 
     rdirty       : REF ARRAY OF CspChannel.T;
-    arp, nrp     : CARDINAL;
+    nrp          : CARDINAL;
     wdirty       : REF ARRAY OF CspChannel.T;
-    awp, nwp     : CARDINAL;
+    nwp          : CARDINAL;
   END;
 
-PROCEDURE ReadDirty(chan : CspChannel.T) =
+PROCEDURE ReadDirty(chan : CspChannel.T; cl : Process.Closure) =
+  VAR
+    t : T := cl.fr.affinity;
   BEGIN
+    IF t.nrp > LAST(t.rdirty^) THEN
+      WITH new = NEW(REF ARRAY OF CspChannel.T, NUMBER(t.rdirty^) * 2) DO
+        SUBARRAY(new^, 0, NUMBER(t.rdirty^)) := t.rdirty^;
+        t.rdirty := new
+      END;
+    END;
+    t.rdirty[t.nrp] := chan;
+    INC(t.nrp)
   END ReadDirty;
   
-PROCEDURE WriteDirty(surrogate : CspChannel.T) =
+PROCEDURE WriteDirty(chan : CspChannel.T; cl : Process.Closure) =
+  VAR
+    t : T := cl.fr.affinity;
   BEGIN
+    IF t.nwp > LAST(t.wdirty^) THEN
+      WITH new = NEW(REF ARRAY OF CspChannel.T, NUMBER(t.wdirty^) * 2) DO
+        SUBARRAY(new^, 0, NUMBER(t.wdirty^)) := t.wdirty^;
+        t.wdirty := new
+      END;
+    END;
+    t.wdirty[t.nwp] := chan;
+    INC(t.nwp)
   END WriteDirty;
 
 PROCEDURE ScheduleOther(from, toSchedule : Process.Closure) =
@@ -65,16 +98,20 @@ PROCEDURE Schedule(closure : Process.Closure) =
     <*ASSERT closure # NIL*>
 
     IF doDebug THEN
+      Debug.Out(F("scheduling %s : %s [%s] to run",
+                  Int(closure.frameId), closure.name, closure.fr.typeName));
       IF t.running = NIL THEN
-        Debug.Out(F("NIL : NIL scheduling %s : %s to run",
-                  Int(closure.frameId), closure.name))
+        Debug.Out(F("NIL : NIL scheduling %s : %s [%s] to run",
+                  Int(closure.frameId), closure.name, closure.fr.typeName))
       ELSE
-        Debug.Out(F("%s : %s scheduling %s : %s to run",
+        Debug.Out(F("%s : %s scheduling %s : %s [%s] to run",
                     Int(t.running.frameId), t.running.name,
-                    Int(closure.frameId), closure.name))
+                    Int(closure.frameId), closure.name, closure.fr.typeName))
       END
     END;
-    
+
+    <*ASSERT t # NIL*>
+
     IF closure.scheduled = nexttime THEN
       IF doDebug THEN
         Debug.Out(Int(closure.id) & " already scheduled at " & Int(nexttime))
@@ -104,20 +141,18 @@ PROCEDURE ScheduleFork(READONLY closures : ARRAY OF Process.Closure) : CARDINAL 
 PROCEDURE GetTime() : Word.T =
   BEGIN RETURN nexttime END GetTime;
 
-VAR
-  nexttime : Word.T := 0;
+VAR nexttime : Word.T := 0;
 
-
-VAR
-  theProcs := NEW(TextFrameTbl.Default).init();
+VAR theProcs := NEW(TextFrameTbl.Default).init();
 
 PROCEDURE GetProcTbl() : TextFrameTbl.T =
   BEGIN RETURN theProcs END GetProcTbl;
 
 PROCEDURE RegisterProcess(fr : Process.Frame) =
   BEGIN
-    fr.affinity := theScheduler;
-
+    IF doDebug THEN
+      Debug.Out(F("Registering process : %s", fr.name))
+    END;
     EVAL theProcs.put(fr.name, fr)
   END RegisterProcess;
 
@@ -133,6 +168,8 @@ PROCEDURE RegisterEdge(edge : CspPortObject.T) =
   END RegisterEdge;
 
 PROCEDURE Run1(t : T) =
+  VAR
+    ap : CARDINAL;
   BEGIN
     (* run *)
 
@@ -149,14 +186,14 @@ PROCEDURE Run1(t : T) =
         temp := t.active;
       BEGIN
         t.active := t.next;
-        t.ap     := t.np;
+        ap       := t.np;
         t.next   := temp;
         t.np     := 0;
       END;
 
       INC(nexttime);
 
-      FOR i := 0 TO t.ap - 1 DO
+      FOR i := 0 TO ap - 1 DO
         WITH cl      = t.active[i] DO
           <*ASSERT cl # NIL*>
           IF doDebug THEN
@@ -176,20 +213,85 @@ PROCEDURE Run1(t : T) =
     END
   END Run1;
 
-VAR
-  theScheduler := NEW(T,
-                      id     := 0,
-                      active := NEW(REF ARRAY OF Process.Closure, 1),
-                      next   := NEW(REF ARRAY OF Process.Closure, 1),
-                      ap     := 0,
-                      np     := 0);
-  
+VAR theScheduler : T;
+    (* when running a single scheduler *)
+    
 PROCEDURE Run() =
   BEGIN
-    Run1(theScheduler);
+    IF schedulers = NIL THEN
+      theScheduler := NEW(T,
+                          id     := 0,
+                          active := NEW(REF ARRAY OF Process.Closure, 1),
+                          next   := NEW(REF ARRAY OF Process.Closure, 1),
+                          np     := 0);
+
+      (* mark the affinity of each process *)
+      VAR
+        k : TEXT;
+        v : Process.Frame;
+        iter := theProcs.iterate();
+      BEGIN
+        WHILE iter.next(k, v) DO
+          v.affinity := theScheduler
+        END
+      END;
+      
+      (* start each process *)
+      VAR
+        k : TEXT;
+        v : Process.Frame;
+        iter := theProcs.iterate();
+      BEGIN
+        WHILE iter.next(k, v) DO
+          v.start()
+        END
+      END;
+      
+      Run1(theScheduler)
+    ELSE
+      RunMulti(schedulers^)
+    END
   END Run;
   
 (**********************************************************************)
+
+VAR schedulers : REF ARRAY OF T := NIL;
+    (* when running parallel schedulers *)
+
+PROCEDURE RunMulti(READONLY schedulers : ARRAY OF T) =
+  BEGIN
+  END RunMulti;
+
+PROCEDURE CreateMulti(n : CARDINAL) =
+  (* create n schedulers *)
+  BEGIN
+    schedulers := NEW(REF ARRAY OF T, n);
+    FOR i := FIRST(schedulers^) TO LAST(schedulers^) DO
+      WITH new = NEW(T,
+                     id     := i,
+                     active := NEW(REF ARRAY OF Process.Closure, 1),
+                     next   := NEW(REF ARRAY OF Process.Closure, 1),
+                     np     := 0,
+
+                     rdirty := NEW(REF ARRAY OF CspChannel.T, 1),
+                     nrp    := 0,
+        
+                     wdirty := NEW(REF ARRAY OF CspChannel.T, 1),
+                     nwp    := 0
+                     ) DO
+        schedulers[i] := new;
+        new.outbox := NEW(REF ARRAY OF ClosureSeq.T, n);
+
+        FOR j := FIRST(new.outbox^) TO LAST(new.outbox^) DO
+          IF j = i THEN
+            new.outbox[j] := NIL
+          ELSE
+            new.outbox[j] := NEW(ClosureSeq.T).init()
+          END
+        END;
+      END(*WITH*)      
+    END(*FOR*)
+  END CreateMulti;
 
 BEGIN
   CspScheduler.GetTime := GetTime;

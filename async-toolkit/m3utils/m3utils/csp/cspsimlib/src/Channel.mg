@@ -222,7 +222,7 @@ PROCEDURE Send(         c : T;
         IF c.wr = c.slack + 1 THEN c.wr := 0 END;
 
         IF c.surrogate AND NOT c.dirty THEN
-          Scheduler.WriteDirty(c);
+          Scheduler.WriteDirty(c, cl);
           c.dirty := TRUE
         END;
         IF sendDebug THEN
@@ -242,7 +242,7 @@ PROCEDURE Send(         c : T;
       IF c.wr = c.slack + 1 THEN c.wr := 0 END;
 
       IF c.surrogate AND NOT c.dirty THEN
-        Scheduler.WriteDirty(c);
+        Scheduler.WriteDirty(c, cl);
         c.dirty := TRUE
       END;
 
@@ -356,7 +356,7 @@ PROCEDURE Recv(     c : T;
         x := c.data[nxtRd];
         c.rd := nxtRd;
         IF c.surrog # NIL AND NOT c.dirty THEN
-          Scheduler.ReadDirty(c);
+          Scheduler.ReadDirty(c, cl);
           c.dirty := TRUE
         END;
 
