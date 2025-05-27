@@ -25,6 +25,8 @@ Module   ("NativeInt")
 Module         ("CspCompiledProcess")
 Interface      ("CspFrame")
 Table          ("TextFrame", "Text", "CspFrame")
+Interface      ("CspClosure")
+Sequence       ("CspClosure", "CspClosure")
 
 Interface      ("CspScheduler")
 Generic_module ("CspCompiledScheduler")

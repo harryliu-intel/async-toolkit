@@ -7,6 +7,8 @@ IMPORT CspScheduler;
 IMPORT CspPortObject;
 IMPORT TextFrameTbl;
 IMPORT TextPortTbl;
+IMPORT CspClosureSeq AS ClosureSeq;
+IMPORT CspChannel;
 
 CONST doDebug = CspDebug.DebugSchedule;
 
@@ -16,22 +18,43 @@ TYPE
     active, next : REF ARRAY OF Process.Closure;
     ap, np       : CARDINAL;
     running      : Process.Closure;
+
+    outbox       : REF ARRAY OF ClosureSeq.T;
+    (* written by "from" scheduler, read by each "to" scheduler, according
+       to their ids *)
+
+    rdirty       : REF ARRAY OF CspChannel.T;
+    arp, nrp     : CARDINAL;
+    wdirty       : REF ARRAY OF CspChannel.T;
+    awp, nwp     : CARDINAL;
   END;
 
-PROCEDURE ScheduleOther(from, toSchedule : Process.Closure) =
+PROCEDURE ReadDirty(chan : CspChannel.T) =
   BEGIN
-    IF from.fr.affinity = toSchedule.fr.affinity THEN
+  END ReadDirty;
+  
+PROCEDURE WriteDirty(surrogate : CspChannel.T) =
+  BEGIN
+  END WriteDirty;
+
+PROCEDURE ScheduleOther(from, toSchedule : Process.Closure) =
+  VAR
+    fromScheduler : T := from.fr.affinity;
+  BEGIN
+    IF fromScheduler = toSchedule.fr.affinity THEN
       (* the source and target are in the same scheduler, we can 
          schedule them same as if they were local *)
       Schedule(toSchedule)
     ELSE
       (* if the target block is running under another scheduler,
          we do not schedule it directly.  Instead, we put it in the 
-         appropriate outbox for our scheduler to handle at the end of the
+         appropriate outbox to handle at the end of the
          timestep *)
-      
-      <*ASSERT FALSE*> (* not yet *)
-      
+      VAR
+        toScheduler   : T := toSchedule.fr.affinity;
+      BEGIN
+        fromScheduler.outbox[toScheduler.id].addhi(toSchedule)
+      END
     END
   END ScheduleOther;
   

@@ -1,9 +1,16 @@
 GENERIC INTERFACE CspCompiledScheduler();
+
+(* 
+   this is GENERIC because the implementation MODULE depends on CspDebug,
+   which allows debugging to be controlled at compile time 
+*)
+
 IMPORT CspCompiledProcess AS Process;
 IMPORT Word;
 IMPORT CspPortObject;
 IMPORT TextFrameTbl;
 IMPORT TextPortTbl;
+IMPORT CspChannel;
 
 PROCEDURE Schedule(closure : Process.Closure);
   (* schedule a closure in the current process to run *)
@@ -30,5 +37,11 @@ PROCEDURE RegisterEdge(edge : CspPortObject.T);
 PROCEDURE GetProcTbl() : TextFrameTbl.T;
 
 PROCEDURE GetPortTbl() : TextPortTbl.T;
+
+PROCEDURE ReadDirty(chan : CspChannel.T);
+  (* a channel with a surrogate has been read from *)
+  
+PROCEDURE WriteDirty(surrogate : CspChannel.T);
+  (* a channel surrogate has been written to *)
   
 END CspCompiledScheduler.

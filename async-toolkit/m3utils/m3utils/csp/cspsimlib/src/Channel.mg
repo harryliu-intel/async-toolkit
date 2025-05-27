@@ -24,22 +24,40 @@ REVEAL
   T = CspChannel.T BRANDED Brand OBJECT
     data           : REF Buff;       (* size slack + 1 *)
     surrog         : Surrogate := NIL;
+    dirty          : BOOLEAN;
   OVERRIDES
-    makeSurrogate := MakeGenericSurrogate;
+    makeSurrogate   := GenericMakeSurrogate;
+    readSurrogate   := ReadSurrogate;
+    clean           := Clean;
   END;
 
 REVEAL
   (* under all conditions, the "real" channel is held at the receiving end *)
   Surrogate = T BRANDED Brand & " Surrogate" OBJECT
     target : T;
+  OVERRIDES
+    unmakeSurrogate := GenericUnmakeSurrogate;
+    writeSurrogate  := WriteSurrogate;
   END;
 
+PROCEDURE Clean(t : T) =
+  BEGIN
+    t.dirty        := FALSE
+  END Clean;
+  
   (**********************************************************************)
 
-PROCEDURE MakeGenericSurrogate(t : T) : CspPortObject.T =
+PROCEDURE GenericMakeSurrogate(t : T) : CspChannel.T =
   BEGIN
     RETURN MakeSurrogate(t)
-  END MakeGenericSurrogate;
+  END GenericMakeSurrogate;
+
+PROCEDURE GenericUnmakeSurrogate(s : Surrogate) : CspChannel.T =
+  BEGIN
+    RETURN UnmakeSurrogate(s)
+  END GenericUnmakeSurrogate;
+
+  (**********************************************************************)
 
 PROCEDURE MakeSurrogate(t : T) : Surrogate =
   (* making a surrogate is easy: simply duplicate the state *)
@@ -51,8 +69,10 @@ PROCEDURE MakeSurrogate(t : T) : Surrogate =
                
                writer     := t.writer,   (* constant during lifetime *)
                reader     := t.reader,   (* constant during lifetime *)
+               width      := t.width,    (* constant during lifetime *)
 
                wr         := t.wr,       (* owned by writing end *)
+               writes     := t.writes,   (* owned by writing end *)
                rd         := t.rd,       (* owned by reading end *)
  
                waiter     := NIL,        (* shared *)
@@ -62,6 +82,8 @@ PROCEDURE MakeSurrogate(t : T) : Surrogate =
                lockrd     := t.lockrd,   (* private to each end *)
 
                locker     := t.locker,   (* private to each end *)
+
+               surrog     := NIL,        (* NIL for Surrogate *)
                
                target     := t           (* constant during lifetime *)
     );
@@ -79,6 +101,7 @@ PROCEDURE WriteSurrogate(s : Surrogate) =
     (* taking the write-end fields from the surrogate, 
        update them in the target *)
     t.wr := s.wr;
+    t.writes := s.writes;
     IF s.waiter.fr = s.writer THEN
       <*ASSERT t.waiter.fr = s.writer OR t.waiter = NIL*>
       t.waiter := s.waiter
@@ -120,6 +143,7 @@ PROCEDURE UnmakeSurrogate(s : Surrogate) : T =
     
 PROCEDURE SendProbe(c : T; cl : Process.Closure) : BOOLEAN =
   BEGIN
+    <*ASSERT c.surrog = NIL*>  (* if there is a surrogate, use that! *)
     WITH res = c.wr # c.rd OR c.waiter = cl DO
       IF probDebug THEN
         Debug.Out(F("%s : %s SendProbe : return %s state %s",
@@ -140,6 +164,7 @@ PROCEDURE Send(         c : T;
                READONLY x : Item;
                cl         : Process.Closure) : BOOLEAN =
   BEGIN
+    <*ASSERT c.surrog = NIL*>  (* if there is a surrogate, use that! *)
     (* the buffer is always big enough to write into 
        (it's one bigger than the slack)  *)
     IF sendDebug THEN
@@ -193,7 +218,13 @@ PROCEDURE Send(         c : T;
       ELSE
         (* c.waiter.frame = cl *)
         INC(c.wr);
+        INC(c.writes);
         IF c.wr = c.slack + 1 THEN c.wr := 0 END;
+
+        IF c.surrogate AND NOT c.dirty THEN
+          Scheduler.WriteDirty(c);
+          c.dirty := TRUE
+        END;
         IF sendDebug THEN
           Debug.Out(F("%s : %s Send/full go : %s",
                       DebugClosure(cl), c.nm, 
@@ -207,7 +238,13 @@ PROCEDURE Send(         c : T;
     ELSE
       (* write to non-full : update write pointer *)
       INC(c.wr);
+      INC(c.writes);
       IF c.wr = c.slack + 1 THEN c.wr := 0 END;
+
+      IF c.surrogate AND NOT c.dirty THEN
+        Scheduler.WriteDirty(c);
+        c.dirty := TRUE
+      END;
 
       IF sendDebug THEN
           Debug.Out(F("%s : %s Send go : %s",
@@ -318,6 +355,10 @@ PROCEDURE Recv(     c : T;
         (* there is something in the channel, copy it in *)
         x := c.data[nxtRd];
         c.rd := nxtRd;
+        IF c.surrog # NIL AND NOT c.dirty THEN
+          Scheduler.ReadDirty(c);
+          c.dirty := TRUE
+        END;
 
         IF recvDebug THEN
           Debug.Out(F("%s : %s Recv go : %s",
@@ -373,11 +414,13 @@ PROCEDURE ChanDebug(chan : T) : TEXT =
 PROCEDURE New(nm : TEXT; slack : CARDINAL) : Ref =
   BEGIN
     WITH res = NEW(Ref,
-                   nm    := nm,
-                   slack := slack,
-                   wr    := 0,
-                   rd    := slack,
-                   data  := NEW(REF Buff, slack + 1)) DO
+                   nm     := nm,
+                   width  := Type.Width,
+                   slack  := slack,
+                   wr     := 0,
+                   writes := 0,
+                   rd     := slack,
+                   data   := NEW(REF Buff, slack + 1)) DO
       Scheduler.RegisterEdge(res);
       RETURN res
     END

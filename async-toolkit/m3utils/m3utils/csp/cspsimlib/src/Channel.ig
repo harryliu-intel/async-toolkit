@@ -67,6 +67,6 @@ CONST Unwait = CspChannelOps.Unwait;
 PROCEDURE MakeSurrogate  (t : T) : Surrogate;
 PROCEDURE WriteSurrogate (s : Surrogate);      (* update surrogate from writer *)
 PROCEDURE ReadSurrogate  (t : T);              (* update surrogate from reader *)
-PROCEDURE UnmakeSurrogate(s : Surrogate) : T;  (* ready to destroy surrogate   *)
+PROCEDURE UnmakeSurrogate(s : Surrogate) : T;  (* destroy surrogate            *)
 
 END Channel.
