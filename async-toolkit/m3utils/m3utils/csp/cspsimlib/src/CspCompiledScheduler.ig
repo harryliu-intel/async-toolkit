@@ -2,6 +2,8 @@ GENERIC INTERFACE CspCompiledScheduler();
 IMPORT CspCompiledProcess AS Process;
 IMPORT Word;
 IMPORT CspPortObject;
+IMPORT TextFrameTbl;
+IMPORT TextPortTbl;
 
 PROCEDURE Schedule(closure : Process.Closure);
   (* schedule a closure in the current process to run *)
@@ -25,4 +27,8 @@ PROCEDURE RegisterProcess(proc : Process.Frame);
 
 PROCEDURE RegisterEdge(edge : CspPortObject.T);
 
+PROCEDURE GetProcTbl() : TextFrameTbl.T;
+
+PROCEDURE GetPortTbl() : TextPortTbl.T;
+  
 END CspCompiledScheduler.

@@ -22,11 +22,14 @@ Module   ("VaryBits")
 Module   ("WideInt")
 Module   ("NativeInt")
 
-Module ("CspCompiledProcess")
-Interface ("CspScheduler")
+Module         ("CspCompiledProcess")
+Interface      ("CspFrame")
+Table          ("TextFrame", "Text", "CspFrame")
+
+Interface      ("CspScheduler")
 Generic_module ("CspCompiledScheduler")
-Module ("CspBoolean")
-Interface ("CspString")
+Module         ("CspBoolean")
+Interface      ("CspString")
 
 Module   ("CspIntrinsics")
 c_source ("CspIntrinsicsC")
@@ -40,6 +43,8 @@ template ("node")
 
 Module    ("CspPort")
 Interface ("CspPortObject")
+Table     ("TextPort", "Text", "CspPortObject")
+
 Interface ("CspNode")
 Module    ("CspChannel")
 Interface ("CspChannelRep") % needs to be VISIBLE

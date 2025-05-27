@@ -5,6 +5,8 @@ FROM Fmt IMPORT Int, F;
 IMPORT Debug;
 IMPORT CspScheduler;
 IMPORT CspPortObject;
+IMPORT TextFrameTbl;
+IMPORT TextPortTbl;
 
 CONST doDebug = CspDebug.DebugSchedule;
 
@@ -82,13 +84,29 @@ PROCEDURE GetTime() : Word.T =
 VAR
   nexttime : Word.T := 0;
 
+
+VAR
+  theProcs := NEW(TextFrameTbl.Default).init();
+
+PROCEDURE GetProcTbl() : TextFrameTbl.T =
+  BEGIN RETURN theProcs END GetProcTbl;
+
 PROCEDURE RegisterProcess(fr : Process.Frame) =
   BEGIN
-    fr.affinity := theScheduler
+    fr.affinity := theScheduler;
+
+    EVAL theProcs.put(fr.name, fr)
   END RegisterProcess;
+
+VAR
+  theEdges := NEW(TextPortTbl.Default).init();
+  
+PROCEDURE GetPortTbl() : TextPortTbl.T =
+  BEGIN RETURN theEdges END GetPortTbl;
 
 PROCEDURE RegisterEdge(edge : CspPortObject.T) =
   BEGIN
+    EVAL theEdges.put(edge.nm, edge)
   END RegisterEdge;
 
 PROCEDURE Run1(t : T) =
@@ -101,9 +119,9 @@ PROCEDURE Run1(t : T) =
       END;
 
       IF t.np = 0 THEN
-        Debug.Error("DEADLOCK!")
+        RETURN
       END;
-      
+
       VAR
         temp := t.active;
       BEGIN

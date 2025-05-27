@@ -10,6 +10,8 @@ TYPE
 
   T <: CspChannel.T;
 
+  Surrogate <: CspChannel.T;
+
 CONST
   Bitwidth = Type.Width;
   NWords   = (Type.Width - 1) DIV BITSIZE(Word.T) + 1;
@@ -57,5 +59,14 @@ CONST Unlock = CspChannelOps.Unlock;
 CONST Ready  = CspChannelOps.Ready;
 CONST Wait   = CspChannelOps.Wait;
 CONST Unwait = CspChannelOps.Unwait;
+
+(* surrogate operations *)
+(* note that normally we would call the generic .makeSurrogate method to 
+   actually make the surrogate, since that's type-independent, and the caller
+   probably doesn't want to keep track of the types of all the channels *)
+PROCEDURE MakeSurrogate  (t : T) : Surrogate;
+PROCEDURE WriteSurrogate (s : Surrogate);      (* update surrogate from writer *)
+PROCEDURE ReadSurrogate  (t : T);              (* update surrogate from reader *)
+PROCEDURE UnmakeSurrogate(s : Surrogate) : T;  (* ready to destroy surrogate   *)
 
 END Channel.

@@ -2,9 +2,7 @@ MODULE Main;
 
 (* look at die cost of chopping Tofino Creek in two *)
 
-IMPORT Math;
-IMPORT Fmt; FROM Fmt IMPORT F;
-IMPORT Wr, FileWr;
+IMPORT Fmt;
 IMPORT ParseParams;
 IMPORT Stdio;
 IMPORT SchemeM3;
@@ -18,8 +16,6 @@ IMPORT TextSeq;
 IMPORT BigInt;
 
 <*FATAL Thread.Alerted*>
-
-CONST LR = Fmt.LongReal;
 
 PROCEDURE GetPaths(extras : TextSeq.T) : REF ARRAY OF Pathname.T = 
   CONST
@@ -40,8 +36,10 @@ VAR
   pp := NEW(ParseParams.T).init(Stdio.stderr);
   doScheme := FALSE;
   extra := NEW(TextSeq.T).init();
-  x := BigInt.GetInitialized();
+
 BEGIN
+  EVAL   BigInt.GetInitialized();
+  
   TRY
     doScheme := pp.keywordPresent("-scm");
     pp.skipParsed();

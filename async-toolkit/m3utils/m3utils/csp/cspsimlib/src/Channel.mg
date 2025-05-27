@@ -23,40 +23,101 @@ TYPE
 REVEAL
   T = CspChannel.T BRANDED Brand OBJECT
     data           : REF Buff;       (* size slack + 1 *)
+    surrog         : Surrogate := NIL;
   OVERRIDES
-    makeSurrogate := MakeSurrogate;
+    makeSurrogate := MakeGenericSurrogate;
   END;
 
-TYPE
-  Surrogate = T OBJECT
-    underlying : T;
+REVEAL
+  (* under all conditions, the "real" channel is held at the receiving end *)
+  Surrogate = T BRANDED Brand & " Surrogate" OBJECT
+    target : T;
   END;
 
-PROCEDURE MakeSurrogate(t : T) : CspPortObject.T =
+  (**********************************************************************)
+
+PROCEDURE MakeGenericSurrogate(t : T) : CspPortObject.T =
+  BEGIN
+    RETURN MakeSurrogate(t)
+  END MakeGenericSurrogate;
+
+PROCEDURE MakeSurrogate(t : T) : Surrogate =
+  (* making a surrogate is easy: simply duplicate the state *)
   VAR
     res := NEW(Surrogate,
-               surrogate  := TRUE,
+               surrogate  := TRUE,       (* constant during lifetime *)
 
-               slack      := t.slack,
-               writer     := t.writer,
-               reader     := t.reader,
+               slack      := t.slack,    (* constant during lifetime *)
+               
+               writer     := t.writer,   (* constant during lifetime *)
+               reader     := t.reader,   (* constant during lifetime *)
 
-               wr         := t.wr,
-               rd         := t.rd,
+               wr         := t.wr,       (* owned by writing end *)
+               rd         := t.rd,       (* owned by reading end *)
  
-               waiter     := NIL,
-               selecter   := NIL,
+               waiter     := NIL,        (* shared *)
+               selecter   := NIL,        (* shared *)
                
-               lockwr     := t.lockwr,
-               lockrd     := t.lockrd,
+               lockwr     := t.lockwr,   (* private to each end *)
+               lockrd     := t.lockrd,   (* private to each end *)
 
-               locker     := t.locker,
+               locker     := t.locker,   (* private to each end *)
                
-               underlying := t);
+               target     := t           (* constant during lifetime *)
+    );
   BEGIN
+    t.surrog := res;
     RETURN res
   END MakeSurrogate;
 
+  (* updating routines in both direction s*)
+
+PROCEDURE WriteSurrogate(s : Surrogate) =
+  VAR
+    t := s.target;
+  BEGIN
+    (* taking the write-end fields from the surrogate, 
+       update them in the target *)
+    t.wr := s.wr;
+    IF s.waiter.fr = s.writer THEN
+      <*ASSERT t.waiter.fr = s.writer OR t.waiter = NIL*>
+      t.waiter := s.waiter
+    END;
+    IF s.selecter.fr = s.writer THEN
+      <*ASSERT t.selecter.fr = s.writer OR t.selecter = NIL*>
+      t.selecter := s.selecter
+    END
+  END WriteSurrogate;
+  
+PROCEDURE ReadSurrogate(t : T) =
+  VAR
+    s := t.surrog;
+  BEGIN
+    (* taking the write-end fields from the target, 
+       update them in the surrogate *)
+    s.rd := t.rd;
+    IF t.waiter.fr = t.reader THEN
+      <*ASSERT s.waiter.fr = t.reader OR s.waiter = NIL*>
+      t.waiter := s.waiter
+    END;
+    IF t.selecter.fr = t.reader THEN
+      <*ASSERT s.selecter.fr = t.reader OR s.selecter = NIL*>
+      s.selecter := t.selecter
+    END
+  END ReadSurrogate;
+  
+PROCEDURE UnmakeSurrogate(s : Surrogate) : T =
+  VAR
+    t := s.target;
+  BEGIN
+    WriteSurrogate(s); (* do a final write before dumping the surrogate *)
+    s.target := NIL;
+    t.surrog := NIL;
+    RETURN t
+  END UnmakeSurrogate;
+
+(**********************************************************************)
+    
 PROCEDURE SendProbe(c : T; cl : Process.Closure) : BOOLEAN =
   BEGIN
     WITH res = c.wr # c.rd OR c.waiter = cl DO

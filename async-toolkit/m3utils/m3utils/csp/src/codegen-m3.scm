@@ -661,14 +661,26 @@
        );;pam
   )
 
-(define (m3-write-proc-frame-decl
+(define (m3-write-proc-public-frame-decl
          w port-tbl the-blocks cell-info the-decls fork-counts)
     
     (w dnl
        "TYPE" dnl)
-    (w "  Frame = Process.Frame OBJECT" dnl)
+    (w "  Frame <: PubFrame;" dnl
+       dnl)
+    (w "  PubFrame = Process.Frame OBJECT" dnl)
     (m3-write-port-list w cell-info)
     (w dnl)
+    (w "  END;" dnl dnl)
+
+  )
+
+(define (m3-write-proc-private-frame-decl
+         w port-tbl the-blocks cell-info the-decls fork-counts)
+    
+    (w dnl
+       "REVEAL" dnl)
+    (w "  Frame = PubFrame BRANDED Brand & \" Frame \" OBJECT" dnl)
     (m3-write-shared-locals w the-blocks cell-info the-decls)
     (w dnl)
     (m3-write-process-closure-list w the-blocks fork-counts)
@@ -3115,14 +3127,14 @@
     (define (mw . x) (Wr.PutText mwr (apply string-append x)))
 
     (mkfile-write "Module      (\"" inm "\")" dnl
-;;                  "SchemeStubs (\"" inm "\")" dnl
+                  "SchemeStubs (\"" inm "\")" dnl
                   "Channel     (\"" inm "\" , \"" inm "\")" dnl
                   "Node        (\"" inm "\" , \"" inm "\")" dnl
                   "SchemeStubs (\"" inm "Chan\")" dnl
                   (if native
                       "NarrowIntOps"
                       "WideIntOps")  " (\"" inm "Ops\",\"" inm "\")" dnl
-;;                  "SchemeStubs (\"" inm "Ops\")" dnl ;; CM3 issue #1205
+                  "SchemeStubs (\"" inm "Ops\")" dnl ;; CM3 issue #1205
                        
                   )
     
@@ -3142,10 +3154,17 @@
                (hi-txt (BigInt.FormatLiteral (cadr range) 16))
                ) 
           (iw
-           (if (and (eq? intf-kind 'SInt) (= intf-width 64))
-               (sa "TYPE T = INTEGER;" dnl)
-               (sa "TYPE T = [ " lo-txt " .. " hi-txt " ];" dnl)
-               )
+           (cond ;; special cases per open issue in CM3
+            ((and (eq? intf-kind 'SInt)
+                  (= intf-width 64))
+             (sa "TYPE T = INTEGER;" dnl))
+
+            ((and (eq? intf-kind 'UInt)
+                  (= intf-width 63))
+             (sa "TYPE T = CARDINAL;" dnl))
+                 
+            (else (sa "TYPE T = [ " lo-txt " .. " hi-txt " ];" dnl))
+            )
            dnl
            "CONST Wide     = FALSE;" dnl
            dnl
@@ -3350,8 +3369,41 @@
     "sstubgen"
     "parseparams"
     "cspsimlib"
+    "mpfr"
+    "cspgrammar"
     )
   )
+
+(define *all-stubs*
+  '(CspExpression CspExpressionPublic CspExpressionSeq
+                  CspStatement CspStatementPublic CspStatementSeq CspType CspTypePublic CspStructMember CspStructMemberSeq CspAst CspGuardedCommand CspGuardedCommandSeq CspDeclaration CspDeclarationPublic CspDeclarationSeq CspDirection CspRange CspInterval CspDeclarator CspDeclaratorSeq CspStructDeclarator CspStructDeclaratorSeq CspSyntax CspPort CspPortSeq AtomCspPortSeqTbl TextCspPortSeqTbl FiniteInterval VaryBits DynamicInt WideInt NativeInt Debug BigInt Math Text TextWr FileWr Wr FileRd Rd TextRd SchemeEnvironment SchemeUtils Fmt Atom Word Env CitTextUtils FS FileFinder RegEx TextSeq Fingerprint Mpfr Wx Mpz
+                  )
+  )
+
+(define *the-stubs*
+  '(CspSyntax
+    DynamicInt WideInt NativeInt
+    Debug
+    BigInt
+    Math
+    Text TextWr FileWr Wr FileRd Rd TextRd
+    SchemeEnvironment
+    Fmt Atom Word Env
+    CitTextUtils
+    FS
+    RegEx TextSeq
+    Fingerprint
+    Mpfr Wx Mpz
+    CspCompiledScheduler1
+    CspChannelOps1
+    TextPortTbl
+    TextFrameTbl
+    CspFrame
+    CspCompiledProcess
+    )
+  )
+
+
 
 (define (write-m3makefile-header!)
   (let ((wr (FileWr.Open (sa (build-dir) "m3makefile"))))
@@ -3379,6 +3431,9 @@
 (define (write-m3makefile-footer!)
   (let ((wr (FileWr.OpenAppend (sa (build-dir) "m3makefile"))))
     (Wr.PutChar wr dnl)
+    (map (lambda(sym)
+           (Wr.PutText wr (sa "SchemeStubs(\"" (symbol->string sym) "\")" dnl)))
+         *the-stubs*)
     (Wr.PutText wr (sa "ExportSchemeStubs (\"sim\")" dnl))
     (Wr.PutText wr (sa "importSchemeStubs ()" dnl))
     (Wr.PutText wr (sa "implementation (\"SimMain\")" dnl))
@@ -3567,9 +3622,10 @@
     
     (m3-write-imports intf m3-port-chan-intfs)
 
-    (m3-write-build-decl intf cell-info)
+    (intf "CONST Brand    = \"" root "\";" dnl
+          dnl)
 
-    (intf dnl "END " root "." dnl)
+    (m3-write-build-decl intf cell-info)
 
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -3586,9 +3642,13 @@
 
 
 
-    (m3-write-proc-frame-decl modu
-                              port-tbl the-exec-blocks cell-info the-decls
-                              fork-counts)
+    (m3-write-proc-public-frame-decl
+     intf 
+     port-tbl the-exec-blocks cell-info the-decls  fork-counts)
+    
+    (m3-write-proc-private-frame-decl
+     modu
+     port-tbl the-exec-blocks cell-info the-decls  fork-counts)
     
     (m3-write-block-decl      modu)
     (m3-write-closure-decl    modu)
@@ -3622,7 +3682,11 @@
                 )
            )
     );;tel
+
+    ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     
+    (intf dnl "END " root "." dnl)
+
     (modu dnl "BEGIN END " root "." dnl)
     
     (Wr.Close di3wr)
@@ -3877,18 +3941,94 @@
 
     (mw "MODULE SimMain EXPORTS Main;" dnl)
     (mw "IMPORT CspCompiledScheduler1 AS Scheduler;" dnl)
+    (mw "" dnl)
+    (mw "IMPORT Fmt;" dnl)
+    (mw "IMPORT ParseParams;" dnl)
+    (mw "IMPORT Stdio;" dnl)
+    (mw "IMPORT SchemeM3;" dnl)
+    (mw "IMPORT SchemeStubs;" dnl)
+    (mw "IMPORT ReadLine, SchemeReadLine;" dnl)
+    (mw "IMPORT Debug;" dnl)
+    (mw "IMPORT Scheme;" dnl)
+    (mw "IMPORT Pathname;" dnl)
+    (mw "IMPORT Thread;" dnl)
+    (mw "IMPORT TextSeq;" dnl)
+    (mw "IMPORT BigInt;" dnl)
 
     (mw dnl)
 
-    (mw builder-text)
+    (mw builder-text) ;; this may contain IMPORTs
 
     (mw dnl)
 
-    (mw "BEGIN BuildSimulation() ; Scheduler.SchedulingLoop() END SimMain." dnl)
+    (mw "<*FATAL Thread.Alerted*>" dnl)
+    (mw "" dnl)
+    (mw "PROCEDURE GetPaths(extras : TextSeq.T) : REF ARRAY OF Pathname.T = " dnl)
+    (mw "  CONST" dnl)
+    (mw "    fixed = ARRAY OF Pathname.T { \"require\", \"m3\" };" dnl)
+    (mw "  VAR" dnl)
+    (mw "    res := NEW(REF ARRAY OF Pathname.T, NUMBER(fixed) + extras.size());" dnl)
+    (mw "  BEGIN" dnl)
+    (mw "    FOR i := 0 TO NUMBER(fixed) - 1 DO" dnl)
+    (mw "      res[i] := fixed[i]" dnl)
+    (mw "    END;" dnl)
+    (mw "    FOR i := NUMBER(fixed) TO extras.size() + NUMBER(fixed) - 1 DO" dnl)
+    (mw "      res[i] := extras.remlo()" dnl)
+    (mw "    END;" dnl)
+    (mw "    RETURN res" dnl)
+    (mw "  END GetPaths;" dnl)
+    (mw "" dnl)
+    (mw "VAR" dnl)
+    (mw "  pp := NEW(ParseParams.T).init(Stdio.stderr);" dnl)
+    (mw "  doScheme := FALSE;" dnl)
+    (mw "  extra := NEW(TextSeq.T).init();" dnl)
+    (mw "" dnl)
+    (mw "BEGIN" dnl)
+    (mw "  EVAL   BigInt.GetInitialized();" dnl)
+    (mw "  " dnl)
+    (mw "  TRY" dnl)
+    (mw "    doScheme := pp.keywordPresent(\"-scm\");" dnl)
+    (mw "    pp.skipParsed();" dnl)
+    (mw "    WITH n = NUMBER(pp.arg^) - pp.next DO" dnl)
+    (mw "      FOR i := 0 TO n - 1 DO" dnl)
+    (mw "        extra.addhi(pp.getNext())" dnl)
+    (mw "      END" dnl)
+    (mw "    END;" dnl)
+    (mw "    pp.finish()" dnl)
+    (mw "  EXCEPT" dnl)
+    (mw "    ParseParams.Error => Debug.Error(\"Can't parse command line\")" dnl)
+    (mw "  END;" dnl)
+    (mw "" dnl)
+    (mw "  (********************  BUILD THE SIMULATION  ********************)" dnl)
+    (mw "" dnl)
+    (mw "  BuildSimulation();" dnl)
+    (mw "" dnl)
+    (mw "  IF doScheme THEN" dnl)
+    (mw "    SchemeStubs.RegisterStubs();" dnl)
+    (mw "    TRY" dnl)
+    (mw "      WITH scm = NEW(SchemeM3.T).init(GetPaths(extra)^) DO" dnl)
+    (mw "        SchemeReadLine.MainLoop(NEW(ReadLine.Default).init(), scm)" dnl)
+    (mw "      END" dnl)
+    (mw "    EXCEPT" dnl)
+    (mw "      Scheme.E(err) => Debug.Error(\"Caught Scheme.E : \" & err)" dnl)
+    (mw "    END" dnl)
+    (mw "  ELSE" dnl)
+    (mw "    Scheduler.SchedulingLoop()" dnl)
+    (mw "  END;" dnl)
+    (mw "" dnl) 
+    (mw "END SimMain." dnl)
 
     (Wr.Close mwr)
     )
 
+  (let ((swr (FileWr.Open (sa (build-dir) "sim.scm"))))
+    (Wr.PutText swr
+                (sa "(load \"" *m3utils* "/" *pkg-path* "/sim.scm\")" dnl
+                    dnl)
+                )
+    (Wr.Close swr)
+    )
+  
  'ok
   )
 
