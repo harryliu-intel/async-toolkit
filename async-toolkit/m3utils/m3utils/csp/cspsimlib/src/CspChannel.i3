@@ -20,10 +20,10 @@ TYPE
     (* remove surrogate and return the target *)
     
     writeSurrogate();
-    (* update surrogate->target from write end *)
+    (* update surrogate->target from write end (called by reader on surrogate) *)
     
     readSurrogate();
-    (* update target->surrogate from read end *)
+    (* update target->surrogate from read end (called by writer on target) *)
 
     clean();
     (* mark surrogate/target linkage clean *)

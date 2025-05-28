@@ -28,7 +28,7 @@ PROCEDURE ScheduleFork(READONLY closures : ARRAY OF Process.Closure) : CARDINAL;
 PROCEDURE ScheduleOther(from, toSchedule : Process.Closure);
   (* schedule a block in another CSP process to run *)
     
-PROCEDURE Run();
+PROCEDURE Run(mt : CARDINAL := 0);
 
 CONST SchedulingLoop = Run;
 

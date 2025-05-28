@@ -9,6 +9,8 @@ IMPORT TextFrameTbl;
 IMPORT TextPortTbl;
 IMPORT CspClosureSeq AS ClosureSeq;
 IMPORT CspChannel;
+IMPORT Random;
+IMPORT Thread;
 
 CONST doDebug = CspDebug.DebugSchedule;
 
@@ -29,45 +31,67 @@ TYPE
        the "next" closures are the ones we are scheduling for the next iteration
     *)
     
-    np           : CARDINAL;
+    ap, np       : CARDINAL;
     running      : Process.Closure;
 
+    (* parallel scheduler fields 
+       
+       we add these to EVERY scheduler so we don't need to stick a bunch
+       of extra tests in the Send/Recv/etc. 
+    *)
+
+    
+    mu           : MUTEX;
+    c            : Thread.Condition;
+    
     outbox       : REF ARRAY OF ClosureSeq.T;
     (* written by "from" scheduler, read by each "to" scheduler, according
        to their ids *)
 
-    rdirty       : REF ARRAY OF CspChannel.T;
-    nrp          : CARDINAL;
-    wdirty       : REF ARRAY OF CspChannel.T;
-    nwp          : CARDINAL;
+    (* 
+       The following are written by the end that updates.
+
+       They are indexed by the target scheduler, so the target 
+       can read the contents without contention.
+    *)
+    rdirty       : REF ARRAY OF REF ARRAY OF CspChannel.T;
+    nrp          : REF ARRAY OF CARDINAL;
+    wdirty       : REF ARRAY OF REF ARRAY OF CspChannel.T;
+    nwp          : REF ARRAY OF CARDINAL;
+
+    thePhase     : Phase;
   END;
 
-PROCEDURE ReadDirty(chan : CspChannel.T; cl : Process.Closure) =
+PROCEDURE ReadDirty(targ : CspChannel.T; cl : Process.Closure) =
   VAR
-    t : T := cl.fr.affinity;
+    t   : T := cl.fr.affinity;
+    tgt : T := targ.writer.affinity; (* target (remote) scheduler *)
+    tgtId   := tgt.id;               (* target scheduler's id *)
   BEGIN
-    IF t.nrp > LAST(t.rdirty^) THEN
-      WITH new = NEW(REF ARRAY OF CspChannel.T, NUMBER(t.rdirty^) * 2) DO
-        SUBARRAY(new^, 0, NUMBER(t.rdirty^)) := t.rdirty^;
-        t.rdirty := new
+    IF t.nrp[tgtId] > LAST(t.rdirty[tgtId]^) THEN
+      WITH new = NEW(REF ARRAY OF CspChannel.T, NUMBER(t.rdirty[tgtId]^) * 2) DO
+        SUBARRAY(new^, 0, NUMBER(t.rdirty[tgtId]^)) := t.rdirty[tgtId]^;
+        t.rdirty[tgtId] := new
       END;
     END;
-    t.rdirty[t.nrp] := chan;
-    INC(t.nrp)
+    t.rdirty[tgtId][t.nrp[tgtId]] := targ;
+    INC(t.nrp[tgtId])
   END ReadDirty;
   
-PROCEDURE WriteDirty(chan : CspChannel.T; cl : Process.Closure) =
+PROCEDURE WriteDirty(surr : CspChannel.T; cl : Process.Closure) =
   VAR
-    t : T := cl.fr.affinity;
+    t   : T := cl.fr.affinity;
+    tgt : T := surr.writer.affinity; (* target (remote) scheduler *)
+    tgtId   := tgt.id;               (* target scheduler's id *)
   BEGIN
-    IF t.nwp > LAST(t.wdirty^) THEN
-      WITH new = NEW(REF ARRAY OF CspChannel.T, NUMBER(t.wdirty^) * 2) DO
-        SUBARRAY(new^, 0, NUMBER(t.wdirty^)) := t.wdirty^;
-        t.wdirty := new
+    IF t.nwp[tgtId] > LAST(t.wdirty[tgtId]^) THEN
+      WITH new = NEW(REF ARRAY OF CspChannel.T, NUMBER(t.wdirty[tgtId]^) * 2) DO
+        SUBARRAY(new^, 0, NUMBER(t.wdirty[tgtId]^)) := t.wdirty[tgtId]^;
+        t.wdirty[tgtId] := new
       END;
     END;
-    t.wdirty[t.nwp] := chan;
-    INC(t.nwp)
+    t.wdirty[tgtId][t.nwp[tgtId]] := surr;
+    INC(t.nwp[tgtId])
   END WriteDirty;
 
 PROCEDURE ScheduleOther(from, toSchedule : Process.Closure) =
@@ -168,8 +192,6 @@ PROCEDURE RegisterEdge(edge : CspPortObject.T) =
   END RegisterEdge;
 
 PROCEDURE Run1(t : T) =
-  VAR
-    ap : CARDINAL;
   BEGIN
     (* run *)
 
@@ -186,14 +208,14 @@ PROCEDURE Run1(t : T) =
         temp := t.active;
       BEGIN
         t.active := t.next;
-        ap       := t.np;
+        t.ap     := t.np;
         t.next   := temp;
         t.np     := 0;
       END;
 
       INC(nexttime);
 
-      FOR i := 0 TO ap - 1 DO
+      FOR i := 0 TO t.ap - 1 DO
         WITH cl      = t.active[i] DO
           <*ASSERT cl # NIL*>
           IF doDebug THEN
@@ -216,9 +238,9 @@ PROCEDURE Run1(t : T) =
 VAR theScheduler : T;
     (* when running a single scheduler *)
     
-PROCEDURE Run() =
+PROCEDURE Run(mt : CARDINAL) =
   BEGIN
-    IF schedulers = NIL THEN
+    IF mt = 0 THEN
       theScheduler := NEW(T,
                           id     := 0,
                           active := NEW(REF ARRAY OF Process.Closure, 1),
@@ -226,68 +248,351 @@ PROCEDURE Run() =
                           np     := 0);
 
       (* mark the affinity of each process *)
-      VAR
-        k : TEXT;
-        v : Process.Frame;
-        iter := theProcs.iterate();
-      BEGIN
-        WHILE iter.next(k, v) DO
-          v.affinity := theScheduler
-        END
-      END;
-      
-      (* start each process *)
-      VAR
-        k : TEXT;
-        v : Process.Frame;
-        iter := theProcs.iterate();
-      BEGIN
-        WHILE iter.next(k, v) DO
-          v.start()
-        END
-      END;
-      
+      MapRandomly(ARRAY OF T { theScheduler });
+      StartProcesses();
       Run1(theScheduler)
     ELSE
+      CreateMulti(mt);
+      MapRandomly(schedulers^);
+      StartProcesses();
       RunMulti(schedulers^)
     END
   END Run;
-  
+
+PROCEDURE StartProcesses() =
+  (* start each process *)
+  VAR
+    k : TEXT;
+    v : Process.Frame;
+    iter := theProcs.iterate();
+  BEGIN
+    WHILE iter.next(k, v) DO
+      v.start()
+    END
+  END StartProcesses;
+
+PROCEDURE MapRandomly(READONLY sarr : ARRAY OF T) =
+  VAR
+    rand := NEW(Random.Default).init();
+    k : TEXT;
+    v : Process.Frame;
+    iter := theProcs.iterate();
+  BEGIN
+    WHILE iter.next(k, v) DO
+      WITH q = rand.integer(FIRST(sarr), LAST(sarr)) DO
+        v.affinity := sarr[q]
+      END
+    END
+  END MapRandomly;
+    
 (**********************************************************************)
 
 VAR schedulers : REF ARRAY OF T := NIL;
     (* when running parallel schedulers *)
 
-PROCEDURE RunMulti(READONLY schedulers : ARRAY OF T) =
+PROCEDURE AcquireLocks(READONLY schedulers : ARRAY OF T) =
   BEGIN
+    FOR i := FIRST(schedulers) TO LAST(schedulers) DO
+      Thread.Acquire(schedulers[i].mu)
+    END
+  END AcquireLocks;
+
+PROCEDURE ReleaseLocks(READONLY schedulers : ARRAY OF T) =
+  BEGIN
+    FOR i := FIRST(schedulers) TO LAST(schedulers) DO
+      Thread.Release(schedulers[i].mu)
+    END
+  END ReleaseLocks;
+
+PROCEDURE SignalThreads(READONLY schedulers : ARRAY OF T) =
+  BEGIN
+    FOR i := FIRST(schedulers) TO LAST(schedulers) DO
+      Thread.Signal(schedulers[i].c)
+    END
+  END SignalThreads;
+
+PROCEDURE SetPhase(READONLY schedulers : ARRAY OF T; phase : Phase) =
+  (* scheduler[].mu m/b locked *)
+  BEGIN
+    IF doDebug THEN
+      Debug.Out(F("SetPhase(%s)", PhaseNames[phase]))
+    END;
+    FOR i := FIRST(schedulers) TO LAST(schedulers) DO
+      schedulers[i].thePhase := phase
+    END
+  END SetPhase;
+
+PROCEDURE AwaitPhase(READONLY schedulers : ARRAY OF T; phase : Phase) =
+  (* scheduler[].mu m/b unlocked *)
+  BEGIN
+    IF doDebug THEN
+      Debug.Out(F("AwaitPhase(%s)", PhaseNames[phase]))
+    END;
+    FOR i := FIRST(schedulers) TO LAST(schedulers) DO
+      WITH s = schedulers[i] DO
+        LOCK s.mu DO
+          WHILE s.thePhase # phase DO
+            Thread.Wait(s.mu, s.c)
+          END
+        END
+      END
+    END
+  END AwaitPhase;
+  
+(**********************************************************************)  
+    
+TYPE
+  Phase = {
+  Idle,
+  GetRemoteBlocks,
+  SwapActiveBlocks, (* this could be combined with UpdateSurrogates *)
+  UpdateSurrogates,
+  RunActiveBlocks
+  };
+
+CONST
+  PhaseNames = ARRAY Phase OF TEXT {
+  "Idle",
+  "GetRemoteBlocks",
+  "SwapActiveBlocks", 
+  "UpdateSurrogates",
+  "RunActiveBlocks"
+  };
+
+PROCEDURE RunMulti(READONLY schedulers : ARRAY OF T) =
+
+  PROCEDURE NothingPending() : BOOLEAN =
+    BEGIN
+      (* something is pending if it is in the local queue of a scheduler
+         or if it is in the outbox of a scheduler *)
+      FOR i := FIRST(schedulers) TO LAST(schedulers) DO
+        WITH s = schedulers[i] DO
+          IF s.np # 0 THEN RETURN FALSE END;
+          FOR j := FIRST(schedulers) TO LAST(schedulers) DO
+            IF s.outbox[j].size() # 0 THEN RETURN FALSE END
+          END
+        END
+      END;
+      RETURN TRUE
+    END NothingPending;
+  
+  PROCEDURE RunPhase(phase : Phase) =
+    BEGIN
+      IF doDebug THEN
+        Debug.Out(F("RunMulti.RunPhase(%s)", PhaseNames[phase]))
+      END;
+
+      FOR i := FIRST(schedulers) TO LAST(schedulers) DO
+        <*ASSERT schedulers[i].thePhase = Phase.Idle*>
+      END;
+
+      AcquireLocks(schedulers);
+
+      TRY
+        SetPhase(schedulers, phase)
+      FINALLY
+        ReleaseLocks(schedulers)
+      END;
+      SignalThreads(schedulers);
+      AwaitPhase(schedulers, Phase.Idle)
+    END RunPhase;
+
+  VAR
+    cls   := NEW(REF ARRAY OF SchedClosure, NUMBER(schedulers));
+    thrds := NEW(REF ARRAY OF Thread.T    , NUMBER(schedulers));
+  BEGIN
+    FOR i := FIRST(cls^) TO LAST(cls^) DO
+      cls[i]   := NEW(SchedClosure, t := schedulers[i]);
+      thrds[i] := Thread.Fork(cls[i])
+    END;
+
+    LOOP
+      IF NothingPending() THEN RETURN END;
+
+      RunPhase(Phase.GetRemoteBlocks);
+      
+      RunPhase(Phase.SwapActiveBlocks);
+
+      RunPhase(Phase.UpdateSurrogates);
+
+      INC(nexttime);
+
+      RunPhase(Phase.RunActiveBlocks);
+    END
   END RunMulti;
 
+TYPE
+  SchedClosure = Thread.Closure OBJECT
+    t : T;
+  OVERRIDES
+    apply := Apply;
+  END;
+
+CONST InitPhase = Phase.Idle;
+      
+PROCEDURE Apply(cl : SchedClosure) : REFANY =
+  VAR
+    t        := cl.t;
+    myId     := t.id;
+  BEGIN
+    IF doDebug THEN
+      Debug.Out(F("Starting scheduler %s", Int(myId)))
+    END;
+    
+    LOOP
+      (* this is a single scheduler *)
+
+      (* wait for command from central *)
+      LOCK t.mu DO
+        WHILE t.thePhase = Phase.Idle DO
+          Thread.Wait(t.mu, t.c)
+        END
+      END;
+
+      IF doDebug THEN
+        Debug.Out(F("Scheduler(%s) : phase %s",
+                    Int(myId),
+                    PhaseNames[t.thePhase]))
+      END;
+
+      CASE t.thePhase OF
+        Phase.Idle =>
+        <*ASSERT FALSE*>
+      |
+        Phase.GetRemoteBlocks =>
+        FOR r := FIRST(schedulers^) TO LAST(schedulers^) DO
+          WITH box = schedulers[r].outbox[myId] DO
+            FOR i := 0 TO box.size() - 1 DO
+              WITH myCl = box.get(i) DO
+                Schedule(myCl)
+              END
+            END
+          END
+        END
+      |
+        Phase.SwapActiveBlocks =>
+        
+        (* clear out the schedulers we just copied in GetRemoteBlocks *)
+        FOR i := FIRST(schedulers^) TO LAST(schedulers^) DO
+          EVAL t.outbox[i].init()
+        END;
+        
+        VAR
+          temp := t.active;
+        BEGIN
+          t.active := t.next;
+          t.ap     := t.np;
+          t.next   := temp;
+          t.np     := 0;
+        END
+      |
+        Phase.UpdateSurrogates =>
+        (* 
+           Update the channels with surrogate writes. 
+
+           This needs to be done on the reader side (obv.)
+        *)
+        FOR i := FIRST(schedulers^) TO LAST(schedulers^) DO
+          WITH remote = NARROW(schedulers[i],T) DO
+            FOR w := 0 TO remote.nwp[myId] - 1 DO
+              WITH surrogate = remote.wdirty[myId][w] DO
+                surrogate.writeSurrogate()
+              END
+            END;
+            FOR r := 0 TO remote.nrp[myId] - 1 DO
+              WITH target = remote.rdirty[myId][r] DO
+                target.readSurrogate()
+              END
+            END
+          END
+        END;
+      |
+        Phase.RunActiveBlocks =>
+        (* first zero all the read/write channel stuff *)
+        FOR i := FIRST(schedulers^) TO LAST(schedulers^) DO
+          t.nrp[i] := 0;
+          t.nwp[i] := 0
+        END;
+
+        (* now run the user code *)
+        FOR i := 0 TO t.ap - 1 DO
+          WITH cl      = t.active[i] DO
+            <*ASSERT cl # NIL*>
+            IF doDebug THEN
+              Debug.Out(F("Scheduler switch to %s : %s",
+                          Int(cl.frameId), cl.name));
+              t.running := cl
+            END;
+            cl.run();
+            IF doDebug THEN
+              Debug.Out(F("Scheduler switch from %s : %s",
+                          Int(cl.frameId), cl.name));
+              t.running := NIL
+            END;
+            (*IF NOT success THEN Schedule(cl) END*)
+          END
+        END
+      END;
+
+      LOCK t.mu DO
+        t.thePhase := Phase.Idle
+      END;
+      Thread.Signal(t.c)
+    END
+  END Apply;
+  
 PROCEDURE CreateMulti(n : CARDINAL) =
   (* create n schedulers *)
+
+  PROCEDURE NewChanArray() : REF ARRAY OF REF ARRAY OF CspChannel.T =
+    VAR
+      res := NEW(REF ARRAY OF REF ARRAY OF CspChannel.T, n);
+    BEGIN
+      FOR i := FIRST(res^) TO LAST(res^) DO
+        res[i] := NEW(REF ARRAY OF CspChannel.T, 1)
+      END;
+      RETURN res
+    END NewChanArray;
+
+  PROCEDURE NewCardArray() : REF ARRAY OF CARDINAL =
+    VAR
+      res := NEW(REF ARRAY OF CARDINAL, n);
+    BEGIN
+      FOR i := FIRST(res^) TO LAST(res^) DO
+        res[i] := 0
+      END;
+      RETURN res
+    END NewCardArray;
+    
   BEGIN
+    IF doDebug THEN
+      Debug.Out(F("Creating %s schedulers", Int(n)))
+    END;
+    
     schedulers := NEW(REF ARRAY OF T, n);
     FOR i := FIRST(schedulers^) TO LAST(schedulers^) DO
       WITH new = NEW(T,
-                     id     := i,
-                     active := NEW(REF ARRAY OF Process.Closure, 1),
-                     next   := NEW(REF ARRAY OF Process.Closure, 1),
-                     np     := 0,
+                     id       := i,
+                     active   := NEW(REF ARRAY OF Process.Closure, 1),
+                     next     := NEW(REF ARRAY OF Process.Closure, 1),
+                     np       := 0,
 
-                     rdirty := NEW(REF ARRAY OF CspChannel.T, 1),
-                     nrp    := 0,
+                     mu       := NEW(MUTEX),
+                     c        := NEW(Thread.Condition),
+                     
+                     rdirty   := NewChanArray(),
+                     nrp      := NewCardArray(),
         
-                     wdirty := NEW(REF ARRAY OF CspChannel.T, 1),
-                     nwp    := 0
+                     wdirty   := NewChanArray(),
+                     nwp      := NewCardArray(),
+
+                     thePhase := InitPhase
                      ) DO
         schedulers[i] := new;
         new.outbox := NEW(REF ARRAY OF ClosureSeq.T, n);
 
         FOR j := FIRST(new.outbox^) TO LAST(new.outbox^) DO
-          IF j = i THEN
-            new.outbox[j] := NIL
-          ELSE
-            new.outbox[j] := NEW(ClosureSeq.T).init()
-          END
+          new.outbox[j] := NEW(ClosureSeq.T).init()
         END;
       END(*WITH*)      
     END(*FOR*)
