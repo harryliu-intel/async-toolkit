@@ -179,7 +179,7 @@ PROCEDURE Send(         c : T;
       IF sendDebug THEN
         Debug.Out(F("%s : %s Send unlock select : %s", DebugClosure(cl), c.nm, DebugClosure(c.selecter)))
       END;
-     Scheduler.ScheduleOther(cl, c.selecter)
+      Scheduler.ScheduleOther(cl, c.selecter)
     END;
     
     IF c.wr = c.rd THEN

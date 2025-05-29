@@ -122,8 +122,9 @@ PROCEDURE Schedule(closure : Process.Closure) =
     <*ASSERT closure # NIL*>
 
     IF doDebug THEN
-      Debug.Out(F("scheduling %s : %s [%s] to run",
-                  Int(closure.frameId), closure.name, closure.fr.typeName));
+      Debug.Out(F("scheduling %s : %s [%s] to run at %s",
+                  Int(closure.frameId), closure.name, closure.fr.typeName,
+                  Int(nexttime)));
       IF t.running = NIL THEN
         Debug.Out(F("NIL : NIL scheduling %s : %s [%s] to run",
                   Int(closure.frameId), closure.name, closure.fr.typeName))
@@ -138,7 +139,8 @@ PROCEDURE Schedule(closure : Process.Closure) =
 
     IF closure.scheduled = nexttime THEN
       IF doDebug THEN
-        Debug.Out(Int(closure.id) & " already scheduled at " & Int(nexttime))
+        Debug.Out(F("%s : %s already scheduled at %s",
+                    Int(closure.frameId), closure.name, Int(nexttime)))
       END;
       RETURN 
     END;
