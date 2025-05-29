@@ -1,6 +1,6 @@
 module collatz;
 
-int NWORKERS = 2;
+//int NWORKERS = 20;
 int W        = 61;
 // 2^62 < (2 ^ 61 - 1) * 3 + 1  < 2^63
 // we need an extra bit for the sign bit
@@ -124,8 +124,10 @@ define DUMB()() <+ common
     print ("t=" + fmtStatus(t));
   }
 }
- 
-define WORKER()(bd(W) -STRT; bd(STATUSW) +STATUS) <+ common
+
+int UPDATEINTERVAL=100000;
+
+define WORKER(int NWORKERS)(bd(W) -STRT; bd(STATUSW) +STATUS) <+ common
 {
   csp {
 
@@ -160,7 +162,7 @@ define WORKER()(bd(W) -STRT; bd(STATUSW) +STATUS) <+ common
          sendStatus(len, snum, steps);
          steps = 0
          
-      [] (len <= maxlen) && (i % 1000 == 0)    ->
+      [] (len <= maxlen) && (i % UPDATEINTERVAL == 0)    ->
          sendStatus(0, 0, steps);
          steps = 0
 
@@ -345,14 +347,14 @@ define STATUS_TREE(int N)(bd(STATUSW) -L[0..N-1], +R)  <+ common
       ]
 }
 
-define COLLATZ()()  <+ common
+define COLLATZ(int NWORKERS)()  <+ common
 {
   subcells {
     bd(W) S, STRT[0..NWORKERS-1];
     bd(STATUSW) WSTATUS[0..NWORKERS-1], STATUS;
     MANAGER mgr(S, STATUS);
     START_TREE(0, NWORKERS) start_tree(S, STRT);
-    <i:0..NWORKERS-1: WORKER() wrkr[i](STRT[i], WSTATUS[i]);>
+    <i:0..NWORKERS-1: WORKER(NWORKERS) wrkr[i](STRT[i], WSTATUS[i]);>
     STATUS_TREE(NWORKERS) status_tree(WSTATUS, STATUS);
   }
 }

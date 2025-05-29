@@ -1,7 +1,7 @@
 GENERIC MODULE CspCompiledScheduler(CspDebug);
 IMPORT CspCompiledProcess AS Process;
 IMPORT Word;
-FROM Fmt IMPORT Int, F;
+FROM Fmt IMPORT Int, F, Bool;
 IMPORT Debug;
 IMPORT CspScheduler;
 IMPORT CspPortObject;
@@ -238,7 +238,7 @@ PROCEDURE Run1(t : T) =
 VAR theScheduler : T;
     (* when running a single scheduler *)
     
-PROCEDURE Run(mt : CARDINAL) =
+PROCEDURE Run(mt : CARDINAL; greedy : BOOLEAN) =
   BEGIN
     IF mt = 0 THEN
       theScheduler := NEW(T,
@@ -255,7 +255,7 @@ PROCEDURE Run(mt : CARDINAL) =
       CreateMulti(mt);
       MapRandomly(schedulers^);
       StartProcesses();
-      RunMulti(schedulers^)
+      RunMulti(schedulers^, greedy)
     END
   END Run;
 
@@ -359,7 +359,7 @@ CONST
   "RunActiveBlocks"
   };
 
-PROCEDURE RunMulti(READONLY schedulers : ARRAY OF T) =
+PROCEDURE RunMulti(READONLY schedulers : ARRAY OF T; greedy : BOOLEAN) =
 
   PROCEDURE NothingPending() : BOOLEAN =
     BEGIN
@@ -402,7 +402,7 @@ PROCEDURE RunMulti(READONLY schedulers : ARRAY OF T) =
     thrds := NEW(REF ARRAY OF Thread.T    , NUMBER(schedulers));
   BEGIN
     FOR i := FIRST(cls^) TO LAST(cls^) DO
-      cls[i]   := NEW(SchedClosure, t := schedulers[i]);
+      cls[i]   := NEW(SchedClosure, t := schedulers[i], greedy := greedy);
       thrds[i] := Thread.Fork(cls[i])
     END;
 
@@ -423,7 +423,8 @@ PROCEDURE RunMulti(READONLY schedulers : ARRAY OF T) =
 
 TYPE
   SchedClosure = Thread.Closure OBJECT
-    t : T;
+    t      : T;
+    greedy : BOOLEAN;
   OVERRIDES
     apply := Apply;
   END;
@@ -431,6 +432,17 @@ TYPE
 CONST InitPhase = Phase.Idle;
       
 PROCEDURE Apply(cl : SchedClosure) : REFANY =
+
+  PROCEDURE DoSwapActiveBlocks() =
+    VAR
+      temp := t.active;
+    BEGIN
+      t.active := t.next;
+      t.ap     := t.np;
+      t.next   := temp;
+      t.np     := 0;
+    END DoSwapActiveBlocks;
+  
   VAR
     t        := cl.t;
     myId     := t.id;
@@ -476,15 +488,8 @@ PROCEDURE Apply(cl : SchedClosure) : REFANY =
         FOR i := FIRST(schedulers^) TO LAST(schedulers^) DO
           EVAL t.outbox[i].init()
         END;
-        
-        VAR
-          temp := t.active;
-        BEGIN
-          t.active := t.next;
-          t.ap     := t.np;
-          t.next   := temp;
-          t.np     := 0;
-        END
+
+        DoSwapActiveBlocks()
       |
         Phase.UpdateSurrogates =>
         (* 
@@ -515,23 +520,38 @@ PROCEDURE Apply(cl : SchedClosure) : REFANY =
         END;
 
         (* now run the user code *)
-        FOR i := 0 TO t.ap - 1 DO
-          WITH cl      = t.active[i] DO
-            <*ASSERT cl # NIL*>
-            IF doDebug THEN
-              Debug.Out(F("Scheduler switch to %s : %s",
-                          Int(cl.frameId), cl.name));
-              t.running := cl
-            END;
-            cl.run();
-            IF doDebug THEN
-              Debug.Out(F("Scheduler switch from %s : %s",
-                          Int(cl.frameId), cl.name));
-              t.running := NIL
-            END;
-            (*IF NOT success THEN Schedule(cl) END*)
+        LOOP
+          FOR i := 0 TO t.ap - 1 DO
+            WITH cl      = t.active[i] DO
+              <*ASSERT cl # NIL*>
+              IF doDebug THEN
+                Debug.Out(F("Apply %s : Scheduler switch to %s : %s",
+                            Int(myId), Int(cl.frameId), cl.name));
+                t.running := cl
+              END;
+              cl.run();
+              IF doDebug THEN
+                Debug.Out(F("Apply %s : Scheduler switch from %s : %s",
+                            Int(myId), Int(cl.frameId), cl.name));
+                t.running := NIL
+              END;
+              (*IF NOT success THEN Schedule(cl) END*)
+            END(*WITH*)
+          END(*FOR*);
+
+          IF doDebug THEN
+            Debug.Out(F("Apply %s : cl.greedy=%s t.np=%s",
+                        Int(myId), Bool(cl.greedy), Int(t.np)))
+          END;
+          
+          IF cl.greedy AND t.np # 0 THEN
+            (* just keep running till we are out of things to do *)
+            DoSwapActiveBlocks()
+          ELSE
+            EXIT
           END
-        END
+        END(*LOOP*)
+
       END;
 
       LOCK t.mu DO

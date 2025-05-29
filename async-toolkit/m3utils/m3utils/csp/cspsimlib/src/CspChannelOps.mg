@@ -31,7 +31,8 @@ PROCEDURE Unlock(c : T; cl : Process.Closure) =
       Debug.Out(F("%s : %s Unlock %s",
                   DebugClosure(cl), c.nm, 
                   cl.name));
-      <*ASSERT c.locker = cl*>
+      <*ASSERT c.locker # NIL*>
+      <*ASSERT c.locker.fr = cl.fr*>
       c.locker := NIL
     END;
 
@@ -71,7 +72,7 @@ PROCEDURE Unwait  (c : T; cl : Process.Closure) =
                   DebugClosure(cl), c.nm, 
                   cl.name))
     END;
-    <*ASSERT c.selecter = NIL OR c.selecter = cl*> c.selecter := NIL
+    <*ASSERT c.selecter = NIL OR c.selecter.fr = cl.fr*> c.selecter := NIL
   END Unwait;
 
 BEGIN END CspChannelOps.

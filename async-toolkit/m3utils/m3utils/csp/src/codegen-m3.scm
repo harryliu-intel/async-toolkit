@@ -12,7 +12,8 @@
 ;; May, 2025
 ;;
 
-(define *default-slack* 1)
+;;(define *default-slack* 1)
+(define *default-slack* 100)
 ;; we should get slack from the CSP source code, but for now we don't,
 ;; so we do it this way
 
@@ -2843,17 +2844,17 @@
     ;; the idea here is this..
     ;;
     ;; the waitfor is in a block of its own (it must be)
-    ;; a single process can't wait on a channel twice concurrently
+    ;; --a single process can't wait on a single channel twice concurrently
     ;;
     ;; entering the waitfor, we must have locked the ports of interest.
     ;;
     ;; if we don't need to wait, we unlock and proceed
     ;;
-    ;; if we do need to wait, we ... unlock and wait (atomically)
+    ;; if we do need to wait, we ... remain locked and wait (atomically)
     ;; when we are awoken from wait, it is this same block, so we unwait
     ;; at the start (OK to unwait without waiting first)
     ;;
-    ;; when we depart the waitfor, the ports must be locked and unwaited
+    ;; when we depart the waitfor, the ports must be unlocked and unwaited
     ;; 
     
     (let loop ((p ports)
@@ -2864,7 +2865,7 @@
              (m3-compile-unwait pc `(XXX ,@ports)) ";" dnl
              res
              "IF ready = 0 THEN" dnl
-             (m3-compile-unlock pc `(XXX ,@ports)) ";" dnl
+             ;;(m3-compile-unlock pc `(XXX ,@ports)) ";" dnl
              (m3-compile-wait pc `(XXX ,@ports)) ";" dnl
              "  RETURN FALSE" dnl
              "ELSE" dnl
@@ -4010,11 +4011,13 @@
     (mw "  doScheme := FALSE;" dnl)
     (mw "  extra    := NEW(TextSeq.T).init();" dnl)
     (mw "  mt       : CARDINAL := 0;" dnl)
+    (mw "  greedy   : BOOLEAN;" dnl)
     (mw "" dnl)
     (mw "BEGIN" dnl)
     (mw "  EVAL   BigInt.GetInitialized();" dnl)
     (mw "  " dnl)
     (mw "  TRY" dnl)
+    (mw "    greedy := pp.keywordPresent(\"-greedy\");" dnl)
     (mw "    IF pp.keywordPresent(\"-mt\") THEN" dnl
         "       mt := pp.getNextInt()" dnl
         "    END;" dnl)
@@ -4044,7 +4047,7 @@
     (mw "      Scheme.E(err) => Debug.Error(\"Caught Scheme.E : \" & err)" dnl)
     (mw "    END" dnl)
     (mw "  ELSE" dnl)
-    (mw "    Scheduler.SchedulingLoop(mt)" dnl)
+    (mw "    Scheduler.SchedulingLoop(mt, greedy)" dnl)
     (mw "  END;" dnl)
     (mw "" dnl) 
     (mw "END SimMain." dnl)
