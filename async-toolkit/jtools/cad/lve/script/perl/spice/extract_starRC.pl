@@ -36,6 +36,7 @@ DOC
 
 use Cwd qw/getcwd abs_path/;
 use LveUtil qw/reName2 read_cdl_aliases/;
+use File::Spec::Functions qw/catdir splitdir/;
 use Hercules;
 
 
@@ -853,6 +854,10 @@ EOF
             # correctly, so write out a tcsh script to execute the csh setup
             # script
             open(my $fh, '>', 'run_cth') or die "Can't write run_cth: $!";
+            my $proj_cfg = $ENV{'EXTRACT_CTH_CFG'} // "/p/hdk/etc/Projects/ilcth/latest/IL76P31_NCL.cth";
+            my @proj_parts = splitdir($proj_cfg);
+            my $cfg = $proj_parts[-1];
+            my $proj = catdir($proj_parts[-3], $proj_parts[-2]);
             print $fh <<EOF;
 #!/usr/intel/bin/tcsh -f
 setenv DR_USERDEFINESUIN
@@ -864,7 +869,7 @@ setenv DISABLE_ICV_CLF_EXTRACTION
 $dr_defines
 set boxfile
 if (-f gray_list.xref) set boxfile='-boxfile gray_list.xref'
-/p/hdk/bin/cth_psetup -p ilcth -cfg IL76P31_NCL.cth -tool ipde_all -cfg_ov '$cfg_ov' -nowash -common_ward -cmd '\$SETUP_IPDE; \$VMAC/release/extractor/run_xtract.pl -cell '"'"$topcell"'"' -gdsfile cell.gds2 -cdlfile cell.cdl_gds2 -temp $temperature -corner $extractCorner -append_usercmd_file lve_override.cmd $flow '"\$boxfile"
+/p/hdk/bin/cth_psetup -p $proj -cfg $cfg -tool ipde_all -cfg_ov '$cfg_ov' -nowash -common_ward -cmd '\$SETUP_IPDE; \$VMAC/release/extractor/run_xtract.pl -cell '"'"$topcell"'"' -gdsfile cell.gds2 -cdlfile cell.cdl_gds2 -temp $temperature -corner $extractCorner -append_usercmd_file lve_override.cmd $flow '"\$boxfile"
 test -f '$spf' && ln -s '$spf' '$spiceTemp'
 EOF
             close($fh);
