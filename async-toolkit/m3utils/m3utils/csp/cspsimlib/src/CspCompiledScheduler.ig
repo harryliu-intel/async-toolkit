@@ -25,8 +25,12 @@ PROCEDURE Schedule(closure : Process.Closure);
 PROCEDURE ScheduleFork(READONLY closures : ARRAY OF Process.Closure) : CARDINAL;
   (* schedule a list of closures, for a fork, in the current process to run *)
 
-PROCEDURE ScheduleOther(from, toSchedule : Process.Closure);
-  (* schedule a block in another CSP process to run *)
+PROCEDURE ScheduleComm(from, toSchedule : Process.Closure);
+  (* schedule a block in another CSP process to run owing to a communication *)
+  
+PROCEDURE ScheduleWait(from, toSchedule : Process.Closure);
+  (* schedule a block in another CSP process to run owing to a select *)
+  
     
 PROCEDURE Run(mt : CARDINAL := 0; greedy := FALSE);
 

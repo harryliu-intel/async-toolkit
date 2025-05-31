@@ -18,6 +18,7 @@ TYPE
     fr        : Frame; (* non-specific -- subtype includes subtyped Frame *)
     frameId   : CARDINAL;
     scheduled : Word.T := -1; (* last time it was scheduled *)
+    waiting   : BOOLEAN := FALSE;
   METHODS
     run();
   END;

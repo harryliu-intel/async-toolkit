@@ -56,12 +56,19 @@ PROCEDURE Ready (c : T; cl : Process.Closure) : BOOLEAN =
   END Ready;
   
 PROCEDURE Wait  (c : T; cl : Process.Closure) =
+  (* to be honest, we need to be able to Wait on a Node as well 
+
+     really, we should be waiting on an array of CspPortObject.Ts
+  *)
   BEGIN
     IF seleDebug THEN
       Debug.Out(F("%s : %s Wait %s",
                   DebugClosure(cl), c.nm, 
                   cl.name))
     END;
+    (* we can't assert NOT waiting here because we currently need to call
+       Wait once for each channel we're waiting on.  See above. *)
+    cl.waiting  := TRUE;
     c.selecter := cl
   END Wait;
   
@@ -72,6 +79,10 @@ PROCEDURE Unwait  (c : T; cl : Process.Closure) =
                   DebugClosure(cl), c.nm, 
                   cl.name))
     END;
+    (* we can't assert waiting here, because of the structure of the waitfor
+       (look in codegen-m3.scm for more details)
+    *)
+    cl.waiting := FALSE;
     <*ASSERT c.selecter = NIL OR c.selecter.fr = cl.fr*> c.selecter := NIL
   END Unwait;
 

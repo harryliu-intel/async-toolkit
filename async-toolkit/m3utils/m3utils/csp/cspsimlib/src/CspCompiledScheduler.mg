@@ -44,7 +44,8 @@ TYPE
     mu           : MUTEX;
     c            : Thread.Condition;
     
-    outbox       : REF ARRAY OF ClosureSeq.T;
+    commOutbox   : REF ARRAY OF ClosureSeq.T;
+    waitOutbox   : REF ARRAY OF ClosureSeq.T;
     (* written by "from" scheduler, read by each "to" scheduler, according
        to their ids *)
 
@@ -94,7 +95,7 @@ PROCEDURE WriteDirty(surr : CspChannel.T; cl : Process.Closure) =
     INC(t.nwp[tgtId])
   END WriteDirty;
 
-PROCEDURE ScheduleOther(from, toSchedule : Process.Closure) =
+PROCEDURE ScheduleComm(from, toSchedule : Process.Closure) =
   VAR
     fromScheduler : T := from.fr.affinity;
   BEGIN
@@ -110,10 +111,34 @@ PROCEDURE ScheduleOther(from, toSchedule : Process.Closure) =
       VAR
         toScheduler   : T := toSchedule.fr.affinity;
       BEGIN
-        fromScheduler.outbox[toScheduler.id].addhi(toSchedule)
+        fromScheduler.commOutbox[toScheduler.id].addhi(toSchedule)
       END
     END
-  END ScheduleOther;
+  END ScheduleComm;
+  
+PROCEDURE ScheduleWait(from, toSchedule : Process.Closure) =
+  VAR
+    fromScheduler : T := from.fr.affinity;
+  BEGIN
+    IF fromScheduler = toSchedule.fr.affinity THEN
+      (* the source and target are in the same scheduler, we can 
+         schedule them same as if they were local *)
+      IF toSchedule.waiting THEN
+        toSchedule.waiting := FALSE;
+        Schedule(toSchedule)
+      END
+    ELSE
+      (* if the target block is running under another scheduler,
+         we do not schedule it directly.  Instead, we put it in the 
+         appropriate outbox to handle at the end of the
+         timestep *)
+      VAR
+        toScheduler   : T := toSchedule.fr.affinity;
+      BEGIN
+        fromScheduler.waitOutbox[toScheduler.id].addhi(toSchedule)
+      END
+    END
+  END ScheduleWait;
   
 PROCEDURE Schedule(closure : Process.Closure) =
   VAR
@@ -199,7 +224,9 @@ PROCEDURE Run1(t : T) =
 
     LOOP
       IF doDebug THEN
-        Debug.Out(F("=====  Scheduling loop %s: np = %s", Int(t.id), Int(t.np))) 
+        Debug.Out(F("=====  @ %s Scheduling loop %s: np = %s",
+                    Int(nexttime),
+                    Int(t.id), Int(t.np))) 
       END;
 
       IF t.np = 0 THEN
@@ -371,7 +398,8 @@ PROCEDURE RunMulti(READONLY schedulers : ARRAY OF T; greedy : BOOLEAN) =
         WITH s = schedulers[i] DO
           IF s.np # 0 THEN RETURN FALSE END;
           FOR j := FIRST(schedulers) TO LAST(schedulers) DO
-            IF s.outbox[j].size() # 0 THEN RETURN FALSE END
+            IF s.commOutbox[j].size() # 0 THEN RETURN FALSE END;
+            IF s.waitOutbox[j].size() # 0 THEN RETURN FALSE END
           END
         END
       END;
@@ -475,10 +503,20 @@ PROCEDURE Apply(cl : SchedClosure) : REFANY =
       |
         Phase.GetRemoteBlocks =>
         FOR r := FIRST(schedulers^) TO LAST(schedulers^) DO
-          WITH box = schedulers[r].outbox[myId] DO
+          WITH box = schedulers[r].commOutbox[myId] DO
             FOR i := 0 TO box.size() - 1 DO
               WITH myCl = box.get(i) DO
                 Schedule(myCl)
+              END
+            END
+          END;
+          WITH box = schedulers[r].waitOutbox[myId] DO
+            FOR i := 0 TO box.size() - 1 DO
+              WITH myCl = box.get(i) DO
+                IF myCl.waiting THEN
+                  myCl.waiting := FALSE; (* in case there are multiple wakers *)
+                  Schedule(myCl)
+                END
               END
             END
           END
@@ -488,7 +526,8 @@ PROCEDURE Apply(cl : SchedClosure) : REFANY =
         
         (* clear out the schedulers we just copied in GetRemoteBlocks *)
         FOR i := FIRST(schedulers^) TO LAST(schedulers^) DO
-          EVAL t.outbox[i].init()
+          EVAL t.commOutbox[i].init();
+          EVAL t.waitOutbox[i].init()
         END;
 
         DoSwapActiveBlocks()
@@ -611,10 +650,13 @@ PROCEDURE CreateMulti(n : CARDINAL) =
                      thePhase := InitPhase
                      ) DO
         schedulers[i] := new;
-        new.outbox := NEW(REF ARRAY OF ClosureSeq.T, n);
 
-        FOR j := FIRST(new.outbox^) TO LAST(new.outbox^) DO
-          new.outbox[j] := NEW(ClosureSeq.T).init()
+        new.commOutbox := NEW(REF ARRAY OF ClosureSeq.T, n);
+        new.waitOutbox := NEW(REF ARRAY OF ClosureSeq.T, n);
+
+        FOR j := FIRST(schedulers^) TO LAST(schedulers^) DO
+          new.commOutbox[j] := NEW(ClosureSeq.T).init();
+          new.waitOutbox[j] := NEW(ClosureSeq.T).init()
         END;
       END(*WITH*)      
     END(*FOR*)

@@ -2855,6 +2855,13 @@
     ;; at the start (OK to unwait without waiting first)
     ;;
     ;; when we depart the waitfor, the ports must be unlocked and unwaited
+    ;;
+    ;; the wait is only active within this block, so that we don't wake
+    ;; up the wrong code block.
+    ;;
+    ;; Note that: when we enter the block from elsewhere, we are not waiting.
+    ;; But when we RETURN FALSE, we wait, so the next time we run, we enter
+    ;; already waiting.  Unwait therefore has to be idempotent.
     ;; 
     
     (let loop ((p ports)

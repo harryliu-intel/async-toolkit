@@ -177,9 +177,11 @@ PROCEDURE Send(         c : T;
 
     IF c.selecter # NIL THEN
       IF sendDebug THEN
-        Debug.Out(F("%s : %s Send unlock select : %s", DebugClosure(cl), c.nm, DebugClosure(c.selecter)))
+        Debug.Out(F("%s : %s Send unlock select : %s", DebugClosure(cl),
+                    c.nm,
+                    DebugClosure(c.selecter)))
       END;
-      Scheduler.ScheduleOther(cl, c.selecter)
+      Scheduler.ScheduleWait(cl, c.selecter)
     END;
     
     IF c.wr = c.rd THEN
@@ -212,7 +214,7 @@ PROCEDURE Send(         c : T;
                 DebugClosure(c.waiter))
           )
         END;
-        Scheduler.ScheduleOther(cl, c.waiter);
+        Scheduler.ScheduleComm(cl, c.waiter);
         c.waiter := cl;
         RETURN FALSE
       ELSE
@@ -261,7 +263,7 @@ PROCEDURE Send(         c : T;
                       DebugClosure(cl), c.nm, 
                       DebugClosure(c.waiter)))
         END;
-        Scheduler.ScheduleOther(cl, c.waiter);
+        Scheduler.ScheduleComm(cl, c.waiter);
         c.waiter := NIL
       END;
       
@@ -317,13 +319,16 @@ PROCEDURE RecvProbe(c : T; cl : Process.Closure) : BOOLEAN =
     END
   END RecvProbe;
   
-PROCEDURE Recv(     c : T;
+PROCEDURE Recv(         c : T;
                VAR      x : Item;
                cl         : Process.Closure) : BOOLEAN =
   BEGIN
     IF c.selecter # NIL THEN
-      Debug.Out(F("%s : %s Recv unlock select : %s", DebugClosure(cl), c.nm, DebugClosure(c.selecter)));
-      Scheduler.ScheduleOther(cl, c.selecter)
+      Debug.Out(F("%s : %s Recv unlock select : %s",
+                  DebugClosure(cl),
+                  c.nm,
+                  DebugClosure(c.selecter)));
+      Scheduler.ScheduleWait(cl, c.selecter)
     END;
     
     VAR
@@ -379,7 +384,7 @@ PROCEDURE Recv(     c : T;
                         DebugClosure(cl), c.nm, 
                         DebugClosure(c.waiter)))
           END;
-          Scheduler.ScheduleOther(cl, c.waiter);
+          Scheduler.ScheduleComm(cl, c.waiter);
           c.waiter := NIL 
         END;
 
@@ -465,7 +470,7 @@ PROCEDURE RecvNative(     c : T;
     END
   END RecvNative;
 
-PROCEDURE RecvDynamic(     c : T;
+PROCEDURE RecvDynamic(         c : T;
                       x(*OUT*)   : DynamicInt.T;
                       cl         : Process.Closure) : BOOLEAN =
   VAR
