@@ -115,6 +115,8 @@ PROCEDURE GetInitialized() : BOOLEAN;
 
 PROCEDURE DebugT(t : T) : TEXT;
 
-PROCEDURE Uniq(t : T) : T; (* internal use, but no harm in exporting it *)
+PROCEDURE Uniq(t : T) : T; (* internal use, but no harm in exporting it  
+                              -- may be needed for pickling/unpickling
+                           *)
        
 END BigInt.

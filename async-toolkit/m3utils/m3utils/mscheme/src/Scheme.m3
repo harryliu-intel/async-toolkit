@@ -26,6 +26,7 @@ IMPORT SchemeUnixDeps;
 IMPORT SchemeEnvironmentBinding;
 IMPORT SchemeEnvironmentInstanceRep; (* for pickling *)
 IMPORT Pickle;
+IMPORT BigInt;
 IMPORT TextWr;
 FROM Fmt IMPORT F;
 
@@ -894,6 +895,24 @@ PROCEDURE PickleGlobalEnv(self : T; to : Wr.T)
     END
   END PickleGlobalEnv;
 
+TYPE
+  PickleReader = Pickle.Reader OBJECT
+  OVERRIDES
+    read := PRRead;
+  END;
+
+PROCEDURE PRRead(pr : PickleReader) : REFANY
+  RAISES { Pickle.Error, Rd.EndOfFile, Rd.Failure } =
+  BEGIN
+    WITH draft = Pickle.Reader.read(pr) DO
+      IF draft # NIL AND ISTYPE(draft, BigInt.T) THEN
+        RETURN BigInt.Uniq(draft)
+      ELSE
+        RETURN draft
+      END
+    END
+  END PRRead;
+  
 PROCEDURE UnpickleGlobalEnv(self : T; from : Rd.T)
   RAISES { Rd.Failure, Pickle.Error } =
   VAR
@@ -902,8 +921,9 @@ PROCEDURE UnpickleGlobalEnv(self : T; from : Rd.T)
     TRY
       LOOP
         WITH
-          nm  = Pickle.Read(from),
-          val = Pickle.Read(from) DO
+          pr  = NEW(PickleReader, rd := from),
+          nm  = pr.read(),
+          val = pr.read() DO
           EVAL env.define(nm, val)
         END
       END
