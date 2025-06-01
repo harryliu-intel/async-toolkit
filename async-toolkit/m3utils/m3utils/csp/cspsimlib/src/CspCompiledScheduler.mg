@@ -61,6 +61,8 @@ TYPE
     nwp          : REF ARRAY OF CARDINAL;
 
     thePhase     : Phase;
+
+    time         : Word.T;
   END;
 
 PROCEDURE ReadDirty(targ : CspChannel.T; cl : Process.Closure) =
@@ -149,7 +151,7 @@ PROCEDURE Schedule(closure : Process.Closure) =
     IF doDebug THEN
       Debug.Out(F("scheduling %s : %s [%s] to run at %s",
                   Int(closure.frameId), closure.name, closure.fr.typeName,
-                  Int(nexttime)));
+                  Int(t.time)));
       IF t.running = NIL THEN
         Debug.Out(F("NIL : NIL scheduling %s : %s [%s] to run",
                   Int(closure.frameId), closure.name, closure.fr.typeName))
@@ -162,10 +164,10 @@ PROCEDURE Schedule(closure : Process.Closure) =
 
     <*ASSERT t # NIL*>
 
-    IF closure.scheduled = nexttime THEN
+    IF closure.scheduled = t.time THEN
       IF doDebug THEN
         Debug.Out(F("%s : %s already scheduled at %s",
-                    Int(closure.frameId), closure.name, Int(nexttime)))
+                    Int(closure.frameId), closure.name, Int(t.time)))
       END;
       RETURN 
     END;
@@ -176,9 +178,13 @@ PROCEDURE Schedule(closure : Process.Closure) =
         t.next := new
       END
     END;
-    t.next[t.np] := closure;
-    closure.scheduled := nexttime;
-    INC(t.np)
+    t.next[t.np]      := closure;
+    closure.scheduled := t.time;
+    INC(t.np);
+
+    IF doDebug THEN
+      Debug.Out(F("Schedule : np = %s", Int(t.np)))
+    END
   END Schedule;
 
 PROCEDURE ScheduleFork(READONLY closures : ARRAY OF Process.Closure) : CARDINAL =
@@ -190,9 +196,9 @@ PROCEDURE ScheduleFork(READONLY closures : ARRAY OF Process.Closure) : CARDINAL 
   END ScheduleFork;
 
 PROCEDURE GetTime() : Word.T =
-  BEGIN RETURN nexttime END GetTime;
+  BEGIN RETURN masterTime END GetTime;
 
-VAR nexttime : Word.T := 0;
+VAR masterTime : Word.T := 0;
 
 VAR theProcs := NEW(TextFrameTbl.Default).init();
 
@@ -221,11 +227,12 @@ PROCEDURE RegisterEdge(edge : CspPortObject.T) =
 PROCEDURE Run1(t : T) =
   BEGIN
     (* run *)
-
+    t.time := masterTime;
+    
     LOOP
       IF doDebug THEN
         Debug.Out(F("=====  @ %s Scheduling loop %s: np = %s",
-                    Int(nexttime),
+                    Int(t.time),
                     Int(t.id), Int(t.np))) 
       END;
 
@@ -242,7 +249,9 @@ PROCEDURE Run1(t : T) =
         t.np     := 0;
       END;
 
-      INC(nexttime);
+      (* note that the time switches here, BEFORE we run *)
+      INC(masterTime);
+      t.time := masterTime;
 
       FOR i := 0 TO t.ap - 1 DO
         WITH cl      = t.active[i] DO
@@ -302,7 +311,7 @@ PROCEDURE StartProcesses() =
 
 PROCEDURE MapRandomly(READONLY sarr : ARRAY OF T) =
   VAR
-    rand := NEW(Random.Default).init();
+    rand := NEW(Random.Default).init(TRUE);
     k : TEXT;
     v : Process.Frame;
     iter := theProcs.iterate();
@@ -406,6 +415,25 @@ PROCEDURE RunMulti(READONLY schedulers : ARRAY OF T; greedy : BOOLEAN) =
       RETURN TRUE
     END NothingPending;
   
+  PROCEDURE CountPendingStuff() : CARDINAL =
+    VAR
+      res : CARDINAL := 0;
+    BEGIN
+      (* something is pending if it is in the local queue of a scheduler
+         or if it is in the outbox of a scheduler *)
+      FOR i := FIRST(schedulers) TO LAST(schedulers) DO
+        WITH s = schedulers[i] DO
+          res := res + s.np;
+          
+          FOR j := FIRST(schedulers) TO LAST(schedulers) DO
+            res := res + s.commOutbox[j].size();
+            res := res + s.waitOutbox[j].size()
+          END
+        END
+      END;
+      RETURN res
+    END CountPendingStuff;
+  
   PROCEDURE RunPhase(phase : Phase) =
     BEGIN
       IF doDebug THEN
@@ -427,6 +455,16 @@ PROCEDURE RunMulti(READONLY schedulers : ARRAY OF T; greedy : BOOLEAN) =
       AwaitPhase(schedulers, Phase.Idle)
     END RunPhase;
 
+  PROCEDURE UpdateTime() =
+    BEGIN
+      (* ensure time advances for everybody *)
+      FOR i := FIRST(schedulers) TO LAST(schedulers) DO
+        masterTime := MAX(masterTime, schedulers[i].time)
+      END;
+      
+      INC(masterTime);
+    END UpdateTime;
+    
   VAR
     cls   := NEW(REF ARRAY OF SchedClosure, NUMBER(schedulers));
     thrds := NEW(REF ARRAY OF Thread.T    , NUMBER(schedulers));
@@ -437,15 +475,30 @@ PROCEDURE RunMulti(READONLY schedulers : ARRAY OF T; greedy : BOOLEAN) =
     END;
 
     LOOP
-      IF NothingPending() THEN RETURN END;
+      IF doDebug THEN
+        Debug.Out(F("=====  @ %s Master scheduling loop : np = %s",
+                    Int(masterTime),
+                    Int(CountPendingStuff())
+                   )
+                 )
+      END;
+
+      IF NothingPending() THEN
+        IF doDebug THEN
+          Debug.Out("RunMulti : nothing pending---done.")
+        END;
+        RETURN
+      END;
+
+      UpdateTime();
 
       RunPhase(Phase.GetRemoteBlocks);
+
+(*      UpdateTime();  *)
       
       RunPhase(Phase.SwapActiveBlocks);
 
       RunPhase(Phase.UpdateSurrogates);
-
-      INC(nexttime);
 
       RunPhase(Phase.RunActiveBlocks);
     END
@@ -502,6 +555,9 @@ PROCEDURE Apply(cl : SchedClosure) : REFANY =
         <*ASSERT FALSE*>
       |
         Phase.GetRemoteBlocks =>
+        <*ASSERT masterTime > t.time*>
+        t.time := masterTime;
+        
         FOR r := FIRST(schedulers^) TO LAST(schedulers^) DO
           WITH box = schedulers[r].commOutbox[myId] DO
             FOR i := 0 TO box.size() - 1 DO
@@ -587,6 +643,7 @@ PROCEDURE Apply(cl : SchedClosure) : REFANY =
           
           IF cl.greedy AND t.np # 0 THEN
             (* just keep running till we are out of things to do *)
+            INC(t.time);
             DoSwapActiveBlocks()
           ELSE
             EXIT
@@ -598,6 +655,7 @@ PROCEDURE Apply(cl : SchedClosure) : REFANY =
       LOCK t.mu DO
         t.thePhase := Phase.Idle
       END;
+      (* local time will have updated *)
       Thread.Signal(t.c)
     END
   END Apply;
