@@ -428,3 +428,42 @@ define SLICE()()
   }
 }
 
+define B()()
+{
+  csp {
+    bool a[2];
+    int  x;
+    x++;
+
+    <i:2: a[i] = x == i>;
+
+    <i:2:print(a[i])>
+  }
+}
+    
+define I()()
+{
+  csp {
+    int a[2];
+    int  x;
+    x++;
+
+    <i:2: a[i] = x + i - 1>;
+
+    <i:2:print(a[i])>
+  }
+}
+
+define S()()
+{
+  csp {
+    string a[2];
+    int  x;
+    x++;
+
+    <i:2: a[i] = "" + hex(x + i - 1)>;
+
+    <i:2:print(a[i])>
+  }
+}
+    

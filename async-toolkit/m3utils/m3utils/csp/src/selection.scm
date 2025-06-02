@@ -195,15 +195,22 @@
   ids
   )
 
-(define (convert-waiting-if wif)
-  ;; convert waiting-if to if/loop/goto version
-  ;; this is, well, an optional module, because we could leave
-  ;; the implementation to the code generator, or implement it
-  ;; differently.
-  ;;
-  ;; See the document:
-  ;; A proposal for the semantics of selection ([...]) in Fulcrum-CSP
-  ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;; convert-waiting-if:
+;;
+;;
+;; convert waiting-if to if/loop/goto version
+;; this is, well, an optional module, because we could leave
+;; the implementation to the code generator, or implement it
+;; differently.
+;;
+;; See the document:
+;; A proposal for the semantics of selection ([...]) in Fulcrum-CSP
+;;
+
+(define (convert-waiting-if-nonarray wif)
+  ;; V1 : use scalar booleans
   
   (let* ((tg           (make-name-generator "convert-waiting-if"))
          (wif-clauses  (get-waiting-if-clauses wif))
@@ -269,11 +276,161 @@
 
     )
   )
+(define (convert-waiting-if-array wif last)
+  ;; V2 : use array booleans to allow fair implementation
+  
+  (let* ((tg           (make-name-generator "conv-wif"))
+         (wif-clauses  (get-waiting-if-clauses wif))
+         (dummies      (map get-waiting-if-clause-dummy wif-clauses))
+
+         (wif-clauses-decls
+                       (map (lambda(d) (make-var1-decl d
+                                                       *default-boolean-type*))
+                            dummies))
+
+         (n            (length wif-clauses))
+
+         (selected     (tg 'next))
+         (seldecl      (make-var1-decl selected *default-int-type*))
+         (selinit      `(assign (id ,selected) ,(bn -1)))
+         (arrnm        (tg 'next 'arr))
+         (arr-rng      `(range ,*big0* ,(bn (- n 1))))
+         (arrdecl      (make-var1-decl arrnm
+                                       `(array ,arr-rng
+                                               ,*default-boolean-type*)))
+         (arridxs      (map bn (count-execute n identity)))
+         (arr          (map (lambda(idx)`(array-access (id ,arrnm) ,idx))
+                            arridxs))
+
+         (arrasses     (map (lambda(a g)`(assign ,a (id ,g)))
+                            arr
+                            dummies))
+
+         (loop-dummy   (tg 'next))
+         (sel-ass-loop `(sequential-loop
+                         ,loop-dummy
+                         ,arr-rng
+                         (if
+                          ((array-access (id ,arrnm) (% (+ (id ,loop-dummy)
+                                                           (id ,last))
+                                                        ,(bn n)))
+                           (sequence
+                             (assign (id ,selected)
+                                     (% (+ (id ,loop-dummy)
+                                           (id ,last))
+                                        ,(bn n)))
+                             (assign (id ,last) (id ,selected))))))
+                       )
+                       
+                         
+         (sensit       (uniq eq?
+                             (apply append
+                                    (map get-waiting-if-clause-sensitivity
+                                         wif-clauses))))
+         (guardeval    (cons 'sequence
+                             (map get-waiting-if-clause-guardeval
+                                  wif-clauses)))
+
+         (lif-clauses  (map (lambda(wif-cl arridx)
+                              `((== (id ,selected) ,arridx)
+                                ,(get-waiting-if-clause-command wif-cl)))
+                            wif-clauses arridxs))
+
+         (wif-clauses-lif
+                      `(if ,@lif-clauses))
+                                        
+         ;; need to make the or
+
+         (g-list       (map make-ident dummies))
+         (or-expr      (make-binop '| g-list)) ; |))
+         (nor-expr    `(not ,or-expr))
+         ;; the OR/NOR expression
+         
+         (ndone        (tg 'next 'not-done-))
+
+         (ndone-id     (make-ident ndone))
+         (ndone-decl   (make-var1-decl ndone *default-boolean-type*))
+         ;; declare the "not done" variable
+         
+         (ndone-init   (make-assign ndone-id #t))
+         (ndone-assign (make-assign ndone-id nor-expr))
+
+         (lock         `(lock ,@sensit))
+         (unlock       `(unlock ,@sensit))
+         (exec-unlock  `(sequence ,unlock ,wif-clauses-lif))
+         (waitfor      `(waitfor ,@sensit))
+         (done-lif     `(if ((== (id ,selected) ,*bigm1*) ,waitfor)
+                            (else ,exec-unlock)))
+
+         (the-loop     `(while ,ndone-id
+                               (sequence
+                                 ,@wif-clauses-decls
+                                 ,seldecl
+                                 ,selinit
+                                 ,arrdecl
+                                 ,lock
+                                 
+                                 ,guardeval
+                                 ,@arrasses
+                                 ,sel-ass-loop
+                                 ,ndone-assign
+                                 ,done-lif)))
+         
+         (res          `(sequence ,ndone-decl
+                                  ,ndone-init
+                                  ,the-loop))
+         )
+
+    (dis "dummies    : " dummies dnl)
+    (dis "arrnm      : " arrnm dnl)
+    (dis "arrasses   : " arrasses dnl)
+    
+    res
+
+    )
+  )
+
+(define *cwif* #f)
+
+(define (convert-waiting-if wif   ;; statement in S-format
+                            last  ;; symbol name of last state storage
+                            )
+  (set! *cwif* wif)
+  (let ((res (convert-waiting-if-array wif last)))
+    (dis "convert-waiting-if : res : " dnl)
+    (pp res)
+;;    (error)
+    res
+    )
+  )
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define (convert-waiting-ifs prog)
+  (define tg (make-name-generator "wif-state"))
 
+  (define (lasts '()))
+    
+  (define (newlast)
+    (let ((lnm (tg 'next)))
+      (set! lasts (cons lnm lasts))
+      lnm
+      )
+    )
+    
   (define (visitor stmt)
-    (if (waiting-if? stmt) (convert-waiting-if stmt) stmt))
-  
-  (visit-stmt prog visitor identity identity)
+    (if (waiting-if? stmt)
+        (convert-waiting-if stmt (newlast))
+        stmt))
+
+  (let ((body   (visit-stmt prog visitor identity identity))
+        
+        (lastdecls
+         (map (lambda(id)(make-var1-decl id *default-int-type*))
+              lasts))
+        (lastasses
+         (map (lambda(id)`(assign (id ,id) ,*big0*))
+              lasts))
+        )
+    `(sequence ,@lastdecls ,@lastasses ,body))
   )

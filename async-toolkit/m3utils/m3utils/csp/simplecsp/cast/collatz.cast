@@ -173,6 +173,44 @@ define WORKER(int NWORKERS)(bd(W) -STRT; bd(STATUSW) +STATUS) <+ common
     }
 }
 
+define DUMMY(int NWORKERS)(bd(W) -STRT; bd(STATUSW) +STATUS) <+ common
+{
+  csp {
+
+    int(W) i;
+    int(W) steps  = 0;
+    int(W) maxlen = 0;
+
+    int(W) id;
+    
+    STRT?id;
+    print ("id = " + id);
+    
+    *[ //id == 0 ->
+      int(W) idx = i * NWORKERS + id; // this is the index of the odd number
+      int(W) num = 2 * idx + 1;       // this is the actual number we shall work on
+      int(W) len = 0;
+      int    snum = num;
+
+      len = num;
+      steps += len;
+      
+      [  len > maxlen ->
+         maxlen = len;
+         sendStatus(len, snum, steps);
+         steps = 0
+         
+         //      [] (len <= maxlen) && (i % UPDATEINTERVAL == 0)    ->
+         //         sendStatus(0, 0, steps);
+         //         steps = 0
+
+      [] else -> skip   
+      ];
+      i++
+    ]
+    }
+}
+
 int Billion = 1000**3;
 int printstep = 4;
 
@@ -347,14 +385,26 @@ define STATUS_TREE(int N)(bd(STATUSW) -L[0..N-1], +R)  <+ common
       ]
 }
 
-define COLLATZ(int NWORKERS)()  <+ common
+define COLLATZ(int NWORKERS_ARG)()  <+ common
 {
+  int NWORKERS;
+  [ NWORKERS_ARG > 0 -> NWORKERS = NWORKERS_ARG; ]
+  [ NWORKERS_ARG < 0 -> NWORKERS = -NWORKERS_ARG; ]
+    
   subcells {
     bd(W) S, STRT[0..NWORKERS-1];
     bd(STATUSW) WSTATUS[0..NWORKERS-1], STATUS;
     MANAGER mgr(S, STATUS);
     START_TREE(0, NWORKERS) start_tree(S, STRT);
-    <i:0..NWORKERS-1: WORKER(NWORKERS) wrkr[i](STRT[i], WSTATUS[i]);>
+
+    [ NWORKERS_ARG > 0 ->
+      <i:0..NWORKERS-1: WORKER(NWORKERS) wrkr[i](STRT[i], WSTATUS[i]);>]
+
+    [ NWORKERS_ARG < 0 ->
+      <i:0..NWORKERS-1: DUMMY(NWORKERS) wrkr[i](STRT[i], WSTATUS[i]);>]
+
+
+      
     STATUS_TREE(NWORKERS) status_tree(WSTATUS, STATUS);
   }
 }

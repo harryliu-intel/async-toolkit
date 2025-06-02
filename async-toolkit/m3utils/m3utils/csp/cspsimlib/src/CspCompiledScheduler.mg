@@ -484,9 +484,7 @@ PROCEDURE RunMulti(READONLY schedulers : ARRAY OF T; greedy : BOOLEAN) =
       END;
 
       IF NothingPending() THEN
-        IF doDebug THEN
-          Debug.Out("RunMulti : nothing pending---done.")
-        END;
+        Debug.Out("RunMulti : nothing pending---done at " & Int(masterTime));
         RETURN
       END;
 
@@ -499,6 +497,8 @@ PROCEDURE RunMulti(READONLY schedulers : ARRAY OF T; greedy : BOOLEAN) =
       RunPhase(Phase.SwapActiveBlocks);
 
       RunPhase(Phase.UpdateSurrogates);
+
+      UpdateTime();
 
       RunPhase(Phase.RunActiveBlocks);
     END
@@ -536,6 +536,11 @@ PROCEDURE Apply(cl : SchedClosure) : REFANY =
     
     LOOP
       (* this is a single scheduler *)
+
+      IF doDebug THEN
+        Debug.Out(F("Scheduler(%s) : idle",
+                    Int(myId)))
+      END;
 
       (* wait for command from central *)
       LOCK t.mu DO
@@ -610,6 +615,9 @@ PROCEDURE Apply(cl : SchedClosure) : REFANY =
         END;
       |
         Phase.RunActiveBlocks =>
+        <*ASSERT masterTime > t.time*>
+        t.time := masterTime;
+
         (* first zero all the read/write channel stuff *)
         FOR i := FIRST(schedulers^) TO LAST(schedulers^) DO
           t.nrp[i] := 0;

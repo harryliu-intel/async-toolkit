@@ -13,7 +13,8 @@
 ;;
 
 ;;(define *default-slack* 1)
-(define *default-slack* 100)
+;;(define *default-slack* (* 100 1000))
+(define *default-slack* 1000)
 ;; we should get slack from the CSP source code, but for now we don't,
 ;; so we do it this way
 
@@ -1982,6 +1983,10 @@
            )
          )
 
+        ((or (array-access? x)
+             (member-access? x))
+         (m3-format-designator pc x))
+
         ((string? x) (stringify x))
         
         ((+? x)      (string-append
@@ -2161,7 +2166,9 @@
           ((bigint? rhs)
            (sa m3-lhs (if (big= rhs *big0*) "FALSE" "TRUE")))
           
-          ((ident? rhs) ;; should cover arrays and structs, too
+          ((or (ident? rhs) ;; should cover arrays and structs, too
+               (array-access? rhs)
+               (member-access? rhs))
            (sa m3-lhs (m3-format-designator pc rhs)))
           
           ((and (pair? rhs) (eq? (car rhs) 'not))
