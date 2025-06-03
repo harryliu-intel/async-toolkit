@@ -27,6 +27,7 @@ Interface      ("CspFrame")
 Table          ("TextFrame", "Text", "CspFrame")
 Interface      ("CspClosure")
 Sequence       ("CspClosure", "CspClosure")
+Table          ("TextClosure", "Text", "CspClosure")
 
 Interface      ("CspScheduler")
 Generic_module ("CspCompiledScheduler")

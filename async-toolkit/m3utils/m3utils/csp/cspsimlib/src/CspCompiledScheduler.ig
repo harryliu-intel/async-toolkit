@@ -43,6 +43,10 @@ CONST ReleaseFork = ScheduleFork;
 
 PROCEDURE RegisterProcess(proc : Process.Frame);
 
+PROCEDURE RegisterClosure(cl : Process.Closure);
+
+PROCEDURE RegisterClosures(READONLY cls : ARRAY OF Process.Closure);
+
 PROCEDURE RegisterEdge(edge : CspPortObject.T);
 
 PROCEDURE GetProcTbl() : TextFrameTbl.T;

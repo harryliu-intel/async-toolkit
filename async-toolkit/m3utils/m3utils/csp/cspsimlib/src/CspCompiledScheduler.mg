@@ -11,6 +11,8 @@ IMPORT CspClosureSeq AS ClosureSeq;
 IMPORT CspChannel;
 IMPORT Random;
 IMPORT Thread;
+IMPORT TextArraySort;
+IMPORT TextClosureTbl;
 
 CONST doDebug = CspDebug.DebugSchedule;
 
@@ -213,8 +215,62 @@ PROCEDURE RegisterProcess(fr : Process.Frame) =
     EVAL theProcs.put(fr.name, fr)
   END RegisterProcess;
 
-VAR
-  theEdges := NEW(TextPortTbl.Default).init();
+VAR theEdges := NEW(TextPortTbl.Default).init();
+
+PROCEDURE GetAllProcNames() : REF ARRAY OF TEXT =
+  VAR
+    res  := NEW(REF ARRAY OF TEXT, theProcs.size());
+    iter := theProcs.iterate();
+    k : TEXT;
+    f : Process.Frame;
+    i    := 0;
+  BEGIN
+    WHILE iter.next(k, f) DO
+      res[i] := k;
+      INC(i)
+    END;
+    TextArraySort.Sort(res^);
+    RETURN res
+  END GetAllProcNames;
+
+PROCEDURE GetFrame(nm : TEXT) : Process.Frame =
+  VAR
+    k : TEXT;
+    f : Process.Frame;
+  BEGIN
+    WITH hadIt = theProcs.get(k, f) DO
+      <*ASSERT hadIt*>
+    END;
+    RETURN f
+  END GetFrame;
+
+
+(**********************************************************************)
+
+VAR closureTbl := NEW(TextClosureTbl.Default).init();
+
+PROCEDURE ClosureName(cl : Process.Closure) : TEXT =
+   VAR
+    nm := cl.fr.name & "/" & cl.name;
+  BEGIN
+    RETURN nm
+  END ClosureName;
+  
+PROCEDURE RegisterClosure(cl : Process.Closure) =
+  VAR
+    nm := ClosureName(cl);
+  BEGIN
+    EVAL closureTbl.put(nm, cl)
+  END RegisterClosure;
+
+PROCEDURE RegisterClosures(READONLY cls : ARRAY OF Process.Closure) =
+  BEGIN
+    FOR i := FIRST(cls) TO LAST(cls) DO
+      RegisterClosure(cls[i])
+    END
+  END RegisterClosures;
+
+(**********************************************************************)
   
 PROCEDURE GetPortTbl() : TextPortTbl.T =
   BEGIN RETURN theEdges END GetPortTbl;
@@ -291,7 +347,7 @@ PROCEDURE Run(mt : CARDINAL; greedy : BOOLEAN) =
       Run1(theScheduler)
     ELSE
       CreateMulti(mt);
-      MapRandomly(schedulers^);
+      MapRoundRobin(schedulers^);
       StartProcesses();
       RunMulti(schedulers^, greedy)
     END
@@ -322,6 +378,19 @@ PROCEDURE MapRandomly(READONLY sarr : ARRAY OF T) =
       END
     END
   END MapRandomly;
+
+PROCEDURE MapRoundRobin(READONLY sarr : ARRAY OF T) =
+  VAR
+    q := 0;
+    k : TEXT;
+    v : Process.Frame;
+    iter := theProcs.iterate();
+  BEGIN
+    WHILE iter.next(k, v) DO
+      v.affinity := sarr[q];
+      q := (q + 1) MOD NUMBER(sarr)
+    END
+  END MapRoundRobin;
     
 (**********************************************************************)
 
@@ -488,6 +557,8 @@ PROCEDURE RunMulti(READONLY schedulers : ARRAY OF T; greedy : BOOLEAN) =
         RETURN
       END;
 
+      (* at the end of every Phase, all the schedulers are idle *)
+      
       UpdateTime();
 
       RunPhase(Phase.GetRemoteBlocks);
@@ -615,6 +686,13 @@ PROCEDURE Apply(cl : SchedClosure) : REFANY =
         END;
       |
         Phase.RunActiveBlocks =>
+        VAR
+          cycles := 0;
+        BEGIN
+          IF doDebug THEN
+            Debug.Out(F("Scheduler %s : starting RunActiveBlocks", Int(myId)))
+          END;
+        
         <*ASSERT masterTime > t.time*>
         t.time := masterTime;
 
@@ -629,6 +707,8 @@ PROCEDURE Apply(cl : SchedClosure) : REFANY =
           FOR i := 0 TO t.ap - 1 DO
             WITH cl      = t.active[i] DO
               <*ASSERT cl # NIL*>
+              <*ASSERT cl.fr.affinity = t*>
+
               IF doDebug THEN
                 Debug.Out(F("Apply %s : Scheduler switch to %s : %s",
                             Int(myId), Int(cl.frameId), cl.name));
@@ -644,6 +724,8 @@ PROCEDURE Apply(cl : SchedClosure) : REFANY =
             END(*WITH*)
           END(*FOR*);
 
+          INC(cycles);
+          
           IF doDebug THEN
             Debug.Out(F("Apply %s : cl.greedy=%s t.np=%s",
                         Int(myId), Bool(cl.greedy), Int(t.np)))
@@ -656,8 +738,14 @@ PROCEDURE Apply(cl : SchedClosure) : REFANY =
           ELSE
             EXIT
           END
-        END(*LOOP*)
 
+        END(*LOOP*);
+
+        IF doDebug THEN
+          Debug.Out(F("Scheduler %s : RunActiveBlocks complete, cycles %s", Int(myId), Int(cycles)))
+        END;
+      END
+        
       END;
 
       LOCK t.mu DO

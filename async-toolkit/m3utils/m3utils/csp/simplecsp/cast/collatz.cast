@@ -28,7 +28,7 @@ define common attributes {
        fmtStatus = "{len=" + s::ops + " num=" + s::l::num  + " length=" + s::l::length + "}"
       );
     
-    function sendStatus(int -len, -num, -steps) =
+    function sendStatus(int -id, -len, -num, -steps) =
       (
        status s;
        s::l::length = len;
@@ -36,7 +36,10 @@ define common attributes {
        s::ops       = steps;
 
        int p = pack(s);
-       //       print ("sendStatus : sending status=" + fmtStatus(s) + " pack=" + hex(p)); 
+
+       //       print ("sendStatus : id=" + id +
+       //              ": sending status=" + fmtStatus(s) +
+       //              " pack=" + hex(p)); 
 
        status t;
        unpack(t, p);
@@ -59,7 +62,7 @@ define common attributes {
 define PACK()(bd(STATUSW) +STATUS) <+ common
 {
   csp {
-    sendStatus(7, 3, 7)
+    sendStatus(0, 7, 3, 7)
   }
 }
 
@@ -125,7 +128,7 @@ define DUMB()() <+ common
   }
 }
 
-int UPDATEINTERVAL=100000;
+int UPDATEINTERVAL=1000;
 
 define WORKER(int NWORKERS)(bd(W) -STRT; bd(STATUSW) +STATUS) <+ common
 {
@@ -159,11 +162,11 @@ define WORKER(int NWORKERS)(bd(W) -STRT; bd(STATUSW) +STATUS) <+ common
       
       [  len > maxlen ->
          maxlen = len;
-         sendStatus(len, snum, steps);
+         sendStatus(id, len, snum, steps);
          steps = 0
          
       [] (len <= maxlen) && (i % UPDATEINTERVAL == 0)    ->
-         sendStatus(0, 0, steps);
+         sendStatus(-id, 0, 0, steps);
          steps = 0
 
       [] else -> skip   
@@ -197,7 +200,7 @@ define DUMMY(int NWORKERS)(bd(W) -STRT; bd(STATUSW) +STATUS) <+ common
       
       [  len > maxlen ->
          maxlen = len;
-         sendStatus(len, snum, steps);
+         sendStatus(id, len, snum, steps);
          steps = 0
          
          //      [] (len <= maxlen) && (i % UPDATEINTERVAL == 0)    ->

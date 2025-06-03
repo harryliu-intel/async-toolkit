@@ -1004,7 +1004,9 @@
                       )
                     );;etucexe-tnuoc
                    (iw "};" dnl dnl)
-                   )
+                   (iw "Scheduler.RegisterClosures(frame." m3lab "_Cl);" dnl
+                       dnl)
+                   );;nigeb
                  
                  (begin  ;; not a fork
                    (iw  (pad 22 "frame." m3lab "_Cl")
@@ -1015,7 +1017,10 @@
                    (iiw "        fr      := frame," dnl)
                    (iiw "        frame   := frame," dnl)
                    (iiw "        block   := Block_" m3lab ");" dnl dnl)
-                   )
+                   (iw "Scheduler.RegisterClosure(frame." m3lab "_Cl);" dnl
+                       dnl)
+
+                   );;nigeb
                  )
              )
            )
