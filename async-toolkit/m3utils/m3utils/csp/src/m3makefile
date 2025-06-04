@@ -19,6 +19,7 @@ import ("mpfr")
 %end
 
 Module ("FileFinder")
+Module ("MakeConstant")
 
 Smodule ("CspCompilerDriver")
 Smodule ("M3Ident")
@@ -96,6 +97,8 @@ SchemeStubs ("Wx")
 
 SchemeStubs ("Mpz")
 %SchemeStubs ("MpzP")
+
+SchemeStubs ("MakeConstant")
 
 ExportSchemeStubs ("cspc")
 importSchemeStubs()

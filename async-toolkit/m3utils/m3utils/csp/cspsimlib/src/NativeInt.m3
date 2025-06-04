@@ -3,7 +3,7 @@ IMPORT Fmt AS FmtIntf;
 IMPORT Mpz;
 IMPORT Debug;
 
-CONST doDebug = TRUE;
+CONST doDebug = FALSE;
       
 PROCEDURE Pow(b, x : T) : T =
   VAR

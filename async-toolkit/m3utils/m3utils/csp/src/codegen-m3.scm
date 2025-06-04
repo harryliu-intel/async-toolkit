@@ -997,7 +997,8 @@
                       (iiw "       frameId := frame.id," dnl)
                       (iiw "       fr      := frame," dnl)
                       (iiw "       frame   := frame," dnl)
-                      (iiw "       block   := Block_" m3lab "_" i ")"
+                      (iiw "       block   := Block_" m3lab "_" i "," dnl)
+                      (iiw "       text    := Text_"  m3lab "_" i ")" dnl
                            (if (= i (- (cdr count) 1)) "" ",") ;; blah!
                            dnl)
                       
@@ -1016,7 +1017,8 @@
                    (iiw "        frameId := frame.id," dnl)
                    (iiw "        fr      := frame," dnl)
                    (iiw "        frame   := frame," dnl)
-                   (iiw "        block   := Block_" m3lab ");" dnl dnl)
+                   (iiw "        block   := Block_" m3lab "," dnl)
+                   (iiw "        text    := Text_"  m3lab ");" dnl dnl)
                    (iw "Scheduler.RegisterClosure(frame." m3lab "_Cl);" dnl
                        dnl)
 
@@ -1047,6 +1049,7 @@
   (w "<*NOWARN*>IMPORT NativeInt, DynamicInt;" dnl)
   (w "<*NOWARN*>IMPORT NativeInt AS NativeIntOps, DynamicInt AS DynamicIntOps;" dnl)
   (w "<*NOWARN*>IMPORT Word;" dnl)
+  (w "<*NOWARN*>IMPORT Text;" dnl)
   (map (lambda(intf)(w "IMPORT " intf ";" dnl))
        (map format-intf-name intfs))
   )
@@ -2490,10 +2493,11 @@
          (counter-lhs  (sa "<*ASSERT " fork-counter " # 0*> "
                            "DEC(" fork-counter ")"))
          )
-    (string-append "IF " fork-counter " = 0 THEN "
-                   
+    (string-append counter-lhs ";" dnl
+                   "IF " fork-counter " = 0 THEN " dnl
                    "Scheduler.Release(cl.frame."
-                   (m3-ident (cadr stmt)) "_Cl) END;"
+                   (m3-ident (cadr stmt)) "_Cl) " dnl
+                   " END;" dnl
                    " RETURN TRUE")
     )
   )
@@ -3077,6 +3081,7 @@
   (let* ((lab         (cadr (get-block-label blk)))
          (btag        m3-label)
          (bnam        (string-append "Block_" btag))
+         (tnam        (string-append "Text_" btag))
          (the-code    (cddr (filter-out-var1s blk)))
 
          (symtab      (pc-symtab pc))
@@ -3102,6 +3107,15 @@
 
     (dis "m3-write-block : the-locals : " the-locals dnl)
     (dis "m3-write-block : structs    : " structs dnl)
+
+    (w
+     "VAR " tnam " := Text.FromChars(" (MakeConstant.CharsFromText (stringify blk)) ");" dnl
+     )
+    (w "(* " dnl
+       (m3-space-comments (ss blk))
+       dnl
+       " *)" dnl
+       dnl)
 
     (w
      "PROCEDURE "bnam"(cl : Closure) : BOOLEAN =" dnl

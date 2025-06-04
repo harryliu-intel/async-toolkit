@@ -1,11 +1,18 @@
 module collatz;
 
+// for CSPC:
+//DSim> cosimulate collatz.COLLATZ(41, 100000000) {csp, subcells}
+//                        100,000,000--^ 
+//
+// for jdsim, change update interval to say 1000
+
+
 //int NWORKERS = 20;
 int W        = 61;
 // 2^62 < (2 ^ 61 - 1) * 3 + 1  < 2^63
 // we need an extra bit for the sign bit
 
-int STATUSW = 128 + 2 * W; // why can't this go in attributes cell?
+int STATUSW = 128 + 2 * W + (W + 1); // why can't this go in attributes cell?
 int INTERVAL = 10000;
 
 define common attributes {
@@ -19,27 +26,38 @@ define common attributes {
 
     structure status =
       (
+       bool     tok;
+       sint(W)  id;
        int(128) ops;
        longest_so_far l;
        );
 
     function fmtStatus(status -s) : string =
       (
-       fmtStatus = "{len=" + s::ops + " num=" + s::l::num  + " length=" + s::l::length + "}"
+       fmtStatus =
+       "{id=" + s::id +
+       " tok=" + s::tok +
+       " len=" + s::ops +
+       " num=" + s::l::num  +
+       " length=" + s::l::length +
+       "}"
       );
     
-    function sendStatus(int -id, -len, -num, -steps) =
+    function sendStatus(bool -tok; int -id, -len, -num, -steps) =
       (
        status s;
+       s::tok       = tok;
+       s::id        = id;
        s::l::length = len;
        s::l::num    = num;
        s::ops       = steps;
 
        int p = pack(s);
 
-       //       print ("sendStatus : id=" + id +
-       //              ": sending status=" + fmtStatus(s) +
-       //              " pack=" + hex(p)); 
+       //              print ("sendStatus : id=" + id +
+       //                     " tok=" + tok + 
+       //            ": sending status=" + fmtStatus(s) +
+       //            " pack=" + hex(p)); 
 
        status t;
        unpack(t, p);
@@ -128,17 +146,17 @@ define DUMB()() <+ common
   }
 }
 
-int UPDATEINTERVAL=1000;
-
-define WORKER(int NWORKERS)(bd(W) -STRT; bd(STATUSW) +STATUS) <+ common
+define WORKER
+  (int NWORKERS, UPDATEINTERVAL)
+  (bd(W) -STRT; bd(STATUSW) +STATUS) <+ common
 {
   csp {
 
-    int(W) i;
+    int(W-log2(NWORKERS)) i;
     int(W) steps  = 0;
     int(W) maxlen = 0;
 
-    int(W) id;
+    int(W/2) id;
     
     STRT?id;
     print ("id = " + id);
@@ -162,12 +180,18 @@ define WORKER(int NWORKERS)(bd(W) -STRT; bd(STATUSW) +STATUS) <+ common
       
       [  len > maxlen ->
          maxlen = len;
-         sendStatus(id, len, snum, steps);
+         sendStatus(false, id, len, snum, steps);
          steps = 0
-         
-      [] (len <= maxlen) && (i % UPDATEINTERVAL == 0)    ->
-         sendStatus(-id, 0, 0, steps);
-         steps = 0
+      [] else -> skip
+      ];
+      
+      [ (i % UPDATEINTERVAL == 0)    ->
+        sendStatus(true, id, 0, 0, steps);
+        steps = 0;
+
+        int dummy;
+        STRT?dummy;
+        //        print("id=" + id + " phase=" + (dummy - id))
 
       [] else -> skip   
       ];
@@ -217,28 +241,43 @@ define DUMMY(int NWORKERS)(bd(W) -STRT; bd(STATUSW) +STATUS) <+ common
 int Billion = 1000**3;
 int printstep = 4;
 
-define MANAGER()(bd(W) +STRT; bd(STATUSW) -STATUS) <+ common
+define MANAGER(int NWORKERS)(bd(W) +STRT; bd(STATUSW) -STATUS) <+ common
 {
   csp {
       
     int ops;
-    STRT!0;
+
+    int(W) bigiter=0;
+    int(log2(NWORKERS)) outstanding;
+    STRT!0; outstanding = NWORKERS; bigiter++;
+    
     status save;
 
     int start = walltime();
     int last  = start; // last time for a print
     
-    *[ STATUS?x ;
+    *[ STATUS?x;
+          
        status s;
        bool doprint = false;
-       
+
        unpack(s,x);
+
+       #[ s::tok -> // a return token from the STRT
+         outstanding--;
+       //         print("Token!  outstanding=" + outstanding);
+         #[ outstanding == 0 ->
+            // restart workers once all tokens have been collected
+       print("phase " + bigiter + " complete, re-launching...");
+            STRT!bigiter ; outstanding=NWORKERS ; bigiter++
+          ];
+       ];
 
        #[ s::l::num != save::l::num -> save = s ; doprint = true ];
        
-       //       print ("STATUS? " + fmtStatus(s) + " ( ops = " + s::ops +
-       //              " ; num = " + save::l::num +
-       //              " ; chain = " + save::l::length + " )");
+       //              print ("STATUS? " + fmtStatus(s) + " ( ops = " + s::ops +
+       //            " ; num = " + save::l::num +
+       //            " ; chain = " + save::l::length + " )");
 
        ops += s::ops;
 
@@ -261,23 +300,21 @@ define MANAGER()(bd(W) +STRT; bd(STATUSW) -STATUS) <+ common
 
 }
 
-define SMERGE()(bd(STATUSW) -L[0..1], +R) <+ common
+define merge_attr attributes <+ common
 {
   csp {
-    
     function recv(int -which; status +-s) =
       (
+       int oldops = s::ops;
+       int oldlen = s::l::length;
+       
        L[which]?xs;
 
-       status q;
-       unpack(q, xs);
-       //print ("recv " + fmtStatus(q));
+       unpack(s, xs);
+       //       print ("recv " + fmtStatus(s));
 
-       #[ q::l::length > s::l::length ->
-          s::l = q::l
-        ];
-
-       s::ops += q::ops;
+       s::l::length  = max(oldlen, s::l::length);
+       s::ops       += oldops;
        );
 
     function checksend(status +-os, +-s) =
@@ -287,17 +324,19 @@ define SMERGE()(bd(STATUSW) -L[0..1], +R) <+ common
        //              " s-interval " + (s::ops % INTERVAL) + " os-length " +
        //              os::l::length + " s-length " + s::l::length);
 
-       #[ (os::ops % INTERVAL != s::ops % INTERVAL)
-          ||
-          os::l::length != s::l::length ->
-       // print ("sending s : " + fmtStatus(s));
+       #[ (os::l::length != s::l::length) || s::tok ->
+       //        print ("sending s : " + fmtStatus(s));
        R!s; s::ops = 0; os = s;
 
        //       print ("s::ops=" + s::ops + " os::ops=" + os::ops);
           ]
        );
-      
+  }
+}
 
+define SMERGE()(bd(STATUSW) -L[0..1], +R) <+ merge_attr
+{
+  csp {
     status s;
     
     *[
@@ -307,15 +346,30 @@ define SMERGE()(bd(STATUSW) -L[0..1], +R) <+ common
       [
        //       #L[0] & #L[1] -> recv(0,s); recv(1,s) // BUG
        //       :
-       #L[0] -> recv(0,s)
+       #L[0] -> recv(0, s)
        :
-       #L[1] -> recv(1,s)
+       #L[1] -> recv(1, s)
        ];
       //      print("received");
       // print ("pre checksend s::ops=" + s::ops + " os::ops=" + os::ops);
       checksend(os, s);
       
       ]
+  }
+}
+
+define DMERGE()(bd(STATUSW) -L[0..1], +R) <+ merge_attr
+{
+  csp {
+    status s;
+    
+    *[
+      status os = s;
+      recv(0, s);
+      checksend(os, s);
+      recv(1, s);
+      checksend(os, s);
+     ]
   }
 }
 
@@ -379,7 +433,7 @@ define STATUS_TREE(int N)(bd(STATUSW) -L[0..N-1], +R)  <+ common
   [ N > 2  ->
       subcells {
         bd(STATUSW) X[0..(N+1)/2 - 1];
-        <i : 0.. N / 2 - 1 :SMERGE m[i]({L[2*i], L[2*i + 1]}, X[i]); >
+        <i : 0.. N / 2 - 1 : SMERGE m[i]({L[2*i], L[2*i + 1]}, X[i]); >
         STATUS_TREE((N+1)/2) tree(X, R);
 
         <i: N/2 .. (N+1)/2 - 1 : L[2*i] = X[i];>
@@ -388,7 +442,7 @@ define STATUS_TREE(int N)(bd(STATUSW) -L[0..N-1], +R)  <+ common
       ]
 }
 
-define COLLATZ(int NWORKERS_ARG)()  <+ common
+define COLLATZ(int NWORKERS_ARG, UPDATEINTERVAL)()  <+ common
 {
   int NWORKERS;
   [ NWORKERS_ARG > 0 -> NWORKERS = NWORKERS_ARG; ]
@@ -397,11 +451,12 @@ define COLLATZ(int NWORKERS_ARG)()  <+ common
   subcells {
     bd(W) S, STRT[0..NWORKERS-1];
     bd(STATUSW) WSTATUS[0..NWORKERS-1], STATUS;
-    MANAGER mgr(S, STATUS);
+    MANAGER(NWORKERS) mgr(S, STATUS);
     START_TREE(0, NWORKERS) start_tree(S, STRT);
 
     [ NWORKERS_ARG > 0 ->
-      <i:0..NWORKERS-1: WORKER(NWORKERS) wrkr[i](STRT[i], WSTATUS[i]);>]
+      <i:0..NWORKERS-1: WORKER(NWORKERS, UPDATEINTERVAL)
+                           wrkr[i](STRT[i], WSTATUS[i]);>]
 
     [ NWORKERS_ARG < 0 ->
       <i:0..NWORKERS-1: DUMMY(NWORKERS) wrkr[i](STRT[i], WSTATUS[i]);>]
@@ -415,7 +470,7 @@ define COLLATZ(int NWORKERS_ARG)()  <+ common
 define STARTSPLIT(int level)(bd(W) -L, +R[0..1]) <+ common
 {
   csp {
-    L?i; R[0]!i, R[1]!(i + 2**level)
+    *[ L?i; R[0]!i, R[1]!(i + 2**level) ]
   }
 }
 

@@ -19,6 +19,7 @@ TYPE
     frameId   : CARDINAL;
     scheduled : Word.T := -1; (* last time it was scheduled *)
     waiting   : BOOLEAN := FALSE;
+    text      : TEXT;  (* for debugging *)
   METHODS
     run();
   END;
