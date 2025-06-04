@@ -2,7 +2,9 @@ module collatz;
 
 // for CSPC:
 //DSim> cosimulate collatz.COLLATZ(41, 100000000) {csp, subcells}
-//                        100,000,000--^ 
+//                        100,000,000--^
+// or maybe 10,000,000 is better...
+//DSim> cosimulate collatz.COLLATZ(32, 10000000) {csp, subcells}
 //
 // for jdsim, change update interval to say 1000
 
