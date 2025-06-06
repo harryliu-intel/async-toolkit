@@ -103,8 +103,14 @@ BROWSEREXPS = `./dirsexist.sh -f cit_parse/testprs paneman/kemacs drawcontext/dc
 
 intel: at-intel std regress intel-install
 
-at-intel:
+at-intel: at-intel.done nanosimrd.done
+at-intel.done:
 	cd rdl/rdlparse/src; ./mk_inputs.sh
+	touch at-intel.done
+
+nanosimrd.done:
+	cd spice/fsdb/src ; ./compile
+	touch nanosimrd.done
 
 std: .top ships m3subs
 regress: std regsubs
