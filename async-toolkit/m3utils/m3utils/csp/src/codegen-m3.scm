@@ -4045,12 +4045,14 @@
     (mw "  extra    := NEW(TextSeq.T).init();" dnl)
     (mw "  mt       : CARDINAL := 0;" dnl)
     (mw "  greedy   : BOOLEAN;" dnl)
+    (mw "  nondet   : BOOLEAN;" dnl)
     (mw "" dnl)
     (mw "BEGIN" dnl)
     (mw "  EVAL   BigInt.GetInitialized();" dnl)
     (mw "  " dnl)
     (mw "  TRY" dnl)
     (mw "    greedy := pp.keywordPresent(\"-greedy\");" dnl)
+    (mw "    nondet := pp.keywordPresent(\"-nondet\");" dnl)
     (mw "    IF pp.keywordPresent(\"-mt\") THEN" dnl
         "       mt := pp.getNextInt()" dnl
         "    END;" dnl)
@@ -4080,7 +4082,7 @@
     (mw "      Scheme.E(err) => Debug.Error(\"Caught Scheme.E : \" & err)" dnl)
     (mw "    END" dnl)
     (mw "  ELSE" dnl)
-    (mw "    Scheduler.SchedulingLoop(mt, greedy)" dnl)
+    (mw "    Scheduler.SchedulingLoop(mt, greedy, nondet)" dnl)
     (mw "  END;" dnl)
     (mw "" dnl) 
     (mw "END SimMain." dnl)

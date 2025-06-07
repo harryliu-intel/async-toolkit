@@ -476,10 +476,18 @@ define STARTSPLIT(int level)(bd(W) -L, +R[0..1]) <+ common
   }
 }
 
+define STARTBUFF()(bd(W) -L, +R) <+ common
+{
+  //  csp {
+  //    *[ L?i; R!i ]
+  //  }
+  subcells { L = R; }  // this makes the workers start a bit out of phase
+}
+
 define START_TREE(int level, N)(bd(W) -L, +R[0..N-1]) <+ common
 // level is the level of the output of the tree
 {
-    [ N==1 -> subcells { L = R[0]; } ]
+  [ N==1 -> subcells { STARTBUFF b(L, R[0]); } ]
       [ N==2 -> subcells { STARTSPLIT(level) s(L, R); } ]
     [ N > 2 ->
       subcells {
@@ -489,7 +497,7 @@ define START_TREE(int level, N)(bd(W) -L, +R[0..N-1]) <+ common
            
         START_TREE(level + 1, (N+1)/2) tree(L, X);
 
-        <i: N/2 .. (N+1)/2 - 1 : R[2*i] = X[i];>
+        <i: N/2 .. (N+1)/2 - 1 : STARTBUFF b[i](X[i],R[2*i]);>
            }
     ]
 }

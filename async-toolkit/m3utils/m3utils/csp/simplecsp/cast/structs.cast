@@ -267,6 +267,9 @@ define NARROWER()()
     x = pack(s);
 
     print("x=" + hex(x));
+
+    print("sizeof=" + sizeof(x));
+    
   }
 }
         

@@ -13,10 +13,16 @@ IMPORT Random;
 IMPORT Thread;
 IMPORT TextArraySort;
 IMPORT TextClosureTbl;
+IMPORT CardSeq;
+IMPORT Wx;
 
 CONST doDebug = CspDebug.DebugSchedule;
 
 TYPE
+  LocalId = [0..1023];
+
+  Set = SET OF LocalId;
+  
   T = CspScheduler.T OBJECT
 
     (* we should probably consider promoting many of the fields to the
@@ -63,10 +69,13 @@ TYPE
     nwp          : REF ARRAY OF CARDINAL;
 
     thePhase     : Phase;
+    idle         : Set; (* used to do partial phases *)
 
     time         : Word.T;
   END;
 
+VAR AllSchedulers : Set;
+    
 PROCEDURE ReadDirty(targ : CspChannel.T; cl : Process.Closure) =
   VAR
     t   : T := cl.fr.affinity;
@@ -332,7 +341,7 @@ PROCEDURE Run1(t : T) =
 VAR theScheduler : T;
     (* when running a single scheduler *)
     
-PROCEDURE Run(mt : CARDINAL; greedy : BOOLEAN) =
+PROCEDURE Run(mt : CARDINAL; greedy, nondet : BOOLEAN) =
   BEGIN
     IF mt = 0 THEN
       theScheduler := NEW(T,
@@ -349,7 +358,11 @@ PROCEDURE Run(mt : CARDINAL; greedy : BOOLEAN) =
       CreateMulti(mt);
       MapRoundRobin(schedulers^);
       StartProcesses();
-      RunMulti(schedulers^, greedy)
+      IF nondet THEN
+        RunNondet (schedulers^, greedy)
+      ELSE
+        RunMulti(schedulers^, greedy)
+      END
     END
   END Run;
 
@@ -397,55 +410,56 @@ PROCEDURE MapRoundRobin(READONLY sarr : ARRAY OF T) =
 VAR schedulers : REF ARRAY OF T := NIL;
     (* when running parallel schedulers *)
 
-PROCEDURE AcquireLocks(READONLY schedulers : ARRAY OF T) =
+PROCEDURE AcquireLocks(READONLY schedulers : ARRAY OF T;
+                       READONLY set        : Set ) =
   BEGIN
     FOR i := FIRST(schedulers) TO LAST(schedulers) DO
-      Thread.Acquire(schedulers[i].mu)
+      IF i IN set THEN
+        Thread.Acquire(schedulers[i].mu)
+      END
     END
   END AcquireLocks;
 
-PROCEDURE ReleaseLocks(READONLY schedulers : ARRAY OF T) =
+PROCEDURE ReleaseLocks(READONLY schedulers : ARRAY OF T;
+                       READONLY set        : Set ) =
   BEGIN
     FOR i := FIRST(schedulers) TO LAST(schedulers) DO
-      Thread.Release(schedulers[i].mu)
+      IF i IN set THEN
+        Thread.Release(schedulers[i].mu)
+      END
     END
   END ReleaseLocks;
 
-PROCEDURE SignalThreads(READONLY schedulers : ARRAY OF T) =
+PROCEDURE SignalThreads(READONLY schedulers : ARRAY OF T;
+                        READONLY set : Set               ) =
   BEGIN
     FOR i := FIRST(schedulers) TO LAST(schedulers) DO
-      Thread.Signal(schedulers[i].c)
+      IF i IN set THEN
+        Thread.Signal(schedulers[i].c)
+      END
     END
   END SignalThreads;
 
-PROCEDURE SetPhase(READONLY schedulers : ARRAY OF T; phase : Phase) =
+PROCEDURE SetPhase(READONLY schedulers : ARRAY OF T;
+                            phase      : Phase;
+                   READONLY set        : Set) =
   (* scheduler[].mu m/b locked *)
+  VAR
+    n := 0;
   BEGIN
+    <*ASSERT phase # Phase.Idle*>
     IF doDebug THEN
       Debug.Out(F("SetPhase(%s)", PhaseNames[phase]))
     END;
     FOR i := FIRST(schedulers) TO LAST(schedulers) DO
-      schedulers[i].thePhase := phase
+      IF i IN set THEN
+        <*ASSERT schedulers[i].thePhase = Phase.Idle*>
+        schedulers[i].thePhase := phase;
+        INC(n)
+      END
     END
   END SetPhase;
 
-PROCEDURE AwaitPhase(READONLY schedulers : ARRAY OF T; phase : Phase) =
-  (* scheduler[].mu m/b unlocked *)
-  BEGIN
-    IF doDebug THEN
-      Debug.Out(F("AwaitPhase(%s)", PhaseNames[phase]))
-    END;
-    FOR i := FIRST(schedulers) TO LAST(schedulers) DO
-      WITH s = schedulers[i] DO
-        LOCK s.mu DO
-          WHILE s.thePhase # phase DO
-            Thread.Wait(s.mu, s.c)
-          END
-        END
-      END
-    END
-  END AwaitPhase;
-  
 (**********************************************************************)  
     
 TYPE
@@ -454,7 +468,11 @@ TYPE
   GetRemoteBlocks,
   SwapActiveBlocks, (* this could be combined with UpdateSurrogates *)
   UpdateSurrogates,
-  RunActiveBlocks
+  RunActiveBlocks,
+  
+  GetRemoteBlocksPartial,
+  SwapActiveBlocksPartial, 
+  UpdateSurrogatesPartial
   };
 
 CONST
@@ -463,9 +481,94 @@ CONST
   "GetRemoteBlocks",
   "SwapActiveBlocks", 
   "UpdateSurrogates",
-  "RunActiveBlocks"
+  "RunActiveBlocks",
+
+  "GetRemoteBlocksPartial",
+  "SwapActiveBlocksPartial", 
+  "UpdateSurrogatesPartial"
+
   };
 
+PROCEDURE GetIdle(READONLY schedulers : ARRAY OF T;
+                  VAR      idle       : Set) =
+  (* wait until at least one scheduler is idle, and add all idle schedulers
+     to idle set, draining the idleQ *)
+  BEGIN
+    LOCK mu DO
+      IF idleQ.size() = 0 THEN
+        Thread.Wait(mu, c)
+      END;
+
+      (* at least one is idle, report it *)
+      
+      WHILE idleQ.size() # 0 DO
+        WITH idler = idleQ.remlo() DO
+          <*ASSERT NOT idler IN idle*>
+          idle := idle + Set { idler };
+          IF doDebug THEN
+            Debug.Out("GetIdle : " & Int(idler))
+          END
+
+        END
+      END
+    END
+  END GetIdle;
+    
+  
+PROCEDURE AwaitIdle(READONLY schedulers : ARRAY OF T;
+                    READONLY subset     : Set) =
+  VAR
+    idleSet    :=  Set {};
+    notForMe := NEW(CardSeq.T).init();
+  BEGIN
+    IF doDebug THEN
+      Debug.Out(F("AwaitIdle( %s)", FmtSet(subset)))
+    END;
+    
+    LOCK mu DO
+      LOOP
+        WHILE idleQ.size() # 0 DO
+          WITH idler = idleQ.remlo() DO
+            IF idler IN subset THEN
+              idleSet := idleSet + Set { idler };
+            ELSE
+              notForMe.addhi(idler)
+            END;
+            IF doDebug THEN
+              Debug.Out("Went idle : " & Int(idler))
+            END
+          END
+        END;
+
+        IF doDebug THEN
+          Debug.Out("idle set = " & FmtSet(idleSet))
+        END;
+        
+        IF idleSet = subset THEN
+          IF doDebug THEN
+            Debug.Out("ALL IDLE.")
+          END;
+          idleQ := notForMe;
+          RETURN 
+        ELSE    
+          Thread.Wait(mu, c)
+        END
+      END
+    END
+  END AwaitIdle;
+
+PROCEDURE ReportIdle(myId : LocalId) =
+  BEGIN
+    LOCK mu DO
+      idleQ.addhi(myId);
+    END;
+    Thread.Signal(c)
+  END ReportIdle;
+
+VAR mu    := NEW(MUTEX);
+VAR c     := NEW(Thread.Condition);    
+VAR idleQ := NEW(CardSeq.T).init();
+  
 PROCEDURE RunMulti(READONLY schedulers : ARRAY OF T; greedy : BOOLEAN) =
 
   PROCEDURE NothingPending() : BOOLEAN =
@@ -513,15 +616,15 @@ PROCEDURE RunMulti(READONLY schedulers : ARRAY OF T; greedy : BOOLEAN) =
         <*ASSERT schedulers[i].thePhase = Phase.Idle*>
       END;
 
-      AcquireLocks(schedulers);
+      AcquireLocks(schedulers, AllSchedulers);
 
       TRY
-        SetPhase(schedulers, phase)
+        SetPhase(schedulers, phase, AllSchedulers)
       FINALLY
-        ReleaseLocks(schedulers)
+        ReleaseLocks(schedulers, AllSchedulers)
       END;
-      SignalThreads(schedulers);
-      AwaitPhase(schedulers, Phase.Idle)
+      SignalThreads(schedulers, AllSchedulers);
+      AwaitIdle(schedulers, AllSchedulers)
     END RunPhase;
 
   PROCEDURE UpdateTime() =
@@ -537,6 +640,7 @@ PROCEDURE RunMulti(READONLY schedulers : ARRAY OF T; greedy : BOOLEAN) =
   VAR
     cls   := NEW(REF ARRAY OF SchedClosure, NUMBER(schedulers));
     thrds := NEW(REF ARRAY OF Thread.T    , NUMBER(schedulers));
+    iter  := 0;
   BEGIN
     FOR i := FIRST(cls^) TO LAST(cls^) DO
       cls[i]   := NEW(SchedClosure, t := schedulers[i], greedy := greedy);
@@ -545,9 +649,10 @@ PROCEDURE RunMulti(READONLY schedulers : ARRAY OF T; greedy : BOOLEAN) =
 
     LOOP
       IF doDebug THEN
-        Debug.Out(F("=====  @ %s Master scheduling loop : np = %s",
+        Debug.Out(F("=====  @ %s Master scheduling loop : np = %s, iter = %s",
                     Int(masterTime),
-                    Int(CountPendingStuff())
+                    Int(CountPendingStuff()),
+                    Int(iter)
                    )
                  )
       END;
@@ -596,7 +701,50 @@ PROCEDURE Apply(cl : SchedClosure) : REFANY =
       t.next   := temp;
       t.np     := 0;
     END DoSwapActiveBlocks;
-  
+
+  PROCEDURE GetRemoteBlocksFrom(r : LocalId) =
+    BEGIN
+      WITH box = schedulers[r].commOutbox[myId] DO
+        FOR i := 0 TO box.size() - 1 DO
+          WITH myCl = box.get(i) DO
+            Schedule(myCl)
+          END
+        END
+      END;
+      WITH box = schedulers[r].waitOutbox[myId] DO
+        FOR i := 0 TO box.size() - 1 DO
+          WITH myCl = box.get(i) DO
+            IF myCl.waiting THEN
+              myCl.waiting := FALSE; (* in case there are multiple wakers *)
+              Schedule(myCl)
+            END
+          END
+        END
+      END
+    END GetRemoteBlocksFrom;
+    
+  PROCEDURE UpdateSurrogatesFrom(i : LocalId) =
+    BEGIN
+      WITH remote = NARROW(schedulers[i],T) DO
+        FOR w := 0 TO remote.nwp[myId] - 1 DO
+          WITH surrogate = remote.wdirty[myId][w] DO
+            surrogate.writeSurrogate()
+          END
+        END;
+        FOR r := 0 TO remote.nrp[myId] - 1 DO
+          WITH target = remote.rdirty[myId][r] DO
+            target.readSurrogate()
+          END
+        END
+      END
+    END UpdateSurrogatesFrom;
+    
+  PROCEDURE ClearOutboxesTo(i : CARDINAL) =
+    BEGIN
+      EVAL t.commOutbox[i].init();
+      EVAL t.waitOutbox[i].init()
+    END ClearOutboxesTo;
+    
   VAR
     t        := cl.t;
     myId     := t.id;
@@ -635,22 +783,16 @@ PROCEDURE Apply(cl : SchedClosure) : REFANY =
         t.time := masterTime;
         
         FOR r := FIRST(schedulers^) TO LAST(schedulers^) DO
-          WITH box = schedulers[r].commOutbox[myId] DO
-            FOR i := 0 TO box.size() - 1 DO
-              WITH myCl = box.get(i) DO
-                Schedule(myCl)
-              END
-            END
-          END;
-          WITH box = schedulers[r].waitOutbox[myId] DO
-            FOR i := 0 TO box.size() - 1 DO
-              WITH myCl = box.get(i) DO
-                IF myCl.waiting THEN
-                  myCl.waiting := FALSE; (* in case there are multiple wakers *)
-                  Schedule(myCl)
-                END
-              END
-            END
+          GetRemoteBlocksFrom(r)
+        END
+      |
+        Phase.GetRemoteBlocksPartial =>
+        <*ASSERT masterTime > t.time*>
+        t.time := masterTime;
+        
+        FOR r := FIRST(schedulers^) TO LAST(schedulers^) DO
+          IF r IN t.idle THEN
+            GetRemoteBlocksFrom(r)
           END
         END
       |
@@ -658,8 +800,18 @@ PROCEDURE Apply(cl : SchedClosure) : REFANY =
         
         (* clear out the schedulers we just copied in GetRemoteBlocks *)
         FOR i := FIRST(schedulers^) TO LAST(schedulers^) DO
-          EVAL t.commOutbox[i].init();
-          EVAL t.waitOutbox[i].init()
+          ClearOutboxesTo(i)
+        END;
+
+        DoSwapActiveBlocks()
+      |
+        Phase.SwapActiveBlocksPartial =>
+        
+        (* clear out the schedulers we just copied in GetRemoteBlocks *)
+        FOR i := FIRST(schedulers^) TO LAST(schedulers^) DO
+          IF i IN t.idle THEN
+            ClearOutboxesTo(i)
+          END
         END;
 
         DoSwapActiveBlocks()
@@ -671,17 +823,13 @@ PROCEDURE Apply(cl : SchedClosure) : REFANY =
            This needs to be done on the reader side (obv.)
         *)
         FOR i := FIRST(schedulers^) TO LAST(schedulers^) DO
-          WITH remote = NARROW(schedulers[i],T) DO
-            FOR w := 0 TO remote.nwp[myId] - 1 DO
-              WITH surrogate = remote.wdirty[myId][w] DO
-                surrogate.writeSurrogate()
-              END
-            END;
-            FOR r := 0 TO remote.nrp[myId] - 1 DO
-              WITH target = remote.rdirty[myId][r] DO
-                target.readSurrogate()
-              END
-            END
+          UpdateSurrogatesFrom(i)
+        END;
+      |
+        Phase.UpdateSurrogatesPartial =>
+        FOR i := FIRST(schedulers^) TO LAST(schedulers^) DO
+          IF i IN t.idle THEN
+            UpdateSurrogatesFrom(i)
           END
         END;
       |
@@ -751,10 +899,24 @@ PROCEDURE Apply(cl : SchedClosure) : REFANY =
       LOCK t.mu DO
         t.thePhase := Phase.Idle
       END;
+      ReportIdle(myId);
       (* local time will have updated *)
       Thread.Signal(t.c)
     END
   END Apply;
+
+PROCEDURE FmtSet(READONLY set : Set) : TEXT =
+  VAR
+    wx := Wx.New();
+  BEGIN
+    FOR i := FIRST(LocalId) TO LAST(LocalId) DO
+      IF i IN set THEN
+        Wx.PutText(wx, Int(i));
+        Wx.PutChar(wx, ' ')
+      END
+    END;
+    RETURN Wx.ToText(wx)
+  END FmtSet;
   
 PROCEDURE CreateMulti(n : CARDINAL) =
   (* create n schedulers *)
@@ -785,7 +947,12 @@ PROCEDURE CreateMulti(n : CARDINAL) =
     END;
     
     schedulers := NEW(REF ARRAY OF T, n);
+
+    AllSchedulers := Set { };
+    
     FOR i := FIRST(schedulers^) TO LAST(schedulers^) DO
+      AllSchedulers := AllSchedulers + Set { i };
+      
       WITH new = NEW(T,
                      id       := i,
                      active   := NEW(REF ARRAY OF Process.Closure, 1),
@@ -801,6 +968,8 @@ PROCEDURE CreateMulti(n : CARDINAL) =
                      wdirty   := NewChanArray(),
                      nwp      := NewCardArray(),
 
+                     idle     := AllSchedulers,
+                     
                      thePhase := InitPhase
                      ) DO
         schedulers[i] := new;
@@ -813,8 +982,187 @@ PROCEDURE CreateMulti(n : CARDINAL) =
           new.waitOutbox[j] := NEW(ClosureSeq.T).init()
         END;
       END(*WITH*)      
-    END(*FOR*)
+    END(*FOR*);
+
+    IF doDebug THEN
+      Debug.Out("AllSchedulers = " & FmtSet(AllSchedulers))
+    END
   END CreateMulti;
+  
+PROCEDURE RunNondet(READONLY schedulers : ARRAY OF T; greedy : BOOLEAN) =
+
+  PROCEDURE NothingPending() : BOOLEAN =
+    BEGIN
+      (* 
+         something is pending if it is in the local queue of a scheduler
+         or if it is in the outbox of a scheduler 
+
+         or if a process is running
+      *)
+
+      IF idle # AllSchedulers THEN RETURN FALSE END;
+
+      FOR i := FIRST(schedulers) TO LAST(schedulers) DO
+        <*ASSERT i IN idle*>
+        WITH s = schedulers[i] DO
+          IF s.np # 0 THEN RETURN FALSE END;
+
+          FOR j := FIRST(schedulers) TO LAST(schedulers) DO
+            IF s.commOutbox[j].size() # 0 THEN RETURN FALSE END;
+            IF s.waitOutbox[j].size() # 0 THEN RETURN FALSE END
+          END
+        END
+      END;
+      RETURN TRUE
+    END NothingPending;
+  
+  PROCEDURE CountPendingStuff() : CARDINAL =
+    (* just for debugging, doesn't lock anything, can touch running
+       schedulers *)
+    VAR
+      res : CARDINAL := 0;
+    BEGIN
+      (* something is pending if it is in the local queue of a scheduler
+         or if it is in the outbox of a scheduler *)
+      FOR i := FIRST(schedulers) TO LAST(schedulers) DO
+        WITH s = schedulers[i] DO
+          res := res + s.np;
+          
+          FOR j := FIRST(schedulers) TO LAST(schedulers) DO
+            res := res + s.commOutbox[j].size();
+            res := res + s.waitOutbox[j].size()
+          END
+        END
+      END;
+      RETURN res
+    END CountPendingStuff;
+  
+  PROCEDURE RunPhase(phase : Phase) =
+    BEGIN
+      IF doDebug THEN
+        Debug.Out(F("RunMulti.RunPhase(%s)", PhaseNames[phase]))
+      END;
+
+      FOR i := FIRST(schedulers) TO LAST(schedulers) DO
+        IF i IN idle THEN
+          <*ASSERT schedulers[i].thePhase = Phase.Idle*>
+        END
+      END;
+
+      AcquireLocks(schedulers, idle);
+
+      TRY
+        SetPhase(schedulers, phase, idle)
+      FINALLY
+        ReleaseLocks(schedulers, idle)
+      END;
+      SignalThreads(schedulers, idle);
+      AwaitIdle(schedulers, idle)
+    END RunPhase;
+
+  PROCEDURE StartActivePhase() =
+    BEGIN
+      IF doDebug THEN
+        Debug.Out(F("RunMulti.StartActivePhase"))
+      END;
+
+      FOR i := FIRST(schedulers) TO LAST(schedulers) DO
+        IF i IN idle THEN
+          <*ASSERT schedulers[i].thePhase = Phase.Idle*>
+        END
+      END;
+
+      AcquireLocks(schedulers, idle);
+
+      TRY
+        SetPhase(schedulers, Phase.RunActiveBlocks, idle)
+      FINALLY
+        ReleaseLocks(schedulers, idle)
+      END;
+      SignalThreads(schedulers, idle);
+
+      idle := Set {};
+      
+    END StartActivePhase;
+
+  PROCEDURE UpdateTime() =
+    BEGIN
+      (* ensure time advances for everybody *)
+      FOR i := FIRST(schedulers) TO LAST(schedulers) DO
+        IF i IN idle THEN
+          masterTime := MAX(masterTime, schedulers[i].time)
+        END
+      END;
+      
+      INC(masterTime);
+    END UpdateTime;
+
+  PROCEDURE UpdateIdle() =
+    BEGIN
+      (* ensure all the idle schedulers know with whom they can communicate *)
+      FOR i := FIRST(schedulers) TO LAST(schedulers) DO
+        IF i IN idle THEN
+          schedulers[i].idle := idle
+        END
+      END
+    END UpdateIdle;
+    
+  VAR
+    idle  := Set {};
+    (* this is the set of schedulers idle at the beginning of the loop *)
+    
+    cls   := NEW(REF ARRAY OF SchedClosure, NUMBER(schedulers));
+    thrds := NEW(REF ARRAY OF Thread.T    , NUMBER(schedulers));
+
+    iter  := 0;
+  BEGIN
+    FOR i := FIRST(cls^) TO LAST(cls^) DO
+      cls[i]   := NEW(SchedClosure, t := schedulers[i], greedy := greedy);
+      thrds[i] := Thread.Fork(cls[i]);
+      idle     := idle + Set { i } (* all are idle *)
+    END;
+
+    LOOP
+      IF doDebug THEN
+        Debug.Out(F("=====  @ %s Master scheduling loop : np = %s , iter = %s",
+                    Int(masterTime),
+                    Int(CountPendingStuff()),
+                    Int(iter)
+                   )
+                 )
+      END;
+
+      IF NothingPending() THEN
+        Debug.Out("RunMulti : nothing pending---done at " & Int(masterTime));
+        RETURN
+      END;
+
+      (* at the end of every Phase, all the schedulers are idle *)
+      
+      UpdateTime();
+
+      UpdateIdle();
+      
+      RunPhase(Phase.GetRemoteBlocksPartial);
+
+      RunPhase(Phase.SwapActiveBlocksPartial);
+
+      RunPhase(Phase.UpdateSurrogatesPartial);
+
+      UpdateTime();
+
+      StartActivePhase();
+
+      INC(iter);
+
+      GetIdle(schedulers, idle);
+
+      IF doDebug THEN
+        Debug.Out("After GetIdle : idle schedulers : " & FmtSet(idle))
+      END
+
+    END
+  END RunNondet;
 
 BEGIN
   CspScheduler.GetTime := GetTime;

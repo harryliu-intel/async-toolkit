@@ -32,7 +32,7 @@ PROCEDURE ScheduleWait(from, toSchedule : Process.Closure);
   (* schedule a block in another CSP process to run owing to a select *)
   
     
-PROCEDURE Run(mt : CARDINAL := 0; greedy := FALSE);
+PROCEDURE Run(mt : CARDINAL := 0; greedy := FALSE; nondet := FALSE);
 
 CONST SchedulingLoop = Run;
 
