@@ -465,12 +465,12 @@ PROCEDURE SetPhase(READONLY schedulers : ARRAY OF T;
 TYPE
   Phase = {
   Idle,
-  GetRemoteBlocks,
+  GetOtherBlocks,
   SwapActiveBlocks, (* this could be combined with UpdateSurrogates *)
   UpdateSurrogates,
   RunActiveBlocks,
   
-  GetRemoteBlocksPartial,
+  GetOtherBlocksPartial,
   SwapActiveBlocksPartial, 
   UpdateSurrogatesPartial
   };
@@ -478,12 +478,12 @@ TYPE
 CONST
   PhaseNames = ARRAY Phase OF TEXT {
   "Idle",
-  "GetRemoteBlocks",
+  "GetOtherBlocks",
   "SwapActiveBlocks", 
   "UpdateSurrogates",
   "RunActiveBlocks",
 
-  "GetRemoteBlocksPartial",
+  "GetOtherBlocksPartial",
   "SwapActiveBlocksPartial", 
   "UpdateSurrogatesPartial"
 
@@ -666,7 +666,7 @@ PROCEDURE RunMulti(READONLY schedulers : ARRAY OF T; greedy : BOOLEAN) =
       
       UpdateTime();
 
-      RunPhase(Phase.GetRemoteBlocks);
+      RunPhase(Phase.GetOtherBlocks);
 
 (*      UpdateTime();  *)
       
@@ -702,7 +702,7 @@ PROCEDURE Apply(cl : SchedClosure) : REFANY =
       t.np     := 0;
     END DoSwapActiveBlocks;
 
-  PROCEDURE GetRemoteBlocksFrom(r : LocalId) =
+  PROCEDURE GetOtherBlocksFrom(r : LocalId) =
     BEGIN
       WITH box = schedulers[r].commOutbox[myId] DO
         FOR i := 0 TO box.size() - 1 DO
@@ -721,7 +721,7 @@ PROCEDURE Apply(cl : SchedClosure) : REFANY =
           END
         END
       END
-    END GetRemoteBlocksFrom;
+    END GetOtherBlocksFrom;
     
   PROCEDURE UpdateSurrogatesFrom(i : LocalId) =
     BEGIN
@@ -778,27 +778,27 @@ PROCEDURE Apply(cl : SchedClosure) : REFANY =
         Phase.Idle =>
         <*ASSERT FALSE*>
       |
-        Phase.GetRemoteBlocks =>
+        Phase.GetOtherBlocks =>
         <*ASSERT masterTime > t.time*>
         t.time := masterTime;
         
         FOR r := FIRST(schedulers^) TO LAST(schedulers^) DO
-          GetRemoteBlocksFrom(r)
+          GetOtherBlocksFrom(r)
         END
       |
-        Phase.GetRemoteBlocksPartial =>
+        Phase.GetOtherBlocksPartial =>
         <*ASSERT masterTime > t.time*>
         t.time := masterTime;
         
         FOR r := FIRST(schedulers^) TO LAST(schedulers^) DO
           IF r IN t.idle THEN
-            GetRemoteBlocksFrom(r)
+            GetOtherBlocksFrom(r)
           END
         END
       |
         Phase.SwapActiveBlocks =>
         
-        (* clear out the schedulers we just copied in GetRemoteBlocks *)
+        (* clear out the schedulers we just copied in GetOtherBlocks *)
         FOR i := FIRST(schedulers^) TO LAST(schedulers^) DO
           ClearOutboxesTo(i)
         END;
@@ -807,7 +807,7 @@ PROCEDURE Apply(cl : SchedClosure) : REFANY =
       |
         Phase.SwapActiveBlocksPartial =>
         
-        (* clear out the schedulers we just copied in GetRemoteBlocks *)
+        (* clear out the schedulers we just copied in GetOtherBlocks *)
         FOR i := FIRST(schedulers^) TO LAST(schedulers^) DO
           IF i IN t.idle THEN
             ClearOutboxesTo(i)
@@ -1143,7 +1143,7 @@ PROCEDURE RunNondet(READONLY schedulers : ARRAY OF T; greedy : BOOLEAN) =
 
       UpdateIdle();
       
-      RunPhase(Phase.GetRemoteBlocksPartial);
+      RunPhase(Phase.GetOtherBlocksPartial);
 
       RunPhase(Phase.SwapActiveBlocksPartial);
 
