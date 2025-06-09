@@ -58,6 +58,8 @@ Sequence ("CspPort", "CspPort")
 Table("AtomCspPortSeq", "Atom", "CspPortSeq")
 Table("TextCspPortSeq", "Text", "CspPortSeq")
 
+Module ("CspWorker")
+
 Generic_module ("WideIntOps")
 Generic_module ("NarrowIntOps")
 template("intops")
