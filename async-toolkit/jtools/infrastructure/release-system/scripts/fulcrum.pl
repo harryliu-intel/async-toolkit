@@ -29,6 +29,8 @@ BEGIN {
 }
 use Getopt::Long qw(:config require_order); # allows tool options not to be decoded
 use DB_File;
+use Cwd qw(realpath);
+use File::Basename;
 
 $ENV{FULCRUM_NB_CONFIG}=$nb_cfg_path{$ENV{EC_SITE}} unless defined $ENV{FULCRUM_NB_CONFIG};
 
@@ -251,8 +253,13 @@ my %notwrapper=(
 opendir (D, $cadencewrapperdir);
 my @c=readdir(D);
 closedir D;
+my $realwrapperdir;
 foreach my $c (@c) {
-    if (! ($c =~ /\./) and -x "$cadencewrapperdir/$c" and -l "$cadencewrapperdir/$c" ) {
+    $realwrapperdir=realpath($cadencewrapperdir) unless defined($realwrapperdir);
+    if (! ($c =~ /\./) and
+        -x "$cadencewrapperdir/$c" and
+        -l "$cadencewrapperdir/$c" and
+        $realwrapperdir eq dirname(realpath("$cadencewrapperdir/$c"))) {
         $cadencewrappers{$c}=1 if ! $notwrapper{$c};
     }
 }
