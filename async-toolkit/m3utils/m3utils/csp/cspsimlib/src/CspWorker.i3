@@ -9,6 +9,7 @@ TYPE
     init(id : CARDINAL) : T;
     getEp() : IP.Endpoint;
     getThread() : Thread.T;
+    awaitInitialization();
   END;
 
 CONST Brand = "CspWorker";

@@ -3,6 +3,7 @@ IMPORT CspCompiledProcess AS Process;
 IMPORT CspPortObject;
 IMPORT TextFrameTbl;
 IMPORT TextPortTbl;
+IMPORT CspFrameSeq AS FrameSeq;
 
 TYPE Builder = PROCEDURE();
 
@@ -18,7 +19,12 @@ PROCEDURE RegisterEdge(edge : CspPortObject.T);
 
 PROCEDURE GetProcTbl() : TextFrameTbl.T;
 
+PROCEDURE GetProcSeq() : FrameSeq.T;
+
 PROCEDURE GetPortTbl() : TextPortTbl.T;
 
+PROCEDURE GetAllProcNames() : REF ARRAY OF TEXT;
+
+PROCEDURE GetFrame(nm : TEXT) : Process.Frame;
 
 END CspSim.

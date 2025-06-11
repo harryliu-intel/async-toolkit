@@ -31,9 +31,10 @@ REVEAL
     peers    : REF ARRAY OF Peer;
     nthreads : CARDINAL;
   OVERRIDES
-    init  := Init;
-    getEp := GetEp;
-    getThread := GetThread;
+    init                := Init;
+    getEp               := GetEp;
+    getThread           := GetThread;
+    awaitInitialization := AwaitInitialization;
   END;
 
 TYPE
@@ -97,7 +98,7 @@ PROCEDURE CommandApply(listener : Listener) : REFANY =
     LOOP
       WITH t    = listener.t,
            line = Rd.GetLine(Stdio.stdin) DO
-        Debug.Out(F("CspWorker.Manager got \"%s\"", line));
+        Debug.Out(F("CspWorker.Manager %s got \"%s\"", Int(listener.t.id), line));
 
         WITH reader = NEW(TextReader.T).init(line),
              kw     = reader.nextE(Delims, TRUE) DO
@@ -166,7 +167,7 @@ PROCEDURE WorkerApply(worker : Worker) : REFANY =
     <*ASSERT worker.rd # NIL*>
     LOOP
       WITH line = Rd.GetLine(worker.rd) DO
-        Debug.Out(F("CspWorker.Worker got \"%s\"", line));
+        Debug.Out(F("CspWorker.Worker %s got \"%s\"", Int(worker.t.id), line));
         WITH reader = NEW(TextReader.T).init(line),
              kw     = reader.nextE(Delims, TRUE) DO
           IF    TE(kw, "HELLOIAM") THEN
@@ -179,5 +180,9 @@ PROCEDURE WorkerApply(worker : Worker) : REFANY =
       END
     END(*POOL*)
   END WorkerApply;
+
+PROCEDURE AwaitInitialization(t : T) =
+  BEGIN
+  END AwaitInitialization;
   
 BEGIN END CspWorker.

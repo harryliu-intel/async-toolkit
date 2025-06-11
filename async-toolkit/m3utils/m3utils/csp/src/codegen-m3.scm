@@ -3500,7 +3500,6 @@
     )
   )
 
-
 (define (node->uint-intf intf)
   (if (eq? 'Node (car intf))
       (cons 'UInt (cdr intf))
@@ -4016,6 +4015,7 @@
     (mw "IMPORT Thread;" dnl)
     (mw "IMPORT TextSeq;" dnl)
     (mw "IMPORT BigInt;" dnl)
+    (mw "IMPORT CspSim;" dnl)
     (mw "IMPORT CspWorker;" dnl)
     (mw "IMPORT CspMaster;" dnl)
 
@@ -4054,6 +4054,7 @@
     (mw "  master   : BOOLEAN;" dnl)
     (mw "  cmd      : TEXT;" dnl)
     (mw "  nworkers : CARDINAL;" dnl)
+    (mw "  theWorker: CspWorker.T := NIL;" dnl)
     (mw "" dnl)
     (mw "BEGIN" dnl)
     (mw "  EVAL   BigInt.GetInitialized();" dnl)
@@ -4089,7 +4090,8 @@
     (mw "  (********************  BUILD THE SIMULATION  ********************)" dnl)
     (mw "" dnl)
     (mw "  IF    worker THEN" dnl)
-    (mw "    EVAL Thread.Join(NEW(CspWorker.T).init(id := workerId).getThread())" dnl)
+    (mw "    theWorker := NEW(CspWorker.T).init(id := workerId);" dnl)
+    (mw "    theWorker.awaitInitialization()" dnl)
     (mw "  ELSIF master THEN" dnl)
     (mw "    NEW(CspMaster.T).init(nworkers := nworkers," dnl
         "                          bld      := BuildSimulation," dnl
@@ -4108,7 +4110,7 @@
     (mw "        Scheme.E(err) => Debug.Error(\"Caught Scheme.E : \" & err)" dnl)
     (mw "      END" dnl)
     (mw "    ELSE" dnl)
-    (mw "      Scheduler.SchedulingLoop(mt, greedy, nondet)" dnl)
+    (mw "      Scheduler.SchedulingLoop(mt, greedy, nondet, theWorker)" dnl)
     (mw "    END" dnl)
     (mw "  END;" dnl)
     (mw "" dnl) 

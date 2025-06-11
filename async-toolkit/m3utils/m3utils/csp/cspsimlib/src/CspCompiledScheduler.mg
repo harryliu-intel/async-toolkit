@@ -3,19 +3,15 @@ IMPORT CspCompiledProcess AS Process;
 IMPORT Word;
 FROM Fmt IMPORT Int, F, Bool;
 IMPORT Debug;
-IMPORT CspScheduler;
-IMPORT CspPortObject;
-IMPORT TextFrameTbl;
-IMPORT TextPortTbl;
 IMPORT CspClosureSeq AS ClosureSeq;
 IMPORT CspChannel;
 IMPORT Random;
 IMPORT Thread;
-IMPORT TextArraySort;
-IMPORT TextClosureTbl;
+IMPORT CspScheduler;
 IMPORT CardSeq;
 IMPORT Wx;
 IMPORT CspSim;
+IMPORT CspWorker;
 
 CONST doDebug = CspDebug.DebugSchedule;
 
@@ -264,7 +260,7 @@ PROCEDURE Run1(t : T) =
 VAR theScheduler : T;
     (* when running a single scheduler *)
     
-PROCEDURE Run(mt : CARDINAL; greedy, nondet : BOOLEAN) =
+PROCEDURE Run(mt : CARDINAL; greedy, nondet : BOOLEAN; worker : CspWorker.T) =
   BEGIN
     IF mt = 0 THEN
       theScheduler := NEW(T,
@@ -318,13 +314,13 @@ PROCEDURE MapRandomly(READONLY sarr : ARRAY OF T) =
 PROCEDURE MapRoundRobin(READONLY sarr : ARRAY OF T) =
   VAR
     q := 0;
-    k : TEXT;
-    v : Process.Frame;
-    iter := CspSim.GetProcTbl().iterate();
+    seq := CspSim.GetProcSeq();
   BEGIN
-    WHILE iter.next(k, v) DO
-      v.affinity := sarr[q];
-      q := (q + 1) MOD NUMBER(sarr)
+    FOR i := 0 TO seq.size() - 1 DO
+      WITH v = seq.get(i) DO
+        v.affinity := sarr[q];
+        q := (q + 1) MOD NUMBER(sarr)
+      END
     END
   END MapRoundRobin;
     
@@ -436,7 +432,6 @@ PROCEDURE GetIdle(READONLY schedulers : ARRAY OF T;
       END
     END
   END GetIdle;
-    
   
 PROCEDURE AwaitIdle(READONLY schedulers : ARRAY OF T;
                     READONLY subset     : Set) =

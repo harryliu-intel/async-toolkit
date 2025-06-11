@@ -11,6 +11,7 @@ IMPORT CspPortObject;
 IMPORT TextFrameTbl;
 IMPORT TextPortTbl;
 IMPORT CspChannel;
+IMPORT CspWorker;
 
 (* The following invariant must always be maintained: 
 
@@ -32,7 +33,10 @@ PROCEDURE ScheduleWait(from, toSchedule : Process.Closure);
   (* schedule a block in another CSP process to run owing to a select *)
   
     
-PROCEDURE Run(mt : CARDINAL := 0; greedy := FALSE; nondet := FALSE);
+PROCEDURE Run(mt     : CARDINAL    := 0;
+              greedy               := FALSE;
+              nondet               := FALSE;
+              worker : CspWorker.T := NIL);
 
 CONST SchedulingLoop = Run;
 

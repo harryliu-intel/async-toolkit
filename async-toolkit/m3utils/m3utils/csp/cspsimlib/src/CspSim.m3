@@ -7,20 +7,26 @@ IMPORT Debug;
 FROM Fmt IMPORT F;
 IMPORT TextArraySort;
 IMPORT CspPortObject;
+IMPORT CspFrameSeq AS FrameSeq;
 
 CONST doDebug = FALSE;
       
-VAR theProcs := NEW(TextFrameTbl.Default).init();
+VAR theProcs   := NEW(TextFrameTbl.Default).init();
+VAR theProcSeq := NEW(FrameSeq.T).init();
 
 PROCEDURE GetProcTbl() : TextFrameTbl.T =
   BEGIN RETURN theProcs END GetProcTbl;
+
+PROCEDURE GetProcSeq() : FrameSeq.T =
+  BEGIN RETURN theProcSeq END GetProcSeq;
 
 PROCEDURE RegisterProcess(fr : Process.Frame) =
   BEGIN
     IF doDebug THEN
       Debug.Out(F("Registering process : %s", fr.name))
     END;
-    EVAL theProcs.put(fr.name, fr)
+    EVAL theProcs.put(fr.name, fr);
+    theProcSeq.addhi(fr)
   END RegisterProcess;
 
 VAR theEdges := NEW(TextPortTbl.Default).init();
@@ -43,15 +49,13 @@ PROCEDURE GetAllProcNames() : REF ARRAY OF TEXT =
 
 PROCEDURE GetFrame(nm : TEXT) : Process.Frame =
   VAR
-    k : TEXT;
     f : Process.Frame;
   BEGIN
-    WITH hadIt = theProcs.get(k, f) DO
+    WITH hadIt = theProcs.get(nm, f) DO
       <*ASSERT hadIt*>
     END;
     RETURN f
   END GetFrame;
-
 
 (**********************************************************************)
 

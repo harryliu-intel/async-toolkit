@@ -15,8 +15,8 @@ end
 
 Module   ("DynamicInt")
 
-Module   ("FiniteInterval")
-Module   ("VaryBits")
+Module   ("FiniteInterval") %% dead code?
+Module   ("VaryBits")       %% dead code?
 
 
 Module   ("WideInt")
@@ -25,6 +25,7 @@ Module   ("NativeInt")
 Module         ("CspCompiledProcess")
 Interface      ("CspFrame")
 Table          ("TextFrame", "Text", "CspFrame")
+Sequence       ("CspFrame", "CspFrame")
 Interface      ("CspClosure")
 Sequence       ("CspClosure", "CspClosure")
 Table          ("TextClosure", "Text", "CspClosure")
