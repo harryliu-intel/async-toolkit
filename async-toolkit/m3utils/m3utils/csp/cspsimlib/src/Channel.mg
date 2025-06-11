@@ -10,7 +10,7 @@ IMPORT CspCompiledScheduler1 AS Scheduler;
 FROM Fmt IMPORT Int, F, Bool;
 IMPORT DynamicInt;
 IMPORT Mpz;
-IMPORT CspPortObject;
+IMPORT CspSim;
 
 CONST sendDebug = CspDebug.DebugSend;
 CONST recvDebug = CspDebug.DebugRecv;
@@ -426,7 +426,7 @@ PROCEDURE New(nm : TEXT; slack : CARDINAL) : Ref =
                    writes := 0,
                    rd     := slack,
                    data   := NEW(REF Buff, slack + 1)) DO
-      Scheduler.RegisterEdge(res);
+      CspSim.RegisterEdge(res);
       RETURN res
     END
   END New;

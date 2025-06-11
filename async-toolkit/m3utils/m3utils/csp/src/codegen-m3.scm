@@ -912,7 +912,7 @@
   
     (w "      ) DO" dnl
        dnl
-       "Scheduler.RegisterProcess(frame);" dnl
+       "CspSim.RegisterProcess(frame);" dnl
        dnl)
 
     (let*((dynamics (filter (compose m3-dynamic-int-type? get-var1-type)
@@ -1005,7 +1005,7 @@
                       )
                     );;etucexe-tnuoc
                    (iw "};" dnl dnl)
-                   (iw "Scheduler.RegisterClosures(frame." m3lab "_Cl);" dnl
+                   (iw "CspSim.RegisterClosures(frame." m3lab "_Cl);" dnl
                        dnl)
                    );;nigeb
                  
@@ -1019,7 +1019,7 @@
                    (iiw "        frame   := frame," dnl)
                    (iiw "        block   := Block_" m3lab "," dnl)
                    (iiw "        text    := Text_"  m3lab ");" dnl dnl)
-                   (iw "Scheduler.RegisterClosure(frame." m3lab "_Cl);" dnl
+                   (iw "CspSim.RegisterClosure(frame." m3lab "_Cl);" dnl
                        dnl)
 
                    );;nigeb
@@ -1042,6 +1042,7 @@
   
   (w "<*NOWARN*>IMPORT CspCompiledProcess AS Process;" dnl)
   (w "<*NOWARN*>IMPORT CspCompiledScheduler1 AS Scheduler;" dnl)
+  (w "<*NOWARN*>IMPORT CspSim;" dnl)
   (w "<*NOWARN*>IMPORT CspString, Fmt;" dnl)
   (w "<*NOWARN*>IMPORT CspBoolean;" dnl)
   (w "<*NOWARN*>IMPORT CspIntrinsics;" dnl)
@@ -4015,6 +4016,8 @@
     (mw "IMPORT Thread;" dnl)
     (mw "IMPORT TextSeq;" dnl)
     (mw "IMPORT BigInt;" dnl)
+    (mw "IMPORT CspWorker;" dnl)
+    (mw "IMPORT CspMaster;" dnl)
 
     (mw dnl)
 
@@ -4046,11 +4049,26 @@
     (mw "  mt       : CARDINAL := 0;" dnl)
     (mw "  greedy   : BOOLEAN;" dnl)
     (mw "  nondet   : BOOLEAN;" dnl)
+    (mw "  worker   : BOOLEAN;" dnl)
+    (mw "  workerId : CARDINAL;" dnl)
+    (mw "  master   : BOOLEAN;" dnl)
+    (mw "  cmd      : TEXT;" dnl)
+    (mw "  nworkers : CARDINAL;" dnl)
     (mw "" dnl)
     (mw "BEGIN" dnl)
     (mw "  EVAL   BigInt.GetInitialized();" dnl)
     (mw "  " dnl)
     (mw "  TRY" dnl)
+    (mw "    IF    pp.keywordPresent(\"-worker\") THEN" dnl)
+    (mw "      master   := FALSE;" dnl)
+    (mw "      worker   := TRUE;" dnl)
+    (mw "      workerId := pp.getNextInt()" dnl)
+    (mw "    ELSIF pp.keywordPresent(\"-master\") THEN" dnl)
+    (mw "      master   := TRUE;" dnl)
+    (mw "      worker   := FALSE;" dnl)
+    (mw "      nworkers := pp.getNextInt();" dnl)
+    (mw "      cmd      := pp.getNext()" dnl)
+    (mw "    END;" dnl)
     (mw "    greedy := pp.keywordPresent(\"-greedy\");" dnl)
     (mw "    nondet := pp.keywordPresent(\"-nondet\");" dnl)
     (mw "    IF pp.keywordPresent(\"-mt\") THEN" dnl
@@ -4070,19 +4088,28 @@
     (mw "" dnl)
     (mw "  (********************  BUILD THE SIMULATION  ********************)" dnl)
     (mw "" dnl)
-    (mw "  BuildSimulation();" dnl)
-    (mw "" dnl)
-    (mw "  IF doScheme THEN" dnl)
-    (mw "    SchemeStubs.RegisterStubs();" dnl)
-    (mw "    TRY" dnl)
-    (mw "      WITH scm = NEW(SchemeM3.T).init(GetPaths(extra)^) DO" dnl)
-    (mw "        SchemeReadLine.MainLoop(NEW(ReadLine.Default).init(), scm)" dnl)
-    (mw "      END" dnl)
-    (mw "    EXCEPT" dnl)
-    (mw "      Scheme.E(err) => Debug.Error(\"Caught Scheme.E : \" & err)" dnl)
-    (mw "    END" dnl)
+    (mw "  IF    worker THEN" dnl)
+    (mw "    EVAL Thread.Join(NEW(CspWorker.T).init(id := workerId).getThread())" dnl)
+    (mw "  ELSIF master THEN" dnl)
+    (mw "    NEW(CspMaster.T).init(nworkers := nworkers," dnl
+        "                          bld      := BuildSimulation," dnl
+        "                          cmd      := cmd," dnl
+        "                          mt       := mt       ).run()" dnl)
     (mw "  ELSE" dnl)
-    (mw "    Scheduler.SchedulingLoop(mt, greedy, nondet)" dnl)
+    (mw "    BuildSimulation();" dnl)
+    (mw "" dnl)
+    (mw "    IF doScheme THEN" dnl)
+    (mw "      SchemeStubs.RegisterStubs();" dnl)
+    (mw "      TRY" dnl)
+    (mw "        WITH scm = NEW(SchemeM3.T).init(GetPaths(extra)^) DO" dnl)
+    (mw "          SchemeReadLine.MainLoop(NEW(ReadLine.Default).init(), scm)" dnl)
+    (mw "        END" dnl)
+    (mw "      EXCEPT" dnl)
+    (mw "        Scheme.E(err) => Debug.Error(\"Caught Scheme.E : \" & err)" dnl)
+    (mw "      END" dnl)
+    (mw "    ELSE" dnl)
+    (mw "      Scheduler.SchedulingLoop(mt, greedy, nondet)" dnl)
+    (mw "    END" dnl)
     (mw "  END;" dnl)
     (mw "" dnl) 
     (mw "END SimMain." dnl)

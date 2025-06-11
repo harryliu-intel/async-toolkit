@@ -41,18 +41,6 @@ PROCEDURE GetTime() : Word.T;
 CONST Release = Schedule;
 CONST ReleaseFork = ScheduleFork;
 
-PROCEDURE RegisterProcess(proc : Process.Frame);
-
-PROCEDURE RegisterClosure(cl : Process.Closure);
-
-PROCEDURE RegisterClosures(READONLY cls : ARRAY OF Process.Closure);
-
-PROCEDURE RegisterEdge(edge : CspPortObject.T);
-
-PROCEDURE GetProcTbl() : TextFrameTbl.T;
-
-PROCEDURE GetPortTbl() : TextPortTbl.T;
-
 PROCEDURE ReadDirty(chan : CspChannel.T; cl : Process.Closure);
   (* a channel with a surrogate has been read from *)
   

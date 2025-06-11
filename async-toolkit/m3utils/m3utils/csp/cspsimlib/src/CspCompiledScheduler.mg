@@ -15,6 +15,7 @@ IMPORT TextArraySort;
 IMPORT TextClosureTbl;
 IMPORT CardSeq;
 IMPORT Wx;
+IMPORT CspSim;
 
 CONST doDebug = CspDebug.DebugSchedule;
 
@@ -211,84 +212,6 @@ PROCEDURE GetTime() : Word.T =
 
 VAR masterTime : Word.T := 0;
 
-VAR theProcs := NEW(TextFrameTbl.Default).init();
-
-PROCEDURE GetProcTbl() : TextFrameTbl.T =
-  BEGIN RETURN theProcs END GetProcTbl;
-
-PROCEDURE RegisterProcess(fr : Process.Frame) =
-  BEGIN
-    IF doDebug THEN
-      Debug.Out(F("Registering process : %s", fr.name))
-    END;
-    EVAL theProcs.put(fr.name, fr)
-  END RegisterProcess;
-
-VAR theEdges := NEW(TextPortTbl.Default).init();
-
-PROCEDURE GetAllProcNames() : REF ARRAY OF TEXT =
-  VAR
-    res  := NEW(REF ARRAY OF TEXT, theProcs.size());
-    iter := theProcs.iterate();
-    k : TEXT;
-    f : Process.Frame;
-    i    := 0;
-  BEGIN
-    WHILE iter.next(k, f) DO
-      res[i] := k;
-      INC(i)
-    END;
-    TextArraySort.Sort(res^);
-    RETURN res
-  END GetAllProcNames;
-
-PROCEDURE GetFrame(nm : TEXT) : Process.Frame =
-  VAR
-    k : TEXT;
-    f : Process.Frame;
-  BEGIN
-    WITH hadIt = theProcs.get(k, f) DO
-      <*ASSERT hadIt*>
-    END;
-    RETURN f
-  END GetFrame;
-
-
-(**********************************************************************)
-
-VAR closureTbl := NEW(TextClosureTbl.Default).init();
-
-PROCEDURE ClosureName(cl : Process.Closure) : TEXT =
-   VAR
-    nm := cl.fr.name & "/" & cl.name;
-  BEGIN
-    RETURN nm
-  END ClosureName;
-  
-PROCEDURE RegisterClosure(cl : Process.Closure) =
-  VAR
-    nm := ClosureName(cl);
-  BEGIN
-    EVAL closureTbl.put(nm, cl)
-  END RegisterClosure;
-
-PROCEDURE RegisterClosures(READONLY cls : ARRAY OF Process.Closure) =
-  BEGIN
-    FOR i := FIRST(cls) TO LAST(cls) DO
-      RegisterClosure(cls[i])
-    END
-  END RegisterClosures;
-
-(**********************************************************************)
-  
-PROCEDURE GetPortTbl() : TextPortTbl.T =
-  BEGIN RETURN theEdges END GetPortTbl;
-
-PROCEDURE RegisterEdge(edge : CspPortObject.T) =
-  BEGIN
-    EVAL theEdges.put(edge.nm, edge)
-  END RegisterEdge;
-
 PROCEDURE Run1(t : T) =
   BEGIN
     (* run *)
@@ -371,7 +294,7 @@ PROCEDURE StartProcesses() =
   VAR
     k : TEXT;
     v : Process.Frame;
-    iter := theProcs.iterate();
+    iter := CspSim.GetProcTbl().iterate();
   BEGIN
     WHILE iter.next(k, v) DO
       v.start()
@@ -383,7 +306,7 @@ PROCEDURE MapRandomly(READONLY sarr : ARRAY OF T) =
     rand := NEW(Random.Default).init(TRUE);
     k : TEXT;
     v : Process.Frame;
-    iter := theProcs.iterate();
+    iter := CspSim.GetProcTbl().iterate();
   BEGIN
     WHILE iter.next(k, v) DO
       WITH q = rand.integer(FIRST(sarr), LAST(sarr)) DO
@@ -397,7 +320,7 @@ PROCEDURE MapRoundRobin(READONLY sarr : ARRAY OF T) =
     q := 0;
     k : TEXT;
     v : Process.Frame;
-    iter := theProcs.iterate();
+    iter := CspSim.GetProcTbl().iterate();
   BEGIN
     WHILE iter.next(k, v) DO
       v.affinity := sarr[q];
