@@ -5,8 +5,14 @@ IMPORT CspCompiledProcess AS Process;
 TYPE
   T <: Public;
 
+  Update <: ROOT;
+
+  ReadUpdate <: Update;
+  WriteUpdate <: Update;
+
   Public = CspPortObject.T  OBJECT
     slack          : (*CONST*) CARDINAL;
+
     writer, reader : (*CONST*) Process.Frame;
 
     width          : (*CONST*) CARDINAL;
@@ -27,6 +33,15 @@ TYPE
 
     clean();
     (* mark surrogate/target linkage clean *)
+
+    (* the following are split versions of the Surrogate ops, for 
+       distributed implementations : *)
+    getReadUpdate() : ReadUpdate;
+    applyReadUpdate(u : ReadUpdate);
+
+    getWriteUpdate() : WriteUpdate;
+    applyWriteUpdate(u : WriteUpdate);
+    
   END;
 
 CONST Brand = "CspChannel";

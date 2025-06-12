@@ -51,6 +51,7 @@ Table     ("TextPort", "Text", "CspPortObject")
 
 Interface ("CspNode")
 Module    ("CspChannel")
+Interface ("CspChannelUpdate")
 Interface ("CspChannelRep") % needs to be VISIBLE
 
 Generic_module ("CspChannelOps")

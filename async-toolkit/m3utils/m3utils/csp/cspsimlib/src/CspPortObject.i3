@@ -9,6 +9,7 @@ INTERFACE CspPortObject;
 TYPE
   T = OBJECT
     nm        : TEXT;
+    id        : CARDINAL;
     surrogate         := FALSE;
   METHODS
     makeSurrogate() : T;

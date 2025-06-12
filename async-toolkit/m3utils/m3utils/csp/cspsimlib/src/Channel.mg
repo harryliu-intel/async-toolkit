@@ -1,7 +1,9 @@
 GENERIC MODULE Channel(Type, CspDebug);
 
 IMPORT CspChannel;
+FROM CspChannel IMPORT ReadUpdate, WriteUpdate;
 IMPORT CspChannelRep;
+FROM CspChannelRep IMPORT End;
 
 IMPORT Debug;
 IMPORT CspCompiledProcess AS Process;
@@ -11,11 +13,12 @@ FROM Fmt IMPORT Int, F, Bool;
 IMPORT DynamicInt;
 IMPORT Mpz;
 IMPORT CspSim;
+IMPORT Word;
 
 CONST sendDebug = CspDebug.DebugSend;
 CONST recvDebug = CspDebug.DebugRecv;
 CONST probDebug = CspDebug.DebugProbe;
-(*CONST seleDebug = CspDebug.DebugSelect;*)
+      (*CONST seleDebug = CspDebug.DebugSelect;*)
 
 TYPE
   Buff     = ARRAY OF Item;         
@@ -26,18 +29,37 @@ REVEAL
     surrog         : Surrogate := NIL;
     dirty          : BOOLEAN;
   OVERRIDES
-    makeSurrogate   := GenericMakeSurrogate;
-    readSurrogate   := ReadSurrogate;
-    clean           := Clean;
+    makeSurrogate    := GenericMakeSurrogate;
+    readSurrogate    := ReadSurrogate;
+    clean            := Clean;
+
+    getReadUpdate    := GetReadUpdate;
+    applyWriteUpdate := ApplyWriteUpdate;
   END;
 
 REVEAL
   (* under all conditions, the "real" channel is held at the receiving end *)
   Surrogate = T BRANDED Brand & " Surrogate" OBJECT
     target : T;
+
+    (* lastPwr:
+
+       pickling for remote -- this is used to keep track of what data
+       has not yet been transferred to the target, so that we may include
+       it in the Update.
+
+       At any given time, what has NOT been pickled is 
+
+       [lastPwr , wr)
+
+    *)
+    
+    lastPwr        : CARDINAL;
   OVERRIDES
-    unmakeSurrogate := GenericUnmakeSurrogate;
-    writeSurrogate  := WriteSurrogate;
+    unmakeSurrogate  := GenericUnmakeSurrogate;
+    writeSurrogate   := WriteSurrogate;
+    getWriteUpdate   := GetWriteUpdate;
+    applyReadUpdate  := ApplyReadUpdate;
   END;
 
 PROCEDURE Clean(t : T) =
@@ -85,7 +107,8 @@ PROCEDURE MakeSurrogate(t : T) : Surrogate =
 
                surrog     := NIL,        (* NIL for Surrogate *)
                
-               target     := t           (* constant during lifetime *)
+               target     := t,          (* constant during lifetime *)
+               lastPwr    := 0           (* private to writing end *)
     );
   BEGIN
     t.surrog := res;
@@ -100,8 +123,9 @@ PROCEDURE WriteSurrogate(s : Surrogate) =
   BEGIN
     (* taking the write-end fields from the surrogate, 
        update them in the target *)
-    t.wr := s.wr;
+    t.wr     := s.wr;
     t.writes := s.writes;
+    
     IF s.waiter.fr = s.writer THEN
       <*ASSERT t.waiter.fr = s.writer OR t.waiter = NIL*>
       t.waiter := s.waiter
@@ -111,6 +135,69 @@ PROCEDURE WriteSurrogate(s : Surrogate) =
       t.selecter := s.selecter
     END
   END WriteSurrogate;
+
+PROCEDURE GetWriteUpdate(s : Surrogate) : WriteUpdate =
+  VAR
+    res := NEW(WriteUpdate,
+               id := s.id,
+               wr := s.wr);
+  BEGIN
+    res.writes := s.writes;
+    IF s.lastPwr # s.wr THEN
+      (* if the write pointer has been changed since last time, we need
+         to take the data that has been written, and copy it into the 
+         Update *)
+      WITH n   = NUMBER(s.data^),
+           beg = s.lastPwr,
+           del = (s.wr - beg) MOD n,
+           wsz = del * NWords,
+           dat = NEW(REF ARRAY OF Word.T, wsz) DO
+        FOR i := 0 TO del - 1 DO
+          SUBARRAY(dat^, i * NWords, NWords) := s.data[(beg + i) MOD n]
+        END;
+
+        res.data := dat
+      END;
+           
+      s.lastPwr := s.wr
+    END;
+    IF s.waiter.fr = s.writer THEN
+      res.waiter := End.Writer
+    ELSE
+      res.waiter := End.Unknown
+    END;
+    IF s.selecter.fr = s.writer THEN
+      res.selecter := End.Writer
+    ELSE
+      res.selecter := End.Unknown
+    END;
+    RETURN res
+  END GetWriteUpdate;
+
+PROCEDURE ApplyWriteUpdate(t : T; u : WriteUpdate) =
+  BEGIN
+    t.wr     := u.wr;
+    t.writes := u.writes;
+
+    WITH n   = NUMBER(t.data^),    (* slack + 1 *)
+         wsz = NUMBER(u.data^),    (* how much data is coming over the wire *)
+         del = wsz DIV NWords,     (* how many items that is *)
+         lim = t.wr,               (* this is the first item not written *)
+         beg = (lim - del) MOD n   (* this is the starting index *)
+     DO
+      FOR i := 0 TO del - 1 DO
+        t.data[(beg + i) MOD n] := SUBARRAY(u.data^, i * NWords, NWords)
+      END
+    END;
+    IF u.waiter = End.Writer THEN
+      <*ASSERT t.waiter.fr = t.writer OR t.waiter = NIL*>
+      t.waiter := t.writer.dummy
+    END;
+    IF u.selecter = End.Writer THEN
+      <*ASSERT t.selecter.fr = t.writer OR t.selecter = NIL*>
+      t.selecter := t.writer.dummy
+    END
+  END ApplyWriteUpdate;
   
 PROCEDURE ReadSurrogate(t : T) =
   VAR
@@ -121,13 +208,45 @@ PROCEDURE ReadSurrogate(t : T) =
     s.rd := t.rd;
     IF t.waiter.fr = t.reader THEN
       <*ASSERT s.waiter.fr = t.reader OR s.waiter = NIL*>
-      t.waiter := s.waiter
+      s.waiter := t.waiter
     END;
     IF t.selecter.fr = t.reader THEN
       <*ASSERT s.selecter.fr = t.reader OR s.selecter = NIL*>
       s.selecter := t.selecter
     END
   END ReadSurrogate;
+
+PROCEDURE GetReadUpdate(t : T) : ReadUpdate =
+  VAR
+    res := NEW(ReadUpdate,
+               id := t.id,
+               rd := t.rd);
+  BEGIN
+    IF t.waiter.fr = t.reader THEN
+      res.waiter := End.Reader
+    ELSE
+      res.waiter := End.Unknown
+    END;
+    IF t.selecter.fr = t.reader THEN
+      res.selecter := End.Reader
+    ELSE
+      res.selecter := End.Unknown
+    END;
+    RETURN res
+  END GetReadUpdate;
+
+PROCEDURE ApplyReadUpdate(s : Surrogate; u : ReadUpdate) =
+  BEGIN
+    s.rd := u.rd;
+    IF u.waiter = End.Reader THEN
+      <*ASSERT s.waiter.fr = s.reader OR s.waiter = NIL*>
+      s.waiter := s.reader.dummy
+    END;
+    IF u.selecter = End.Reader THEN
+      <*ASSERT s.selecter.fr = s.reader OR s.selecter = NIL*>
+      s.selecter := s.reader.dummy
+    END
+  END ApplyReadUpdate;
   
 PROCEDURE UnmakeSurrogate(s : Surrogate) : T =
   VAR
@@ -416,10 +535,11 @@ PROCEDURE ChanDebug(chan : T) : TEXT =
     )
   END ChanDebug;
 
-PROCEDURE New(nm : TEXT; slack : CARDINAL) : Ref =
+PROCEDURE New(nm : TEXT; id, slack : CARDINAL) : Ref =
   BEGIN
     WITH res = NEW(Ref,
                    nm     := nm,
+                   id     := id,
                    width  := Type.Width,
                    slack  := slack,
                    wr     := 0,

@@ -1,6 +1,6 @@
 MODULE CspMaster;
 IMPORT Thread;
-FROM Fmt IMPORT F, Int;
+FROM Fmt IMPORT F, Int, FN;
 IMPORT Debug;
 IMPORT ProcUtils;
 IMPORT Wr;
@@ -12,10 +12,17 @@ IMPORT Lex, FloatMode;
 IMPORT Text;
 FROM CspSimUtils IMPORT ScanIp, FmtIp;
 FROM CspSim IMPORT Builder;
+IMPORT TextCardTbl;
+IMPORT CspSim;
+IMPORT TextPortTbl;
+IMPORT CspPortObject;
+IMPORT CspChannel;
 
 <*FATAL Thread.Alerted*>
 
 CONST TE = Text.Equal;
+
+TYPE TA = ARRAY OF TEXT;
 
 REVEAL
   T = Public BRANDED Brand OBJECT
@@ -24,10 +31,27 @@ REVEAL
     wcl      : REF ARRAY OF Manager;
     bld      : Builder;
     mt       : CARDINAL; (* threads per worker *)
+    procMap  : TextCardTbl.T;
+    portMap  : TextPortTbl.T;
+  METHODS
+    gid2wid(gid : CARDINAL) : CARDINAL := Gid2Wid; (* global to worker *)
+    gid2sid(gid : CARDINAL) : CARDINAL := Gid2Sid; (* global to scheduler *)
   OVERRIDES
     init := Init;
     run  := Run;
   END;
+
+PROCEDURE Gid2Wid(t : T; gid : CARDINAL) : CARDINAL =
+  BEGIN
+    (* LSBs are the thread within the worker *)
+    RETURN gid DIV t.mt
+  END Gid2Wid;
+
+PROCEDURE Gid2Sid(t : T; gid : CARDINAL) : CARDINAL =
+  BEGIN
+    (* LSBs are the thread within the worker *)
+    RETURN gid MOD t.mt
+  END Gid2Sid;
 
 PROCEDURE NextPow2(q : CARDINAL) : CARDINAL =
   VAR
@@ -67,10 +91,10 @@ VAR mu := NEW(MUTEX);
 VAR c  := NEW(Thread.Condition);
 
 TYPE MgrState =
-{ Starting, Ready, InitWorkers, ConnectWorkers };
+{ Starting, Ready, InitWorkers, ConnectWorkers, ParcelOut };
 
 CONST MgrStateNames = ARRAY MgrState OF TEXT 
-{ "Starting", "Ready", "InitWorkers", "ConnectWorkers" };
+{ "Starting", "Ready", "InitWorkers", "ConnectWorkers", "ParcelOut" };
 
 PROCEDURE Run(t : T) =
 
@@ -117,19 +141,47 @@ PROCEDURE Run(t : T) =
     AwaitReady();
 
     Debug.Out("Worker processes ready.");
-    Debug.Out("====================  BUILD PROCESS GRAPH  ====================");
+    Debug.Out("====================  BUILD LOCAL PROCESS GRAPH  ====================");
     
-    t.bld();
+    t.bld(restrict := NIL);
 
     WITH nschedulers = t.mt * t.nworkers DO
-      
+      t.procMap := AssignSchedulers(t);
     END;
+    t.portMap := CspSim.GetPortTbl();
     
+    SetState(MgrState.ParcelOut);
+    
+    AwaitReady();
+
     LOOP
       Thread.Pause(0.1d0)
     END
   END Run;
+  
+PROCEDURE AssignSchedulers(t : T) : TextCardTbl.T =
+  VAR
+    seq     := CspSim.GetProcSeq();
+    procMap := NEW(TextCardTbl.Default).init();
+  BEGIN
+    FOR i := 0 TO seq.size() - 1 DO
+      WITH fr  = seq.get(i),
+           wid = i MOD t.nworkers,
+           sid = (i DIV t.nworkers) MOD t.mt,
+           gid = wid * t.mt + sid DO
+        Debug.Out(F("AssignSchedulers :  %s to scheduler %s",
+                    fr.name,
+                    Int(gid)));
+        EVAL procMap.put(fr.name, gid)
+      END
+    END;
+    RETURN procMap
+  END AssignSchedulers;
 
+PROCEDURE ParcelOut(procMap : TextCardTbl.T) =
+  BEGIN
+  END ParcelOut;
+  
 CONST Delims = " ";
 
 PROCEDURE MgrApply(mgr : Manager) : REFANY =
@@ -165,6 +217,65 @@ PROCEDURE MgrApply(mgr : Manager) : REFANY =
       
       Wr.Flush(wr)
     END DoConnectWorkers;
+
+  PROCEDURE DoParcelOut() =
+    VAR
+      iter := mgr.t.procMap.iterate();
+      k : TEXT;
+      v : CARDINAL;
+    BEGIN
+      Wr.PutText(wr, F("BEGINPROCS\n"));
+      WHILE iter.next(k, v) DO
+        IF mgr.t.gid2wid(v) = mgr.id THEN
+          Wr.PutText(wr, F("SCHEDULE %s %s\n", Int(mgr.t.gid2sid(v)), k))
+        END
+      END;
+      Wr.PutText(wr, F("ENDPROCS\n"));
+      Wr.Flush(wr)
+    END DoParcelOut;
+    
+  PROCEDURE DoTouchedEdges() =
+    VAR
+      iter := mgr.t.portMap.iterate();
+      k : TEXT;
+      v : CspPortObject.T;
+    BEGIN
+      (* here we list all the channels that touch any of the processes 
+         assigned to our worker *)
+      Wr.PutText(wr, F("BEGINEDGES\n"));
+      WHILE iter.next(k, v) DO
+        TYPECASE v OF
+          CspChannel.T(chan) =>
+          VAR
+            wrs, rds : CARDINAL; (* scheduler IDs of ends of channel *)
+          BEGIN
+            WITH hadIt = mgr.t.procMap.get(chan.writer.name, wrs) DO
+              <*ASSERT hadIt*>
+            END;
+            WITH hadIt = mgr.t.procMap.get(chan.reader.name, rds) DO
+              <*ASSERT hadIt*>
+            END;
+            
+            IF mgr.t.gid2wid(rds) = mgr.id OR mgr.t.gid2wid(wrs) = mgr.id THEN
+              Wr.PutText(wr, FN("CHANNEL %s %s %s %s %s %s\n",
+                                TA{
+              Int(chan.id),
+              chan.nm,
+              chan.writer.name, Int(wrs),
+              chan.writer.name, Int(rds)
+              }))
+            END
+          END
+
+          (* need to repeat the same for a node *)
+          
+        ELSE
+          (* skip *)
+        END
+      END;
+      Wr.PutText(wr, F("ENDEDGES\n"));
+      Wr.Flush(wr)
+    END DoTouchedEdges;
 
   PROCEDURE SetMyselfReady() =
     BEGIN
@@ -232,6 +343,11 @@ PROCEDURE MgrApply(mgr : Manager) : REFANY =
         |
           MgrState.ConnectWorkers =>
           DoConnectWorkers();
+          SetMyselfReady()
+        |
+          MgrState.ParcelOut =>
+          DoParcelOut();
+          DoTouchedEdges();
           SetMyselfReady()
         ELSE
           Debug.Error(F("manager %s : unexpected state %s",

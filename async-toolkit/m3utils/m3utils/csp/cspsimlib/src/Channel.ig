@@ -51,7 +51,7 @@ PROCEDURE RecvDynamic(         c : T;
 
 PROCEDURE ChanDebug(chan : T) : TEXT;
 
-PROCEDURE New(nm : TEXT; slack : CARDINAL := 0) : Ref;
+PROCEDURE New(nm : TEXT; id : CARDINAL; slack : CARDINAL := 0) : Ref;
 
 (* the following could ACTUALLY be moved out of here. *)
 CONST Lock   = CspChannelOps.Lock;
@@ -69,4 +69,6 @@ PROCEDURE WriteSurrogate (s : Surrogate);      (* update surrogate from writer *
 PROCEDURE ReadSurrogate  (t : T);              (* update surrogate from reader *)
 PROCEDURE UnmakeSurrogate(s : Surrogate) : T;  (* destroy surrogate            *)
 
+
+  
 END Channel.

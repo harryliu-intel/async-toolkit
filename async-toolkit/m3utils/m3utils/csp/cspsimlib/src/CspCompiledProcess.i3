@@ -8,6 +8,8 @@ TYPE
     typeName  : TEXT;
     id        : CARDINAL;
     affinity  : CspScheduler.T;
+    dummy     : Closure; (* a dummy closure that's not really executable,
+                            but points back to this Frame *)
   METHODS
     start(); (* schedule start block to run *)
   END;
@@ -23,6 +25,8 @@ TYPE
   METHODS
     run();
   END;
+
+  DummyClosure = Closure BRANDED Brand & " Dummy Closure" OBJECT END;
 
 CONST Brand = "CspCompiledProcess";
 

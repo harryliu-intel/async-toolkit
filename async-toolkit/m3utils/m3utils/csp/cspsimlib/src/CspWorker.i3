@@ -1,12 +1,13 @@
 INTERFACE CspWorker;
 IMPORT IP;
 IMPORT Thread;
+IMPORT CspSim;
 
 TYPE
   T <: Public;
 
   Public = OBJECT METHODS
-    init(id : CARDINAL) : T;
+    init(id : CARDINAL; bld : CspSim.Builder) : T;
     getEp() : IP.Endpoint;
     getThread() : Thread.T;
     awaitInitialization();

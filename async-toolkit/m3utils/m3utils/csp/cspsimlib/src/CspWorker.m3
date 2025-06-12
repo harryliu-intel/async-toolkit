@@ -12,6 +12,10 @@ IMPORT TextReader;
 IMPORT Scan;
 IMPORT FloatMode, Lex;
 IMPORT Text;
+IMPORT TextSet, TextSetDef;
+IMPORT TextCardTbl;
+IMPORT CspSim;
+IMPORT TextRefTbl;
 
 <*FATAL Thread.Alerted*>
 
@@ -22,14 +26,18 @@ CONST TE = Text.Equal;
 
 REVEAL
   T = Public BRANDED Brand OBJECT
-    conn     : TCP.Connector;
-    ep       : IP.Endpoint;
-    listener : Thread.T; (* listen for incoming connections *)
-    manager  : Thread.T; (* handle incoming commands from master *)
-    mu       : MUTEX;
-    id       : CARDINAL;
-    peers    : REF ARRAY OF Peer;
-    nthreads : CARDINAL;
+    conn        : TCP.Connector;
+    ep          : IP.Endpoint;
+    listener    : Thread.T; (* listen for incoming connections *)
+    manager     : Thread.T; (* handle incoming commands from master *)
+    mu          : MUTEX;
+    c           : Thread.Condition;
+    id          : CARDINAL;
+    peers       : REF ARRAY OF Peer;
+    nthreads    : CARDINAL;
+    initialized : BOOLEAN;
+    myprocs     : TextCardTbl.T;
+    bld         : CspSim.Builder;
   OVERRIDES
     init                := Init;
     getEp               := GetEp;
@@ -48,23 +56,31 @@ PROCEDURE GetThread(t : T) : Thread.T =
     RETURN t.manager
   END GetThread;
 
-PROCEDURE Init(t : T; id : CARDINAL) : T =
+PROCEDURE Init(t : T; id : CARDINAL; bld : CspSim.Builder) : T =
   BEGIN
     Debug.Out(F("CspWorker.Init(id = %s)", Int(id)));
     WITH nullEp = IP.Endpoint { IP.NullAddress, IP.NullPort } DO
       t.conn := TCP.NewConnector(nullEp)
     END;
-    t.ep       := TCP.GetEndPoint(t.conn);
-    t.mu       := NEW(MUTEX);
-    t.id       := id;
-    t.listener := Thread.Fork(NEW(Listener, t := t, apply := ListenApply)); 
-    t.manager  := Thread.Fork(NEW(Listener, t := t, apply := CommandApply));
+    t.initialized := FALSE;
+    t.ep          := TCP.GetEndPoint(t.conn);
+    t.mu          := NEW(MUTEX);
+    t.c           := NEW(Thread.Condition);
+    t.id          := id;
+    t.listener    := Thread.Fork(NEW(Listener, t := t, apply := ListenApply)); 
+    t.manager     := Thread.Fork(NEW(Listener, t := t, apply := CommandApply));
+    t.myprocs     := NEW(TextCardTbl.Default).init();
+    t.bld         := bld;
+    
     Wr.PutText(Stdio.stdout,
                FN("WORKER %s %s %s\n",
                   TA{Int(t.id),
                      FmtIp(t.ep.addr),
-                     Int(t.ep.port)} )   );
+                     Int(t.ep.port)
+    } )   );
+
     Wr.Flush(Stdio.stdout);
+    
     RETURN t
   END Init;
 
@@ -94,14 +110,25 @@ VAR mu := NEW(MUTEX);
 CONST Delims = " ";
       
 PROCEDURE CommandApply(listener : Listener) : REFANY =
+
+  PROCEDURE Line() : TextReader.T =
+    BEGIN
+      WITH line =  Rd.GetLine(Stdio.stdin) DO
+        Debug.Out(F("CspWorker.Manager %s got \"%s\"",
+                    Int(listener.t.id),
+                    line));
+        RETURN NEW(TextReader.T).init(line)
+      END
+    END Line;
+
+  VAR
+    myprocnames := NEW(TextSetDef.T).init();
+    mychans     := NEW(TextRefTbl.Default).init();
   BEGIN
     LOOP
-      WITH t    = listener.t,
-           line = Rd.GetLine(Stdio.stdin) DO
-        Debug.Out(F("CspWorker.Manager %s got \"%s\"", Int(listener.t.id), line));
-
-        WITH reader = NEW(TextReader.T).init(line),
-             kw     = reader.nextE(Delims, TRUE) DO
+      WITH t      = listener.t,
+           reader = Line(),
+           kw     = reader.nextE(Delims, TRUE) DO
           IF    TE(kw, "NPEERS") THEN
             WITH n = reader.getInt() DO
               t.peers := NEW(REF ARRAY OF Peer, n)
@@ -126,6 +153,55 @@ PROCEDURE CommandApply(listener : Listener) : REFANY =
                 t.peers[id].ep := ep
               END
             END(*HTIW*)
+          ELSIF TE(kw, "BEGINPROCS") THEN
+            LOOP
+              WITH reader = Line(),
+                   kw     = reader.nextE(Delims, TRUE) DO
+                IF    TE(kw, "SCHEDULE") THEN
+                  WITH sid = Scan.Int(reader.nextE(Delims, TRUE)),
+                       pnm = reader.nextE("", TRUE) DO
+                    EVAL listener.t.myprocs.put(pnm, sid);
+                    EVAL myprocnames.insert(pnm)
+                  END
+                ELSIF TE(kw, "ENDPROCS") THEN
+                  EXIT
+                ELSE
+                  <*ASSERT FALSE*>
+                END
+              END
+            END
+          ELSIF TE(kw, "BEGINEDGES") THEN
+            LOOP
+              WITH reader = Line(),
+                   kw     = reader.nextE(Delims, TRUE) DO
+                IF    TE(kw, "CHANNEL") THEN
+                  WITH cnm  = reader.nextE(Delims, TRUE),
+                       cid  = Scan.Int(reader.nextE(Delims, TRUE)),
+                       wrnm = reader.nextE(Delims, TRUE),
+                       wrs  = Scan.Int(reader.nextE(Delims, TRUE)),
+                       rdnm = reader.nextE(Delims, TRUE),
+                       rds  = Scan.Int(reader.nextE(Delims, TRUE)),
+
+                       rc   = NEW(RemoteChannel,
+                                  nm   := cnm,
+                                  id   := cid,
+                                  wrnm := wrnm, wrs := wrs,
+                                  rdnm := rdnm, rds := rds) DO
+                    EVAL mychans.put(cnm, rc)
+                  END
+                ELSIF TE(kw, "ENDEDGES") THEN
+                  EXIT
+                ELSE
+                  <*ASSERT FALSE*>
+                END
+              END
+            END
+          ELSIF TE(kw, "BUILD") THEN
+            Debug.Out(
+                F("====================  BUILD WORKER %s PROCESS GRAPH  ====================", Int(t.id)));
+            
+            t.bld(myprocnames)
+            
           ELSIF TE(kw, "CONNECT") THEN
             FOR i := t.id + 1 TO LAST(t.peers^) DO
               WITH  tcp  = TCP.Connect(t.peers[i].ep),
@@ -138,12 +214,25 @@ PROCEDURE CommandApply(listener : Listener) : REFANY =
                 Wr.PutText(w.wr, F("HELLOIAM %s\n", Int(t.id)));
                 Wr.Flush(w.wr)
               END                
+            END;(* ROF *)
+            LOCK t.mu DO
+              t.initialized := TRUE;
+              Thread.Signal(t.c)
             END
           END
         END
-      END
     END
   END CommandApply;
+
+TYPE
+  RemoteChannel = OBJECT
+    nm   : TEXT;
+    id   : CARDINAL;
+    wrnm : TEXT;
+    wrs  : CARDINAL;
+    rdnm : TEXT;
+    rds  : CARDINAL;
+  END;
 
 PROCEDURE ListenApply(listener : Listener) : REFANY =
   BEGIN
@@ -183,6 +272,11 @@ PROCEDURE WorkerApply(worker : Worker) : REFANY =
 
 PROCEDURE AwaitInitialization(t : T) =
   BEGIN
+    LOCK t.mu DO
+      WHILE NOT t.initialized DO
+        Thread.Wait(t.mu, t.c)
+      END
+    END
   END AwaitInitialization;
   
 BEGIN END CspWorker.

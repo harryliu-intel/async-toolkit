@@ -212,8 +212,9 @@ PROCEDURE DefBinding(def    : CspPort.Channel;
   
 PROCEDURE GenBuilder(t : T; builderName : TEXT; defSlack : CARDINAL) : TEXT =
 
-  VAR chanTbl := NEW(TextAtomTbl.Default).init();
+  VAR chanTbl   := NEW(TextAtomTbl.Default).init();
       chanTypes := NEW(TextSetDef.T).init();
+      cid       := 0;
       
   PROCEDURE ExtractChannelInfo() =
     (* this takes all the channels mentioned in the .procs file and
@@ -315,12 +316,14 @@ PROCEDURE GenBuilder(t : T; builderName : TEXT; defSlack : CARDINAL) : TEXT =
     BEGIN
       WHILE iter.next(cname, ctype) DO
         P(F(
-                           "    %s := %s.New(\"%s\", slack := %s);\n",
+                           "    %s := %s.New(\"%s\", id := %s, slack := %s);\n",
                            M3Ident.Escape(cname),
                            Atom.ToText(ctype),
                            cname,
+                           Int(cid),
                            Int(defSlack))
-        )
+        );
+        INC(cid)
 
       END
       
@@ -331,7 +334,8 @@ PROCEDURE GenBuilder(t : T; builderName : TEXT; defSlack : CARDINAL) : TEXT =
       FOR i := 0 TO t.insts.size() - 1 DO
         WITH inst = NARROW(t.insts.get(i), REF Instance)^ DO
           P(F(
-                "    EVAL m3__%s.Build(\"%s\" \n",
+                "    IF restrict = NIL OR restrict.member(\"%s\") THEN\n" &
+                "      EVAL m3__%s.Build(\"%s\" \n",
                 (* 
                    this is a hack!
                    we need to map the names the same way that Java
@@ -344,6 +348,7 @@ PROCEDURE GenBuilder(t : T; builderName : TEXT; defSlack : CARDINAL) : TEXT =
                    But for now, we are just guessing!
                 *)
 
+                             inst.ptypeE,
                              inst.ptypeE,
                              inst.name) (* the name should NOT be escaped *)
           );
@@ -391,7 +396,7 @@ PROCEDURE GenBuilder(t : T; builderName : TEXT; defSlack : CARDINAL) : TEXT =
               (* now hook up the Node ports too *)
               
               Wx.PutText(wx,
-                         "    );\n"                     
+                         "    )\n  END;\n"                     
               )
             END;
             
@@ -407,7 +412,7 @@ PROCEDURE GenBuilder(t : T; builderName : TEXT; defSlack : CARDINAL) : TEXT =
     ExtractChannelInfo();
     WriteImports();
 
-    P(F("\n\nPROCEDURE %s() =\n", builderName));
+    P(F("\n\nPROCEDURE %s(restrict : TextSet.T := NIL) =\n", builderName));
     P(F("  VAR\n"));
     WriteChannelCreation();
     P(F("  BEGIN\n"));

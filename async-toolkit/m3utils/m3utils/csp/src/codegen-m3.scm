@@ -912,6 +912,7 @@
   
     (w "      ) DO" dnl
        dnl
+       "frame.dummy := NEW(Closure, name := \"**DUMMY**\", frameId := frame.id, fr := frame);" dnl
        "CspSim.RegisterProcess(frame);" dnl
        dnl)
 
@@ -4018,6 +4019,7 @@
     (mw "IMPORT CspSim;" dnl)
     (mw "IMPORT CspWorker;" dnl)
     (mw "IMPORT CspMaster;" dnl)
+    (mw "IMPORT TextSet;" dnl)
 
     (mw dnl)
 
@@ -4090,8 +4092,9 @@
     (mw "  (********************  BUILD THE SIMULATION  ********************)" dnl)
     (mw "" dnl)
     (mw "  IF    worker THEN" dnl)
-    (mw "    theWorker := NEW(CspWorker.T).init(id := workerId);" dnl)
-    (mw "    theWorker.awaitInitialization()" dnl)
+    (mw "    theWorker := NEW(CspWorker.T).init(id := workerId, bld := BuildSimulation);" dnl)
+    (mw "    theWorker.awaitInitialization();" dnl)
+    (mw "    Scheduler.SchedulingLoop(mt, greedy, nondet, theWorker)" dnl)
     (mw "  ELSIF master THEN" dnl)
     (mw "    NEW(CspMaster.T).init(nworkers := nworkers," dnl
         "                          bld      := BuildSimulation," dnl
@@ -4110,7 +4113,7 @@
     (mw "        Scheme.E(err) => Debug.Error(\"Caught Scheme.E : \" & err)" dnl)
     (mw "      END" dnl)
     (mw "    ELSE" dnl)
-    (mw "      Scheduler.SchedulingLoop(mt, greedy, nondet, theWorker)" dnl)
+    (mw "      Scheduler.SchedulingLoop(mt, greedy, nondet, NIL)" dnl)
     (mw "    END" dnl)
     (mw "  END;" dnl)
     (mw "" dnl) 

@@ -76,7 +76,7 @@ VAR AllSchedulers : Set;
 PROCEDURE ReadDirty(targ : CspChannel.T; cl : Process.Closure) =
   VAR
     t   : T := cl.fr.affinity;
-    tgt : T := targ.writer.affinity; (* target (remote) scheduler *)
+    tgt : T := targ.writer.affinity; (* target (other) scheduler *)
     tgtId   := tgt.id;               (* target scheduler's id *)
   BEGIN
     IF t.nrp[tgtId] > LAST(t.rdirty[tgtId]^) THEN
@@ -92,7 +92,7 @@ PROCEDURE ReadDirty(targ : CspChannel.T; cl : Process.Closure) =
 PROCEDURE WriteDirty(surr : CspChannel.T; cl : Process.Closure) =
   VAR
     t   : T := cl.fr.affinity;
-    tgt : T := surr.writer.affinity; (* target (remote) scheduler *)
+    tgt : T := surr.writer.affinity; (* target (other) scheduler *)
     tgtId   := tgt.id;               (* target scheduler's id *)
   BEGIN
     IF t.nwp[tgtId] > LAST(t.wdirty[tgtId]^) THEN
@@ -262,6 +262,10 @@ VAR theScheduler : T;
     
 PROCEDURE Run(mt : CARDINAL; greedy, nondet : BOOLEAN; worker : CspWorker.T) =
   BEGIN
+    IF worker # NIL AND mt = 0 THEN
+      mt := 1
+    END;
+    
     IF mt = 0 THEN
       theScheduler := NEW(T,
                           id     := 0,
@@ -273,8 +277,15 @@ PROCEDURE Run(mt : CARDINAL; greedy, nondet : BOOLEAN; worker : CspWorker.T) =
       MapRandomly(ARRAY OF T { theScheduler });
       StartProcesses();
       Run1(theScheduler)
+    ELSIF worker # NIL THEN
+      Debug.Out("Scheduler.Run : worker");
+      LOOP
+        (* here we should do some work *)
+        Thread.Pause(1.0d0)
+      END
     ELSE
-      CreateMulti(mt);
+      schedulers := NEW(REF ARRAY OF T, mt);
+      CreateMulti(schedulers^);
       MapRoundRobin(schedulers^);
       StartProcesses();
       IF nondet THEN
@@ -643,14 +654,14 @@ PROCEDURE Apply(cl : SchedClosure) : REFANY =
     
   PROCEDURE UpdateSurrogatesFrom(i : LocalId) =
     BEGIN
-      WITH remote = NARROW(schedulers[i],T) DO
-        FOR w := 0 TO remote.nwp[myId] - 1 DO
-          WITH surrogate = remote.wdirty[myId][w] DO
+      WITH other = NARROW(schedulers[i],T) DO
+        FOR w := 0 TO other.nwp[myId] - 1 DO
+          WITH surrogate = other.wdirty[myId][w] DO
             surrogate.writeSurrogate()
           END
         END;
-        FOR r := 0 TO remote.nrp[myId] - 1 DO
-          WITH target = remote.rdirty[myId][r] DO
+        FOR r := 0 TO other.nrp[myId] - 1 DO
+          WITH target = other.rdirty[myId][r] DO
             target.readSurrogate()
           END
         END
@@ -836,7 +847,7 @@ PROCEDURE FmtSet(READONLY set : Set) : TEXT =
     RETURN Wx.ToText(wx)
   END FmtSet;
   
-PROCEDURE CreateMulti(n : CARDINAL) =
+PROCEDURE CreateMulti(VAR sarr : ARRAY OF T) =
   (* create n schedulers *)
 
   PROCEDURE NewChanArray() : REF ARRAY OF REF ARRAY OF CspChannel.T =
@@ -858,17 +869,17 @@ PROCEDURE CreateMulti(n : CARDINAL) =
       END;
       RETURN res
     END NewCardArray;
-    
+
+  VAR
+    n := NUMBER(sarr);
   BEGIN
     IF doDebug THEN
       Debug.Out(F("Creating %s schedulers", Int(n)))
     END;
     
-    schedulers := NEW(REF ARRAY OF T, n);
-
     AllSchedulers := Set { };
     
-    FOR i := FIRST(schedulers^) TO LAST(schedulers^) DO
+    FOR i := FIRST(sarr) TO LAST(sarr) DO
       AllSchedulers := AllSchedulers + Set { i };
       
       WITH new = NEW(T,
@@ -890,12 +901,12 @@ PROCEDURE CreateMulti(n : CARDINAL) =
                      
                      thePhase := InitPhase
                      ) DO
-        schedulers[i] := new;
+        sarr[i] := new;
 
-        new.commOutbox := NEW(REF ARRAY OF ClosureSeq.T, n);
-        new.waitOutbox := NEW(REF ARRAY OF ClosureSeq.T, n);
+        new.commOutbox := NEW(REF ARRAY OF ClosureSeq.T, n + 1);
+        new.waitOutbox := NEW(REF ARRAY OF ClosureSeq.T, n + 1);
 
-        FOR j := FIRST(schedulers^) TO LAST(schedulers^) DO
+        FOR j := 0 TO n + 1 - 1  DO
           new.commOutbox[j] := NEW(ClosureSeq.T).init();
           new.waitOutbox[j] := NEW(ClosureSeq.T).init()
         END;

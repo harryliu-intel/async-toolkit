@@ -4,8 +4,9 @@ IMPORT CspPortObject;
 IMPORT TextFrameTbl;
 IMPORT TextPortTbl;
 IMPORT CspFrameSeq AS FrameSeq;
+IMPORT TextSet;
 
-TYPE Builder = PROCEDURE();
+TYPE Builder = PROCEDURE(restrict : TextSet.T);
 
 CONST Brand = "CspSim";
 
