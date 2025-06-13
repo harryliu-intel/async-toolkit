@@ -24,5 +24,15 @@ PROCEDURE random_native(bits : NativeInt.T) : NativeInt.T;
 PROCEDURE random_dynamic(x : DynamicInt.T; bits : NativeInt.T) : DynamicInt.T;
 
 CONST random_wide = random_dynamic;
+
+TYPE
+  Putter = OBJECT
+  METHODS
+    put(str : CspString.T);
+  END;
+  
+PROCEDURE GetPutter() : Putter;
+  
+PROCEDURE SetPutter(putter : Putter);
   
 END CspIntrinsics.

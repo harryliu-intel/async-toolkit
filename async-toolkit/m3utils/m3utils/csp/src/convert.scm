@@ -10,8 +10,18 @@
     seq
     (CspAst.StructureDeclaration ident (seq '*m3*))
     )
-    
   )
+
+(define (force-boolean x)
+  (cond ((and (= *bigtc* (rttype-typecode x))
+              (BigInt.Equal *bigm1* x))
+         #t)
+
+        ((and (= *bigtc* (rttype-typecode x))
+              (BigInt.Equal *big0* x))
+         #f)
+
+        (else x)))
 
 (define (convert-field-decl fd)
   (let ((fn   (cadadr fd))
@@ -150,11 +160,10 @@
 
                             (let* ((guard (car gc)) ;; convert -1 to #t
                                    (expr-guess 
-                                    (convert-expr guard)))
-                              (if (and (= *bigtc* (rttype-typecode guard))
-                                       (BigInt.Equal *bigm1* guard))
-                                  (CspAst.BooleanExpr #t)
-                                  expr-guess))
+                                    (convert-expr (force-boolean guard))))
+                              expr-guess
+                              )
+                            
                             
                             (convert-stmt (cadr gc) s))))
                     args)

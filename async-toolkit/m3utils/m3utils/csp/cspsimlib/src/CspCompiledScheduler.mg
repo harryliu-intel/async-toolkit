@@ -279,6 +279,14 @@ PROCEDURE Run(mt : CARDINAL; greedy, nondet : BOOLEAN; worker : CspWorker.T) =
       Run1(theScheduler)
     ELSIF worker # NIL THEN
       Debug.Out("Scheduler.Run : worker");
+      schedulers := NEW(REF ARRAY OF T, mt);
+
+      CreateMulti(schedulers^);
+      
+      RunNondet(schedulers^, greedy);
+
+      Debug.Out("Scheduler.Run : DONE");
+
       LOOP
         (* here we should do some work *)
         Thread.Pause(1.0d0)
@@ -289,9 +297,9 @@ PROCEDURE Run(mt : CARDINAL; greedy, nondet : BOOLEAN; worker : CspWorker.T) =
       MapRoundRobin(schedulers^);
       StartProcesses();
       IF nondet THEN
-        RunNondet (schedulers^, greedy)
+        RunNondet(schedulers^, greedy)
       ELSE
-        RunMulti(schedulers^, greedy)
+        RunMulti (schedulers^, greedy)
       END
     END
   END Run;
@@ -419,8 +427,7 @@ CONST
 
   };
 
-PROCEDURE GetIdle(READONLY schedulers : ARRAY OF T;
-                  VAR      idle       : Set) =
+PROCEDURE GetIdle(VAR      idle       : Set) =
   (* wait until at least one scheduler is idle, and add all idle schedulers
      to idle set, draining the idleQ *)
   BEGIN
@@ -438,14 +445,12 @@ PROCEDURE GetIdle(READONLY schedulers : ARRAY OF T;
           IF doDebug THEN
             Debug.Out("GetIdle : " & Int(idler))
           END
-
         END
       END
     END
   END GetIdle;
   
-PROCEDURE AwaitIdle(READONLY schedulers : ARRAY OF T;
-                    READONLY subset     : Set) =
+PROCEDURE AwaitIdle(READONLY subset     : Set) =
   VAR
     idleSet    :=  Set {};
     notForMe := NEW(CardSeq.T).init();
@@ -553,7 +558,7 @@ PROCEDURE RunMulti(READONLY schedulers : ARRAY OF T; greedy : BOOLEAN) =
         ReleaseLocks(schedulers, AllSchedulers)
       END;
       SignalThreads(schedulers, AllSchedulers);
-      AwaitIdle(schedulers, AllSchedulers)
+      AwaitIdle(AllSchedulers)
     END RunPhase;
 
   PROCEDURE UpdateTime() =
@@ -986,7 +991,7 @@ PROCEDURE RunNondet(READONLY schedulers : ARRAY OF T; greedy : BOOLEAN) =
         ReleaseLocks(schedulers, idle)
       END;
       SignalThreads(schedulers, idle);
-      AwaitIdle(schedulers, idle)
+      AwaitIdle(idle)
     END RunPhase;
 
   PROCEDURE StartActivePhase() =
@@ -1084,7 +1089,7 @@ PROCEDURE RunNondet(READONLY schedulers : ARRAY OF T; greedy : BOOLEAN) =
 
       INC(iter);
 
-      GetIdle(schedulers, idle);
+      GetIdle(idle);
 
       IF doDebug THEN
         Debug.Out("After GetIdle : idle schedulers : " & FmtSet(idle))

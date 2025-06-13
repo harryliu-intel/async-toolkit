@@ -168,12 +168,17 @@ define WORKER
       int(W) num = 2 * idx + 1;       // this is the actual number we shall work on
       int(W) len = 0;
       int    snum = num;
+      int    newval;
       
       // do the Collatz loop -- see below for assembly
       *[ num != 1 ->
-         [  odd(num)  -> num = 3 * num + 1
-         [] even(num) -> num = num / 2
+         [  odd(num)  -> newval = 3 * num + 1
+         [] even(num) -> newval = num / 2
          ];
+         num = newval;
+
+         assert(num == newval, "overflow!");
+         
          len++
        ]
       ;

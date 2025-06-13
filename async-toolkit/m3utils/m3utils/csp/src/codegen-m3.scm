@@ -2675,10 +2675,16 @@
        )
 
       ((assert)
-       (sa "CspIntrinsics.assert("
-           (m3-compile-value pc 'x (caddr expr))
-           ","
-           "\"" (stringify expr) "\")")
+       (let ((message
+              (if (null? (cdddr expr))
+                  (CitTextUtils.MakeM3Literal (stringify expr))
+                  (m3-compile-print-value pc (cadddr expr)))))
+         (sa "CspIntrinsics.assert("
+             (m3-compile-value pc 'x (force-boolean (caddr expr)))
+             ", "
+             message
+             ")")
+         )
        )
            
       ((walltime simtime)

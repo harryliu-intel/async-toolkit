@@ -476,4 +476,36 @@ PROCEDURE FormatInfixArr(READONLY seq : ARRAY OF TEXT;
     RETURN Wx.ToText(wx)
   END FormatInfixArr;
 
+PROCEDURE MakeM3Literal(of : TEXT) : TEXT =
+
+  CONST DQ = '"';
+  CONST BS = '\\';
+  
+  PROCEDURE Put(c : CHAR) =
+    BEGIN
+      arr[p] := c;
+      INC(p)
+    END Put;
+    
+  VAR
+    n   := Text.Length(of);
+    arr := NEW(REF ARRAY OF CHAR, n * 2 + 2);
+    p   := 0;
+  BEGIN
+    Put(DQ);
+    FOR i := 0 TO n - 1 DO
+      WITH c = Text.GetChar(of, i) DO
+        CASE c OF
+          DQ => Put(BS); Put(DQ)
+        |
+          BS => Put(BS); Put(BS)
+        ELSE
+          Put(c)
+        END
+      END
+    END;
+    Put(DQ);
+    RETURN Text.FromChars(SUBARRAY(arr^, 0, p))
+  END MakeM3Literal;
+  
 BEGIN END CitTextUtils.

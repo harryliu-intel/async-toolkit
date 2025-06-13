@@ -1,5 +1,4 @@
 MODULE CspIntrinsics;
-IMPORT IO;
 FROM CspScheduler IMPORT GetTime;
 IMPORT CspCompiledProcess AS Process;
 FROM CspCompiledProcess IMPORT Frame;
@@ -14,15 +13,31 @@ IMPORT DynamicInt;
 IMPORT Debug;
 IMPORT Random;
 IMPORT Word;
+IMPORT Wr;
+IMPORT Stdio;
+IMPORT Thread;
 
+<*FATAL Thread.Alerted*>
+
+PROCEDURE DefaultPut(<*UNUSED*>self : Putter; str : CspString.T) =
+  BEGIN
+    Wr.PutText(Stdio.stdout, str)
+  END DefaultPut;
+
+VAR putstring : Putter := NEW(Putter, put := DefaultPut);
+    
 PROCEDURE print(frame : Process.Frame; str : CspString.T) : BOOLEAN =
   BEGIN
-    IO.Put(F("%s: %s: %s\n",
-             Unsigned(GetTime(), base := 10),
-             frame.name,
-             str));
+    putstring.put(F("%s: %s: %s\n",
+                    Unsigned(GetTime(), base := 10),
+                    frame.name,
+                    str));
     RETURN TRUE
   END print;
+
+PROCEDURE GetPutter() : Putter = BEGIN RETURN putstring END GetPutter;
+
+PROCEDURE SetPutter(putter : Putter) = BEGIN putstring := putter END SetPutter;
   
 PROCEDURE string_native(<*UNUSED*>frame  : Frame;
                         num              : NativeInt.T;

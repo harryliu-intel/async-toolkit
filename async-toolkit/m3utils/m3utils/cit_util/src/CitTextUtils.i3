@@ -119,4 +119,7 @@ PROCEDURE FormatInfix(seq : TextSeq.T; operator : TEXT) : TEXT;
 PROCEDURE FormatInfixArr(READONLY arr : ARRAY OF TEXT; operator : TEXT) : TEXT;
   (* same, for an array *)
 
+PROCEDURE MakeM3Literal(of : TEXT) : TEXT;
+  (* put in double quotes and escape anything dubious *)
+
 END CitTextUtils.

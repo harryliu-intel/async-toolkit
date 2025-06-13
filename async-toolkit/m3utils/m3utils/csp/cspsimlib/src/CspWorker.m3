@@ -175,8 +175,8 @@ PROCEDURE CommandApply(listener : Listener) : REFANY =
               WITH reader = Line(),
                    kw     = reader.nextE(Delims, TRUE) DO
                 IF    TE(kw, "CHANNEL") THEN
-                  WITH cnm  = reader.nextE(Delims, TRUE),
-                       cid  = Scan.Int(reader.nextE(Delims, TRUE)),
+                  WITH cid  = Scan.Int(reader.nextE(Delims, TRUE)),
+                       cnm  = reader.nextE(Delims, TRUE),
                        wrnm = reader.nextE(Delims, TRUE),
                        wrs  = Scan.Int(reader.nextE(Delims, TRUE)),
                        rdnm = reader.nextE(Delims, TRUE),
