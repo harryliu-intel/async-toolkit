@@ -12,9 +12,9 @@
 ;; May, 2025
 ;;
 
-;;(define *default-slack* 1)
+(define *default-slack* 1)
 ;;(define *default-slack* (* 100 1000))
-(define *default-slack* 1000)
+;;(define *default-slack* 1000)
 ;; we should get slack from the CSP source code, but for now we don't,
 ;; so we do it this way
 
@@ -786,20 +786,32 @@
          (m3id      (m3-ident id))
          (is-array  (array-port? port-def))
          )
+    (define construct-operation
+      (lambda(txt)
+        (let ((res
+               (case whch
+                 ((writer)         (sa txt ".markWriter(frame)"))
+                 ((reader)         (sa txt ".markReader(frame)"))
+                 ((surrogate)
+                  (sa txt " := CspChannel.CheckSurrogate("txt " , frame)"))
+                 (else (error)))))
+                  res)
+        )
+      )
 
     (if is-array
         (let ((dims (array-dims (get-port-channel port-def))))
           (dis "dims : " dims dnl)
+          (dis "whch : " whch dnl)
           (w (m3-initialize-array
-           (lambda(txt) (sa txt "." whch " := frame" dnl))
-           m3id
+              construct-operation
+              (sa "frame." m3id)
            dims
            'mark_rw
            ))
           )
-        
-        (w m3id "." whch " := frame" dnl)
 
+        (w (construct-operation (sa "frame." m3id)) dnl)
         )
 
         (w     ";"       dnl)
@@ -807,10 +819,14 @@
   )
 
 (define (m3-mark-reader w pc id)
-  (m3-mark-reader-writer "reader" w pc id))
+  (m3-mark-reader-writer 'reader w pc id))
 
 (define (m3-mark-writer w pc id)
-  (m3-mark-reader-writer "writer" w pc id))
+  (m3-mark-reader-writer 'writer w pc id))
+
+(define (m3-check-surrogate w pc id)
+  (m3-mark-reader-writer 'surrogate w pc id))
+  
 
 (define (get-port-channel pdef)
    (cadddr pdef))
@@ -872,10 +888,23 @@
     )
   )
 
-(define (m3-write-start-defn w cell-info the-blocks)
+(define (m3-write-start-defn w cell-info the-blocks pc)
   (m3-write-start-signature w cell-info)
   (w " = " dnl)
   (w "  BEGIN" dnl)
+
+  ;;
+  ;; here we need to insert CheckSurrogate for each Channel
+  ;;
+
+  (let* ((proc-ports (get-ports cell-info))
+         (iw (indent-writer w "     "))
+         (chanlist (filter channel-port? proc-ports))
+         (ids      (map get-port-id chanlist)))
+    (map (curry m3-check-surrogate iw pc) ids
+         )
+    (w dnl))
+  
   (w "    Scheduler.Schedule(frame." (m3-ident (cadar the-blocks))"_Cl)" dnl)
   (w "  END Start;" dnl
      dnl
@@ -1052,6 +1081,7 @@
   (w "<*NOWARN*>IMPORT NativeInt AS NativeIntOps, DynamicInt AS DynamicIntOps;" dnl)
   (w "<*NOWARN*>IMPORT Word;" dnl)
   (w "<*NOWARN*>IMPORT Text;" dnl)
+  (w "<*NOWARN*>IMPORT CspChannel;" dnl)
   (map (lambda(intf)(w "IMPORT " intf ";" dnl))
        (map format-intf-name intfs))
   )
@@ -3740,7 +3770,7 @@
                                 *the-arr-tbl*
                                 pc)
       (m3-write-start-defn      modu
-                                cell-info the-exec-blocks)
+                                cell-info the-exec-blocks pc)
       (m3-write-blocks          modu the-exec-blocks pc)
 
       (map modu

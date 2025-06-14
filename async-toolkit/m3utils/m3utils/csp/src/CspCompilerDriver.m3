@@ -348,7 +348,7 @@ PROCEDURE GenBuilder(t : T; builderName : TEXT; defSlack : CARDINAL) : TEXT =
                    But for now, we are just guessing!
                 *)
 
-                             inst.ptypeE,
+                             inst.name,
                              inst.ptypeE,
                              inst.name) (* the name should NOT be escaped *)
           );

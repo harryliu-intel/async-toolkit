@@ -26,32 +26,15 @@ TYPE TA = ARRAY OF TEXT;
 
 REVEAL
   T = Public BRANDED Brand OBJECT
-    nworkers : CARDINAL;
     cmd      : TEXT;
     wcl      : REF ARRAY OF Manager;
     bld      : Builder;
-    mt       : CARDINAL; (* threads per worker *)
     procMap  : TextCardTbl.T;
     portMap  : TextPortTbl.T;
-  METHODS
-    gid2wid(gid : CARDINAL) : CARDINAL := Gid2Wid; (* global to worker *)
-    gid2sid(gid : CARDINAL) : CARDINAL := Gid2Sid; (* global to scheduler *)
   OVERRIDES
     init := Init;
     run  := Run;
   END;
-
-PROCEDURE Gid2Wid(t : T; gid : CARDINAL) : CARDINAL =
-  BEGIN
-    (* LSBs are the thread within the worker *)
-    RETURN gid DIV t.mt
-  END Gid2Wid;
-
-PROCEDURE Gid2Sid(t : T; gid : CARDINAL) : CARDINAL =
-  BEGIN
-    (* LSBs are the thread within the worker *)
-    RETURN gid MOD t.mt
-  END Gid2Sid;
 
 PROCEDURE NextPow2(q : CARDINAL) : CARDINAL =
   VAR
@@ -178,21 +161,32 @@ PROCEDURE AssignSchedulers(t : T) : TextCardTbl.T =
     RETURN procMap
   END AssignSchedulers;
 
-PROCEDURE ParcelOut(procMap : TextCardTbl.T) =
-  BEGIN
-  END ParcelOut;
-  
 CONST Delims = " ";
 
 PROCEDURE MgrApply(mgr : Manager) : REFANY =
 
+  PROCEDURE Send(str : TEXT) =
+    BEGIN
+      Debug.Out(F("MgrApply %s, send : %s", Int(mgr.id), str));
+
+      Thread.Pause(0.1d0); (* slow it down a bit for debug *)
+      
+      Wr.PutText(wr, str);
+      Wr.PutChar(wr, '\n')
+    END Send;
+
+  PROCEDURE Flush() =
+    BEGIN
+      Wr.Flush(wr)
+    END Flush;
+    
   PROCEDURE DoInitWorkers() =
     BEGIN
       Debug.Out(F("MgrApply(%s).DoInitWorkers", Int(mgr.id)));
 
-      Wr.PutText(wr, F("NTHREADS %s\n", Int(mgr.t.mt)));
-      Wr.PutText(wr, F("NPEERS %s\n", Int(NUMBER(mgr.t.wcl^))));
-      Wr.Flush(wr);
+      Send(F("NTHREADS %s", Int(mgr.t.mt)));
+      Send(F("NPEERS %s", Int(NUMBER(mgr.t.wcl^))));
+      Flush();
 
       WITH line   = Rd.GetLine(rd),
            reader = NEW(TextReader.T).init(line),
@@ -206,16 +200,16 @@ PROCEDURE MgrApply(mgr : Manager) : REFANY =
     BEGIN
       FOR i := FIRST(mgr.t.wcl^) TO LAST(mgr.t.wcl^) DO
         WITH peerMgr = mgr.t.wcl[i] DO
-          Wr.PutText(wr, F("PEER %s %s %s\n",
+          Send(F("PEER %s %s %s",
                            Int(i),
                            FmtIp(peerMgr.ep.addr),
                            Int(peerMgr.ep.port)))
         END
       END;
 
-      Wr.PutText(wr, F("CONNECT\n"));
+      Send(F("CONNECT"));
       
-      Wr.Flush(wr)
+      Flush()
     END DoConnectWorkers;
 
   PROCEDURE DoParcelOut() =
@@ -224,14 +218,14 @@ PROCEDURE MgrApply(mgr : Manager) : REFANY =
       k : TEXT;
       v : CARDINAL;
     BEGIN
-      Wr.PutText(wr, F("BEGINPROCS\n"));
+      Send(F("BEGINPROCS"));
       WHILE iter.next(k, v) DO
         IF mgr.t.gid2wid(v) = mgr.id THEN
-          Wr.PutText(wr, F("SCHEDULE %s %s\n", Int(mgr.t.gid2sid(v)), k))
+          Send(F("SCHEDULE %s %s", Int(mgr.t.gid2sid(v)), k))
         END
       END;
-      Wr.PutText(wr, F("ENDPROCS\n"));
-      Wr.Flush(wr)
+      Send(F("ENDPROCS"));
+      Flush()
     END DoParcelOut;
     
   PROCEDURE DoTouchedEdges() =
@@ -242,7 +236,7 @@ PROCEDURE MgrApply(mgr : Manager) : REFANY =
     BEGIN
       (* here we list all the channels that touch any of the processes 
          assigned to our worker *)
-      Wr.PutText(wr, F("BEGINEDGES\n"));
+      Send(F("BEGINEDGES"));
       WHILE iter.next(k, v) DO
         TYPECASE v OF
           CspChannel.T(chan) =>
@@ -257,12 +251,12 @@ PROCEDURE MgrApply(mgr : Manager) : REFANY =
             END;
             
             IF mgr.t.gid2wid(rds) = mgr.id OR mgr.t.gid2wid(wrs) = mgr.id THEN
-              Wr.PutText(wr, FN("CHANNEL %s %s %s %s %s %s\n",
+              Send(FN("CHANNEL %s %s %s %s %s %s %s %s",
                                 TA{
               Int(chan.id),
               chan.nm,
-              chan.writer.name, Int(wrs),
-              chan.writer.name, Int(rds)
+              chan.writer.name, Int(chan.writer.id), Int(wrs),
+              chan.reader.name, Int(chan.reader.id), Int(rds)
               }))
             END
           END
@@ -273,9 +267,15 @@ PROCEDURE MgrApply(mgr : Manager) : REFANY =
           (* skip *)
         END
       END;
-      Wr.PutText(wr, F("ENDEDGES\n"));
-      Wr.Flush(wr)
+      Send(F("ENDEDGES"));
+      Flush()
     END DoTouchedEdges;
+
+  PROCEDURE DoCommandBuild() =
+    BEGIN
+      Send("BUILD");
+      Flush()
+    END DoCommandBuild;
 
   PROCEDURE SetMyselfReady() =
     BEGIN
@@ -348,6 +348,7 @@ PROCEDURE MgrApply(mgr : Manager) : REFANY =
           MgrState.ParcelOut =>
           DoParcelOut();
           DoTouchedEdges();
+          DoCommandBuild();
           SetMyselfReady()
         ELSE
           Debug.Error(F("manager %s : unexpected state %s",

@@ -1,4 +1,5 @@
 INTERFACE CspPortObject;
+IMPORT CspFrame;
 
 (* 
    generic "thing" that is a port.
@@ -13,6 +14,9 @@ TYPE
     surrogate         := FALSE;
   METHODS
     makeSurrogate() : T;
+
+    markWriter(frame : CspFrame.T);
+    markReader(frame : CspFrame.T);
   END;
 
 CONST Brand = "CspPortObject";

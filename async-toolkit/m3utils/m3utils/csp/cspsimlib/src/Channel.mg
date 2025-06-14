@@ -9,7 +9,7 @@ IMPORT Debug;
 IMPORT CspCompiledProcess AS Process;
 FROM CspCompiledProcess IMPORT DebugClosure;
 IMPORT CspCompiledScheduler1 AS Scheduler;
-FROM Fmt IMPORT Int, F, Bool;
+FROM Fmt IMPORT Int, F, Bool, FN;
 IMPORT DynamicInt;
 IMPORT Mpz;
 IMPORT CspSim;
@@ -21,7 +21,8 @@ CONST probDebug = CspDebug.DebugProbe;
       (*CONST seleDebug = CspDebug.DebugSelect;*)
 
 TYPE
-  Buff     = ARRAY OF Item;         
+  Buff     = ARRAY OF Item;
+  TA       = ARRAY OF TEXT;
 
 REVEAL
   T = CspChannel.T BRANDED Brand OBJECT
@@ -35,6 +36,10 @@ REVEAL
 
     getReadUpdate    := GetReadUpdate;
     applyWriteUpdate := ApplyWriteUpdate;
+
+    markWriter       := MarkWriter;
+    markReader       := MarkReader;
+    isSurrogate      := ReturnFalse;
   END;
 
 REVEAL
@@ -60,14 +65,29 @@ REVEAL
     writeSurrogate   := WriteSurrogate;
     getWriteUpdate   := GetWriteUpdate;
     applyReadUpdate  := ApplyReadUpdate;
+    isSurrogate      := ReturnTrue;
   END;
 
+PROCEDURE ReturnFalse(<*UNUSED*>t : T) : BOOLEAN =
+  BEGIN RETURN FALSE END ReturnFalse;
+  
+PROCEDURE ReturnTrue(<*UNUSED*>t : T) : BOOLEAN =
+  BEGIN RETURN TRUE END ReturnTrue;
+  
 PROCEDURE Clean(t : T) =
-  BEGIN
-    t.dirty        := FALSE
-  END Clean;
+  BEGIN t.dirty        := FALSE END Clean;
   
   (**********************************************************************)
+
+PROCEDURE MarkWriter(t : T; frame : Process.Frame) =
+  BEGIN
+    t.writer := frame
+  END MarkWriter;
+
+PROCEDURE MarkReader(t : T; frame : Process.Frame) =
+  BEGIN
+    t.reader := frame
+  END MarkReader;
 
 PROCEDURE GenericMakeSurrogate(t : T) : CspChannel.T =
   BEGIN
@@ -108,14 +128,22 @@ PROCEDURE MakeSurrogate(t : T) : Surrogate =
                surrog     := NIL,        (* NIL for Surrogate *)
                
                target     := t,          (* constant during lifetime *)
-               lastPwr    := 0           (* private to writing end *)
+               lastPwr    := 0,          (* private to writing end *)
+               data       := t.data      (* share data on same machine *)
     );
   BEGIN
     t.surrog := res;
     RETURN res
   END MakeSurrogate;
 
-  (* updating routines in both direction s*)
+  (* updating routines in both direction s
+    
+     I think the trickiest part is if the waiter or selecter is NIL.
+
+     Then what?  
+
+     How do we propagate the NIL-ing of the waiter and selecter?
+  *)
 
 PROCEDURE WriteSurrogate(s : Surrogate) =
   VAR
@@ -126,11 +154,11 @@ PROCEDURE WriteSurrogate(s : Surrogate) =
     t.wr     := s.wr;
     t.writes := s.writes;
     
-    IF s.waiter.fr = s.writer THEN
+    IF s.waiter # NIL AND s.waiter.fr = s.writer THEN
       <*ASSERT t.waiter.fr = s.writer OR t.waiter = NIL*>
       t.waiter := s.waiter
     END;
-    IF s.selecter.fr = s.writer THEN
+    IF s.selecter # NIL AND s.selecter.fr = s.writer THEN
       <*ASSERT t.selecter.fr = s.writer OR t.selecter = NIL*>
       t.selecter := s.selecter
     END
@@ -206,11 +234,11 @@ PROCEDURE ReadSurrogate(t : T) =
     (* taking the write-end fields from the target, 
        update them in the surrogate *)
     s.rd := t.rd;
-    IF t.waiter.fr = t.reader THEN
+    IF t.waiter # NIL AND t.waiter.fr = t.reader THEN
       <*ASSERT s.waiter.fr = t.reader OR s.waiter = NIL*>
       s.waiter := t.waiter
     END;
-    IF t.selecter.fr = t.reader THEN
+    IF t.selecter # NIL AND t.selecter.fr = t.reader THEN
       <*ASSERT s.selecter.fr = t.reader OR s.selecter = NIL*>
       s.selecter := t.selecter
     END
@@ -526,12 +554,14 @@ PROCEDURE ChanDebug(chan : T) : TEXT =
       Debug.Error("Interloper waiting on channel : " & chan.waiter.fr.name)
     END;
     
-    RETURN F("chan \"%s\" wr=%s rd=%s waiter=%s full=%s",
-             chan.nm,
-             Int(chan.wr),
-             Int(chan.rd),
-             waiterStr,
-             Bool(Full(chan))
+    RETURN FN("chan \"%s\" surrogate=%s wr=%s rd=%s waiter=%s full=%s",
+              TA {chan.nm,
+                  Bool(chan.surrogate),
+                  Int(chan.wr),
+                  Int(chan.rd),
+                  waiterStr,
+                  Bool(Full(chan))
+    }
     )
   END ChanDebug;
 
@@ -545,6 +575,8 @@ PROCEDURE New(nm : TEXT; id, slack : CARDINAL) : Ref =
                    wr     := 0,
                    writes := 0,
                    rd     := slack,
+                   writer := NIL,
+                   reader := NIL,
                    data   := NEW(REF Buff, slack + 1)) DO
       CspSim.RegisterEdge(res);
       RETURN res

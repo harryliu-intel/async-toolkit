@@ -12,6 +12,9 @@ IMPORT CardSeq;
 IMPORT Wx;
 IMPORT CspSim;
 IMPORT CspWorker;
+IMPORT TextCardTbl;
+IMPORT CspRemoteChannel;
+IMPORT CspPortObject;
 
 CONST doDebug = CspDebug.DebugSchedule;
 
@@ -79,6 +82,9 @@ PROCEDURE ReadDirty(targ : CspChannel.T; cl : Process.Closure) =
     tgt : T := targ.writer.affinity; (* target (other) scheduler *)
     tgtId   := tgt.id;               (* target scheduler's id *)
   BEGIN
+    IF doDebug THEN
+      Debug.Out("ReadDirty target : " & targ.nm)
+    END;
     IF t.nrp[tgtId] > LAST(t.rdirty[tgtId]^) THEN
       WITH new = NEW(REF ARRAY OF CspChannel.T, NUMBER(t.rdirty[tgtId]^) * 2) DO
         SUBARRAY(new^, 0, NUMBER(t.rdirty[tgtId]^)) := t.rdirty[tgtId]^;
@@ -95,6 +101,9 @@ PROCEDURE WriteDirty(surr : CspChannel.T; cl : Process.Closure) =
     tgt : T := surr.writer.affinity; (* target (other) scheduler *)
     tgtId   := tgt.id;               (* target scheduler's id *)
   BEGIN
+    IF doDebug THEN
+      Debug.Out("WriteDirty surrogate : " & surr.nm)
+    END;
     IF t.nwp[tgtId] > LAST(t.wdirty[tgtId]^) THEN
       WITH new = NEW(REF ARRAY OF CspChannel.T, NUMBER(t.wdirty[tgtId]^) * 2) DO
         SUBARRAY(new^, 0, NUMBER(t.wdirty[tgtId]^)) := t.wdirty[tgtId]^;
@@ -259,7 +268,81 @@ PROCEDURE Run1(t : T) =
 
 VAR theScheduler : T;
     (* when running a single scheduler *)
+
+PROCEDURE ConfigureRemoteChannels(READONLY sarr : ARRAY OF T;
+                                  worker        : CspWorker.T) =
+
+  PROCEDURE GetChannel() : CspChannel.T =
+    VAR
+      po : CspPortObject.T;
+    BEGIN
+      WITH hadIt = cTbl.get(k, po) DO
+        <*ASSERT hadIt*>
+        RETURN po
+      END
+    END GetChannel;
     
+  VAR
+    cTbl  := CspSim.GetPortTbl();
+    cdTbl := worker.getChannelData();
+    iter  := cdTbl.iterate();
+    myWid := worker.getId();
+    k  : TEXT;
+    cd : CspRemoteChannel.T;
+  BEGIN
+    WHILE iter.next(k, cd) DO
+      Debug.Out(F("Worker %s : configuring remote channel %s (%s) wrs=%s rds=%s",
+                  Int(myWid),
+                  cd.nm, Int(cd.id),
+                  Int(cd.wrs),
+                  Int(cd.rds)));
+      WITH wwid = worker.gid2wid(cd.wrs),
+           rwid = worker.gid2wid(cd.rds) DO
+        IF    wwid = myWid AND rwid # myWid THEN
+          (* remote is read, I am write *)
+          WITH chan = GetChannel() DO
+            chan.reader := NewReaderFrame(cd, rwid)
+          END
+        ELSIF rwid = myWid AND wwid # myWid THEN
+          (* remote is write, I am read *)
+          WITH chan = GetChannel() DO
+            chan.writer := NewWriterFrame(cd, wwid)
+          END
+        END
+      END
+    END
+  END ConfigureRemoteChannels;
+
+TYPE
+  RemoteFrame = Process.Frame OBJECT
+    tgts   : CARDINAL; (* global id of tgt scheduler *)
+    tgtw   : CARDINAL; (* worker id of tgt *)
+  END;
+    
+PROCEDURE NewReaderFrame(cd : CspRemoteChannel.T;
+                         rwid : CARDINAL) : Process.Frame =
+  VAR
+    res := NEW(RemoteFrame, id := cd.rdid, tgts := cd.wrs, tgtw := rwid);
+  BEGIN
+    res.dummy := NEW(Process.Closure,
+                     name    := "**REMOTE-READER-DUMMY**",
+                     frameId := cd.rdid,
+                     fr      := res);
+    RETURN res
+  END NewReaderFrame;
+  
+PROCEDURE NewWriterFrame(cd : CspRemoteChannel.T;
+                         wwid : CARDINAL) : Process.Frame =
+  VAR
+    res := NEW(RemoteFrame, id := cd.wrid, tgts := cd.rds, tgtw := wwid);
+  BEGIN
+    res.dummy := NEW(Process.Closure,
+                     name    := "**REMOTE-WRITER-DUMMY**",
+                     frameId := cd.wrid,
+                     fr      := res);
+    RETURN res
+  END NewWriterFrame;
+  
 PROCEDURE Run(mt : CARDINAL; greedy, nondet : BOOLEAN; worker : CspWorker.T) =
   BEGIN
     IF worker # NIL AND mt = 0 THEN
@@ -278,13 +361,25 @@ PROCEDURE Run(mt : CARDINAL; greedy, nondet : BOOLEAN; worker : CspWorker.T) =
       StartProcesses();
       Run1(theScheduler)
     ELSIF worker # NIL THEN
-      Debug.Out("Scheduler.Run : worker");
+      Debug.Out("Scheduler.Run : worker wait");
+      worker.awaitInitialization();
+      Thread.Pause(2.0d0);
+      Debug.Out("Scheduler.Run : worker run");
+      
       schedulers := NEW(REF ARRAY OF T, mt);
 
       CreateMulti(schedulers^);
-      
-      RunNondet(schedulers^, greedy);
 
+      WITH map = worker.getProcMap() DO
+        MapPerMap(schedulers^, map)
+      END;
+
+      ConfigureRemoteChannels(schedulers^, worker);
+      
+      Debug.Out("Scheduler.Run : starting processes");
+      StartProcesses();
+
+      RunNondet(schedulers^, greedy);
       Debug.Out("Scheduler.Run : DONE");
 
       LOOP
@@ -342,6 +437,23 @@ PROCEDURE MapRoundRobin(READONLY sarr : ARRAY OF T) =
       END
     END
   END MapRoundRobin;
+    
+PROCEDURE MapPerMap(READONLY sarr : ARRAY OF T; map : TextCardTbl.T) =
+  VAR
+    seq := CspSim.GetProcSeq();
+    sid : CARDINAL;
+  BEGIN
+    FOR i := 0 TO seq.size() - 1 DO
+      WITH v     = seq.get(i),
+           hadIt = map.get(v.name, sid) DO
+        <*ASSERT hadIt*>
+        IF doDebug THEN
+          Debug.Out(F("MapPerMap : mapping %s -> %s", v.name, Int(sid)))
+        END;
+        v.affinity := sarr[sid]
+      END
+    END
+  END MapPerMap;
     
 (**********************************************************************)
 

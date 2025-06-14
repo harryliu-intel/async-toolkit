@@ -1,10 +1,11 @@
 INTERFACE CspMaster;
 IMPORT CspSim;
+IMPORT CspRemote;
 
 TYPE
   T <: Public;
 
-  Public = OBJECT METHODS
+  Public = CspRemote.T OBJECT METHODS
     init(nworkers : CARDINAL;
          cmd      : TEXT;
          bld      : CspSim.Builder;

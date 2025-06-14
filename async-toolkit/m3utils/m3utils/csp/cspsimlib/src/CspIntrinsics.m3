@@ -21,7 +21,8 @@ IMPORT Thread;
 
 PROCEDURE DefaultPut(<*UNUSED*>self : Putter; str : CspString.T) =
   BEGIN
-    Wr.PutText(Stdio.stdout, str)
+    Wr.PutText(Stdio.stdout, str);
+    Wr.Flush(Stdio.stdout)
   END DefaultPut;
 
 VAR putstring : Putter := NEW(Putter, put := DefaultPut);

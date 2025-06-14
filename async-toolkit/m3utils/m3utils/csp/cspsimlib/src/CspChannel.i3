@@ -22,6 +22,8 @@ TYPE
     makeSurrogate() : T;
     (* make a surrogate *)
 
+    isSurrogate() : BOOLEAN;
+
     unmakeSurrogate() : T;
     (* remove surrogate and return the target *)
     
@@ -41,8 +43,12 @@ TYPE
 
     getWriteUpdate() : WriteUpdate;
     applyWriteUpdate(u : WriteUpdate);
-    
+
   END;
+
+PROCEDURE CheckSurrogate(VALUE c : T; fr : Process.Frame) : T;
+  (* if fr is the sender, c has a surrogate, and c is not the 
+     surrogate, overwrite c with the surrogate *)
 
 CONST Brand = "CspChannel";
 

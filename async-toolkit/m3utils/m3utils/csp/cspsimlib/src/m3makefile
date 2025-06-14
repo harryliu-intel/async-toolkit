@@ -62,6 +62,7 @@ Table("TextCspPortSeq", "Text", "CspPortSeq")
 
 Module ("CspSim")
 
+Module ("CspRemote")
 Module ("CspWorker")
 Module ("CspMaster")
 Module ("CspSimUtils")
@@ -69,6 +70,10 @@ Module ("CspSimUtils")
 Generic_module ("WideIntOps")
 Generic_module ("NarrowIntOps")
 template("intops")
+
+Interface ("CspRemoteChannel")
+
+Table ("TextRemoteChannel", "Text", "CspRemoteChannel")
 
 library ("cspsimlib")
 
