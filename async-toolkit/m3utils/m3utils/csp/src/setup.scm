@@ -135,6 +135,9 @@
 (dis "  ===  TO RUN COMPILER: " dnl)
 (dis "  ===  (loaddata! <csp-prefix>)" dnl)
 (dis "  ===  (compile!)" dnl)
+(dis dnl)
+(dis "  ===  TO BUILD A PROCESS GRAPH: " dnl)
+(dis "  ===  (drive! <procs-prefix>)" dnl)
 (dis dnl dnl dnl)
 
 
