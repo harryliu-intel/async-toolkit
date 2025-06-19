@@ -467,7 +467,7 @@ public final class Cast2Cdl {
                                  final boolean ignoreUnimpl)
     throws IOException {
         outputCDL(cell, castParser, emitter, cadencizer, inline_layout,
-                  sortNetlist, handleVerilog, exitOnError, false,
+                  sortNetlist, handleVerilog, exitOnError, ignoreUnimpl,
                   false);
     }
 
