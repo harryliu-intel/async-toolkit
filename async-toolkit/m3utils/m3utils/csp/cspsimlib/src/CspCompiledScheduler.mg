@@ -2,7 +2,7 @@ GENERIC MODULE CspCompiledScheduler(CspDebug);
 IMPORT CspCompiledProcess AS Process;
 IMPORT Word;
 FROM Fmt IMPORT Int, F, Bool;
-IMPORT Debug;
+IMPORT Debug; FROM Debug IMPORT UnNil;
 IMPORT CspClosureSeq AS ClosureSeq;
 IMPORT CspChannel;
 IMPORT Random;
@@ -102,7 +102,7 @@ PROCEDURE WriteDirty(surr : CspChannel.T; cl : Process.Closure) =
     tgtId   := tgt.id;               (* target scheduler's id *)
   BEGIN
     IF doDebug THEN
-      Debug.Out("WriteDirty surrogate : " & surr.nm)
+      Debug.Out("WriteDirty surrogate : " & UnNil(surr.nm))
     END;
     IF t.nwp[tgtId] > LAST(t.wdirty[tgtId]^) THEN
       WITH new = NEW(REF ARRAY OF CspChannel.T, NUMBER(t.wdirty[tgtId]^) * 2) DO

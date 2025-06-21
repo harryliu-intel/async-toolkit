@@ -29,6 +29,10 @@ TYPE
     
     waiter         : Process.Closure;
     (*
+      Must not be NIL, use special Nil singletons instead.
+
+      Points to either a waiting Closure, or to one of the special Nils.
+
       the protocol rules for the waiter are as follows:
 
       I. the waiter is set (assigned) only to a closure of the process 
@@ -47,6 +51,10 @@ TYPE
 
     selecter       : Process.Closure;
     (* 
+       Must not be NIL, use special Nil singletons instead.
+
+       Points to either a waiting Closure, or to one of the special Nils.
+
        the protocol rules for selecter are more lenient than for 
        waiter.
 
@@ -100,6 +108,6 @@ REVEAL
 TYPE
   Update = CspChannel.Update;
   
-  End = { None, Reader, Writer, Unknown };
+  End = { None, Reader, Writer, ReaderNil, WriterNil, Unknown };
   
 END CspChannelRep.

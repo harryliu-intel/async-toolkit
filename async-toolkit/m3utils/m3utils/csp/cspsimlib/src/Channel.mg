@@ -5,7 +5,7 @@ FROM CspChannel IMPORT ReadUpdate, WriteUpdate;
 IMPORT CspChannelRep;
 FROM CspChannelRep IMPORT End;
 
-IMPORT Debug;
+IMPORT Debug; FROM Debug IMPORT UnNil;
 IMPORT CspCompiledProcess AS Process;
 FROM CspCompiledProcess IMPORT DebugClosure;
 IMPORT CspCompiledScheduler1 AS Scheduler;
@@ -101,10 +101,19 @@ PROCEDURE GenericUnmakeSurrogate(s : Surrogate) : CspChannel.T =
 
   (**********************************************************************)
 
+VAR
+  ReaderNil := NEW(Process.Closure, name := "**READER-NIL("&Brand&")**"); 
+  WriterNil := NEW(Process.Closure, name := "**WRITER-NIL("&Brand&")**"); 
+  InitiaNil := NEW(Process.Closure, name := "**INITIA-NIL("&Brand&")**");
+  
 PROCEDURE MakeSurrogate(t : T) : Surrogate =
   (* making a surrogate is easy: simply duplicate the state *)
   VAR
     res := NEW(Surrogate,
+
+               nm         := t.nm,
+               id         := t.id,
+               
                surrogate  := TRUE,       (* constant during lifetime *)
 
                slack      := t.slack,    (* constant during lifetime *)
@@ -117,8 +126,8 @@ PROCEDURE MakeSurrogate(t : T) : Surrogate =
                writes     := t.writes,   (* owned by writing end *)
                rd         := t.rd,       (* owned by reading end *)
  
-               waiter     := NIL,        (* shared *)
-               selecter   := NIL,        (* shared *)
+               waiter     := NIL,        (* shared *) (* fix *)
+               selecter   := NIL,        (* shared *) (* fix *)
                
                lockwr     := t.lockwr,   (* private to each end *)
                lockrd     := t.lockrd,   (* private to each end *)
@@ -314,9 +323,10 @@ PROCEDURE Send(         c : T;
     <*ASSERT c.surrog = NIL*>  (* if there is a surrogate, use that! *)
     (* the buffer is always big enough to write into 
        (it's one bigger than the slack)  *)
+    <*ASSERT cl # NIL*>
     IF sendDebug THEN
       Debug.Out(F("%s : %s Send called : %s",
-                  DebugClosure(cl), c.nm,
+                  DebugClosure(cl), UnNil(c.nm),
                   ChanDebug(c)))
     END;
     
@@ -346,7 +356,7 @@ PROCEDURE Send(         c : T;
 
       IF c.waiter = NIL THEN
         IF sendDebug THEN
-          Debug.Out(F("%s : %s Send wait", DebugClosure(cl), c.nm))
+          Debug.Out(F("%s : %s Send wait", DebugClosure(cl), UnNil(c.nm)))
         END;
         
         <*ASSERT c.waiter = NIL OR c.waiter = cl*>
@@ -397,7 +407,7 @@ PROCEDURE Send(         c : T;
 
       IF sendDebug THEN
           Debug.Out(F("%s : %s Send go : %s",
-                      DebugClosure(cl), c.nm, 
+                      DebugClosure(cl), UnNil(c.nm), 
                       ChanDebug(c)))
       END;
 
@@ -544,6 +554,10 @@ PROCEDURE ChanDebug(chan : T) : TEXT =
   VAR
     waiterStr : TEXT;
   BEGIN
+    IF chan = NIL THEN
+      RETURN "**ChanDebug(NIL)**"
+    END;
+    
     IF chan.waiter = NIL THEN
       waiterStr := "NIL"
     ELSIF chan.waiter.frameId = chan.writer.id THEN
@@ -555,7 +569,7 @@ PROCEDURE ChanDebug(chan : T) : TEXT =
     END;
     
     RETURN FN("chan \"%s\" surrogate=%s wr=%s rd=%s waiter=%s full=%s",
-              TA {chan.nm,
+              TA {UnNil(chan.nm),
                   Bool(chan.surrogate),
                   Int(chan.wr),
                   Int(chan.rd),
