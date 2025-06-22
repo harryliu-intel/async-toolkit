@@ -109,7 +109,7 @@ at-intel.done:
 	touch at-intel.done
 
 nanosimrd.done:
-	cd spice/fsdb/src ; ./compile
+	cd spice/fsdb/src ; ./compile || true
 	touch nanosimrd.done
 
 std: .top ships m3subs
