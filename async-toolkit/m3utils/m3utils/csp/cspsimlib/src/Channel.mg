@@ -203,11 +203,11 @@ PROCEDURE WriteSurrogate(s : Surrogate) =
     t.wr     := s.wr;
     t.writes := s.writes;
     
-    IF NOT IsNilClosure(s.waiter) AND s.waiter.fr = s.writer THEN
+    IF s.waiter = WriterNil OR s.waiter.fr = s.writer THEN
       <*ASSERT t.waiter.fr = s.writer OR IsNilClosure(t.waiter)*>
       t.waiter := s.waiter
     END;
-    IF NOT IsNilClosure(s.selecter) AND s.selecter.fr = s.writer THEN
+    IF s.selecter = WriterNil OR s.selecter.fr = s.writer THEN
       <*ASSERT t.selecter.fr = s.writer OR IsNilClosure(t.selecter) *>
       t.selecter := s.selecter
     END
@@ -291,11 +291,11 @@ PROCEDURE ReadSurrogate(t : T) =
     (* taking the write-end fields from the target, 
        update them in the surrogate *)
     s.rd := t.rd;
-    IF NOT IsNilClosure(t.waiter) AND t.waiter.fr = t.reader THEN
+    IF t.waiter = ReaderNil OR t.waiter.fr = t.reader THEN
       <*ASSERT s.waiter.fr = t.reader OR IsNilClosure(s.waiter)*>
       s.waiter := t.waiter
     END;
-    IF NOT IsNilClosure(t.selecter) AND t.selecter.fr = t.reader THEN
+    IF t.selecter = ReaderNil OR t.selecter.fr = t.reader THEN
       <*ASSERT s.selecter.fr = t.reader OR IsNilClosure(s.selecter)*>
       s.selecter := t.selecter
     END
