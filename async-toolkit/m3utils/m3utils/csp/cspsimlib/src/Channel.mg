@@ -104,6 +104,27 @@ PROCEDURE GenericUnmakeSurrogate(s : Surrogate) : CspChannel.T =
 
   (**********************************************************************)
 
+  (* here we have the various "nils" supported by the endpoints.
+
+     In a single thread, we could just make all these NIL.
+
+     But in multiple threads, we sometimes need to track which end of
+     a channel set the waiter or selecter to NIL so that we know when
+     to send this information to the scheduler on the other end of the
+     channel.
+
+     Note that in a complex system, we will have many different "nils":
+     each channel type implies three different ones, and each address
+     space makes another set of copies.  In a distributed implementation,
+     we can't use local pointers to communicate since those have no meaning
+     outside of their native address space, and we instead convert all
+     the Closures to instances of type CspChannelRep.End.
+
+     The fact that each channel type has a different set of Nils is not
+     used for any real purpose except debugging.  Certainly if they get
+     mixed up, something is very wrong somewhere.
+  *)
+  
 VAR
   ReaderNil := NEW(Process.Closure, name := "**READER-NIL("&Brand&")**"); 
   WriterNil := NEW(Process.Closure, name := "**WRITER-NIL("&Brand&")**"); 
@@ -217,12 +238,16 @@ PROCEDURE GetWriteUpdate(s : Surrogate) : WriteUpdate =
            
       s.lastPwr := s.wr
     END;
-    IF s.waiter.fr = s.writer THEN
+    IF    s.waiter = WriterNil THEN
+      res.waiter := End.WriterNil
+    ELSIF s.waiter.fr = s.writer THEN
       res.waiter := End.Writer
     ELSE
       res.waiter := End.Unknown
     END;
-    IF s.selecter.fr = s.writer THEN
+    IF s.selecter = WriterNil THEN
+      res.selecter := End.WriterNil
+    ELSIF s.selecter.fr = s.writer THEN
       res.selecter := End.Writer
     ELSE
       res.selecter := End.Unknown
@@ -248,10 +273,14 @@ PROCEDURE ApplyWriteUpdate(t : T; u : WriteUpdate) =
     IF u.waiter = End.Writer THEN
       <*ASSERT t.waiter.fr = t.writer OR IsNilClosure(t.waiter)*>
       t.waiter := t.writer.dummy
+    ELSIF u.waiter = End.WriterNil THEN
+      t.waiter := WriterNil
     END;
     IF u.selecter = End.Writer THEN
       <*ASSERT t.selecter.fr = t.writer OR IsNilClosure(t.selecter) *>
       t.selecter := t.writer.dummy
+    ELSIF u.selecter = End.WriterNil THEN
+      t.selecter := WriterNil
     END
   END ApplyWriteUpdate;
   
@@ -278,12 +307,15 @@ PROCEDURE GetReadUpdate(t : T) : ReadUpdate =
                id := t.id,
                rd := t.rd);
   BEGIN
-    IF t.waiter.fr = t.reader THEN
+    IF t.waiter = ReaderNil THEN
+    ELSIF t.waiter.fr = t.reader THEN
       res.waiter := End.Reader
     ELSE
       res.waiter := End.Unknown
     END;
-    IF t.selecter.fr = t.reader THEN
+    IF t.selecter = ReaderNil THEN
+      res.selecter := End.ReaderNil
+    ELSIF t.selecter.fr = t.reader THEN
       res.selecter := End.Reader
     ELSE
       res.selecter := End.Unknown
@@ -297,10 +329,14 @@ PROCEDURE ApplyReadUpdate(s : Surrogate; u : ReadUpdate) =
     IF u.waiter = End.Reader THEN
       <*ASSERT s.waiter.fr = s.reader OR IsNilClosure(s.waiter)*>
       s.waiter := s.reader.dummy
+    ELSIF u.waiter = End.ReaderNil THEN
+      s.waiter := ReaderNil
     END;
     IF u.selecter = End.Reader THEN
       <*ASSERT s.selecter.fr = s.reader OR IsNilClosure(s.selecter) *>
       s.selecter := s.reader.dummy
+    ELSIF u.selecter = End.ReaderNil THEN
+      s.selecter := ReaderNil
     END
   END ApplyReadUpdate;
   
