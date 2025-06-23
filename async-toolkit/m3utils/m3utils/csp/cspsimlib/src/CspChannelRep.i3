@@ -27,7 +27,7 @@ TYPE
        rd is incremented only by receiving, which may only be done by receiver
     *)
     
-    waiter         : Process.Closure;
+    (*waiter         : Process.Closure;*) (* move to Channel.mg *)
     (*
       Must not be NIL, use special Nil singletons instead.
 
@@ -65,7 +65,10 @@ TYPE
     (* locking *)
     lockwr, lockrd : CARDINAL;
     locker         : Process.Closure; (* only used during debug *)
-
+  METHODS
+    isNilClosure(cl : Process.Closure) : BOOLEAN;
+    (* check whether a given closure is Nil per the particular channel type.
+       only used by CspChannelOps.Unwait *)
   END;
 
 CONST Brand = "CspChannelRep";

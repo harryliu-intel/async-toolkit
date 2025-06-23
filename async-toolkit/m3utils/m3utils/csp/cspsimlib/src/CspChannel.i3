@@ -11,13 +11,14 @@ TYPE
   WriteUpdate <: Update;
 
   Public = CspPortObject.T  OBJECT
-    slack          : (*CONST*) CARDINAL;
+    slack                : (*CONST*) CARDINAL;
 
-    writer, reader : (*CONST*) Process.Frame;
+    writer, reader       : (*CONST*) Process.Frame;
+    writerNil, readerNil : (*CONST*) Process.Closure;
 
-    width          : (*CONST*) CARDINAL;
+    width                : (*CONST*) CARDINAL;
 
-    writes         : CARDINAL; (* stats counter : updated by Send() *)
+    writes               : CARDINAL; (* stats counter : updated by Send() *)
   METHODS
     makeSurrogate() : T;
     (* make a surrogate *)

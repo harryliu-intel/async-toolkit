@@ -61,6 +61,7 @@ PROCEDURE Wait  (c : T; cl : Process.Closure) =
      really, we should be waiting on an array of CspPortObject.Ts
   *)
   BEGIN
+    <*ASSERT cl # NIL*>
     IF seleDebug THEN
       Debug.Out(F("%s : %s Wait %s",
                   DebugClosure(cl), c.nm, 
@@ -83,7 +84,14 @@ PROCEDURE Unwait  (c : T; cl : Process.Closure) =
        (look in codegen-m3.scm for more details)
     *)
     cl.waiting := FALSE;
-    <*ASSERT c.selecter = NIL OR c.selecter.fr = cl.fr*> c.selecter := NIL
+    <*ASSERT c.isNilClosure(c.selecter) OR c.selecter.fr = cl.fr*>
+    IF    cl.fr = c.writer THEN
+      c.selecter := c.writerNil
+    ELSIF cl.fr = c.reader THEN
+      c.selecter := c.readerNil
+    ELSE
+      <*ASSERT FALSE*> (* a process that is neither reader nor writer *)
+    END
   END Unwait;
 
 BEGIN END CspChannelOps.

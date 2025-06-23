@@ -29,6 +29,7 @@ REVEAL
     data           : REF Buff;       (* size slack + 1 *)
     surrog         : Surrogate := NIL;
     dirty          : BOOLEAN;
+    waiter         : Process.Closure;
   OVERRIDES
     makeSurrogate    := GenericMakeSurrogate;
     readSurrogate    := ReadSurrogate;
@@ -40,6 +41,8 @@ REVEAL
     markWriter       := MarkWriter;
     markReader       := MarkReader;
     isSurrogate      := ReturnFalse;
+
+    isNilClosure     := MIsNilClosure;
   END;
 
 REVEAL
@@ -105,6 +108,19 @@ VAR
   ReaderNil := NEW(Process.Closure, name := "**READER-NIL("&Brand&")**"); 
   WriterNil := NEW(Process.Closure, name := "**WRITER-NIL("&Brand&")**"); 
   InitiaNil := NEW(Process.Closure, name := "**INITIA-NIL("&Brand&")**");
+
+PROCEDURE IsNilClosure(cl : Process.Closure) : BOOLEAN =
+  (* check whether a selecter or waiter is "Nil" in a way that we can tell
+     who set it to that value *)
+  BEGIN
+    <*ASSERT cl # NIL*>
+    RETURN cl = ReaderNil OR cl = WriterNil OR cl = InitiaNil
+  END IsNilClosure;
+
+PROCEDURE MIsNilClosure(<*UNUSED*>t : T; cl : Process.Closure) : BOOLEAN =
+  BEGIN
+    RETURN IsNilClosure(cl)
+  END MIsNilClosure;
   
 PROCEDURE MakeSurrogate(t : T) : Surrogate =
   (* making a surrogate is easy: simply duplicate the state *)
@@ -122,12 +138,15 @@ PROCEDURE MakeSurrogate(t : T) : Surrogate =
                reader     := t.reader,   (* constant during lifetime *)
                width      := t.width,    (* constant during lifetime *)
 
+               readerNil  := ReaderNil,  (* constant *)
+               writerNil  := WriterNil,  (* constant *)
+
                wr         := t.wr,       (* owned by writing end *)
                writes     := t.writes,   (* owned by writing end *)
                rd         := t.rd,       (* owned by reading end *)
  
-               waiter     := NIL,        (* shared *) (* fix *)
-               selecter   := NIL,        (* shared *) (* fix *)
+               waiter     := InitiaNil,  (* shared *)
+               selecter   := InitiaNil,  (* shared *)
                
                lockwr     := t.lockwr,   (* private to each end *)
                lockrd     := t.lockrd,   (* private to each end *)
@@ -163,12 +182,12 @@ PROCEDURE WriteSurrogate(s : Surrogate) =
     t.wr     := s.wr;
     t.writes := s.writes;
     
-    IF s.waiter # NIL AND s.waiter.fr = s.writer THEN
-      <*ASSERT t.waiter.fr = s.writer OR t.waiter = NIL*>
+    IF NOT IsNilClosure(s.waiter) AND s.waiter.fr = s.writer THEN
+      <*ASSERT t.waiter.fr = s.writer OR IsNilClosure(t.waiter)*>
       t.waiter := s.waiter
     END;
-    IF s.selecter # NIL AND s.selecter.fr = s.writer THEN
-      <*ASSERT t.selecter.fr = s.writer OR t.selecter = NIL*>
+    IF NOT IsNilClosure(s.selecter) AND s.selecter.fr = s.writer THEN
+      <*ASSERT t.selecter.fr = s.writer OR IsNilClosure(t.selecter) *>
       t.selecter := s.selecter
     END
   END WriteSurrogate;
@@ -227,11 +246,11 @@ PROCEDURE ApplyWriteUpdate(t : T; u : WriteUpdate) =
       END
     END;
     IF u.waiter = End.Writer THEN
-      <*ASSERT t.waiter.fr = t.writer OR t.waiter = NIL*>
+      <*ASSERT t.waiter.fr = t.writer OR IsNilClosure(t.waiter)*>
       t.waiter := t.writer.dummy
     END;
     IF u.selecter = End.Writer THEN
-      <*ASSERT t.selecter.fr = t.writer OR t.selecter = NIL*>
+      <*ASSERT t.selecter.fr = t.writer OR IsNilClosure(t.selecter) *>
       t.selecter := t.writer.dummy
     END
   END ApplyWriteUpdate;
@@ -243,12 +262,12 @@ PROCEDURE ReadSurrogate(t : T) =
     (* taking the write-end fields from the target, 
        update them in the surrogate *)
     s.rd := t.rd;
-    IF t.waiter # NIL AND t.waiter.fr = t.reader THEN
-      <*ASSERT s.waiter.fr = t.reader OR s.waiter = NIL*>
+    IF NOT IsNilClosure(t.waiter) AND t.waiter.fr = t.reader THEN
+      <*ASSERT s.waiter.fr = t.reader OR IsNilClosure(s.waiter)*>
       s.waiter := t.waiter
     END;
-    IF t.selecter # NIL AND t.selecter.fr = t.reader THEN
-      <*ASSERT s.selecter.fr = t.reader OR s.selecter = NIL*>
+    IF NOT IsNilClosure(t.selecter) AND t.selecter.fr = t.reader THEN
+      <*ASSERT s.selecter.fr = t.reader OR IsNilClosure(s.selecter)*>
       s.selecter := t.selecter
     END
   END ReadSurrogate;
@@ -276,11 +295,11 @@ PROCEDURE ApplyReadUpdate(s : Surrogate; u : ReadUpdate) =
   BEGIN
     s.rd := u.rd;
     IF u.waiter = End.Reader THEN
-      <*ASSERT s.waiter.fr = s.reader OR s.waiter = NIL*>
+      <*ASSERT s.waiter.fr = s.reader OR IsNilClosure(s.waiter)*>
       s.waiter := s.reader.dummy
     END;
     IF u.selecter = End.Reader THEN
-      <*ASSERT s.selecter.fr = s.reader OR s.selecter = NIL*>
+      <*ASSERT s.selecter.fr = s.reader OR IsNilClosure(s.selecter) *>
       s.selecter := s.reader.dummy
     END
   END ApplyReadUpdate;
@@ -332,7 +351,7 @@ PROCEDURE Send(         c : T;
     
     c.data[c.wr] := x;
 
-    IF c.selecter # NIL THEN
+    IF NOT IsNilClosure(c.selecter) THEN
       IF sendDebug THEN
         Debug.Out(F("%s : %s Send unlock select : %s", DebugClosure(cl),
                     c.nm,
@@ -354,12 +373,10 @@ PROCEDURE Send(         c : T;
          handshake is complete.
       *)
 
-      IF c.waiter = NIL THEN
+      IF IsNilClosure(c.waiter) THEN
         IF sendDebug THEN
           Debug.Out(F("%s : %s Send wait", DebugClosure(cl), UnNil(c.nm)))
         END;
-        
-        <*ASSERT c.waiter = NIL OR c.waiter = cl*>
         c.waiter := cl;
         RETURN FALSE
       ELSIF c.waiter # cl THEN
@@ -390,7 +407,7 @@ PROCEDURE Send(         c : T;
                       ChanDebug(c)))
         END;
 
-        c.waiter := NIL; (* end of handshake *)
+        c.waiter := WriterNil; (* end of handshake *)
         
         RETURN TRUE
       END
@@ -413,7 +430,7 @@ PROCEDURE Send(         c : T;
 
       (* if anyone is sleeping on the channel (i.e., the channel was
          empty and the receiver got here before us), wake them up *)
-      IF c.waiter # NIL THEN
+      IF NOT IsNilClosure(c.waiter) THEN
         <*ASSERT c.waiter.frameId = c.reader.id*>
         IF sendDebug THEN
           Debug.Out(F("%s : %s Send schedule : %s",
@@ -421,7 +438,7 @@ PROCEDURE Send(         c : T;
                       DebugClosure(c.waiter)))
         END;
         Scheduler.ScheduleComm(cl, c.waiter);
-        c.waiter := NIL
+        c.waiter := WriterNil
       END;
       
       RETURN TRUE
@@ -443,7 +460,7 @@ PROCEDURE RecvProbe(c : T; cl : Process.Closure) : BOOLEAN =
                   ChanDebug(c)))
     END;
 
-    <*ASSERT c.waiter = NIL OR c.waiter.frameId # c.reader.id*>
+    <*ASSERT IsNilClosure(c.waiter) OR c.waiter.frameId # c.reader.id*>
     
     IF c.rd = c.slack THEN
       nxtRd := 0
@@ -463,7 +480,7 @@ PROCEDURE RecvProbe(c : T; cl : Process.Closure) : BOOLEAN =
        Let's say we return TRUE if the writing end is blocked 
        on the channel, too.
     *)
-    WITH res = c.wr # nxtRd OR (c.waiter # NIL AND c.waiter.frameId = c.writer.id) DO
+    WITH res = c.wr # nxtRd OR (NOT IsNilClosure(c.waiter) AND c.waiter.frameId = c.writer.id) DO
       
       IF probDebug THEN
         Debug.Out(F("%s : %s RecvProbe : return %s state %s",
@@ -480,7 +497,7 @@ PROCEDURE Recv(         c : T;
                VAR      x : Item;
                cl         : Process.Closure) : BOOLEAN =
   BEGIN
-    IF c.selecter # NIL THEN
+    IF NOT IsNilClosure(c.selecter) THEN
       Debug.Out(F("%s : %s Recv unlock select : %s",
                   DebugClosure(cl),
                   c.nm,
@@ -503,7 +520,7 @@ PROCEDURE Recv(         c : T;
         Debug.Error("Receiving on an unconnected channel : " & c.nm)
       END;
       
-      IF c.wr = nxtRd AND c.waiter = NIL THEN
+      IF c.wr = nxtRd AND IsNilClosure(c.waiter) THEN
         (* channel is empty -- just block *)
         IF recvDebug THEN
           Debug.Out(F("%s : %s Recv : wait %s",
@@ -528,7 +545,7 @@ PROCEDURE Recv(         c : T;
                       ChanDebug(c)))
         END;
 
-        IF c.waiter # NIL THEN
+        IF NOT IsNilClosure(c.waiter) THEN
           (* 
              If someone was waiting, it must have been the sender, 
              waiting for slack. 
@@ -542,7 +559,7 @@ PROCEDURE Recv(         c : T;
                         DebugClosure(c.waiter)))
           END;
           Scheduler.ScheduleComm(cl, c.waiter);
-          c.waiter := NIL 
+          c.waiter := ReaderNil 
         END;
 
         RETURN TRUE
@@ -557,9 +574,12 @@ PROCEDURE ChanDebug(chan : T) : TEXT =
     IF chan = NIL THEN
       RETURN "**ChanDebug(NIL)**"
     END;
+
+    <*ASSERT chan.waiter # NIL*>
+    <*ASSERT chan.selecter # NIL*>
     
-    IF chan.waiter = NIL THEN
-      waiterStr := "NIL"
+    IF IsNilClosure(chan.waiter) THEN
+      waiterStr := chan.waiter.name
     ELSIF chan.waiter.frameId = chan.writer.id THEN
       waiterStr := "writer " & chan.waiter.fr.name & ":" & chan.waiter.name
     ELSIF chan.waiter.frameId = chan.reader.id THEN
@@ -579,9 +599,9 @@ PROCEDURE ChanDebug(chan : T) : TEXT =
     )
   END ChanDebug;
 
-PROCEDURE New(nm : TEXT; id, slack : CARDINAL) : Ref =
+PROCEDURE New(nm : TEXT; id, slack : CARDINAL) : T =
   BEGIN
-    WITH res = NEW(Ref,
+    WITH res = NEW(T,
                    nm     := nm,
                    id     := id,
                    width  := Type.Width,
@@ -589,8 +609,16 @@ PROCEDURE New(nm : TEXT; id, slack : CARDINAL) : Ref =
                    wr     := 0,
                    writes := 0,
                    rd     := slack,
-                   writer := NIL,
-                   reader := NIL,
+
+                   writer    := NIL, (* NIL means not connected yet *)
+                   reader    := NIL, (* NIL means not connected yet *)
+                   
+                   waiter    := InitiaNil,  
+                   selecter  := InitiaNil,  
+
+                   readerNil := ReaderNil,
+                   writerNil := WriterNil,
+                   
                    data   := NEW(REF Buff, slack + 1)) DO
       CspSim.RegisterEdge(res);
       RETURN res
