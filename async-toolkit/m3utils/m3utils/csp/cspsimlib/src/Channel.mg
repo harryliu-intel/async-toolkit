@@ -19,6 +19,7 @@ CONST sendDebug = CspDebug.DebugSend;
 CONST recvDebug = CspDebug.DebugRecv;
 CONST probDebug = CspDebug.DebugProbe;
       (*CONST seleDebug = CspDebug.DebugSelect;*)
+CONST surrDebug = sendDebug AND recvDebug;
 
 TYPE
   Buff     = ARRAY OF Item;
@@ -200,6 +201,12 @@ PROCEDURE WriteSurrogate(s : Surrogate) =
   BEGIN
     (* taking the write-end fields from the surrogate, 
        update them in the target *)
+    IF surrDebug THEN
+      Debug.Out(F("WriteSurrogate target=%s <- surrogate=%s",
+                  ChanDebug(t),
+                  ChanDebug(s)))
+    END;
+    
     t.wr     := s.wr;
     t.writes := s.writes;
     
@@ -210,7 +217,8 @@ PROCEDURE WriteSurrogate(s : Surrogate) =
     IF s.selecter = WriterNil OR s.selecter.fr = s.writer THEN
       <*ASSERT t.selecter.fr = s.writer OR IsNilClosure(t.selecter) *>
       t.selecter := s.selecter
-    END
+    END;
+    
   END WriteSurrogate;
 
 PROCEDURE GetWriteUpdate(s : Surrogate) : WriteUpdate =
@@ -290,6 +298,13 @@ PROCEDURE ReadSurrogate(t : T) =
   BEGIN
     (* taking the write-end fields from the target, 
        update them in the surrogate *)
+    IF surrDebug THEN
+      Debug.Out(F("ReadSurrogate surrogate=%s <- target=%s",
+                  ChanDebug(s),
+                  ChanDebug(t)))
+    END;
+    
+
     s.rd := t.rd;
     IF t.waiter = ReaderNil OR t.waiter.fr = t.reader THEN
       <*ASSERT s.waiter.fr = t.reader OR IsNilClosure(s.waiter)*>
