@@ -55,7 +55,10 @@ TYPE
     commOutbox   : REF ARRAY OF ClosureSeq.T;
     waitOutbox   : REF ARRAY OF ClosureSeq.T;
     (* written by "from" scheduler, read by each "to" scheduler, according
-       to their ids *)
+       to their ids 
+
+       XXX REMOVE XXX
+    *)
 
     (* 
        The following are written by the end that updates.
@@ -122,6 +125,7 @@ PROCEDURE ScheduleComm(from, toSchedule : Process.Closure) =
       (* the source and target are in the same scheduler, we can 
          schedule them same as if they were local *)
       Schedule(toSchedule)
+      (*
     ELSE
       (* if the target block is running under another scheduler,
          we do not schedule it directly.  Instead, we put it in the 
@@ -131,7 +135,8 @@ PROCEDURE ScheduleComm(from, toSchedule : Process.Closure) =
         toScheduler   : T := toSchedule.fr.affinity;
       BEGIN
         fromScheduler.commOutbox[toScheduler.id].addhi(toSchedule)
-      END
+        END
+        *)
     END
   END ScheduleComm;
   
@@ -146,6 +151,7 @@ PROCEDURE ScheduleWait(from, toSchedule : Process.Closure) =
         toSchedule.waiting := FALSE;
         Schedule(toSchedule)
       END
+      (*
     ELSE
       (* if the target block is running under another scheduler,
          we do not schedule it directly.  Instead, we put it in the 
@@ -155,7 +161,8 @@ PROCEDURE ScheduleWait(from, toSchedule : Process.Closure) =
         toScheduler   : T := toSchedule.fr.affinity;
       BEGIN
         fromScheduler.waitOutbox[toScheduler.id].addhi(toSchedule)
-      END
+        END
+        *)
     END
   END ScheduleWait;
   

@@ -6,6 +6,66 @@ IMPORT Word;
 (* 
    This is the private interface to a CspChannel.T, needed for 
    implementing sends and receives 
+
+   This interface reveals fields that are the same across all types of
+   channels but not needed for non-implementers of channel operations.
+
+   The things revealed here are:
+
+   -- the read and write pointers
+
+   -- the waiter and selecter fields for suspending and unsuspending.
+      Note that waiter is not needed anymore here, since it is actually
+      used entirely within the Send and Recv operations, which are type-
+      specific, but we still document waiter here.  selecter, on the other
+      hand, is used in Wait/Unwait, which are type-independent (used in
+      the waiting-if implementation)
+
+   -- the fields used for channel "locking"; we put "locking" in quotes 
+      because Lock doesn't really lock anything.  What it does is make a
+      record of relevant channel state at the entry to a waiting-if so
+      that we can tell whether or not the channel state has changed 
+      between two points in the code and then take an appropriate action.
+
+   waiter and selecter are separate because there is a fundamental
+   difference between a process's suspending on a channel action
+   (send, receive, peek) versus its suspending on a select.  If a
+   process (really a block/closure) has suspended on a channel action,
+   it will certainly be woken up by the complementary action's being
+   executed.  If, on the other hand, a process has been suspended on a
+   selection, waking that process will only cause guarded commands to
+   be retried, that is, no effective code will be executed until
+   guards have evaluated to true.  
+
+
+   Selections
+   ==========
+
+   As a consequence of the above, we can implement selections in a way
+   that may have spurious wakings-up.  This is important because it
+   may be difficult to ensure that selection wake-ups are delivered in
+   a timely fashion: consider selecting on two channels.  If both
+   channels become active, we would like the implementation to be
+   allowed to proceed on the first event without having to definitely
+   ensure that no further wake-ups are going to occur.  Otherwise,
+   waking up could become very expensive, especially in a distributed
+   implementation.
+
+   Sends/Receives
+   ==============
+
+   As a second consequence of the above, let's discuss the distributed
+   implementation of waiting on a receive or send action.  We observe
+   that, if a process has suspended on a receive or send action, it
+   has observed that there is no complementary action available YET.
+   That process has hence suspended (i.e., it is in a stable state).
+   In other words, a non-Nil waiter value means that the implied
+   closure is suspended.  It is therefore safe to unsuspend it when it
+   is detected that a complementary action is available.  This is true
+   even in the case of a distributed implementation.  This means that in
+   case of a Channel/Surrogate split, it is safe to wake the local process
+   when the data from the counterpart arrives.
+
 *)
 
 REVEAL

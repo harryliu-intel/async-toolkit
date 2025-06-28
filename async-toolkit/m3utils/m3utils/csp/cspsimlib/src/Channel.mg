@@ -218,7 +218,9 @@ PROCEDURE WriteSurrogate(s : Surrogate) =
       <*ASSERT t.selecter.fr = s.writer OR IsNilClosure(t.selecter) *>
       t.selecter := s.selecter
     END;
-    
+
+    (* at this point we need to check if we've released a thread
+       and if so to schedule it, right? *)
   END WriteSurrogate;
 
 PROCEDURE GetWriteUpdate(s : Surrogate) : WriteUpdate =
@@ -296,7 +298,7 @@ PROCEDURE ReadSurrogate(t : T) =
   VAR
     s := t.surrog;
   BEGIN
-    (* taking the write-end fields from the target, 
+    (* taking the read-end fields from the target, 
        update them in the surrogate *)
     IF surrDebug THEN
       Debug.Out(F("ReadSurrogate surrogate=%s <- target=%s",
@@ -313,7 +315,11 @@ PROCEDURE ReadSurrogate(t : T) =
     IF t.selecter = ReaderNil OR t.selecter.fr = t.reader THEN
       <*ASSERT s.selecter.fr = t.reader OR IsNilClosure(s.selecter)*>
       s.selecter := t.selecter
-    END
+    END;
+
+    (* at this point we need to check if we've released a thread
+       and if so to schedule it, right? *)
+    
   END ReadSurrogate;
 
 PROCEDURE GetReadUpdate(t : T) : ReadUpdate =
@@ -391,14 +397,18 @@ PROCEDURE Send(         c : T;
                cl         : Process.Closure) : BOOLEAN =
   BEGIN
     <*ASSERT c.surrog = NIL*>  (* if there is a surrogate, use that! *)
-    (* the buffer is always big enough to write into 
-       (it's one bigger than the slack)  *)
     <*ASSERT cl # NIL*>
     IF sendDebug THEN
       Debug.Out(F("%s : %s Send called : %s",
                   DebugClosure(cl), UnNil(c.nm),
                   ChanDebug(c)))
     END;
+    
+    (* 
+       the buffer is always big enough to write into 
+       (it's one bigger than the slack); that is, if we didn't have 
+       space, we would have suspended on the previous Send 
+    *)
     
     c.data[c.wr] := x;
 
@@ -431,7 +441,7 @@ PROCEDURE Send(         c : T;
         c.waiter := cl;
         RETURN FALSE
       ELSIF c.waiter # cl THEN
-        (* tell reader to proceed *)
+        (* reader has already reached the action, so tell reader to proceed *)
         IF sendDebug THEN
           Debug.Out(
               F("%s : %s Send schedule reader %s",
@@ -440,8 +450,27 @@ PROCEDURE Send(         c : T;
           )
         END;
         Scheduler.ScheduleComm(cl, c.waiter);
+
+        (* at this point, we have stuffed the data and woken up the reader,
+           which was waiting for us.
+
+           We now wait for the rendez-vous.
+
+           We set ourselves waiting and return FALSE.
+
+           What if we (1) set waiter to Nil and returned TRUE here instead?
+           If we did that, we wouldn't implement slack zero correctly.
+           Consider:
+
+           *[ X ; Y ] || *[ X ] || *[ Y ]
+
+           If we did (1), we would start executing Y before X was complete.
+           That breaks something, but what?  I know something broke in a 
+           simulation from it but I can't (re)construct the exact case.
+         *)
+        
         c.waiter := cl;
-        RETURN FALSE
+        RETURN FALSE 
       ELSE
         (* c.waiter.frame = cl *)
         INC(c.wr);
