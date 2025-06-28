@@ -38,6 +38,7 @@ IMPORT TextSet;
 IMPORT CheckMode;
 IMPORT TextTextTbl;
 IMPORT TextIntTbl;
+IMPORT Env;
 
 <*FATAL Thread.Alerted*>
 
@@ -461,15 +462,15 @@ PROCEDURE MeasureFromSpice(spiceFn        : Pathname.T;
     END
   END MeasureFromSpice;
     
-PROCEDURE CheckLatch(db              : MarginMeasurementSeq.T;
-                     x               : SpiceObject.X; (* instantiation *)
-                     subCkt          : SpiceCircuit.T;(* of what *)
-                     READONLY arcs   : ARRAY OF Arc;  (* ...validate against *)
-                     trace           : Trace.T;
-                     mapper          : Mapper;
-                     Dot      : TEXT;
-                     allNames : TextSet.T;
-                     dutPfx   : TEXT;
+PROCEDURE CheckLatch(db                : MarginMeasurementSeq.T;
+                     x                 : SpiceObject.X; (* instantiation *)
+                     subCkt            : SpiceCircuit.T;(* of what *)
+                     READONLY arcs     : ARRAY OF Arc;  (* ...validate against *)
+                     trace             : Trace.T;
+                     mapper            : Mapper;
+                     Dot               : TEXT;
+                     allNames          : TextSet.T;
+                     dutPfx            : TEXT;
                      nMargins          : CARDINAL;
                      tranFinder        : TransitionFinder.T;
                      resetTime         : LONGREAL
@@ -484,8 +485,6 @@ PROCEDURE CheckLatch(db              : MarginMeasurementSeq.T;
     negClkIdx            : CARDINAL;
     negClkNm             : TEXT;
     gotNeg := FALSE;
-  CONST
-    UnNil = Debug.UnNil;
   BEGIN
     Debug.Out(F("Checking latch %s of type %s", x.name, subCkt.name));
     
@@ -606,6 +605,20 @@ PROCEDURE UnmapName(nm : TEXT;
     RETURN nm
   END UnmapName;
 
+VAR theAplot := DetermineAplotPath();
+
+PROCEDURE DetermineAplotPath() : Pathname.T =
+  VAR
+    toolsDir := Env.Get("MY_TOOLS_DIR");
+  BEGIN
+    IF toolsDir = NIL THEN
+      theAplot := "/nfs/site/disks/zsc3_fin_data_share/rliu68/tools/bin/fulcrum aplot %s"
+    ELSE
+      theAplot := toolsDir & "/tools/all/intel_999999/bin/aplot %s";
+    END;
+    RETURN theAplot
+  END DetermineAplotPath;
+
 PROCEDURE GraphMeasurement(meas : MarginMeasurement.T;
                            ns   : LONGREAL;
                            idx  : CARDINAL;
@@ -619,7 +632,7 @@ PROCEDURE GraphMeasurement(meas : MarginMeasurement.T;
     wr := NEW(TextWr.T).init();
     stdout, stderr := ProcUtils.WriteHere(wr);
     wx := Wx.New();
-    cmd := F("/nfs/site/disks/zsc3_fin_data_share/rliu68/tools/bin/fulcrum aplot %s", root);
+    cmd := F(theAplot, root);
     loNsF := meas.at * 1.0d9 - 0.5d0 * ns;
     hiNsF := meas.at * 1.0d9 + 0.5d0 * ns;
     loNs := ROUND(loNsF);
