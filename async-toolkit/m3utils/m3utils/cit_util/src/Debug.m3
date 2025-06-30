@@ -410,7 +410,7 @@ VAR
   triggers: TextSet.T;
   streams     := DebugStreamList.List1(DebugStream.T { stderr }); 
 
-  warnStreams : DebugStreamList.T := NIL;
+  warnStreams : DebugStreamList.T := streams;
   (* ADDITIONAL warn Streams *)
   
   (* protected by mu *)
