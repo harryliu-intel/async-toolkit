@@ -215,7 +215,6 @@ PROCEDURE Flatten(define          : Dsim.Define;
       END
     END
   END Flatten;
-
   
 VAR
   dsim       : DsimData       := NIL;
@@ -291,6 +290,7 @@ BEGIN
     END;
     IF pp.keywordPresent("-dsim") THEN
       dsimFn := pp.getNext()
+      (* I think this functionality has been disabled? *)
     END;
 
     pp.skipParsed();
@@ -335,9 +335,11 @@ BEGIN
   TRY
     trace := NEW(Trace.T).init(traceRt)
   EXCEPT
-    OSError.E(x) => Debug.Error(F("Trouble opening input trace %s : OSError.E : %s", traceRt, AL.Format(x)))
+    OSError.E(x) =>
+    Debug.Error(F("Trouble opening input trace %s : OSError.E : %s", traceRt, AL.Format(x)))
   |
-    Rd.Failure(x) => Debug.Error(F("Trouble reading input trace %s : Rd.Failure : %s", traceRt, AL.Format(x)))
+    Rd.Failure(x) =>
+    Debug.Error(F("Trouble reading input trace %s : Rd.Failure : %s", traceRt, AL.Format(x)))
   |
     Rd.EndOfFile =>
     Debug.Error(F("Short read opening input trace"))
@@ -349,7 +351,6 @@ BEGIN
   IF dsim # NIL THEN
     Process.Exit(0)
   END;
-  
   
   (* map names *)
 
@@ -365,7 +366,7 @@ BEGIN
   tranFinder := NEW(TransitionFinder.T).init(trace, vdd / 2.0d0, vdd / 10.0d0);
 
   IF spiceFn # NIL THEN
-    MeasureFromSpice(spiceFn, quick, nMargins, trace, spice, translate, rootType, rootCkt, mapper, traceRt, graphNs, Dot, allNames, dutPfx, tranFinder, resetTime, mappedNames)
+    MeasureFromSpice(spiceFn, quick, nMargins, trace, translate, rootType, rootCkt, mapper, traceRt, graphNs, Dot, allNames, dutPfx, tranFinder, resetTime, mappedNames)
   END;
 
   IF doByName THEN

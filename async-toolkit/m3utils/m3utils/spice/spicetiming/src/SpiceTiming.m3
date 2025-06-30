@@ -153,11 +153,11 @@ PROCEDURE DoOneLatchSpec(db             : MarginMeasurementSeq.T;
                          quick          : BOOLEAN;
                          nMargins       : CARDINAL;
                          trace          : Trace.T;
-                       Dot      : TEXT;
-                       allNames : TextSet.T;
-                       dutPfx   : TEXT;
-                      tranFinder        : TransitionFinder.T;
-                      resetTime         : LONGREAL) =
+                         Dot            : TEXT;
+                         allNames       : TextSet.T;
+                         dutPfx         : TEXT;
+                         tranFinder     : TransitionFinder.T;
+                         resetTime      : LONGREAL) =
   (* this is for a flattened design with one level of subcircuit remaining *)
   VAR
     regEx := RegEx.Compile(spec.typeNamePattern);
@@ -289,10 +289,10 @@ PROCEDURE MeasureByName(truncValues : CARDINAL;
                         vdd         : LONGREAL;
                         valueTag    : TEXT;
                         graphNs     : LONGREAL;
-                      nMargins          : CARDINAL;
-                      tranFinder        : TransitionFinder.T;
-                      resetTime         : LONGREAL;
-                    mappedNames : TextTextTbl.T) =
+                        nMargins    : CARDINAL;
+                        tranFinder  : TransitionFinder.T;
+                        resetTime   : LONGREAL;
+                        mappedNames : TextTextTbl.T) =
   VAR
     latchNodes       : LatchNodes;
     clkTrIdx, dTrIdx : CARDINAL;
@@ -401,7 +401,6 @@ PROCEDURE MeasureFromSpice(spiceFn        : Pathname.T;
                            quick          : BOOLEAN;
                            nMargins       : CARDINAL;
                            trace          : Trace.T;
-                           spice          : SpiceFormat.T;
                            translate      : BOOLEAN;
                            rootType       : TEXT;
                            rootCkt        : SpiceCircuit.T;
@@ -414,6 +413,9 @@ PROCEDURE MeasureFromSpice(spiceFn        : Pathname.T;
                            tranFinder     : TransitionFinder.T;
                            resetTime      : LONGREAL;
                            mappedNames    : TextTextTbl.T) =
+  VAR
+    spice          : SpiceFormat.T;
+
   BEGIN
     TRY
       WITH spiceRd = FileRd.Open(spiceFn) DO
@@ -648,8 +650,10 @@ PROCEDURE GraphMeasurement(meas : MarginMeasurement.T;
     Wx.PutText(wx, F("add %s\n", to));
     Wx.PutText(wx, F("range %s:%s\n", Int(loNs), Int(hiNs)));
     Wx.PutText(wx, "\\set term png size 2000,480\n");
-    Wx.PutText(wx, F("\\set output \"worst%s.%s.png\"\n",
-                     meas.scenario.tag, Int(GetNextCounter(meas.scenario.tag))));
+    Wx.PutText(wx, F("\\set output \"%s.worst%s.%s.png\"\n",
+                     root,
+                     meas.scenario.tag,
+                     Int(GetNextCounter(meas.scenario.tag))));
     Wx.PutText(wx, "update\n");
     Wx.PutText(wx, "quit\n");
 

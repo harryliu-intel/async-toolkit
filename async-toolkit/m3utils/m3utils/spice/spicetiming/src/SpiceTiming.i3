@@ -1,10 +1,18 @@
 INTERFACE SpiceTiming;
+
+(* 
+   check timing constraints from a spice deck
+   -- setup
+   -- hold
+   -- pulsewidth
+
+ *)
+
 IMPORT Pathname;
 IMPORT CheckMode;
 IMPORT Transition;
 IMPORT CheckDir;
 IMPORT Trace;
-IMPORT SpiceFormat;
 IMPORT SpiceCircuit;
 IMPORT TextSet;
 IMPORT TransitionFinder;
@@ -14,7 +22,6 @@ PROCEDURE MeasureFromSpice(spiceFn        : Pathname.T;
                            quick          : BOOLEAN;
                            nMargins       : CARDINAL;
                            trace          : Trace.T;
-                           spice          : SpiceFormat.T;
                            translate      : BOOLEAN;
                            rootType       : TEXT;
                            rootCkt        : SpiceCircuit.T;
@@ -27,6 +34,7 @@ PROCEDURE MeasureFromSpice(spiceFn        : Pathname.T;
                            tranFinder     : TransitionFinder.T;
                            resetTime      : LONGREAL;
                            mappedNames    : TextTextTbl.T);
+  (* measure timing, using a spice deck as the spec *)
   
 PROCEDURE MeasureByName(truncValues : CARDINAL;
                         trace       : Trace.T;
@@ -38,6 +46,16 @@ PROCEDURE MeasureByName(truncValues : CARDINAL;
                         tranFinder  : TransitionFinder.T;
                         resetTime   : LONGREAL;
                         mappedNames : TextTextTbl.T);
+  (* measure timing, from a graybox extracted circuit, assuming 
+     certain mappings for the clock and Q inputs of the circuits
+
+     The logic to find Q, D, and CLK is in the Latches interface
+     (specifically, Latches.IsQNode).
+
+     A simple future extension would be to pass in an object that
+     has the same interface as IsQNode and allow the client to
+     provide said object.
+  *)
 
 TYPE
   Node = RECORD
