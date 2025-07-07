@@ -164,7 +164,7 @@ Command-line option meaning is as follows
                assumed to have been created by this program and are not
                re-created
 
-  -force       Equal to setting -starttime to the end of time (LAST(Time.T))
+  -force|-f    Equal to setting -starttime to the end of time (LAST(Time.T))
                so all output files are re-generated
 
   -copyrootname Use prefix of inFileName before last period as outfileRoot

@@ -257,15 +257,9 @@ PROCEDURE WriteTrace(ofn : Pathname.T;
   END WriteTrace;
 
 PROCEDURE DoConversion(conv : Conversion.T) =
-  VAR
-    ifn := conv.ifn;
-    ofn := conv.ofn;
-    doBuild := TRUE;
-  BEGIN
 
-    (* check if all required traces are already built first *)
-    IF doTrace THEN
-      doBuild := FALSE;
+  PROCEDURE CheckIfDone(VAR doBuild : BOOLEAN) =
+    BEGIN
       FOR f := FIRST(TraceFile.Version) TO LAST(TraceFile.Version) DO
         IF f IN formats THEN
           WITH sfx      = TraceFile.VersionSuffixes[f],
@@ -295,6 +289,18 @@ PROCEDURE DoConversion(conv : Conversion.T) =
           END
         END
       END
+    END CheckIfDone;
+    
+  VAR
+    ifn     := conv.ifn;
+    ofn     := conv.ofn;
+    doBuild := TRUE;
+  BEGIN
+
+    (* check if all required traces are already built first *)
+    IF doTrace THEN
+      doBuild := FALSE;
+      CheckIfDone(doBuild)
     END;
 
     IF doBuild = FALSE THEN
@@ -536,7 +542,7 @@ BEGIN
       ignoreTime := pp.getNextLongReal()
     END;
 
-    IF pp.keywordPresent("-force") THEN
+    IF pp.keywordPresent("-force") OR pp.keywordPresent("-f") THEN
       ignoreTime := LAST(Time.T)
       (* set ignoreTime to the end of eternity, so all files are rebuilt *)
     END;
