@@ -621,27 +621,28 @@ PROCEDURE DetermineAplotPath() : Pathname.T =
     RETURN theAplot
   END DetermineAplotPath;
 
-PROCEDURE GraphMeasurement(meas : MarginMeasurement.T;
-                           ns   : LONGREAL;
-                           idx  : CARDINAL;
-                           root : Pathname.T;
+PROCEDURE GraphMeasurement(meas        : MarginMeasurement.T;
+                           ns          : LONGREAL;
+                           idx         : CARDINAL;
+                           root        : Pathname.T;
                            mappedNames : TextTextTbl.T
                            ) =
   VAR
     scenStr := MarginMeasurement.Format(meas);
-    fr := UnmapName(meas.scenario.datNm, mappedNames);
-    to := UnmapName(meas.scenario.clkNm, mappedNames);
-    wr := NEW(TextWr.T).init();
-    stdout, stderr := ProcUtils.WriteHere(wr);
-    wx := Wx.New();
-    cmd := F(theAplot, root);
-    loNsF := meas.at * 1.0d9 - 0.5d0 * ns;
-    hiNsF := meas.at * 1.0d9 + 0.5d0 * ns;
-    loNs := ROUND(loNsF);
-    hiNs := ROUND(hiNsF);
-    input : TEXT;
+    fr      := UnmapName(meas.scenario.datNm, mappedNames);
+    to      := UnmapName(meas.scenario.clkNm, mappedNames);
+    wr      := NEW(TextWr.T).init();
+    stdout,
+    stderr  := ProcUtils.WriteHere(wr);
+    wx      := Wx.New();
+    cmd     := F(theAplot, root);
+    loNsF   := meas.at * 1.0d9 - 0.5d0 * ns;
+    hiNsF   := meas.at * 1.0d9 + 0.5d0 * ns;
+    loNs    := ROUND(loNsF);
+    hiNs    := ROUND(hiNsF);
 
-    iWr : Wr.T;
+    input : TEXT;
+    iWr   : Wr.T;
     
   BEGIN
 
