@@ -1494,7 +1494,7 @@ $(SPICE_DIR)/hsim/$(ENV)/%/hsim.out: $(SPICE_DIR)/cell.hspice \
 	type=$(call GET_EXTRACT_MODE,$(@D)); \
 	reduce=$$([[ $$type == extracted ]] && echo 1 || echo 0); \
 	nodes=$$($(GNUGAWK) '{print $$7}' '$(word 3,$^)' | sort -u | \
-	        tr '\n' ',' | $(GNUSED) 's/,$$//' ); \
+	        tr '\n' ':' | $(GNUSED) 's/:$$//' ); \
 	QRSH_FLAGS="$(PACKAGE_FLAGS) -l hsim=1" \
 	QB_DIAG_FILE='$@.diag' \
 	QB_RUN_NAME='lve_hsim' \

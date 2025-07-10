@@ -90,7 +90,10 @@ sub usage() {
     $usage .= "    --start-time=$start_time\n";
     $usage .= "    --measure-time=$measure_time\n";
     $usage .= "    --slope-time=$slope_time\n";
-    $usage .= "    --measure-nodes=(, separated list of nodes with full subckt path specified)\n";
+    $usage .= "    --measure-nodes=(: separated list of nodes with full subckt path specified)\n";
+    $usage .= "    --cap-load=$cap_load\n";
+    $usage .= "    --out-nodes=(: separated list of nodes to add cap-load to)\n";
+    $usage .= "    --node-props=(file to out-nodes from)\n";
     $usage .= "    --power-window=(t1,t2) ( window for power measurements, default is 6ns to run-time)\n";
     $usage .= "    --lve-root-dir=<path> (Where is the lve root?)\n";
     $usage .= "    --sub-lve-root-dir=<path> (Where is the lve root?)\n";
@@ -159,7 +162,7 @@ while (defined $ARGV[0] && $ARGV[0] =~ /^--(.*)/) {
     } elsif ($flag eq "sub-lve-root-dir") {
        	$sub_lve_root_dir = $value;
     } elsif ($flag eq "measure-nodes") {
-        @measure_nodes = split(",",$value);
+        @measure_nodes = split(":",$value);
     } elsif ($flag eq "sim") {
         $sim = $value;
     } elsif ($flag eq "totem-mode") {
@@ -171,7 +174,7 @@ while (defined $ARGV[0] && $ARGV[0] =~ /^--(.*)/) {
     } elsif ($flag eq "cap-load") {
         $cap_load=$value;
     } elsif ($flag eq "out-nodes") {
-        @out_nodes=split(",",$value);
+        @out_nodes=split(":",$value);
     } elsif ($flag eq "node-props") { # read node-props file to enumerate out_nodes
         open NODE_PROPS, "<$value" or die "can't read $value\n";
         while (my $line=<NODE_PROPS>) {
