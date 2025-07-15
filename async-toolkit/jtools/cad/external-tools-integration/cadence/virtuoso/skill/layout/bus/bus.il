@@ -302,63 +302,19 @@ wires_modtime = makeTable("wires" 0)
   )
 
 
-; draw a via (use Nanoroute compatible vias)
-(defun DrawVia (name viaList xy width cuts @key (doubleVias t) (verticalVias nil) (positiveVias nil)
-                     (guideInst nil) (stacked nil) (corrected nil) (CV (geGetEditCellView)))
-  (let (inst net type extensions params contactOrientation layer1 layer2)
-
-;	when(verticalVias==t println("YES"))
-
-    ;convert to a list if not a list
-    (if !listp(viaList) viaList = list(viaList))
-    (foreach via viaList
-    	(cond (guideInst!=nil contactOrientation = guideInst->orient)
-          (guideInst==nil contactOrientation = "R0"))
-    	(cond ((and busContacts (via!=nil))
-           (if cuts=="" then
-             type = via
-             (if !doubleVias then
-               nil
-                else
-                 type = (strcat via "_R_H")
-             )
-            else type = (strcat via cuts)
-           )
-           extensions = (BusDefaultViaExtensions via
-                         ?cuts cuts ?doubleVias doubleVias ?stacked stacked)
-           params = (if extensions
-                        (list (list "layer1XEnclosure" "float" (car extensions))
-                              (list "layer1YEnclosure" "float" (cadr extensions))
-                              (list "layer2XEnclosure" "float" (caddr extensions))
-                              (list "layer2YEnclosure" "float" (cadddr extensions))
-                              )
-                      nil
-                      )
-	
-           inst = (dbCreateVia CV
-                               (techFindViaDefByName TechLib type)
-                               (busTransformPoint xy guideInst)
-                               contactOrientation
-                  )
-           inst->routeStatus = "locked"
-           when( corrected
-           layer2 = evalstring(car(parseString(nth(0 parseString(type "_")) "M")))
-           layer1 = evalstring(car(parseString(nth(1 parseString(type "_")) "M")))
-           if( evenp(layer1)
-            then
-              inst~>layer1Enc = 0.04:0.01
-              inst~>layer2Enc = 0.04:0.01
-            else
-              inst~>layer1Enc = 0.04:0.01
-              inst~>layer2Enc = 0.04:0.01
-            )
-           )
-           (SetBusProp inst)
-           net = (MakeNet CV name)
-           (cond (net!=nil (dbAddFigToNet inst net)))
-           )
-        )
-    ) ;foreach
+; draw a via (now using NearbyVia and PDK viaTable)
+; all legacy options are ignored!
+(defun DrawVia (name viaList xy width cuts
+                @key (CV (geGetEditCellView))
+                     (doubleVias t) (verticalVias nil) (positiveVias nil)
+                     (guideInst nil) (stacked nil) (corrected nil)
+                )
+  (let (net via)
+    (when viaList
+      net=(dbFindNetByName CV name)
+      via=(NearbyVia viaList width width xy net ?CV CV)
+      (SetBusProp via)
+      )
     )
   t
   )

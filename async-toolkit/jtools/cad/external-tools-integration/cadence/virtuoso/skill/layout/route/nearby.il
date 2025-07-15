@@ -22,12 +22,11 @@
 ; connect subcells pins of a net with short paths or vias
 (defun RouteNearbyNet (net @key (CV (geGetEditCellView)) (topShapes t) (subShapes t) (offGrid t) (verbose nil)
                            (protect_map nil) (distance nil) (checkEnclosure nil))
-  (let (layerNames tech n MasterRectList layerName pinRectList layerNum space len
+  (let (layerNames n MasterRectList layerName pinRectList layerNum space len
              e1 e2 inst1 inst2 net1 net2 rect1 rect2 overlap gap rect rects horz hrect vrect
              r1x0 r1x1 r1y0 r1y1 r2x0 r2x1 r2y0 r2y1
              x0 y0 x1 y1 x y key pitch transform r1 r2
-             viaDef via list1 list2 xy wb wt viaName viaDef via)
-    tech = (techGetTechFile CV)
+             list1 list2 xy wb wt via)
     n=0
     (for m 0 TopMetal layerNames = (cons Metal[m] layerNames))
     MasterRectList = (nrFindPinShapesWithNet net layerNames ?topShapes topShapes ?subShapes subShapes)
@@ -170,23 +169,7 @@
             (unless wb (error "no track width for %d %g:%g\n" v (car xy) (cadr xy)))
             wt = (if offGrid (GetWireWidth v+1 rect2) (GetTrackWidth v+1 xy))
             (unless wt (error "no track width for %d %g:%g\n" v+1 (car xy) (cadr xy)))
-            wb = (round wb/MfgGrid)
-            wt = (round wt/MfgGrid)
-            viaName = viaTable[(list v wb wt)]
-            (unless viaName (error "no viaTable for %d %d %d at %f %f\n" v wb wt (car xy) (cadr xy)))
-            (cond ((atom viaName)
-                   viaDef = (techFindViaDefByName tech viaName)
-                   params = nil
-                   )
-                  (t
-                   viaDef = (techFindViaDefByName tech (car viaName))
-                   params = (cdr viaName)
-                   viaName = (car viaName)
-                   )
-                  )
-            via = (dbCreateVia CV viaDef xy "R0" params)
-            via->routeStatus="locked"
-            via->net = net
+            via=(NearbyVia v wb wt xy net ?CV CV)
             (dbReplaceProp via "autogen" "string" "RouteNearby")
             (when checkEnclosure
               r1=nil
@@ -211,6 +194,31 @@
       )
     (leMergeShapes rects) ; merge overlapping route nearby rectangles
     n
+    )
+  )
+
+; Draw a via using viaTable, given via number v, bottom and top layer wire widths, location, and net
+(defun NearbyVia (v wb wt xy net @key (CV (geGetEditCellView)))
+  (let (tech viaName viaDef params via)
+    tech = (techGetTechFile CV)
+    wb = (round wb/MfgGrid)
+    wt = (round wt/MfgGrid)
+    viaName = viaTable[(list v wb wt)]
+    (unless viaName (error "no viaTable for %d %d %d at %f %f\n" v wb wt (car xy) (cadr xy)))
+    (cond ((atom viaName)
+           viaDef = (techFindViaDefByName tech viaName)
+           params = nil
+           )
+          (t
+           viaDef = (techFindViaDefByName tech (car viaName))
+           params = (cdr viaName)
+           viaName = (car viaName)
+           )
+          )
+    via = (dbCreateVia CV viaDef xy "R0" params)
+    via->routeStatus = "locked"
+    via->net = net
+    via
     )
   )
 
