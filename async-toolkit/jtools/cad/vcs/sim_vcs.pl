@@ -150,7 +150,12 @@ if (!$outdir) {
     if (looks_like_number($cell_base)) {
         $cell_base = (split(/\./, $cell))[-2];
     }
-    $wd = "vcs.${cell_base}_${env}.${level}.${curtime}";
+    if ($level eq "sdf") {
+        $wd = "vcs.${cell_base}_${env}.${level}_${corner}.${curtime}";
+    }
+    else {
+        $wd = "vcs.${cell_base}_${env}.${level}.${curtime}";
+    }
     mkdir $wd or die "Can't mkdir $wd: $!\n";
     chmod 0750, $wd;
     system("rm -if vcs_latest; ln -s $wd vcs_latest") == 0 or die "Symlink failed\n";
