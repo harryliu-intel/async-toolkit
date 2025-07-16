@@ -3,6 +3,11 @@
 ; $DateTime: 2006/09/08 20:01:38 $
 ; $Author: lines $
 
+; newer naming convention
+(defun FloorplanOverlap (@key (CV (geGetEditCellView)))
+  (FL_Overlap ?CV CV)
+  )
+
 ; Flatten prBoundary shapes to overlap view, then select any overlaps
 (defun FL_Overlap (@key (CV (geGetEditCellView)))
   (let (ovCV window instances pts
