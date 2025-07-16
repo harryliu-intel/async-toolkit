@@ -1,23 +1,21 @@
-; Simpler flow to import GDS to DFII.  Streams in GDS to a temporary
-; library, copies all cells to the desired destination libName,
-; appends a prefix and suffix to create CAST-style cellName's, and
-; updates the instance masters.  Then applies a user-defined
-; postprocessing function to all cells, such as to rename instances
-; and nodes.
+; Simple flow to import OAS to DFII.  Streams in OSA to a temporary
+; library.  Does not include CopyToNewLib like ImportGDS does.  This is usually
+; used to import IP collateral which requires extra skill processing steps.
 
-; Import a OAS file and rename all subcells to CAST conventions
-(defun ImportOAS (oasFileName libName cellName viewName
-       		 @key (CV (geGetEditCellView))
-                      (layerMapFile nil)
-                      (propMapFile nil)
-                      (enableColoring t)
-                      (setCopyExact nil) ; lamda on CV to decide when to set CopyExact property
-                      )
+; Import OAS file to a scratch libName/cellName/viewName
+(defun ImportOAS (oasFileName ; source *.oas file
+                  libName cellName viewName ; destination lib,cell,view
+       		  @key (layerMapFile nil) ; use a different layer map from PDK
+                       (propMapFile nil)  ; use a different prop map from PDK
+                       (objMapFile nil) ; us a different object map from PDK
+                       (setCopyExact nil) ; lamda on CV to decide when to set CopyExact property
+                  )
   (let (PDK_DIR cmd status CV)
     ; stream in OAS into import_oas_temp library
     PDK_DIR = (ConfigFileGetValue TheCDSConfigTable "FULCRUM_PDK_ROOT")
     (unless layerMapFile (sprintf layerMapFile "%s/share/Fulcrum/stream/strmout.layermap" PDK_DIR))
     (unless propMapFile (sprintf propMapFile "%s/share/Fulcrum/stream/oasis_prop.map" PDK_DIR))
+    (unless objMapFile (sprintf objMapFile "%s/share/Fulcrum/stream/objectmap" PDK_DIR))
 
     cmd = (strcat "oasisin "
                   "-library \"" libName "\" "
@@ -28,9 +26,9 @@
                   "-attachTechFileOfLib \"" TechLibName "\" "
                   "-layerMap \"" layerMapFile "\" "
                   "-propMap \"" propMapFile "\" "
-                  "-objectMap \"" PDK_DIR "/share/Fulcrum/stream/objectmap\" "
+                  "-objectMap \"" objMapFile "\" "
 		  "-textHeight \"0.01\" "
-	          (if enableColoring " -enableColoring" "")
+	          "-enableColoring"
 		  )
     status = (shell cmd)
     (unless status (error "strmin failed\n"))
@@ -58,12 +56,13 @@
     )
   )
 
+; Import all cells in OAS to scratch libName
 (defun ImportOASLib (oasFileName libName)
   (let (PDK_DIR cmd status CV layerMapFile propMapFile objMapFile)
     PDK_DIR = (ConfigFileGetValue TheCDSConfigTable "FULCRUM_PDK_ROOT")
-    (unless layerMapFile (sprintf layerMapFile "%s/share/Fulcrum/stream/strmout.layermap" PDK_DIR))
-    (unless propMapFile (sprintf propMapFile "%s/share/Fulcrum/stream/oasis_prop.map" PDK_DIR))
-    (unless objMapFile (sprintf objMapFile "%s/share/Fulcrum/stream/objectmap" PDK_DIR))
+    (sprintf layerMapFile "%s/share/Fulcrum/stream/strmout.layermap" PDK_DIR)
+    (sprintf propMapFile "%s/share/Fulcrum/stream/oasis_prop.map" PDK_DIR)
+    (sprintf objMapFile "%s/share/Fulcrum/stream/objectmap" PDK_DIR)
 
     cmd = (strcat "oasisin "
                  "-library \"" libName "\" "
@@ -82,4 +81,3 @@
     (ddUpdateLibList)
     )
   )
-
