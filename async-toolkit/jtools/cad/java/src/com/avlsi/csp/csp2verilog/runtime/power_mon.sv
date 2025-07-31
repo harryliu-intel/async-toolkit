@@ -7,7 +7,7 @@ logic prev_sig;
 int file;
 
 initial begin
-  file = $fopen($sformatf("power_%s.dat", name), "w");
+  file = $fopen($sformatf("power_%s.time", name), "w");
   $timeformat(-12,0,"ps");
   prev_sig <= signal;
 end
