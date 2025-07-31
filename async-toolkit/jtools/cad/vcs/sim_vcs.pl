@@ -19,7 +19,7 @@ die "ERROR: undefined \$SOURCE_VERILOG_DIR\n" unless (defined($ENV{SOURCE_VERILO
 
 
 # Command line options for simulation
-my ($cell, $env, $level, $corner, $outdir, $simv, $tcl, $t_run, $perf, $depth,
+my ($cell, $env, $level, $corner, $outdir, $simv, $tcl, $t_run, $t_reset, $perf, $depth,
     $fsdb, $verdi, @simv_args, $verbose, $help);
 # Command line options to pass through to gen_model
 my (@cast_defines, @c2v_args, @gen_args, @vcs_args, @power);
@@ -31,6 +31,7 @@ GetOptions("level=s"     => \$level,
            "simv=s"      => \$simv,
            "tcl=s"       => \$tcl,
            "t-run=s"     => \$t_run,
+           "t-reset=s"   => \$t_reset,
            "perf=s"      => \$perf,
            "power=s"     => \@power,
            "depth=s"     => \$depth,
@@ -166,6 +167,20 @@ chdir($wd) or die "$!";
 my $fulcrum = "fulcrum";
 $fulcrum = $ENV{MY_FULCRUM} if (defined($ENV{MY_FULCRUM}));
 
+my $instdir = $ENV{'FULCRUM_PACKAGE_ROOT'};
+my $runtime = "$instdir/share/cast2verilog";
+
+if (!$t_reset) {
+    if ($verbose) {print "WARNING: No reset duration specified, defaulting to 10us\n";}
+    $t_reset = "10us";
+}
+if (!$t_run) {
+    if ($verbose) {print "WARNING: No run time specified, defaulting to 100us\n";}
+    $t_run = "100us";
+}
+
+#Add t_reset to vcs_args
+push @vcs_args, "+define+CAST2VERILOG_RESET_DURATION=$t_reset";
 
 #If no simv was specified, generate verilog and compile it
 if (!$simv) {
@@ -206,11 +221,7 @@ if (!$simv) {
     $simv = "./simv";
 }
 
-if (!$t_run) {
-    if ($verbose) {print "WARNING: No run time specified, defaulting to 50us\n";}
-    $t_run = "50us";
-}
-
+#If no fsdb name was specified, default to trace.fsdb
 if (!$fsdb) {
     if ($verbose) {print "WARNING: No FSDB file specified, defaulting to trace.fsdb\n";}
     $fsdb = "trace.fsdb";
@@ -220,9 +231,17 @@ if (!$fsdb) {
 if (!$tcl) {
     $tcl = "./run.tcl";
     open TCL, ">$tcl" or die;
+    if ($level eq "sdf") {
+        print TCL "source $runtime/sdf_workarounds.tcl\n";
+    }
     print TCL <<EOF;
 fsdbDumpfile $fsdb
 fsdbDumpvars 0 TESTBENCH +all
+EOF
+    if ($level eq "sdf") {
+        print TCL "reset_tcheck $t_reset\n";
+    }
+    print TCL <<EOF;
 run ${t_run}
 exit
 EOF

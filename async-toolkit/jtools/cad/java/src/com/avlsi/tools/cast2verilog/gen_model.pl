@@ -17,7 +17,7 @@ GetOptions("cast-path=s" => \$cast_path,
            "spar-dir=s"  => \$spar_dir,
            "gls-dir=s"   => \$gls_dir,
            "cell=s"      => \$cell,
-           "env=s"       => \$env, 
+           "env=s"       => \$env,
            "cosim=s"     => \$cosim,
            "width=i"     => \$width,
            "fpga-path=s" => \$fpga_path,
@@ -66,7 +66,7 @@ my $cmd = ("cast2verilog --cast-path=\Q$cast_path\E " .
 
 system($cmd) == 0 || die "Error executing cast2verilog: $!";
 
-# Read 
+#   
 sub get_spar_from_verilog_string {
   my ($vlog_file) = @_;
   my @vlog_split = split(/\//, $vlog_file);
@@ -227,11 +227,6 @@ if (defined($gls_dir)) {
     }
     close $lh;
 
-    my $fh_tcl;
-    open $fh_tcl, ">run_workarounds.tcl" || die "Can't open run_workarounds.tcl: $!";
-    print $fh_tcl "source $runtime/sdf.tcl\n";
-    close $fh_tcl;
-
     #foreach my $sdf (@sdf) {
     #    my $arg = "max:$block:$sdf";
     #    push(@sdf_args, ("-sdf $arg"));
@@ -244,13 +239,6 @@ if (defined($gls_dir)) {
     #        close $fh1;
     #    }
     #}
-
-    open $fh_tcl, ">sdf_reset.tcl" || die "Can't open sdf_reset.tcl: $!";
-    print $fh_tcl <<"EOF";
-source $runtime/sdf_workarounds.tcl
-reset_tcheck $reset_duration
-EOF
-    close $fh_tcl;
 
   } else {
     push @args, '-f', '$CAST2VERILOG_RUNTIME/gls.vcfg';
