@@ -12,7 +12,7 @@ while (my $line = <STDIN> ){
         my $class;
         my $r=lc($rule);
         if ($r =~ /nodata/) { $class="nodata"; }
-        elsif ($r =~ /^bm/ || $r =~ /^m/ || $r =~ /^bv/ || $r =~ /^v/) { $class="metvia"; }
+        elsif ($r =~ /^bm/ || $r =~ /^sm/ || $r =~ /^m/ || $r =~ /^bv/ || $r =~ /^sv/ || $r =~ /^v/) { $class="metvia"; }
         else { $class="other"; }
         if (defined($count{$class})) { $count{$class}+=$c; $rules{$class} .= "\t$rule\t$c\n"; }
         else                         { $count{$class} =$c; $rules{$class}  = "\t$rule\t$c\n"; }
