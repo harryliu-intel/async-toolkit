@@ -37,6 +37,7 @@ import shared_pkg::*;
 import mby_rx_metadata_pkg::*;
 ();
 logic                                   egr_ppe_valid;  //egress to PPE valid
+logic   [EGR_PPE_DATA_CNT_WIDTH-1:0]    egr_ppe_cnt;    //egress to PPE header byte count
 logic   [0:EGR_PPE_DATA_WIDTH-1]        egr_ppe_hdr;    //header segment (pre mod)
 ppe_meta_data_t                         egr_ppe_md;     //metadata
 logic                                   ack;            //acknowledge
@@ -46,6 +47,7 @@ logic   [0:PPE_EGR_DATA_WIDTH-1]        ppe_egr_hdr;    //modified header
 
 modport egr(
     output  egr_ppe_valid,
+    output  egr_ppe_cnt,
     output  egr_ppe_hdr,
     output  egr_ppe_md,
     input   ack,
@@ -56,6 +58,7 @@ modport egr(
 
 modport ppe(
     input   egr_ppe_valid,
+    input   egr_ppe_cnt,
     input   egr_ppe_hdr,
     input   egr_ppe_md,
     output  ack,

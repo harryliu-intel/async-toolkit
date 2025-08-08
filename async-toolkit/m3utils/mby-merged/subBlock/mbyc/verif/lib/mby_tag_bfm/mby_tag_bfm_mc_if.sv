@@ -74,8 +74,8 @@ interface mby_tag_bfm_mc_if(input logic clk, input logic rst);
    //
    //---------------------------------------------------------------------------
    task drive_data(logic [DATA_WIDTH-1:0] data_pkt,
-                   logic [DEBG_WIDTH-1:0] debg_pkt,
-                   logic [DLAY_WIDTH-1:0] delay);
+         logic [DEBG_WIDTH-1:0] debg_pkt,
+         logic [DLAY_WIDTH-1:0] delay);
       @(posedge clk);
       intf_data_pkt <= data_pkt;
       intf_debg_pkt <= debg_pkt;
@@ -110,9 +110,18 @@ interface mby_tag_bfm_mc_if(input logic clk, input logic rst);
    //
    //---------------------------------------------------------------------------
    task mon_data(output logic [DATA_WIDTH-1:0] data_pkt,
-                 output logic [DEBG_WIDTH-1:0] debg_pkt);
+         output logic [DEBG_WIDTH-1:0] debg_pkt);
       data_pkt = intf_data_pkt;
       debg_pkt = intf_debg_pkt;
+      @(negedge clk);
+   endtask
+
+   task hard_reset();
+      $display("Executing hard reset in the interface.");
+   endtask
+
+   task soft_reset();
+      $display("Executing soft reset in the interface.");
    endtask
 
 endinterface : mby_tag_bfm_mc_if

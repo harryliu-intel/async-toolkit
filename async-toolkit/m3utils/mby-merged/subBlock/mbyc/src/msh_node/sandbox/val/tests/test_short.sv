@@ -30,12 +30,12 @@
 `include "env.sv"                   // defines most of the testbench
 
 program testcase (                  // a program is a system verilog testbench entry point
-    msh_node_dut_if dut_if,               // mesh DUT interface 
-    //-hz: 12/7/2018
-    mby_mem_msh_bank_ram_shell_4096x532_func_if mem_if_0, // defined in shared/interfaces
-    mby_mem_msh_bank_ram_shell_4096x532_func_if mem_if_1, // under subBlock/mbyc/src
-    mby_mem_msh_bank_ram_shell_4096x532_func_if mem_if_2,
-    mby_mem_msh_bank_ram_shell_4096x532_func_if mem_if_3
+    msh_node_dut_if dut_if,         // mesh DUT interface 
+
+    mby_msh_mem_if mem_if_0,        // defined in shared/interfaces
+    mby_msh_mem_if mem_if_1,        // under subBlock/mbyc/src
+    mby_msh_mem_if mem_if_2,
+    mby_msh_mem_if mem_if_3
 );     
 
 
@@ -54,7 +54,38 @@ program testcase (                  // a program is a system verilog testbench e
         .mem_if_3	(mem_if_3),
 
 	// num of input request
-	.knob_inp_req_num (25)
+//	.knob_inp_req_num (25),	// number of input request for request loop
+	.knob_inp_req_num (1),
+
+        .knob_dut_row ($urandom_range(0, 15)), // random dut node row num
+        .knob_dut_col ($urandom_range(0, 7)),   // random dut node col num
+//      .knob_dut_row (7),   
+//      .knob_dut_col (3),
+
+//      .knob_plane($urandom_range(0,2)), // 0:plane0, 1:plane1, other:random
+        .knob_plane(2),
+
+//	.knob_drv_toward($urandom_range(0,4)),	// 0:EB, 1:WB, 2:NB; 3:SB; other:random
+	.knob_drv_toward(4),	
+
+	.knob_legal_only(1),	// when 'legal_only' is 1, 
+				// req_row, req_col, port_row and port_side are
+				// generated under constraints to make sure test legal
+
+        .knob_req_row ($urandom_range(0, 16)), // [0,15]=target node row, 16=random
+        .knob_req_col ($urandom_range(0, 8)),  // [0,7]=target node col, 8=random
+//      .knob_req_row (16),   
+//      .knob_req_col (8),
+
+        .knob_rreq_port_row ($urandom_range(0, 16)), // [0,15]=assigned port_row, 16=random
+        .knob_rreq_port_side ($urandom_range(0, 4)), // [0,3]=assigned side: 0=n,1=s,2=e,3=w, and 4=random
+//      .knob_rreq_port_row (16),   
+//      .knob_rreq_port_side (4),
+
+        .knob_rsp_port_row ($urandom_range(0, 16)), // [0,15]=assigned port_row, 16=random
+        .knob_rsp_port_side ($urandom_range(0, 4))  // [0,3]=assigned side: 0=n,1=s,2=e,3=w, and 4=random
+//      .knob_rsp_port_row (16),   
+//      .knob_rsp_port_side (4)
 
     );
 

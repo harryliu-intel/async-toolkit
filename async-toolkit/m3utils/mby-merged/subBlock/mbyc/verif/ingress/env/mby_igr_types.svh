@@ -26,14 +26,15 @@
 `define NUM_PORTS_PER_EPL 4
 `define NUM_TAG_PORTS 2
 
-typedef virtual mby_igr_env_if                                   igr_env_if_t;
+typedef virtual mby_igr_env_if           igr_env_if_t;
 
-typedef mby_ec_bfm_pkg::eth_bfm#(.MAX_PORTS(`NUM_PORTS_PER_VP))  igr_vp_bfm_t;
-typedef mby_ec_bfm_pkg::eth_bfm#(.MAX_PORTS(`NUM_PORTS_PER_EPL)) igr_eth_bfm_t;
-typedef mby_ec_bfm_pkg::mby_ec_cdi_tx_io                         igr_eth_bfm_tx_io_t;
-typedef mby_ec_bfm_pkg::mby_ec_cdi_rx_io                         igr_eth_bfm_rx_io_t;
-typedef virtual mby_ec_cdi_tx_intf                               igr_eth_bfm_tx_intf_t;
-typedef virtual mby_ec_cdi_rx_intf                               igr_eth_bfm_rx_intf_t;
+typedef mby_ec_bfm_pkg::eth_bfm          igr_vp_bfm_t;
+typedef mby_ec_bfm_pkg::eth_bfm          igr_eth_bfm_t;
+typedef mby_ec_bfm_pkg::mby_ec_cdi_tx_io igr_eth_bfm_tx_io_t;
+typedef mby_ec_bfm_pkg::mby_ec_cdi_rx_io igr_eth_bfm_rx_io_t;
+typedef virtual mby_ec_cdi_tx_intf       igr_eth_bfm_tx_intf_t;
+typedef virtual mby_ec_cdi_rx_intf       igr_eth_bfm_rx_intf_t;
+typedef mby_gpm_bfm_pkg::mby_gpm_bfm     igr_gpm_bfm_t;
 
 `endif // MBY_IGR_TYPES_SV
 

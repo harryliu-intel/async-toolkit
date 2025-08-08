@@ -49,32 +49,56 @@ typedef logic mby_gpm_bfm_msh_data_t;
 typedef logic mby_gpm_bfm_pod_debg_t;
 // Defining the mesh debug type to be a simple logic for now.
 typedef logic mby_gpm_bfm_msh_debg_t;
+
+// Re-using the smm_bfm transactions, this is the main data type used for write
+// and read requests to SMM BFM
+typedef mby_smm_bfm_mwr_req_xaction mby_gpm_bfm_smm_mwr_xaction;
 // These are the modes of operation of the GPM BFM, variable to be included in
 // the configuration object.
 typedef enum bit[1:0] {
    GPM_BFM_IGR_MODE,
-   GPM_BFM_EGR_MODE,
-   GPM_BFM_MSH_MODE
+   GPM_BFM_EGR_MODE
 } mby_gpm_bfm_mode_t;
 
 
 // -------------------------------------------------------------------------
-// Main class & VIF type definitions for TAG BFM
+// Main class & VIF type definitions for GPM BFM
 // -------------------------------------------------------------------------
-// Creating the virtual interface types for pod and mesh agents.
+// Creating the virtual interface types for pod agents.
 typedef virtual mby_gpm_bfm_pod_if mby_gpm_bfm_pod_vif;
-typedef virtual mby_gpm_bfm_msh_if mby_gpm_bfm_msh_vif;
 // Forward declaration of the transaction classes (in the tag_bfm_pkg this
 // file (bfm_types) is compiled before the transaction items.
+
 typedef class mby_gpm_bfm_pod_xaction;
-typedef class mby_gpm_bfm_msh_xaction;
-// Defining the pod agent as a parameterized base agent.
-typedef mby_base_pkg::mby_base_agent#(
+
+
+typedef shdv_base_io_policy_param#(
    .T_req(mby_gpm_bfm_pod_xaction),
-   .T_vif(mby_gpm_bfm_pod_vif)) pod_agent;
-// Defining the mesh agent as a parameterized base agent.
-typedef mby_base_pkg::mby_base_agent#(
-   .T_req(mby_gpm_bfm_msh_xaction),
-   .T_vif(mby_gpm_bfm_msh_vif)) msh_agent;
+   .T_vif(mby_gpm_bfm_pod_vif)) mby_gpm_bfm_pod_io;
+
+// Defining the flow control policy for the tag bfm
+typedef shdv_base_empty_fc_policy mby_gpm_bfm_pod_fc;
+
+
+// Defining the pod agent as a parameterized base agent.
+typedef shdv_base_pkg::shdv_agent#(
+   .T_req(mby_gpm_bfm_pod_xaction),
+   .T_iop(mby_gpm_bfm_pod_io),
+   .T_fcp(mby_gpm_bfm_pod_fc)) pod_agent;
+
+// Defining the pod pointer generator type
+typedef class mby_gpm_bfm_pptr_gen;
+typedef mby_gpm_bfm_pptr_gen#(.T_req(mby_gpm_bfm_pod_xaction)) gpm_bfm_pptr_gen_t;
+
+// Defining the pod sequence type
+typedef class mby_gpm_bfm_pod_seq;
+typedef mby_gpm_bfm_pod_seq#(.REQ(mby_gpm_bfm_pod_xaction)) gpm_bfm_pod_seq_t;
+
+// Defining the port type for smm bfm write requests interface
+typedef uvm_analysis_port#(.T(mby_gpm_bfm_smm_mwr_xaction)) gpm_bfm_smm_mwr_port_t;
+
+// Defining the port type for tag bfm free pointer interface
+//Fixme: Temporary parametized as int, change to actual tag bfm data type
+typedef uvm_analysis_port#(.T(int)) gpm_bfm_tag_fptr_port_t;
 
 `endif

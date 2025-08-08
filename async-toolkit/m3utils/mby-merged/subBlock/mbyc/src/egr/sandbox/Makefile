@@ -1,17 +1,23 @@
 
 # Prevent Make from setting implicit rules for files that look like c/cpp.
 
+
 # tb top
-VCS_SRC  = rtl/egr_top_tb.sv
-ifdef dut
-    ifneq ($(dut),"egr_top")
-        VCS_SRC  = ../$(dut)/sandbox/rtl/$(dut)_tb.sv
-    endif
+dut ?= egr_top
+ifneq ($(dut),egr_top)
+    VCS_SRC  = ../$(dut)/sandbox/rtl/$(dut)_tb.sv
+else
+    VCS_SRC  = rtl/egr_top_tb.sv
 endif
 
 ifndef SHRTL
 $(warning SHRTL is not set. For better performance, use $ setenv SHRTL `ToolConfig.pl get_tool_path ipconfig/shrtl`)
 SHRTL ?= $(shell ToolConfig.pl get_tool_path ipconfig/shrtl)
+endif
+
+ifndef DESIGNCOMPILER
+$(warning DESIGNCOMPILER is not set. For better performance, use $ setenv DESIGNCOMPILER `ToolConfig.pl get_tool_path designcompiler`)
+DESIGNCOMPILER ?= $(shell ToolConfig.pl get_tool_path designcompiler)
 endif
 
 # SRC is the relative path from the including Makefile
@@ -20,6 +26,11 @@ SRC = ../..
 include $(SRC)/shared/sandbox/Make.mby
 
 VCS_DEFS += +define+VCSSIM +define+INTEL_SVA_OFF
+
+use_gui ?= 0
+ifeq ($(use_gui),1)
+    VCS_FLAGS += -gui
+endif
 
 VCS_FLAGS += $(VCS_DEFS)
 
@@ -78,6 +89,9 @@ INCS += $(SRC)/egr/rtl/mem/tqu/src/mem_wrap
 
 INCS += $(SRC)/mems/rtl
 INCS += $(SHRTL)/src/common/rtl
+INCS += $(SHRTL)/src/fifo/rtl
+INCS += $(VCS_HOME)/packages/sva_cg
+INCS += $(DESIGNCOMPILER)/dw/sim_ver
 
 BUILD_DEP = $(addsuffix /*,$(INCS))
 VCS_LIB = $(addprefix -y ,$(INCS))
@@ -92,13 +106,13 @@ simv: $(VCS_SRC) $(BUILD_DEP)
 	vcs $(VCS_FLAGS) $(VCS_LIB) $(VCS_INC) $(VCS_SRC) -l build.log
 
 debug: simv
-	./simv $(TRACE_FLAGS) $(SIMV_FLAGS) +TIMESTAMP_FREQUENCY=100 +TIMEOUT=1000
+	./simv $(TRACE_FLAGS) $(SIMV_FLAGS) +TIMESTAMP_FREQUENCY=100 +TIMEOUT=1000  +TESTNAME=first_packet_ms1p0 +VERBOSITY=$(VERBOSITY)
 
 first_packet_ms1p0 first_packet_ms2p0 first_packet_ms2p1 first_packet_ms2p5: simv
-	./simv $(TRACE_FLAGS) $(SIMV_FLAGS) +TIMESTAMP_FREQUENCY=100 +TIMEOUT=1000 +TESTNAME=$@
+	./simv $(TRACE_FLAGS) $(SIMV_FLAGS) +TIMESTAMP_FREQUENCY=100 +TIMEOUT=1000 +TESTNAME=$@ +VERBOSITY=$(VERBOSITY)
 
 gate: simv
-	./simv $(SIMV_FLAGS) +TIMESTAMP_FREQUENCY=100 +TIMEOUT=1000
+	./simv $(SIMV_FLAGS) +TIMESTAMP_FREQUENCY=100 +TIMEOUT=1000 +TESTNAME=first_packet_ms1p0
 	rm -rf DVEfiles csrc/ simv simv.daidir/ simv.vdb/ ucli.key vc_hdrs.h *.txt *.txt.disablelog .synopsys_dve_rebuild.tcl *.vpd
 
 clean:

@@ -37,27 +37,25 @@ import shared_pkg::*;
 import hlp_pkg::*;
 import hlp_ipp_pkg::*;
 ();
-imn_rpl_bkwd_t      rpl_bkwd;       //Management status from downstream blocks
-imn_rpl_frwd_t      rpl_frwd;       //Managment to downstream blocks
+imn_rpl_frwd_t                              rpl_bkwd;       //Management status from downstream blocks
+imn_rpl_frwd_t                              rpl_frwd;       //Managment to downstream blocks
 
-parser_out_t        parser_out;     //Parser results
-logic   [1:0]       parser_out_v;   //Parser results valid
+parser_out_t                                parser_out;     //Parser results
+logic   [1:0]                               parser_out_v;   //Parser results valid
 
-igr_rx_ppe_md_t     if0_md;         //Interface 0 metadata
-igr_rx_ppe_md_t     if1_md;         //Interface 1 metadata
+igr_rx_ppe_md_t [1:0]                       if_md;          //Interface metadata
+logic   [1:0] [IGR_PPE_MD_ECC_WIDTH-1:0]    if_md_ecc;      //Interface metadata ECC bits
 
-igr_rx_ppe_tail_t   tail_info;      //Tail info
-logic               tail_info_v;    //Tail info valid
+igr_rx_ppe_tail_t [1:0]                     tail_info;      //Tail info
 
 modport parser(
     input   rpl_bkwd,
     output  rpl_frwd,
     output  parser_out,
     output  parser_out_v,
-    output  if0_md,
-    output  if1_md,
-    output  tail_info,
-    output  tail_info_v
+    output  if_md,
+    output  if_md_ecc,
+    output  tail_info
 );
 
 modport classifier(
@@ -65,10 +63,9 @@ modport classifier(
     input   rpl_frwd,
     input   parser_out,
     input   parser_out_v,
-    input   if0_md,
-    input   if1_md,
-    input   tail_info,
-    input   tail_info_v
+    input   if_md,
+    input   if_md_ecc,
+    input   tail_info
 );
 
 endinterface: par_class_if

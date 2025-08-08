@@ -39,49 +39,62 @@
 //------------------------------------------------------------------------------
 // CLASS: mby_igr_base_scbd
 //
-// This is the main igr_base_scbd class. This class implements the common 
+// This is the main igr_base_scbd class. This class implements the common
 // functionality across different igr scoreboards types.
 //
 //------------------------------------------------------------------------------
 class mby_igr_base_scbd extends shdv_base_scoreboard;
-    `uvm_component_utils(mby_igr_base_scbd)
-    //---------------------------------------------------------------------------
-    // CONSTRUCTOR: new
-    //
-    // Constructor.
-    //
-    // ARGUMENTS:
-    //    string name          - An instance name of the scoreboard
-    //    uvm_component parent - The scoreboard's parent component pointer.
-    //---------------------------------------------------------------------------
-    function new (string name, uvm_component parent);
-        super.new(name, parent);
-    endfunction
+   `uvm_component_utils(mby_igr_base_scbd)
+   //---------------------------------------------------------------------------
+   // CONSTRUCTOR: new
+   //
+   // Constructor.
+   //
+   // ARGUMENTS:
+   //    string name          - An instance name of the scoreboard
+   //    uvm_component parent - The scoreboard's parent component pointer.
+   //---------------------------------------------------------------------------
+   function new (string name, uvm_component parent);
+       super.new(name, parent);
+   endfunction
 
-    //---------------------------------------------------------------------------
-    // FUNCTION: start_of_simulation_phase
-    //
-    // Initializes all the scoreboard variables.
-    //
-    // ARGUMENTS:
-    //    uvm_phase phase - UVM phase
-    //---------------------------------------------------------------------------
-    function void start_of_simulation_phase(uvm_phase phase);
-        super.start_of_simulation_phase(phase);
-    endfunction
+   //---------------------------------------------------------------------------
+   // FUNCTION: start_of_simulation_phase
+   //
+   // Initializes all the scoreboard variables.
+   //
+   // ARGUMENTS:
+   //    uvm_phase phase - UVM phase
+   //---------------------------------------------------------------------------
+   function void start_of_simulation_phase(uvm_phase phase);
+       super.start_of_simulation_phase(phase);
+   endfunction
 
-    //---------------------------------------------------------------------------
-    // FUNCTION: check_phase
-    //
-    // Every scoreboard shall extend the UVM check() function to ensure that end
-    // of test has been executed completely.
-    //
-    // ARGUMENTS:
-    //    uvm_phase phase - UVM phase
-    //---------------------------------------------------------------------------
-    function void check_phase(uvm_phase phase);
-        `uvm_error(get_name(), "check_phase function has not been extended")
-    endfunction
+   //---------------------------------------------------------------------------
+   // FUNCTION: check_phase
+   //
+   // Every scoreboard shall extend the UVM check() function to ensure that end
+   // of test has been executed completely.
+   //
+   // ARGUMENTS:
+   //    uvm_phase phase - UVM phase
+   //---------------------------------------------------------------------------
+   function void check_phase(uvm_phase phase);
+       `uvm_error(get_name(), "check_phase function has not been extended")
+   endfunction
+
+
+   //---------------------------------------------------------------------------
+   // Function: reset
+   //
+   // Reset Scoreboard. This function will cause all scoreboard state to be
+   // reset and all prediction queues to be flushed. Integration layer
+   // scoreboards may need to execute the reset() function of sub-integration
+   // layer scoreboards.
+   //---------------------------------------------------------------------------
+   virtual function void reset();
+   endfunction
+
 endclass
 
 `endif // __MBY_IGR_BASE_SCBD__

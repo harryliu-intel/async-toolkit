@@ -26,7 +26,20 @@ class mby_igr_tb_cfg extends shdv_base_config;
 
    mby_igr_env_cfg env_cfg;
    mby_igr_dut_cfg dut_cfg;
-
+    
+   rand eth_bfm_pkg::speed_e speed_cfg[4]; 
+   bit randomize_speed_cfg = $test$plusargs("RAND_SPEED_CFG"); 
+       
+   constraint allowed_cfg{
+      if(randomize_speed_cfg) 
+         foreach(speed_cfg[i]) (i==0) ? speed_cfg[i] inside {eth_bfm_pkg::SPEED_400G,eth_bfm_pkg::SPEED_200G,eth_bfm_pkg::SPEED_100G} : speed_cfg[i] == eth_bfm_pkg::SPEED_OFF;
+      else 
+         foreach(speed_cfg[i]) (i==0) ? speed_cfg[i] inside {eth_bfm_pkg::SPEED_400G} : speed_cfg[i] == eth_bfm_pkg::SPEED_OFF;
+   } 
+    
+    
+    
+    
    `uvm_object_utils_begin(mby_igr_tb_cfg)
       `uvm_field_object( env_cfg, UVM_ALL_ON )
       `uvm_field_object( dut_cfg, UVM_ALL_ON )

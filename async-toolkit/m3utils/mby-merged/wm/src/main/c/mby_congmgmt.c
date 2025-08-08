@@ -2,15 +2,14 @@
 
 // Copyright (C) 2018 Intel Corporation
 
-#include "mby_triggers.h"
 #include "mby_congmgmt.h"
 
 void CongMgmt
 (
-    mby_ppe_cm_apply_map        * const cm_apply_map,
-    mby_ppe_cm_usage_map        * const cm_usage_map,
-    const mbyTriggersToCongMgmt * const in,
-          mbyCongMgmtToRxStats  * const out
+    mby_ppe_cm_apply_map  const * const cm_apply_map,
+    mby_ppe_cm_usage_map  const * const cm_usage_map,
+    mbyTriggersToCongMgmt const * const in,
+    mbyCongMgmtToRxStats        * const out
 )
 {
     // Note: this stage is empty for now. Will be coded up in the next sprint. <-- REVISIT!!!
@@ -28,7 +27,7 @@ void CongMgmt
     out->L2_DMAC           = in->L2_DMAC;
     out->L2_EVID1          = in->L2_EVID1;
     out->L2_IVLAN1_CNT     = in->L2_IVLAN1_CNT;
-    out->MARK_ROUTED       = in->MARK_ROUTED;
+    out->ROUTED            = in->ROUTED;
     out->MIRTYP            = in->MIRTYP;
     out->MOD_IDX           = in->MOD_IDX;
     out->MOD_PROF_IDX      = in->MOD_PROF_IDX;
@@ -38,8 +37,6 @@ void CongMgmt
     out->PM_ERR            = in->PM_ERR;
     out->PM_ERR_NONSOP     = in->PM_ERR_NONSOP;
     out->QOS_L3_DSCP       = in->QOS_L3_DSCP;
-    out->RX_DATA           = in->RX_DATA;
-    out->RX_LENGTH         = in->RX_LENGTH;
     out->RX_PORT           = in->RX_PORT;
     out->SAF_ERROR         = in->SAF_ERROR;
     out->SEG_META_ERR      = in->SEG_META_ERR;
@@ -48,4 +45,5 @@ void CongMgmt
     out->TX_DROP           = in->TX_DROP;
     out->TX_TAG            = in->TX_TAG;
     out->XCAST             = in->XCAST;
+    out->RX_LENGTH         = in->RX_LENGTH;
 }

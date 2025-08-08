@@ -1,108 +1,139 @@
-foreach $i (0..31) {
-    >> PARSER_ANA_CAM_$i$_CFG_reg_sel
-    >> PARSER_ANA_CAM_$i$_STATUS_reg_sel
-    >> parser_ana_cam_$i$_mem_ls_enter
-    >> parser_ana_cam_$i$_rd_adr
-    >> parser_ana_cam_$i$_rd_en
-    >> parser_ana_cam_$i$_wr_adr
-    >> parser_ana_cam_$i$_wr_data
-    >> parser_ana_cam_$i$_wr_en
-    >> parser_ana_cam_$i$_ecc_uncor_err
-    >> parser_ana_cam_$i$_init_done
-    >> parser_ana_cam_$i$_rd_data
-    >> parser_ana_cam_$i$_rd_valid
+foreach $i (0..7) {
+    if($i < 4) {
+        input_fifo_rd_en[0] >> parser_input_data_fifo_$i$_rd_en
+        input_fifo_wr_en[0] >> parser_input_data_fifo_$i$_wr_en
 
-    >> PARSER_ANA_EXC_$i$_CFG_reg_sel
-    >> PARSER_ANA_EXC_$i$_STATUS_reg_sel
-    >> parser_ana_exc_$i$_mem_ls_enter
-    >> parser_ana_exc_$i$_rd_adr
-    >> parser_ana_exc_$i$_rd_en
-    >> parser_ana_exc_$i$_wr_adr
-    >> parser_ana_exc_$i$_wr_data
-    >> parser_ana_exc_$i$_wr_en
-    >> parser_ana_exc_$i$_ecc_uncor_err
-    >> parser_ana_exc_$i$_init_done
-    >> parser_ana_exc_$i$_rd_data
-    >> parser_ana_exc_$i$_rd_valid
+        input_fifo_rd_adr[0] >> parser_input_data_fifo_$i$_rd_adr
+        input_fifo_wr_adr[0] >> parser_input_data_fifo_$i$_wr_adr
 
-    >> PARSER_ANA_EXT_$i$_CFG_reg_sel
-    >> PARSER_ANA_EXT_$i$_STATUS_reg_sel
-    >> parser_ana_ext_$i$_mem_ls_enter
-    >> parser_ana_ext_$i$_rd_adr
-    >> parser_ana_ext_$i$_rd_en
-    >> parser_ana_ext_$i$_wr_adr
-    >> parser_ana_ext_$i$_wr_data
-    >> parser_ana_ext_$i$_wr_en
-    >> parser_ana_ext_$i$_ecc_uncor_err
-    >> parser_ana_ext_$i$_init_done
-    >> parser_ana_ext_$i$_rd_data
-    >> parser_ana_ext_$i$_rd_valid
+        input_data_fifo_wr_data[0][(($i*274)+273):($i*274)] >> parser_input_data_fifo_$i$_wr_data
+        input_data_fifo_rd_data[0][(($i*274)+273):($i*274)] >> parser_input_data_fifo_$i$_rd_data
+    }
+    else {
+        input_fifo_rd_en[1] >> parser_input_data_fifo_$i$_rd_en
+        input_fifo_wr_en[1] >> parser_input_data_fifo_$i$_wr_en
 
-    >> PARSER_ANA_S_$i$_CFG_reg_sel
-    >> PARSER_ANA_S_$i$_STATUS_reg_sel
-    >> parser_ana_s_$i$_mem_ls_enter
-    >> parser_ana_s_$i$_rd_adr
-    >> parser_ana_s_$i$_rd_en
-    >> parser_ana_s_$i$_wr_adr
-    >> parser_ana_s_$i$_wr_data
-    >> parser_ana_s_$i$_wr_en
-    >> parser_ana_s_$i$_ecc_uncor_err
-    >> parser_ana_s_$i$_init_done
-    >> parser_ana_s_$i$_rd_data
-    >> parser_ana_s_$i$_rd_valid
+        input_fifo_rd_adr[1] >> parser_input_data_fifo_$i$_rd_adr
+        input_fifo_wr_adr[1] >> parser_input_data_fifo_$i$_wr_adr
 
-    >> PARSER_ANA_W_$i$_CFG_reg_sel
-    >> PARSER_ANA_W_$i$_STATUS_reg_sel
-    >> parser_ana_w_$i$_mem_ls_enter
-    >> parser_ana_w_$i$_rd_adr
-    >> parser_ana_w_$i$_rd_en
-    >> parser_ana_w_$i$_wr_adr
-    >> parser_ana_w_$i$_wr_data
-    >> parser_ana_w_$i$_wr_en
-    >> parser_ana_w_$i$_ecc_uncor_err
-    >> parser_ana_w_$i$_init_done
-    >> parser_ana_w_$i$_rd_data
-    >> parser_ana_w_$i$_rd_valid
+        input_data_fifo_wr_data[1][((($i-4)*274)+273):(($i-4)*274)] >> parser_input_data_fifo_$i$_wr_data
+        input_data_fifo_rd_data[1][((($i-4)*274)+273):(($i-4)*274)] >> parser_input_data_fifo_$i$_rd_data
+    }
 
-    >> PARSER_KEY_S_$i$_CFG_reg_sel
-    >> PARSER_KEY_S_$i$_STATUS_reg_sel
-    >> parser_key_s_$i$_mem_ls_enter
-    >> parser_key_s_$i$_rd_adr
-    >> parser_key_s_$i$_rd_en
-    >> parser_key_s_$i$_wr_adr
-    >> parser_key_s_$i$_wr_data
-    >> parser_key_s_$i$_wr_en
-    >> parser_key_s_$i$_ecc_uncor_err
-    >> parser_key_s_$i$_init_done
-    >> parser_key_s_$i$_rd_data
-    >> parser_key_s_$i$_rd_valid
-
-    >> PARSER_KEY_W_$i$_CFG_reg_sel
-    >> PARSER_KEY_W_$i$_STATUS_reg_sel
-    >> parser_key_w_$i$_mem_ls_enter
-    >> parser_key_w_$i$_rd_adr
-    >> parser_key_w_$i$_rd_en
-    >> parser_key_w_$i$_wr_adr
-    >> parser_key_w_$i$_wr_data
-    >> parser_key_w_$i$_wr_en
-    >> parser_key_w_$i$_ecc_uncor_err
-    >> parser_key_w_$i$_init_done
-    >> parser_key_w_$i$_rd_data
-    >> parser_key_w_$i$_rd_valid
+    >> PARSER_INPUT_DATA_FIFO_$i$_CFG_reg_sel
+    >> PARSER_INPUT_DATA_FIFO_$i$_STATUS_reg_sel
+    >> parser_input_data_fifo_$i$_mem_ls_enter
+    >> parser_input_data_fifo_$i$_ecc_uncor_err
+    >> parser_input_data_fifo_$i$_init_done
+    >> parser_input_data_fifo_$i$_rd_valid
 }
 
-foreach $i (0..15) {
+foreach $i (0..1) {
+    if($i < 1) {
+        input_fifo_rd_en[0] >> parser_input_md_fifo_$i$_rd_en
+        input_fifo_wr_en[0] >> parser_input_md_fifo_$i$_wr_en
+
+        input_fifo_rd_adr[0] >> parser_input_md_fifo_$i$_rd_adr
+        input_fifo_wr_adr[0] >> parser_input_md_fifo_$i$_wr_adr
+
+        input_md_fifo_wr_data[0] >> parser_input_md_fifo_$i$_wr_data
+        input_md_fifo_rd_data[0] >> parser_input_md_fifo_$i$_rd_data
+
+        md_dly_fifo_rd_en[0] >> parser_md_dly_fifo_$i$_rd_en
+        md_dly_fifo_wr_en[0] >> parser_md_dly_fifo_$i$_wr_en
+
+        md_dly_fifo_rd_adr[0] >> parser_md_dly_fifo_$i$_rd_adr
+        md_dly_fifo_wr_adr[0] >> parser_md_dly_fifo_$i$_wr_adr
+
+        md_dly_fifo_wr_data[0] >> parser_md_dly_fifo_$i$_wr_data
+        md_dly_fifo_rd_data[0] >> parser_md_dly_fifo_$i$_rd_data
+
+        tail_dly_fifo_rd_en[0] >> parser_tail_dly_fifo_$i$_rd_en
+        tail_dly_fifo_wr_en[0] >> parser_tail_dly_fifo_$i$_wr_en
+
+        tail_dly_fifo_rd_adr[0] >> parser_tail_dly_fifo_$i$_rd_adr
+        tail_dly_fifo_wr_adr[0] >> parser_tail_dly_fifo_$i$_wr_adr
+
+        tail_dly_fifo_wr_data[0] >> parser_tail_dly_fifo_$i$_wr_data
+        tail_dly_fifo_rd_data[0] >> parser_tail_dly_fifo_$i$_rd_data
+    }
+    else {
+        input_fifo_rd_en[1] >> parser_input_md_fifo_$i$_rd_en
+        input_fifo_wr_en[1] >> parser_input_md_fifo_$i$_wr_en
+
+        input_fifo_rd_adr[1] >> parser_input_md_fifo_$i$_rd_adr
+        input_fifo_wr_adr[1] >> parser_input_md_fifo_$i$_wr_adr
+
+        input_md_fifo_wr_data[1] >> parser_input_md_fifo_$i$_wr_data
+        input_md_fifo_rd_data[1] >> parser_input_md_fifo_$i$_rd_data
+
+        md_dly_fifo_rd_en[1] >> parser_md_dly_fifo_$i$_rd_en
+        md_dly_fifo_wr_en[1] >> parser_md_dly_fifo_$i$_wr_en
+
+        md_dly_fifo_rd_adr[1] >> parser_md_dly_fifo_$i$_rd_adr
+        md_dly_fifo_wr_adr[1] >> parser_md_dly_fifo_$i$_wr_adr
+
+        md_dly_fifo_wr_data[1] >> parser_md_dly_fifo_$i$_wr_data
+        md_dly_fifo_rd_data[1] >> parser_md_dly_fifo_$i$_rd_data
+
+        tail_dly_fifo_rd_en[1] >> parser_tail_dly_fifo_$i$_rd_en
+        tail_dly_fifo_wr_en[1] >> parser_tail_dly_fifo_$i$_wr_en
+
+        tail_dly_fifo_rd_adr[1] >> parser_tail_dly_fifo_$i$_rd_adr
+        tail_dly_fifo_wr_adr[1] >> parser_tail_dly_fifo_$i$_wr_adr
+
+        tail_dly_fifo_wr_data[1] >> parser_tail_dly_fifo_$i$_wr_data
+        tail_dly_fifo_rd_data[1] >> parser_tail_dly_fifo_$i$_rd_data
+    }
+    >> PARSER_INPUT_MD_FIFO_$i$_CFG_reg_sel
+    >> PARSER_INPUT_MD_FIFO_$i$_STATUS_reg_sel
+    >> parser_input_md_fifo_$i$_mem_ls_enter
+    >> parser_input_md_fifo_$i$_ecc_uncor_err
+    >> parser_input_md_fifo_$i$_init_done
+    >> parser_input_md_fifo_$i$_rd_valid
+
+    >> PARSER_MD_DLY_FIFO_$i$_CFG_reg_sel
+    >> PARSER_MD_DLY_FIFO_$i$_STATUS_reg_sel
+    >> parser_md_dly_fifo_$i$_mem_ls_enter
+    >> parser_md_dly_fifo_$i$_ecc_uncor_err
+    >> parser_md_dly_fifo_$i$_init_done
+    >> parser_md_dly_fifo_$i$_rd_valid
+
+    >> PARSER_TAIL_DLY_FIFO_$i$_CFG_reg_sel
+    >> PARSER_TAIL_DLY_FIFO_$i$_STATUS_reg_sel
+    >> parser_tail_dly_fifo_$i$_mem_ls_enter
+    >> parser_tail_dly_fifo_$i$_ecc_uncor_err
+    >> parser_tail_dly_fifo_$i$_init_done
+    >> parser_tail_dly_fifo_$i$_rd_valid
+}
+
+ptype_ram_rd_en     >> parser_ptype_ram_rd_en
+ptype_ram_wr_en     >> parser_ptype_ram_wr_en
+ptype_ram_rd_adr    >> parser_ptype_ram_rd_adr
+ptype_ram_wr_adr    >> parser_ptype_ram_wr_adr
+ptype_ram_wr_data   >> parser_ptype_ram_wr_data
+ptype_ram_rd_data   >> parser_ptype_ram_rd_data
+
+    >> PARSER_PTYPE_RAM_CFG_reg_sel
+    >> PARSER_PTYPE_RAM_STATUS_reg_sel
+    >> parser_ptype_ram_mem_ls_enter
+    >> parser_ptype_ram_ecc_uncor_err
+    >> parser_ptype_ram_init_done
+    >> parser_ptype_ram_rd_valid
+
+foreach $i (0..79) {
+    extract_cfg_rd_en[$i]   >> parser_extract_cfg_$i$_rd_en
+    extract_cfg_wr_en[$i]   >> parser_extract_cfg_$i$_wr_en
+    extract_cfg_rd_adr[$i]  >> parser_extract_cfg_$i$_rd_adr
+    extract_cfg_wr_adr[$i]  >> parser_extract_cfg_$i$_wr_adr
+    extract_cfg_wr_data[$i] >> parser_extract_cfg_$i$_wr_data
+    extract_cfg_rd_data[$i] >> parser_extract_cfg_$i$_rd_data
+
     >> PARSER_EXTRACT_CFG_$i$_CFG_reg_sel
     >> PARSER_EXTRACT_CFG_$i$_STATUS_reg_sel
     >> parser_extract_cfg_$i$_mem_ls_enter
-    >> parser_extract_cfg_$i$_rd_adr
-    >> parser_extract_cfg_$i$_rd_en
-    >> parser_extract_cfg_$i$_wr_adr
-    >> parser_extract_cfg_$i$_wr_data
-    >> parser_extract_cfg_$i$_wr_en
     >> parser_extract_cfg_$i$_ecc_uncor_err
     >> parser_extract_cfg_$i$_init_done
-    >> parser_extract_cfg_$i$_rd_data
     >> parser_extract_cfg_$i$_rd_valid
 }
 
@@ -119,77 +150,7 @@ foreach $i (0..1) {
     >> parser_csum_cfg_$i$_init_done
     >> parser_csum_cfg_$i$_rd_data
     >> parser_csum_cfg_$i$_rd_valid
-
-    >> PARSER_PORT_CFG_$i$_CFG_reg_sel
-    >> PARSER_PORT_CFG_$i$_STATUS_reg_sel
-    >> parser_port_cfg_$i$_mem_ls_enter
-    >> parser_port_cfg_$i$_rd_adr
-    >> parser_port_cfg_$i$_rd_en
-    >> parser_port_cfg_$i$_wr_adr
-    >> parser_port_cfg_$i$_wr_data
-    >> parser_port_cfg_$i$_wr_en
-    >> parser_port_cfg_$i$_ecc_uncor_err
-    >> parser_port_cfg_$i$_init_done
-    >> parser_port_cfg_$i$_rd_data
-    >> parser_port_cfg_$i$_rd_valid
 }
-
-    >> PARSER_METADATA_FIFO_CFG_reg_sel
-    >> PARSER_METADATA_FIFO_STATUS_reg_sel
-    >> parser_metadata_fifo_mem_ls_enter
-    >> parser_metadata_fifo_rd_adr
-    >> parser_metadata_fifo_rd_en
-    >> parser_metadata_fifo_wr_adr
-    >> parser_metadata_fifo_wr_data
-    >> parser_metadata_fifo_wr_en
-    >> parser_metadata_fifo_ecc_uncor_err
-    >> parser_metadata_fifo_init_done
-    >> parser_metadata_fifo_rd_data
-    >> parser_metadata_fifo_rd_valid
-
-    >> PARSER_PTYPE_RAM_CFG_reg_sel
-    >> PARSER_PTYPE_RAM_STATUS_reg_sel
-    >> parser_ptype_ram_adr
-    >> parser_ptype_ram_mem_ls_enter
-    >> parser_ptype_ram_rd_en
-    >> parser_ptype_ram_wr_data
-    >> parser_ptype_ram_wr_en
-    >> parser_ptype_ram_ecc_uncor_err
-    >> parser_ptype_ram_init_done
-    >> parser_ptype_ram_rd_data
-    >> parser_ptype_ram_rd_valid
-    >> parser_ptype_ram_mem_ls_enter
-    >> parser_ptype_ram_rd_en
-    >> parser_ptype_ram_wr_data
-    >> parser_ptype_ram_wr_en
-    >> parser_ptype_ram_ecc_uncor_err
-    >> parser_ptype_ram_init_done
-    >> parser_ptype_ram_rd_data
-    >> parser_ptype_ram_rd_valid
-
-
-    >> PARSER_PTYPE_CAM_CFG_reg_sel
-    >> PARSER_PTYPE_CAM_STATUS_reg_sel
-    >> parser_ptype_cam_adr
-    >> parser_ptype_cam_chk_en
-    >> parser_ptype_cam_chk_for_err_trig
-    >> parser_ptype_cam_chk_key
-    >> parser_ptype_cam_chk_mask
-    >> parser_ptype_cam_raw_hit_in
-    >> parser_ptype_cam_rd_en
-    >> parser_ptype_cam_slice_en
-    >> parser_ptype_cam_wr_data
-    >> parser_ptype_cam_wr_en
-    >> parser_ptype_cam_ecc_uncor_err
-    >> parser_ptype_cam_init_done
-    >> parser_ptype_cam_raw_hit_out
-    >> parser_ptype_cam_rd_data
-    >> parser_ptype_cam_rule_hit_num
-    >> parser_ptype_cam_rule_hit_num_vld
-    >> parser_ptype_cam_tcam_chk_rdy
-    >> parser_ptype_cam_tcam_chk_valid
-    >> parser_ptype_cam_tcam_rd_valid
-    >> parser_ptype_cam_tcam_rdwr_rdy
 
     >> PARSER_ECC_COR_ERR_reg_sel
     >> PARSER_ECC_UNCOR_ERR_reg_sel

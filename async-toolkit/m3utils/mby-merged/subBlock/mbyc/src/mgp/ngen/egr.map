@@ -2,8 +2,8 @@
 
 cclk                  >> clk
 
-egr_igr_wreq       >> igr_dirtypod_if
-igr_egr_rreq       >> igr_cleanpod_if
+egr_dirtypod_if    >> igr_dirtypod_if
+egr_cleanpod_if    >> igr_cleanpod_if
 egr_pod            >> pod_if
 egr_mc_mirror_pod  >> mc_mirror_pod_if
 egr_ahb            >> ahb_if

@@ -39,7 +39,7 @@
 //------------------------------------------------------------------------------
 // CLASS: mby_egr_base_scbd
 //
-// This is the main egr_base_scbd class. This class implements the common 
+// This is the main egr_base_scbd class. This class implements the common
 // functionality across different egr scoreboards types.
 //
 //------------------------------------------------------------------------------
@@ -82,6 +82,19 @@ class mby_egr_base_scbd extends shdv_base_scoreboard;
     function void check_phase(uvm_phase phase);
         `uvm_error(get_name(), "check_phase function has not been extended")
     endfunction
+
+
+   //---------------------------------------------------------------------------
+   // Function: reset
+   //
+   // Reset Scoreboard. This function will cause all scoreboard state to be
+   // reset and all prediction queues to be flushed. Integration layer
+   // scoreboards may need to execute the reset() function of sub-integration
+   // layer scoreboards.
+   //---------------------------------------------------------------------------
+   virtual function void reset();
+   endfunction
+
 endclass
 
 `endif // __MBY_EGR_BASE_SCBD__

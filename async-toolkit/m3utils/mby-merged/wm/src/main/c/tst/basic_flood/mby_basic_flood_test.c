@@ -1,14 +1,12 @@
 #include <stdint.h>
 #include <stdio.h>
+#include <string.h>
 
-#include <mby_common.h>
 #include <mby_errors.h>
-#include <mby_model.h>
-#include <mby_rxstats.h>
 #include <mby_init.h>
-#include <mby_parser.h>
 #include <mby_pipeline.h>
-#include <model_c_write.h> // write_field()
+#include "tst_model_c_write.h"
+
 
 #include "mby_basic_flood_init.h"
 
@@ -32,6 +30,7 @@ static mby_top_map       top_map;
 static mby_top_map__addr top_map_addr;
 
 static mbyRxStatsToRxOut rxs2rxo;
+static varchar_t rx_data;
 
 inline static int checkOk (const char * test, const fm_status status)
 {
@@ -120,9 +119,13 @@ static fm_status sendPacket
         mbyRxMacToParser mac2par;
 
         // Populate input:
-        mac2par.RX_DATA   = (fm_byte *) packet;
         mac2par.RX_LENGTH = (fm_uint32) length;
         mac2par.RX_PORT   = (fm_uint32) port;
+        memcpy(mac2par.SEG_DATA, packet, MIN(length, sizeof(mac2par.SEG_DATA)));
+
+        // Set variables for TxPipeline
+        rx_data.data   = packet;
+        rx_data.length = length;
 
         // Call RX pipeline:
         RxPipeline(rx_top_map, rx_top_map_w, shm_map, &mac2par, &rxs2rxo);
@@ -145,9 +148,9 @@ static fm_status receivePacket
         sts = FM_ERR_UNSUPPORTED;
     else
     {
-       mby_ppe_tx_top_map       const * const tx_top_map   = &(top_map.mpp[0].mgp[0].tx_ppe);
-       mby_ppe_tx_top_map__addr const * const tx_top_map_w = &(top_map_addr.mpp[0].mgp[0].tx_ppe);
-       mby_shm_map              const * const shm_map      = &(top_map.mpp[0].shm);
+        mby_ppe_tx_top_map       const * const tx_top_map   = &(top_map.mpp[0].mgp[0].tx_ppe);
+        mby_ppe_tx_top_map__addr const * const tx_top_map_w = &(top_map_addr.mpp[0].mgp[0].tx_ppe);
+        mby_shm_map              const * const shm_map      = &(top_map.mpp[0].shm);
 
         // Input struct:
         mbyTxInToModifier txi2mod;
@@ -159,7 +162,7 @@ static fm_status receivePacket
         txi2mod.IS_TIMEOUT    = rxs2rxo.IS_TIMEOUT;
         txi2mod.L2_DMAC       = rxs2rxo.L2_DMAC;
         txi2mod.L2_EVID1      = rxs2rxo.L2_EVID1;
-        txi2mod.MARK_ROUTED   = rxs2rxo.MARK_ROUTED;
+        txi2mod.ROUTED        = rxs2rxo.ROUTED;
         txi2mod.MIRTYP        = rxs2rxo.MIRTYP;
         txi2mod.MOD_IDX       = rxs2rxo.MOD_IDX;
         txi2mod.MOD_PROF_IDX  = rxs2rxo.MOD_PROF_IDX;
@@ -170,8 +173,6 @@ static fm_status receivePacket
         txi2mod.PM_ERR        = rxs2rxo.PM_ERR;
         txi2mod.PM_ERR_NONSOP = rxs2rxo.PM_ERR_NONSOP;
         txi2mod.QOS_L3_DSCP   = rxs2rxo.QOS_L3_DSCP;
-        txi2mod.RX_DATA       = rxs2rxo.RX_DATA;
-        txi2mod.RX_LENGTH     = rxs2rxo.RX_LENGTH;
         txi2mod.SAF_ERROR     = rxs2rxo.SAF_ERROR;
         txi2mod.TAIL_CSUM_LEN = rxs2rxo.TAIL_CSUM_LEN;
         txi2mod.TX_DROP       = rxs2rxo.TX_DROP;
@@ -180,14 +181,22 @@ static fm_status receivePacket
 
         // Output struct:
         mbyTxStatsToTxMac txs2mac;
-        txs2mac.TX_DATA = packet; //points at provided buffer
+        // TODO why is this commented out in the struct? REVISIT
+        //txs2mac.TX_DATA = packet; //points at provided buffer
 
         // Call RX pipeline:
-        TxPipeline(tx_top_map, tx_top_map_w, shm_map, &txi2mod, &txs2mac, MBY_MAX_PACKET_SIZE);
+        // TODO what do we do here with rx_data and tx_data?
+        varchar_builder_t txd_builder;
+        varchar_t tx_data;
+
+        varchar_builder_init(&txd_builder, &tx_data, malloc, free);
+
+        TxPipeline(tx_top_map, tx_top_map_w, shm_map, &rx_data,
+                   &txi2mod, &txs2mac, &txd_builder);
 
         // Populate output:
         *port   = txs2mac.TX_PORT;
-        *length = txs2mac.TX_LENGTH;
+        *length = tx_data.length;
     }
     return sts;
 }

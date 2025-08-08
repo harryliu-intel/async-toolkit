@@ -49,19 +49,14 @@ igr$y$_vp_rx_metadata           >> igr_vp_rx_metadata
 igr$y$_vp_rx_port_num           >> igr_vp_rx_port_num                        
 igr$y$_vp_rx_time_stamp         >> igr_vp_rx_time_stamp                      
 egr$y$_ahb                      >> egr_ahb                                   
-ahb$y$_rxppe                    >> ahb_rxppe                            
-ahb$y$_txppe0                   >> ahb_txppe0                            
-ahb$y$_txppe1                   >> ahb_txppe1                            
 grp_a$y                         >> egr_epl0                                  
 grp_b$y                         >> egr_epl1                                  
 grp_c$y                         >> egr_epl2                                  
 grp_d$y                         >> egr_epl3                                  
-glb$y$_rxppe                    >> glb_rxppe                            
-glb$y$_txppe0                   >> glb_txppe0                         
-glb$y$_txppe1                   >> glb_txppe1                         
-egr$y$_mc_table0                >> egr_mc_table0                          
-egr$y$_mc_table1                >> egr_mc_table1                          
-egr$y$_ppestm                   >> egr_ppestm
+tx_ppe_mod_if$y$_0              >> tx_ppe_mod_if0
+tx_ppe_mod_if$y$_1              >> tx_ppe_mod_if1
+tx_ppe_negh_if$y$_0             >> tx_ppe_negh_if0
+tx_ppe_negh_if$y$_1             >> tx_ppe_negh_if1
 
 igr$y$_vp_tx_pfc_xoff           >> igr_vp_tx_pfc_xoff
 rxppe$y$_ppestm0                >> rxppe_ppestm0

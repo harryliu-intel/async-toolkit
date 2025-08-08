@@ -53,8 +53,8 @@ class mby_igr_eth_simple_seq extends mby_igr_extended_base_seq;
 
    `uvm_object_utils(mby_igr_eth_simple_seq)
 
-   eth_frame      los_frames[4];
-   eth_sequencer  los_sequencers[4];
+   eth_frame      los_frames[1];
+   eth_sequencer  los_sequencers[1];
 
    //---------------------------------------------------------------------------
    // Function: new()
@@ -64,7 +64,7 @@ class mby_igr_eth_simple_seq extends mby_igr_extended_base_seq;
       // raise objection by default
       this.set_automatic_phase_objection(1);
       `uvm_info(this.get_name(), ("mby_igr_eth_simple_seq::new"), UVM_LOW)
-      
+
    endfunction : new
 
    //---------------------------------------------------------------------------
@@ -72,8 +72,39 @@ class mby_igr_eth_simple_seq extends mby_igr_extended_base_seq;
    //---------------------------------------------------------------------------
    virtual task body();
       int count[4] = {0,0,0,0};
+
+      uvm_status_e status;
+      uvm_path_e access_type = UVM_BACKDOOR;
+      uvm_reg_data_t read_data;
+      mby_igr_reg_pkg::mby_igr_reg_blk ral;
+      ral = env.get_tb_ral;
+
       this.set_name("mby_igr_eth_simple_seq");
-      wait_n(15);
+      wait_n(50);
+
+      `uvm_info(get_name(), "CSR backdoor access", UVM_LOW);
+      ral.rx_pb_block.RX_PB_PORT_CFG.read(status, read_data, access_type);
+      if (read_data != '0)
+      begin
+         `uvm_warning(get_name(), "RX_PB_PORT_CFG: Read data is different from zero");
+      end else
+      begin
+         `uvm_info(get_name(), "RX_PB_PORT_CFG: Read data is zero", UVM_LOW);
+      end
+      wait_n(10);
+      ral.rx_pb_block.RX_PB_PORT_CFG.write(status, '1, access_type);
+      `uvm_info(get_name(), "RX_PB_PORT_CFG: Written data is 0xFFFFFFFF", UVM_LOW);
+      wait_n(10);
+      ral.rx_pb_block.RX_PB_PORT_CFG.read(status, read_data, access_type);
+      if (read_data != 'hffffffff)
+      begin
+         `uvm_warning(get_name(), "RX_PB_PORT_CFG: Read data is different written data");
+      end else
+      begin
+         `uvm_info(get_name(), "RX_PB_PORT_CFG: Read data is equal to written data", UVM_LOW);
+      end
+      wait_n(10);
+
       `uvm_info("TST", ("Starting eth simple sequence..."), UVM_LOW)
       foreach(los_sequencers[i]) begin
          assert($cast(los_sequencers[i],
@@ -91,16 +122,14 @@ class mby_igr_eth_simple_seq extends mby_igr_extended_base_seq;
          automatic int auto_i = i;
          fork
            begin
-             repeat (20) begin
+             repeat (1) begin
                assert(los_frames[auto_i].randomize() with {
                  bubble         == 0;
-                 kind           inside {BASIC_FRAME,
-                                        IPV4_FRAME,
-                                        IPV6_FRAME};
-                 payload.size() inside {[64:66]};
-                 dmac            == 'h000102030405 + count[auto_i];
-                 smac            == 'h060708090a0b + count[auto_i];
-                 tc              == count[auto_i][3:0];
+                 kind           == BASIC_FRAME;
+                 payload.size() == 46;
+                 dmac           == 'h000102030405 + count[auto_i];
+                 smac           == 'h060708090a0b + count[auto_i];
+                 tc             == count[auto_i][3:0];
                  (kind == BASIC_FRAME) ->
                     foreach (payload[idx])
                       payload[idx] == idx;
@@ -118,7 +147,7 @@ class mby_igr_eth_simple_seq extends mby_igr_extended_base_seq;
       end
 
       wait fork;
-      wait_n(20);
+      wait_n(500);
    endtask
 
 endclass : mby_igr_eth_simple_seq
@@ -186,34 +215,24 @@ class mby_igr_rand_test extends mby_igr_base_test;
       `uvm_info("::set_default_sequences", "Setting phase sequences", UVM_NONE)
 
       // Specifying reset phase sequence
-      uvm_config_db#(uvm_object_wrapper)::set(this,
-         "env.tb_seqr.reset_phase",
-         "default_sequence",
-         mby_igr_dummy_seq::type_id::get());
+      env.set_reset_sequence("mby_igr_dummy_seq");
 
       // Specifying post_reset phase sequence
+     /*
       uvm_config_db#(uvm_object_wrapper)::set(this,
          "env.tb_seqr.post_reset_phase",
          "default_sequence",
-         mby_igr_dummy_seq::type_id::get());
+         mby_igr_dummy_seq::type_id::get()); */
 
       // Specifying configure phase sequence
-      uvm_config_db#(uvm_object_wrapper)::set(this,
-         "env.tb_seqr.configure_phase",
-         "default_sequence",
-         mby_igr_dummy_seq::type_id::get());
+      env.set_configure_sequence("mby_igr_dummy_seq");
 
       // Specifying shutdown phase sequence
-      uvm_config_db#(uvm_object_wrapper)::set(this,
-         "env.tb_seqr.shutdown_phase",
-         "default_sequence",
-         mby_igr_dummy_seq::type_id::get());
+      env.set_shutdown_sequence("mby_igr_dummy_seq");
 
       // Specifying main phase sequence
-      uvm_config_db#(uvm_object_wrapper)::set(this,
-         "env.tb_seqr.main_phase",
-         "default_sequence",
-         mby_igr_eth_simple_seq::type_id::get());
+      env.set_main_sequence("mby_igr_eth_simple_seq");
+
    endfunction : set_default_sequences
 
    //---------------------------------------------------------------------------

@@ -1,4 +1,10 @@
 
+<% if ($MBY_RX_PB) {
+   } else {
+   $MBY_RX_PB = 1;
+%>
+
+
 `include "mby_port_cfg.rdl"
 
 
@@ -98,3 +104,7 @@ addrmap mby_rx_pb_map {
   rx_pb_port_cfg_r RX_PB_PORT_CFG;
   rx_pb_wm_rf      RX_PB_WM[18];
 };
+
+<%
+   }
+%>

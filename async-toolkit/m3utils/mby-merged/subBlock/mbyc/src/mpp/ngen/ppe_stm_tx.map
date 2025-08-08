@@ -2,13 +2,15 @@
 
 sreset             >> reset
 
-egr0_ppestm        >>  egr_ppe_stm_if0
-egr1_ppestm        >>  egr_ppe_stm_if1
+tx_ppe_mod_if0_0   >>  tx_ppe_mod_if0
+tx_ppe_mod_if0_1   >>  tx_ppe_mod_if1
+tx_ppe_mod_if1_0   >>  tx_ppe_mod_if2
+tx_ppe_mod_if1_1   >>  tx_ppe_mod_if3
 
-egr0_mc_table0  >> mc_table_if0_0
-egr0_mc_table1  >> mc_table_if0_1
-egr1_mc_table0  >> mc_table_if1_0
-egr1_mc_table1  >> mc_table_if1_1
+tx_ppe_negh_if0_0   >>  tx_ppe_negh_if0
+tx_ppe_negh_if0_1   >>  tx_ppe_negh_if1
+tx_ppe_negh_if1_0   >>  tx_ppe_negh_if2
+tx_ppe_negh_if1_1   >>  tx_ppe_negh_if3
 
     >> i_ibus_ctrl
     >> o_ibus_resp

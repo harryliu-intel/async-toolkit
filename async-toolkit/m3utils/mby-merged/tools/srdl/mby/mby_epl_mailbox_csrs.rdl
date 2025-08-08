@@ -1,6 +1,9 @@
-//
-//
-`include "lib_udp.rdl"
+<% if ($MBY_EPL_MAILBOX_CSRS) {
+   } else {
+   $MBY_EPL_MAILBOX_CSRS = 1;
+%>
+
+`include "mby_lib_udp.rdl"
 `include "mby_epl_mailbox_csrs.rdlh"
 
     addrmap mby_epl_mailbox_csrs {                // Start the Address Map for mby_epl_mailbox_csrs
@@ -34,3 +37,6 @@
         epl_lm_foo                                epl_lm_foo                                         @0x000000000200;
     };            // End of Address Map for mby_epl_mailbox_csrs
 
+<%
+   }
+%>

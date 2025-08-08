@@ -1,4 +1,9 @@
-`include "lib_udp.rdl"
+<% if ($MBY_PPE_RX_TOP_MAP) {
+   } else {
+   $MBY_PPE_RX_TOP_MAP = 1;
+%>
+
+`include "mby_lib_udp.rdl"
 
 
 `include "mby_ppe_parser_map.rdl"
@@ -35,3 +40,6 @@ addrmap mby_ppe_rx_top_map {
   mby_ppe_trig_usage_map        trig_usage;
 };
 
+<%
+   }
+%>

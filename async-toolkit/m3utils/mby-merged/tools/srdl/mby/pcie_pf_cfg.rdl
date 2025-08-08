@@ -1,6 +1,11 @@
+<% if ($PCIE_PF_CFG) {
+   } else {
+   $PCIE_PF_CFG = 1;
+%>
+
 <% use security; %>
 <% my %Security_Props = security::GetSecurityInfo(); %>
-`include "lib_udp.rdl"
+`include "mby_lib_udp.rdl"
 
 
 
@@ -4967,3 +4972,8 @@ addrmap PCIE_CFG_map {
   pcie_portlogic_r           PCIE_PORTLOGIC                @0x258;
   pcie_portlogic_link_state_r PCIE_PORTLOGIC_LINK_STATE     @0x260;
 }; // final size: 0x268 <= 0x400 = 8<<7
+
+<%
+   }
+%>
+

@@ -9,7 +9,7 @@
 // Last modified : 21.08.2018
 //-----------------------------------------------------------------------------
 // Description :
-// 
+//
 //-----------------------------------------------------------------------------
 // Copyright (c) 2018 by Intel Corporation This model is the confidential and
 // proprietary property of Intel Corporation and the possession or use of this
@@ -21,15 +21,19 @@
 
 program mby_egr_test_lib;
 
-  import uvm_pkg::*;
-  import mby_egr_env_pkg::*;
-  import eth_bfm_pkg::*;
-  import mby_ec_bfm_pkg::*;
-  import mby_tag_bfm_pkg::*;
-
+   import uvm_pkg::*;
+   import mby_egr_env_pkg::*;
+   import eth_bfm_pkg::*;
+   import mby_ec_bfm_pkg::*;
+   import mby_tag_bfm_pkg::*;
+   import shdv_synchronization_pkg::*;
+   import shdv_reset_pkg::*;
+   import shdv_base_pkg::*;
+   
 `include "uvm_macros.svh"
 `include "mby_egr_base_test.svh"
 `include "mby_egr_rand_test.svh"
+`include "mby_egr_tag_seq.svh"
 `include "mby_egr_first_packet_test.svh"
 
 

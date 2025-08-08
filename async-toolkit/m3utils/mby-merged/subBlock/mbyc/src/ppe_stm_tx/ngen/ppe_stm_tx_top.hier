@@ -5,11 +5,17 @@ ppe_stm_tx_top [
     #(.MOD_TBL_BANKS(10), \
       .MOD_TBL_CHUNKS(8), \
       .MOD_TBL_RDATA_WIDTH(72), \
-      .MOD_TBL_MEM_SIZE(2047), \
+      .MOD_TBL_MEM_SIZE(2048), \
       .LOG2_MOD_TBL_MEM_SIZE(11), \
       .MOD_TBL_RPORTS(4), \
       .MOD_TBL_ADDR_WIDTH(18), \
-      .MOD_TBL_WDATA_WIDTH(72))
+      .MOD_TBL_WDATA_WIDTH(72), \
+      .NEGH_TBL_RPORTS(4), \
+      .NEGH_TBL_DEPTH(16384), \
+      .LOG2_NEGH_TBL_DEPTH(14), \
+      .NEGH_TBL_WIDTH(85))
   ppe_stm_tx_shells_wrapper of ppe_stm_tx_shells_wrapper with ppe_stm_tx_shells_wrapper.map
+  ppe_stm_tx_rf_mems of ppe_stm_tx_rf_mems with ppe_stm_tx_rf_mems.map
   ppe_stm_tx_sram_mems of ppe_stm_tx_sram_mems with ppe_stm_tx_sram_mems.map
+  ppe_stm_tx_tcam_mems of ppe_stm_tx_tcam_mems with ppe_stm_tx_tcam_mems.map
 ]

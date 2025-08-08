@@ -42,6 +42,10 @@ module mby_igr_ti_high #(
    ,mby_ec_cdi_rx_intf  eth_bfm_rx_intf_3
    ,mby_ec_cdi_tx_intf  eth_bfm_tx_intf_4
    ,mby_ec_cdi_rx_intf  eth_bfm_rx_intf_4
+   ,mby_tag_bfm_uc_if   tag_bfm_intf_0
+   ,mby_tag_bfm_uc_if   tag_bfm_intf_1
+   ,mby_pbr_bfm_cptr_slave_if  pbr_bfm_cptr_slave_if
+   ,mby_pbr_bfm_dptr_master_if pbr_bfm_dptr_master_if
   );
 
    import uvm_pkg::*;
@@ -54,7 +58,7 @@ module mby_igr_ti_high #(
    // ===============================================
    mby_igr_ti_low #(.IP_ENV(IP_ENV))
       u_ingress_ti_low (
-                        .ingress_if  (ingress_if)
+                        .ingress_if        (ingress_if)
                        ,.eth_bfm_tx_intf_0 (eth_bfm_tx_intf_0)
                        ,.eth_bfm_rx_intf_0 (eth_bfm_rx_intf_0)
                        ,.eth_bfm_tx_intf_1 (eth_bfm_tx_intf_1)
@@ -65,6 +69,10 @@ module mby_igr_ti_high #(
                        ,.eth_bfm_rx_intf_3 (eth_bfm_rx_intf_3)
                        ,.eth_bfm_tx_intf_4 (eth_bfm_tx_intf_4)
                        ,.eth_bfm_rx_intf_4 (eth_bfm_rx_intf_4)
+                       ,.tag_bfm_intf_0    (tag_bfm_intf_0)
+                       ,.tag_bfm_intf_1    (tag_bfm_intf_1)
+                       ,.pbr_bfm_cptr_slave_if    (pbr_bfm_cptr_slave_if)
+                       ,.pbr_bfm_dptr_master_if   (pbr_bfm_dptr_master_if)
                        );
 
 endmodule

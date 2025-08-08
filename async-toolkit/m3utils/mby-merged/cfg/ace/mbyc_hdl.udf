@@ -39,7 +39,10 @@ for (my $i = 0; $i < @ARGV; $i++) {
 print "MGM debug : @mbyMgmLibs\n";
 
 %audf = (
-   Includes => [],
+   Includes => [
+         "CTECH:cfg/ctech/CTECH_hdl.udf",
+         "CTECH_EXP:cfg/ctech_exp/CTECH_EXP_hdl.udf",
+   ],
    HDLSpec  => {
      mby => {
          # Define all the libraries which could be compiled
@@ -83,10 +86,16 @@ print "MGM debug : @mbyMgmLibs\n";
                -hdl_spec => [ 'subBlock/mbyc/cfg/ace/HDL/rtl/mby_igr_rtl.hdl', ],
                -dependent_libs => ['mby_mgm_lib',],
             },
-	    
+
             mby_igr_pbb_rtl_lib => {
                -generated => 1,   # added due to mgm dependency
                -hdl_spec => [ 'subBlock/mbyc/cfg/ace/HDL/rtl/mby_igr_pbb_rtl.hdl', ],
+               -dependent_libs => ['mby_mgm_lib',],
+            },
+
+            mby_post_ppe_rtl_lib => {
+               -generated => 1,   # added due to mgm dependency
+               -hdl_spec => [ 'subBlock/mbyc/cfg/ace/HDL/rtl/mby_post_ppe_rtl.hdl', ],
                -dependent_libs => ['mby_mgm_lib',],
             },
 
@@ -107,7 +116,7 @@ print "MGM debug : @mbyMgmLibs\n";
                -hdl_spec        => [ 'subBlock/mbyc/cfg/ace/HDL/rtl/mby_gmn_rtl.hdl', ],
                -dependent_libs => ['mby_mgm_lib',],
             },
-            
+
             mby_cup_rtl_lib => {
                -hdl_spec => [ 'subBlock/mbyc/cfg/ace/HDL/rtl/mby_cup_rtl.hdl', ],
             },
@@ -121,6 +130,7 @@ print "MGM debug : @mbyMgmLibs\n";
             mby_tx_ppe_rtl_lib => {
                -generated => 1,   # added due to mgm dependency
                -hdl_spec => [ 'subBlock/mbyc/cfg/ace/HDL/rtl/mby_tx_ppe_rtl.hdl', ],
+               -dependent_libs => ['mby_mgm_lib',],
             },
 
             mby_ppe_stm_rx_rtl_lib => {
@@ -139,6 +149,13 @@ print "MGM debug : @mbyMgmLibs\n";
                -generated => 1,   # added due to mgm dependency
                -hdl_spec => [ 'subBlock/mbyc/cfg/ace/HDL/rtl/mby_msh_rtl.hdl', ],
                -dependent_libs => ['mby_mgm_lib','mby_regflow_lib'],
+            },
+
+            mby_msh_emu_rtl_lib => {
+               -generated => 1,   # added due to mgm dependency
+               -hdl_spec => [ 'subBlock/mbyc/cfg/ace/HDL/rtl/mby_msh_emu_rtl.hdl', ],
+               -dependent_libs => ['mby_mgm_lib','mby_regflow_lib'],
+               # -vlog_opts => [ "+define+EMULATION" ],
             },
 
             mby_msh_node_rtl_lib => {
@@ -187,7 +204,7 @@ print "MGM debug : @mbyMgmLibs\n";
 
 
             ### Verif libs
-            
+
             gen_rx_ppe_regflow_lib => {
                     -generated => 1,
                     -gen_config => "mby::gen_rx_ppe_regflow_lib",
@@ -199,11 +216,11 @@ print "MGM debug : @mbyMgmLibs\n";
                     -gen_config => "mby::gen_mesh_regflow_lib",
                     -tools => ["-vcs_createlib"],
             },
-            
+
             mby_mesh_env_lib => {
                -hdl_spec        => [# 'target/GenRTL/regflow/mby/subblock/mby_mesh_ral.hdl',
                                      'subBlock/mbyc/cfg/ace/HDL/verif/mby_mesh_env.hdl',],
-               -dependent_libs  => [ 'shdv_shared_lib', 'mby_common_lib', 'mby_mgp_bfm_lib',  ],
+               -dependent_libs  => [ 'shdv_shared_lib', 'mby_mgp_bfm_lib',  ],
                -tag             => "nonsynth",
             },
 
@@ -215,18 +232,25 @@ print "MGM debug : @mbyMgmLibs\n";
 
             mby_mesh_tb_lib  => {
                -hdl_spec        => [ 'subBlock/mbyc/cfg/ace/HDL/verif/mby_mesh_tb.hdl', ],
-               -dependent_libs  => [ 'shdv_shared_lib', 'mby_common_lib', 'mby_mesh_env_lib', 'mby_mesh_ti_lib', 'mby_mesh_test_lib', 'mby_mgp_bfm_lib' ],
+               -dependent_libs  => [ 'shdv_shared_lib', 'mby_mesh_env_lib', 'mby_mesh_ti_lib', 'mby_mesh_test_lib', 'mby_mgp_bfm_lib' ],
                -tag             => "nonsynth",
+            },
+
+            mby_mesh_tb_emu_lib  => {
+               -hdl_spec        => [ 'subBlock/mbyc/cfg/ace/HDL/verif/mby_mesh_tb_emu.hdl', ],
+               -dependent_libs  => [ 'shdv_shared_lib', 'mby_mesh_env_lib', 'mby_mesh_ti_lib', 'mby_mesh_test_lib', 'mby_mgp_bfm_lib' ],
+               -tag             => "nonsynth",
+               -vlog_opts       => [ "+define+EMULATION" ],
             },
 
             mby_mesh_test_lib => {
                -hdl_spec       => [ 'subBlock/mbyc/cfg/ace/HDL/verif/mby_mesh_test.hdl', ],
-               -dependent_libs => [ 'sip_shared_lib', 'mby_mesh_env_lib', 'mby_wm_dpi_lib' ],
+               -dependent_libs => [ 'sip_shared_lib', 'mby_mesh_env_lib'  ],
                -tag            => "nonsynth",
             },
             mby_mgp_bfm_lib => {
                -hdl_spec       => [ "subBlock/mbyc/cfg/ace/HDL/verif/mby_mgp_bfm.hdl" ],
-               -dependent_libs => [ 'mby_common_lib', 'shdv_shared_lib', 
+               -dependent_libs => [ 'mby_common_lib', 'shdv_shared_lib',
                                    ],
                -tag            => "nonsynth+nonlint",
             },
@@ -234,6 +258,83 @@ print "MGM debug : @mbyMgmLibs\n";
                -hdl_spec        => [ 'cfg/ace/HDL/verif/mby_base_pkg.hdl' ],
                -dependent_libs  => [ 'shdv_shared_lib' ],
                -tag             => "nonsynth",
+            },
+            mby_reset_lib       => {
+	       -hdl_spec        => [ 'cfg/ace/HDL/verif/mby_reset.hdl' ],
+               -dependent_libs  => [ 'shdv_shared_lib','mby_base_pkg_lib' ],
+               -tag             => "nonsynth",
+            },
+
+            mby_mce_env_lib => {
+               -hdl_spec        => ['subBlock/mbyc/cfg/ace/HDL/verif/mby_mce_env.hdl',],
+               -dependent_libs  => [ 'shdv_shared_lib',  ],
+               -tag             => "nonsynth",
+            },
+
+            mby_mce_ti_lib => {
+               -hdl_spec       => [ 'subBlock/mbyc/cfg/ace/HDL/verif/mby_mce_ti.hdl' ],
+               -dependent_libs => [ 'shdv_shared_lib', 'mby_mce_env_lib', ],
+               -tag            => "nonsynth",
+            },
+
+            mby_mce_tb_lib  => {
+               -hdl_spec        => [ 'subBlock/mbyc/cfg/ace/HDL/verif/mby_mce_tb.hdl', ],
+               -dependent_libs  => [ 'shdv_shared_lib', 'mby_mce_env_lib', 'mby_mce_ti_lib', 'mby_mce_test_lib',  ],
+               -tag             => "nonsynth",
+            },
+
+            mby_mce_test_lib => {
+               -hdl_spec       => [ 'subBlock/mbyc/cfg/ace/HDL/verif/mby_mce_test.hdl', ],
+               -dependent_libs => [ 'sip_shared_lib', 'mby_mce_env_lib'  ],
+               -tag            => "nonsynth",
+            },
+
+            mby_gcm_env_lib => {
+               -hdl_spec        => ['subBlock/mbyc/cfg/ace/HDL/verif/mby_gcm_env.hdl',],
+               -dependent_libs  => [ 'shdv_shared_lib',  ],
+               -tag             => "nonsynth",
+            },
+
+            mby_gcm_ti_lib => {
+               -hdl_spec       => [ 'subBlock/mbyc/cfg/ace/HDL/verif/mby_gcm_ti.hdl' ],
+               -dependent_libs => [ 'shdv_shared_lib', 'mby_gcm_env_lib', ],
+               -tag            => "nonsynth",
+            },
+
+            mby_gcm_tb_lib  => {
+               -hdl_spec        => [ 'subBlock/mbyc/cfg/ace/HDL/verif/mby_gcm_tb.hdl', ],
+               -dependent_libs  => [ 'shdv_shared_lib', 'mby_gcm_env_lib', 'mby_gcm_ti_lib', 'mby_gcm_test_lib',  ],
+               -tag             => "nonsynth",
+            },
+
+            mby_gcm_test_lib => {
+               -hdl_spec       => [ 'subBlock/mbyc/cfg/ace/HDL/verif/mby_gcm_test.hdl', ],
+               -dependent_libs => [ 'sip_shared_lib', 'mby_gcm_env_lib'  ],
+               -tag            => "nonsynth",
+            },
+
+            mby_gpol_env_lib => {
+               -hdl_spec        => ['subBlock/mbyc/cfg/ace/HDL/verif/mby_gpol_env.hdl',],
+               -dependent_libs  => [ 'shdv_shared_lib',  ],
+               -tag             => "nonsynth",
+            },
+
+            mby_gpol_ti_lib => {
+               -hdl_spec       => [ 'subBlock/mbyc/cfg/ace/HDL/verif/mby_gpol_ti.hdl' ],
+               -dependent_libs => [ 'shdv_shared_lib', 'mby_gpol_env_lib', ],
+               -tag            => "nonsynth",
+            },
+
+            mby_gpol_tb_lib  => {
+               -hdl_spec        => [ 'subBlock/mbyc/cfg/ace/HDL/verif/mby_gpol_tb.hdl', ],
+               -dependent_libs  => [ 'shdv_shared_lib', 'mby_gpol_env_lib', 'mby_gpol_ti_lib', 'mby_gpol_test_lib',  ],
+               -tag             => "nonsynth",
+            },
+
+            mby_gpol_test_lib => {
+               -hdl_spec       => [ 'subBlock/mbyc/cfg/ace/HDL/verif/mby_gpol_test.hdl', ],
+               -dependent_libs => [ 'sip_shared_lib', 'mby_gpol_env_lib'  ],
+               -tag            => "nonsynth",
             },
 
             mby_tag_bfm_lib    => {
@@ -250,7 +351,7 @@ print "MGM debug : @mbyMgmLibs\n";
 
             mby_gpm_bfm_lib    => {
                -hdl_spec        => [ 'cfg/ace/HDL/verif/mby_gpm_bfm.hdl' ],
-               -dependent_libs  => [ 'shdv_shared_lib', 'mby_base_pkg_lib' ],
+               -dependent_libs  => [ 'shdv_shared_lib', 'mby_base_pkg_lib' , 'mby_smm_bfm_lib' ],
                -tag             => "nonsynth",
             },
 
@@ -268,7 +369,7 @@ print "MGM debug : @mbyMgmLibs\n";
 
             mby_ingress_env_lib => {
                -hdl_spec        => [ 'cfg/ace/HDL/verif/mby_ingress_env.hdl' ],
-               -dependent_libs  => [ 'shdv_shared_lib', 'common_intfs_lib', 'mby_ec_bfm_lib', 'mby_wm_dpi_lib', 'mby_tag_bfm_lib' ],
+               -dependent_libs  => [ 'shdv_shared_lib', 'common_intfs_lib', 'mby_ec_bfm_lib', 'mby_wm_dpi_lib', 'mby_tag_bfm_lib', 'mby_pbr_bfm_lib', 'mby_gpm_bfm_lib'],
                -tag             => "nonsynth",
             },
 
@@ -279,8 +380,9 @@ print "MGM debug : @mbyMgmLibs\n";
             },
 
             mby_ingress_tb_lib  => {
+               -generated       => 1,   # added due to mgm dependency (tmp as it is needed by the rx_ppe_bfm)
                -hdl_spec        => [ 'cfg/ace/HDL/verif/mby_ingress_tb.hdl', ],
-               -dependent_libs  => [ 'shdv_shared_lib', 'mby_ingress_env_lib', 'mby_ingress_ti_lib', 'mby_ingress_test_lib', 'common_intfs_lib', 'mby_ec_bfm_lib' ],
+               -dependent_libs  => [ 'shdv_shared_lib', 'mby_ingress_env_lib', 'mby_ingress_ti_lib', 'mby_ingress_test_lib', 'common_intfs_lib', 'mby_ec_bfm_lib', 'mby_mgm_lib' ],
                -tag             => "nonsynth",
             },
 
@@ -298,7 +400,7 @@ print "MGM debug : @mbyMgmLibs\n";
 
             mby_egress_env_lib => {
                -hdl_spec        => [ 'cfg/ace/HDL/verif/mby_egress_env.hdl' ],
-               -dependent_libs  => [ 'shdv_shared_lib', 'common_intfs_lib', 'mby_ec_bfm_lib', 'mby_common_lib', 'mby_tag_bfm_lib', 'mby_smm_bfm_lib'],
+	       -dependent_libs  => [ 'shdv_shared_lib', 'common_intfs_lib', 'mby_ec_bfm_lib', 'mby_common_lib', 'mby_tag_bfm_lib', 'mby_smm_bfm_lib', 'mby_reset_lib', 'mby_pbr_bfm_lib'],
                -tag             => "nonsynth",
             },
 
@@ -353,13 +455,13 @@ print "MGM debug : @mbyMgmLibs\n";
 
             mby_wm_dpi_lib => {
                -hdl_spec       => [ 'cfg/ace/HDL/verif/mby_wm_dpi.hdl', ],
-               -dependent_libs => [ 'shdv_shared_lib'],
+               -dependent_libs => [ 'shdv_shared_lib','gen_mby_wm_m3'],
                -tag            => "nonsynth",
                -elab_opts => [
-                  '-CFLAGS "-D VCS"',
-                  '-CFLAGS "-std=gnu99"',
-                  "-CFLAGS \"-I$ENV{MODEL_ROOT}/wm/src/client/c\"",
-                  "$ENV{MODEL_ROOT}/wm/src/client/c/mby_tcp_client_library.c",
+                 "-CFLAGS \"-D VCS\" -CFLAGS \"-I$ENV{MODEL_ROOT}/wm/src/client/c -I$ENV{MODEL_ROOT}/wm/src/main/m3/genviews/src/build_c/mby_c/src/ -I$ENV{MODEL_ROOT}/wm/src/main/m3/model_server/src/mby_struct/src -I$ENV{MODEL_ROOT}/wm/src/main/c\"    $ENV{MODEL_ROOT}/wm/src/client/c/mby_tcp_client_library.c $ENV{MODEL_ROOT}/wm/src/client/c/mby_tcp_client_stages.c",
+                 "-CFLAGS \"-std=gnu99 \" ",
+                 "-CFLAGS \"-g\" ",
+                 "-CFLAGS \" -D SV_BUILD \" ",
                ],
             },
 
@@ -436,7 +538,7 @@ print "MGM debug : @mbyMgmLibs\n";
 
             mby_rx_ppe_test_lib => {
                -hdl_spec       => [ 'subBlock/mbyc/cfg/ace/HDL/verif/mby_rx_ppe_test.hdl' ],
-               -dependent_libs => [ 'shdv_shared_lib', 'mby_rx_ppe_env_lib'],
+               -dependent_libs => [ 'shdv_shared_lib', 'mby_rx_ppe_env_lib', 'mby_wm_dpi_lib'],
                -tag            => "nonsynth",
             },
 
@@ -449,7 +551,7 @@ print "MGM debug : @mbyMgmLibs\n";
             mby_rx_ppe_tb_top_lib => {
                -hdl_spec       => [ 'subBlock/mbyc/cfg/ace/HDL/verif/mby_rx_ppe_tb_top.hdl', ],
                -dependent_libs => [ 'shdv_shared_lib', 'mby_rx_ppe_env_lib', 'mby_rx_ppe_test_lib', 'mby_rx_ppe_ti_lib', 'mby_common_lib',
-                                     'ec_ti_lib', 'mby_ec_bfm_lib' ],
+                                     'ec_ti_lib', 'mby_ec_bfm_lib', 'mby_wm_dpi_lib' ],
                -tag            => "nonsynth",
             },
 
@@ -528,12 +630,15 @@ print "MGM debug : @mbyMgmLibs\n";
                top         => 'mby_rx_ppe_tb_top_lib.mby_rx_ppe_tb_top',
 
                use  => [
+                        "CTECH:CTECH_model",
+                        "CTECH_EXP:CTECH_EXP_model",
                         "eth_port_mby_ec:mby_ec",
                         "eth_port_common:common"
                        ],
 
                libs => [
-                  "sva_lib",   
+                  "gen_mby_wm_m3",
+                  "sva_lib",
                   "gen_mby_mgm_lib",
                   "gen_mby_wm_m3",
                   "mby_fulcrum_legacy_rtl_lib",
@@ -604,6 +709,7 @@ print "MGM debug : @mbyMgmLibs\n";
 
                libs => [
                         "shdv_shared_lib",
+                        "gen_mby_wm_m3",
                         "mby_wm_dpi_lib",
                         "sva_lib",
                         "gen_mby_mgm_lib",
@@ -612,6 +718,7 @@ print "MGM debug : @mbyMgmLibs\n";
                         "mby_base_pkg_lib",
                         ## jjgodine: removing bfm library compiles for now
                         "mby_tag_bfm_lib",
+                        "mby_smm_bfm_lib",
                         "mby_gpm_bfm_lib",
                         "mby_pbr_bfm_lib",
                         "mby_pcm_bfm_lib",
@@ -680,13 +787,16 @@ print "MGM debug : @mbyMgmLibs\n";
                    "mby_egr_rtl_lib",
                    "mby_rtl_lib",
                    "mby_base_pkg_lib",
+		   "mby_reset_lib",
                    "mby_tag_bfm_lib",
                    "mby_smm_bfm_lib",
+                   "mby_pbr_bfm_lib",
                    "mby_egress_tb_lib",
                    "mby_egress_ti_lib",
                    "mby_egress_env_lib",
                    "mby_egress_test_lib",
                    "mby_egr_scbd_lib",
+                   "gen_mby_wm_m3",
                    "mby_wm_dpi_lib",
                    "upf",
                    "lpa"
@@ -758,9 +868,7 @@ print "MGM debug : @mbyMgmLibs\n";
                   "mby_mesh_ti_lib",
                   "mby_mesh_test_lib",
                   "mby_jasper_lib",
-                  "mby_wm_dpi_lib",
                   "ext_shared_lib",
-                  "mby_common_lib",
                   "mby_mgp_bfm_lib",
                  # "gen_mesh_regflow_lib",
                ],
@@ -808,11 +916,310 @@ print "MGM debug : @mbyMgmLibs\n";
             #      upf_files => ['tools/upf/mby_upf.upf'],
             #   },
             },
-
             ####################################################################
             # mby mesh model ends
             ####################################################################
 
+            ####################################################################
+            ## mby mesh_emu model starts
+            ####################################################################
+            mesh_emu => {
+
+               top  => 'mby_mesh_tb_emu_lib.mby_mesh_tb_top_emu',
+
+               use  => [
+                        "eth_port_mby_ec:mby_ec",
+                        "eth_port_common:common"
+                       ],
+
+               libs => [
+                  "shdv_shared_lib",
+                  "svt_ahb_lib",
+                  "sva_lib",
+                  "mby_mgm_lib",
+                  "mby_mesh_env_lib",
+                  "mby_mesh_tb_emu_lib",
+                  "gen_mby_mgm_lib",
+                  "mby_msh_emu_rtl_lib",
+                  "mby_msh_node_rtl_lib",
+                  "mby_mesh_ti_lib",
+                  "mby_mesh_test_lib",
+                  "mby_jasper_lib",
+                  "ext_shared_lib",
+                  "mby_mgp_bfm_lib",
+                 # "gen_mesh_regflow_lib",
+               ],
+               testcase_globals => {
+                    },
+
+               elab_opts => [
+                  "-debug_pp ",
+                  "-full64 ",
+                  "-cm cond+branch+fsm+assert+line+tgl ",
+                  "-CFLAGS \"-D VCS\" -CFLAGS \"-I$ENV{VCS_HOME}/include\"    $ENV{UVM_HOME}/src/dpi/uvm_dpi.cc ",
+                  "-kdb",
+                  "-lca",
+               ],
+
+                xport => {
+                  libs => [
+                     "mby_regflow_lib",
+                     "mby_mesh_ti_lib",
+                     "mby_mesh_env_lib",
+                     "mby_jasper_lib"
+                  ],
+               },
+
+               # List of full path to PLI libraries to use
+               pli_libs => [ "-verdi_pli_libs", "-hier_rtl_dumper", ],
+
+               #lintra_test_list => [ "$ENV{MODEL_ROOT}/verif/mby/reglist/mby_lintra.list" ],
+
+               # Specify a set of test case specific options (must be valid test options)
+               testcase_globals => {
+                  -test_vlog_opts    => [ -sverilog ],
+                  -test_vlog_files   => [],
+                  -test_vlog_incdirs => [
+                     "subBlock/mbyc/verif/mesh/",
+                     "subBlock/mbyc/verif/mesh/ral",
+                     "subBlock/mbyc/verif/mesh/env",
+                     "$ENV{UVM_HOME}/src",
+                     "${MBY_IOSF_SB_VC_ROOT}/tb/seq_lib",
+                  ],
+               },
+
+            #   power_intent => {
+            #      power_top => 'mby_tb/mby_top',
+            #      upf_files => ['tools/upf/mby_upf.upf'],
+            #   },
+
+                emu_opts => [
+                   "-cfg ZSE1 -cfg-",
+                   "-no_spark",
+                   "-use_emubuild_tooldata",
+                   "-s all +s PRE_FLOW",
+                   "-target $ENV{MODEL_ROOT}/target/emu/\$MODEL",
+                   "-top mby_msh_emu_rtl_lib.mby_msh_top",
+                   "-yml $ENV{MODEL_ROOT}/tools/emu/cfg/buildProjectCfg.yml",
+                   "-inside_simbuild",
+                   "-clean_target",
+                   #-effm1= do analysis, -effm 2 = effm1+full synthesis, -effm 3 = effm 2+ loop report
+                   "-effm 1",
+                ],
+
+
+            },
+            ####################################################################
+            # mby mesh_emu model ends
+            ####################################################################
+
+            ####################################################################
+            ## mby MCE model starts
+            ####################################################################
+            mce => {
+
+               top  => 'mby_mce_tb_lib.mby_mce_tb_top',
+
+               libs => [
+                  "shdv_shared_lib",
+                  "svt_ahb_lib",
+                  "sva_lib",
+                  "mby_mgm_lib",
+                  "gen_mby_mgm_lib",
+                  "mby_mce_env_lib",
+                  "mby_mce_tb_lib",
+                  "mby_mce_ti_lib",
+                  "mby_mce_test_lib",
+                  "mby_jasper_lib",
+                  "ext_shared_lib",
+               ],
+               testcase_globals => {
+                    },
+
+               elab_opts => [
+                  "-debug_pp ",
+                  "-full64 ",
+                  "-cm cond+branch+fsm+assert+line+tgl ",
+                  "-CFLAGS \"-D VCS\" -CFLAGS \"-I$ENV{VCS_HOME}/include\"    $ENV{UVM_HOME}/src/dpi/uvm_dpi.cc ",
+                  "-kdb",
+                  "-lca",
+               ],
+
+                xport => {
+                  libs => [
+                     "mby_regflow_lib",
+                     "mby_mce_ti_lib",
+                     "mby_mce_env_lib",
+                     "mby_jasper_lib"
+                  ],
+               },
+
+               # List of full path to PLI libraries to use
+               pli_libs => [ "-verdi_pli_libs", "-hier_rtl_dumper", ],
+
+               #lintra_test_list => [ "$ENV{MODEL_ROOT}/verif/mby/reglist/mby_lintra.list" ],
+
+               # Specify a set of test case specific options (must be valid test options)
+               testcase_globals => {
+                  -test_vlog_opts    => [ -sverilog ],
+                  -test_vlog_files   => [],
+                  -test_vlog_incdirs => [
+                     "subBlock/mbyc/verif/mce/",
+                     "subBlock/mbyc/verif/mce/ral",
+                     "subBlock/mbyc/verif/mce/env",
+                     "$ENV{UVM_HOME}/src",
+                     "${MBY_IOSF_SB_VC_ROOT}/tb/seq_lib",
+                  ],
+               },
+
+            #   power_intent => {
+            #      power_top => 'mby_tb/mby_top',
+            #      upf_files => ['tools/upf/mby_upf.upf'],
+            #   },
+            },
+            ####################################################################
+            # mby MCE model ends
+            ####################################################################
+    
+            ####################################################################
+            ## mby GCM model starts
+            ####################################################################
+            gcm => {
+
+               top  => 'mby_gcm_tb_lib.mby_gcm_tb_top',
+
+               libs => [
+                  "shdv_shared_lib",
+                  "svt_ahb_lib",
+                  "sva_lib",
+                  "mby_mgm_lib",
+                  "gen_mby_mgm_lib",
+                  "mby_gcm_env_lib",
+                  "mby_gcm_tb_lib",
+                  "mby_gcm_ti_lib",
+                  "mby_gcm_test_lib",
+                  "mby_jasper_lib",
+                  "ext_shared_lib",
+               ],
+               testcase_globals => {
+                    },
+
+               elab_opts => [
+                  "-debug_pp ",
+                  "-full64 ",
+                  "-cm cond+branch+fsm+assert+line+tgl ",
+                  "-CFLAGS \"-D VCS\" -CFLAGS \"-I$ENV{VCS_HOME}/include\"    $ENV{UVM_HOME}/src/dpi/uvm_dpi.cc ",
+                  "-kdb",
+                  "-lca",
+               ],
+
+                xport => {
+                  libs => [
+                     "mby_regflow_lib",
+                     "mby_gcm_ti_lib",
+                     "mby_gcm_env_lib",
+                     "mby_jasper_lib"
+                  ],
+               },
+
+               # List of full path to PLI libraries to use
+               pli_libs => [ "-verdi_pli_libs", "-hier_rtl_dumper", ],
+
+               #lintra_test_list => [ "$ENV{MODEL_ROOT}/verif/mby/reglist/mby_lintra.list" ],
+
+               # Specify a set of test case specific options (must be valid test options)
+               testcase_globals => {
+                  -test_vlog_opts    => [ -sverilog ],
+                  -test_vlog_files   => [],
+                  -test_vlog_incdirs => [
+                     "subBlock/mbyc/verif/gcm/",
+                     "subBlock/mbyc/verif/gcm/ral",
+                     "subBlock/mbyc/verif/gcm/env",
+                     "$ENV{UVM_HOME}/src",
+                     "${MBY_IOSF_SB_VC_ROOT}/tb/seq_lib",
+                  ],
+               },
+
+            #   power_intent => {
+            #      power_top => 'mby_tb/mby_top',
+            #      upf_files => ['tools/upf/mby_upf.upf'],
+            #   },
+            },
+            ####################################################################
+            # mby GCM model ends
+            ####################################################################
+           
+    
+            ####################################################################
+            ## mby GPOL model starts
+            ####################################################################
+            gpol => {
+
+               top  => 'mby_gpol_tb_lib.mby_gpol_tb_top',
+
+               libs => [
+                  "shdv_shared_lib",
+                  "svt_ahb_lib",
+                  "sva_lib",
+                  "mby_mgm_lib",
+                  "gen_mby_mgm_lib",
+                  "mby_gpol_env_lib",
+                  "mby_gpol_tb_lib",
+                  "mby_gpol_ti_lib",
+                  "mby_gpol_test_lib",
+                  "mby_jasper_lib",
+                  "ext_shared_lib",
+               ],
+               testcase_globals => {
+                    },
+
+               elab_opts => [
+                  "-debug_pp ",
+                  "-full64 ",
+                  "-cm cond+branch+fsm+assert+line+tgl ",
+                  "-CFLAGS \"-D VCS\" -CFLAGS \"-I$ENV{VCS_HOME}/include\"    $ENV{UVM_HOME}/src/dpi/uvm_dpi.cc ",
+                  "-kdb",
+                  "-lca",
+               ],
+
+                xport => {
+                  libs => [
+                     "mby_regflow_lib",
+                     "mby_gpol_ti_lib",
+                     "mby_gpol_env_lib",
+                     "mby_jasper_lib"
+                  ],
+               },
+
+               # List of full path to PLI libraries to use
+               pli_libs => [ "-verdi_pli_libs", "-hier_rtl_dumper", ],
+
+               #lintra_test_list => [ "$ENV{MODEL_ROOT}/verif/mby/reglist/mby_lintra.list" ],
+
+               # Specify a set of test case specific options (must be valid test options)
+               testcase_globals => {
+                  -test_vlog_opts    => [ -sverilog ],
+                  -test_vlog_files   => [],
+                  -test_vlog_incdirs => [
+                     "subBlock/mbyc/verif/gpol/",
+                     "subBlock/mbyc/verif/gpol/ral",
+                     "subBlock/mbyc/verif/gpol/env",
+                     "$ENV{UVM_HOME}/src",
+                     "${MBY_IOSF_SB_VC_ROOT}/tb/seq_lib",
+                  ],
+               },
+
+            #   power_intent => {
+            #      power_top => 'mby_tb/mby_top',
+            #      upf_files => ['tools/upf/mby_upf.upf'],
+            #   },
+            },
+            ####################################################################
+            # mby GPOL model ends
+            ####################################################################
+           
+    
+    
             ####################################################################
             ## mby egr rtl dev model starts
             ####################################################################

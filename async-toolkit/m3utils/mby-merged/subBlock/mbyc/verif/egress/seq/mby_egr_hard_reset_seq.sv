@@ -21,47 +21,39 @@
 //-----------------------------------------------------------------------------
 // Class: mby_egr_hard_reset_seq
 //-----------------------------------------------------------------------------
+import shdv_reset_pkg::*;
 class mby_egr_hard_reset_seq extends mby_egr_extended_base_seq;
 
-  `uvm_object_utils(mby_egr_hard_reset_seq)
+   shdv_reset_event        reset_event;
+   shdv_reset_manager      reset_manager;
+   shdv_reset_data         reset_data;
 
+   `uvm_object_utils(mby_egr_hard_reset_seq)
+   rand int delay, duration;
+   
+   constraint reset_select{
+      soft duration  inside {[80:100]};
+      soft delay     inside {[0:5]};
+   }
    //--------------------------------------------------------------------------
    // Task: body()
    //--------------------------------------------------------------------------
    task body();
-      virtual mby_egr_env_if env_if;
-      mby_egr_env egress_env_ptr;
-      uvm_event egress_fusepull_comp_e;
-      uvm_event_pool    egress_epool;
 
-      uvm_report_warning (get_name(), "INTEG - EGRESS_hard_reset should be IMP ");
 
-      assert($cast(egress_env_ptr, mby_egr_env::get_egr_env()))
-      else begin
-         `uvm_error(get_name(), $sformatf("Unable to get handle to mby_egr_env."));
-      end
+      randomize();
+      reset_data              = shdv_reset_data::type_id::create("reset_data");
+      reset_data.rst_domain   = "egr";
 
-      //Pointer to env IF
-      env_if = egress_env_ptr.egress_if;
-      //pointer to event pool and fuse event
-      egress_epool = egress_epool.get_global_pool();
-      egress_fusepull_comp_e = egress_epool.get("EGRESS_DETECT_FUSEPULL_COMP_SB_MSG");
+      reset_data.rst_type  = "power_good";
+      reset_event          = reset_manager.get_global("egr_power_good");
 
-      //Reset and power up flow
-      env_if.power_good_reset = 0;
-      env_if.reset = 0;
+      wait_n(delay);
+      reset_event.set(reset_data);
 
-      //power good
-      #1;
-      env_if.power_good_reset = 1;
+      wait_n(duration);
+      reset_event.clear();
 
-      egress_fusepull_comp_e.wait_trigger();
-
-      //Primary interface
-      repeat (10) begin
-         @(posedge env_if.clock);
-      end
-      env_if.reset = 1;
 
    endtask : body
 

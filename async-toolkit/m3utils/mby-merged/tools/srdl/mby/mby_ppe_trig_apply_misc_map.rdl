@@ -1,7 +1,14 @@
 // INTEL TOP SECRET
 // Copyright 2014-2018 Intel Corporation. All Rights Reserved.
 //
-`include "lib_udp.rdl"
+
+<% if ($MBY_PPE_TRIG_APPLY_MISC_MAP) {
+   } else {
+   $MBY_PPE_TRIG_APPLY_MISC_MAP = 1;
+%>
+
+
+`include "mby_lib_udp.rdl"
 <% use security; %>
 <% my %Security_Props = security::GetSecurityInfo(); %>
 
@@ -450,3 +457,6 @@ addrmap mby_ppe_trig_apply_misc_map {
   ma_tcn_usage_r                      MA_TCN_USAGE[17]                      @0x21D0 += 8;
 };
 
+<%
+   }
+%>

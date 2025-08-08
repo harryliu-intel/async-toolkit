@@ -46,6 +46,7 @@ class env;
 
     // Declaration of variables that hold handles to env sub-objects.  
     system_driver       sys_drvr;
+    
     inp_driver          inp_driver;    // FIXME -- for pre_ppe/post_ppe, this should be 1 inp_driver per input port
                                        //          possibly dynamic based on testcase port config
 
@@ -82,7 +83,7 @@ class env;
         // These sub-processes need to execute concurrently because they are driving,
         // monitoring, and responding to various concurrent events in the simulation.
         fork
-//            mntr.connect_to_DUT();      // connect the monitor
+              //mntr.connect_to_DUT();      // connect the monitor
               inp_driver.connect_to_DUT_inputs();
 //            foreach (inp_drvrs[i]) begin
 //                // To avoid a race condition (i changing before it is doing being used), 

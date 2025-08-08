@@ -2,10 +2,11 @@
 
 // Copyright (C) 2018 Intel Corporation
 
-#include "mby_congmgmt.h"
-#include "mby_rxstats.h"
-#include "mby_maskgen.h" // action codes
 #include <model_c_write.h> // write_field()
+
+#include "mby_params.h"
+#include "mby_action_codes.h"
+#include "mby_rxstats.h"
 
 static fm_uint16 getBankIndex(const fm_uint32 rx_port)
 {
@@ -102,7 +103,7 @@ static void handleRxBank0
     fm_uint64 len   = rx_length;
 
     // IPv4 packets:
-    if      (is_ipv4 && is_bcast)
+    if (is_ipv4 && is_bcast)
         index += STAT_RxBcstPktsIPv4;
     else if (is_ipv4 && is_mcast)
         index += STAT_RxMcstPktsIPv4;
@@ -172,7 +173,7 @@ static void handleRxBank2
         case MBY_ACTION_DROP_IV:            index += STAT_VlanIngressDrops;               break;
         case MBY_ACTION_DROP_EV:            index += STAT_VlanEgressDrops;                break;
         case MBY_ACTION_DROP_CAM:           index += STAT_GlortMissDrops;                 break;
-        case MBY_ACTION_DROP_FFU:           index += STAT_FFUDrops;                       break;
+        case MBY_ACTION_DROP_CGRP:          index += STAT_FFUDrops;                       break;
         case MBY_ACTION_DROP_TRIG:          index += STAT_TriggerDrops;                   break;
         case MBY_ACTION_DROP_L3_PYLD_LEN:   index += STAT_L3PayloadLengthValidationDrops; break;
         default:                                                                          break;
@@ -285,9 +286,6 @@ void RxStats
     // Handle RX VLAN counters:
     handleRxBankVlan(stats_map, stats_map_w, rx_length, action, l2_ivlan1_cnt, is_bcast, is_mcast, is_ucast);
 
-    // Write outputs:
-    out->RX_LENGTH         = rx_length;
-
     // Pass thru:
     out->CONTENT_ADDR      = in->CONTENT_ADDR;
     out->DROP_TTL          = in->DROP_TTL;
@@ -297,7 +295,7 @@ void RxStats
     out->IS_TIMEOUT        = in->IS_TIMEOUT;
     out->L2_DMAC           = in->L2_DMAC;
     out->L2_EVID1          = in->L2_EVID1;
-    out->MARK_ROUTED       = in->MARK_ROUTED;
+    out->ROUTED            = in->ROUTED;
     out->MIRTYP            = in->MIRTYP;
     out->MOD_IDX           = in->MOD_IDX;
     out->MOD_PROF_IDX      = in->MOD_PROF_IDX;
@@ -308,7 +306,6 @@ void RxStats
     out->PM_ERR            = in->PM_ERR;
     out->PM_ERR_NONSOP     = in->PM_ERR_NONSOP;
     out->QOS_L3_DSCP       = in->QOS_L3_DSCP;
-    out->RX_DATA           = in->RX_DATA;
     out->SAF_ERROR         = in->SAF_ERROR;
     out->TAIL_CSUM_LEN     = in->TAIL_CSUM_LEN;
     out->TX_DROP           = in->TX_DROP;

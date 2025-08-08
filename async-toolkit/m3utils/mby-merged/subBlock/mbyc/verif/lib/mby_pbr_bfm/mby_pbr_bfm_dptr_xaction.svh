@@ -46,7 +46,7 @@
 //     T_debug    - mby_pbr_bfm_dptr_debg_t
 //
 //-----------------------------------------------------------------------------
-class mby_pbr_bfm_dptr_xaction extends mby_base_sequence_item
+class mby_pbr_bfm_dptr_xaction extends shdv_base_sequence_item_param
 #(
    .T_data (mby_pbr_bfm_dptr_data_t),
    .T_debug(mby_pbr_bfm_dptr_debg_t)
@@ -55,7 +55,7 @@ class mby_pbr_bfm_dptr_xaction extends mby_base_sequence_item
    // -------------------------------------------------------------------------
    // Macro for factory registration
    // -------------------------------------------------------------------------
-  `uvm_object_utils(mby_pbr_bfm_dptr_xaction#(T_data, T_data_rsp, T_debug))
+  `uvm_object_utils(mby_pbr_bfm_dptr_xaction)
 
    // -------------------------------------------------------------------------
    // CONSTRUCTOR: new
@@ -77,6 +77,17 @@ class mby_pbr_bfm_dptr_xaction extends mby_base_sequence_item
    //
    // -------------------------------------------------------------------------
    virtual function string convert2string();
+      string msg_str = "";
+      string lns_str = { {8{"--------"}}, "\n" };
+      //msg_str = super.convert2string();
+      msg_str = { msg_str, $sformatf("dptr_xaction::\t") };
+      msg_str = { msg_str, $sformatf("pod_put_req      = %0x\t", this.data.pod_put_req) };
+      msg_str = { msg_str, $sformatf("pod_put_type         = 0x%0x\t", this.data.pod_put_type) };
+      msg_str = { msg_str, $sformatf("pod_put_ack   = %0x\t", this.data.pod_put_ack) };
+      msg_str = { msg_str, $sformatf("schedule_stall   = %0x\t", this.data.schedule_stall) };
+      msg_str = { msg_str, $sformatf("data_dirty_ptr = 0x%0x\t", this.data.data_dirty_ptr) };
+      //msg_str = { msg_str, lns_str };
+      return msg_str;
    endfunction : convert2string
 
    // -------------------------------------------------------------------------

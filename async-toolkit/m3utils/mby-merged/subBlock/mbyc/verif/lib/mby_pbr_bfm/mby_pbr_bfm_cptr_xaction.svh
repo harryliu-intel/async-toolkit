@@ -46,7 +46,7 @@
 //     T_debug    - mby_pbr_bfm_cptr_debg_t
 //
 //-----------------------------------------------------------------------------
-class mby_pbr_bfm_cptr_xaction extends mby_base_sequence_item
+class mby_pbr_bfm_cptr_xaction extends shdv_base_sequence_item_param
 #(
    .T_data (mby_pbr_bfm_cptr_data_t),
    .T_debug(mby_pbr_bfm_cptr_debg_t)
@@ -55,8 +55,14 @@ class mby_pbr_bfm_cptr_xaction extends mby_base_sequence_item
    // -------------------------------------------------------------------------
    // Macro for factory registration
    // -------------------------------------------------------------------------
-  `uvm_object_utils(mby_pbr_bfm_cptr_xaction#(T_data, T_data_rsp, T_debug))
+  `uvm_object_utils(mby_pbr_bfm_cptr_xaction)
 
+   // CONSTRAINT: c_req_seg
+   // debug
+   constraint c_req_seg {
+      data.req_seg_ptr >=0;
+      data.req_seg_ptr < 10;
+   }
    // -------------------------------------------------------------------------
    // CONSTRUCTOR: new
    //
@@ -77,6 +83,24 @@ class mby_pbr_bfm_cptr_xaction extends mby_base_sequence_item
    //
    // -------------------------------------------------------------------------
    virtual function string convert2string();
+      string msg_str = "";
+      string lns_str = { {8{"--------"}}, "\n" };
+      //msg_str = super.convert2string();
+      msg_str = { msg_str, $sformatf("cptr_xaction::\t") };
+      msg_str = { msg_str, $sformatf("req_valid      = %0x\t", this.data.req_valid) };
+      msg_str = { msg_str, $sformatf("req_id         = 0x%0x\t", this.data.req_id) };
+      msg_str = { msg_str, $sformatf("req_seg_ptr    = 0x%0x\t", this.data.req_seg_ptr) };
+
+      msg_str = { msg_str, $sformatf("fifo_ack   = %0x\t", this.data.fifo_ack) };
+
+      msg_str = { msg_str, $sformatf("id_ack_valid   = %0x\t", this.data.id_ack_valid) };
+      msg_str = { msg_str, $sformatf("id_ack_id      = 0x%0x\t", this.data.id_ack_id) };
+
+      msg_str = { msg_str, $sformatf("data_clean_ptr = 0x%0x\t", this.data.data_clean_ptr) };
+      msg_str = { msg_str, $sformatf("data_valid     = %0x\t", this.data.data_valid) };
+      
+      //msg_str = { msg_str, lns_str };
+      return msg_str;
    endfunction : convert2string
 
    // -------------------------------------------------------------------------

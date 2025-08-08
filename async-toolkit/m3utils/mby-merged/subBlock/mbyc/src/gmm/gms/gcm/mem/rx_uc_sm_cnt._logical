@@ -11,4 +11,4 @@ Memory clock name B       <Read Clock Name>                   = cclk
 Debug Read                <Yes, No>                           = No
 Ram Clear-On-Reset        <Yes, Number, No, LL>               = No
 Memory Instances          <Integer Number>                    = 1
-Ram Fast Clock Frequency  <Real Number>                       = 1200
+Ram Fast Clock Frequency  <Real Number>                       = 1225

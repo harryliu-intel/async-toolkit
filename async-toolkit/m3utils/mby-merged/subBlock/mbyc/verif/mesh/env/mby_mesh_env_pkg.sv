@@ -39,12 +39,13 @@ package mby_mesh_env_pkg;
    import uvm_pkg::*;
 
    import shdv_base_pkg::*;
-   import mby_common_pkg::*;
+   import mby_msh_pkg::*;
 
    `include "uvm_macros.svh"
 
    `define __INSIDE_MBY_MESH_ENV_PKG
 
+   `include "mby_mesh_defines.svh"
    `include "mby_mesh_env_cfg.svh"
    `include "mby_mesh_dut_cfg.svh"
    `include "mby_mesh_tb_top_cfg.svh"

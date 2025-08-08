@@ -40,35 +40,36 @@
 // Main struct type definitions for SMM BFM
 // -------------------------------------------------------------------------
 // Re-using the defined types from the RTL pkg libraries: subBlock/mbyc/src/shared/rtl/mby_msh_pkg.sv  
-// The struct format defined here is a literaly coppy from the Mesh West Side Interface from: subBlock/mbyc/src/msh/rtl/mby_msh.sv 
+// and taking local definitions from SMM BFM defines: subBlock/mbyc/verif/lib/mby_smm_bfm/mby_smm_bfm_defines.svh
+// The struct format defined here is a copy from the Mesh West Side Interface from: subBlock/mbyc/src/msh/rtl/mby_msh.sv 
 
+// TODO : types defined for SMM BFM aren't included yet at this point, need to later replace these global
+//        parameters with the local ones
 typedef struct packed {  // Copy of: subBlock/mbyc/src/shared/interfaces/mim_wr_if.sv
-  logic                         mim_wreq_valid;
-  logic [W_SEG_PTR-1:0]         mim_wr_seg_ptr; //[19:0]
-  logic [W_SEMA-1:0]            mim_wr_sema;    //[ 3:0]
-  logic [W_WD_SEL-1:0]          mim_wr_wd_sel;  //[ 2:0]
-  logic [W_REQ_ID-1:0]          mim_wreq_id;    //[12:0]
-  logic [W_WORD_BITS-1:0]       mim_wr_data;    // 64*8
+  logic                       mim_wreq_valid;
+  logic [W_SEG_PTR-1:0]       mim_wr_seg_ptr; //[19:0]
+  logic [W_SEMA-1:0]          mim_wr_sema;    //[ 3:0]
+  logic [W_WD_SEL-1:0]        mim_wr_wd_sel;  //[ 2:0]
+  logic [W_REQ_ID-1:0]        mim_wreq_id;    //[12:0]
+  logic [W_WORD_BITS-1:0]     mim_wr_data;    // 64*8
 
-  logic [W_XACT_CREDITS-1:0]    mim_wreq_credits; // temp value   
+  logic [W_XACT_CREDITS-1:0]  mim_wreq_credits; // temp value
 } mby_smm_bfm_row_wr_req_t;
 
 typedef struct packed {   // Copy of: subBlock/mbyc/src/shared/interfaces/mim_rd_if.sv
-  logic                         mim_rreq_valid;
-  logic [W_SEG_PTR-1:0]         mim_seg_ptr;      //[19:0]
-  logic [W_SEMA-1:0]            mim_sema;         //[ 3:0]
-  logic [W_WD_SEL-1:0]          mim_wd_sel;       //[ 2:0]
-  logic [W_REQ_ID-1:0]          mim_req_id;       //[12:0]
+  logic                       mim_rreq_valid;
+  logic [W_SEG_PTR-1:0]       mim_seg_ptr;      //[19:0]
+  logic [W_SEMA-1:0]          mim_sema;         //[ 3:0]
+  logic [W_WD_SEL-1:0]        mim_wd_sel;       //[ 2:0]
+  logic [W_REQ_ID-1:0]        mim_req_id;       //[12:0]
 
-  logic [W_XACT_CREDITS-1:0]    mim_rreq_credits; // temp value   
+  logic [W_XACT_CREDITS-1:0]   mim_rreq_credits; // temp value
 
   logic                         mim_rrsp_valid;
   logic [W_RRSP_DEST_BLOCK-1:0] mim_rrsp_dest_block;  //[2:0]
-  logic [W_REQ_ID-1:0]          mim_rrsp_req_id;      //[12:0]
-  logic [W_WORD_BITS-1:0]       mim_rd_data;          //64 x 8    
+  logic [W_REQ_ID-1:0]          mim_rrsp_req_id;  //[12:0]
+  logic [W_WORD_BITS-1:0]       mim_rd_data;      //64 x 8
 } mby_smm_bfm_row_rd_req_t;
-
-
 
 // Defining the debug types to be simple logic for now.
 typedef logic mby_smm_bfm_row_wr_req_debg_t;

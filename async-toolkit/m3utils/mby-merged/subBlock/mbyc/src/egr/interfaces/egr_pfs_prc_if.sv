@@ -34,16 +34,17 @@ localparam DATA_TRANSMIT_QUEUE_COUNT = 8;
 // PFS tells PRC which queue to pop a packet from.
 
 mby_tag_ring_t tag;
+logic [$clog2(MGP_COUNT)-1:0] tag_mgp;
 logic [$clog2(DATA_TRANSMIT_QUEUE_COUNT)-1:0] dtq; // Indicates the data transmit queue of the winning tag
 logic [N_MAX_LP_PER_EPL-1:0][DATA_TRANSMIT_QUEUE_COUNT-1:0] fund_credit;
 
 modport pfs(
-    output tag, dtq,
+    output tag, dtq, tag_mgp,
     input fund_credit
     );
 
 modport prc(
-    input tag, dtq,
+    input tag, dtq, tag_mgp,
     output fund_credit
     );
 

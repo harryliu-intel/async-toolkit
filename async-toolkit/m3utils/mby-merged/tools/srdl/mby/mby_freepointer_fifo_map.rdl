@@ -1,4 +1,9 @@
-`include "lib_udp.rdl"
+<% if ($MBY_FREEPOINTER_FIFO_MAP) {
+   } else {
+   $MBY_FREEPOINTER_FIFO_MAP = 1;
+%>
+
+`include "mby_lib_udp.rdl"
  
 <% use security; %>
 <% my %Security_Props = security::GetSecurityInfo(); %>
@@ -44,3 +49,7 @@ addrmap mby_freepointer_fifo_map {
   mesh_freepointer_load_address_r MESH_FREEPOINTER_LOAD_ADDRESS[3085];
 
 };
+
+<%
+   }
+%>

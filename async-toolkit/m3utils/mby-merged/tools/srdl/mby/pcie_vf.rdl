@@ -1,6 +1,11 @@
+<% if ($PCIE_VF) {
+   } else {
+   $PCIE_VF = 1;
+%>
+
 <% use security; %>
 <% my %Security_Props = security::GetSecurityInfo(); %>
-`include "lib_udp.rdl"
+`include "mby_lib_udp.rdl"
 
 enum pcie_vfrxdctl_drop_on_empty_enum {
   DROP = 1'd1 { desc = " Drop the frame if queue has no descriptors"; };
@@ -1981,3 +1986,8 @@ addrmap PCIE_VF_map {
   pcie_vfvtctl_r             PCIE_VFVTCTL                  @0x6e0;
   pcie_vftx_desc_rff         PCIE_VFTX_DESC[256]           @0x200000 += 8192;
 }; // final size: 0x400000 <= 0x400000 = 8<<19
+
+<%
+   }
+%>
+

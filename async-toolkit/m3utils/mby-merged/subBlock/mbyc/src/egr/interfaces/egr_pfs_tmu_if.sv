@@ -52,6 +52,7 @@ logic [$clog2(MGP_COUNT)-1:0] pop_mgp;
 
 // Popped tag is valid <POP_TAG_LATENCY> clocks after pop.
 mby_tag_ring_t tag;
+logic [$clog2(MGP_COUNT)-1:0] tag_mgp;
 // Is the current tag coming form the tail buffer or head buffer?
 logic tag_tail_buffer;
 
@@ -64,14 +65,14 @@ logic [$clog2(MGP_COUNT)-1:0] timestamp_mgp;
 
 modport pfs(
     // port list
-    input queue_valid, tag, allow_fast_pop, tag_tail_buffer,
+    input queue_valid, tag, allow_fast_pop, tag_tail_buffer, tag_mgp,
         timestamp_valid, timestamp, timestamp_port, timestamp_tc, timestamp_mgp,
     output pop, pop_port, pop_tc, pop_mgp
     );
 
 modport tmu(
     // port list
-    output queue_valid, tag, allow_fast_pop, tag_tail_buffer,
+    output queue_valid, tag, allow_fast_pop, tag_tail_buffer, tag_mgp,
         timestamp_valid, timestamp, timestamp_port, timestamp_tc, timestamp_mgp,
     input pop, pop_port, pop_tc, pop_mgp
     );

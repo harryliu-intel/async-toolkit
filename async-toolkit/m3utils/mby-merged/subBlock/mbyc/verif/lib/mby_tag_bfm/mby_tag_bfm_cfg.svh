@@ -56,7 +56,7 @@
 // (end)
 //
 //-----------------------------------------------------------------------------
-class mby_tag_bfm_cfg extends mby_base_config;
+class mby_tag_bfm_cfg extends shdv_base_config;
 
    // VARIABLE: frame_gen_active
    // Agent is configured to be active or passive
@@ -69,6 +69,16 @@ class mby_tag_bfm_cfg extends mby_base_config;
    // VARIABLE: traffic_mode
    // The tag bfm can be configured to be in uni-cast or multi-cast modes.
    rand mby_tag_bfm_traffic_mode_t traffic_mode;
+   
+   // VARIABLE: driver_active
+   // Agent is configured to be active or passive
+   // TODO: add "_is_" e.g. driver_is_active
+   rand uvm_active_passive_enum driver_active;
+
+   // VARIABLE: monitor_active
+   // Agent is configured to be active or passive
+   rand uvm_active_passive_enum monitor_active;
+
 
    // CONSTRAINT: ingress_constraint
    // Sets proper values for driver/monitor enables and Uni-cast traffic

@@ -18,8 +18,8 @@
 // 21.08.2018 : created
 //-----------------------------------------------------------------------------
 
-mim_wr_if         igr_dirtypod_if(); //IGR Dirty Pod Write Interface //TODO Modify port names to similar of IGR
-mim_rd_if         igr_cleanpod_if(); //IGR Clean Pod Read Req/Rsp Interface
+egr_igr_dpod_if   igr_dirtypod_if(); //IGR Dirty Pod Write Interface //TODO Modify port names to similar of IGR
+igr_egr_cpod_if   igr_cleanpod_if(); //IGR Clean Pod Read Req/Rsp Interface
 
 mim_rd_if            mim_rd_if0_0(); //MIM Read Request Row0 Plane 0
 mim_rd_if            mim_rd_if0_1(); //MIM Read Request Row0 Plane 1
@@ -74,13 +74,13 @@ always_comb ahb_if.ahb_wr_data = 0;
 
 
 
-always_ff @(posedge egress_clock) epl_if0.tx_enable_port_num <= egress_reset ? (epl_if0.tx_enable_port_num + 2'b1) : 2'b0;
+always_ff @(posedge egress_clock) epl_if0.tx_enable_port_num <= (!egress_reset) ? (epl_if0.tx_enable_port_num + 2'b1) : 2'b0;
 always_comb epl_if0.tx_enable = 1'b1;
-always_ff @(posedge egress_clock) epl_if1.tx_enable_port_num <= egress_reset ? (epl_if1.tx_enable_port_num + 2'b1) : 2'b0;
+always_ff @(posedge egress_clock) epl_if1.tx_enable_port_num <= (!egress_reset) ? (epl_if1.tx_enable_port_num + 2'b1) : 2'b0;
 always_comb epl_if1.tx_enable = 1'b1;
-always_ff @(posedge egress_clock) epl_if2.tx_enable_port_num <= egress_reset ? (epl_if2.tx_enable_port_num + 2'b1) : 2'b0;
+always_ff @(posedge egress_clock) epl_if2.tx_enable_port_num <= (!egress_reset) ? (epl_if2.tx_enable_port_num + 2'b1) : 2'b0;
 always_comb epl_if2.tx_enable = 1'b1;
-always_ff @(posedge egress_clock) epl_if3.tx_enable_port_num <= egress_reset ? (epl_if3.tx_enable_port_num + 2'b1) : 2'b0;
+always_ff @(posedge egress_clock) epl_if3.tx_enable_port_num <= (!egress_reset) ? (epl_if3.tx_enable_port_num + 2'b1) : 2'b0;
 always_comb epl_if3.tx_enable = 1'b1;
 
 egr_top egress (

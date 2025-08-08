@@ -1,12 +1,10 @@
 
 module smm_row_mwr_reqs #(parameter TIME_DELAY = 625,parameter ADDRESS_BITS=20, parameter WORD_BYTES=64)(
+    input valid,
+    input [ADDRESS_BITS-1:0] seg_ptr,
     input mesh_clk,
     input mesh_rst,
-    mby_smm_bfm_row_wr_req_if mwr_req,
-    //output reg [2:0] o_node_col,
-    //output reg [3:0] o_node_row,
-    output reg [ADDRESS_BITS-1:0] o_wr_seg_ptr,
-    output reg [1:0] o_wr_wd_sel
+    mby_smm_bfm_mwr_req_if mwr_req
     );
 
     logic [7:0] data_ctr;
@@ -15,39 +13,27 @@ module smm_row_mwr_reqs #(parameter TIME_DELAY = 625,parameter ADDRESS_BITS=20, 
 initial begin
     $monitor ("%g MemWr seg_ptr=%h data=%h",$time, mwr_req.intf_data_pkt.mim_wr_seg_ptr, mwr_req.intf_data_pkt.mim_wr_data);
     mwr_req.intf_data_pkt.mim_wreq_valid = 0;
-    //mwr_req.node_col=0;
-    //mwr_req.node_row=0;
     data_ctr = 0;
     wd_sel_ctr = 0;
    
     mwr_req.intf_data_pkt.mim_wr_data = {WORD_BYTES*8{1'b0}};
-    mwr_req.intf_data_pkt.mim_wr_seg_ptr  = {ADDRESS_BITS{1'b0}};
     @(negedge mesh_rst);
     #100;
-    repeat(10) begin
+    forever begin
         @(posedge mesh_clk);
-	     data_ctr++; 
-        mwr_req.intf_data_pkt.mim_wreq_valid = 1;
-        //mwr_req.intf_data_pkt.wr_req.node_col = ($random%8);
-        //o_node_col = mwr_req.intf_data_pkt.wr_req.node_col;
-        //mwr_req.intf_data_pkt.wr_req.node_row = ($random%16);
-        //o_node_row = mwr_req.intf_data_pkt.wr_req.node_row;
-        mwr_req.intf_data_pkt.mim_wr_data = {64{data_ctr}};
-        if(wd_sel_ctr == 0)
-           begin
-              mwr_req.intf_data_pkt.mim_wr_seg_ptr = ($random%(1<<ADDRESS_BITS));
-              o_wr_seg_ptr = mwr_req.intf_data_pkt.mim_wr_seg_ptr;
-           end
-        else
-           begin
-              mwr_req.intf_data_pkt.mim_wr_seg_ptr = o_wr_seg_ptr;
-           end   
-        mwr_req.intf_data_pkt.mim_wr_wd_sel = wd_sel_ctr;
-        o_wr_wd_sel  = mwr_req.intf_data_pkt.mim_wr_wd_sel;
-        @(posedge mesh_clk);
-        wd_sel_ctr++;
         mwr_req.intf_data_pkt.mim_wreq_valid = 0;
-	//#($random%10);
+        if(valid) begin
+           data_ctr++; 
+           mwr_req.intf_data_pkt.mim_wreq_valid = 1;
+           mwr_req.intf_data_pkt.mim_wr_data = {64{data_ctr}};
+           mwr_req.intf_data_pkt.mim_wr_seg_ptr = seg_ptr;
+           mwr_req.intf_data_pkt.mim_wr_wd_sel = wd_sel_ctr%2;
+           wd_sel_ctr++;
+           @(posedge mesh_clk);
+           mwr_req.intf_data_pkt.mim_wr_data = {8{{16'h0000},{16'hbebe},{2{data_ctr}},{16'hcafe}}}; //metadata=0000-bebe-datactnr-cafe :concat with data cntr to know what md is associated to data
+           mwr_req.intf_data_pkt.mim_wr_wd_sel = wd_sel_ctr%2;
+           wd_sel_ctr++;
+        end
     end //repeat for write
 end //initial
 

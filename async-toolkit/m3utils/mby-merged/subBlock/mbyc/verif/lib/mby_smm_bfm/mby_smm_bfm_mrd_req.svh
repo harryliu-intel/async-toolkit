@@ -45,7 +45,7 @@
 // MemWrs/MemRds to a given Mem Node in the Mesh and location in the Memory Node
 // based on Row, Col, Address coming in Request.
 //
-// PARAMETERS::
+// PARAMETERS:
 //     type T_req - sequence item type to be handled.
 //-----------------------------------------------------------------------------
 
@@ -55,21 +55,30 @@ class mby_smm_bfm_mrd_req
    )
    extends uvm_pkg::uvm_subscriber #(T_req);
 
-   // VARIABLE: rd_req_cfg_obj
-   //    The bfm's mrd request configuration objects
-   mby_smm_bfm_cfg rd_req_cfg_obj;
+   // VARIABLE: cfg_obj
+   //    The bfm's mrd request configuration object
+   mby_smm_bfm_cfg cfg_obj;
 
    // VARIABLE: rd_req_agent_prt
    //    Pointer to the SMM BFM read request agent.
-   smm_bfm_row_rd_req_agent rd_req_agent_ptr;
+   smm_bfm_rd_req_agent rd_req_agent_ptr;
 
    // VARIABLE: mesh_ptr
    //    Pointer to the SMM BFM nodes array.
    smm_bfm_mem_node  mesh_ptr[MAX_NUM_MSH_ROWS-1:0][MAX_NUM_MSH_COLS-1:0];
    
-   // VARIABLE: rd_req_pending
+   // VARIABLE: operation_mode
+   //    Defines the behavior of this subscriber in order to operate with other RTL/BFM components.
+   operation_mode_e operation_mode;
+   
+   // VARIABLE: delay_simulation
+   //    Defines whether a delay should be simulated for memory read/write operations. If set a delay will be added
+   //    for each operation, otherwise all transactions will take place on 0 simulation time.
+   delay_simulation_e delay_simulation;
+   
+   // VARIABLE: mrd_req_pending
    //    Counter of the current memory read requests that are pending to be delivered to egress.
-   int rd_req_pending;
+   int mrd_req_pending;
    
    // Registering class with the factory
    `uvm_component_utils(mby_smm_bfm_mrd_req#(T_req))
@@ -105,11 +114,49 @@ class mby_smm_bfm_mrd_req
    // Assigns the internal agent pointer to be the same as the input argument.
    //
    // ARGUMENTS:
-   //    smm_bfm_row_rd_req_agent rd_req_agent_ptr  - An instance name of the address translator.
+   //    smm_bfm_rd_req_agent rd_req_agent_ptr  - An instance name of the address translator.
    // -------------------------------------------------------------------------
-   function void set_agent_ptr(smm_bfm_row_rd_req_agent rd_req_agent_ptr);
+   function void set_agent_ptr(smm_bfm_rd_req_agent rd_req_agent_ptr);
       this.rd_req_agent_ptr = rd_req_agent_ptr;
    endfunction : set_agent_ptr
+
+   // -------------------------------------------------------------------------
+   // FUNCTION: set_operation_opts
+   //
+   // Sets operation options for this subscriber as follows
+   //
+   // Operation modes
+   //    It defines how the subscriber should behave depending on the component that will be connected to. which can
+   //    be either Egress or Global Pointer Manager (GPM). Mode of operation helps to differentiate the subscriber
+   //    instance and handle the requirements specific to Egress or GPM.
+   //
+   //    EGRESS_MODE: The subscriber gets connected to one of the six Egress-to-Mesh interfaces, and sets its behavior
+   //       to get, process and respond memory read requests from Egress.
+   //    GPM_MODE: The subscriber gets connected to a GPM port, and sets its behavior to get, process and respond 
+   //       memory write requests from GPM.
+   //    Note: INGRESS_MODE doesn't apply to this subscriber as Ingress doesn't issue memory reads.
+   //
+   // Delay simulation:
+   //    If set, then the subscriber will hold the memory read response for a random number of cycles in order to
+   //    simulate the time required to look for and retrieve the requested data from the mesh.
+   //
+   //    WITH_DELAY_SIMULATION: The memory read response gets hold for a random number of cycles before sending it
+   //       back to the DUT.
+   //    WITHOUT_DELAY_SIMULATION: The memory read response gets returned to the DUT immediately after the memory
+   //       read request got received, taking it 0 simulation time to complete.
+   //
+   // ARGUMENTS:
+   //    operation_mode_e operation_mode     -  Defines the subscriber behavior.
+   //    delay_simulation_e delay_simulation -  Indicates whether delay simulation takes place.
+   // -------------------------------------------------------------------------
+   function void set_operation_opts(operation_mode_e operation_mode = EGRESS_MODE, delay_simulation_e delay_simulation = WITH_DELAY_SIMULATION);
+      if (operation_mode inside {INGRESS_MODE}) begin
+         `uvm_fatal(get_type_name(), "set_operation_opts(): %s is not supported for mrd_req subscriber.")
+      end
+      
+      this.operation_mode     = operation_mode;
+      this.delay_simulation   = delay_simulation;
+   endfunction : set_operation_opts
 
    // ------------------------------------------------------------------------
    // FUNCTION: build_phase
@@ -123,8 +170,7 @@ class mby_smm_bfm_mrd_req
    function void build_phase(uvm_phase phase);
       super.build_phase(phase);
       
-      rd_req_cfg_obj = new("rd_req_cfg_obj");
-      rd_req_pending = 0;
+      mrd_req_pending   = 0;
    endfunction : build_phase
 
    // ------------------------------------------------------------------------
@@ -144,91 +190,101 @@ class mby_smm_bfm_mrd_req
    // ------------------------------------------------------------------------
    // FUNCTION: start_mrd_req_rsp_task
    //
-   // Sets up an separate context for the received memory write request and
-   // start the corresponding read request/response task.
+   // Sets up an separate context for the received memory read request and
+   // start the corresponding read request/response task depending on delay_simulation
+   // specified.
    //
    // ARGUMENTS:
    //    T_req mem_req - contains a memory read request to the SMM BFM.
    // ------------------------------------------------------------------------
    function void start_mrd_req_rsp_task(T_req mem_req);
-      // Have a local copy of mem_req, task can be forked safely.
       fork
          mrd_req_rsp(mem_req);
       join_none
    endfunction
 
    // ------------------------------------------------------------------------
-   // FUNCTION: mrd_req_rsp
+   // TASK: mrd_req_rsp
    //
-   // Receives a memory read request, adds the request/response modeled time delays,
-   // and generate a memory read response for the model.
+   // Receives a memory read request from Egress or Global Pointer Manager, adds the request/response time delays
+   // depending on the configuration set at set_operation_opts(), and generate a memory read response for the model.
    //
    // ARGUMENTS:
    //    T_req mem_req - contains a memory read request to the SMM BFM.
    // ------------------------------------------------------------------------
    virtual protected task automatic mrd_req_rsp(T_req mem_req);
-      T_req          mem_rsp;       // Sequence item to store the generated memory response
+      smm_bfm_mrd_seq   rdrsp_seq;  // Sequence object used to drive the generated memory response
+      T_req             mem_rsp;    // Sequence item to store the generated memory response
       
-      smm_bfm_rdrsp_seq  rdrsp_seq;
+      bit [SMM_BFM_W_REQ_ID-1:0]          req_id;     // Memory read request ID
+      bit [SMM_BFM_ADDR_WIDTH-1:0]        addr;       // Memory read address
+      bit [SMM_BFM_DATA_WIDTH-1:0]        rd_data;    // Memory read data
+      bit [SMM_BFM_W_RRSP_DEST_BLOCK-1:0] dest_block; // Memory read response Dest Block
+      bit [SMM_BFM_NUM_MSH_ROWS-1:0]      node_row;   // SMM BFM node column
+      bit [SMM_BFM_NUM_MSH_COLS-1:0]      node_col;   // SMM BFM node row
       
-      // TODO: parameterize these definitions, these come from a file
-      // TODO : change logics by bits
-      logic [12:0]   req_id;        // Memory read request ID
-      logic [13:0]   addr;          // Memory read address
-      logic [511:0]  rd_data;       // Memory read data
+      int unsigned   mrd_req_delay;    // Modeled read request delay
       
-      logic [3:0]    node_row;      // SMM BFM node column
-      logic [2:0]    node_col;      // SMM BFM node row
+      string   msg_str;
+      string   mrd_req_str;
       
-      int unsigned   req_rsp_delay; // Modeled read request delay
-      
-      string         msg_str;
-      
-      rd_req_pending++;
-      
-      rdrsp_seq = smm_bfm_rdrsp_seq::type_id::create("rdrsp_seq", this);
+      rdrsp_seq   = smm_bfm_mrd_seq::type_id::create("rdrsp_seq", this);
+      mem_rsp     = T_req::type_id::create("mem_rsp", this);
       
       // Decode memory read request data
-      req_id      = mem_req.data_pkt.mim_req_id;
-      addr        = mem_req.data_pkt.mim_seg_ptr[13:0];
-      node_row    = mem_req.data_pkt.mim_seg_ptr[17:14];
-      node_col    = {mem_req.data_pkt.mim_seg_ptr[1:0]^mem_req.data_pkt.mim_wd_sel,mem_req.data_pkt.mim_seg_ptr[18]};
+      req_id      = mem_req.data.mim_req_id;
+      dest_block  = mem_req.data.mim_wd_sel;   //TODO: what is dest block? - for now assigned with wd_sel
+      addr        = mem_req.data.mim_seg_ptr[13:0];
+      node_row    = mem_req.data.mim_seg_ptr[17:14];
+      node_col    = {mem_req.data.mim_seg_ptr[1:0]^mem_req.data.mim_wd_sel,mem_req.data.mim_seg_ptr[18]};
       rd_data     = mesh_ptr[node_row][node_col].mrd(addr);
       
-      msg_str     = $sformatf("mrd_req_rsp() : Received a memory read request for NodeRow = 0x%0x, NodeCol = 0x%0x, \
-                        Address = 0x%0x, RdData = 0x%0x. ReqID = 0x%x", node_row, node_col, addr, rd_data, req_id);
+      mrd_req_str = $sformatf("NodeRow = 0x%0x, NodeCol = 0x%0x, Address = 0x%04x", node_row, node_col, addr);
+      
+      msg_str     = $sformatf("mrd_req_rsp(): %s Received a memory read request for ", operation_mode.name());
+      msg_str     = {msg_str, $sformatf("%s, RdData = 0x%0128x", mrd_req_str, rd_data)};
       
       `uvm_info(get_type_name(), msg_str,  UVM_MEDIUM)
       
-      // Generate the memory read response
-      mem_rsp = T_req::type_id::create("mem_rsp", this);
-      mem_rsp.data_pkt.mim_rrsp_valid  = 1;
-      mem_rsp.data_pkt.mim_rd_data     = rd_data;
-      mem_rsp.data_pkt.mim_rrsp_req_id = req_id;
+      // Generate the memory read response accordingly
+      mem_rsp.data.mim_rrsp_valid        = 1;
+      mem_rsp.data.mim_rd_data           = rd_data;
+      mem_rsp.data.mim_rrsp_req_id       = req_id;
+      mem_rsp.data.mim_rrsp_dest_block   = dest_block;
       
-      // TODO ;   Profile based latencies.
-      req_rsp_delay  = $urandom_range(rd_req_cfg_obj.mrd_req_rsp_delay_min,
-                                      rd_req_cfg_obj.mrd_req_rsp_delay_max) + rd_req_cfg_obj.mrd_req_rsp_delay_extra;
+      if (delay_simulation inside {WITH_DELAY_SIMULATION}) begin
+         // Increase the number of pending read requests so the main thread can raise an objection to let
+         // this task finish properly
+         mrd_req_pending++;
+         
+         // Generate profile based latencies, min and max got adjusted based on the configured profile.
+         mrd_req_delay = $urandom_range(cfg_obj.mrd_req_delay_min, cfg_obj.mrd_req_delay_max);
+         
+         msg_str = $sformatf("mrd_req_rsp(): %s Delay of read request/response is ", operation_mode.name());
+         msg_str = {msg_str, $sformatf("%0d clocks. %s", mrd_req_delay, mrd_req_str)};
+         
+         `uvm_info(get_type_name(), msg_str,  UVM_MEDIUM)
+         
+         // Simulate read request/response latency
+         repeat(mrd_req_delay) @(posedge this.rd_req_agent_ptr.driver.io_policy.vintf.clk);
+      end
       
-      msg_str     = $sformatf("mrd_req_rsp() : Delay of read request/response operation is %0d clocks. ReqID = 0x%x",
-                       req_rsp_delay, req_id);
-      
-      `uvm_info(get_type_name(), msg_str,  UVM_MEDIUM)
-      
-      // Look for the driver in this agent then for a vif and then a clock in it
-      repeat(req_rsp_delay) @(posedge this.rd_req_agent_ptr.driver.vintf.clk);
-      
-      // Use this instead
+      // Once the delay got simulated, the memory read response gets sent through the sequencer
       rdrsp_seq.mem_rsp = mem_rsp;
       rdrsp_seq.start(this.rd_req_agent_ptr.sequencer);
       
-      mem_rsp.data_pkt.mim_rrsp_valid = 0;
+      mem_rsp.data.mim_rrsp_valid = 0;
       
-      msg_str     = $sformatf("mrd_req_rsp() : Memory read request done. ReqID = 0x%x", req_id);
+      msg_str  = $sformatf("mrd_req_rsp(): %s Memory read request done. ", operation_mode.name());
+      msg_str  = {msg_str, mrd_req_str};
       
       `uvm_info(get_type_name(), msg_str, UVM_MEDIUM)
       
-      rd_req_pending--;
+      if (delay_simulation inside {WITH_DELAY_SIMULATION}) begin
+         // Decrease the number of pending read requests, so the main thread can drop the objection if there aren't
+         // more pending read requests
+         mrd_req_pending--;
+      end
    endtask : mrd_req_rsp
 
    // -------------------------------------------------------------------------
@@ -243,23 +299,23 @@ class mby_smm_bfm_mrd_req
       bit      objection_raised = 0;
       string   msg_str;
       
-      forever @ (posedge this.rd_req_agent_ptr.driver.vintf.clk) begin
+      forever @ (posedge this.rd_req_agent_ptr.driver.io_policy.vintf.clk) begin
          // Maintain track of the memory read requests in flight, will hold on test
          // completion until all read requests are completed.
-         if (!objection_raised && rd_req_pending > 0) begin
+         if (!objection_raised && mrd_req_pending > 0) begin
             phase.raise_objection(this, "SMM BFM: Pending memory read requests.", 1);
             
-            msg_str = $sformatf("run_phase(): There are %0d pending memory read requests, raised phase objection.",
-                         rd_req_pending);
+            msg_str = $sformatf("run_phase(): %0d pending memory read requests, raised phase objection.",
+               mrd_req_pending);
             
             `uvm_info(get_type_name(), msg_str, UVM_DEBUG)
             
             objection_raised = 1;
-         end else if (objection_raised && rd_req_pending == 0) begin
+         end else if (objection_raised && mrd_req_pending == 0) begin
             phase.drop_objection(this, "SMM BFM: No pending memory read requests.", 1);
             
-            msg_str = $sformatf("run_phase(): There are %0d pending memory read requests, dropped phase objection.",
-                         rd_req_pending);
+            msg_str = $sformatf("run_phase(): %0d pending memory read requests, dropped phase objection.",
+               mrd_req_pending);
             
             `uvm_info(get_type_name(), msg_str, UVM_DEBUG)
             

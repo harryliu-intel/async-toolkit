@@ -1,0 +1,16 @@
+    >>  car_raw_lan_power_good_with_byprst
+    >>  fary_ffuse_data_misc_rf
+    >>  fary_pwren_b_rf
+    >>  aary_pwren_b_rf
+    >>  fdfx_lbist_test_mode
+    >>  fscan_byprst_b
+    >>  fscan_ram_awt_mode
+    >>  fscan_ram_awt_ren
+    >>  fscan_ram_awt_wen
+    >>  fscan_ram_bypsel
+    >>  fscan_ram_init_en
+    >>  fscan_ram_init_val
+    >>  fscan_ram_odis_b
+    >>  fscan_ram_rddis_b
+    >>  fscan_ram_wrdis_b
+    >>  fscan_rstbypen

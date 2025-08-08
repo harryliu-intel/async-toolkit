@@ -47,13 +47,14 @@ package mby_gpm_bfm_pkg;
    import shdv_base_pkg::*;
    import mby_base_pkg::*;
    import mby_gmm_pkg::*;
+   import mby_smm_bfm_pkg::*;
 
    `include "uvm_macros.svh"
    `include "mby_gpm_bfm_defines.svh"
    `include "mby_gpm_bfm_types.svh"
    `include "mby_gpm_bfm_pod_xaction.svh"
-   `include "mby_gpm_bfm_msh_xaction.svh"
    `include "mby_gpm_bfm_cfg.svh"
+   `include "mby_gpm_bfm_pod_seq.svh"
    `include "mby_gpm_bfm_pptr_gen.svh"
    `include "mby_gpm_bfm.svh"
 

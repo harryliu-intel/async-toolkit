@@ -188,7 +188,7 @@ $ToolConfig_ips{sva_lib_ip} = {
 
 $ToolConfig_ips{shdv} = {
    PATH => "$ENV{IP_MODELS}/shdv/&get_tool_version()",
-   VERSION => "shdv-dev-x0-19ww01a",
+   VERSION => "shdv-dev-x0-19ww07a",
    OTHER   => {
       SEARCH_PATHS   => ["&get_tool_path()",],
       IMPORT         => ["cfg/shdv_IPToolData.pm",],
@@ -206,7 +206,7 @@ $ToolConfig_ips{fdo_tools} = {
 
 $ToolConfig_ips{shrtl} = {
    PATH => "$ENV{IP_MODELS}/shrtl/&get_tool_version()",
-   VERSION => "shrtl-dev-x0-18ww48a",
+   VERSION => "shrtl-dev-x0-19ww06a",
    OTHER   => {
       SEARCH_PATHS   => ["&get_tool_path()",],
       IMPORT         => ["cfg/shrtl_IPToolData.pm",],
@@ -224,5 +224,7 @@ $ToolConfig_ips{VTE_TR_UVM} = {
     },
 };
 
+
+$ToolConfig_tools{buildman}{ENV}{SPYGLASS_CDC_VER}  = "&get_tool_version(spyglass_cdc/spyglass)";
 
 1;

@@ -41,5 +41,5 @@ done
 
 cd test_api
 make clean
-make -j 10
+make -j 30
 

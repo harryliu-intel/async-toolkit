@@ -1,4 +1,10 @@
-`include "lib_udp.rdl"
+<%
+  if ($MBY_IP) {
+  } else {
+    $MBY_IP = 1;
+%>
+
+`include "mby_lib_udp.rdl"
 
 addrmap mby_regs{
 	`include "mby_cfg.rdl"
@@ -27,3 +33,7 @@ addrmap mby_regs{
 	mby_mem_sb->Space="MSG";
 	mby_mem_sb->BaseAddress="0xaa"; //INTEG: Need to replace with the IP SB port number	
 };
+
+<%
+  };
+%>

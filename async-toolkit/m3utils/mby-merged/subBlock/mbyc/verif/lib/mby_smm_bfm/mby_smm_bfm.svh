@@ -38,18 +38,25 @@
 //-----------------------------------------------------------------------------
 // CLASS: mby_smm_bfm
 //
+// Main class for the SMM BFM. It simulates the memory mesh behavior and latencies.
+// This class contains the agents and subscribers used to handle all memory read and write
+// requests coming from the outside.
+// TODO : it will also provide coverage data on the use cases taking place, it will support
+// basic/advanced traffic scenarios as well as resets.
 //-----------------------------------------------------------------------------
 class mby_smm_bfm extends uvm_component;
+   // VARIABLE cfg_obj
+   mby_smm_bfm_cfg cfg_obj;
 
-   // VARIABLE: igr_wr_req_cfg_obj, igr_wr_req_cfg_obj
-   // The bfm's mwr/mrd request configuration objects
+   // VARIABLE: igr_wr_req_agent 
+   // SMM BFM Agent Instance interfacing with the Ingress for Write Request Transactions.
+   smm_bfm_wr_req_agent igr_wr_req_agent;
+   
+   // VARIABLE: egr_rd_req_agent 
+   // SMM BFM Agent Instance interfacing with the Egress for Read Request Transactions.
+   smm_bfm_rd_req_agent egr_rd_req_agent;
 
-   // VARIABLE: igr_wr_req_agent, egr_rd_req_agent 
-   // These are the Mesh BFM Agent Instances interfacing with the Ingress and Egress respectively for Write/Read Request Transactions.
-   smm_bfm_row_wr_req_agent igr_wr_req_agent;
-   smm_bfm_row_rd_req_agent egr_rd_req_agent;
-
-
+   // TODO : temporarily disabled, will be used for Global Memory? Manager and Multicast Engine
    // VARIABLE: gmm_wr_req_agent, mce_wr_req_agent 
    // These are the Mesh BFM Agent Instances interfacing with the GMM and MCE respectively for Write Request Transactions.
    //smm_bfm_col_wr_req_agent gmm_wr_req_agent;
@@ -60,9 +67,17 @@ class mby_smm_bfm extends uvm_component;
    //smm_bfm_col_rd_req_agent gmm_rd_req_agent;
    //smm_bfm_col_rd_req_agent mce_rd_req_agent;
 
+   // VARIABLE: mem_mesh 
+   // Array of SMM BFM memory node instances representing the whole mesh.
    smm_bfm_mem_node  mem_mesh[MAX_NUM_MSH_ROWS-1:0][MAX_NUM_MSH_COLS-1:0];
-   smm_bfm_mwr_req   mwr_req;
-   smm_bfm_mrd_req   mrd_req;
+   
+   // VARIABLE: mwr_req_row 
+   // Subscriber that handles incoming memory write requests from Ingress.
+   smm_bfm_mwr_req   mwr_req_row;
+   
+   // VARIABLE: mrd_req_row
+   // Subscriber that handles incoming memory read requests from Egress.
+   smm_bfm_mrd_req   mrd_req_row;
    
    // -------------------------------------------------------------------------
    // Macro to register new class type
@@ -94,31 +109,38 @@ class mby_smm_bfm extends uvm_component;
    function void build_phase(uvm_phase phase);
       super.build_phase(phase);
       
-      // Not  really used these config objects yet, but compilation will complain if they aren't defined
-      igr_wr_req_agent = smm_bfm_row_wr_req_agent::type_id::create("igr_wr_req_agent", this);
-      igr_wr_req_agent.cfg_obj = new("smm_bfm_igr_wr_req_cfg");
-      uvm_config_db#(mby_base_config)::set(this, "igr_wr_req_agent", "cfg_obj", igr_wr_req_agent.cfg_obj);
-      igr_wr_req_agent.cfg_obj.monitor_active = UVM_ACTIVE;
-      igr_wr_req_agent.cfg_obj.driver_active = UVM_ACTIVE;
+      // Set up config agents
+      igr_wr_req_agent = smm_bfm_wr_req_agent::type_id::create("igr_wr_req_agent", this);
+      egr_rd_req_agent = smm_bfm_rd_req_agent::type_id::create("egr_rd_req_agent", this);
       
-      egr_rd_req_agent = smm_bfm_row_rd_req_agent::type_id::create("egr_rd_req_agent", this);
-      egr_rd_req_agent.cfg_obj = new("smm_bfm_egr_rd_req_cfg");
-      uvm_config_db#(mby_base_config)::set(this, "egr_rd_req_agent", "cfg_obj", egr_rd_req_agent.cfg_obj);
-      egr_rd_req_agent.cfg_obj.monitor_active = UVM_ACTIVE;
-      egr_rd_req_agent.cfg_obj.driver_active = UVM_ACTIVE;
+      igr_wr_req_agent.cfg = this.cfg_obj.mwr_req_agent_cfg;
+      egr_rd_req_agent.cfg = this.cfg_obj.mrd_req_agent_cfg;
       
+      // Instantiate all of the SMM memory nodes into the mesh array
       for(int row_idx=0 ; row_idx<MAX_NUM_MSH_ROWS; row_idx++) begin
          for(int col_idx=0 ; col_idx<MAX_NUM_MSH_COLS; col_idx++) begin
             mem_mesh[row_idx][col_idx] = smm_bfm_mem_node::type_id::create($sformatf("mem_node%d%d",row_idx,col_idx), this);
+            mem_mesh[row_idx][col_idx].set_row_col(row_idx, col_idx);
          end
       end
 
-      mwr_req         = smm_bfm_mwr_req::type_id::create("mwr_req", this);
-      mwr_req.set_mesh_ptr(mem_mesh);
-      mrd_req         = smm_bfm_mrd_req::type_id::create("mrd_req", this);
-      mrd_req.set_mesh_ptr(mem_mesh);
+      // TODO : replicate mrd/mwr subscribers as per total DUT interfaces (6 of each)
+      // Set up subscribers
+      mwr_req_row = smm_bfm_mwr_req::type_id::create("mwr_req_row", this);
+      mrd_req_row = smm_bfm_mrd_req::type_id::create("mrd_req_row", this);
 
-      mrd_req.set_agent_ptr(egr_rd_req_agent);
+      mwr_req_row.cfg_obj = this.cfg_obj;
+      mwr_req_row.set_mesh_ptr(mem_mesh);
+      mwr_req_row.set_agent_ptr(igr_wr_req_agent);
+      mwr_req_row.set_operation_opts(INGRESS_MODE, WITHOUT_DELAY_SIMULATION);
+
+      mrd_req_row.cfg_obj = this.cfg_obj;
+      mrd_req_row.set_mesh_ptr(mem_mesh);
+      mrd_req_row.set_agent_ptr(egr_rd_req_agent);
+      mrd_req_row.set_operation_opts(EGRESS_MODE, WITH_DELAY_SIMULATION);
+
+      // TODO : set up mrd_req_col for GPM_MODE
+
    endfunction : build_phase
 
    // ------------------------------------------------------------------------
@@ -129,8 +151,8 @@ class mby_smm_bfm extends uvm_component;
    // ------------------------------------------------------------------------
    function void connect_phase(uvm_phase phase);
       super.connect_phase(phase);
-      igr_wr_req_agent.monitor.mon_ap.connect(mwr_req.analysis_export);
-      egr_rd_req_agent.monitor.mon_ap.connect(mrd_req.analysis_export);
+      igr_wr_req_agent.monitor.mon_ap.connect(mwr_req_row.analysis_export);
+      egr_rd_req_agent.monitor.mon_ap.connect(mrd_req_row.analysis_export);
     endfunction : connect_phase
 
 endclass : mby_smm_bfm

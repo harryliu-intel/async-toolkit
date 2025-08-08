@@ -1,8 +1,8 @@
 Ram Type                  <REGULAR, ROM, TCAM>                = REGULAR
 Ram Ports                 <1rw, 1r1w, 2rw>                    = 1rw
 Ram Lines Number          <Integer Number>                    = 64
-Ram Data Width            <Integer Number>                    = 47
-Ram Write Resolution      <Divider of Data Width>             = 47
+Ram Data Width            <Integer Number>                    = 48
+Ram Write Resolution      <Divider of Data Width>             = 48
 Ram Protection Type       <ECC, Parity, None>                 = None
 Pre Chk ECC Sample        <Yes, CLKG, No>                     = No
 Post Chk ECC Sample       <Yes, CLKG, No>                     = No
@@ -11,4 +11,4 @@ Memory clock name B       <Read Clock Name>                   = cclk
 Debug Read                <Yes, No>                           = No
 Ram Clear-On-Reset        <Yes, Number, No, LL>               = No
 Memory Instances          <Integer Number>                    = 1
-Ram Fast Clock Frequency  <Real Number>                       = 1200
+Ram Fast Clock Frequency  <Real Number>                       = 1225

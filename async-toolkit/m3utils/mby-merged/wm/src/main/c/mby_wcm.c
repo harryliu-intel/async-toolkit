@@ -2,9 +2,8 @@
 
 // Copyright (C) 2018 Intel Corporation
 
-
-#include "mby_common.h"
 #include "mby_wcm.h"
+#include "mby_bitfield.h"
 
 static mbyWcmKeyInfo selectWcmKey
 (

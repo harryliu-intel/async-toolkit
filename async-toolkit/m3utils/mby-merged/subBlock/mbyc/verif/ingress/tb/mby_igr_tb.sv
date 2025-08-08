@@ -31,7 +31,7 @@
 module mby_igr_tb ();
 
   import uvm_pkg::*;
-  
+
   // ===============================================
   // =                FSDB variable                =
   // ===============================================
@@ -44,12 +44,12 @@ module mby_igr_tb ();
 
   logic ingress_clock;
   logic ingress_reset;
-  
+
   // ===============================================
   // Verification Test Library
   // ===============================================
   mby_igr_test_lib test();
-  
+
   // ===============================================
   // DUT RTL instance
   // ===============================================
@@ -73,15 +73,15 @@ module mby_igr_tb ();
   mby_ec_cdi_rx_intf eth_bfm_rx_intf_3 (ingress_reset, ingress_clock);
   mby_ec_cdi_tx_intf eth_bfm_tx_intf_4 (ingress_reset, ingress_clock);
   mby_ec_cdi_rx_intf eth_bfm_rx_intf_4 (ingress_reset, ingress_clock);
-    
-  mby_tag_bfm_uc_if tag_bfm_intf_0 (ingress_reset, ingress_clock);
-  mby_tag_bfm_uc_if tag_bfm_intf_1 (ingress_reset, ingress_clock);
-    
-  assign eth_bfm_tx_intf_0.enable = 1;
-  assign eth_bfm_tx_intf_1.enable = 1;
-  assign eth_bfm_tx_intf_2.enable = 1;
-  assign eth_bfm_tx_intf_3.enable = 1;
-  assign eth_bfm_tx_intf_4.enable = 1;
+  // tag bfm interfaces
+  mby_tag_bfm_uc_if  tag_bfm_intf_0    (ingress_clock, ingress_reset);
+  mby_tag_bfm_uc_if  tag_bfm_intf_1    (ingress_clock, ingress_reset);
+
+   mby_pbr_bfm_cptr_slave_if  pbr_bfm_cptr_slave_intf_0(.clk(ingress_clock),.rst(ingress_reset));
+   mby_pbr_bfm_dptr_master_if pbr_bfm_dptr_master_intf_0(.clk(ingress_clock),.rst(ingress_reset));
+// TODO: raalfaro - assign in top tb
+//   assign pbr_bfm_dptr_slave_intf_0.intf_data_pkt.pod_put_req = pbr_bfm_dptr_master_intf_0.intf_data_pkt.pod_put_req;
+//   assign pbr_bfm_dptr_master_intf_0.intf_data_pkt.schedule_stall = pbr_bfm_dptr_slave_intf_0.intf_data_pkt.schedule_stall;
 
   // ===============================================
   // Clock block instance
@@ -127,6 +127,10 @@ module mby_igr_tb ();
                    ,.eth_bfm_rx_intf_3   (eth_bfm_rx_intf_3)
                    ,.eth_bfm_tx_intf_4   (eth_bfm_tx_intf_4)
                    ,.eth_bfm_rx_intf_4   (eth_bfm_rx_intf_4)
+                   ,.tag_bfm_intf_0      (tag_bfm_intf_0)
+                   ,.tag_bfm_intf_1      (tag_bfm_intf_1)
+                   ,.pbr_bfm_cptr_slave_if  (pbr_bfm_cptr_slave_intf_0)
+                   ,.pbr_bfm_dptr_master_if (pbr_bfm_dptr_master_intf_0)
                   );
 
 `include "std_ace_util.vic"

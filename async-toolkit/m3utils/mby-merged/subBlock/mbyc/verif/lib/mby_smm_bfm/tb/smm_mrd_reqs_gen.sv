@@ -2,7 +2,7 @@
 module smm_row_mrd_reqs #(parameter TIME_DELAY = 625,parameter ADDRESS_BITS=20, parameter WORD_BYTES=64)(
     input mesh_clk,
     input mesh_rst,
-    mby_smm_bfm_row_rd_req_if mrd_req,
+    mby_smm_bfm_mrd_req_if mrd_req,
     input [ADDRESS_BITS-1:0] i_rd_seg_ptr,
     input [1:0] i_rd_wd_sel
     

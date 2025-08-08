@@ -42,7 +42,7 @@
 // control the PCM agent's driver/monitor behavior.
 //
 //-----------------------------------------------------------------------------
-class mby_pcm_bfm_cfg extends mby_base_config;
+class mby_pcm_bfm_cfg extends shdv_base_config;
 
     // VARIABLE: bfm_mode
     // This is the PCM bfm mode of operation (igr/egr).
@@ -50,23 +50,23 @@ class mby_pcm_bfm_cfg extends mby_base_config;
 
     // VARIABLE: queue_cfg
     // Basic configuration object for the queue agent.
-    rand mby_base_config queue_cfg;
+    rand shdv_base_config queue_cfg;
 
     // VARIABLE: rx_wm_cfg
     // Basic configuration object for the rx_wm agent.
-    rand mby_base_config rx_wm_cfg;
+    rand shdv_base_config rx_wm_cfg;
 
     // VARIABLE: rx_sm_wm_cfg
     // Basic configuration object for the rx_sm_wm agent.
-    rand mby_base_config rx_sm_wm_cfg;
+    rand shdv_base_config rx_sm_wm_cfg;
 
     // VARIABLE: deque_cfg
     // Basic configuration object for the deque agent.
-    rand mby_base_config deque_cfg;
+    rand shdv_base_config deque_cfg;
 
     // VARIABLE: tx_sm_wm_cfg
     // Basic configuration object for the tx_sm_wm agent.
-    rand mby_base_config tx_sm_wm_cfg;
+    rand shdv_base_config tx_sm_wm_cfg;
 
     // CONSTRAINT: gmm_mode_constraint
     // Sets the agents' configuration settings based

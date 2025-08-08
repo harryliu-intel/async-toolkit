@@ -46,10 +46,13 @@ program mby_rx_ppe_test_lib;
    import eth_bfm_pkg::*;
    import mby_ec_bfm_pkg::*;
  //  import ec_env_pkg::*;
+   import pktlib_pkg::*;
 
     `define __INSIDE_MBY_RX_PPE_TEST_LIB
     `include "mby_rx_ppe_base_test.svh"
     `include "mby_rx_ppe_alive_test.svh"
+    `include "mby_rx_ppe_wm_access_test.svh"
+    `include "mby_rx_ppe_l2_basic_test.svh"
 
     `undef __INSIDE_MBY_RX_PPE_TEST_LIB
 

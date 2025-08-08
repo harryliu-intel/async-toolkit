@@ -1,6 +1,11 @@
+<% if ($PCIE_VF_CFG) {
+   } else {
+   $PCIE_VF_CFG = 1;
+%>
+
 <% use security; %>
 <% my %Security_Props = security::GetSecurityInfo(); %>
-`include "lib_udp.rdl"
+`include "mby_lib_udp.rdl"
 
 
 
@@ -2940,3 +2945,8 @@ addrmap PCIE_CFG_VF_map {
   pcie_vf_cfg_acs_hdr_r      PCIE_VF_CFG_ACS_HDR           @0x158;
   pcie_vf_cfg_acs_cap_r      PCIE_VF_CFG_ACS_CAP           @0x160;
 }; // final size: 0x168 <= 0x200 = 8<<6
+
+
+<%
+   }
+%>

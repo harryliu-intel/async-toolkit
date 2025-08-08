@@ -1,6 +1,11 @@
+<% if ($PCIE_PF) {
+   } else {
+   $PCIE_PF = 1;
+%>
+
 <% use security; %>
 <% my %Security_Props = security::GetSecurityInfo(); %>
-`include "lib_udp.rdl"
+`include "mby_lib_udp.rdl"
 
 enum pcie_rxdctl_drop_on_empty_enum {
   DROP = 1'd1 { desc = " Drop the frame if queue has no descriptors"; };
@@ -10600,3 +10605,8 @@ addrmap PCIE_PF_map {
   pcie_host_lane_ctrl_r      PCIE_HOST_LANE_CTRL           @0x444448;
   pcie_serdes_ctrl_r         PCIE_SERDES_CTRL[8]           @0x444480 += 8;
 }; // final size: 0x4444c0 <= 0x800000 = 8<<20
+
+<%
+   }
+%>
+

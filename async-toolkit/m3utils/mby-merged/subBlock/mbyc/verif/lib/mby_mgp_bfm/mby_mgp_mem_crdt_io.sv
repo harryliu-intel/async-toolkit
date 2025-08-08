@@ -16,9 +16,11 @@ class mby_mgp_mem_crdt_io  extends uvm_component;
    `uvm_component_utils(mby_mgp_mem_crdt_io)
   
 
-   virtual mby_mgp_mim_req_if rdreq_vif;
-   virtual mby_mgp_mim_req_if wrreq_vif;
-   virtual mby_mgp_mim_rsp_if rsp_vif;
+   virtual mby_mgp_rreq_if rdreq_vif;
+   virtual mby_mgp_wreq_if wrreq_vif;
+   virtual mby_mgp_rsp_if  rsp_vif;
+   virtual mby_mgp_data_if rddata_vif;
+   virtual mby_mgp_data_if wrdata_vif;
 
    int 	                port_idx;
    int 			port_num;
@@ -58,7 +60,7 @@ endfunction : build_phase
 // Track posedge of clock
 //----------------------------------------------------------------------------------------
 task mby_mgp_mem_crdt_io::step();
-   @rdreq_vif.req_mst_cb;
+   @rdreq_vif.rreq_mst_cb;
 endtask
 
 //----------------------------------------------------------------------------------------
@@ -89,7 +91,8 @@ function void mby_mgp_mem_crdt_io::fill_req(mby_mgp_req_seq_item req);
    req.req_type = req_type;
    req.pack(req_phys);
    pline_phys = req_phys;
-   `uvm_info(this.get_name(), $sformatf("Filled pline req data : 0x%0x, req_type : %s", req.data, req_type.name), UVM_NONE)
+   
+   
 endfunction
 
 
@@ -109,36 +112,32 @@ task mby_mgp_mem_crdt_io::drive_item();
 
    req_phys_out = pline_phys;
    if (req_type == RDREQ) begin
-      rdreq_vif.req_mst_cb.req_id[port_idx][port_num]  <= req_phys_out.req_bus.req_id;
-      rdreq_vif.req_mst_cb.valid[port_idx][port_num]   <= req_phys_out.req_bus.valid;
-      rdreq_vif.req_mst_cb.seg_ptr[port_idx][port_num] <= req_phys_out.req_bus.seg_ptr;
-      rdreq_vif.req_mst_cb.sema[port_idx][port_num]    <= req_phys_out.req_bus.sema;
-      rdreq_vif.req_mst_cb.wd_sel[port_idx][port_num]  <= req_phys_out.req_bus.word_sel;
-      rdreq_vif.req_mst_cb.data[port_idx][port_num]    <= 0;
+      rdreq_vif.rreq_mst_cb.rd_req[port_idx][port_num]      <= {req_phys_out.rreq_bus.valid,
+								req_phys_out.rreq_bus.req_id,
+                                                                req_phys_out.rreq_bus.seg_ptr,
+                                                                req_phys_out.rreq_bus.word_sel,
+								req_phys_out.rreq_bus.sema,
+                                                                req_phys_out.rreq_bus.pclass,
+                                                                req_phys_out.rreq_bus.mcast,
+                                                                req_phys_out.rreq_bus.csr};
    end
    else if (req_type == WRREQ) begin
-      wrreq_vif.req_mst_cb.req_id[port_idx][port_num]  <= req_phys_out.req_bus.req_id;
-      wrreq_vif.req_mst_cb.valid[port_idx][port_num]   <= req_phys_out.req_bus.valid;
-      wrreq_vif.req_mst_cb.seg_ptr[port_idx][port_num] <= req_phys_out.req_bus.seg_ptr;
-      wrreq_vif.req_mst_cb.sema[port_idx][port_num]    <= req_phys_out.req_bus.sema;
-      wrreq_vif.req_mst_cb.wd_sel[port_idx][port_num]  <= req_phys_out.req_bus.word_sel;
-      wrreq_vif.req_mst_cb.data[port_idx][port_num]    <= req_phys_out.req_bus.data;
+      wrreq_vif.wreq_mst_cb.wr_req[port_idx][port_num]      <= {req_phys_out.wreq_bus.valid,
+                                                                req_phys_out.wreq_bus.seg_ptr,
+                                                                req_phys_out.wreq_bus.word_sel,
+								req_phys_out.wreq_bus.sema,
+                                                                req_phys_out.wreq_bus.pclass,
+                                                                req_phys_out.wreq_bus.mcast,
+                                                                req_phys_out.wreq_bus.csr};
+      wrdata_vif.data_mst_cb.req_data[port_idx][port_num]   <= {req_phys_out.wreq_bus.data,
+                                                                req_phys_out.wreq_bus.ecc};
    end 
    if (rdreq_vif.reset == 1'b1) begin
       for (int idx = 0; idx < NUM_MSH_ROWS; idx++) begin
 	 for (int jdx = 0; jdx < NUM_MSH_ROW_PORTS; jdx++) begin
-	    rdreq_vif.req_mst_cb.req_id[idx][jdx]  <= 0;
-            rdreq_vif.req_mst_cb.valid[idx][jdx]   <= 0;
-            rdreq_vif.req_mst_cb.seg_ptr[idx][jdx] <= 0;
-            rdreq_vif.req_mst_cb.sema[idx][jdx]    <= 0;
-            rdreq_vif.req_mst_cb.wd_sel[idx][jdx]  <= 0;
-            rdreq_vif.req_mst_cb.data[idx][jdx]    <= 0;
-	    wrreq_vif.req_mst_cb.req_id[idx][jdx]  <= 0;
-            wrreq_vif.req_mst_cb.valid[idx][jdx]   <= 0;
-            wrreq_vif.req_mst_cb.seg_ptr[idx][jdx] <= 0;
-            wrreq_vif.req_mst_cb.sema[idx][jdx]    <= 0;
-            wrreq_vif.req_mst_cb.wd_sel[idx][jdx]  <= 0;
-            wrreq_vif.req_mst_cb.data[idx][jdx]    <= 0;
+	    rdreq_vif.rreq_mst_cb.rd_req[idx][jdx]     <= 0;
+            wrreq_vif.wreq_mst_cb.wr_req[idx][jdx]     <= 0;
+	    wrdata_vif.data_mst_cb.req_data[idx][jdx]  <= 0;
 	 end 
       end
    end
@@ -153,35 +152,35 @@ function mby_mgp_req_seq_item mby_mgp_mem_crdt_io::sample_item();
 
    req  = mby_mgp_req_seq_item::type_id::create("req");
    req.req_type = req_type;
-   
+/*   
    //
    // Monitor the response interface and collect all the valid responses.
    //
    if (req_type == RDREQ) begin
-      phys.req_bus.valid    <= rdreq_vif.req_slv_cb.valid[port_idx][port_num];
-      phys.req_bus.seg_ptr  <= rdreq_vif.req_slv_cb.seg_ptr[port_idx][port_num];
-      phys.req_bus.sema     <= rdreq_vif.req_slv_cb.sema[port_idx][port_num];
-      phys.req_bus.word_sel <= rdreq_vif.req_slv_cb.wd_sel[port_idx][port_num];
+      phys.req_bus.valid    <= rdreq_vif.rreq_slv_cb.valid[port_idx][port_num];
+      phys.req_bus.seg_ptr  <= rdreq_vif.rreq_slv_cb.seg_ptr[port_idx][port_num];
+      phys.req_bus.sema     <= rdreq_vif.rreq_slv_cb.sema[port_idx][port_num];
+      phys.req_bus.word_sel <= rdreq_vif.rreq_slv_cb.wd_sel[port_idx][port_num];
    end
    else if (req_type == WRREQ) begin
-      phys.req_bus.valid    <= wrreq_vif.req_slv_cb.valid[port_idx][port_num];
-      phys.req_bus.seg_ptr  <= wrreq_vif.req_slv_cb.seg_ptr[port_idx][port_num];
-      phys.req_bus.sema     <= wrreq_vif.req_slv_cb.sema[port_idx][port_num];
-      phys.req_bus.word_sel <= wrreq_vif.req_slv_cb.wd_sel[port_idx][port_num];
-      phys.req_bus.data     <= wrreq_vif.req_slv_cb.data[port_idx][port_num];
+      phys.req_bus.valid    <= wrreq_vif.wreq_slv_cb.valid[port_idx][port_num];
+      phys.req_bus.seg_ptr  <= wrreq_vif.wreq_slv_cb.seg_ptr[port_idx][port_num];
+      phys.req_bus.sema     <= wrreq_vif.wreq_slv_cb.sema[port_idx][port_num];
+      phys.req_bus.word_sel <= wrreq_vif.wreq_slv_cb.wd_sel[port_idx][port_num];
+      phys.req_bus.data     <= wrreq_vif.wreq_slv_cb.data[port_idx][port_num];
    end
    else if (req_type == RDRSP) begin
-      phys.rsp_bus.valid    <= rsp_vif.rrsp_slv_cb.valid[port_idx][port_num];
-      phys.rsp_bus.dest_blk <= rsp_vif.rrsp_slv_cb.rrsp_dest_blk[port_idx][port_num];
-      phys.rsp_bus.req_id   <= rsp_vif.rrsp_slv_cb.req_id[port_idx][port_num];
-      phys.rsp_bus.data     <= rsp_vif.rrsp_slv_cb.data[port_idx][port_num];
+      phys.rsp_bus.valid    <= rsp_vif.rsp_slv_cb.valid[port_idx][port_num];
+      phys.rsp_bus.dest_blk <= rsp_vif.rsp_slv_cb.rrsp_dest_blk[port_idx][port_num];
+      phys.rsp_bus.req_id   <= rsp_vif.rsp_slv_cb.req_id[port_idx][port_num];
+      phys.rsp_bus.data     <= rsp_vif.rsp_slv_cb.data[port_idx][port_num];
    end
       
    req.unpack(phys);
 
    if (req.valid) begin
       return req;
-   end
+   end */
 endfunction : sample_item
 
 

@@ -26,8 +26,8 @@
 //-----------------------------------------------------------------------------
 // Class: mby_egr_env_base_seq
 //-----------------------------------------------------------------------------
-class mby_egr_env_base_seq extends mby_base_seq;
-
+//class mby_egr_env_base_seq extends mby_base_seq;
+class mby_egr_env_base_seq extends shdv_base_sequence;
   `uvm_object_utils(mby_egr_env_base_seq)
 //PJP  `uvm_declare_p_sequencer(slu_sequencer)
   mby_egr_env env;

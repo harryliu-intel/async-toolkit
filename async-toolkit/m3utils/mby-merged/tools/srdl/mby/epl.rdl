@@ -28,8 +28,13 @@
 // -- Description  : This is RDL for the MAC block.
 //------------------------------------------------------------------------------
 
+<%
+  if ($EPL) {
+  } else {
+    $EPL = 1;
+%>
 
-`include "lib_udp.rdl"
+`include "mby_lib_udp.rdl"
 `include "mby_epl_mailbox_csrs.rdl"
 `include "epl_mac.rdl"
 `include "gdr_rsfec_core.ppp.rdl"
@@ -53,3 +58,6 @@ addrmap epl {
   
 };
 
+<%
+  };
+%>

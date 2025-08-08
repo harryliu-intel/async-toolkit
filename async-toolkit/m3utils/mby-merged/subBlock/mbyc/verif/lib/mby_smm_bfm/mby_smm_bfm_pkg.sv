@@ -32,6 +32,14 @@
 //------------------------------------------------------------------------------
 `ifndef __MBY_SMM_BFM_PKG__
 `define __MBY_SMM_BFM_PKG__
+//------------------------------------------------------------------------------
+//
+// PACKAGE: mby_smm_bfm_pkg
+//
+// This is the Madison Bay SMM BFM package pre, it loads the basic requirements for
+// the SMM BFM components.
+//
+//------------------------------------------------------------------------------
 
 package mby_smm_bfm_pkg;
 
@@ -39,7 +47,6 @@ package mby_smm_bfm_pkg;
    import shdv_base_pkg::*;
    import mby_base_pkg::*;
    import shared_pkg::*;
-   //import mby_igr_pkg::*;
    import mby_msh_pkg::*;
    import mby_egr_pkg::*;
    import mby_smm_bfm_pkg_pre::*;
@@ -48,12 +55,12 @@ package mby_smm_bfm_pkg;
    `include "mby_smm_bfm_defines.svh"
    `include "mby_smm_bfm_types.svh"
    `include "mby_smm_bfm_cfg.svh"
-   `include "mby_smm_bfm_rdrsp_seq.svh"
+   `include "mby_smm_bfm_mrd_seq.svh"
    `include "mby_smm_bfm_mem_node.svh"
    `include "mby_smm_bfm_mwr_req.svh"
    `include "mby_smm_bfm_mrd_req.svh"
-   `include "mby_smm_bfm_row_wr_req_xaction.svh"
-   `include "mby_smm_bfm_row_rd_req_xaction.svh"
+   `include "mby_smm_bfm_mwr_req_xaction.svh"
+   `include "mby_smm_bfm_mrd_req_xaction.svh"
    `include "mby_smm_bfm.svh"
 
 endpackage : mby_smm_bfm_pkg

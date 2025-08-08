@@ -52,10 +52,10 @@ interface gpm_dut_if
     logic                hreset;
 
     // pod pointer ring interface
-    mby_pod_ptr_ring_t   pod_ring_left;
-    mby_pod_ptr_ring_t   pod_ring_right;
-    mby_pod_ptr_ring_t   pod_ring_left;
-    mby_pod_ptr_ring_t   pod_ring_right;
+    mby_pod_ptr_ring_t   i_pod_ring_left;
+    mby_pod_ptr_ring_t   i_pod_ring_right;
+    mby_pod_ptr_ring_t   o_pod_ring_left;
+    mby_pod_ptr_ring_t   o_pod_ring_right;
 
     // Signal from GPM to egress to stall egress from injecting a new dirty pod
     logic                pod_ring_stall_left;

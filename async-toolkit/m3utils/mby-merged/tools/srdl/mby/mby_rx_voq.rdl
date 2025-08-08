@@ -1,4 +1,10 @@
 
+<% if ($MBY_RX_VOQ) {
+   } else {
+   $MBY_RX_VOQ = 1;
+%>
+
+
 `include "mby_port_cfg.rdl"
 
 
@@ -144,3 +150,7 @@ addrmap mby_rx_voq_map {
   saf_egress_speed_r  SAF_EGRESS_SPEED[256];
   saf_tc_r            SAF_TC[16];
 };
+
+<%
+   }
+%>

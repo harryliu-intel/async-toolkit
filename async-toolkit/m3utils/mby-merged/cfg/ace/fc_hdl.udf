@@ -54,6 +54,7 @@ my @fc_verif_liblist = (
     "shdv_shared_lib",
     "ext_shared_lib",
     "svt_ahb_lib",
+    "gen_mby_wm_m3",
     "mby_wm_dpi_lib",
     "mby_common_lib",
     "fc_hdl_top_lib",
@@ -160,14 +161,20 @@ EOF
          # Define all the libraries which could be compiled
          libs => {
 
+                mby_jasper_lint => {
+                	-jg_lint_model  => "mby top mby_top",
+                	-tag            => "nonsynth",
+                },
+
+
+
              mby_parclk_rtl_lib => {
                     -vlog_files => [
-                        "src/rtl/clkstub/AW_sync.sv",
-                        "src/rtl/clkstub/AW_width_scale.sv",
+                        &ToolConfig::get_tool_path('ipconfig/axxia_aw')."/AW_sync.sv",
+                        &ToolConfig::get_tool_path('ipconfig/axxia_aw')."/AW_width_scale.sv",
                         "src/rtl/clkstub/parclk_gpreg_v2.sv",
                         "src/rtl/clkstub/mby_parclk.sv",
                         "src/rtl/clkstub/pll_stub.sv",
-                        "src/rtl/clkstub/refclk_rcvr.sv",
                         "src/rtl/clkstub/clk_mux_2to1_glitchfree.sv",
                     ],
              },
@@ -409,18 +416,11 @@ EOF
                     "$ENV{ACE_HOME}/lib/Verilog",
                 ],},
 
-#              fc_emul_top_lib => {
-#                  -hdl_spec => [
-#                      "emul/wrappers/fc_emul_top.hdl",
-#                  ],
-#              },
-
          },
 
          models => {
             fc => {
                top         => 'fc_hdl_top_lib.fc_hdl_top_cfg fc_hvl_top_lib.fc_hvl_top_cfg',
-#               jg_elab_top => 'mby_jasper_lib.mby_top',
 
                enable_congruency_elab  =>  $mby_enable_congruency_elab,
                enable_xprop_elab       =>  $mby_enable_xprop_elab,
@@ -445,7 +445,7 @@ EOF
                top_language => 'SystemVerilog',
 
                pli_libs => [
-                   "-hier_rtl_dumper",
+                    "-hier_rtl_dumper",
                ],
 
                libs => [
@@ -497,19 +497,19 @@ EOF
 
                power_intent => {
                   power_top => 'mby_tb/mby_top',
-                  upf_files => ['tools/upf/mby_upf.upf'],
+                  upf_files => ['target/mby/upf/gen/fc_par/soc.sim.upf'],
                },
             },
 
             fc_effm => {
-               top         => 'fc_top_lib.soc',
+               top         => 'fc_hdl_top_lib.fc_hdl_top_cfg',
                top_language => 'SystemVerilog',
                use => \@models_use,
                       
                effm_opts => [   
                     "-cfg ZSE -cfg-",
                     "-use_emubuild_tooldata",  # Remove this when we use HDK greater than 1.4.7
-                    "-top fc_top_lib.soc",
+                    "-top fc_hdl_top_lib.fc_hdl_top_cfg",
                     "-effm 2",
                     "-target $ENV{MODEL_ROOT}/target/".&ToolConfig::get_facet("dut")."/emu/",
                     "-yml $ENV{MODEL_ROOT}/tools/effm/cfg/buildProjectCfg.yml",
@@ -519,12 +519,14 @@ EOF
                pli_libs => [ "-hier_rtl_dumper", ],
 
                libs => [
-                  "mby_mgm_lib",
                   @fc_collage_build_liblist,
                   $fc_global_vars::COLLAGE_LIB,
-                  "fc_top_lib",
+                  @fc_rtl_liblist,
+                  @fc_verif_liblist,        # should not be needed, but to satisfy some dependencies in libs included elsewhere
+                  "generated_collateral_lib",
                   @all_sip_rtl_liblist,
-                  @all_hip_liblist,   
+                  @all_sip_verif_liblist,   # should not be needed, but to satisfy some dependencies in libs included elsewhere
+                  @all_hip_liblist,
                   'dump_filelist_lib',
                ],
  
@@ -532,7 +534,8 @@ EOF
 
             mby => {
                top         => 'mby_tb_lib.mby_tb',
-               jg_elab_top => 'mby_jasper_lib.mby_top',
+               jg_elab_top => 'mby_rtl_lib.mby_top',
+               jg_test_list => ["$ENV{MODEL_ROOT}/verif/mby/tests/lists/mby_jg.list"],
 
                enable_congruency_elab  =>  $mby_enable_congruency_elab,
                enable_xprop_elab       =>  $mby_enable_xprop_elab,
@@ -559,6 +562,7 @@ EOF
                   "mby_wm_dpi_lib",
                   "ext_shared_lib",
                   "mby_common_lib",
+                  'mby_jasper_lint',
                ],
 
                elab_opts => [
@@ -601,7 +605,7 @@ EOF
 
                power_intent => {
                   power_top => 'mby_tb/mby_top',
-                  upf_files => ['tools/upf/mby_upf.upf'],
+                  upf_files => ['target/mby/upf/gen/fc_par/soc.sim.upf'],
                },
             },
 
@@ -666,7 +670,7 @@ EOF
 
                power_intent => {
                   power_top => 'mby_tb/mby_top',
-                  upf_files => [ 'tools/upf/mby_upf.upf' ],
+                  upf_files => [ 'target/mby/upf/gen/fc_par/soc.sim.upf' ],
                },
             },
 
@@ -678,5 +682,7 @@ EOF
 $audf{HDLSpec}{mby}{models}{fc_no_phy} = $audf{HDLSpec}{mby}{models}{fc};
 $audf{HDLSpec}{mby}{models}{fc_8} = $audf{HDLSpec}{mby}{models}{fc};
 $audf{HDLSpec}{mby}{models}{fc_8_no_phy} = $audf{HDLSpec}{mby}{models}{fc};
+
+
 
 

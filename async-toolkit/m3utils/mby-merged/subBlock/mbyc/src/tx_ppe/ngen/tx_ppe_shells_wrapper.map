@@ -1,0 +1,106 @@
+foreach $i (0..3) {
+    >> MOD_MAP_$i$_CFG_reg_sel
+    >> MOD_MAP_$i$_STATUS_reg_sel
+    >> mod_map_$i$_adr
+    >> mod_map_$i$_mem_ls_enter
+    >> mod_map_$i$_rd_en
+    >> mod_map_$i$_wr_data
+    >> mod_map_$i$_wr_en
+    >> mod_map_$i$_ecc_uncor_err
+    >> mod_map_$i$_init_done
+    >> mod_map_$i$_rd_data
+    >> mod_map_$i$_rd_valid
+}
+
+foreach $i (0..15) {
+    >> MOD_PROFILE_COMMAND_$i$_CFG_reg_sel
+    >> MOD_PROFILE_COMMAND_$i$_STATUS_reg_sel
+    >> mod_profile_command_$i$_adr
+    >> mod_profile_command_$i$_mem_ls_enter
+    >> mod_profile_command_$i$_rd_en
+    >> mod_profile_command_$i$_wr_data
+    >> mod_profile_command_$i$_wr_en
+    >> mod_profile_command_$i$_ecc_uncor_err
+    >> mod_profile_command_$i$_init_done
+    >> mod_profile_command_$i$_rd_data
+    >> mod_profile_command_$i$_rd_valid
+}
+
+foreach $i (0..7) {
+    >> MOD_PROFILE_FIELD_$i$_CFG_reg_sel
+    >> MOD_PROFILE_FIELD_$i$_STATUS_reg_sel
+    >> mod_profile_field_$i$_adr
+    >> mod_profile_field_$i$_mem_ls_enter
+    >> mod_profile_field_$i$_rd_en
+    >> mod_profile_field_$i$_wr_data
+    >> mod_profile_field_$i$_wr_en
+    >> mod_profile_field_$i$_ecc_uncor_err
+    >> mod_profile_field_$i$_init_done
+    >> mod_profile_field_$i$_rd_data
+    >> mod_profile_field_$i$_rd_valid
+
+    >> MOD_INPUT_FIFO_$i$_CFG_reg_sel
+    >> MOD_INPUT_FIFO_$i$_STATUS_reg_sel
+    >> mod_input_fifo_$i$_mem_ls_enter
+    >> mod_input_fifo_$i$_rd_adr
+    >> mod_input_fifo_$i$_rd_en
+    >> mod_input_fifo_$i$_wr_adr
+    >> mod_input_fifo_$i$_wr_data
+    >> mod_input_fifo_$i$_wr_en
+    >> mod_input_fifo_$i$_ecc_uncor_err
+    >> mod_input_fifo_$i$_init_done
+    >> mod_input_fifo_$i$_rd_data
+    >> mod_input_fifo_$i$_rd_valid
+}
+
+    >> MOD_MAP_DUAL_CFG_reg_sel
+    >> MOD_MAP_DUAL_STATUS_reg_sel
+    >> mod_map_dual_adr
+    >> mod_map_dual_mem_ls_enter
+    >> mod_map_dual_rd_en
+    >> mod_map_dual_wr_data
+    >> mod_map_dual_wr_en
+    >> mod_map_dual_ecc_uncor_err
+    >> mod_map_dual_init_done
+    >> mod_map_dual_rd_data
+    >> mod_map_dual_rd_valid
+
+    >> MOD_PROFILE_GROUP_CFG_reg_sel
+    >> MOD_PROFILE_GROUP_STATUS_reg_sel
+    >> mod_profile_group_adr
+    >> mod_profile_group_mem_ls_enter
+    >> mod_profile_group_rd_en
+    >> mod_profile_group_wr_data
+    >> mod_profile_group_wr_en
+    >> mod_profile_group_ecc_uncor_err
+    >> mod_profile_group_init_done
+    >> mod_profile_group_rd_data
+    >> mod_profile_group_rd_valid
+
+    >> MOD_MIRROR_PROFILES_CFG_reg_sel
+    >> MOD_MIRROR_PROFILES_STATUS_reg_sel
+    >> mod_mirror_profiles_mem_ls_enter
+    >> mod_mirror_profiles_rd_adr
+    >> mod_mirror_profiles_rd_en
+    >> mod_mirror_profiles_wr_adr
+    >> mod_mirror_profiles_wr_data
+    >> mod_mirror_profiles_wr_en
+    >> mod_mirror_profiles_ecc_uncor_err
+    >> mod_mirror_profiles_init_done
+    >> mod_mirror_profiles_rd_data
+    >> mod_mirror_profiles_rd_valid
+
+    >> TX_PPE_ECC_COR_ERR_reg_sel
+    >> TX_PPE_ECC_UNCOR_ERR_reg_sel
+    >> unified_regs_rd
+    >> unified_regs_wr_data
+    >> tx_ppe_ecc_int
+    >> tx_ppe_init_done
+    >> unified_regs_ack
+    >> unified_regs_rd_data
+    >> TX_PPE_ECC_COR_ERR_reg_sel
+    >> TX_PPE_ECC_COR_ERR_reg_sel
+    >> TX_PPE_ECC_COR_ERR_reg_sel
+
+cclk    >> clk
+reset_n >> reset_n
