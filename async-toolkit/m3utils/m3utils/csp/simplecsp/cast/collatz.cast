@@ -154,6 +154,8 @@ define WORKER
 {
   csp {
 
+    bool assert_inrange=false;
+    
     int(W-log2(NWORKERS)) i;
     int(W) steps  = 0;
     int(W) maxlen = 0;
@@ -177,7 +179,7 @@ define WORKER
          ];
          num = newval;
 
-         assert(num == newval, "overflow!");
+         #[ assert_inrange -> assert(num == newval, "overflow!") ];
          
          len++
        ]

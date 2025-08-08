@@ -125,6 +125,9 @@ TYPE
     (* locking *)
     lockwr, lockrd : CARDINAL;
     locker         : Process.Closure; (* only used during debug *)
+
+    dirty          : BOOLEAN;  (* have pending surrogate updates *)
+    
   METHODS
     isNilClosure(cl : Process.Closure) : BOOLEAN;
     (* check whether a given closure is Nil per the particular channel type.

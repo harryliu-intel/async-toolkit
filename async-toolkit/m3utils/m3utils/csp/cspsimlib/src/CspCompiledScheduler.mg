@@ -594,7 +594,7 @@ PROCEDURE AwaitIdle(READONLY subset     : Set) =
         END;
 
         IF doDebug THEN
-          Debug.Out("idle set = " & FmtSet(idleSet))
+          Debug.Out("AwaitIdle : idle set = " & FmtSet(idleSet))
         END;
         
         IF idleSet = subset THEN
@@ -633,7 +633,9 @@ PROCEDURE RunMulti(READONLY schedulers : ARRAY OF T; greedy : BOOLEAN) =
           IF s.np # 0 THEN RETURN FALSE END;
           FOR j := FIRST(schedulers) TO LAST(schedulers) DO
             IF s.commOutbox[j].size() # 0 THEN RETURN FALSE END;
-            IF s.waitOutbox[j].size() # 0 THEN RETURN FALSE END
+            IF s.waitOutbox[j].size() # 0 THEN RETURN FALSE END;
+            IF s.nrp[j] # 0 THEN RETURN FALSE END;
+            IF s.nwp[j] # 0 THEN RETURN FALSE END
           END
         END
       END;
@@ -1044,6 +1046,12 @@ PROCEDURE CreateMulti(VAR sarr : ARRAY OF T) =
   
 PROCEDURE RunNondet(READONLY schedulers : ARRAY OF T; greedy : BOOLEAN) =
 
+  PROCEDURE Pend(what : TEXT; i, j : [ -1..LAST(CARDINAL) ] ) =
+    BEGIN
+      Debug.Out(F("Pending : scheduler[%s] : %s[%s]",
+                  Int(i), what, Int(j)))
+    END Pend;
+    
   PROCEDURE NothingPending() : BOOLEAN =
     BEGIN
       (* 
@@ -1053,16 +1061,18 @@ PROCEDURE RunNondet(READONLY schedulers : ARRAY OF T; greedy : BOOLEAN) =
          or if a process is running
       *)
 
-      IF idle # AllSchedulers THEN RETURN FALSE END;
+      IF idle # AllSchedulers THEN Pend("idle # AllSchedulers", -1, -1); RETURN FALSE END;
 
       FOR i := FIRST(schedulers) TO LAST(schedulers) DO
         <*ASSERT i IN idle*>
         WITH s = schedulers[i] DO
-          IF s.np # 0 THEN RETURN FALSE END;
+          IF s.np # 0 THEN Pend("np",i,-1); RETURN FALSE END;
 
           FOR j := FIRST(schedulers) TO LAST(schedulers) DO
-            IF s.commOutbox[j].size() # 0 THEN RETURN FALSE END;
-            IF s.waitOutbox[j].size() # 0 THEN RETURN FALSE END
+            IF s.commOutbox[j].size() # 0 THEN Pend("commOutbox",i,j); RETURN FALSE END;
+            IF s.waitOutbox[j].size() # 0 THEN Pend("waitOutbox",i,j); RETURN FALSE END;
+            IF s.nrp[j] # 0 THEN Pend("nrp",i,j); RETURN FALSE END;
+            IF s.nwp[j] # 0 THEN Pend("nwp",i,j); RETURN FALSE END
           END
         END
       END;

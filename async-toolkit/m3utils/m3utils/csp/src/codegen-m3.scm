@@ -14,6 +14,7 @@
 
 (define *default-slack* 1)
 ;;(define *default-slack* (* 100 1000))
+;;(define *default-slack* 10)
 ;;(define *default-slack* 1000)
 ;; we should get slack from the CSP source code, but for now we don't,
 ;; so we do it this way

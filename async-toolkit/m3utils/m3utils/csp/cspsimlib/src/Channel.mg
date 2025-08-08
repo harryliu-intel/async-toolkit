@@ -29,7 +29,6 @@ REVEAL
   T = CspChannel.T BRANDED Brand OBJECT
     data           : REF Buff;       (* size slack + 1 *)
     surrog         : Surrogate := NIL;
-    dirty          : BOOLEAN;
     waiter         : Process.Closure;
   OVERRIDES
     makeSurrogate    := GenericMakeSurrogate;
@@ -124,6 +123,30 @@ PROCEDURE GenericUnmakeSurrogate(s : Surrogate) : CspChannel.T =
      The fact that each channel type has a different set of Nils is not
      used for any real purpose except debugging.  Certainly if they get
      mixed up, something is very wrong somewhere.
+
+     But maybe this approach is actually wrong.  In a multi-threaded
+     environment, whether in a single address space or in multiple 
+     address spaces, communication is performed as follows.
+
+     The normal channel object is used on the receive end of the channel.
+     On the sending end of a channel, a surrogate object is used instead.
+
+     At the end of a timestep, if a channel end is manipulated, the
+     information about that manipulation is packaged up and sent to the
+     remote end's scheduler.
+
+     The tricky part.  How to deal with the race condition as follows.
+     A channel's reader and writer get to the communication on the
+     same timestep.  The reader goes to sleep, waiting for the writer.
+     But the writer goes to sleep, waiting for the reader.  Hmm.  The same
+     thing holds true for a selection.
+
+     For a read/write blockage, we could simply re-try the reader/writer
+     if they waiting, on an update to the wait channel.
+
+     For a selection, the channel manipulator *should* block.  Only the
+     selection should be woken up.  It is OK to wake selections at any
+     time, so this we can wake locally.
   *)
   
 VAR
@@ -206,6 +229,30 @@ PROCEDURE WriteSurrogate(s : Surrogate) =
                   ChanDebug(t),
                   ChanDebug(s)))
     END;
+
+    (* at this point we need to check if we've released a thread
+       and if so to schedule it, right? *)
+    IF t.wr # s.wr THEN
+      IF t.waiter.fr = t.reader THEN
+        IF surrDebug THEN
+          Debug.Out(F("WriteSurrogate scheduling reader : target=%s <- surrogate=%s",
+                      ChanDebug(t),
+                      ChanDebug(s)))
+        END;
+          
+        Scheduler.ScheduleComm(t.waiter, t.waiter) ;
+        t.waiter := ReaderNil
+      END;
+      IF NOT IsNilClosure(t.selecter) THEN
+        IF surrDebug THEN
+          Debug.Out(F("%s : %s WriteSurrogate unlock select : %s",
+                      DebugClosure(t.selecter),
+                      t.nm,
+                      DebugClosure(t.selecter)))
+        END;
+        Scheduler.ScheduleWait(t.selecter, t.selecter)
+      END
+    END;
     
     t.wr     := s.wr;
     t.writes := s.writes;
@@ -219,8 +266,7 @@ PROCEDURE WriteSurrogate(s : Surrogate) =
       t.selecter := s.selecter
     END;
 
-    (* at this point we need to check if we've released a thread
-       and if so to schedule it, right? *)
+    s.dirty := FALSE (* this is suspicious -- updating wrong end *)
   END WriteSurrogate;
 
 PROCEDURE GetWriteUpdate(s : Surrogate) : WriteUpdate =
@@ -307,6 +353,21 @@ PROCEDURE ReadSurrogate(t : T) =
     END;
     
 
+    IF t.rd # s.rd THEN
+      IF s.waiter.fr = s.writer THEN
+        Scheduler.ScheduleComm(s.waiter, s.waiter);
+        s.waiter := WriterNil
+      END;
+      IF NOT IsNilClosure(s.selecter) THEN
+        IF surrDebug THEN
+          Debug.Out(F("%s : %s ReadSurrogate unlock select : %s",
+                      DebugClosure(s.selecter),
+                      s.nm,
+                      DebugClosure(s.selecter)))
+        END;
+        Scheduler.ScheduleWait(s.selecter, s.selecter)
+      END
+    END;
     s.rd := t.rd;
     IF t.waiter = ReaderNil OR t.waiter.fr = t.reader THEN
       <*ASSERT s.waiter.fr = t.reader OR IsNilClosure(s.waiter)*>
@@ -317,9 +378,7 @@ PROCEDURE ReadSurrogate(t : T) =
       s.selecter := t.selecter
     END;
 
-    (* at this point we need to check if we've released a thread
-       and if so to schedule it, right? *)
-    
+    t.dirty := FALSE (* this is suspicious -- updating wrong end *)
   END ReadSurrogate;
 
 PROCEDURE GetReadUpdate(t : T) : ReadUpdate =
@@ -391,7 +450,7 @@ PROCEDURE Full(c : T) : BOOLEAN =
   BEGIN
     RETURN c.wr = c.rd
   END Full;
-  
+
 PROCEDURE Send(         c : T;
                READONLY x : Item;
                cl         : Process.Closure) : BOOLEAN =
@@ -420,7 +479,7 @@ PROCEDURE Send(         c : T;
       END;
       Scheduler.ScheduleWait(cl, c.selecter)
     END;
-    
+
     IF c.wr = c.rd THEN
       (* channel is full, we check if the other end has caught up.
 
@@ -451,27 +510,11 @@ PROCEDURE Send(         c : T;
         END;
         Scheduler.ScheduleComm(cl, c.waiter);
 
-        (* at this point, we have stuffed the data and woken up the reader,
-           which was waiting for us.
-
-           We now wait for the rendez-vous.
-
-           We set ourselves waiting and return FALSE.
-
-           What if we (1) set waiter to Nil and returned TRUE here instead?
-           If we did that, we wouldn't implement slack zero correctly.
-           Consider:
-
-           *[ X ; Y ] || *[ X ] || *[ Y ]
-
-           If we did (1), we would start executing Y before X was complete.
-           That breaks something, but what?  I know something broke in a 
-           simulation from it but I can't (re)construct the exact case.
-         *)
+        (* 
+           at this point, we have stuffed the data and woken up the reader,
+           which was waiting for us
+        *)
         
-        c.waiter := cl;
-        RETURN FALSE 
-      ELSE
         (* c.waiter.frame = cl *)
         INC(c.wr);
         INC(c.writes);
@@ -490,6 +533,8 @@ PROCEDURE Send(         c : T;
         c.waiter := WriterNil; (* end of handshake *)
         
         RETURN TRUE
+      ELSE
+        <*ASSERT FALSE*>
       END
     ELSE
       (* write to non-full : update write pointer *)
@@ -498,6 +543,12 @@ PROCEDURE Send(         c : T;
       IF c.wr = c.slack + 1 THEN c.wr := 0 END;
 
       IF c.surrogate AND NOT c.dirty THEN
+        IF surrDebug THEN
+          Debug.Out(F("%s : %s Send WriteDirty : %s",
+                      DebugClosure(cl), UnNil(c.nm), 
+                      ChanDebug(c)))
+        END;
+
         Scheduler.WriteDirty(c, cl);
         c.dirty := TRUE
       END;
@@ -523,6 +574,7 @@ PROCEDURE Send(         c : T;
       
       RETURN TRUE
     END
+
   END Send;
 
   (* 
@@ -572,6 +624,19 @@ PROCEDURE RecvProbe(c : T; cl : Process.Closure) : BOOLEAN =
       RETURN res
     END
   END RecvProbe;
+
+PROCEDURE IsEmpty(c : T) : BOOLEAN =
+  
+  VAR
+    nxtRd : CARDINAL;
+  BEGIN
+    IF c.rd = c.slack THEN
+      nxtRd := 0
+    ELSE
+      nxtRd := c.rd + 1
+    END;
+    RETURN c.wr = nxtRd 
+  END IsEmpty;
   
 PROCEDURE Recv(         c : T;
                VAR      x : Item;
@@ -608,7 +673,7 @@ PROCEDURE Recv(         c : T;
                       ChanDebug(c)))
         END;
 
-        c.waiter := cl;
+        c.waiter := cl; (* this doesn't really dirty the channel...*)
         RETURN FALSE
       ELSE
         (* there is something in the channel, copy it in *)
@@ -632,12 +697,13 @@ PROCEDURE Recv(         c : T;
 
              Wake him up.
           *)
-          <*ASSERT c.waiter.frameId = c.writer.id *>
           IF recvDebug THEN
             Debug.Out(F("%s : %s Recv : schedule %s",
                         DebugClosure(cl), c.nm, 
                         DebugClosure(c.waiter)))
           END;
+          <*ASSERT c.waiter.frameId = c.writer.id *>
+
           Scheduler.ScheduleComm(cl, c.waiter);
           c.waiter := ReaderNil 
         END;
@@ -668,12 +734,13 @@ PROCEDURE ChanDebug(chan : T) : TEXT =
       Debug.Error("Interloper waiting on channel : " & chan.waiter.fr.name)
     END;
     
-    RETURN FN("chan \"%s\" surrogate=%s wr=%s rd=%s waiter=%s full=%s",
+    RETURN FN("chan \"%s\" surrogate=%s wr=%s rd=%s waiter=%s empty=%s full=%s",
               TA {UnNil(chan.nm),
                   Bool(chan.surrogate),
                   Int(chan.wr),
                   Int(chan.rd),
                   waiterStr,
+                  Bool(IsEmpty(chan)),
                   Bool(Full(chan))
     }
     )
