@@ -70,7 +70,7 @@ IMPORT LineProblemSeq;
 IMPORT LineProblemArraySort;
 IMPORT LRScalarFieldPll;
 IMPORT LongRealSeq AS LRSeq;
-FROM GenOpt IMPORT rho, iter;
+FROM GenOpt IMPORT  GetRho, SetRho, GetIter, SetIter;
 IMPORT LineMinimizer;
 
 CONST LR = LongReal;
@@ -123,8 +123,8 @@ PROCEDURE Minimize(p              : LRVector.T;
     message : TEXT;
     
   BEGIN
-    rho   := rhobeg;
-    iter  := 0;
+    SetRho(rhobeg);
+    SetIter(0);
     
     FOR i := 0 TO 2 * n - 1 DO
       cl[i] := NEW(LineMinimizer.T).init()
@@ -156,7 +156,7 @@ PROCEDURE Minimize(p              : LRVector.T;
           cl[i].start(pp[i],
                       LRVector.Copy(da[i]),
                       func,
-                      rho)
+                      GetRho())
         END;
 
         IF FALSE THEN
@@ -196,10 +196,10 @@ PROCEDURE Minimize(p              : LRVector.T;
         WITH dp = LRVector.Copy(p) DO
           LRMatrix2.SubV(newp, p^, dp^);
           WITH norm = LRMatrix2.Norm(dp^) DO
-            rho := 0.25d0 * rho + 0.75d0 * norm
+            SetRho(0.25d0 * GetRho() + 0.75d0 * norm)
           END;
-          Debug.Out(F("Robust.m3 : new rho = %s", LR(rho)));
-          IF rho < rhoend THEN
+          Debug.Out(F("Robust.m3 : new rho = %s", LR(GetRho())));
+          IF GetRho() < rhoend THEN
             message := "stopping because rho < rhoend";
             EXIT
           END
@@ -271,7 +271,7 @@ PROCEDURE Minimize(p              : LRVector.T;
         (* we don't know how it works so we don't know how to clear it *)
       END;
 
-      INC(iter);
+      SetIter(GetIter() + 1);
 
       message := "stopping because of out of iterations"
       (* if we fall through, that's the last message we set! *)
@@ -295,13 +295,13 @@ PROCEDURE Minimize(p              : LRVector.T;
 
       Debug.Out("Robust.m3 : " & message);
       
-      RETURN Output { iterations := iter,
+      RETURN Output { iterations := GetIter(),
                       funcCount  := 0,
                       fhist      := GetFHist(allMins),
                       message    := message,
                       f          := bestval,
                       x          := bestv,
-                      stoprho    := rho }
+                      stoprho    := GetRho() }
     END
   END Minimize;
 

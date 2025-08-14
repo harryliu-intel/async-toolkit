@@ -49,7 +49,7 @@ IMPORT MultiEvalLR AS MultiEval;
 IMPORT Word;
 IMPORT IP, NetObj, ReadLineError; (* for exceptions *)
 FROM GenOptUtils IMPORT FmtP;
-FROM GenOpt IMPORT Method, ResultWriter, rho, scmCb, doNetbatch,
+FROM GenOpt IMPORT Method, ResultWriter, GetRho, scmCb, doNetbatch,
                    schemaDataFn, schemaPath, schemaEval, outOfDomainResult;
 FROM GenOpt IMPORT method, rhoEnd, rhoBeg, vseq, paramBindings;
 IMPORT GenOpt;
@@ -693,7 +693,7 @@ PROCEDURE SchemaReadResult(schemaPath ,
           END
         END;
         
-        schemaScm.bind(T2S("*opt-rho*"), L2S(rho))
+        schemaScm.bind(T2S("*opt-rho*"), L2S(GetRho()))
       END;
       
       schemaScm.setInGlobalEnv(optVarsNm, optVars);

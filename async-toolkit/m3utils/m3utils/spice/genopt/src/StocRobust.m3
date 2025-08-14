@@ -25,7 +25,8 @@ IMPORT LineProblem;
 IMPORT LineProblemArraySort;
 IMPORT LRScalarFieldPll;
 IMPORT LongRealSeq AS LRSeq;
-FROM GenOpt IMPORT rho, iter, ResultWriter;
+FROM GenOpt IMPORT ResultWriter;
+FROM GenOpt IMPORT  GetRho, SetRho, GetIter, SetIter;
 FROM GenOptUtils IMPORT FmtP;
 IMPORT LineMinimizer;
 IMPORT MultiEvalLR AS MultiEval;
@@ -306,7 +307,7 @@ PROCEDURE DoLeaderBoard(READONLY pr   : PointResult.T; (* current [old] point *)
     
     WITH wx = Wx.New() DO
       Wx.PutText(wx, "==== StocRobust leaderboard ====\n");
-      Wx.PutText(wx, F("rho = %s ; p = %s\n", LR(rho), FmtP(pr.p)));
+      Wx.PutText(wx, F("rho = %s ; p = %s\n", LR(GetRho()), FmtP(pr.p)));
       FOR i := FIRST(parr^) TO LAST(parr^) DO
         WITH rec  = parr[i],
              dist = Vdist(rec.p, pr.p) DO
@@ -352,7 +353,7 @@ PROCEDURE AttemptSurfaceFit(pr            : PointResult.T;
   PROCEDURE PickClosestPoints() : PointMetricSeq.T =
     VAR
       success := FALSE;
-      tryrho  := rho;
+      tryrho  := GetRho();
       seq   : PointMetricSeq.T;
     BEGIN
       LOOP
@@ -376,7 +377,7 @@ PROCEDURE AttemptSurfaceFit(pr            : PointResult.T;
         END
       END;
       Debug.Out(F("AttemptSurfaceFit: seq.size()=%s rho=%s tryrho=%s success=%s p=%s",
-                Int(seq.size()), LR(rho), LR(tryrho), Bool(success),
+                Int(seq.size()), LR(GetRho()), LR(tryrho), Bool(success),
                 PointResult.Format(pr)));
       RETURN seq
     END PickClosestPoints;
@@ -607,14 +608,14 @@ PROCEDURE AttemptSurfaceFit(pr            : PointResult.T;
             IF ppmet < ppmin OR ppmet > ppmax THEN
               Debug.Out("pparr[0] untrustworthy");
               bestQ :=
-                  PointResult.T { LRVector.Copy(parr[0].p), pmet, FALSE, rho }
+                  PointResult.T { LRVector.Copy(parr[0].p), pmet, FALSE, GetRho() }
             ELSIF ppmet > pmax THEN
               Debug.Out("pparr[0] bad");
               bestQ :=
-                  PointResult.T { LRVector.Copy(parr[0].p), pmet, FALSE, rho }
+                  PointResult.T { LRVector.Copy(parr[0].p), pmet, FALSE, GetRho() }
             ELSE
               bestQ :=
-                  PointResult.T { LRVector.Copy(pparr[0].p), ppmet, TRUE, rho }
+                  PointResult.T { LRVector.Copy(pparr[0].p), ppmet, TRUE, GetRho() }
             END
           END
         END
@@ -881,8 +882,8 @@ PROCEDURE Minimize(pa             : LRVector.T;
     pr       := PointResult.T { pa, LAST(LONGREAL), FALSE, LAST(LONGREAL) };
     
   BEGIN
-    rho   := rhobeg;
-    iter  := 0;
+    SetRho(rhobeg);
+    SetIter(0);
     
     FOR i := 0 TO 2 * n - 1 DO
       cl[i] := NEW(LineMinimizer.T).init()
@@ -950,7 +951,7 @@ PROCEDURE Minimize(pa             : LRVector.T;
       
       Debug.Out(F("StocRobust.Minimize : pass %s; database has %s points",
                   Int(pass), Int(values.size())));
-      Debug.Out(F("StocRobust.Minimize : rho=%s [rhoend=%s]", LR(rho), LR(rhoend)));
+      Debug.Out(F("StocRobust.Minimize : rho=%s [rhoend=%s]", LR(GetRho()), LR(rhoend)));
 
       <*ASSERT LineMinimizer.Running() = 0*>
         
@@ -962,7 +963,7 @@ PROCEDURE Minimize(pa             : LRVector.T;
                     
                     MultiEvaluate(func, samples, sigmaK, values, thisCyc),
                     
-                    rho)
+                    GetRho())
       END;
       
       IF FALSE THEN
@@ -996,7 +997,7 @@ PROCEDURE Minimize(pa             : LRVector.T;
       *)
 
       VAR
-        newp := PointResult.T { lps[0].minp, lps[0].minval, FALSE, rho };
+        newp := PointResult.T { lps[0].minp, lps[0].minval, FALSE, GetRho() };
         (* tentatively set to best line-search point *)
         
         opt0 := Predict(pr.p, SUBARRAY(pp^, 0, n));
@@ -1019,16 +1020,16 @@ PROCEDURE Minimize(pa             : LRVector.T;
 
         IF newp.p^ = pr.p^ THEN
           (* if we're not going anywhere, just tighten up a little bit *)
-          rho := 0.9d0 * rho
+          SetRho(0.9d0 * GetRho())
         ELSE
           WITH dp = LRVector.Copy(pr.p) DO
             M.SubV(newp.p^, pr.p^, dp^);
             (* we blend in new rho estimator *)
             
-            rho := 0.50d0 * rho + 0.50d0 * M.Norm(dp^);
+            SetRho(0.50d0 * GetRho() + 0.50d0 * M.Norm(dp^));
             
-            Debug.Out(F("Robust.m3 : new rho = %s", LR(rho)));
-            IF rho < rhoend THEN
+            Debug.Out(F("Robust.m3 : new rho = %s", LR(GetRho())));
+            IF GetRho() < rhoend THEN
               message := "stopping because rho < rhoend";
               EXIT
             END
@@ -1054,13 +1055,13 @@ PROCEDURE Minimize(pa             : LRVector.T;
         allMins.addhi(newp);
 
         IF progressWriter # NIL THEN
-          WITH output = Output { iterations := iter,
+          WITH output = Output { iterations := GetIter(),
                                  funcCount  := 0,
                                  fhist      := GetFHist(allMins),
                                  message    := message,
                                  f          := pr.metric,
                                  x          := LRVector.Copy(pr.p),
-                                 stoprho    := rho } DO
+                                 stoprho    := GetRho() } DO
             progressWriter.write(output)
           END
         END;
@@ -1113,7 +1114,7 @@ PROCEDURE Minimize(pa             : LRVector.T;
         (* we don't know how it works so we don't know how to clear it *)
       END;
 
-      INC(iter);
+      SetIter(GetIter() + 1);
 
       message := "stopping because of out of iterations"
       (* if we fall through, that's the last message we set! *)
@@ -1145,13 +1146,13 @@ PROCEDURE Minimize(pa             : LRVector.T;
       
       Debug.Out("Robust.m3 : " & message);
       
-      RETURN Output { iterations := iter,
+      RETURN Output { iterations := GetIter(),
                       funcCount  := 0,
                       fhist      := GetFHist(allMins),
                       message    := message,
                       f          := bestval,
                       x          := bestv,
-                      stoprho    := rho }
+                      stoprho    := GetRho() }
     END
   END Minimize;
 
