@@ -1,6 +1,0 @@
-import ("cit_util")
-import ("libm3")
-
-implementation ("Main")
-
-program ("cotest")
