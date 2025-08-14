@@ -10,6 +10,10 @@ REVEAL
     force := ForceSmallPromise;
   END;
 
+VAR BigInt_Zero := BigInt.New(0);
+VAR BigInt_One  := BigInt.New(1);
+VAR BigInt_Two  := BigInt.New(2);
+
 PROCEDURE Small(z : INTEGER) : T =
   BEGIN RETURN NEW(SmallPromise, v := z) END Small;
 
@@ -43,8 +47,8 @@ PROCEDURE Big(z : BigInt.T; width : CARDINAL) : Concrete =
     <* ASSERT BigInt.Sign(z) # -1 *> (* for now -- not sure what neg. would do *)
     
     FOR i := 0 TO width - 1 DO
-      res.bits[i] := BigInt.ToInteger(BigInt.Mod(z, BigInt.Two));
-      z           := BigInt.Div(z, BigInt.Two)
+      res.bits[i] := BigInt.ToInteger(BigInt.Mod(z, BigInt_Two));
+      z           := BigInt.Div(z, BigInt_Two)
     END;
     RETURN res
   END Big;
@@ -62,14 +66,14 @@ PROCEDURE ToBigInt(t : T) : BigInt.T =
     |
       Concrete(c) =>
       VAR
-        res := BigInt.Zero;
+        res := BigInt_Zero;
       BEGIN
         FOR i := NUMBER(c.bits^) - 1 TO 0 BY -1 DO
           CASE c.bits[i] OF
-            0 => res := BigInt.Mul(res, BigInt.Two)
+            0 => res := BigInt.Mul(res, BigInt_Two)
           |
-            1 => res := BigInt.Add(BigInt.Mul(res, BigInt.Two),
-                                   BigInt.One)
+            1 => res := BigInt.Add(BigInt.Mul(res, BigInt_Two),
+                                   BigInt_One)
           END
         END;
         RETURN res

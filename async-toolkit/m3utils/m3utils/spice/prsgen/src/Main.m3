@@ -48,6 +48,10 @@ TYPE
 
   Array  = OBJECT lo, hi : CARDINAL END;
 
+VAR BigInt_Zero := BigInt.New(0);
+VAR BigInt_One  := BigInt.New(1);
+VAR BigInt_Two  := BigInt.New(2);
+
 PROCEDURE Tok(l : TextList.T; n : CARDINAL) : TEXT RAISES { Syntax } =
   BEGIN
     IF n >= TextList.Length(l) THEN
@@ -336,10 +340,10 @@ PROCEDURE ParseVals(token : TEXT) : ValSeq RAISES { Syntax } =
       END;
       (* past any base spec with base set, all digits in soFar *)
       VAR
-        bigNum  := BigInt.Zero;
+        bigNum  := BigInt_Zero;
         bigBase := BigInt.New(base);
         bits    := NEW(Value).init();
-        bigTwo  := BigInt.New(2);
+        bigTwo  := BigInt_Two;
         bigRem  : BigInt.T;
       BEGIN
         FOR i := 0 TO soFar.size()-1 DO
@@ -349,11 +353,11 @@ PROCEDURE ParseVals(token : TEXT) : ValSeq RAISES { Syntax } =
 
         (* number is in bigNum *)
 
-        WHILE NOT BigInt.Equal(bigNum, BigInt.Zero) DO
+        WHILE NOT BigInt.Equal(bigNum, BigInt_Zero) DO
           BigInt.Divide(bigNum, bigTwo, bigNum, bigRem);
-          IF    BigInt.Equal(bigRem,BigInt.Zero) THEN
+          IF    BigInt.Equal(bigRem,BigInt_Zero) THEN
             bits.addhi(0)
-          ELSIF BigInt.Equal(bigRem,BigInt.One) THEN
+          ELSIF BigInt.Equal(bigRem,BigInt_One) THEN
             bits.addhi(1)
           ELSE
             <*ASSERT FALSE*>
