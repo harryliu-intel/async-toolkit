@@ -6,7 +6,8 @@
 /* $Id: generics.tmpl,v 1.15 2011/04/02 17:51:35 mika Exp $ */
 
 
-_M3TMPLHACK = TOP & "/m3tmplhack/" & BUILD_DIR & "/m3tmplhack"
+%_M3TMPLHACK = TOP & "/m3tmplhack/" & BUILD_DIR & "/m3tmplhack"
+_M3TMPLHACK = "m3tmplhack" % moved to CM3 official version
 
 readonly proc Build_generic_module(nam, gen, args1, args2) is
         build_generic_intf(nam, gen, args1, VISIBLE)

@@ -24,7 +24,7 @@ directories at the top level in order for packages using cit_util to work:
 - hack
 - m3overrides
 - m3subdir.mk
-- m3tmplhack
+- m3tmplhack % moved to CM3
 
 ##################################
 # Deprecated 20050126 by jd
