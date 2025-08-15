@@ -118,7 +118,7 @@ regressfix: fix regress
 withlinks: std .bindir browserexps binlinks
 all: withlinks commons subs
 
-clean: cleanm3 cleansubs cleanships cleancommons cleanbuilddirs cleanthis
+clean: cleanm3 cleansubs cleanships cleancommons cleanbuilddirs cleanthis cleandone
 fastprep: .top .m3deps
 fast: fastprep .todo .fastmake
 faster: fastprep .lesstodo .fastmake
@@ -153,6 +153,9 @@ faster: fastprep .lesstodo .fastmake
 	(cd makehack; $(M3BUILDPROGRAM))
 	cat .todo .m3deps | makehack/`cat .bindir`/makehack > .fast
 	sh .fast
+
+cleandone:
+	rm -f *.done
 
 cleanthis:
 	rm -f .bindir
