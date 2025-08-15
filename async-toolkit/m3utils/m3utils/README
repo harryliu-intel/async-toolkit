@@ -18,7 +18,7 @@ directories at the top level in order for packages using cit_util to work:
 
 - Makefile  
 - Make.defs
-- cit_common
+- cit_common % moved to CM3
 - cit_util
 - dirsexist.sh
 - hack
