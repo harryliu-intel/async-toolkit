@@ -3,7 +3,7 @@
 import ("netobj")
 import("cit_common")
 import("set")
-import("rdwrreset")
+import("rdwr")
 
 if defined("CM3_VERSION")
 	import ("libbuf")

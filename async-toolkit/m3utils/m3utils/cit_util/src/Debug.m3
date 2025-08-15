@@ -39,7 +39,7 @@ IMPORT Process;
 IMPORT ThreadF;
 IMPORT Pathname;
 IMPORT LockedTextBooleanTbl;
-IMPORT RdWrReset;
+IMPORT RdWrPipe;
 IMPORT TZ, XTime AS Time;
 IMPORT DebugStream, DebugStreamList;
 IMPORT RTParams, TextReader, FileWr, AL;
@@ -339,7 +339,7 @@ PROCEDURE DefaultOut(t: TEXT) =
         p := streams;
       BEGIN
         WHILE p # NIL DO
-          IF reset = TRUE THEN RdWrReset.Wr(p.head.wr) END;
+          IF reset = TRUE THEN RdWrPipe.ResetWrCounter(p.head.wr) END;
 
           TRY
             Wr.PutText(p.head.wr, t); 
