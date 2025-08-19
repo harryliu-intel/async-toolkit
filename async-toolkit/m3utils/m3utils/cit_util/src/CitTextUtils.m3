@@ -128,6 +128,16 @@ PROCEDURE FindSub(in, sub : TEXT; VAR pos : CARDINAL; start := 0) : BOOLEAN =
     RETURN FALSE
   END FindSub;
 
+PROCEDURE FindText(in, sub : TEXT; start := 0) : [-1..LAST(CARDINAL)] =
+  VAR r : CARDINAL;
+  BEGIN
+    IF FindSub(in, sub, r, start) THEN
+      RETURN r 
+    ELSE
+      RETURN -1
+    END
+  END FindText;
+
 PROCEDURE FindAnyChar(in: TEXT; c: SET OF CHAR;
                       VAR pos: CARDINAL; start := 0): BOOLEAN =
   BEGIN

@@ -39,6 +39,9 @@ PROCEDURE FilterIdent(in : TEXT) : TEXT; (* filter anything that's not a legal
 PROCEDURE FindSub(in, sub : TEXT; VAR pos : CARDINAL; start := 0) : BOOLEAN;
 (* find first occurrence of sub in in *)
 
+PROCEDURE FindText(in, sub : TEXT; start := 0) : [-1..LAST(CARDINAL)];
+(* as FindSub but returns -1 if not found *)
+
 PROCEDURE FindAnyChar(in: TEXT; c: SET OF CHAR;
                       VAR pos: CARDINAL; start := 0): BOOLEAN;
 
