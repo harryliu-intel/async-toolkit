@@ -42,7 +42,7 @@ end
 %override("boxes",TOP)
 %override("simplegrid",TOP)
 %override("router",TOP)
-override("term",TOP)
+%override("term",TOP)
 %override("m3-3",TOP)
 override("klay",TOP)
 override("paneman",TOP)
