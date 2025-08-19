@@ -286,7 +286,7 @@ Sequence("LongReal", "LongReal")
 
 Module("LongrealSort")
 
-Module("Chmod")
+%Module("Chmod")
 
 template("sharedseq")
 generic_module("SharedSequence")
