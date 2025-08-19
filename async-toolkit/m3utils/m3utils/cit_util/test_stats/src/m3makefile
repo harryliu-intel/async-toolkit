@@ -1,3 +1,0 @@
-import("cit_util")
-implementation("Main")
-program("test_stats")
