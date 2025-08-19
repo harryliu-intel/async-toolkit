@@ -1,9 +1,0 @@
-/* $Id: parametricspline.tmpl,v 1.1 2001/09/19 07:58:03 mika Exp $ */
-readonly proc parametricSpline(nm, baseSpline) is
-        build_generic_module("Parametric" & nm, "ParametricSplineImpl", [baseSpline], [baseSpline])
-end
-
-readonly proc ParametricSpline(nm, baseSpline) is
-        Build_generic_module("Parametric" & nm, "ParametricSplineImpl", [baseSpline], [baseSpline])
-end
-
