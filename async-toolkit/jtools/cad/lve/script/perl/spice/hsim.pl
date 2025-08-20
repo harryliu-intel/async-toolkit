@@ -33,6 +33,7 @@ my @measure_nodes=();
 my $xa_level = 5;
 my $output_dir = ".";
 my @pdk_include = ("spice/default.sp","spice/rc.sp"); # PDK files to include
+my @sub_lve_root_dir;
 my $run_directory = ".";
 my $del = 0;
 my $prscap    = 1e-13;
@@ -160,7 +161,7 @@ while (defined $ARGV[0] && $ARGV[0] =~ /^--(.*)/) {
     } elsif ($flag eq "lve-root-dir") {
        	$lve_root_dir = $value;
     } elsif ($flag eq "sub-lve-root-dir") {
-       	$sub_lve_root_dir = $value;
+       	@sub_lve_root_dir = split(":",$value);
     } elsif ($flag eq "measure-nodes") {
         @measure_nodes = split(":",$value);
     } elsif ($flag eq "sim") {
@@ -292,6 +293,7 @@ if ($sim eq "xa") {
 .option XA_CMD="set_sim_level -level $xa_level"
 .option XA_CMD="set_wildcard_rule -match* one"
 .option XA_CMD="set_message_option -limit 100"
+.option XA_CMD="set_duplicate_rule -select_subckt first"
 EOF
 # sneaky bug: this option prevents waveforms from being written to the fsdb file
 print RUN_FILE ".OPTION XA_CMD=\"set_monte_carlo_option -simulate_nominal 0\"\n" if ($seed>0);
@@ -341,8 +343,10 @@ if ($sim eq "xa") { print RUN_FILE ".option XA_CMD=\"set_sim_case -case sensitiv
 if (defined($lve_root_dir) and -d "$lve_root_dir") {
     print RUN_FILE ".option search='$lve_root_dir'\n";
 }
-if (defined($sub_lve_root_dir) and -d "$sub_lve_root_dir") {
-    print RUN_FILE ".option search='$sub_lve_root_dir'\n";
+foreach my $dir (@sub_lve_root_dir) {
+    if (-d "$dir") {
+        print RUN_FILE ".option search='$dir'\n";
+    }
 }
 
 # adjust total run time
@@ -370,6 +374,7 @@ EOF
 # determine the canonical name of special nets from comments emitted
 # by JFlat
 my %canon = ();
+my %special_net_defined; # hack to avoid duplicates
 if ($env_spice_file ne "") {
     open($fh, $env_spice_file) or die "Can't open $env_spice_file: $!";
     while (<$fh>) {
@@ -386,7 +391,10 @@ if ($env_spice_file ne "") {
                 foreach my $alias (@aliases) {
                     $canon{$alias} = $aliases[0];
                 }
-                push @{$special_net{$type}}, $aliases[0];
+                unless (defined($special_net_defined{$aliases[0]})) {
+                    $special_net_defined{$aliases[0]}=1;
+                    push @{$special_net{$type}}, $aliases[0];
+                }
             }
         }
     }
