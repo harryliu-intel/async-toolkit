@@ -201,7 +201,7 @@ if (defined($gls_dir)) {
       my $sdf_file = (glob "$sdf_dir/$file_prefix*$sdf*.sdf.gz")[0];
       #Check if glob returned any files
       if (!-e $sdf_file) {
-        print "WARNIG: No SDF file found for $vlog_file in directory $sdf_dir\n";
+        print "WARNING: No SDF file found for $vlog_file in directory $sdf_dir\n";
         next;
       }
       #Get block name directly from SDF file
@@ -213,13 +213,13 @@ if (defined($gls_dir)) {
       if ($perf) {
         my $bind_file = "$sdf_dir/${block}.bind_hist_mon.v";
         if (!-e $bind_file) {
-          print "WARNIG: No history monitors found for $block in directory $sdf_dir\n";
+          print "WARNING: No history monitors found for $block in directory $sdf_dir\n";
           next;
         }
         push @sdf_args, "$bind_file";
         my $conn_file = "$sdf_dir/${block}.bd_conn.rpt";
         if (!-e $conn_file) {
-          print "WARNIG: No connectivity file found for $block in directory $sdf_dir\n";
+          print "WARNING: No connectivity file found for $block in directory $sdf_dir\n";
           next;
         }
         push @crit_args, "$conn_file";
