@@ -168,6 +168,7 @@ if (@power) {
   print $fh_power "\nendmodule\n";
   close $fh_power;
   push @vcs_args, $power_mon;
+  push @vcs_args, "\"\$CAST2VERILOG_RUNTIME/power_mon.sv\"";
 }
 
 my $instdir = $ENV{'FULCRUM_PACKAGE_ROOT'};

@@ -2,4 +2,3 @@
 -v $CAST2VERILOG_RUNTIME/bd_hist_mon.sv
 $CAST2VERILOG_RUNTIME/bd_hist_mon.cc
 #$CAST2VERILOG_RUNTIME/HistoryMonitor.cc
--v $CAST2VERILOG_RUNTIME/power_mon.sv
