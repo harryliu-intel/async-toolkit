@@ -87,6 +87,7 @@ sub get_spar_from_verilog_string {
 sub get_spar_for_macro {
   my ($macro) = @_;
   my @macro_split = split(/_D_/, $macro);
+  return "" if (scalar @macro_split <= 1); 
   my $subtype = pop @macro_split;
   my $cell_name =  pop @macro_split;
   $cell_name= `echo '$cell_name' | fulcrum rename --type=cell --from=mw --to=cadence 2>/dev/null`;
@@ -99,6 +100,7 @@ sub get_spar_for_macro {
 sub get_verilog_path_for_macro {
   my ($macro) = @_;
   my @macro_split = split(/_D_/, $macro);
+  return "" if (scalar @macro_split <= 1); 
   my $subtype = pop @macro_split;
   my $cell_name =  pop @macro_split;
   $cell_name= `echo '$cell_name' | fulcrum rename --type=cell --from=mw --to=cast 2>/dev/null`;
@@ -112,9 +114,8 @@ sub get_verilog_path_for_macro {
 sub get_macros {
   my ($file) = @_;
   die "ERROR: can't read $file\n" if (!-e $file);
-  my @macro_mw  = `grep -v '\\/\\/\\|i0s' $file`;
-  s/\n// for @macro_mw; #chomp(@macro_mw) doesnt work
-  return @macro_mw;
+  my $grep_output = qx{grep -v '\\/\\/' $file | grep '_D_' $file};
+  return split(/\n/,$grep_output);
 }
 
 sub get_verilog_paths_for_macros {
@@ -127,10 +128,13 @@ sub get_verilog_paths_for_macros {
   my @verilog_paths;
   while (@queue) {
     my $macro = pop @queue;
-    push @verilog_paths, get_verilog_path_for_macro($macro);
-    $spar_macro_dir =  get_spar_for_macro($macro);
-    $macro_list = "$spar_macro_dir/$macro.macro.list";
-    push @queue, get_macros($macro_list) if (-e $macro_list);
+    my $verilog_path = get_verilog_path_for_macro($macro);
+    if ($verilog_path ne "") {
+      push @verilog_paths, $verilog_path;
+      $spar_macro_dir =  get_spar_for_macro($macro);
+      $macro_list = "$spar_macro_dir/$macro.macro.list";
+      push @queue, get_macros($macro_list) if (-e $macro_list);
+    }
   }
   return join('\n', @verilog_paths);
 }
