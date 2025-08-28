@@ -4,9 +4,15 @@ use warnings;
 
 my $local=0;
 my $block=0;
-if (@ARGV>0 && $ARGV[0] eq "--local") { $local=1; shift; }
-if (@ARGV>0 && $ARGV[0] eq "--block") { $block=1; shift; }
-@ARGV>0 or die "USAGE: virtuoso_replay [[--local|--block]] 1.il 2.il ...\n";
+my $cds_lib;
+while (@ARGV>0) {
+    if    ($ARGV[0] eq "--local") { $local=1; shift; }
+    elsif ($ARGV[0] eq "--block") { $block=1; shift; }
+    elsif ($ARGV[0] =~ /--cds-lib=(\S+)/) { $cds_lib=$1; shift; }
+    else { last; }
+}
+
+@ARGV>0 or die "USAGE: virtuoso_replay [[--local|--block]] [--cds-lib=?] 1.il 2.il ...\n";
 my $count = 0;
 foreach my $file (@ARGV) {
     (-r $file) or die "cannot read file $file\n";
@@ -17,6 +23,7 @@ foreach my $file (@ARGV) {
     system("$ENV{FULCRUM} mkcdswd --target-dir=${base}.cdswd " .
            "--dfII-dir=$ENV{DFII_DIR} --cast-path=$ENV{CAST_PATH} " .
            "--force --p4-client=$ENV{HW_CLIENT}");
+    if (defined($cds_lib)) { system("cp \"$cds_lib\" ${base}.cdswd"); }
 
     # Workaround for Xvnc server sharing
     # Valid Xvnc display range from [10..99] (excluding +)
