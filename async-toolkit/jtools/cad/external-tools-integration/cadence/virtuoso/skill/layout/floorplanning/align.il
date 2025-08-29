@@ -32,7 +32,7 @@
     (cond (CopyExact && lib=="g1m"
                      h = (substring CopyExact 13 1)
                      v = (substring CopyExact 12 1)
-                     oy = TrackPitch ; G1M cells are offset by one row from origin
+                     oy = 0.24 ; G1M cells are offset by one row from origin
                      (list lib h v oy)
                      )
           (CopyExact && lib=="g1i"
@@ -44,7 +44,7 @@
           (CopyExact && lib=="i0s"
                      h = (substring CopyExact 13 1)
                      v = (substring CopyExact 12 1)
-                     oy = TrackPitch ; I0S cells are offset by one row from origin
+                     oy = 0.16 ; I0S cells are offset by one row from origin
                      (list lib h v oy)
                      )
           (CopyExact && lib=="i0m"
@@ -81,6 +81,11 @@
                  (CopyExact && (substring CopyExact 1 3)=="i0m"
                             ox=0.5*GridPolyPitch
                             gy=0.18*(if h=="n" && CV->viewName=="floorplan" 1 2)
+                            )
+                 (CopyExact && (substring CopyExact 1 5)=="g1mzh" gx=0.5*GridPolyPitch gy=0.24 ox=0 oy=0) ; halo cells
+                 (CopyExact && (substring CopyExact 1 3)=="g1m"
+                            ox=0.5*GridPolyPitch
+                            gy=0.24*(if h=="n" && CV->viewName=="floorplan" 1 2)
                             )
                  (CopyExact && (substring CopyExact 1 6)=="x78srm"
                             ox=0.5*GridPolyPitch
