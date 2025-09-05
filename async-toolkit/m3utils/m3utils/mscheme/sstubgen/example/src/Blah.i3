@@ -1,7 +1,0 @@
-INTERFACE Blah;
-
-TYPE U = OBJECT METHODS
-      defPrim(maxArgs : CARDINAL := LAST(CARDINAL)) : U;
-END;
- 
-END Blah.

@@ -1,6 +1,0 @@
-import ("libm3")
-import ("mscheme")
-
-implementation ("StackTest")
-
-program ("stacktest")
