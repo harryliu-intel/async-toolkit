@@ -593,7 +593,7 @@
         (viewName "layout")
         (oasFile nil)
         (gdsFile nil)
-        (colorize nil) ; run ColorizeByOverlay
+        (colorize TechLibName=="1276.4"||TechLibName=="1276") ; run ColorizeByOverlay
         (baseCV nil)
         (pinMap nil)
         (calibreOffset t)
