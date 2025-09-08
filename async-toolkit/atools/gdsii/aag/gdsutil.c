@@ -292,7 +292,7 @@ static int  is_use_cell (char *name)
 
    if (use_cell[0][0] == 0)
       return (-1);
-   for (i = 0; use_cell[i][0] && i < USE_CELL_CNT; i++)
+   for (i = 0; i < USE_CELL_CNT && use_cell[i][0]; i++)
       if (!strcmp (use_cell[i], name))
          return (1);
    return (0);
@@ -2428,7 +2428,7 @@ static void gds_flat_structure (GDS_TRANS trans, char *name, FILE *fp)
 
    int from = __LINE__;
    push (from);
-   memset ((char *) &tmp, sizeof (tmp), 0);
+   memset ((char *) &tmp, 0, sizeof (tmp));
    data = malloc(datasize);
    if (! data ) {
       out_of_memory(__LINE__);
@@ -2670,7 +2670,7 @@ static void gds_flat_sref (GDS_TRANS trans, FILE *fp)
    double iangle;
    int exists=1;
    char a[8];
-   memset(a,8,0);
+   memset(a,0,8);
 
    calling_trans = trans;
    /* get sname */
@@ -2824,7 +2824,7 @@ static void gds_flat_aref (GDS_TRANS trans, FILE *fp)
    int  from;
    int  exists=1;
    char a[8];
-   memset(a,8,0);
+   memset(a,0,8);
 
    calling_trans = trans;
    /* get sname */
@@ -2855,6 +2855,7 @@ static void gds_flat_aref (GDS_TRANS trans, FILE *fp)
    /* initialize local translation */
    ltrans.x = ltrans.y = 0L;
    st = iangle = col = row = x0 = y0 = x1 = y1 = x2 = y2 = 0;
+   from = __LINE__;
    push(from);
    if ((! gds_find_structure(name))) {
     sref.len=0;
@@ -3347,7 +3348,7 @@ void gds_set_cell (char *name)
    else
    {
       for (i = 0;
-         use_cell[i][0] && i < USE_CELL_CNT && strcmp (use_cell[i], name);
+         i < USE_CELL_CNT && use_cell[i][0] && strcmp (use_cell[i], name);
             i++);
       if (i < USE_CELL_CNT)
          strncpy (use_cell[i], name, 63);
@@ -4740,7 +4741,7 @@ static void gds_flat_size (GDS_TRANS trans, char *name, LONGINT* minx, LONGINT* 
 
    int from = __LINE__;
    push (from);
-   memset ((char *) &tmp, sizeof (tmp), 0);
+   memset ((char *) &tmp, 0, sizeof (tmp));
    data=malloc(datasize);
    if (! data ) {
       out_of_memory(__LINE__);
