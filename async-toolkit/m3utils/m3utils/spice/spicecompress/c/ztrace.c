@@ -45,15 +45,15 @@ read_node_header(FILE *fp, ztrace_node_header_t *dirent)
   }
 
   {
-    unsigned char c;
+    int c;
     if ((c = getc(fp)) == EOF) return 0;
-    dirent->code = c;
+    dirent->code = (unsigned char)c;
   }
 
   {
-    unsigned char decimate;
+    int decimate;
     if ((decimate = getc(fp)) == EOF) return 0;
-    dirent->decimate = decimate;
+    dirent->decimate = (unsigned char)decimate;
   }
 
   return 1;
@@ -93,6 +93,8 @@ ztrace_get_header(FILE *fp, ztrace_header_t *header)
 
   header->directory = malloc(header->nwaves * sizeof(ztrace_node_header_t));
 
+  assert(header->directory);
+  
   {
     int i;
     for (i = 0; i < header->nwaves; ++i)
@@ -405,6 +407,8 @@ ztrace_get_node_values(FILE                  *fp,
         arr[i] = darr[i] * range + dirent->norm.min;
 
       free(darr);
+      free(decoded);
+      free(data);
     }
     
   }

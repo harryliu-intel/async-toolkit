@@ -112,7 +112,10 @@ static ArithProbability_t
 GetChar(ArithDecoder_t *de, CodeValue_t scaledValue, Encode_t *c)
 {
   int i;
-  for (i = 0; i < CumTableSize; ++i)
+  /* static code scan says we can only count to CumTableSize - 1, 
+     although other code invariants guarantee we will break out of the
+     loop no later than there. */
+  for (i = 0; i < CumTableSize - 1; ++i) 
     if (scaledValue < de->up.cum[i + 1]) {
       *c = i;
       return ((ArithProbability_t){ de->up.cum[(int)i],

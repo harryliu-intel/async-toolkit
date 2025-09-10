@@ -155,7 +155,7 @@ Rep16Stream_ReadT(const char *buf, size_t n, rep16_t *t)
 
   t->order = w0 & oMask;
 
-  memset(t->c, sizeof(t->c), 0);
+  memset(t->c, 0, sizeof(t->c));
 
   if (t->order == 0 || t->reset)
     p += read_unsigned(buf + p, &(t->c0));
