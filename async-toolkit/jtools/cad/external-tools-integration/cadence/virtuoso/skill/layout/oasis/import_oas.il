@@ -58,14 +58,15 @@
 
 ; Import all cells in OAS to scratch libName
 (defun ImportOASLib (oasFileName libName)
-  (let (PDK_DIR cmd status CV layerMapFile propMapFile objMapFile)
+  (let (RUN_DIR PDK_DIR cmd status CV layerMapFile propMapFile objMapFile)
     PDK_DIR = (ConfigFileGetValue TheCDSConfigTable "FULCRUM_PDK_ROOT")
     (sprintf layerMapFile "%s/share/Fulcrum/stream/strmout.layermap" PDK_DIR)
     (sprintf propMapFile "%s/share/Fulcrum/stream/oasis_prop.map" PDK_DIR)
     (sprintf objMapFile "%s/share/Fulcrum/stream/objectmap" PDK_DIR)
-
+    RUN_DIR = (strcat (ConfigFileGetValue TheCDSConfigTable "TEMP") "/import")
+    (shell (strcat "mkdir -p \"" RUN_DIR "\""))
     cmd = (strcat "oasisin "
-                 "-library \"" libName "\" "
+                  "-library \"" libName "\" "
                   "-oasisFile \"" oasFileName "\" "
                   "-logFile \"oasisIn.log\" "
                   "-attachTechFileOfLib \"" TechLibName "\" "
@@ -73,9 +74,9 @@
                   "-propMap \"" propMapFile "\" "
                   "-objectMap \"" objMapFile "\" "
 		  "-textHeight \"0.01\" "
-		  "-enableColoring"
+		  "-enableColoring "
+                  "-runDir \"" RUN_DIR "\""
 		  )
-
     status = (shell cmd)
     (unless status (error "strmin failed\n"))
     (ddUpdateLibList)
