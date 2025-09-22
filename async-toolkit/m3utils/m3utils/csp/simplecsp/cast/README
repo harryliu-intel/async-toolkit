@@ -6,3 +6,6 @@ the intermediate form's syntax.
 
 The front-end itself is not included here but in the Java companion
 distribution.
+
+The src sub-directory contains a hand-compiled example, showing the
+general approach taken in the compiler.
