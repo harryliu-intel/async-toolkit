@@ -1,0 +1,97 @@
+\documentclass[11pt]{article}
+
+% Page layout
+\usepackage[letterpaper, margin=1in]{geometry}
+\usepackage{parskip}
+\setlength{\parindent}{0pt}
+
+% Typography
+\usepackage{times}
+\usepackage[T1]{fontenc}
+
+% Math and symbols
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{longtable}
+\usepackage{fancyvrb}
+\usepackage{booktabs}
+
+% Code listings for syntax
+\usepackage{listings}
+\lstset{
+    basicstyle=\ttfamily\small,
+    columns=fullflexible,
+    keepspaces=true,
+    showstringspaces=false,
+    breaklines=true,
+    frame=none,
+    xleftmargin=2em,
+}
+
+% For BNF-style syntax rules
+\usepackage{syntax}
+\setlength{\grammarparsep}{4pt}
+\setlength{\grammarindent}{8em}
+
+% Hyperlinks
+\usepackage[colorlinks=true, linkcolor=blue, urlcolor=blue, citecolor=blue]{hyperref}
+
+% Headers and footers
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\textit{YourLanguage Language Definition}}
+\fancyhead[R]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+% Section formatting
+\usepackage{titlesec}
+\titleformat{\section}{\large\bfseries}{\thesection}{1em}{}
+\titleformat{\subsection}{\normalsize\bfseries}{\thesubsection}{1em}{}
+
+% Custom commands
+\newcommand{\keyword}[1]{\texttt{\textbf{#1}}}
+\newcommand{\type}[1]{\textit{#1}}
+\newcommand{\term}[1]{\textit{#1}}
+\newcommand{\nonterminal}[1]{\textit{#1}}
+
+% Title page
+\title{\textbf{Language Syntax}}
+\author{Designed and written by\\
+Your Name, Collaborator One, and Collaborator Two}
+\date{Version 0.0\\
+\today}
+
+\begin{document}
+
+\maketitle
+
+\vspace{1em}
+
+\noindent
+Copyright \copyright\ [Year] [Your Organization]. All Rights Reserved.
+
+\clearpage
+
+\tableofcontents
+
+\clearpage
+
+\section{CSP Lexer}
+\include{CspLexer}
+
+\section{CSP Parser}
+\include{CspParser}
+
+\section{CAST Lexer}
+\include{CastTwoLexer}
+
+\section{CAST Parser}
+\include{CastTwoParser}
+
+\section{CAST Tree Parser}
+\include{CastTwoTreeParser}
+
+
+\end{document}
+

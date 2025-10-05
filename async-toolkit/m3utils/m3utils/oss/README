@@ -1,0 +1,7 @@
+use the merge.sh script as follows
+
+./merge.sh
+
+I don't actually think it matters where you run it from.
+
+It will delete the existing merged directory and re-build it from the original repos.

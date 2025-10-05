@@ -1,0 +1,983 @@
+\begin{longtable}[]{@{}l@{}}
+\toprule
+\endhead
+\begin{minipage}[t]{0.97\columnwidth}\raggedright
+Grammar CastTwoParser\\
+\href{http://www.ANTLR.org}{ANTLR}-generated HTML file from CastTwo.g
+
+Terence Parr, \href{http://www.magelang.com}{MageLang Institute}\\
+ANTLR Version 2.7.5 (20050128); 1989-2005\strut
+\end{minipage}\tabularnewline
+\bottomrule
+\end{longtable}
+
+\begin{verbatim}
+Definition of parser CastTwoParser, which is a subclass of LLkParser.
+
+
+goal
+    :   compilationUnit EOF 
+    ;
+
+
+compilationUnit
+    :   moduleDeclaration ( importDeclaration )* ( fileLevelBodyStatement )* 
+    ;
+
+
+moduleDeclaration
+    :   MODULE moduleIdent SEMI 
+    |   
+    ;
+
+
+importDeclaration
+    :   IMPORT importIdent SEMI 
+    ;
+
+
+fileLevelBodyStatement
+    :   typeDeclaration 
+    |   channelDeclaration 
+    |   aliasDeclaration 
+    |   typeBody 
+    |   assignmentStatement 
+    |   variableDeclarationStatement 
+    |   loopStatement 
+    |   ifStatement 
+    |   prsBlock 
+    ;
+
+
+moduleIdent
+    :   IDENT 
+        (   moduleMetaParamList 
+        |   
+        ) 
+        ( DOT_IDENT 
+            (   moduleMetaParamList 
+            |   
+            ) )* 
+    ;
+
+
+importIdent
+    :   IDENT 
+        (   moduleMetaParamList 
+        |   
+        ) 
+        ( DOT_IDENT 
+            (   moduleMetaParamList 
+            |   
+            ) )* 
+        (   DOT_IDENT 
+        |   DOT TIMES 
+        ) 
+        
+    ;
+
+
+moduleMetaParamList
+    :   LPAREN moduleMetaParams RPAREN 
+    ;
+
+
+moduleMetaParams
+    :   moduleMetaParam ( COMMA moduleMetaParam )* 
+    ;
+
+
+moduleMetaParam
+    :   (   MINUS 
+        |   
+        ) 
+        integer 
+    |   TRUE 
+    |   FALSE 
+    |   LCURLY moduleMetaParams RCURLY 
+    ;
+
+
+integer
+    :   NUM_INT 
+    |   NUM_HEX 
+    ;
+
+
+cellTypeIdent
+    :   IDENT cellTypeTail 
+    ;
+
+
+cellTypeTail
+    :   (   moduleMetaParamList 
+        |   
+        ) 
+        DOT_IDENT cellTypeTail 
+    |   
+    ;
+
+
+dottedIdent
+    :   IDENT ( DOT_IDENT )+ 
+    ;
+
+
+bodyStatements
+    :   (   ( fileLevelBodyStatement )* 
+        |   ( internalBodyStatement )* 
+        ) 
+        
+    ;
+
+
+internalBodyStatement
+    :   prsBlock 
+    |   cspBlock 
+    |   subcellsBlock 
+    |   envBlock 
+    |   javaBlock 
+    |   netlistBlock 
+    |   directiveBlock 
+    |   typeBody 
+    |   topLevelConstantDeclaration 
+    |   assignmentStatement 
+    |   variableDeclarationStatement 
+    |   loopStatement 
+    |   ifStatement 
+    |   subtypesBlock 
+    |   verilogBlock 
+    ;
+
+
+typeDeclaration
+    :   typeHeader typeBody 
+    ;
+
+
+channelDeclaration
+    :   DEFCHAN IDENT 
+        (   metaParameterList 
+            (   portParameterList 
+            |   
+            ) 
+        |   
+        ) 
+        (   inheritanceList 
+        |   
+        ) 
+        (   refinement 
+        |   
+        ) 
+        channelBody 
+    ;
+
+
+aliasDeclaration
+    :   DEFALIAS IDENT 
+        (   metaParameterList 
+        |   
+        ) 
+        refinement SEMI 
+    ;
+
+
+typeBody
+    :   LCURLY bodyStatements RCURLY 
+    ;
+
+
+assignableExpression
+    :   IDENT 
+        (   DOT_IDENT 
+        |   arraySelector 
+        )* 
+    ;
+
+
+assignmentStatement
+    :   assignment SEMI 
+    ;
+
+
+variableDeclarationStatement
+    :   variableDeclaration SEMI 
+    ;
+
+
+loopStatement
+    :   LT IDENT COLON range COLON bodyStatements GT 
+    ;
+
+
+ifStatement
+    :   LBRACK expression ARROW bodyStatements RBRACK 
+    ;
+
+
+prsBlock
+    :   (   FRAGMENT 
+        |   
+        ) 
+        PRS LCURLY 
+    ;
+
+
+cspBlock
+    :   CSP 
+        (   cspPorts 
+        |   
+        ) 
+        LCURLY 
+    ;
+
+
+subcellsBlock
+    :   (   INLINE 
+        |   FRAGMENT 
+        |   
+        ) 
+        SUBCELLS LCURLY 
+    ;
+
+
+envBlock
+    :   ENV 
+        (   ( LCURLY ( namedEnv )* RCURLY ) 
+        |   namedEnv 
+        ) 
+    ;
+
+
+javaBlock
+    :   JAVA LCURLY 
+        (   oldJavaStatements 
+        |   newJavaStatements 
+        ) 
+        RCURLY 
+    ;
+
+
+netlistBlock
+    :   NETLIST LCURLY 
+    ;
+
+
+directiveBlock
+    :   DIRECTIVE LCURLY 
+    ;
+
+
+topLevelConstantType
+    :   INT 
+    |   FLOAT 
+    |   BOOL 
+    ;
+
+
+topLevelConstantDeclaration
+    :   topLevelConstantType IDENT 
+        (   arraySelector 
+        |   
+        ) 
+        (   ASSIGN expression 
+        |   
+        ) 
+        SEMI 
+    ;
+
+
+subtypesBlock
+    :   SUBTYPES LCURLY 
+    ;
+
+
+verilogBlock
+    :   VERILOG 
+        (   ( LCURLY ( verilogNamed )* RCURLY ) 
+        |   verilogNamed 
+        ) 
+    ;
+
+
+metaParameterList
+    :   LPAREN parameterList RPAREN 
+    ;
+
+
+portParameterList
+    :   LPAREN parameterList RPAREN 
+    ;
+
+
+inheritanceList
+    :   inheritance ( inheritance )* 
+    ;
+
+
+refinement
+    :   LT COLON cellTypeIdent 
+        (   typeParameterList 
+        |   
+        ) 
+        (   COLON cellTypeIdent 
+            (   typeParameterList 
+            |   
+            ) 
+        |   
+        ) 
+    ;
+
+
+channelBody
+    :   LCURLY channelStatements RCURLY 
+    ;
+
+
+channelStatements
+    :   ( channelStatement )* 
+    ;
+
+
+channelStatement
+    :   aliasBlock 
+    |   assertBlock 
+    |   directiveBlock 
+    ;
+
+
+aliasBlock
+    :   ALIAS LCURLY 
+    ;
+
+
+assertBlock
+    :   ASSERT LCURLY 
+    ;
+
+
+typeHeader
+    :   DEFINE IDENT 
+        (   metaParameterList 
+            (   portParameterList 
+                (   impliedParameterList 
+                |   
+                ) 
+            |   
+            ) 
+        |   
+        ) 
+        inheritanceAndRefinement 
+    ;
+
+
+impliedParameterList
+    :   LPAREN parameterList RPAREN 
+    ;
+
+
+inheritanceAndRefinement
+    :   ATTRIBUTES 
+        (   inheritanceList 
+        |   
+        ) 
+    |   (   inheritanceList 
+        |   
+        ) 
+        (   refinement 
+        |   
+        ) 
+    ;
+
+
+inheritance
+    :   LT PLUS cellTypeIdent 
+        (   typeParameterList 
+        |   
+        ) 
+        (   COLON cellTypeIdent 
+            (   typeParameterList 
+            |   
+            ) 
+        |   
+        ) 
+    ;
+
+
+expressionList
+    :   (   
+        |   expression ( COMMA expression )* 
+            (   COMMA 
+            |   
+            ) 
+            
+        ) 
+    ;
+
+
+typeParameterList
+    :   LPAREN expressionList RPAREN 
+    |   
+    ;
+
+
+parameterList
+    :   (   variableDeclaration ( SEMI variableDeclaration )* 
+            (   SEMI 
+            |   
+            ) 
+        |   
+        ) 
+        
+    ;
+
+
+envExtraParameterList
+    :   LPAREN parameterList RPAREN 
+    ;
+
+
+variableDeclaration
+    :   (   INLINE 
+        |   FLATTEN 
+        |   
+        ) 
+        type channelWidth variableDeclarators 
+    ;
+
+
+arraySelector
+    :   LBRACK ranges RBRACK 
+    ;
+
+
+expression
+    :   conditionalInclusiveOrExpression 
+    ;
+
+
+instantiation
+    :   variableDeclaration 
+    ;
+
+
+type
+    :   primitiveType 
+    |   cellTypeIdent typeParameterList 
+    ;
+
+
+channelWidth
+    :   LBRACK expression RBRACK 
+    |   
+    ;
+
+
+variableDeclarators
+    :   variableDeclarator ( COMMA variableDeclarator )* 
+    ;
+
+
+variableDeclarator
+    :   (   (   PLUS 
+                (   MINUS 
+                |   
+                ) 
+            |   MINUS 
+                (   PLUS 
+                |   
+                ) 
+            ) 
+        |   
+        ) 
+        IDENT 
+        (   arraySelector 
+        |   
+        ) 
+        (   COLON IDENT 
+        |   
+        ) 
+        (   COLON assignableExpression 
+        |   
+        ) 
+        (   variableInitializer 
+        |   
+        ) 
+        
+    ;
+
+
+variableInitializer
+    :   LPAREN expressionList RPAREN 
+        (   LPAREN expressionList RPAREN 
+        |   
+        ) 
+    |   ASSIGN expression 
+    ;
+
+
+ranges
+    :   range ( COMMA range )* 
+    ;
+
+
+range
+    :   expression 
+        (   DOTDOT expression 
+        |   
+        ) 
+        
+    ;
+
+
+startRange
+    :   range EOF 
+    ;
+
+
+cellType
+    :   cellTypeIdent typeParameterList EOF 
+    ;
+
+
+primitiveType
+    :   BOOL 
+    |   FLOAT 
+    |   INT 
+    |   NODE 
+    ;
+
+
+assignment
+    :   assignableExpression assignmentRhs 
+    ;
+
+
+assignmentRhs
+    :   ( ASSIGN expression )+ 
+    ;
+
+
+startExpressionList
+    :   expressionList EOF 
+    ;
+
+
+arrayComprehension
+    :   arrayComprehensionItem ( COMMA arrayComprehensionItem )* 
+    ;
+
+
+arrayComprehensionItem
+    :   (   expression 
+        |   LT_COMMA IDENT COLON range COLON arrayComprehension GT 
+        ) 
+    ;
+
+
+startExpression
+    :   expression EOF 
+    ;
+
+
+conditionalInclusiveOrExpression
+    :   conditionalExclusiveOrExpression ( OR conditionalExclusiveOrExpression )* 
+    ;
+
+
+conditionalExclusiveOrExpression
+    :   conditionalAndExpression ( XOR conditionalAndExpression )* 
+    ;
+
+
+conditionalAndExpression
+    :   relationalExpression ( AND relationalExpression )* 
+    ;
+
+
+relationalExpression
+    :   additiveExpression ( (  EQ 
+            |   NE 
+            |   LT 
+            |   LE 
+            |   GT 
+            |   GE 
+            ) 
+            additiveExpression )* 
+    ;
+
+
+additiveExpression
+    :   multiplicativeExpression ( (  PLUS 
+            |   MINUS 
+            ) 
+            multiplicativeExpression )* 
+    ;
+
+
+multiplicativeExpression
+    :   unaryExpression ( (    TIMES 
+            |   DIV 
+            |   MOD 
+            ) 
+            unaryExpression )* 
+    ;
+
+
+additiveExpr
+    :   additiveExpression 
+    ;
+
+
+unaryExpression
+    :   PLUS unaryExpression 
+    |   MINUS unaryExpression 
+    |   NOT unaryExpression 
+    |   exponentialExpression 
+    ;
+
+
+exponentialExpression
+    :   selectionExpression 
+        (   EXP exponentialExpression 
+        |   
+        ) 
+    ;
+
+
+selectionExpression
+    :   primaryExpression 
+        (   DOT_IDENT 
+        |   arraySelector 
+        )* 
+    ;
+
+
+primaryExpression
+    :   IDENT LPAREN expressionList RPAREN 
+    |   IDENT 
+    |   integer 
+    |   NUM_REAL 
+    |   TRUE 
+    |   FALSE 
+    |   anonymousArray 
+    |   QuotedString 
+    |   LPAREN conditionalInclusiveOrExpression RPAREN 
+    |   primitiveType LPAREN conditionalInclusiveOrExpression RPAREN 
+    |   LT 
+        (   PLUS 
+        |   TIMES 
+        |   XOR 
+        ) 
+        IDENT COLON range COLON additiveExpr GT 
+    |   LT_OR IDENT COLON range COLON additiveExpr GT 
+    |   LT_AND IDENT COLON range COLON additiveExpr GT 
+    ;
+
+
+anonymousArray
+    :   LCURLY arrayComprehension RCURLY 
+    ;
+
+
+namedEnv
+    :   IDENT 
+        (   metaParameterList 
+            (   envExtraParameterList 
+            |   
+            ) 
+        |   
+        ) 
+        inheritanceAndRefinement 
+        (   ( LCURLY envBlockStatements RCURLY ) 
+        |   singleEnvBlockStatement 
+        ) 
+        
+    ;
+
+
+envBlockStatements
+    :   ( internalBodyStatement )* 
+    ;
+
+
+singleEnvBlockStatement
+    :   envBlockStatement 
+    ;
+
+
+envBlockStatement
+    :   prsBlock 
+    |   subcellsBlock 
+    |   subtypesBlock 
+    |   directiveBlock 
+    |   cspBlock 
+    |   netlistBlock 
+    |   javaBlock 
+    |   verilogBlock 
+    ;
+
+
+startPrsNodeExpression
+    :   prsNodeExpression EOF 
+    ;
+
+
+prsNodeExpression
+    :   IDENT 
+        (   DOT_IDENT 
+        |   arraySelector 
+        )* 
+    ;
+
+
+cspPorts
+    :   LPAREN cspPort ( COMMA cspPort )* RPAREN 
+    ;
+
+
+cspPort
+    :   IDENT 
+    ;
+
+
+oldJavaStatements
+    :   ( oldJavaStatement )+ 
+    ;
+
+
+newJavaStatements
+    :   ( newJavaStatement )+ 
+    ;
+
+
+newJavaStatement
+    :   newJavaClassStatement 
+    |   javaChannelStatement 
+    |   directiveBlock 
+    ;
+
+
+newJavaClassStatement
+    :   (   IDENT 
+        |   dottedIdent 
+        ) 
+        (   javaClassMetaParameters 
+        |   
+        ) 
+        IDENT 
+        (   javaClassParameters 
+        |   
+        ) 
+        (   javaClassInitializers 
+        |   
+        ) 
+        SEMI 
+    ;
+
+
+javaChannelStatement
+    :   CHANNEL IDENT 
+        (   arraySelector 
+        |   
+        ) 
+        (   javaChannelTimingInfo 
+        |   
+        ) 
+        SEMI 
+    ;
+
+
+javaClassMetaParameters
+    :   LPAREN javaClassMetaParameter ( COMMA javaClassMetaParameter )* RPAREN 
+    ;
+
+
+javaClassParameters
+    :   LPAREN javaClassParameter ( COMMA javaClassParameter )* RPAREN 
+    ;
+
+
+javaClassInitializers
+    :   COLON javaClassInitializer ( COMMA javaClassInitializer )* 
+    ;
+
+
+javaClassMetaParameter
+    :   expression 
+    ;
+
+
+javaClassParameter
+    :   ( selectionExpression ) 
+        (   javaChannelTimingInfo 
+        |   
+        ) 
+        
+    ;
+
+
+javaChannelTimingInfo
+    :   COLON 
+        (   integer 
+        |   LPAREN integer COMMA integer COMMA integer COMMA integer COMMA integer RPAREN 
+        ) 
+    ;
+
+
+javaClassInitializer
+    :   TRUE 
+    |   FALSE 
+    |   integer 
+    |   NUM_REAL 
+    |   QuotedString 
+    ;
+
+
+oldJavaStatement
+    :   oldJavaClassStatement 
+    |   inputChannelStatement 
+    |   outputChannelStatement 
+    |   internalChannelStatement 
+    ;
+
+
+oldJavaClassStatement
+    :   JAVACLASS QuotedString 
+    ;
+
+
+inputChannelStatement
+    :   INPUTCHAN QuotedString 
+    ;
+
+
+outputChannelStatement
+    :   OUTPUTCHAN QuotedString 
+    ;
+
+
+internalChannelStatement
+    :   INTERNALCHAN QuotedString 
+    ;
+
+
+verilogNamed
+    :   IDENT LCURLY verilogStatements RCURLY 
+    ;
+
+
+verilogStatements
+    :   ( verilogStatement )* 
+    ;
+
+
+verilogStatement
+    :   verilogIdent 
+        (   POUND LPAREN expressionList RPAREN 
+        |   
+        ) 
+        LPAREN 
+        (   verilogParameters 
+        |   
+        ) 
+        RPAREN 
+        (   COLON verilogFiles 
+        |   
+        ) 
+        SEMI 
+    |   COLON verilogFiles SEMI 
+    |   directiveBlock 
+    ;
+
+
+verilogIdent
+    :   IDENT 
+    |   dottedIdent 
+    ;
+
+
+verilogParameters
+    :   verilogImplicitParameter ( COMMA verilogImplicitParameter )* 
+    |   verilogExplicitParameter ( COMMA verilogExplicitParameter )* 
+    ;
+
+
+verilogFiles
+    :   QuotedString ( COMMA QuotedString )* 
+    ;
+
+
+verilogImplicitParameter
+    :   selectionExpression 
+    ;
+
+
+verilogExplicitParameter
+    :   (   DOT_IDENT 
+        |   DOT ESCAPED_VERILOG_IDENT 
+        ) 
+        LPAREN 
+        (   selectionExpression 
+        |   
+        ) 
+        RPAREN 
+    ;
+
+
+partialExtraction
+    :   cellTypeIdent 
+        (   typeParameterList 
+        |   
+        ) 
+        ( ( PLUS 
+            |   MINUS 
+            ) 
+            (   PLUS 
+            |   MINUS 
+            |   
+            ) 
+            assignableExpression )* 
+        (   COLON 
+            (   cellTypeIdent 
+                (   typeParameterList 
+                |   
+                ) 
+            |   TIMES 
+            ) 
+        |   
+        ) 
+        EOF 
+    ;
+
+
+alintFanin
+    :   prsNodeExpression 
+        (   ASSIGN NUM_INT 
+        |   PLUS 
+        |   MINUS 
+        ) 
+        
+    ;
+
+
+alintScenario
+    :   alintScenarioItem ( COMMA alintScenarioItem )* 
+    ;
+
+
+alintScenarioItem
+    :   (   alintFanin 
+        |   LT_COMMA IDENT COLON range COLON alintScenario GT 
+        ) 
+    ;
+
+
+startAlintScenario
+    :   LCURLY 
+        (   alintScenario 
+        |   
+        ) 
+        RCURLY EOF 
+    ;
+\end{verbatim}
