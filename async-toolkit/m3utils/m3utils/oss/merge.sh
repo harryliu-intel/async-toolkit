@@ -50,4 +50,4 @@ done
 
 cd ${MERGEDIR}
 
-~/m3utils/oss/censor.sh ${TGTNAME}
+${ROOT}/orig/m3utils/oss/censor.sh ${TGTNAME}
