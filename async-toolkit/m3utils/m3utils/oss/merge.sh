@@ -4,11 +4,11 @@ ROOT=/nfs/site/disks/or_lhdk75_disk0037/w137/gorda/mnystroe/oss
 SRCDIR=${ROOT}/orig
 PATHSDIR=${ROOT}/paths
 MERGEDIR=${ROOT}/merged
+
 HOME=`pwd`
 MAIN=async-toolkit
 #HOME=`pwd`
 M3INSTALL=/nfs/pdx/disks/or_n3a_disk001/w138/mnystroe/m3utils
-MAIN=m3utils
 TGTNAME=merged-git
 
 cd ${SRCDIR}
