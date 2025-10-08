@@ -6,6 +6,9 @@ PATHSDIR=${ROOT}/paths
 MERGEDIR=${ROOT}/merged
 HOME=`pwd`
 MAIN=async-toolkit
+#HOME=`pwd`
+M3INSTALL=/nfs/pdx/disks/or_n3a_disk001/w138/mnystroe/m3utils
+MAIN=m3utils
 TGTNAME=merged-git
 
 cd ${SRCDIR}
@@ -50,4 +53,15 @@ done
 
 cd ${MERGEDIR}
 
-${ROOT}/orig/${MAIN}/oss/censor.sh ${TGTNAME}
+${M3INSTALL}/oss/censor.sh ${TGTNAME}
+
+cd "${TGTNAME}-1"
+
+YEAR=2025
+LINE1="Copyright (c) %Y Intel Corporation.  All rights reserved.  See COPYRIGHT for more information."
+LINE2="SPDX-License-Identifier: Apache-2.0"
+
+(find . -type f | xargs -n1 ${M3INSTALL}/copyright/AMD64_LINUX/copyright -year 2025 -line1 ${LINE1} -line2 ${LINE2}) | tee copyright.out 2>&1
+
+(find . -type f -and -name m3makefile | xargs -n1 ${M3INSTALL}/copyright/AMD64_LINUX/copyright -style tex -year ${YEAR} -line1 ${LINE1} -line2 ${LINE2} ) | tee copyright.out 2>&1
+

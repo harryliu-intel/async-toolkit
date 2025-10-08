@@ -7,7 +7,10 @@ CLONE="${TGTNAME}-1"
 
 git clone --no-local ${TGTNAME} ${CLONE} > ${CLONE}.clone.out 2>&1
 
-paths=`pwd`/paths.txt
+touch paths.txt
+paths=`realpath paths.txt`
+
+echo "paths : " ${paths}
 
 cd ${CLONE}
 
@@ -16,7 +19,7 @@ remove="git filter-repo --sensitive-data-removal --invert-paths"
 # remove various GPL things
 
 
-echo << EOF > ${paths}
+cat << EOF > ${paths}
 async-toolkit/mby-merged/wm/src/main/m3/hardrada/hda/Similix-master
 async-toolkit/mby-merged/wm/src/main/m3/hardrada/hda/scheme48
 async-toolkit/mby-merged/wm/src/main/m3/hardrada/hda/scm

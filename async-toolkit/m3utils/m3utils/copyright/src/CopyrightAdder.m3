@@ -1,6 +1,8 @@
 UNSAFE MODULE CopyrightAdder EXPORTS Main;
 
-IMPORT Rd, Wr, FileRd, FileWr, OSError, Text, Params, ParseParams, Stdio, FS, Debug, Thread, Ustat, Unix, M3toC, Ctypes;
+IMPORT Rd, Wr, FileRd, FileWr, OSError, Text, Params,
+       ParseParams, Stdio, FS, Debug, Thread, Ustat, Unix, M3toC, Ctypes;
+FROM Fmt IMPORT Int, Bool;
 
 <*FATAL Thread.Alerted*>
 
@@ -35,6 +37,8 @@ CONST
     Mapping{".ig",    Modula3Style},
     Mapping{".mg",    Modula3Style},
     Mapping{".sh",    HashStyle},
+    Mapping{".csh",   HashStyle},
+    Mapping{".awk",   HashStyle},
     Mapping{".zsh",   HashStyle}, 
     Mapping{".py",    HashStyle},
     Mapping{".pl",    HashStyle}, 
@@ -43,6 +47,7 @@ CONST
     Mapping{".tcl",   HashStyle},
     Mapping{".c",     CStyle},
     Mapping{".h",     CStyle},
+    Mapping{".p4",    CStyle},
     Mapping{".cpp",   SlashStyle},
     Mapping{".java",  SlashStyle}, 
     Mapping{".scala", SlashStyle},
@@ -192,6 +197,15 @@ PROCEDURE GenerateCopyright(style : Style; year : TEXT; line1 : TEXT; line2 : TE
     END;
   END GenerateCopyright;
 
+<*UNUSED*>
+PROCEDURE DumpPp(pp : ParseParams.T) =
+  <*FATAL Wr.Failure*>
+  BEGIN
+    FOR i := 0 TO NUMBER(pp.arg^) - 1 DO
+      Wr.PutText(Stdio.stderr, "pp.arg[" & Int(i) & "] : " & pp.arg[i] & " parsed=" & Bool(pp.parsed[i]) & "\n")
+    END
+  END DumpPp;
+  
 PROCEDURE ParseCommandLine(): BOOLEAN =
   VAR
     pp       : ParseParams.T;
@@ -205,7 +219,6 @@ PROCEDURE ParseCommandLine(): BOOLEAN =
     pp := NEW(ParseParams.T).init(Stdio.stderr);
     
     TRY
-      (* Parse required flags *)
       IF pp.keywordPresent("-year") THEN
         copyrightYear := pp.getNext();
         hasYear       := TRUE;
@@ -221,9 +234,12 @@ PROCEDURE ParseCommandLine(): BOOLEAN =
         hasLine2       := TRUE;
       END;
       
-      (* Parse optional flags *)
       IF pp.keywordPresent("-type") THEN
         overrideFileType := pp.getNext();
+        IF FALSE THEN
+          Wr.PutText(Stdio.stderr,
+                     "Type is overriden to " & overrideFileType & "\n")
+        END;
       END;
       
       IF pp.keywordPresent("-dry-run") THEN
@@ -247,6 +263,8 @@ PROCEDURE ParseCommandLine(): BOOLEAN =
           <*ASSERT FALSE*>
         END;
       END;
+
+      pp.skipParsed();
       
       (* Get the filename *)
       targetFilename := pp.getNext();
@@ -276,7 +294,9 @@ PROCEDURE ParseCommandLine(): BOOLEAN =
     END;
   END ParseCommandLine;
 
-PROCEDURE CheckForShebang(content : TEXT; VAR shebang : TEXT; VAR restOfContent : TEXT) =
+PROCEDURE CheckForShebang(content           : TEXT;
+                          VAR shebang       : TEXT;
+                          VAR restOfContent : TEXT) =
   VAR
     firstLineEnd : INTEGER;
   BEGIN
@@ -293,7 +313,8 @@ PROCEDURE CheckForShebang(content : TEXT; VAR shebang : TEXT; VAR restOfContent 
     END;
   END CheckForShebang;
 
-PROCEDURE AddCopyrightToFile(filename : TEXT; fileType : TEXT) RAISES {OSError.E, Wr.Failure, Rd.Failure} =
+PROCEDURE AddCopyrightToFile(filename : TEXT; fileType : TEXT)
+  RAISES {OSError.E, Wr.Failure, Rd.Failure} =
   VAR
     rd             : FileRd.T;
     wr             : FileWr.T;
@@ -312,7 +333,7 @@ PROCEDURE AddCopyrightToFile(filename : TEXT; fileType : TEXT) RAISES {OSError.E
   BEGIN
     (* Determine style for this file *)
     IF NOT GetStyle(filename, fileType, style) THEN
-      Debug.Error("Unknown file type for " & filename & ". Use -type <extension> or -style to specify.");
+      Debug.Error("Unknown file type for " & filename & " : use -type <extension> or -style to specify.");
       RETURN;
     END;
     
@@ -417,7 +438,7 @@ PROCEDURE PrintUsage() RAISES {Wr.Failure} =
     W("  .pl, .perl          Perl files           # ...\n");
     W("  .rb                 Ruby files           # ...\n");
     W("  .tcl                Tcl files            # ...\n");
-    W("  .c, .h              C files              /* ... */\n");
+    W("  .c, .h, .p4         C files              /* ... */\n");
     W("  .cpp, .java         C++/Java files       // ...\n");
     W("  .scala              Scala files          // ...\n");
     W("  .js, .go            JavaScript/Go files  // ...\n");
