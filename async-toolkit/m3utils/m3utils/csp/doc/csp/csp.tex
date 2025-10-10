@@ -1,0 +1,621 @@
+\documentclass[11pt]{report}
+
+% Page layout
+\usepackage[letterpaper, margin=1in]{geometry}
+\usepackage{parskip}
+\setlength{\parindent}{0pt}
+
+% Typography
+%\usepackage{times}
+%\usepackage[T1]{fontenc}
+
+% Math and symbols
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{longtable}
+\usepackage{fancyvrb}
+\usepackage{booktabs}
+
+% Code listings for syntax
+\usepackage{listings}
+\lstset{
+    basicstyle=\ttfamily\small,
+    columns=fullflexible,
+    keepspaces=true,
+    showstringspaces=false,
+    breaklines=true,
+    frame=none,
+    xleftmargin=2em,
+}
+
+% For BNF-style syntax rules
+\usepackage{syntax}
+\setlength{\grammarparsep}{4pt}
+\setlength{\grammarindent}{8em}
+
+% Hyperlinks
+\usepackage[colorlinks=true, linkcolor=blue, urlcolor=blue, citecolor=blue]{hyperref}
+
+% Headers and footers
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\textit{The Fulcrum CSP Language}}
+\fancyhead[R]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+% Section formatting
+\usepackage{titlesec}
+\titleformat{\section}{\large\bfseries}{\thesection}{1em}{}
+\titleformat{\subsection}{\normalsize\bfseries}{\thesubsection}{1em}{}
+
+% Custom commands
+\newcommand{\keyword}[1]{\texttt{\textbf{#1}}}
+\newcommand{\type}[1]{\textit{#1}}
+\newcommand{\term}[1]{\textit{#1}}
+\newcommand{\nonterminal}[1]{\textit{#1}}
+
+% Title page
+\title{\textbf{The Fulcrum CSP Language}}
+\author{Edited by\\
+  Mika Nystr\"om \\
+  Neuromorphic Computing Laboratory \\
+Intel Corporation}
+\date{Version 0.0\\
+\today}
+
+\begin{document}
+
+\maketitle
+
+\begin{center}
+\textit{The language designer should be familiar with many alternative\\
+features designed by others, and should have excellent judgment in\\
+choosing the best and rejecting any that are mutually inconsistent...\\
+One thing he should not do is to include untried ideas of his own.\\
+His task is consolidation, not innovation.}
+
+---C.A.R. Hoare
+\end{center}
+
+\vspace{1em}
+
+\noindent
+
+\vspace{1em}
+
+\noindent
+Copyright \copyright\ [2025] [Intel Corporation]. All Rights Reserved.  Distributed under the Apache License, Version 2.0.
+
+\clearpage
+
+\tableofcontents
+
+\clearpage
+
+% ========================================
+% INTRODUCTION
+% ========================================
+\chapter{Introduction}
+
+\section{History}
+Starting in the mid 1980s, Alain Martin at Caltech started to use a
+variant of Hoare's Communicating Sequential Processes to describe
+asynchronous circuit designs, and while the basic syntax of the
+language was well established by Martin and his students, the usage
+model and many implementation details were left informal.  A detailed
+implementation effort followed at Fulcrum Microsystems in the early
+2000s, and the resulting language was used to describe the high-level
+design of numerous Fulcrum products throughout the 2000s and 2010s,
+and later at Intel, in the Neuromorphic Computing Lab of Intel Labs.
+The initial implementation was structured as a circuit simulator, but
+over time, a direct-to-silicon compiler was also developed at Fulcrum,
+Intel, and Timeless Design Automation.  At the time of writing, CSP
+has seen over two decades of successful use as a hardware description
+and validation language.
+
+CSP, like its 1970s namesake, is a programming language based on a
+static graph of many small independent processes, which do not share
+internal state but use the rendezvous for communication.  CSP supports
+many features that are helpful in hardware design, such as
+arbitrary-precision arithmetic by default, bit extraction, packing and
+unpacking of structured data, and of course, extremely high levels of
+multithreading.
+
+One design goal of CSP has been to as much as possible banish
+unpredictable behaviors from the language.  Unpredictable behaviors
+that might be of little concern in software development can be a much
+bigger concern in hardware description, because CSP is used both as
+the input to a silicon compiler and to a software runtime (called a
+``simulator''), and the software implementation is used to validate
+the design before fabrication.  Unspecified constructs in the language
+would allow the two implementations to diverge, meaning that results
+from software simulation of the design could not be relied on to
+validate the design since the hardware implementation might be
+different.  Accordingly, CSP variables have well-defined initial
+values, and expression-evaluation orders as well as function-parameter
+evaluation orders are strictly specified.
+
+Like many (but not all) of its predecessors, CSP does not include
+facilities for process creation or the establishment of communication
+channels between processes.  In the Fulcrum system, these tasks are
+handled by an enclosing language environment called CAST (Caltech
+ASyncrhonous Tools).  In other words, when a CSP program starts
+executing, the entire process graph has already been created and
+connected.  This of course closely matches the distinction between
+fabrication and operation that is present in all hardware.
+Nevertheless, it is not difficult to imagine a system that uses CSP to
+describe processes that will be created and connected by a means other
+than CAST: for example a dynamic means, such as might be desired in a
+software system.  CAST is not a subject of this report, and mentions
+of that language can be read as simply referring to the process
+creation and connection that must occur before a CSP process begins
+execution.  That being said, one of the main uses of CSP is to serve
+as a vehicle for performing process decomposition (``Martin synthesis'')
+and it is the CAST framework that establishes the relationship between
+different CSP descriptions of the same computational process.
+
+\subsection{Note on the name ``CSP''}
+This report describes the syntax and semantics of {\em Fulcrum CSP,} a
+programming language developed at Fulcrum Microsystems in the early
+2000s, before that company was acquired by Intel in 2011.  The
+language takes its name from Hoare's 1978 {\em Communicating
+  sequential processes,} what the wider programming community knows as
+``CSP'', but has seen significant changes from that language, in
+particular following the {\em Communicating hardware processes\/} (CHP)
+described (but not yet named) by Martin in 1986.  In any case, the
+name ``CSP'' will be used to mean Fulcrum CSP throughout this report.
+
+
+\section{Perspective}
+
+The vast majority of chip design today is performed in variants of the
+Verilog language.  Verilog was introduced in 1984 as a means of
+circuit description and simulation, and is subject to an IEEE
+standardization process.  Over the years, the simplicity of the
+original Verilog idea has been transformed into a veritable
+encyclopedia of design, description, and verification capabilities.
+Verilog today is used for many tasks throughout a chip-design process
+where each task uses only a small subset of the language.  In essence,
+Verilog shares some fundamental design aspects with CSP; in
+particular, Verilog's semantics allow for descriptions with a very
+high level of concurrency, and another similarity is that both
+languages make it difficult (but not impossible) to allocate storage
+space dynamically, as this is not something that has a sensible
+implementation in silicon.  At the same time, the wide variety of
+computational models supported by Verilog make that language extremely
+difficult to describe and extremely demanding of programming
+methodology---in particular when it comes to communication between
+different system modules.  In contrast, CSP provides specific,
+restricted communication constructs representing the rendezvous and
+Martin's probe, which leads to highly structured communicating
+processes.  Unlike the situation in Verilog, where the
+programmer-designer must specify the details of sequencing for every
+gate, CSP allows the implementation of sequencing to be abstracted into
+the chosen implementation for the rendezvous.
+
+\section{Overview}
+
+\section{Features}
+
+Fulcrum CSP has a number of features that may need introduction for those
+familiar with the majority of software or hardware languages, and the
+remainder of the section will discuss these.
+
+\subsection{Process decomposition}
+
+\subsection{Guarded commands}
+
+\subsection{The rendezvous}
+
+\subsection{Channel probes}
+
+\subsection{Type system}
+\subsubsection{Arbitrary-precision arithmetic}
+\subsubsection{Structured types}
+
+\subsection{Variable initialization}
+
+\subsection{Functions}
+
+
+
+\section{Acknowledgments}
+Our goal with this report is to be as clear as Greg Nelson's {\em
+Systems Programming with Modula-3\/} and the present editor
+gratefully acknowledges the influence of that book.  We also
+gratefully acknowledge that text and inspiration has also been
+borrowed from the Asynchronous Circuit Toolkit (ACT) of Rajit
+Manohar's group at Yale.
+
+========================
+
+This section provides an overview of the language design philosophy, goals, and historical context. Discuss:
+\begin{itemize}
+\item The motivation for creating the language
+\item Design principles and constraints
+\item Key features and innovations
+\item Relationship to predecessor languages
+\end{itemize}
+
+\subsection{Design Goals}
+
+Enumerate the primary objectives that guided the language design.
+
+\subsection{Influences}
+
+Describe other languages and systems that influenced the design.
+
+\chapter{Language Definition}
+% ========================================
+% DEFINITIONS
+% ========================================
+\section{Definitions}
+\label{sec:definitions}
+
+A CSP program specifies a computation that acts on a sequence of
+digital components called {\em locations.} 
+
+A {\em static error\/} is an error that the implementation must detect
+before program execution.  Violations of the language definition are
+static errors unless they are explicitly classified as runtime errors.
+
+A {\em checked runtime error\/} is an error that the implementation must
+detect and report at runtime.  The method for reporting such errors
+is implementation-dependent.
+
+An {\em unchecked runtime error\/} is an error that is not guaranteed to
+be detected, and can cause the subsequent behavior of the computation to
+be arbitrary.  Unchecked runtime errors cannot occur in CSP.
+
+A {\em variable\/} is a
+set of locations that represents a mathematical value according to a
+convention determined by the variable's {\em type.}  If a value can be
+represented by some variable of type {\tt T}, then we say that the
+value is a {\em member\/} of {\tt T} and {\tt T} {\em contains\/} the
+value.
+
+An {\em identifier\/} is a symbol declared as a name for a variable,
+type, port, function, etc.  The region of the program over a which a
+declaration applies is called the {\em scope\/} of the declaration.
+The meaning of an identifier is determined by the enclosing scope,
+but declaring an identifier so that it is visible more than once in
+a single scope is a static error.
+
+\section{Types}
+\label{sec:types}
+
+\subsection{Integer types}
+
+There are three kinds of integer types: {\tt int}, signed integers,
+and unsigned integers. {\tt int} contains zero, all positive integers
+(Peano natural numbers), and the negation of the positive integers.
+
+Signed integers are declared {\tt sint(W)} where {\tt W} is the
+type's width in bits.  A type {\tt sint(W)} contains the values
+$[-2^{{\tt W}-1}..2^{{\tt W}-1}-1]$.
+
+Unsigned integers are declared {\tt int(W)} where {\tt W} is the
+type's width in bits.  A type {\tt int(W)} contains the values
+$[0..2^{{\tt W}}-1]$.
+
+\subsection{Boolean}
+
+The type {\tt bool} contains two values: {\tt false} and {\tt true}.
+
+\subsection{String}
+
+The type {\tt string} contains
+
+\subsection{Structure types}
+
+\subsection{Array types}
+
+
+
+
+
+
+\section{Statements}
+\label{sec:statements}
+
+\section{Declarations}
+\label{sec:declarations}
+
+\section{Expressions}
+\label{sec:expressions}
+
+
+\section{Syntax}
+
+
+\textbf{Comments.} Comments are treated as whitespace and have the form...
+
+\section{Types}
+\label{sec:types}
+
+A type is a set of values together with operations on those values.
+
+\subsection{Ordinal Types}
+
+An ordinal type is a type whose values have a total ordering and can be indexed.
+
+\subsubsection{Integer Types}
+
+\begin{grammar}
+<IntegerType> ::= `INTEGER' | `INT8' | `INT16' | `INT32' | `INT64'
+\end{grammar}
+
+\subsubsection{Enumeration Types}
+
+\begin{grammar}
+<EnumerationType> ::= `\{' <Identifier> \{ `,' <Identifier> \} `\}'
+\end{grammar}
+
+\subsubsection{Subrange Types}
+
+\begin{grammar}
+<SubrangeType> ::= `[' <ConstExpr> `..' <ConstExpr> `]'
+\end{grammar}
+
+\subsection{Floating-Point Types}
+
+\begin{grammar}
+<FloatType> ::= `REAL' | `FLOAT32' | `FLOAT64'
+\end{grammar}
+
+\subsection{Boolean Type}
+
+The type \keyword{BOOLEAN} contains two values: \keyword{FALSE} and \keyword{TRUE}.
+
+\subsection{Character and String Types}
+
+\begin{grammar}
+<CharType> ::= `CHAR'
+
+<StringType> ::= `STRING'
+\end{grammar}
+
+\subsection{Array Types}
+
+An array is an indexed collection of elements of a given type.
+
+\begin{grammar}
+<ArrayType> ::= `ARRAY' <IndexType> `OF' <ElementType>
+\end{grammar}
+
+\subsection{Record Types}
+
+A record is a collection of named fields.
+
+\begin{grammar}
+<RecordType> ::= `RECORD' <FieldList> `END'
+
+<FieldList> ::= <Field> \{ `;' <Field> \}
+
+<Field> ::= <Identifier> \{ `,' <Identifier> \} `:' <Type>
+\end{grammar}
+
+\subsection{Pointer and Reference Types}
+
+\begin{grammar}
+<PointerType> ::= `REF' <Type> | `^' <Type>
+\end{grammar}
+
+\subsection{Procedure Types}
+
+\begin{grammar}
+<ProcedureType> ::= `PROCEDURE' `(' [<FormalParams>] `)' [`:' <ReturnType>]
+\end{grammar}
+
+\subsection{Object Types}
+
+Object types provide data abstraction and inheritance.
+
+\begin{grammar}
+<ObjectType> ::= <Type> `OBJECT' <Fields> [<Methods>] `END'
+\end{grammar}
+
+% ========================================
+% DECLARATIONS
+% ========================================
+\section{Declarations}
+\label{sec:declarations}
+
+Declarations introduce names for constants, types, variables, procedures, etc.
+
+\subsection{Constant Declarations}
+
+\begin{grammar}
+<ConstDecl> ::= `CONST' <Identifier> `=' <ConstExpr>
+\end{grammar}
+
+\subsection{Type Declarations}
+
+\begin{grammar}
+<TypeDecl> ::= `TYPE' <Identifier> `=' <Type>
+\end{grammar}
+
+\subsection{Variable Declarations}
+
+\begin{grammar}
+<VarDecl> ::= `VAR' <Identifier> \{ `,' <Identifier> \} `:' <Type> [`:=' <Expr>]
+\end{grammar}
+
+\subsection{Procedure Declarations}
+
+\begin{grammar}
+<ProcDecl> ::= `PROCEDURE' <Identifier> `(' [<FormalParams>] `)' [`:' <Type>]
+               [<Raises>] `=' <Block>
+
+<FormalParams> ::= <FormalParam> \{ `;' <FormalParam> \}
+
+<FormalParam> ::= [<Mode>] <Identifier> \{ `,' <Identifier> \} `:' <Type>
+
+<Mode> ::= `VALUE' | `VAR' | `CONST' | `READONLY'
+\end{grammar}
+
+% ========================================
+% STATEMENTS
+% ========================================
+\section{Statements}
+\label{sec:statements}
+
+A statement specifies a computation.
+
+\subsection{Assignment Statement}
+
+\begin{grammar}
+<AssignStmt> ::= <Designator> `:=' <Expr>
+\end{grammar}
+
+\subsection{Procedure Call}
+
+\begin{grammar}
+<CallStmt> ::= <Designator> `(' [<ActualParams>] `)'
+\end{grammar}
+
+\subsection{Conditional Statements}
+
+\subsubsection{If Statement}
+
+\begin{grammar}
+<IfStmt> ::= `IF' <Expr> `THEN' <StmtSeq>
+             \{ `ELSIF' <Expr> `THEN' <StmtSeq> \}
+             [`ELSE' <StmtSeq>]
+             `END'
+\end{grammar}
+
+\subsubsection{Case Statement}
+
+\begin{grammar}
+<CaseStmt> ::= `CASE' <Expr> `OF'
+               <Case> \{ `|' <Case> \}
+               [`ELSE' <StmtSeq>]
+               `END'
+
+<Case> ::= <CaseLabels> `=>' <StmtSeq>
+\end{grammar}
+
+\subsection{Loop Statements}
+
+\subsubsection{While Statement}
+
+\begin{grammar}
+<WhileStmt> ::= `WHILE' <Expr> `DO' <StmtSeq> `END'
+\end{grammar}
+
+\subsubsection{For Statement}
+
+\begin{grammar}
+<ForStmt> ::= `FOR' <Identifier> `:=' <Expr> `TO' <Expr> [`BY' <Expr>]
+              `DO' <StmtSeq> `END'
+\end{grammar}
+
+\subsubsection{Loop Statement}
+
+\begin{grammar}
+<LoopStmt> ::= `LOOP' <StmtSeq> `END'
+\end{grammar}
+
+\subsection{Control Flow}
+
+\subsubsection{Return Statement}
+
+\begin{grammar}
+<ReturnStmt> ::= `RETURN' [<Expr>]
+\end{grammar}
+
+\subsubsection{Exit Statement}
+
+\begin{grammar}
+<ExitStmt> ::= `EXIT' | `BREAK'
+\end{grammar}
+
+% ========================================
+% EXPRESSIONS
+% ========================================
+\section{Expressions}
+\label{sec:expressions}
+
+An expression denotes a value and has a type.
+
+\subsection{Literals}
+
+Numeric, character, and string literals.
+
+\subsection{Operators}
+
+\subsubsection{Arithmetic Operators}
+
+\begin{tabular}{ll}
+\texttt{+} & Addition \\
+\texttt{-} & Subtraction \\
+\texttt{*} & Multiplication \\
+\texttt{/} & Division \\
+\texttt{\%} & Modulo \\
+\end{tabular}
+
+\subsubsection{Relational Operators}
+
+\begin{tabular}{ll}
+\texttt{=} & Equal \\
+\texttt{<>} & Not equal \\
+\texttt{<} & Less than \\
+\texttt{<=} & Less than or equal \\
+\texttt{>} & Greater than \\
+\texttt{>=} & Greater than or equal \\
+\end{tabular}
+
+\subsubsection{Logical Operators}
+
+\begin{tabular}{ll}
+\keyword{AND} & Logical conjunction \\
+\keyword{OR} & Logical disjunction \\
+\keyword{NOT} & Logical negation \\
+\end{tabular}
+
+\subsection{Type Conversions}
+
+Describe explicit and implicit conversions.
+
+\section{Standard Interfaces}
+\label{sec:stdlib}
+
+\section{Reserved Words}
+\label{app:keywords}
+
+\section{Operator Precedence}
+\label{app:precedence}
+
+Table of operator precedence and associativity.
+
+\chapter{Syntax}
+
+\section{CSP Lexer}
+\include{dist/CspLexer}
+
+\section{CSP Parser}
+\include{dist/CspParser}
+
+\section{CAST Lexer}
+\include{dist/CastTwoLexer}
+
+\section{CAST Parser}
+\include{dist/CastTwoParser}
+
+\section{CAST Tree Parser}
+\include{dist/CastTwoTreeParser}
+
+\chapter{Example Programs}
+\label{app:examples}
+
+Complete example programs illustrating language features.
+
+% ========================================
+% INDEX (optional)
+% ========================================
+% \printindex
+
+
+\end{document}
