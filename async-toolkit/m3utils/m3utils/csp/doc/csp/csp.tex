@@ -140,7 +140,7 @@ Like many (but not all) of its predecessors, CSP does not include
 facilities for process creation or the establishment of communication
 channels between processes.  In the Fulcrum system, these tasks are
 handled by an enclosing language environment called CAST (Caltech
-ASyncrhonous Tools).  In other words, when a CSP program starts
+ASynchronous Tools).  In other words, when a CSP program starts
 executing, the entire process graph has already been created and
 connected.  This of course closely matches the distinction between
 fabrication and operation that is present in all hardware.
@@ -160,9 +160,9 @@ This report describes the syntax and semantics of {\em Fulcrum CSP,} a
 programming language developed at Fulcrum Microsystems in the early
 2000s, before that company was acquired by Intel in 2011.  The
 language takes its name from Hoare's 1978 {\em Communicating
-  sequential processes,} what the wider programming community knows as
+  Sequential Processes,} what the wider programming community knows as
 ``CSP'', but has seen significant changes from that language, in
-particular following the {\em Communicating hardware processes\/} (CHP)
+particular following the {\em Communicating Hardware Processes\/} (CHP)
 described (but not yet named) by Martin in 1986.  In any case, the
 name ``CSP'' will be used to mean Fulcrum CSP throughout this report.
 
@@ -176,7 +176,7 @@ standardization process.  Over the years, the simplicity of the
 original Verilog idea has been transformed into a veritable
 encyclopedia of design, description, and verification capabilities.
 Verilog today is used for many tasks throughout a chip-design process
-where each task uses only a small subset of the language.  In essence,
+where each task uses only a small subset of the language.  
 Verilog shares some fundamental design aspects with CSP; in
 particular, Verilog's semantics allow for descriptions with a very
 high level of concurrency, and another similarity is that both
@@ -222,29 +222,12 @@ remainder of the section will discuss these.
 
 \section{Acknowledgments}
 Our goal with this report is to be as clear as Greg Nelson's {\em
-Systems Programming with Modula-3\/} and the present editor
-gratefully acknowledges the influence of that book.  We also
-gratefully acknowledge that text and inspiration has also been
+  Systems Programming with Modula-3\/} and the present editor
+gratefully acknowledges the influence of that book, and parts of the
+language definition have been shamelessly stolen from that book.  We
+also gratefully acknowledge that text and inspiration has also been
 borrowed from the Asynchronous Circuit Toolkit (ACT) of Rajit
 Manohar's group at Yale.
-
-========================
-
-This section provides an overview of the language design philosophy, goals, and historical context. Discuss:
-\begin{itemize}
-\item The motivation for creating the language
-\item Design principles and constraints
-\item Key features and innovations
-\item Relationship to predecessor languages
-\end{itemize}
-
-\subsection{Design Goals}
-
-Enumerate the primary objectives that guided the language design.
-
-\subsection{Influences}
-
-Describe other languages and systems that influenced the design.
 
 \chapter{Language Definition}
 % ========================================
@@ -254,7 +237,10 @@ Describe other languages and systems that influenced the design.
 \label{sec:definitions}
 
 A CSP program specifies a computation that acts on a sequence of
-digital components called {\em locations.} 
+digital components called {\em locations.}  A CSP program describes
+a {\em process\/} within a distributed system.  Within a single process,
+a location can be referenced by and shared between different statements, but 
+a single location is bound to only one process.
 
 A {\em static error\/} is an error that the implementation must detect
 before program execution.  Violations of the language definition are
@@ -275,6 +261,12 @@ represented by some variable of type {\tt T}, then we say that the
 value is a {\em member\/} of {\tt T} and {\tt T} {\em contains\/} the
 value.
 
+A {\em port\/} is a means for a process to communicate with other
+processes.  A port can be either an {\em output port,} in which case
+values written to the port will appear in another process, or an {\em
+  input port,} in which case values will appear at the port that were
+written in another process.
+
 An {\em identifier\/} is a symbol declared as a name for a variable,
 type, port, function, etc.  The region of the program over a which a
 declaration applies is called the {\em scope\/} of the declaration.
@@ -286,32 +278,186 @@ a single scope is a static error.
 \label{sec:types}
 
 \subsection{Integer types}
-
-There are three kinds of integer types: {\tt int}, signed integers,
-and unsigned integers. {\tt int} contains zero, all positive integers
+\label{subsec:integer-types}
+There are three kinds of integer types: {\tt int}, {\em signed integers,}
+and {\em unsigned integers.} {\tt int} contains zero, all positive integers
 (Peano natural numbers), and the negation of the positive integers.
 
 Signed integers are declared {\tt sint(W)} where {\tt W} is the
-type's width in bits.  A type {\tt sint(W)} contains the values
+type's width in bits, which is a constant expression.  A type {\tt sint(W)} contains the values
 $[-2^{{\tt W}-1}..2^{{\tt W}-1}-1]$.
 
 Unsigned integers are declared {\tt int(W)} where {\tt W} is the
-type's width in bits.  A type {\tt int(W)} contains the values
+type's width in bits, which is a constant expression.  A type {\tt int(W)} contains the values
 $[0..2^{{\tt W}}-1]$.
 
 \subsection{Boolean}
 
 The type {\tt bool} contains two values: {\tt false} and {\tt true}.
 
+In cases where a boolean variable is implicitly converted to {\tt int},
+{\tt false} is interpreted as 0 and {\tt true} is interpreted as -1.
+
 \subsection{String}
 
-The type {\tt string} contains
+The type {\tt string} contains all sequences of characters, where a
+character is one of 256 constant values.  The visual representation of
+the characters is system dependent but generally follows 7-bit ASCII
+for the lower half (0..127) with a system-dependent upper half.
 
 \subsection{Structure types}
 
+A {\em structure type\/} is a sequence of named variables, called the
+{\em fields\/} of the structure type. Different fields can have
+different types.  The name and type of each field is statically
+determined by the structure type's type.  The expression {\tt s::f}
+designates the field named {\tt f} in the structure {\tt s}.
+
+A structure type declaration has the form:
+\begin{verbatim}
+  structure T =
+   (
+    FieldList
+   );
+\end{verbatim}
+where {\tt FieldList} is a list of field declarations, each of which has the
+form:
+\begin{verbatim}
+   Type fieldName = initial;
+\end{verbatim}
+where {\tt fieldName} is an identifier, {\tt Type} is any type, and
+{\tt initial} is a constant expression.  The field names must be
+distinct.  Empty structure types are not allowed.
+
+The constant {\tt initial} is a initial value used when a structure is
+constructed.  The {\tt = initial} can be omitted, in which case the default
+value for the type will be used for initialization.
+
 \subsection{Array types}
 
+An {\em array\/} is an indexed collection of component variables,
+called the {\em elements\/} of the array.  The indexes are of type
+{\tt int}.  The elements all have the same size and the same type,
+called the {\em element type\/} of the array.
 
+The {\em shape\/} of a multi-dimensional array is the sequence of its
+lengths in each dimension.  More precisely, the shape of an array is
+its length followed by the shape of any of
+its elements; the shape of a non-array is the empty sequence.
+The {\em layout\/} of a multi-dimensional array is the sequence of
+its lengths and starting indexes in each dimension; the layout of a non-array
+is the empty sequence.
+
+All arrays are {\em fixed\/} in CSP, and the layout of every array is
+determined before program startup.
+
+An array declaration has the form:
+\begin{verbatim}
+  Element Id Layout;
+\end{verbatim}
+where {\tt Element} is the element type and {\tt Layout} represents
+the layout of the array.  The layout can be specified in one of
+two equivalent ways: either as a comma separated list of ranges {\tt lo..hi}
+between brackets or as a list of ranges {\tt lo..hi} within separate brackets:
+\begin{verbatim}
+  T a[0..2,0..2];
+  T b[0..2][0..2];
+\end{verbatim}
+here {\tt a} and {\tt b} have equivalent declarations.  Any array index
+can also be specified with a single number {\tt length} in which case the
+index ranges over {\tt 0..length - 1}.  Hence the following are equivalent:
+\begin{verbatim}
+  T c[0..2,0..5];
+  T d[3][6];
+\end{verbatim}
+
+Types that are not array types are called {\em scalar types,} and instances
+of such types are called {\em scalars.}
+
+   
+
+
+\subsection{Packed and fixed-width types}
+The following types are of fixed width: signed integers,
+unsigned integers, and booleans.
+
+If a structure type contains only fixed-width fields, then the
+structure type is a {\em packed structure type.}  A packed structure
+type is itself of fixed width.
+
+If the element type of an array is of fixed width, then the array is a
+{\em packed array type.}  A packed array type is itself of fixed width.
+
+
+
+
+\subsection{Channels and ports}
+
+A channel is used for communication between two concurrent processes.
+Formally, a channel is an ordered 6-tuple $(S, P_S, R, P_R, W,
+\Sigma)$ where $S$ is a process called the {\em sender,} $P_S$ is the
+name of the output port in the sender, $R$ is a process called the
+{\em receiver,} $P_R$ is the name of the input port in the receiver, $W$
+is an integer called the {\em width\/} of the channel, and $\Sigma$ is
+an integer called the {\em slack\/} of the channel.  Channels are not
+declared within the CSP language but described externally.  Values
+transacted over a channel are of type {\tt int($W$)} (see section~\ref{subsec:integer-types}.)
+
+Within a CSP process, a channel is visible either as an input port or
+as an output port.  Hence, channels are point-to-point and have exactly
+one sender and exactly one receiver.
+
+
+\section{Functions}
+\label{sec:functions}
+A {\em function\/} is a triple consisting of:
+\begin{itemize}
+\item the {\em name,} which is an identifier.
+  
+\item the {\em body,} which is a statement.
+
+\item the {\em signature,} which specifies the function's formal arguments and
+  result type.
+\end{itemize}
+A function that returns as a result is also called a {\em function procedure\/}; a function that does not return a result is called a {\em proper procedure.}
+
+A function definition has the form:
+\begin{verbatim}
+   function F sig = ( body );
+\end{verbatim}
+where {\tt body} is the body, and {\tt sig} is a signature specification,
+which has the form:
+\begin{verbatim}
+   (formal0 ; ...; formaln-1) : R
+\end{verbatim}
+where each {\tt formali} is a formal parameter declaration, as described below and {\tt R} is the result type, which can be any type.  The ``{\tt : R}'' can
+be omitted, making the signature that of a proper procedure.
+
+A formal parameter declaration has the form
+\begin{verbatim}
+   Type Mode Name Layout = Initial
+\end{verbatim}
+where
+\begin{itemize}
+\item {\tt Type} is the type of the parameter if the parameter is scalar, or the element type of the parameter if the parameter type is an array type
+  
+\item {\tt Mode} is a parameter mode, which can be {\tt -}, {\tt +}, or {\tt +-}.  {\tt Mode} can be omitted, in which case it is taken to be {\tt +-}.
+
+\item {\tt Name} is an identifier that names the parameter.
+
+\item {\tt Layout} specifies the array layout for an array parameter; if it is
+  omitted, the parameter is scalar.
+
+\item{\tt Initial} specifies the initial value of a parameter whose mode is {\tt +}.  {\tt = Initial} can be omitted.
+\end{itemize}
+When a series of parameters share the same type, {\tt Mode Name Layout = Initial} can be a replaced with a comma-separated list of mode, name, layout, and initial value, in which case the type is repeated for each parameter.  That is:
+\begin{verbatim}
+   Type Mode0 Name0 Layout0 = Initial0, Mode1 Name1 Layout1 = Initial1, ...
+\end{verbatim}
+is shorthand for
+\begin{verbatim}
+   Type Mode0 Name0 Layout0 = Initial0; Type Mode1 Name1 Layout1 = Initial1; ...
+\end{verbatim}
 
 
 
@@ -319,8 +465,140 @@ The type {\tt string} contains
 \section{Statements}
 \label{sec:statements}
 
+Executing a statement produces a computation that can halt, cause a checked
+runtime error, or loop forever.
+
+\subsection{Assignment}
+
+We specify assignment rules by enumeration.
+
+\subsubsection{General assignability rule}
+
+A value is assignable to a variable of the same type.  If the type of a
+value differs from the target variable, the value is not assignable to
+the variable, with the exceptions below.
+
+\subsubsection{Integer assignment}
+
+The three kinds of integer types are all assignable to each other by
+virtue of the fact that all integer right-hand-sides are interpreted
+as being of type {\tt int}.  Assigning a value of type {\tt int} to a
+variable of type {\tt int(W)} or {\tt sint(W)} is done by interpreting
+the RHS as a two's-complement number and performing a bitwise
+assignment into the locations representing the LHS, also interpreted
+as a two's-complement number, discarding any bits that do not fit in
+the target locations.
+
+
+\subsubsection{Array assignment}
+
+Arrays are assignable if they have the same shape and their element types
+are assignable.
+
+\subsubsection{Integer to string assignment}
+
+An integer value is assignable to a string variable.  The value assigned
+to the string variable is the hexadecimal ASCII string corresponding
+to the integer.
+
+\subsubsection{Expression assignment}
+
+An expression {\tt e} is {\em assignable\/} to a type {\tt T} if {\tt e} is
+assignable to a variable of type {\tt T}.
+
+An assignment statement has the form:
+\begin{verbatim}
+   v = e
+\end{verbatim}
+where {\tt v} is a writable designator and {\tt e} is an expression
+assingable to the variable designated by {\tt v}.  The statement sets
+{\tt v} to the value of {\tt e}.  {\tt v} is always evaluated before
+{\tt e}, and {\tt v} is updated after {\tt e} is evaluated.  In
+particular, if {\tt v} and {\tt e} are overlapping subarrays, the
+assignment is performed in such a way that no element is used as a
+target before it is used as a source.
+
+\subsection{Function call}
+
+A function call has the form:
+\begin{verbatim}
+   F(Bindings)
+\end{verbatim}
+where {\tt F} is the name of a function and {\tt Bindings} is a list
+of bindings.  A binding has the form {\tt actual}, where {\tt actual} is
+an expression.  If the list of bindings is empty, the parentheses are still
+required.
+
+Function parameters are passed by value-return.  This means that for
+each formal that has {\tt -} in its mode, the binding is turned
+into an assignment
+\begin{verbatim}
+   Name = actual
+\end{verbatim}
+where {\tt Name} is the name of the formal, which is evaluated before
+the body of the function.  For a formal that does not have {\tt -} in its
+mode, the binding is instead turned into an assignment
+\begin{verbatim}
+   Name = initial
+\end{verbatim}
+where {\tt initial} is the initial value from the function signature
+  for that parameter.
+For each formal that has {\tt +} in its mode,
+the binding is turned into an assignment
+\begin{verbatim}
+   actual = Name 
+\end{verbatim}
+which is evaluated after the body of the function.  Finally, for function
+procedures, the return value of the function is declared using the function's
+own name (e.g., {\tt F}) before the
+body of the function as having type {\tt R} (the return type of the function),
+and upon return of the function the returned value is {\tt F}.
+
+To execute the call, the function's arguments are evaluated left-to-right,
+the formal parameters are assigned, the body of the procedure is executed, and
+{\tt +} parameters and the function result (if present) are assigned.
+
+For example, consider:
+\begin{verbatim}
+  function F(int +x = 12; -y) : int = ( x = x * y; F = x + y );
+  q = 2;
+  z = F(q, 3);
+\end{verbatim}
+following the rules above, this is equivalent to:
+\begin{verbatim}
+  q = 2;
+  int x = 12;
+  int y = 3;
+  int F;
+  x = x * y;
+  F = x + y;
+  x = F;
+\end{verbatim}
+
+
+
+
+
+
+
+
+
+
+
+
 \section{Declarations}
 \label{sec:declarations}
+CSP declarations in a program occur in a specified order.  Certain
+constants, functions, and structure types can be pre-declared by the
+CAST environment of a CSP program.  Within a single CSP program,
+the sequence of declarations is fixed:
+\begin{verbatim}
+  structure type declarations;
+  function declarations;
+  program body
+\end{verbatim}
+the program body is evaluated when the system starts to run.  The evaluation
+order of different CSP programs within a system is unspecified.
 
 \section{Expressions}
 \label{sec:expressions}
@@ -331,206 +609,6 @@ The type {\tt string} contains
 
 \textbf{Comments.} Comments are treated as whitespace and have the form...
 
-\section{Types}
-\label{sec:types}
-
-A type is a set of values together with operations on those values.
-
-\subsection{Ordinal Types}
-
-An ordinal type is a type whose values have a total ordering and can be indexed.
-
-\subsubsection{Integer Types}
-
-\begin{grammar}
-<IntegerType> ::= `INTEGER' | `INT8' | `INT16' | `INT32' | `INT64'
-\end{grammar}
-
-\subsubsection{Enumeration Types}
-
-\begin{grammar}
-<EnumerationType> ::= `\{' <Identifier> \{ `,' <Identifier> \} `\}'
-\end{grammar}
-
-\subsubsection{Subrange Types}
-
-\begin{grammar}
-<SubrangeType> ::= `[' <ConstExpr> `..' <ConstExpr> `]'
-\end{grammar}
-
-\subsection{Floating-Point Types}
-
-\begin{grammar}
-<FloatType> ::= `REAL' | `FLOAT32' | `FLOAT64'
-\end{grammar}
-
-\subsection{Boolean Type}
-
-The type \keyword{BOOLEAN} contains two values: \keyword{FALSE} and \keyword{TRUE}.
-
-\subsection{Character and String Types}
-
-\begin{grammar}
-<CharType> ::= `CHAR'
-
-<StringType> ::= `STRING'
-\end{grammar}
-
-\subsection{Array Types}
-
-An array is an indexed collection of elements of a given type.
-
-\begin{grammar}
-<ArrayType> ::= `ARRAY' <IndexType> `OF' <ElementType>
-\end{grammar}
-
-\subsection{Record Types}
-
-A record is a collection of named fields.
-
-\begin{grammar}
-<RecordType> ::= `RECORD' <FieldList> `END'
-
-<FieldList> ::= <Field> \{ `;' <Field> \}
-
-<Field> ::= <Identifier> \{ `,' <Identifier> \} `:' <Type>
-\end{grammar}
-
-\subsection{Pointer and Reference Types}
-
-\begin{grammar}
-<PointerType> ::= `REF' <Type> | `^' <Type>
-\end{grammar}
-
-\subsection{Procedure Types}
-
-\begin{grammar}
-<ProcedureType> ::= `PROCEDURE' `(' [<FormalParams>] `)' [`:' <ReturnType>]
-\end{grammar}
-
-\subsection{Object Types}
-
-Object types provide data abstraction and inheritance.
-
-\begin{grammar}
-<ObjectType> ::= <Type> `OBJECT' <Fields> [<Methods>] `END'
-\end{grammar}
-
-% ========================================
-% DECLARATIONS
-% ========================================
-\section{Declarations}
-\label{sec:declarations}
-
-Declarations introduce names for constants, types, variables, procedures, etc.
-
-\subsection{Constant Declarations}
-
-\begin{grammar}
-<ConstDecl> ::= `CONST' <Identifier> `=' <ConstExpr>
-\end{grammar}
-
-\subsection{Type Declarations}
-
-\begin{grammar}
-<TypeDecl> ::= `TYPE' <Identifier> `=' <Type>
-\end{grammar}
-
-\subsection{Variable Declarations}
-
-\begin{grammar}
-<VarDecl> ::= `VAR' <Identifier> \{ `,' <Identifier> \} `:' <Type> [`:=' <Expr>]
-\end{grammar}
-
-\subsection{Procedure Declarations}
-
-\begin{grammar}
-<ProcDecl> ::= `PROCEDURE' <Identifier> `(' [<FormalParams>] `)' [`:' <Type>]
-               [<Raises>] `=' <Block>
-
-<FormalParams> ::= <FormalParam> \{ `;' <FormalParam> \}
-
-<FormalParam> ::= [<Mode>] <Identifier> \{ `,' <Identifier> \} `:' <Type>
-
-<Mode> ::= `VALUE' | `VAR' | `CONST' | `READONLY'
-\end{grammar}
-
-% ========================================
-% STATEMENTS
-% ========================================
-\section{Statements}
-\label{sec:statements}
-
-A statement specifies a computation.
-
-\subsection{Assignment Statement}
-
-\begin{grammar}
-<AssignStmt> ::= <Designator> `:=' <Expr>
-\end{grammar}
-
-\subsection{Procedure Call}
-
-\begin{grammar}
-<CallStmt> ::= <Designator> `(' [<ActualParams>] `)'
-\end{grammar}
-
-\subsection{Conditional Statements}
-
-\subsubsection{If Statement}
-
-\begin{grammar}
-<IfStmt> ::= `IF' <Expr> `THEN' <StmtSeq>
-             \{ `ELSIF' <Expr> `THEN' <StmtSeq> \}
-             [`ELSE' <StmtSeq>]
-             `END'
-\end{grammar}
-
-\subsubsection{Case Statement}
-
-\begin{grammar}
-<CaseStmt> ::= `CASE' <Expr> `OF'
-               <Case> \{ `|' <Case> \}
-               [`ELSE' <StmtSeq>]
-               `END'
-
-<Case> ::= <CaseLabels> `=>' <StmtSeq>
-\end{grammar}
-
-\subsection{Loop Statements}
-
-\subsubsection{While Statement}
-
-\begin{grammar}
-<WhileStmt> ::= `WHILE' <Expr> `DO' <StmtSeq> `END'
-\end{grammar}
-
-\subsubsection{For Statement}
-
-\begin{grammar}
-<ForStmt> ::= `FOR' <Identifier> `:=' <Expr> `TO' <Expr> [`BY' <Expr>]
-              `DO' <StmtSeq> `END'
-\end{grammar}
-
-\subsubsection{Loop Statement}
-
-\begin{grammar}
-<LoopStmt> ::= `LOOP' <StmtSeq> `END'
-\end{grammar}
-
-\subsection{Control Flow}
-
-\subsubsection{Return Statement}
-
-\begin{grammar}
-<ReturnStmt> ::= `RETURN' [<Expr>]
-\end{grammar}
-
-\subsubsection{Exit Statement}
-
-\begin{grammar}
-<ExitStmt> ::= `EXIT' | `BREAK'
-\end{grammar}
 
 % ========================================
 % EXPRESSIONS

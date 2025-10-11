@@ -82,47 +82,6 @@ subcellsBlock
     
 cspBlock
         :                #( csp:CSP 
-             // System.err.println("csp text: " + #csp.getText());
-             try {
-                 final CspLexer cspLexer =
-                     new CspLexer(new StringReader(#csp.getText()));
-                 cspLexer.setTokenObjectClass(TokenWithInfo.class.getName());
-                 final TokenStreamSelector selector =
-                     CastTwoUtil.getSelector(cspLexer, "csplexer",
-                                             #csp.getLine(), #csp.getColumn(),
-                                             #csp.getFilename());
-
-                 final CspParser cspParser = new CspParser(selector);
-                 cspParser.setSelector(selector);
-
-                 cspParser.setFilename(#csp.getFilename());
-                 final Pair p = cspParser.program();
-                 final CSPProgram cspProgram = (CSPProgram) p.getFirst();
-                 final TokenWithInfo dir = (TokenWithInfo) p.getSecond();
-                 if (dir != null) {
-                     parseDirectives(dir.getText(), dir.getLine(),
-                                     dir.getColumn(), dir.getFilename(), env,
-                                     BlockInterface.CSP,
-                                     cell.getBlockInterface()
-                                         .iterator(BlockInterface.CSP)
-                                         .next());
-                 }
-
-                 cspProgram.setInitializerStatement
-                     (makeCSPConstantInitializers(env));
-                 if (envContainer != null) {
-                     cspProgram.refineDeclarationsFrom(
-                        envContainer.getCSPProgram());
-                 }
-
-                 cell.setCSPProgram(cspProgram);
-             } catch (RecognitionException e) {
-                 throw semanticWrapperException(e, csp);
-             } catch (TokenStreamException e) {
-                 throw semanticWrapperException(e, csp);
-             } catch (InvalidOperationException e) {
-                 throw semanticWrapperException(e, csp);
-             }
           ( cspPortsenv, cell | ) ) 
         ;
     
@@ -140,36 +99,12 @@ javaBlock
     
 netlistBlock
         :                #( netlist:NETLIST 
-            final CDLLexer lexer =
-                new CDLLexer(new StringReader(#netlist.getText()), true);
-            lexer.setFilename(#netlist.getFilename());
-            lexer.setColumn(#netlist.getColumn());
-            lexer.setLine(#netlist.getLine());
-            final CDLParser parser = new CDLParser(lexer);
-
-            parser.setASTNodeClass(CDLParser.ASTWithToken.class.getName());
-            try {
-                parser.startDeviceList();
-            } catch (TokenStreamException e) {
-                throw semanticWrapperException("Error parsing netlist block", e, netlist);
-            }
-            final AST ast = parser.getAST();
-            final CDLWalker walker = new CDLWalker();
-            final Template templ = new Template(Collections.EMPTY_MAP);
-            final Map params = new HashMap();
-            walker.deviceList(ast, new BlockEnvironment(
-                                       CDLWalker.sanitizeEnvironment(env),
-                                       new LocalEnvironment(params)), templ);
-            ((NetlistBlock) cell.getBlockInterface().iterator(BlockInterface.NETLIST).next()).setCDLTemplate(templ, params);
           ) 
         ;
     
     
 directiveBlock
         :                #( directive:DIRECTIVE 
-            parseDirectives(#directive.getText(), #directive.getLine(),
-                            #directive.getColumn(), #directive.getFilename(),
-                            env, type, parent);
           ) 
         ;
     
@@ -248,22 +183,6 @@ expression
     
 expressionList
         :                #( EXPRESSION_LIST ( expressionenv, anonymousAllowedP, deepP  l.add(ve);  | ( id:IDENT rangeenv, true expr:EXPRESSION_LIST ) 
-              final Symbol sym = generateSymbol(id.getText());
-              final Range.Iterator ri = r.iterator();
-              while (ri.hasNext()) {
-                  final int i = ri.next();
-                  final Environment loopEnv =
-                      new LoopEnvironment(env, sym, IntValue.valueOf(i));
-                  final TupleValue tv =
-                      expressionList(expr, loopEnv, anonymousAllowedP, deepP);
-                  for (int j = 0; j < tv.getSize(); ++j) {
-                      try {
-                          l.add(tv.accessTuple(j));
-                      } catch (InvalidOperationException e) {
-                          throw semanticWrapperException(e, id);
-                      }
-                  }
-              }
             )* ) 
         ;
     
@@ -280,12 +199,7 @@ baseType
     
     
 arraySelector
-        :                #( arrayExpr:ARRAY_SUB ( Range r; rangeenv, false  if (r.getMin() > r.getMax())
-                 throw semanticWrapperException
-                     ("Array subscript minimum value of " + r.getMin() +
-                      " is greater than maximum of " + r.getMax(),
-                      new Exception(), arrayExpr);
-             l.add(r);
+        :                #( arrayExpr:ARRAY_SUB ( Range r; rangeenv, false 
             )* ) 
         ;
     
@@ -339,10 +253,10 @@ assertPrsStatement
     
     
 assertExclStatement
-        :   (                    #( hi:EXCLHI assertExclNodesenv  hiLo = ExclusiveNodeSet.HI; errorAST=hi;  ) 
-            |                    #( lo:EXCLLO assertExclNodesenv  hiLo = ExclusiveNodeSet.LO; errorAST=lo;  ) 
-            |                    #( cc:EXCLCC assertExclNodesenv  hiLo = ExclusiveNodeSet.CC; errorAST=cc;  ) 
-            |                    #( nocc:NOCC assertExclNodesenv  hiLo = ExclusiveNodeSet.NOCC; errorAST=nocc;  ) 
+        :   (                    #( hi:EXCLHI assertExclNodesenv  ) 
+            |                    #( lo:EXCLLO assertExclNodesenv  ) 
+            |                    #( cc:EXCLCC assertExclNodesenv  ) 
+            |                    #( nocc:NOCC assertExclNodesenv  ) 
             ) 
             
         ;
@@ -447,15 +361,7 @@ aliasLoopStatement
     
 metaParamList
         :   (                    #( f:FORMALS ( 
-            if (i >= tupleVal.getSize()) {
-                int expected = 0;
-                AST child = f.getFirstChild();
-                while (child != null) {
-                    expected++;
-                    child = child.getNextSibling();
-                }
-                throw new InvalidOperationException("too few metaparameters: got " + tupleVal.getSize() + " and expected " + expected);
-            }
+        
          metaParamenv, metaParams, tupleVal.accessTuple(i++) )* ) 
             |   
             ) 
@@ -476,7 +382,7 @@ portParamList
     
     
 portParam
-        :                #( VAR_DECL id:IDENT ( PLUS if (reverseDirection) in=true; else out=true; | ) ( MINUS if (reverseDirection) out=true; else in=true; | ) typeenv, cell, null, HierName.makeHierName(id.getText()), false,
+        :                #( VAR_DECL id:IDENT ( PLUS | ) ( MINUS | ) typeenv, cell, null, HierName.makeHierName(id.getText()), false,
                 false, false, id, PORT_PARAM ( COLON id2:IDENT | ) ( envExtraPortIdentenv, buf | ) ) 
         ;
     
@@ -486,12 +392,12 @@ envExtraPortIdent
           buf.append(id.getText());
        ) 
         |                #( FIELD_ACCESS envExtraPortIdentenv, buf fi:FIELD_IDENT ) 
-        |                #( ARRAY_ACCESS envExtraPortIdentenv, buf  buf.append('[');  subtypesArraySelectorenv, buf  buf.append(']');  ) 
+        |                #( ARRAY_ACCESS envExtraPortIdentenv, buf   subtypesArraySelectorenv, buf  ) 
         ;
     
     
 subtypesArraySelector
-        :                #( ARRAY_SUB subtypesRangeenv, buf (  buf.append(',');  subtypesRangeenv, buf )* ) 
+        :                #( ARRAY_SUB subtypesRangeenv, buf (   subtypesRangeenv, buf )* ) 
         ;
     
     
@@ -626,16 +532,7 @@ subtypesStatement
     
 subtypesRefinement
         :                #( v:VAR_DECL ( inline:INLINE | ) subtypesIdentenv, copied, buf 
-             // It's impossible to subtype anonymous cells, so it
-             // doesn't need to pass through generateName().
-
-             try {
-                 subcellName = HierName.makeHierName(buf.toString(), '.');
-             } catch (InvalidHierNameException e) {
-                 throw new AssertionFailure
-                     ("Can't make HierName from " + buf);
-             }
-          typeenv, throwawayCell, null,
+            typeenv, throwawayCell, null,
                          HierName.makeHierName("fake"),
                          false, false, false, null, LOCAL_VAR typeenv, throwawayCell, null,
                         HierName.makeHierName("fake"),
@@ -756,40 +653,13 @@ javaClassMetaParameter
     
 javaClassParameter
         :                #( JAVA_CLASS_PARAMETER exprenv, false ( javaChannelTimingInfoenv | ) 
-             if (v instanceof ArrayValue) {
-                 final ArrayValue av = (ArrayValue) v;
-                 final CoSimChannelNames names = av.getCoSimChannelNames();
-                 // If there's only one element, unwrap it
-                 if (names.hasOneElement()) {
-                     param = new JavaClassParameter(names.getFirstElement());
-                 } else {
-                     param = new JavaClassParameter(names);
-                 }
-             } else {
-                 // v is a channel? TODO: better error reporting,
-                 // commenting
-                 param = 
-                    new JavaClassParameter
-                    (v.getInstanceName().getAsString('.'));
-             }
-             if(timingParams != null) {
-                 param.setTimingParams(timingParams);
-             }
           ) 
         ;
     
     
 javaChannelTimingInfo
         :                #( c:CHANNEL_TIMING_INFO exprenv, false ( 
-             rv = new int[1];
-             rv[0] = getInt(slackValue, slack);
           | exprenv, false exprenv, false exprenv, false exprenv, false 
-             rv = new int[5];
-             rv[0] = getInt(slackValue, slack);
-             rv[1] = getInt(ffValue, ff);
-             rv[2] = getInt(bbValue, bb);
-             rv[3] = getInt(fbValue, fb);
-             rv[4] = getInt(bfValue, bf);
           ) ) 
         ;
     
@@ -912,19 +782,19 @@ partialExtract
     
     
 partialExtractExpr
-        :                #( FIELD_ACCESS partialExtractExprsb fi:FIELD_IDENT  sb.append('.'); sb.append(fi.getText());  ) 
-        |                #( ARRAY_ACCESS partialExtractExprsb  sb.append('[');  partialExtractArraySelectorsb  sb.append(']');  ) 
+        :                #( FIELD_ACCESS partialExtractExprsb fi:FIELD_IDENT ) 
+        |                #( ARRAY_ACCESS partialExtractExprsb  ) 
         |   IDENT 
         ;
     
     
 partialExtractArraySelector
-        :                #( arrayExpr:ARRAY_SUB partialExtractRangesb (  sb.append(',');  partialExtractRangesb )* ) 
+        :                #( arrayExpr:ARRAY_SUB partialExtractRangesb ( partialExtractRangesb )* ) 
         ;
     
     
 partialExtractRange
-        :                #( RANGE #( EXPRESSION n:NUM_INT  sb.append(n.getText());  ) ) 
+        :                #( RANGE #( EXPRESSION n:NUM_INT   ) ) 
         ;
     
     
