@@ -44,8 +44,10 @@ globalBodyStatement
     
     
 bodyStatementList
-        :                #( BODY_STATEMENT_LIST ( bodyStatementenv, globalP, cell, envContainer, paramEnv, prsEnv,
-                         subcellsEnv, subtypesEnv )* ) 
+        :                #( BODY_STATEMENT_LIST 
+                              ( bodyStatementenv, globalP, cell, envContainer, 
+                                paramEnv, prsEnv,
+                                subcellsEnv, subtypesEnv )* ) 
         ;
     
     
@@ -76,7 +78,8 @@ prsBlock
     
     
 subcellsBlock
-        :                #( subcells:SUBCELLS ( inline:INLINE | fragment:FRAGMENT | ) ) 
+        :                #( subcells:SUBCELLS 
+                            ( inline:INLINE | fragment:FRAGMENT | ) ) 
         ;
     
     
@@ -110,13 +113,15 @@ directiveBlock
     
     
 block
-        :                #( BLOCK bodyStatementListenv, false, cell, envContainer, paramEnv, prsEnv,
+        :                #( BLOCK bodyStatementListenv, false, cell, 
+                                 envContainer, paramEnv, prsEnv,
                                  subcellsEnv, subtypesEnv ) 
         ;
     
     
 variableDeclarationStatement
-        :                #( VAR_DECL id:IDENT  varName = generateName(id.getText());  ( INLINE  inlineP = true;  | ) ( FLATTEN  flattenP = true;  | ) typeenv, cell, envContainer, HierName.makeHierName(varName),
+        :                #( VAR_DECL id:IDENT    
+                             ( INLINE  inlineP = true;  | ) ( FLATTEN  flattenP = true;  | ) typeenv, cell, envContainer, HierName.makeHierName(varName),
                 globalP, inlineP, flattenP, id, LOCAL_VAR ( variableInitializerenv | ) ) 
         ;
     
