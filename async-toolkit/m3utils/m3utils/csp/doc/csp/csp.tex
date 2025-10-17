@@ -240,8 +240,8 @@ the ANTLR grammar used at Fulcrum to construct the CSP parser.
 To avoid confusion, throughout this report we will use the
 machine-readable syntax used in Fulcrum CSP, rather than a syntax
 ``for publication.''  Accordingly, assignment will be written \verb!=!
-(not $:=$), the probe will be written \verb!#A! (not $\overline{A}$),
-etc.
+  (not $:=$), the test for equality will be written \verb!==! (not
+$=$), the probe will be written \verb!#A! (not $\overline{A}$), etc.
 
 \section{Features}
 
@@ -269,7 +269,7 @@ nondeterministic programs by Dijkstra in 1975.  Hoare's CSP and its
 descendants have used these for looping and branching.  Following
 Dijkstra and unlike if-else statements of the kind introduced in
 Algol, guarded commands are symmetric---there is no particular order in
-which guards are evaluated.
+which guards are evaluated (until the \verb!else! keyword is introduced).
 
 \subsubsection{The rendezvous}
 
@@ -280,14 +280,14 @@ The rendezvous is a distributed assignment statement.  As a simple
 example, consider two processes \verb!P! and \verb!Q! where \verb!P!
 is the sending process, in which case its text includes a send
 operation of a local value \verb!v! on a port \verb!X!:
-\begin{verbatim}
+\begin{Verbatim}[samepage=true]
    X!v
-\end{verbatim}
+\end{Verbatim}
 and further that the receiving process \verb!Q! performs a receive operation
 on a port \verb!Y! into a local variable \verb!w!:
-\begin{verbatim}
+\begin{Verbatim}[samepage=true]
    Y?w
-\end{verbatim}
+\end{Verbatim}
 Consider further that (by a mechanism external to CSP itself) the ports
 \verb!P.X! and \verb!Q.Y! have been connected together and therefore form
 a {\em channel.}  Then the semantics of the rendezvous are as follows:
@@ -300,15 +300,15 @@ a {\em channel.}  Then the semantics of the rendezvous are as follows:
 
 \item When both \verb!P! has reached \verb,X!v,
   and \verb!Q! has reached \verb,Y?w, then the assignment
-\begin{verbatim}
+\begin{Verbatim}[samepage=true]
    w = v
-\end{verbatim}
+\end{Verbatim}
 is executed and \verb!P! and \verb!Q! continue execution at their next statements.
   
 \end{itemize}
 The simple semantics given here can be modified by the addition of {\em slack\/} to the channel.  If the channel has slack $n$, then \verb,P.X!v, can complete
 $n$ more times than \verb,Q.Y?w, before \verb,P, is suspended, following
-Martin 1981\cite{martin1981}.  Values entering the channel appear on the
+Martin 1981\cite{Martin1981}.  Values entering the channel appear on the
 output in FIFO order.  The simple semantics above then illustrates
 the case $n=0$, {\em slack-zero\/} communication. 
 
@@ -331,31 +331,32 @@ unrelated places as these inputs arrive.  Call the ports on the process
 are truly unrelated, there may be no way of knowing in what sequence inputs
 will arrive on \verb!A! and \verb!B!.  Simply receiving the inputs is not
 a solution, since if we attempt to code this as
-\begin{verbatim}
+\begin{Verbatim}[samepage=true]
    A?a ; B?b
-\end{verbatim}
+\end{Verbatim}
 and only one of the two ports has an input arriving, our system will
 deadlock with this process waiting for an input to arrive on the other
 ports.  The probe is the solution to this problem.  The probe is written
 \verb!#A! and is a boolean value that is true exactly when performing an
 action on \verb!A! can proceed without suspension.  The coding of our
 example then is
-\begin{verbatim}
+\begin{Verbatim}[samepage=true]
    [  #A -> A?a ; // handle a
    [] #B -> B?b ; // handle b
    ]
-\end{verbatim}
+\end{Verbatim}
+
 More complex expressions can then be constructed using the usual logical
 operators, as needed.
 
 The probe can be used to describe a simple reactive process structure,
 where the process waits for inputs and handles each input in turn, doing
 nothing else:
-\begin{verbatim}
+\begin{Verbatim}[samepage=true]
    *[[ #A -> A?a ; // handle a
     [] #B -> B?b ; // handle b
     ]]
-\end{verbatim}
+\end{Verbatim}
 
 \subsubsection{Arbitrary-precision arithmetic}
 
@@ -406,7 +407,7 @@ Only two's-complement arithmetic is directly
 supported.
 
 
-\subsubsection{Structured types}
+\subsubsection{Structured types}\label{sec:struct}
 
 Structured types (records in Pascal parlance) are common in hardware-oriented
 languages.  CSP's structures are called {\em structs\/} and are by default
@@ -556,7 +557,7 @@ written in another process.
 \label{sec:types}
 
 \subsection{Integer types}
-\label{subsec:integer-types}
+\label{sec:integer-types}
 There are three kinds of integer types: \verb!int!, {\em signed integers,}
 and {\em unsigned integers.} \verb!int! contains zero, all positive integers
 (Peano natural numbers), and the negation of the positive integers.
@@ -596,17 +597,17 @@ determined by the structure type's type.  The expression \verb!s::f!
 designates the field named \verb!f! in the structure \verb!s!.
 
 A structure type declaration has the form:
-\begin{verbatim}
+\begin{Verbatim}[samepage=true]
   structure T =
    (
     FieldList
    );
-\end{verbatim}
+\end{Verbatim}
 where \verb!FieldList! is a list of field declarations, each of which has the
 form:
-\begin{verbatim}
+\begin{Verbatim}[samepage=true]
    Type fieldName = initial;
-\end{verbatim}
+\end{Verbatim}
 where \verb!fieldName! is an identifier, \verb!Type! is any type, and
 \verb!initial! is a constant expression.  The field names must be
 distinct.  Empty structure types are not allowed.
@@ -634,24 +635,24 @@ All arrays are {\em fixed\/} in CSP, and the layout of every array is
 determined before program startup.
 
 An array declaration has the form:
-\begin{verbatim}
+\begin{Verbatim}[samepage=true]
   Element Id Layout;
-\end{verbatim}
+\end{Verbatim}
 where \verb!Element! is the element type and \verb!Layout! represents
 the layout of the array.  The layout can be specified in one of
 two equivalent ways: either as a comma separated list of ranges \verb!lo..hi!
 between brackets or as a list of ranges \verb!lo..hi! within separate brackets:
-\begin{verbatim}
+\begin{Verbatim}[samepage=true]
   T a[0..2,0..2];
   T b[0..2][0..2];
-\end{verbatim}
+\end{Verbatim}
 here \verb!a! and \verb!b! have equivalent declarations.  Any array index
 can also be specified with a single number \verb!length! in which case the
 index ranges over \verb!0..length - 1!.  Hence the following are equivalent:
-\begin{verbatim}
+\begin{Verbatim}[samepage=true]
   T c[0..2,0..5];
   T d[3][6];
-\end{verbatim}
+\end{Verbatim}
 
 Types that are not array types are called {\em scalar types,} and instances
 of such types are called {\em scalars.}
@@ -686,7 +687,7 @@ $W$ is an integer called the {\em width\/} of the channel, and
 $\Sigma$ is an integer called the {\em slack\/} of the channel.
 Channels are not declared within the CSP language but described
 externally.  Values transacted over a channel are of type
-\verb!int(W)! (see section~\ref{subsec:integer-types}.)
+\verb!int(W)! (see section~\ref{sec:integer-types}.)
 
 
 
@@ -714,21 +715,21 @@ A {\em function\/} is a triple consisting of:
 A function that returns as a result is also called a {\em function procedure\/}; a function that does not return a result is called a {\em proper procedure.}
 
 A function definition has the form:
-\begin{verbatim}
+\begin{Verbatim}[samepage=true]
    function F sig = ( body );
-\end{verbatim}
+\end{Verbatim}
 where \verb!body! is the body, and \verb!sig! is a signature specification,
 which has the form:
-\begin{verbatim}
+\begin{Verbatim}[samepage=true]
    (formal0 ; ...; formaln-1) : R
-\end{verbatim}
+\end{Verbatim}
 where each \verb!formali! is a formal parameter declaration, as described below and \verb!R! is the result type, which can be any type.  The ``\verb!: R!'' can
 be omitted, making the signature that of a proper procedure.
 
 A formal parameter declaration has the form
-\begin{verbatim}
+\begin{Verbatim}[samepage=true]
    Type Mode Name Layout = Initial
-\end{verbatim}
+\end{Verbatim}
 where
 \begin{itemize}
 \item \verb!Type! is the type of the parameter if the parameter is scalar, or the element type of the parameter if the parameter type is an array type
@@ -743,13 +744,13 @@ where
 \item\verb!Initial! specifies the initial value of a parameter whose mode is \verb!+!.  \verb!= Initial! can be omitted.
 \end{itemize}
 When a series of parameters share the same type, \verb!Mode Name Layout = Initial! can be a replaced with a comma-separated list of mode, name, layout, and initial value, in which case the type is repeated for each parameter.  That is:
-\begin{verbatim}
+\begin{Verbatim}[samepage=true]
    Type Mode0 Name0 Layout0 = Initial0, Mode1 Name1 Layout1 = Initial1, ...
-\end{verbatim}
+\end{Verbatim}
 is shorthand for
-\begin{verbatim}
+\begin{Verbatim}[samepage=true]
    Type Mode0 Name0 Layout0 = Initial0; Type Mode1 Name1 Layout1 = Initial1; ...
-\end{verbatim}
+\end{Verbatim}
 A function definition is also a function declaration.
 
 \section{Initialization}
@@ -802,9 +803,9 @@ runtime error, or loop forever.
 \subsection{Skip}
 
 The no-op {\em skip\/} statement
-\begin{verbatim}
+\begin{Verbatim}[samepage=true]
    skip
-\end{verbatim}
+\end{Verbatim}
 when activated in any state, terminates in the same state.
 
 \subsection{Assignment}
@@ -846,9 +847,9 @@ An expression \verb!e! is {\em assignable\/} to a type \verb!T! if \verb!e! is
 assignable to a variable of type \verb!T!.
 
 An assignment statement has the form:
-\begin{verbatim}
+\begin{Verbatim}[samepage=true]
    v = e
-\end{verbatim}
+\end{Verbatim}
 where \verb!v! is a writable designator and \verb!e! is an expression
 assingable to the variable designated by \verb!v!.  The statement sets
 \verb!v! to the value of \verb!e!.  \verb!v! is always evaluated before
@@ -873,13 +874,13 @@ of the form \verb'X=':
 and
 \verb!>>=!.
 For each assignment-by-operation statement of the form
-\begin{verbatim}
+\begin{Verbatim}[samepage=true]
    v X= e
-\end{verbatim}
+\end{Verbatim}
 this is equivalent to 
-\begin{verbatim}
+\begin{Verbatim}[samepage=true]
    v = v X e
-\end{verbatim}
+\end{Verbatim}
 with the exception that \verb!v! is evaluated only once.  See section~\ref{sec:expressions} for a specification of each operation \verb!X! in this context.
 
 The two special operations \verb!x++! and \verb!x--! are syntactic sugar for
@@ -889,9 +890,9 @@ The two special operations \verb!x++! and \verb!x--! are syntactic sugar for
 \subsection{Function call}
 
 A function call has the form:
-\begin{verbatim}
+\begin{Verbatim}[samepage=true]
    F(Bindings)
-\end{verbatim}
+\end{Verbatim}
 where \verb!F! is the name of a function and \verb!Bindings! is a list
 of bindings.  A binding has the form \verb!actual!, where \verb!actual! is
 an expression.  If the list of bindings is empty, the parentheses are still
@@ -900,24 +901,24 @@ required.
 Function parameters are passed by value-result.  This means that for
 each formal that has \verb!-! in its mode, the binding is turned
 into an assignment
-\begin{verbatim}
+\begin{Verbatim}[samepage=true]
    Name = actual
-\end{verbatim}
+\end{Verbatim}
 where \verb!Name! is the name of the formal, which is evaluated before
 the body of the function.  For a formal that does not have \verb!-! in its
 mode, the binding is instead turned into an assignment
-\begin{verbatim}
+\begin{Verbatim}[samepage=true]
    Name = initial
-\end{verbatim}
+\end{Verbatim}
 where \verb!initial! is the initial value from the function signature
 for that parameter, or a declaration without an initialization, subject
 to the normal initialization rules, if no initial value is provided in the
 function signature .
 For each formal that has \verb!+! in its mode,
 the binding is turned into an assignment
-\begin{verbatim}
+\begin{Verbatim}[samepage=true]
    actual = Name 
-\end{verbatim}
+\end{Verbatim}
 which is evaluated after the body of the function.  Finally, for function
 procedures, the return value of the function is declared using the function's
 own name (e.g., \verb!F!) before the
@@ -929,13 +930,13 @@ the formal parameters are assigned, the body of the procedure is executed, and
 \verb!+! parameters and the function result (if present) are assigned.
 
 For example, consider:
-\begin{verbatim}
+\begin{Verbatim}[samepage=true]
   function F(int +x = 12; -y) : int = ( x = x * y; F = x + y );
   q = 2;
   z = F(q, 3);
-\end{verbatim}
+\end{Verbatim}
 following the rules above, this is equivalent to:
-\begin{verbatim}
+\begin{Verbatim}[samepage=true]
   q = 2;
   int x = 12;
   int y = 3;
@@ -943,23 +944,23 @@ following the rules above, this is equivalent to:
   x = x * y;
   F = x + y;
   z = F;
-\end{verbatim}
+\end{Verbatim}
 
 
 \subsection{Sequential composition}
 A statement of the form
-\begin{verbatim}
+\begin{Verbatim}[samepage=true]
    S1; S2
-\end{verbatim}
+\end{Verbatim}
 represents {\em sequential composition,} and is operationally defined that it
 executes \verb!S1!, and then if the outcome is normal, executes \verb!S1!.  If
 the outcome of \verb!S1! is an error, \verb!S2! is ignored.
 
 \subsection{Parallel composition}
 A statement of the form
-\begin{verbatim}
+\begin{Verbatim}[samepage=true]
    S1, S2
-\end{verbatim}
+\end{Verbatim}
 represents {\em parallel composition,} and is operationally defined that it
 executes \verb!S1! and \verb!S2! in some arbitrary order, or even in such a
 way that if there are observable states within \verb!S1! and \verb!S2! in
@@ -971,13 +972,13 @@ executes.
 \subsection{Guarded commands}
 
 {\em Guarded commands\/} consist of a list of commands:
-\begin{verbatim}
+\begin{Verbatim}[samepage=true]
   Start G0 -> S0 Sep G1 -> S1 Sep ... Gn-1 -> Sn-1 Sep else -> Sn End
-\end{verbatim}
+\end{Verbatim}
 where
 
 \begin{itemize}
-\item  \verb!Start! is a starting bracket, either \verb!*[! or \verb![!.
+\item  \verb!Start! is a starting bracket, either \verb!*[!, \verb![!, or \verb!#[!.
 \item the \verb!Gi! are boolean expressions called the {\em guards.}
 \item the \verb!Si! are statements called the {\em guarded commands.}
 \item \verb!Sep! is a separator, either \verb![]! or \verb!:!.
@@ -996,6 +997,25 @@ The shorthand \verb![ G ]! is short for \verb![ G -> skip ]! and hence means
 
 \verb!else -> Sn! may be omitted.  If present, \verb!else! is interpreted
 as the expression \verb?!G0 & !G1 & ... & !Gn-1?.
+
+\subsubsection{Simple if statement}
+When \verb!Start! is \verb!#[!, the statement is a {\em simple if statement.}
+When the selection statement is activated,
+an arbitrary \verb!Sj! for which \verb!Gj! is true is executed, after which
+the selection statement terminates.  If no \verb!Gj! is true, the simple
+if statement is equivalent to \verb!skip!.
+
+The simple if statement:
+\begin{Verbatim}[samepage=true]
+   #[ G0 -> S0 [] G1 -> S1 [] ... [] Gn-1 -> Sn-1 ]
+\end{Verbatim}
+is equivalent to the selection:
+\begin{Verbatim}[samepage=true]
+    [ G0 -> S0 [] G1 -> S1 [] ... [] Gn-1 -> Sn-1 [] else -> skip ]
+\end{Verbatim}
+
+An \verb!else! clause is not permitted in the simple if statement.
+
 
 \subsubsection{Repetition statement}
 When \verb!Start! is \verb!*[!, the statement is {\em a repetition
@@ -1032,9 +1052,9 @@ of \verb!Si! has begun.
 
 \subsection{The loop statement}\label{sec:loop-statement}
 The loop construct is
-\begin{verbatim}
+\begin{Verbatim}[samepage=true]
    < Op Id : Range : Statement >
-\end{verbatim}
+\end{Verbatim}
 where
 \begin{itemize}
 
@@ -1069,9 +1089,9 @@ details on ports and channels.
 \subsubsection{Send}
 
 The send statement is
-\begin{verbatim}
+\begin{Verbatim}[samepage=true]
    OPort ! e
-\end{verbatim}
+\end{Verbatim}
 where \verb!OPort! an output port of width \verb!W! and
 \verb!e! is an expression assignable to a variable of type \verb!int(W)!.
 (Compare to section~\ref{sec:expr-ass}.)
@@ -1086,9 +1106,9 @@ is incremented.  See section~\ref{sec:slack}.
 \subsubsection{Receive}\label{sec:receive}
 
 The receive statement is
-\begin{verbatim}
+\begin{Verbatim}[samepage=true]
    IPort ? v
-\end{verbatim}
+\end{Verbatim}
 where \verb!IPort! is an input port of width \verb!W!
 and \verb!v! is a writable designator assignable from an expression
 of type \verb!int(W)!.
@@ -1129,11 +1149,11 @@ CSP declarations in a program occur in a specified order.  Certain
 constants, functions, and structure types can be pre-declared by the
 CAST environment of a CSP program.  Within a single CSP program,
 the sequence of declarations is fixed:
-\begin{verbatim}
+\begin{Verbatim}[samepage=true]
   structure type declarations;
   function declarations;
   program body
-\end{verbatim}
+\end{Verbatim}
 the program body is evaluated when the system starts to run.  The evaluation
 order of different CSP programs within a system is unspecified.
 CSP does not allow forward references: therefore, an implication of the
@@ -1147,9 +1167,9 @@ and declarations and definitions of functions are described in section~\ref{sec:
 Variables are declared anywhere in the program body.  The program body is a
 scope, and a guarded command is a scope.  A variable declaration has
 the format
-\begin{verbatim}
+\begin{Verbatim}[samepage=true]
    Type Id Layout ;
-\end{verbatim}
+\end{Verbatim}
 \begin{itemize}
 \item \verb!Type! is the type of the variable, if the variable is scalar, or the type of an element, if the variable is an array.
 \item \verb!Id! is an identifier that becomes bound to the variable
@@ -1184,18 +1204,18 @@ notation in several ways.
 The argument to an operation can be required to have a type in a
 particular class, such as an integer type.  In this case the formal
 specifies a type class instead of a type.  For example:
-\begin{verbatim}
+\begin{Verbatim}[samepage=true]
    + (a : integer, b : integer) : int
-\end{verbatim}
+\end{Verbatim}
 The formal type \verb!Any! specifies an argument of any type.
 
 A single operation name can be overloaded, which means that it denotes
 more than one operation.  In this case, we write a separate signature for
 each of the operations.  For example:
-\begin{verbatim}
+\begin{Verbatim}[samepage=true]
    + (a : integer, b : integer) : int
      (a : string, b : string)   : string
-\end{verbatim}
+\end{Verbatim}
 The particular operation will be elected so that each actual argument type
 is of the corresponding formal type or a member of the corresponding
 formal type class.
@@ -1233,9 +1253,9 @@ literals is \verb!bool!.
 A string literal is a pair of double quotes enclosing a sequence of
 ISO-Latin-1 printing charcters (excluding double quote) and escape sequences.
 The type of a string literal is \verb!string!.
-\begin{verbatim}
+\begin{Verbatim}[samepage=true]
    " String "
-\end{verbatim}
+\end{Verbatim}
 The legal escape sequences are: \verb!\n!, \verb!\r!, \verb!\t!,
 \verb!\b!, \verb!\f!, \verb!\"!, \verb!\'!, \verb!\\!, and arbitrary
 8-bit characters can be written \verb!\x HexNum!, where \verb!HexNum!
@@ -1292,9 +1312,9 @@ array, and struct accessor expressions.
 \subsubsection{Bit access}
 If \verb!e! is an integer expression, a range of bits of \verb!e! can
 be accessed using the syntax
-\begin{verbatim}
+\begin{Verbatim}[samepage=true]
    e { Range }
-\end{verbatim}
+\end{Verbatim}
 where \verb!Range! is a range \verb!Hi : Lo! where \verb!Hi! and \verb!Lo!
 are of type \verb!int!, or a single number \verb!k!, which is interpreted as
 \verb!k : k!.  If the range is empty, the value is zero.
@@ -1306,9 +1326,9 @@ a writable designator if \verb!e! is a writable designator.  The type of
 \subsubsection{Array access}
 If \verb!e! is an array expression of any type, a {\em slice\/} of the array
 is denoted by
-\begin{verbatim}
+\begin{Verbatim}[samepage=true]
    e [ I0 , I1, I2 , ... , In-1]
-\end{verbatim}
+\end{Verbatim}
 where \verb!I0!..\verb!In-1! are indexes into the first \verb!n! dimensions
 of the array; \verb!I0!..\verb!In-1! must be integers.
 
@@ -1333,9 +1353,9 @@ available in CSP.
 
 \subsubsection{Struct field access}
 If \verb!e! is a struct, the expression
-\begin{verbatim}
+\begin{Verbatim}[samepage=true]
   e :: Field
-\end{verbatim}
+\end{Verbatim}
 where \verb!Field! names a field of the structure type of \verb!e!, denotes
 the value of the corresponding field.  The struct-access expression is a designator if \verb!e! is a designator; it is
 a writable designator if \verb!e! is a writable designator.  The type of
@@ -1493,9 +1513,9 @@ For integer \verb!x! and \verb!y!, \verb!x || y! is equivalent to
 
 \subsection{Loop expressions}\label{sec:loop-expression}
 A loop expression is
-\begin{verbatim}
+\begin{Verbatim}[samepage=true]
    < Op Id : Range : Expr >
-\end{verbatim}
+\end{Verbatim}
 where
 \begin{itemize}
 
@@ -1531,9 +1551,9 @@ equal to the zero element of \verb!Op! as it applies to the type of \verb!Expr!,
 
 The peek, or {\em receive expression,} is indicated by writing the name
 of a receive port in an expression.  The peek is
-\begin{verbatim}
+\begin{Verbatim}[samepage=true]
    IPort
-\end{verbatim}
+\end{Verbatim}
 where \verb!IPort! is an input port of width \verb!W!.  If no value
 has yet been sent by the sender, the receiver is suspended until the
 sender has sent the value, at which time the peek evaluates to the
@@ -1584,7 +1604,7 @@ packed with the earlier indexes changing slowest.
 \subsubsection{Examples}
 
 Consider
-\begin{verbatim}
+\begin{Verbatim}[samepage=true]
     structure s = (
       int(8) a[4];
       int(8) b;
@@ -1600,13 +1620,13 @@ Consider
     ss::b    = 0xbb;
 
     sss = pack(ss)  
-\end{verbatim}
+\end{Verbatim}
 \verb!sss! will contain \verb!0x3020100bb! because \verb!a! gets packed to
 higher-order bits, \verb!b! gets packed to lower-order bits, and within
 \verb!b! the higher indexes are packed to higher order bits.
 
 Now consider
-\begin{verbatim}
+\begin{Verbatim}[samepage=true]
     structure t = (
       int(8) a[2][2];
     );
@@ -1619,7 +1639,7 @@ Now consider
     tt::a[1][1] = 0x11;
 
     ttt = pack(tt)
-\end{verbatim}
+\end{Verbatim}
 \verb!ttt! will contain \verb!0x11100100! because \verb!a[1]! is packed
 to higher-order-bits and within \verb!a[1]!, \verb!a[1][1]! is packed
 higher than \verb!a[1][0]!.
@@ -1630,13 +1650,13 @@ higher than \verb!a[1][0]!.
 \end{tabular}
 If \verb!x! and \verb!t! are of the same structure type, and
 \verb!y! is equal to \verb!pack(t)! then
-\begin{verbatim}
+\begin{Verbatim}[samepage=true]
    unpack(x, y)
-\end{verbatim}
+\end{Verbatim}
 is equivalent to the statement
-\begin{verbatim}
+\begin{Verbatim}[samepage=true]
    x = t
-\end{verbatim}
+\end{Verbatim}
 
 \subsection{Assertions}
 
