@@ -407,7 +407,7 @@ Only two's-complement arithmetic is directly
 supported.
 
 
-\subsubsection{Structured types}\label{sec:struct}
+\subsubsection{Structured types}
 
 Structured types (records in Pascal parlance) are common in hardware-oriented
 languages.  CSP's structures are called {\em structs\/} and are by default
@@ -589,6 +589,7 @@ for the lower half (0..127) with a system-dependent upper half.
 The shortest string is the empty string.  There is no ``null string'' in CSP.
 
 \subsection{Structure types}
+\label{sec:struct}
 
 A {\em structure type\/} is a sequence of named variables, called the
 {\em fields\/} of the structure type. Different fields can have
@@ -1066,15 +1067,16 @@ where
   an integer value \verb!N!, which is interpreted identically to \verb!0 .. N - 1!,
 \item \verb!Statement! is a CSP statement (including a sequential or parallel composition)
 \end{itemize}
-The loop statement is interpreted as \verb!Hi - Lo + 1! textual repetitions of
- \verb!(Statement)! with the name \verb!Id! bound to the values
-\verb!Lo! to \verb!Hi! in succession, with \verb!Op! as a separator.
-This means that within \verb!Statement!, \verb!Id! takes on the constant
-\verb!int! value of the index of that iteration of the loop, and \verb!Id! is
-a readonly designator.
-The empty range is allowed and if present, the loop is equivalent to
-\verb!skip!. \verb!Lo! and \verb!Hi! need not be compile-time constants, but
-an implementation is allowed to require that \verb!Lo! and \verb!Hi! be compile-time constants when \verb!Op! is \verb!,!.
+The loop statement is interpreted as \verb!Hi - Lo + 1! textual
+repetitions of \verb!(Statement)! with the name \verb!Id! bound to the
+values \verb!Lo! to \verb!Hi! in succession, with \verb!Op! as a
+separator.  This means that within \verb!Statement!, \verb!Id! takes
+on the constant \verb!int! value of the index of that iteration of the
+loop, and \verb!Id! is a readonly designator.  The empty range is
+allowed and if present, the loop is equivalent to
+\verb!skip!. \verb!Lo! and \verb!Hi! need not be compile-time
+constants, but an implementation is allowed to require that \verb!Lo!
+and \verb!Hi! be compile-time constants when \verb!Op! is \verb!,!.
 
 
 \subsection{The rendezvous}
@@ -1085,6 +1087,24 @@ The rendezvous is implemented with two kinds of statements: {\em
 for {\em synchronization\/} and {\em distributed assignment\/} between
 {\em communicating processes.}  See section~\ref{sec:chanport} for
 details on ports and channels.
+
+\subsubsection{Slack}\label{sec:slack}
+
+Communications actions on the two ports of a channel are synchronized.
+Call the number of send actions that have been completed on a channel
+$cS$ and the number of receive actions on that channel $cR$.  Since values
+cannot be received before they are sent, we have that
+\[
+cR \leq cS
+\]
+and the difference $cS - cR$ is the number of messages sent that have not
+yet been received.  The slack $\Sigma$ of the channel is the limit on this
+difference, so that:
+\[
+0 \leq cS - cR \leq \Sigma 
+\]
+The sender and receiver processes will be suspended if a send or receive
+action would violate this constraint. 
 
 \subsubsection{Send}
 
@@ -1123,24 +1143,6 @@ See section~\ref{sec:slack}.
 
 See also section~\ref{sec:peek}.
 
-\subsubsection{Slack}\label{sec:slack}
-
-Communications actions on the two ports of a channel are synchronized.
-Call the number of send actions that have been completed on a channel
-$cS$ and the number of receive actions on that channel $cR$.  Since values
-cannot be received before they are sent, we have that
-\[
-cR \leq cS
-\]
-and the difference $cS - cR$ is the number of messages sent that have not
-yet been received.  The slack $\Sigma$ of the channel is the limit on this
-difference, so that:
-\[
-0 \leq cS - cR \leq \Sigma 
-\]
-The sender and receiver processes will be suspended if a send or receive
-action would violate this constraint. 
-
 
 
 \section{Declarations}
@@ -1161,8 +1163,9 @@ declaration order is that functions cannot access variables declared in
 the program body.  Functions can however access structure type declarations
 and constants declared in CAST.
 
-Declarations of structure types are described in section~\ref{sec:struct},
-and declarations and definitions of functions are described in section~\ref{sec:functions}.
+Declarations of structure types are described in
+section~\ref{sec:struct}, and declarations and definitions of
+functions are described in section~\ref{sec:functions}.
 
 Variables are declared anywhere in the program body.  The program body is a
 scope, and a guarded command is a scope.  A variable declaration has
@@ -1559,7 +1562,7 @@ has yet been sent by the sender, the receiver is suspended until the
 sender has sent the value, at which time the peek evaluates to the
 value that would have been written by executing a receive on the
 channel.  $cR$ is not incremented for the channel.  See
-sections~\ref{sec:receive} and~\ref{sec:slack}.
+section~\ref{sec:receive}.
 
 \section{Special functions}
 
@@ -1648,6 +1651,7 @@ higher than \verb!a[1][0]!.
 \begin{tabular}{l}
   \verb!unpack(x: structure; y: integer)! \\
 \end{tabular}
+
 If \verb!x! and \verb!t! are of the same structure type, and
 \verb!y! is equal to \verb!pack(t)! then
 \begin{Verbatim}[samepage=true]
@@ -1679,6 +1683,7 @@ required, to not evaluate \verb!y!.
 \begin{tabular}{l}
   \verb!string  (x, y : integer) : string! \\
 \end{tabular}
+
 If \verb!x! is any integer and \verb!y! is in the range \verb!2..36!,
 \verb!string(x, y)! converts the number \verb!x! to an ASCII string
 representation in the base \verb!y!, where the digits are drawn from the
@@ -1688,6 +1693,7 @@ set \verb!0..9,a..z!.
 \begin{tabular}{l}
   \verb!random  (x : integer) : int(x)! \\
 \end{tabular}
+
 If \verb!x! is a nonnegative integer, \verb!random(x)! evaluates to
 a number whose \verb!x! least-significant bits are randomly chosen to
 be \verb!0! or \verb!1!.  \verb!random(0)! evaluates to \verb!0!.
@@ -1699,6 +1705,7 @@ runtime error.
   \verb!simtime   () : int(x)! \\
   \verb!walltime  () : int(x)! \\
 \end{tabular}
+
 \verb!simtime! and \verb!walltime! are timing functions.
 \verb!simtime()! returns an integer that increases at some rate with
 respect to the execution of the system of processes.  Repeated calls
