@@ -391,6 +391,7 @@ PrintTimeValChng(ffrVCTrvsHdl   vc_trvs_hdl,
         
       case FSDB_BYTES_PER_BIT_8B:
         ((float *)buff)[tidx] = *(double*)vc_ptr;	
+        break;
         
       default:
         ((float *)buff)[tidx] = 0.0;
@@ -431,6 +432,7 @@ PrintTimeValChng(ffrVCTrvsHdl   vc_trvs_hdl,
           
         case FSDB_BYTES_PER_BIT_8B:
           fprintf(stream, " %15e", *(double*)vc_ptr);	
+          break;
           
         default:
           fprintf(stream, " DIGITAL");

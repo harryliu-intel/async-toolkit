@@ -396,6 +396,7 @@ __PrintTimeValChng(ffrVCTrvsHdl   vc_trvs_hdl,
 
     case FSDB_BYTES_PER_BIT_8B:
 	fprintf(stderr, "         y-val: (%15e)\n", *(double*)vc_ptr);	
+        break;
         
     default:
 	fprintf(stderr, "skip digital values.\n");
