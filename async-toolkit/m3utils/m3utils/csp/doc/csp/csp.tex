@@ -196,7 +196,8 @@ language takes its name from Hoare's 1978 {\em Communicating
 ``CSP'', but has seen significant changes from that language, in
 particular following the {\em Communicating Hardware Processes\/} (CHP)
 described (but not yet named) by Martin in 1986.  In any case, the
-name ``CSP'' will be used to mean Fulcrum CSP throughout this report.
+name ``CSP'' will be used to mean Fulcrum CSP throughout this report unless
+qualified otherwise.
 
 
 \section{Overview}
@@ -282,8 +283,9 @@ Similarly, Dijkstra introduced the \verb!do! loop:
      f -> S1
    od
 \end{verbatim}
-which repeats until neither \verb!e! nor \verb!f! is true, using the
-same selection rules as for the selection, except that it terminates.
+which repeats until neither \verb!e! nor \verb!f! is true, and then
+terminates, using the same nondeterministic selection rules as for the
+selection until then.
 
 Our semantics follow Dijkstra and Martin and use Hoare's syntax of
 \begin{Verbatim}[samepage=true]
@@ -337,14 +339,14 @@ a {\em channel.}  Then the semantics of the rendezvous are as follows:
 \begin{Verbatim}[samepage=true]
    w = v
 \end{Verbatim}
-is executed and \verb!P! and \verb!Q! continue execution at their next statements.
+is executed and \verb!P! and \verb!Q! continue execution at their next statements.  See section~\ref{sec:rendezvous}.
   
 \end{itemize}
 The simple semantics given here can be modified by the addition of {\em slack\/} to the channel.  If the channel has slack $n$, then \verb,P.X!v, can complete
 $n$ more times than \verb,Q.Y?w, before \verb,P, is suspended, following
 Martin 1981\cite{Martin1981}.  Values entering the channel appear on the
 output in FIFO order.  The simple semantics above then illustrates
-the case $n=0$, {\em slack-zero\/} communication. 
+the case $n=0$, {\em slack-zero\/} communication.  See section~\ref{sec:slack}.
 
 The explicit synchronization provided by the rendezvous allows distributed
 systems to be built without an additional synchronization mechanism such as
@@ -391,6 +393,7 @@ nothing else:
     [] #B -> B?b ; // handle b
     ]]
 \end{Verbatim}
+See section~\ref{sec:probe}.
 
 \subsubsection{Arbitrary-precision arithmetic}
 
@@ -438,7 +441,7 @@ signed or not).  In this way, the rules for expressions are very simple
 (arbitrary precision) but it is still possible to specify exactly
 the width of registers, etc., which is important for silicon compilation.
 Only two's-complement arithmetic is directly
-supported.
+supported.  See section~\ref{sec:integer-types}.
 
 
 \subsubsection{Structured types}
@@ -446,20 +449,21 @@ supported.
 Structured types (records in Pascal parlance) are common in hardware-oriented
 languages.  CSP's structures are called {\em structs\/} and are by default
 packed, with a specified packing order, and bitwise control over layout
-and data widths.
+and data widths.  See section~\ref{sec:struct}.
 
 \subsubsection{Variable initialization and evaluation orders}
 
 To avoid as much as possible unspecified behaviors in the language,
 all variables have specific default values.  Furthermore, unlike in most
 software languages, the evaluation orders of expressions and
-function parameters is fully specified.
+function parameters is fully specified.  See section~\ref{sec:initialization}.
 
 \subsubsection{Functions}
 
 In CSP, functions (procedures in Pascal parlance) have value or
 value-result semantics and cannot access any global variables
 (excepted predeclared constants from outside the CSP environment).
+See section~\ref{sec:functions}.
 
 
 \section{Synthesizable subset}
@@ -816,7 +820,7 @@ is shorthand for
 \end{Verbatim}
 A function definition is also a function declaration.
 
-\section{Initialization}
+\section{Initialization}\label{sec:initialization}
 
 All declared variables, whether explicitly declared or implicitly
 declared as type \verb!int! by being used without a declaration, are
@@ -1171,7 +1175,7 @@ constants, but an implementation is allowed to require that \verb!Lo!
 and \verb!Hi! be compile-time constants when \verb!Op! is \verb!,!.
 
 
-\subsection{The rendezvous}
+\subsection{The rendezvous}\label{sec:rendezvous}
 
 The rendezvous is implemented with two kinds of statements: {\em
   send,} and {\em receive,} collectively called {\em communications
@@ -1641,6 +1645,17 @@ equal to the zero element of \verb!Op! as it applies to the type of \verb!Expr!,
 \verb!^! & \verb!int! & 0 \\
 \verb!^! & \verb!bool! & \verb!false! \\
 \end{tabular}
+
+\subsection{Probe}\label{sec:probe}
+
+If \verb!X! is an input port or an output port, the expression
+\begin{verbatim}
+   #X
+\end{verbatim}
+is called the probe of \verb!X!.  \verb!#X! is true if \verb!X! is an
+input port and the receive statement \verb!X?x! would execute without
+blocking, or if \verb!X! is an output port and the receive statement
+\verb,X!x, would execute without blocking.  
 
 \subsection{Peek}\label{sec:peek}
 
