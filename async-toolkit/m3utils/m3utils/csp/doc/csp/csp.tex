@@ -199,37 +199,11 @@ described (but not yet named) by Martin in 1986.  In any case, the
 name ``CSP'' will be used to mean Fulcrum CSP throughout this report.
 
 
-\section{Perspective}
-
-The vast majority of chip design today is performed in variants of the
-Verilog language.  Verilog was introduced in 1984 as a means of
-circuit description and simulation, and is subject to an IEEE
-standardization process.  Over the years, the simplicity of the
-original Verilog idea has been transformed into a veritable
-encyclopedia of design, description, and verification capabilities.
-Verilog today is used for many tasks throughout a chip-design process
-where each task uses only a small subset of the language.  
-Verilog shares some fundamental design aspects with CSP; in
-particular, Verilog's semantics allow for descriptions with a very
-high level of concurrency, and another similarity is that both
-languages make it difficult (but not impossible) to allocate storage
-space dynamically, as this is not something that has a sensible
-implementation in silicon.  At the same time, the wide variety of
-computational models supported by Verilog make that language extremely
-difficult to describe and extremely demanding of programming
-methodology---in particular when it comes to communication between
-different system modules.  In contrast, CSP provides specific,
-restricted communication constructs representing the rendezvous and
-Martin's probe, which leads to highly structured communicating
-processes.  Unlike the situation in Verilog, where the
-programmer-designer must specify the details of sequencing for every
-gate, CSP allows the implementation of sequencing to be abstracted into
-the chosen implementation for the rendezvous.
-
 \section{Overview}
 
 The remainder of the introduction covers the main features of Fulcrum
-CSP informally.  The next chapter gives a more formal reference manual
+CSP informally and gives some perspective and background information about
+the authors of the language.  The next chapter gives a more formal reference manual
 for the language.  The final chapter covers a few practical example
 programs, showing some of the CSP features in action.  Finally, the
 appendix gives the syntax equations for the language, extracted from
@@ -271,6 +245,66 @@ Dijkstra and unlike if-else statements of the kind introduced in
 Algol, guarded commands are symmetric---there is no particular order in
 which guards are evaluated (until the \verb!else! keyword is introduced).
 
+In short, instead of
+\begin{Verbatim}[samepage=true]
+   if e then
+     S0
+   else if f then
+     S1
+   else
+     S2
+   end
+\end{Verbatim}
+Dijkstra introduced the {\em selection\/}:
+\begin{Verbatim}[samepage=true]
+   if 
+     e -> S0
+   []
+     f -> S1
+   []
+     ~e & ~f -> S2
+   fi
+\end{Verbatim}
+with the semantic difference that if both \verb!e! and \verb!f! are
+true, the choice between \verb!S0! and \verb!S1! is nondeterministic
+and not determined by the syntactic order of the guards.  Activating
+the selection with no guards true in Dijkstra was an error (equivalent
+to \verb!abort!).  Martin introduced the idea that the selection
+instead blocks until one of the guards {\em becomes\/} true, which in
+a distributed system can happen owing to events external to the
+process.
+
+Similarly, Dijkstra introduced the \verb!do! loop:
+\begin{verbatim}
+   do
+     e -> S0
+   []
+     f -> S1
+   od
+\end{verbatim}
+which repeats until neither \verb!e! nor \verb!f! is true, using the
+same selection rules as for the selection, except that it terminates.
+
+Our semantics follow Dijkstra and Martin and use Hoare's syntax of
+\begin{Verbatim}[samepage=true]
+   [ 
+     e -> S0
+   []
+     f -> S1
+   []
+     ~e & ~f -> S2
+   ]
+\end{Verbatim}
+for the selection, and
+\begin{verbatim}
+   *[
+     e -> S0
+   []
+     f -> S1
+   ]
+\end{verbatim}
+for the do-loop.
+
 \subsubsection{The rendezvous}
 
 In CSP, program variables are local to each process in which they are
@@ -299,7 +333,7 @@ a {\em channel.}  Then the semantics of the rendezvous are as follows:
   then process \verb!Q! is suspended until \verb!P! reaches \verb,X!v,.
 
 \item When both \verb!P! has reached \verb,X!v,
-  and \verb!Q! has reached \verb,Y?w, then the assignment
+  and \verb!Q! has reached \verb,Y?w, then the {\em distributed assignment}
 \begin{Verbatim}[samepage=true]
    w = v
 \end{Verbatim}
@@ -441,6 +475,33 @@ meaning that CSP written using only that subset can be automatically
 compiled to an efficient hardware realization.  This distinction of a
 synthesizable subset is entirely part of a given implementation and
 will not be covered in this report.
+
+\section{Perspective}
+
+The vast majority of chip design today is performed in variants of the
+Verilog language.  Verilog was introduced in 1984 as a means of
+circuit description and simulation, and is subject to an IEEE
+standardization process.  Over the years, the simplicity of the
+original Verilog idea has been transformed into a veritable
+encyclopedia of design, description, and verification capabilities.
+Verilog today is used for many tasks throughout a chip-design process
+where each task uses only a small subset of the language.  
+Verilog shares some fundamental design aspects with CSP; in
+particular, Verilog's semantics allow for descriptions with a very
+high level of concurrency, and another similarity is that both
+languages make it difficult (but not impossible) to allocate storage
+space dynamically, as this is not something that has a sensible
+implementation in silicon.  At the same time, the wide variety of
+computational models supported by Verilog make that language extremely
+difficult to describe and extremely demanding of programming
+methodology---in particular when it comes to communication between
+different system modules.  In contrast, CSP provides specific,
+restricted communication constructs representing the rendezvous and
+Martin's probe, which leads to highly structured communicating
+processes.  Unlike the situation in Verilog, where the
+programmer-designer must specify the details of sequencing for every
+gate, CSP allows the implementation of sequencing to be abstracted into
+the chosen implementation for the rendezvous.
 
 \section{Background}
 
@@ -736,6 +797,7 @@ where
 \item \verb!Type! is the type of the parameter if the parameter is scalar, or the element type of the parameter if the parameter type is an array type
   
 \item \verb!Mode! is a parameter mode, which can be \verb!-!, \verb!+!, or \verb!+-!.  \verb!Mode! can be omitted, in which case it is taken to be \verb!+-!.
+  See section~\ref{sec:funccall}.
 
 \item \verb!Name! is an identifier that names the parameter.
 
@@ -798,8 +860,8 @@ The default initializers are:
 \section{Statements}
 \label{sec:statements}
 
-Executing a statement produces a computation that can halt, cause a checked
-runtime error, or loop forever.
+Executing a statement produces a computation that can 
+terminate (halt), cause a checked runtime error, or loop forever.
 
 \subsection{Skip}
 
@@ -888,7 +950,7 @@ The two special operations \verb!x++! and \verb!x--! are syntactic sugar for
 \verb!x += 1! and \verb!x -= 1! respectively.
 
 
-\subsection{Function call}
+\subsection{Function call}\label{sec:funccall}
 
 A function call has the form:
 \begin{Verbatim}[samepage=true]
@@ -906,7 +968,7 @@ into an assignment
    Name = actual
 \end{Verbatim}
 where \verb!Name! is the name of the formal, which is evaluated before
-the body of the function.  For a formal that does not have \verb!-! in its
+the body of the function (during the {\em function prolog\/}).  For a formal that does not have \verb!-! in its
 mode, the binding is instead turned into an assignment
 \begin{Verbatim}[samepage=true]
    Name = initial
@@ -920,33 +982,60 @@ the binding is turned into an assignment
 \begin{Verbatim}[samepage=true]
    actual = Name 
 \end{Verbatim}
-which is evaluated after the body of the function.  Finally, for function
+which is evaluated after the body of the function (during the {\em function epilog\/}).  Finally, for function
 procedures, the return value of the function is declared using the function's
 own name (e.g., \verb!F!) before the
 body of the function as having type \verb!R! (the return type of the function),
 and upon return of the function the returned value is \verb!F!.
 
-To execute the call, the function's arguments are evaluated left-to-right,
-the formal parameters are assigned, the body of the procedure is executed, and
-\verb!+! parameters and the function result (if present) are assigned.
+To execute the call, the function's arguments are evaluated
+left-to-right,
+\begin{itemize}
+
+\item the formal parameters are assigned (the prolog)
+
+\item the body of the procedure is executed
+
+\item and \verb!+! parameters and the
+  function result (if present) are assigned (the epilog)
+\end{itemize}
 
 For example, consider:
 \begin{Verbatim}[samepage=true]
-  function F(int +x = 12; -y) : int = ( x = x * y; F = x + y );
+  function F(int +x = 12, -y) : int = ( x = x * y; F = x + y );
   q = 2;
   z = F(q, 3);
 \end{Verbatim}
 following the rules above, this is equivalent to:
 \begin{Verbatim}[samepage=true]
   q = 2;
-  int x = 12;
+
+  // prolog
+  int x = 12; 
   int y = 3;
   int F;
+
+  // body
   x = x * y;
   F = x + y;
+
+  // epilog
+  q = x;
+
+  // return site
   z = F;
 \end{Verbatim}
+where if necessary \verb!x! and \verb!y! are renamed so they do not
+clash with existing variables in the current scope.  (\verb!F! does
+not need to be renamed since it would already clash with an existing
+variable of the same name.)
 
+If \verb!+! parameters are aliased, that is, if following the value-result
+rules listed above would lead to a situation in which
+two or more \verb!+! parameters reference the same locations, the two
+values are independent of each other during execution of the function,
+but the order in which the results are assigned in the function epilog
+is indeterminate.
 
 \subsection{Sequential composition}
 A statement of the form
@@ -955,20 +1044,23 @@ A statement of the form
 \end{Verbatim}
 represents {\em sequential composition,} and is operationally defined that it
 executes \verb!S1!, and then if the outcome is normal, executes \verb!S1!.  If
-the outcome of \verb!S1! is an error, \verb!S2! is ignored.
+the outcome of \verb!S1! is other than terminating normally, \verb!S2! is ignored.
 
 \subsection{Parallel composition}
 A statement of the form
 \begin{Verbatim}[samepage=true]
    S1, S2
 \end{Verbatim}
-represents {\em parallel composition,} and is operationally defined that it
-executes \verb!S1! and \verb!S2! in some arbitrary order, or even in such a
-way that if there are observable states within \verb!S1! and \verb!S2! in
-such a way that the executions of \verb!S1! and \verb!S1! are interleaved in
-some arbitrary way, or even executed entirely in parallel.  If either of
-\verb!S1! or \verb!S2! fails to terminate, the other statement still
-executes.
+represents {\em parallel composition,} and is operationally defined
+that it executes \verb!S1! and \verb!S2! in some arbitrary order, or
+even in such a way that if there are observable states within
+\verb!S1! and \verb!S2! in such a way that the executions of \verb!S1!
+and \verb!S1! are interleaved in some arbitrary way, or even executed
+entirely in parallel.  If either of \verb!S1! or \verb!S2! loops
+forever, the other statement still executes.  If either of \verb!S1!
+or \verb!S2! terminates with a runtime error, the implementation is
+allowed to terminate the execution of the other statement.
+
 
 \subsection{Guarded commands}
 
