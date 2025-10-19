@@ -117,6 +117,7 @@
            )
           (CopyExact && (strncmp CopyExact "x78hdc" 6)==0 align=(list GridPolyPitch:0.21 0:0)) ; HDC SRAM collateral
           (TechLibName=="1278.3" align=(list GridPolyPitch:TrackPitch GridPolyPitch/2:TrackPitch)) ; I0S
+          (TechLibName=="1276.4" align=(list GridPolyPitch:TrackPitch 1.5*GridPolyPitch:0)) ; G1I
           (t align=(list GridPolyPitch/2:GridDiffPitch 0.0:0.0)) ; unknown alignment
           )
     align
