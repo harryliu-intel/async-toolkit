@@ -569,14 +569,15 @@ A {\em static error\/} is an error that the implementation must detect
 before program execution.  Violations of the language definition are
 static errors unless they are explicitly classified as runtime errors.
 
-A {\em checked runtime error\/} is an error that the implementation must
-detect and report at runtime.  The method for reporting such errors
-is implementation-dependent.  This means that an implementation is not
-required to halt execution on every runtime error; however, the implementation
-must ensure that the execution of the program is {\em safe\/} regardless
-of the presence of errors.  This means that errors must be guaranteed
-not to be able to corrupt the runtime system so that further execution
-of the program is not faithful to the language semantics.
+A {\em checked runtime error\/} is an error that the implementation
+must detect and report at runtime.  The method for reporting such
+errors is implementation-dependent.  This means that an implementation
+is not required to halt execution on every runtime error; however, the
+implementation must ensure that the execution of the program is {\em
+  safe\/} regardless of the presence of errors.  This means that, even
+in the presence of errors, the implementation must guarantee that the
+runtime system is not corrupted in a way that makes further execution
+of the program not faithful to the language semantics.
 
 An {\em unchecked runtime error\/} is an error that is not guaranteed to
 be detected, and can cause the subsequent behavior of the computation to
@@ -585,8 +586,8 @@ be arbitrary.  Unchecked runtime errors cannot occur in CSP.
 An {\em identifier\/} is a symbol declared as a name for a variable,
 type, port, function, etc.  The region of the program over a which a
 declaration applies is called the {\em scope\/} of the declaration.
-The meaning of an identifier is determined by the enclosing scope,
-but declaring an identifier so that it is visible more than once in
+The meaning of an identifier is determined by the enclosing scope.
+Declaring an identifier so that it is visible more than once in
 a single scope is a static error.
 
 A {\em variable\/} is a
@@ -597,7 +598,7 @@ value is a {\em member\/} of \verb!T! and \verb!T! {\em contains\/} the
 value.
 
 An {\em expression\/} specifies a computation that produces a value or
-variable.  Expression that produce variables are called {\em
+variable.  Expressions that produce variables are called {\em
   designators.}  A designator can denote either a variable or the
 value of that variable, depending on the context.  Some designators
 are {\em readonly,} which means that they cannot be used in contexts
@@ -682,8 +683,7 @@ The shortest string is the empty string.  There is no ``null string'' in CSP.
 A {\em structure type\/} is a sequence of named variables, called the
 {\em fields\/} of the structure type. Different fields can have
 different types.  The name and type of each field is statically
-determined by the structure type's type.  The expression \verb!s::f!
-designates the field named \verb!f! in the structure \verb!s!.
+determined by the structure type's declaration.
 
 A structure type declaration has the form:
 \begin{Verbatim}[samepage=true]
@@ -701,6 +701,12 @@ where \verb!fieldName! is an identifier, \verb!Type! is any type, and
 \verb!initial! is a constant expression.  The field names must be
 distinct.  Empty structure types are not allowed.
 
+
+An instance of a structure type is called a {\em structure\/} and is declared
+by stating the name of the structure type.  See sections~\ref{sec:declarations}
+and~\ref{sec:struct-field-access}.
+
+
 The constant \verb!initial! is a initial value used when a structure is
 constructed.  The \verb!= initial! can be omitted, in which case the default
 value for the type will be used for initialization.
@@ -709,7 +715,7 @@ value for the type will be used for initialization.
 
 An {\em array\/} is an indexed collection of component variables,
 called the {\em elements\/} of the array.  The indexes are of type
-\verb!int!.  The elements all have the same size and the same type,
+\verb!int!.  The elements all have the same type,
 called the {\em element type\/} of the array.
 
 The {\em shape\/} of a multi-dimensional array is the sequence of its
@@ -720,7 +726,7 @@ The {\em layout\/} of a multi-dimensional array is the sequence of
 its lengths and starting indexes in each dimension; the layout of a non-array
 is the empty sequence.
 
-All arrays are {\em fixed\/} in CSP, and the layout of every array is
+All arrays are {\em fixed\/} in CSP, meaning that the layout of every array is
 determined before program startup.
 
 An array declaration has the form:
@@ -735,7 +741,7 @@ between brackets or as a list of ranges \verb!lo..hi! within separate brackets:
   T a[0..2,0..2];
   T b[0..2][0..2];
 \end{Verbatim}
-here \verb!a! and \verb!b! have equivalent declarations.  Any array index
+here \verb!a! and \verb!b! have equivalent declarations.  Any array dimension
 can also be specified with a single number \verb!length! in which case the
 index ranges over \verb!0..length - 1!.  Hence the following are equivalent:
 \begin{Verbatim}[samepage=true]
@@ -762,12 +768,16 @@ type is itself of fixed width.
 If the element type of an array is of fixed width, then the array is a
 {\em packed array type.}  A packed array type is itself of fixed width.
 
+By elimination, the following types are not of fixed width: strings,
+the \verb!int! type, and structure types and arrays containing strings
+or the \verb!int! type, whether directly or indirectly.
 
 
 
 \subsection{Channels, ports, and nodes}\label{sec:chanport}
 
-A channel is used for communication between two concurrent processes.
+A channel is used for communication between two concurrent processes, using
+the rendezvous operations send and receive.
 Formally, a channel is an ordered 6-tuple $(S, P_S, R, P_R, W,
 \Sigma)$ where $S$ is a process called the {\em sender,} $P_S$ is the
 name of the output port in the sender, $R$ is a process called the
@@ -801,7 +811,7 @@ A {\em function\/} is a triple consisting of:
 \item the {\em signature,} which specifies the function's formal arguments and
   result type.
 \end{itemize}
-A function that returns as a result is also called a {\em function procedure\/}; a function that does not return a result is called a {\em proper procedure.}
+A function that returns a result is also called a {\em function procedure\/}; a function that does not return a result is called a {\em proper procedure.}
 
 A function definition has the form:
 \begin{Verbatim}[samepage=true]
@@ -823,8 +833,10 @@ where
 \begin{itemize}
 \item \verb!Type! is the type of the parameter if the parameter is scalar, or the element type of the parameter if the parameter type is an array type
   
-\item \verb!Mode! is a parameter mode, which can be \verb!-!, \verb!+!, or \verb!+-!.  \verb!Mode! can be omitted, in which case it is taken to be \verb!+-!.
-  See section~\ref{sec:funccall}.
+\item \verb!Mode! is a parameter mode, which can be \verb!-!,
+  \verb!+!, or \verb!+-!.  \verb!Mode! can be omitted, in which case
+  it is taken to be \verb!+-!.  See section~\ref{sec:funccall} for a
+  discussion of the semantics of the parameter modes.
 
 \item \verb!Name! is an identifier that names the parameter.
 
@@ -1501,7 +1513,7 @@ cannot be used as array accessors even though they can be used to
 declare arrays: this implies that ``partial array slices'' are not
 available in CSP.
 
-\subsubsection{Struct field access}
+\subsubsection{Struct field access}\label{sec:struct-field-access}
 If \verb!e! is a struct, the expression
 \begin{Verbatim}[samepage=true]
   e :: Field
