@@ -5,7 +5,7 @@ SRCDIR=${ROOT}/orig
 PATHSDIR=${ROOT}/paths
 MERGEDIR=${ROOT}/merged
 HOME=`pwd`
-MAIN=m3utils
+MAIN=async-toolkit
 TGTNAME=merged-git
 
 cd ${SRCDIR}
@@ -50,4 +50,4 @@ done
 
 cd ${MERGEDIR}
 
-${ROOT}/orig/m3utils/oss/censor.sh ${TGTNAME}
+${ROOT}/orig/${MAIN}/oss/censor.sh ${TGTNAME}

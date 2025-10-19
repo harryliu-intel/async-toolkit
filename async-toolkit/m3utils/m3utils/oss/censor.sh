@@ -17,10 +17,10 @@ remove="git filter-repo --sensitive-data-removal --invert-paths"
 
 
 echo << EOF > ${paths}
-m3utils/mby-merged/wm/src/main/m3/hardrada/hda/Similix-master
-m3utils/mby-merged/wm/src/main/m3/hardrada/hda/scheme48
-m3utils/mby-merged/wm/src/main/m3/hardrada/hda/scm
-m3utils/mby-merged/wm/src/main/m3/hardrada/hda/slib
+async-toolkit/mby-merged/wm/src/main/m3/hardrada/hda/Similix-master
+async-toolkit/mby-merged/wm/src/main/m3/hardrada/hda/scheme48
+async-toolkit/mby-merged/wm/src/main/m3/hardrada/hda/scm
+async-toolkit/mby-merged/wm/src/main/m3/hardrada/hda/slib
 EOF
 
 # remove any actual RTL sources
