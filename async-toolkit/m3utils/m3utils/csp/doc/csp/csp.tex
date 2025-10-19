@@ -618,6 +618,29 @@ values written to the port will appear in another process, or an {\em
   input port,} in which case values will appear at the port that were
 written in another process.
 
+\section{Comments}
+Anything within a comment is ignored by the implementation.  Comments
+are treated as whitespace, so they can be used to separate language
+tokens that are required to be separated by whitespace.
+
+CSP allows two types of comments:
+
+Block comments are written
+\begin{Verbatim}[samepage=true]
+   /* This is a comment */
+\end{Verbatim}
+and allow newlines to be present for multi-line comments.  Anything
+following \verb!/*!, including \verb!/*! itself, is ignored, until
+the next occurrence of \verb!*/! in the file.  (That is, block
+comments do not nest.)
+
+Line comments are written
+\begin{Verbatim}[samepage=true]
+   // This is a comment 
+\end{Verbatim}
+and anything following \verb!//!, including the \verb!//! itself, until
+the following newline, is part of the comment.
+
 \section{Types}
 \label{sec:types}
 
@@ -875,6 +898,15 @@ The no-op {\em skip\/} statement
 \end{Verbatim}
 when activated in any state, terminates in the same state.
 
+\subsection{Error}
+
+The abortion statement {\em error\/} 
+\begin{Verbatim}[samepage=true]
+   error
+\end{Verbatim}
+when activated in any state, causes a checked runtime error and does
+not terminate.  (It is called {\em abort\/} in most other languages.)
+
 \subsection{Assignment}
 
 We specify assignment rules by enumeration.
@@ -1065,6 +1097,22 @@ forever, the other statement still executes.  If either of \verb!S1!
 or \verb!S2! terminates with a runtime error, the implementation is
 allowed to terminate the execution of the other statement.
 
+Syntactically, \verb!,! binds tighter than \verb!;!.
+
+\subsection{Parenthesization}
+
+Parentheses \verb!(! \verb!)! can be used around statements and statement
+compositions.  For example,
+\begin{Verbatim}[samepage=true]
+   S0; S1, S2; S3
+\end{Verbatim}
+means ``first execute \verb!S0!, then execute \verb!S1! and \verb!S2! in parallel, and finally execute \verb!S3!'' whereas
+\begin{Verbatim}[samepage=true]
+   (S0; S1), (S2; S3)
+\end{Verbatim}
+means ``execute \verb!S0! followed by \verb!S1! in parallel with executing \verb!S2! followed by \verb!S3!.''
+
+
 
 \subsection{Guarded commands}
 
@@ -1173,6 +1221,9 @@ allowed and if present, the loop is equivalent to
 \verb!skip!. \verb!Lo! and \verb!Hi! need not be compile-time
 constants, but an implementation is allowed to require that \verb!Lo!
 and \verb!Hi! be compile-time constants when \verb!Op! is \verb!,!.
+
+\verb!Op! can be omitted, in which case the statement is treated as if
+\verb!Op! were \verb!;!.
 
 
 \subsection{The rendezvous}\label{sec:rendezvous}
@@ -1659,10 +1710,9 @@ blocking, or if \verb!X! is an output port and the send statement
 
 \subsection{Peek}\label{sec:peek}
 
-The peek, or {\em receive expression,} is indicated by writing the name
-of a receive port in an expression.  The peek is
+The peek, or {\em receive expression,} The peek is
 \begin{Verbatim}[samepage=true]
-   IPort
+   # IPort ?
 \end{Verbatim}
 where \verb!IPort! is an input port of width \verb!W!.  If no value
 has yet been sent by the sender, the receiver is suspended until the
@@ -1809,8 +1859,8 @@ runtime error.
 
 \subsection{Timing functions}
 \begin{tabular}{l}
-  \verb!simtime   () : int(x)! \\
-  \verb!walltime  () : int(x)! \\
+  \verb!simtime   () : int! \\
+  \verb!walltime  () : int! \\
 \end{tabular}
 
 \verb!simtime! and \verb!walltime! are timing functions.
@@ -1826,6 +1876,90 @@ of one billion per second of real time, with some unspecified
 granularity.  Its offset to TAI (Temps Atomique International,
 International Atomic Time) is unspecified but should be constant at
 least across a single execution of a system of CSP processes.
+
+The implementation will provide a function 
+
+\begin{tabular}{l}
+  \verb!time   () : int! \\
+\end{tabular}
+
+that is related to \verb!simtime! and \verb!walltime! in some
+implementation-dependent way.
+
+\subsection{File input}
+
+An implementation will provide a rudimentary interface for file input.
+
+\begin{tabular}{l}
+  \verb!readHexInts   (path : string; n : integer; data : integer[]) : int! \\
+\end{tabular}
+
+\verb!readHexInts(path,n,data)! reads at most \verb!n! integers from a
+file in the local filesystem that can be reached through the path
+\verb!path!, using local system conventions for naming, filesystem
+links, access rights, etc.  These integers are expected to be provided
+in ASCII hexadecimal notation (without a \verb!0x! or any other
+prefix) within this file.  \verb!//! line comments are respected
+within this file: if the strong \verb!//! appears in the file, any
+text from, and including, \verb!//! to the end of that line is
+ignored.
+
+It is a checked runtime error for the referenced file to contain anything
+other than ASCII hexadecimal data and proper line comments.
+
+\subsection{Miscellaneous required functions}
+
+The implementation will provide the following required functions.
+
+\begin{tabular}{l}
+  \verb!min   (x, y : integer) : int! \\
+  \verb!max   (x, y : integer) : int! \\
+\end{tabular}
+
+\verb!min(x,y)! returns the value of the less positive of the two arguments \verb!x! and \verb!y!; \verb!max(x,y)! returns the value of the more positive of the two arguments \verb!x! and \verb!y!.
+
+\begin{tabular}{l}
+  \verb!b2i   (x : bool) : int(1)! \\
+\end{tabular}
+
+\verb!b2i(x)! returns 1 if \verb!x! is equal to \verb!true! and 0 if \verb!x! is equal to \verb!false!.
+
+\begin{tabular}{l}
+  \verb!abs   (x : integer) : int! \\
+\end{tabular}
+
+\verb!abs(x)! returns the value of \verb!x! if \verb!x! is greater than or
+equal to zero; \verb!-x! otherwise.
+
+\begin{tabular}{l}
+  \verb!choose   (x : bool; y, z: integer) : int! \\
+\end{tabular}
+
+\verb!choose(x, y, z)! returns \verb!y! if \verb!x! is equal to
+\verb!true! and \verb!z! otherwise; \verb!choose! adheres to the
+normal function-call rules; in particular, all three actuals are
+always evaluated.
+
+\begin{tabular}{l}
+  \verb!log2   (x : integer) : int! \\
+  \verb!log4   (x : integer) : int! \\
+\end{tabular}
+
+\verb!log2(x)! returns the number of binary digits required to represent
+any number in the range \verb!0..abs(x - 1)!.  If \verb!x! is positive,
+this is equal to the mathematical expression $\lceil \log_2 \verb!x! \rceil$;
+if \verb!x! is negative, it is equal to $\lceil \log_2 (\verb!-x - 1!) \rceil$.
+
+\verb!log4(x)! returns the number of quaternary digits required to represent
+any number in the range \verb!0..abs(x - 1)!.  If \verb!x! is positive,
+this is equal to the mathematical expression $\lceil \log_4 \verb!x! \rceil$;
+if \verb!x! is negative, it is equal to $\lceil \log_4 (\verb!-x - 1!) \rceil$.
+
+
+
+
+
+
 
 \begin{thebibliography}{99}
 
