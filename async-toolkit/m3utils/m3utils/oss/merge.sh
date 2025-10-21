@@ -62,11 +62,4 @@ ${M3INSTALL}/oss/censor.sh ${TGTNAME}
 
 cd "${TGTNAME}-1"
 
-YEAR=2025
-LINE1="Copyright (c) %Y Intel Corporation.  All rights reserved.  See COPYRIGHT for more information."
-LINE2="SPDX-License-Identifier: Apache-2.0"
-
-(find . -type f | xargs -n1 ${COPYRIGHT} -line1 ${LINE1} -line2 ${LINE2}) | tee copyright.out 2>&1
-
-(find . -type f -and -name m3makefile | xargs -n1 ${COPYRIGHT} -style tex -year ${YEAR} -line1 ${LINE1} -line2 ${LINE2} ) | tee copyright.out 2>&1
-
+${M3INSTALL}/oss/copyright.sh
