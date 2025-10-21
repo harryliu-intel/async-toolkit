@@ -4,14 +4,15 @@
 
 
 ROOT=/nfs/site/disks/or_lhdk75_disk0037/w137/gorda/mnystroe/oss
-SRCDIR=${ROOT}/orig
+ORIGDIR=${ROOT}/orig
 PATHSDIR=${ROOT}/paths
 MERGEDIR=${ROOT}/merged
 
 HOME=`pwd`
 MAIN=async-toolkit
 #HOME=`pwd`
-M3INSTALL=${SRCDIR}/m3utils
+M3INSTALL=${ORIGDIR}/m3utils
+MAIN=async-toolkit
 TGTNAME=merged-git
 
 # we point out copyright specially because the MAIN is probably a clean
@@ -19,7 +20,7 @@ TGTNAME=merged-git
 
 COPYRIGHT=/nfs/pdx/disks/or_n3a_disk001/w138/mnystroe/m3utils/copyright/AMD64_LINUX/copyright
 
-cd ${SRCDIR}
+cd ${ORIGDIR}
 repos=`echo *`
 echo "REPOS : ${repos}"
 
@@ -29,7 +30,7 @@ mkdir ${PATHSDIR}
 # put repos in correct subdir location
 for r in ${repos}; do
     cd ${PATHSDIR}
-    git clone --no-local ${SRCDIR}/${r} > ${r}.clone.out 2>&1
+    git clone --no-local ${ORIGDIR}/${r} > ${r}.clone.out 2>&1
 
     cd ${PATHSDIR}/${r}
     if [ "${r}" != "${MAIN}" ]; then
@@ -68,4 +69,4 @@ ${M3INSTALL}/oss/censor.sh ${TGTNAME}
 
 cd "${TGTNAME}-1"
 
-${M3INSTALL}/oss/copyright.sh
+${M3INSTALL}/oss/copyright.sh > copyright.out
