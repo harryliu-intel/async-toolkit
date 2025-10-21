@@ -315,7 +315,7 @@ declared and used.  Processes communicate entirely through the {\em
 The rendezvous is a distributed assignment statement.  As a simple
 example, consider two processes \verb!P! and \verb!Q! where \verb!P!
 is the sending process, in which case its text includes a send
-operation of a local value \verb!v! on a port \verb!X!:
+operation of a local value \verb!v! on a {\em port\/} \verb!X!:
 \begin{Verbatim}[samepage=true]
    X!v
 \end{Verbatim}
@@ -395,9 +395,22 @@ nothing else:
 \end{Verbatim}
 See section~\ref{sec:probe}.
 
+\subsubsection{Node data type}
+
+While CSP is based on the idea of independent parallel processes that
+communicate across channels using the rendezvous, it also includes a
+more basic {\em node\/} data type for unstructured communcation.
+While the majority of hardware design can be accomodated by the
+channel structures, some algorithms need access to a lower-level,
+shared data type.  An example of something that is difficult to accomodate
+with channels is global configuration state, which in a hardware system
+may be fixed at power-up, or provided to a module as a shared constant
+that does not change during operation.
+
 \subsubsection{Arbitrary-precision arithmetic}
 
-In software, there are three common approaches to arithmetic precision.
+In software, there are three common approaches to arithmetic
+precision.
 
 \begin{itemize}
 \item Some languages (such as Java) define arithmetic to be the same on every
@@ -464,6 +477,16 @@ In CSP, functions (procedures in Pascal parlance) have value or
 value-result semantics and cannot access any global variables
 (excepted predeclared constants from outside the CSP environment).
 See section~\ref{sec:functions}.
+
+
+\subsubsection{Memory management}
+
+CSP has two variable-sized types: strings and the special
+arbitrary-precision integer \verb!int!.  There is no memory allocation
+or freeing as such.  An implementation is expected to use garbage
+collection to manage the memory used for strings and arbitrary-precision
+integers, but this is not visible to the programmer-designer working in
+CSP.
 
 
 \section{Synthesizable subset}
@@ -603,21 +626,22 @@ variable.  Expressions that produce variables are called {\em
 value of that variable, depending on the context.  Some designators
 are {\em readonly,} which means that they cannot be used in contexts
 that might change the value of the variable.  A designator that is not
-readonly is called {\em writable.}  {\bf Are there readonly
-  designators in CSP, or are all designators writable?---Yes only loop
-  (angle-bracket) indexes?} Expressions whose values can be determined
+readonly is called {\em writable.}   Expressions whose values can be determined
 statically are called {\em constant expressions;} they are never
-designators.  {\bf is there ANY distinction between a constant
-  expression and a readonly designator?  A readonly designator might
-  have a changing value, but if it the loop is inlined, it might as
-  well be a constant.  Hmm, a loop index with a variable range would
-  not be a constant expression.}
+designators.
 
 A {\em port\/} is a means for a process to communicate with other
-processes.  A port can be either an {\em output port,} in which case
-values written to the port will appear in another process, or an {\em
-  input port,} in which case values will appear at the port that were
-written in another process.
+processes.  A port can be either an {\em output port,} or an {\em
+  inout port,} in which case values written to the port will appear in
+another process, or an {\em input port,} in which case values will
+appear at the port that were written in another process.
+
+A {\em deadlock\/} is a state in which some number of processes are
+permanently blocked from making progress.  An implementation is
+permitted but not required to treat a deadlock as a runtime error.  If
+an implementation is able to detect a {\em partial deadlock\/}, that
+is, a deadlock involving only a subset of processes, it should offer
+an option not to treat such a deadlock as an error.
 
 \section{Comments}
 Anything within a comment is ignored by the implementation.  Comments
@@ -773,8 +797,18 @@ the \verb!int! type, and structure types and arrays containing strings
 or the \verb!int! type, whether directly or indirectly.
 
 
+\subsection{Ports}
 
-\subsection{Channels, ports, and nodes}\label{sec:chanport}
+Two kinds of ports are provided for processes to communicate with
+other processes.
+
+\begin{itemize}
+\item {\em Channel ports\/} (section~\ref{sec:chanport})
+
+\item {\em Node ports\/} (section~\ref{sec:nodeport})
+\end{itemize}
+
+\subsection{Channels}\label{sec:chanport}
 
 A channel is used for communication between two concurrent processes, using
 the rendezvous operations send and receive.
@@ -789,15 +823,54 @@ externally.  Values transacted over a channel are of type
 \verb!int(W)! (see section~\ref{sec:integer-types}.)
 
 
-
 Within a CSP process, a channel is visible either as an input port or
 as an output port.  Hence, channels are point-to-point and have exactly
 one sender and exactly one receiver.  An implementation may permit
 ports to ``loop back,'' that is to connect from a process to itself.
 
-A {\em node\/} is a special read-write shared variable that is attached
-to a scalar port of a process.  It can be read and written as a local
-variable.
+Channels may be elements of arrays.
+
+\subsection{Nodes}\label{sec:nodeport}
+
+A {\em node\/} is a shared boolean variable that is attached to a node
+port of one or more processes.  It can be read and written as a local
+variable, and it can be used in any context where a scalar boolean local
+variable could be used.  Nodes may be {\em input nodes, output nodes,}
+or {\em inout nodes,} and like channels are declared externally to the
+CSP language.
+
+Nodes may be elements of arrays.
+
+If a node is assigned  to (possibly repeatedly) by a single process
+\verb!P! (in which the node is attached to an output or inout node
+port) and also available to a set of other observing processes \verb!Q_0..Q_n-1!
+(in each of which the node is attached to an input or inout node port) then the final assignment within \verb!P! will eventually be available
+to \verb!Q_0..Q_n-1!, but it is not specified in what order the
+observers will observe the update.
+
+If a node is assigned to by more than one process \verb!P_0..P_n-1!, and
+all the assigned values \verb!v_i! are the same \verb!v!, the observing processes will eventually observe the node to be \verb!v!, but it is not specified
+in what order the observers will observe the update.
+
+If a node is assigned to by more than one process \verb!P_0..P_n-1!,
+and the final assigned values \verb!v_i! are different, the observing
+processes will eventually observe the node to be some value \verb!w!,
+and that value will be the same across all processes, but it is not
+specified what the value will be other than that it will be one of the
+\verb!v_i!, nor is it specified in what order the observers will observe
+the update.  (Since nodes are boolean, this just means that the
+observed values will eventually converge to \verb!true! or
+\verb!false! across all the \verb!Q_i!.)
+
+Nodes that are members of arrays may be treated by the implementation
+as independent of each other; that is, in case of contention, one
+node in the array may converge to a value \verb!w[k]! independently of
+and notwithstanding the convergence of another node in the array to a
+value \verb!w[l]!.  
+
+The implementation may check that nodes are properly reset at the beginning
+of execution and treat a failure of a program to do so as a runtime error.
+See section~\label{sec:resetfunction}.
 
 
 \section{Functions}
@@ -808,7 +881,7 @@ A {\em function\/} is a triple consisting of:
   
 \item the {\em body,} which is a statement.
 
-\item the {\em signature,} which specifies the function's formal arguments and
+\item the {\em signature,} which specifies the function's formal parameters and
   result type.
 \end{itemize}
 A function that returns a result is also called a {\em function procedure\/}; a function that does not return a result is called a {\em proper procedure.}
@@ -843,7 +916,7 @@ where
 \item \verb!Layout! specifies the array layout for an array parameter; if it is
   omitted, the parameter is scalar.
 
-\item\verb!Initial! specifies the initial value of a parameter whose mode is \verb!+!.  \verb!= Initial! can be omitted.
+\item\verb!Initial! specifies the initial value of a scalar parameter whose mode is \verb!+!.  \verb!= Initial! can be omitted.  
 \end{itemize}
 When a series of parameters share the same type, \verb!Mode Name Layout = Initial! can be a replaced with a comma-separated list of mode, name, layout, and initial value, in which case the type is repeated for each parameter.  That is:
 \begin{Verbatim}[samepage=true]
@@ -876,7 +949,7 @@ is present, that initializer is used.
 
 \item If a variable is introduced as a function parameter with \verb!-! in its
   parameter mode, the variable is initialized by copying the value of
-  the actual from the call site of the function.
+  the actual parameter at the time that the function is called.
   
 \item If a variable appears as a field
   within a struct and the structure type declaration contains an initializer
@@ -949,8 +1022,15 @@ are assignable.
 \subsubsection{Integer to string assignment}
 
 An integer value is assignable to a string variable.  The value assigned
-to the string variable is the decimal ASCII string corresponding
-to the integer.
+to the string variable is the human-readable string corresponding
+to the value of the integer in decimal base.  For example, the assignment
+\begin{Verbatim}[samepage=true]
+   s = "The answer is " + (4 * 10 + 2)
+\end{Verbatim}
+will result in \verb!s! containing the string:
+\begin{Verbatim}[samepage=true]
+   The answer is 42
+\end{Verbatim}
 
 \subsubsection{Expression assignment}\label{sec:expr-ass}
 
@@ -962,17 +1042,32 @@ An assignment statement has the form:
    v = e
 \end{Verbatim}
 where \verb!v! is a writable designator and \verb!e! is an expression
-assingable to the variable designated by \verb!v!.  The statement sets
+assignable to the variable designated by \verb!v!.  The statement sets
 \verb!v! to the value of \verb!e!.  \verb!v! is always evaluated before
 \verb!e!, and \verb!v! is updated after \verb!e! is evaluated.  In
 particular, if \verb!v! and \verb!e! are overlapping subarrays, the
 assignment is performed in such a way that no element is used as a
 target before it is used as a source.
 
+\subsubsection{Boolean assignment shorthands}
+
+A statement of the form
+\begin{verbatim}
+   v -
+\end{verbatim}
+where \verb!v! is a writable designator referencing a boolean variable
+is equivalent to the statement \verb!v = false!.
+
+A statement of the form
+\begin{verbatim}
+   v +
+\end{verbatim}
+where \verb!v! is a writable designator referencing a boolean variable
+is equivalent to the statement \verb!v = true!.
+
 \subsubsection{Assignment by operation shorthands}
 
 CSP provides the assignment-by-operation shorthands
-of the form \verb'X=':
 \verb!+=!,
 \verb!-=!,
 \verb!*=!,
@@ -986,13 +1081,25 @@ and
 \verb!>>=!.
 For each assignment-by-operation statement of the form
 \begin{Verbatim}[samepage=true]
-   v X= e
+   v Op= e
 \end{Verbatim}
+where \verb!Op=! is the token formed by appending the suffix \verb!=! to
+an operation token,
 this is equivalent to 
 \begin{Verbatim}[samepage=true]
-   v = v X e
+   v = v Op e
 \end{Verbatim}
-with the exception that \verb!v! is evaluated only once.  See section~\ref{sec:expressions} for a specification of each operation \verb!X! in this context.
+with the exception that \verb!v! is evaluated only once.  For example,
+\begin{Verbatim}[samepage=true]
+   v *= w
+\end{Verbatim}
+means 
+\begin{Verbatim}[samepage=true]
+   v = v * w
+\end{Verbatim}
+except that \verb!v! is only evaluated once.
+
+See section~\ref{sec:expressions} for a specification of each operation \verb!Op! in this context.
 
 The two special operations \verb!x++! and \verb!x--! are syntactic sugar for
 \verb!x += 1! and \verb!x -= 1! respectively.
@@ -1006,16 +1113,16 @@ A function call has the form:
 \end{Verbatim}
 where \verb!F! is the name of a function and \verb!Bindings! is a list
 of bindings.  A binding has the form \verb!actual!, where \verb!actual! is
-an expression.  If the list of bindings is empty, the parentheses are still
+an expression, which is called the {\em actual parameter.}  If the list of bindings is empty, the parentheses are still
 required.
 
 Function parameters are passed by value-result.  This means that for
-each formal that has \verb!-! in its mode, the binding is turned
+each formal parameter that has \verb!-! in its mode, the binding is turned
 into an assignment
 \begin{Verbatim}[samepage=true]
    Name = actual
 \end{Verbatim}
-where \verb!Name! is the name of the formal, which is evaluated before
+where \verb!Name! is the name of the formal parameter.  This assignment is evaluated before
 the body of the function (during the {\em function prolog\/}).  For a formal that does not have \verb!-! in its
 mode, the binding is instead turned into an assignment
 \begin{Verbatim}[samepage=true]
@@ -1024,19 +1131,21 @@ mode, the binding is instead turned into an assignment
 where \verb!initial! is the initial value from the function signature
 for that parameter, or a declaration without an initialization, subject
 to the normal initialization rules, if no initial value is provided in the
-function signature .
-For each formal that has \verb!+! in its mode,
+function signature.
+For each formal parameter that has \verb!+! in its mode,
 the binding is turned into an assignment
 \begin{Verbatim}[samepage=true]
    actual = Name 
 \end{Verbatim}
-which is evaluated after the body of the function (during the {\em function epilog\/}).  Finally, for function
+which is evaluated after the body of the function (during the {\em function epilog\/}).
+
+Finally, for function
 procedures, the return value of the function is declared using the function's
 own name (e.g., \verb!F!) before the
 body of the function as having type \verb!R! (the return type of the function),
 and upon return of the function the returned value is \verb!F!.
 
-To execute the call, the function's arguments are evaluated
+To execute the call, the function's parameters are evaluated
 left-to-right,
 \begin{itemize}
 
@@ -1064,14 +1173,14 @@ following the rules above, this is equivalent to:
   int F;
 
   // body
-  x = x * y;
-  F = x + y;
+  x = x * y; // x is 36
+  F = x + y; // F is 39
 
   // epilog
-  q = x;
+  q = x;     // q is 36
 
   // return site
-  z = F;
+  z = F;     // z is 39
 \end{Verbatim}
 where if necessary \verb!x! and \verb!y! are renamed so they do not
 clash with existing variables in the current scope.  (\verb!F! does
@@ -1085,7 +1194,7 @@ values are independent of each other during execution of the function,
 but the order in which the results are assigned in the function epilog
 is indeterminate.
 
-\subsection{Sequential composition}
+\subsection{Sequential composition}\label{sec:sequential-composition}
 A statement of the form
 \begin{Verbatim}[samepage=true]
    S1; S2
@@ -1094,20 +1203,21 @@ represents {\em sequential composition,} and is operationally defined that it
 executes \verb!S1!, and then if the outcome is normal, executes \verb!S1!.  If
 the outcome of \verb!S1! is other than terminating normally, \verb!S2! is ignored.
 
-\subsection{Parallel composition}
+\subsection{Parallel composition}\label{sec:parallel-composition}
 A statement of the form
 \begin{Verbatim}[samepage=true]
    S1, S2
 \end{Verbatim}
 represents {\em parallel composition,} and is operationally defined
-that it executes \verb!S1! and \verb!S2! in some arbitrary order, or
-even in such a way that if there are observable states within
-\verb!S1! and \verb!S2! in such a way that the executions of \verb!S1!
-and \verb!S1! are interleaved in some arbitrary way, or even executed
-entirely in parallel.  If either of \verb!S1! or \verb!S2! loops
-forever, the other statement still executes.  If either of \verb!S1!
-or \verb!S2! terminates with a runtime error, the implementation is
-allowed to terminate the execution of the other statement.
+that when activated, \verb!S1! and \verb!S2! are executed in some
+arbitrary order, or even in such a way that if there are observable
+states within \verb!S1! and \verb!S2!, the executions of \verb!S1!
+and \verb!S1! may be interleaved in some arbitrary way, or even
+executed entirely in parallel.  If either of \verb!S1! or \verb!S2!
+loops forever, the other statement still executes.  If either of
+\verb!S1!  or \verb!S2! terminates with a runtime error, the
+implementation is allowed to terminate the execution of the other
+statement.
 
 Syntactically, \verb!,! binds tighter than \verb!;!.
 
@@ -1128,16 +1238,17 @@ means ``execute \verb!S0! followed by \verb!S1! in parallel with executing \verb
 
 \subsection{Guarded commands}
 
-{\em Guarded commands\/} consist of a list of commands:
+A {\em guarded command list\/} is a statement of the form:
 \begin{Verbatim}[samepage=true]
-  Start G0 -> S0 Sep G1 -> S1 Sep ... Gn-1 -> Sn-1 Sep else -> Sn End
+  Start G_0 -> S_0 Sep G_1 -> S_1 Sep ... G_n-1 -> S_n-1 Sep else -> S_n End
 \end{Verbatim}
 where
 
+
 \begin{itemize}
 \item  \verb!Start! is a starting bracket, either \verb!*[!, \verb![!, or \verb!#[!.
-\item the \verb!Gi! are boolean expressions called the {\em guards.}
-\item the \verb!Si! are statements called the {\em guarded commands.}
+\item the \verb!G_i! are boolean expressions called the {\em guards.}
+\item the \verb!S_i! are statements called the {\em guarded commands.}
 \item \verb!Sep! is a separator, either \verb![]! or \verb!:!.
 \item \verb!End! is the ending bracket \verb!]!.
 \end{itemize}
@@ -1145,30 +1256,36 @@ where
 \subsubsection{Selection statement}
 When \verb!Start! is \verb![!, the statement is a {\em selection statement.}
 When the selection statement is activated,
-execution is suspended until at least one \verb!Gi! is true, at which time an
-arbitrary \verb!Sj! for which \verb!Gj! is true is executed, after which
+execution is suspended until at least one \verb!G_i! is true, at which time
+a \verb!S_j! for which \verb!G_j! is true is executed, after which
 the selection statement terminates.
 
 The shorthand \verb![ G ]! is short for \verb![ G -> skip ]! and hence means
 ``wait until \verb!G! holds.''
 
-\verb!else -> Sn! may be omitted.  If present, \verb!else! is interpreted
-as the expression \verb?!G0 & !G1 & ... & !Gn-1?.
+\verb!else -> S_n! may be omitted.  If present, \verb!else! is interpreted
+as the expression \verb?!G_0 & !G_1 & ... & !G_n-1?.
+
+Activation of a selection statement without an \verb!else! in a state
+where none of \verb!G_0..G_n-1! holds and the implementation is able to
+detect that none of \verb!G_0..G_n-1! can ever hold (e.g., because they
+refer only to local variables of the process containing the statement) may
+be treated by the implementation as an error.
 
 \subsubsection{Simple if statement}
 When \verb!Start! is \verb!#[!, the statement is a {\em simple if statement.}
 When the selection statement is activated,
-an arbitrary \verb!Sj! for which \verb!Gj! is true is executed, after which
-the selection statement terminates.  If no \verb!Gj! is true, the simple
+an arbitrary \verb!Sj! for which \verb!G_j! is true is executed, after which
+the selection statement terminates.  If no \verb!G_j! is true, the simple
 if statement is equivalent to \verb!skip!.
 
 The simple if statement:
 \begin{Verbatim}[samepage=true]
-   #[ G0 -> S0 [] G1 -> S1 [] ... [] Gn-1 -> Sn-1 ]
+   #[ G_0 -> S_0 [] G_1 -> S_1 [] ... [] G_n-1 -> S_n-1 ]
 \end{Verbatim}
 is equivalent to the selection:
 \begin{Verbatim}[samepage=true]
-    [ G0 -> S0 [] G1 -> S1 [] ... [] Gn-1 -> Sn-1 [] else -> skip ]
+    [ G_0 -> S_0 [] G_1 -> S_1 [] ... [] G_n-1 -> S_n-1 [] else -> skip ]
 \end{Verbatim}
 
 An \verb!else! clause is not permitted in the simple if statement.
@@ -1177,15 +1294,15 @@ An \verb!else! clause is not permitted in the simple if statement.
 \subsubsection{Repetition statement}
 When \verb!Start! is \verb!*[!, the statement is {\em a repetition
   statement.}  When the repetition statement is activated, it amounts
-to the execution of \verb!skip! if no \verb!Gi! is true; otherwise an
-arbitrary \verb!Sj! for which \verb!Gj! is true is executed, after which
+to the execution of \verb!skip! if no \verb!G_i! is true; otherwise an
+arbitrary \verb!S_j! for which \verb!G_j! is true is executed, after which
 the repetition statement is repeated.
 
 The shorthand \verb!*[ S ]! is short for \verb![ true -> S ]! and hence means
 ``repeat \verb!S! forever.''
 
 \verb!else -> Sn! may be omitted.  If present, \verb!else! is interpreted
-as the expression  \verb?!G0 & !G1 & ... & !Gn-1?. 
+as the expression  \verb?!G_0 & !G_1 & ... & !G_n-1?. 
 
 \subsubsection{Deterministic and nondeterministic guarded commands}
 When \verb!Sep! is \verb![]!, the selection or repetition statement
@@ -1215,7 +1332,7 @@ The loop construct is
 where
 \begin{itemize}
 
-\item \verb!Op! is either \verb!;! or \verb!,!
+\item \verb!Op! is either \verb!;! or \verb!,! referencing sequential composition (section~\ref{sec:sequential-composition}) or parallel composition (section~\ref{sec:parallel-composition}),
 
 \item  \verb!Id! is an identifier,
   
@@ -1276,10 +1393,10 @@ where \verb!OPort! an output port of width \verb!W! and
 (Compare to section~\ref{sec:expr-ass}.)
 
 The statement \verb,OPort ! e, results in an assignment to a writable
-designator in the receiver associated with the channel of the value \verb!e!.
-If the channel is not ready, the sender is suspended until the channel is
-ready, at which time the sender proceeds and $cS$ for the channel
-is incremented.  See section~\ref{sec:slack}.
+designator in the receiver associated with the channel of the value
+\verb!e!.  If the channel is not ready, the sender is suspended until
+the channel is ready, at which time the sender proceeds and $cS$ for
+the channel is incremented.  See section~\ref{sec:slack}.
 
 
 \subsubsection{Receive}\label{sec:receive}
@@ -1349,7 +1466,8 @@ declared to have type \verb!int! (section~\ref{sec:integer-types}).
 \label{sec:expressions}
 
 An expression prescribes a computation that produces a value or
-variable.  Syntactically, an expression is an operand.  Operands are
+variable.  Syntactically, an expression is an operand, or an operation
+applied to arguments, which are themselves expressions.  Operands are
 identifiers or literals.  An expression is evaluated by recursively
 evaluating its arguments and performing the operation.  The order of
 argument operation is left-to-right for every subexpression at equal
@@ -1359,32 +1477,35 @@ for subexpressions of \verb!&&! and \verb!||! (see section~\ref{sec:shortcircuit
 \subsection{Conventions for describing operations}\label{op-conventions}
 
 To describe the argument and result types of operations, we use a
-notation like function signatures.  But since most operations are too
-general to be described by a true function signature, we extend the
-notation in several ways.
+notation like function declarations (section~\ref{sec:functions}).
+But since most operations are too general to be described by a true
+function signature, we extend the notation in several ways.
 
 The argument to an operation can be required to have a type in a
-particular class, such as an integer type.  In this case the formal
-specifies a type class instead of a type.  For example:
+particular class, such as an integer type.  In this case the formal parameter
+specifies a type class instead of a type.
+Type classes we use, as opposed to regular CSP types, are
+\verb!Integer! for an integer of any type, and \verb!Structure! for a
+structure type of any type.
+
+For example to describe the
+signature of the addition operator \verb!+! we use a function-style
+declaration :
 \begin{Verbatim}[samepage=true]
-   + (a : integer, b : integer) : int
+   + (Integer -a, -b) : int
 \end{Verbatim}
-The formal type \verb!Any! specifies an argument of any type.
 
 A single operation name can be overloaded, which means that it denotes
 more than one operation.  In this case, we write a separate signature for
 each of the operations.  For example:
 \begin{Verbatim}[samepage=true]
-   + (a : integer, b : integer) : int
-     (a : string, b : string)   : string
+   + (Integer -a, -b) : int
+     (string  -a, -b) : string
 \end{Verbatim}
 The particular operation will be elected so that each actual argument type
 is of the corresponding formal type or a member of the corresponding
 formal type class.
 
-Type classes we use, as opposed to regular CSP types, are
-\verb!integer! for an integer of any type, and \verb!structure! for a
-structure type of any type.
 
 \subsection{Literals}
 
@@ -1429,7 +1550,7 @@ is a hexadecimal number from 0--255, or as \verb!\ OctNum!, where
 Every integer expression has type \verb!int! regardless of the types
 of its operands.
 
-\subsection{Operation syntax}
+\subsection{Operation syntax}\label{sec:opsyntax}
 
 The operators that have special syntax are classified and listed in order
 of decreasing binding power in the following table:
@@ -1454,17 +1575,25 @@ of decreasing binding power in the following table:
 All infix operators are left associative except exponentiation \verb!**!, which
 is right associative.
 
-\subsection{Designators}
+\subsection{Designators}\label{sec:designators}
 
-An identifier is a writable designator if it is declared as a variable or
-is a function parameter.  An identifier is a readonly designator if it is
-the index of a loop statement (section~\ref{sec:loop-statement}) or of a
-loop expression (section~\ref{sec:loop-expression}).  CAST constants
-are not designators: they are constant expressions.
+An identifier is a writable designator if it is declared as a
+variable, as an output node or inout node, an array of output nodes or
+inout nodes, , or is a function parameter.  An identifier is a
+readonly designator if it is an input node, an array of input nodes, the index of a loop
+statement (section~\ref{sec:loop-statement}), or the index of a loop
+expression (section~\ref{sec:loop-expression}).  CAST constants are
+not designators: they are constant expressions.
 
 The only operations that produce designators are subscripting, array slicing,
 bit accessing, and structure-field accessing.
 
+
+\subsection{Function application}
+
+A function call is an expression if the function returns a result (is
+a function procedure).  The type of the expression is the result type
+of the function.
 
 \subsection{Bit, array, and struct accessors}
 
@@ -1489,10 +1618,10 @@ a writable designator if \verb!e! is a writable designator.  The type of
 If \verb!e! is an array expression of any type, a {\em slice\/} of the array
 is denoted by
 \begin{Verbatim}[samepage=true]
-   e [ I0 , I1, I2 , ... , In-1]
+   e [ I_0 , I_1, I_2 , ... , I_n-1]
 \end{Verbatim}
-where \verb!I0!..\verb!In-1! are indexes into the first \verb!n! dimensions
-of the array; \verb!I0!..\verb!In-1! must be integers.
+where \verb!I_0!..\verb!I_n-1! are indexes into the first \verb!n! dimensions
+of the array; \verb!I_0!..\verb!I_n-1! must be integers.
 
 If \verb!n! is equal to the dimensionality of \verb!e!, the value of
 the expression is an element of \verb!e!.  If \verb!n! is less than
@@ -1503,7 +1632,7 @@ runtime error for any of the indexes to overrun the length of any
 corresponding dimension of the array.  The array-access expression is
 a designator if \verb!e! is a designator; it is a writable designator
 if \verb!e! is a writable designator.  The type of
-\verb!e [ I0 , I1, I2 , ... , In-1]! is the element type of \verb!e!
+\verb!e [ I_0 , I_1, I_2 , ... , I_n-1]! is the element type of \verb!e!
   if \verb!n! is equal to the dimensionality of \verb!e!, else it is
   an array with the shape of the remaining unspecified dimensions of
   \verb!e!.
@@ -1529,10 +1658,10 @@ a writable designator if \verb!e! is a writable designator.  The type of
 The basic arithmetic operators are built into the language.  
 
 \begin{tabular}{rl}
-{\em infix} & \verb!+  (x, y: integer)          : int! \\
-{\em infix} & \verb!+  (x, y: string)           : int! \\
-{\em infix} & \verb!+  (x : integer; y: string) : int! \\
-{\em infix} & \verb!+  (x : string; y: integer) : int! \\
+{\em infix} & \verb!+  (Integer -x, -y)         : int! \\
+{\em infix} & \verb!+  (string  -x, -y)         : int! \\
+{\em infix} & \verb!+  (Integer -x, string  -y) : int! \\
+{\em infix} & \verb!+  (string  -x, Integer -y) : int! \\
 \end{tabular}
 
 As an infix operator on integer arguments, \verb!+! denotes addition.
@@ -1543,17 +1672,17 @@ As an infix operator where one argument is a string and the other an integer, \v
 string denoting the number in decimal.
 
 \begin{tabular}{rl}
-{\em prefix} & \verb!-  (x   : integer)          : int! \\
-{\em infix}  & \verb!-  (x, y: integer)          : int! \\
+{\em prefix} & \verb!-  (Integer -x)           : int! \\
+{\em infix}  & \verb!-  (Integer -x, -y)       : int! \\
 \end{tabular}
 
 As a prefix operator, \verb!-! denotes integer negation.
 As an infix operator on integer arguments, \verb!-! denotes subtraction.
 
 \begin{tabular}{rl}
-{\em infix}  & \verb!*  (x, y: integer)          : int! \\
-{\em infix}  & \verb!/  (x, y: integer)          : int! \\
-{\em infix}  & \verb!%  (x, y: integer)          : int! \\
+{\em infix}  & \verb!*  (Integer -x, -y)          : int! \\
+{\em infix}  & \verb!/  (Integer -x, -y)          : int! \\
+{\em infix}  & \verb!%  (Integer -x, -y)          : int! \\
 \end{tabular}
 
 \verb!*! denotes integer multiplication. For \verb!x! and \verb!y! both
@@ -1565,8 +1694,8 @@ For any integers \verb!x! and \verb!y!, \verb!x % y! is defined to be
 equal to \verb!x - y * (x / y)!.
 
 \begin{tabular}{rl}
-{\em infix}  & \verb!>>  (x, y: integer)          : int! \\
-{\em infix}  & \verb!<<  (x, y: integer)          : int! \\
+{\em infix}  & \verb!>>  (Integer -x, -y)          : int! \\
+{\em infix}  & \verb!<<  (Integer -x, -y)          : int! \\
 \end{tabular}
 
 The \verb!<<! and \verb!>>! operators interpret the first operand as
@@ -1580,7 +1709,7 @@ then \verb!x >> y! is defined as \verb!x << -y!, and \verb!x << y! is defined
 as \verb!x >> -y!.
 
 \begin{tabular}{rl}
-  {\em infix}  & \verb!**  (x, y: integer)          : int! \\
+  {\em infix}  & \verb!**  (Integer -x, -y)          : int! \\
  \end{tabular}
 
 As an infix operator on integers, \verb!**! denotes exponentiation:
@@ -1592,10 +1721,10 @@ Unlike all the other operators, \verb!**! is right-associative.
 Relations are operators that have \verb!bool! as their range.
 
 \begin{tabular}{ll}
-{\em infix} & \verb!<  (x, y: integer)     : bool! \\
-{\em infix} & \verb!<= (x, y: integer)     : bool! \\
-{\em infix} & \verb!>  (x, y: integer)     : bool! \\
-{\em infix} & \verb!>= (x, y: integer)     : bool! \\
+{\em infix} & \verb!<  (Integer -x, -y)     : bool! \\
+{\em infix} & \verb!<= (Integer -x, -y)     : bool! \\
+{\em infix} & \verb!>  (Integer -x, -y)     : bool! \\
+{\em infix} & \verb!>= (Integer -x, -y)     : bool! \\
 \end{tabular}
 
 The regular less than, less than or equal to, greater than, greater than
@@ -1605,10 +1734,10 @@ expressions in CSP, the operands are interpreted as \verb!int! regardless
 of type.
 
 \begin{tabular}{ll}
-{\em infix} & \verb!== (x, y: integer)     : bool! \\
-{\em infix} & \verb!== (x, y: bool)        : bool! \\
-{\em infix} & \verb,!= (x, y: integer)     : bool, \\
-{\em infix} & \verb,!= (x, y: bool)        : bool, \\
+{\em infix} & \verb!== (Integer -x, -y)     : bool! \\
+{\em infix} & \verb!== (bool -x, -y)        : bool! \\
+{\em infix} & \verb,!= (Integer -x, -y)     : bool, \\
+{\em infix} & \verb,!= (bool -x, -y)        : bool, \\
 \end{tabular}
 
 \verb!==! and \verb,!=, return \verb!true! if the operands are
@@ -1618,7 +1747,7 @@ integers or to two booleans.
 \subsubsection{Logical and bitwise operators}
 
 \begin{tabular}{ll}
-  {\em prefix} & \verb!~ (x: integer)     : integer! \\
+  {\em prefix} & \verb!~ (x: Integer)     : int! \\
   {\em prefix} & \verb!~ (x: bool)        : bool! \\
 \end{tabular}
 
@@ -1630,12 +1759,12 @@ and if the value of \verb!x! is \verb!false! then the value of
 \verb!~x! is \verb!true!.
 
 \begin{tabular}{ll}
-{\em infix} & \verb!& (x, y: integer)     : int! \\
-{\em infix} & \verb!& (x, y: bool)        : bool! \\
-{\em infix} & \verb!| (x, y: integer)     : int! \\
-{\em infix} & \verb!| (x, y: bool)        : bool! \\
-{\em infix} & \verb!^ (x, y: integer)     : int! \\
-{\em infix} & \verb!^ (x, y: bool)        : bool! \\
+{\em infix} & \verb!& (Integer -x, -y)     : int! \\
+{\em infix} & \verb!& (bool -x, -y)        : bool! \\
+{\em infix} & \verb!| (Integer -x, -y)     : int! \\
+{\em infix} & \verb!| (bool -x, -y)        : bool! \\
+{\em infix} & \verb!^ (Integer -x, -y)     : int! \\
+{\em infix} & \verb!^ (bool -x, -y)        : bool! \\
 \end{tabular}
 
 For boolean arguments \verb!x! and \verb!y!, \verb!x & y! is \verb!true! if
@@ -1655,10 +1784,10 @@ interpreted as two's-complement numbers.
 
 \subsubsection{Logical short-circuit operators}\label{sec:shortcircuit}
 \begin{tabular}{ll}
-{\em infix} & \verb!&& (x, y: bool)        : bool! \\
-{\em infix} & \verb!&& (x, y: integer)     : bool! \\
-{\em infix} & \verb!|| (x, y: bool)        : bool! \\
-{\em infix} & \verb!|| (x, y: integer)     : bool! \\
+{\em infix} & \verb!&& (bool -x, -y)        : bool! \\
+{\em infix} & \verb!&& (Integer -x, -y)     : bool! \\
+{\em infix} & \verb!|| (bool -x, -y)        : bool! \\
+{\em infix} & \verb!|| (Integer -x, -y)     : bool! \\
 \end{tabular}
 
 For boolean \verb!x! and \verb!y!, \verb!x && y! is \verb!false! if
@@ -1720,9 +1849,38 @@ input port and the receive statement \verb!X?x! would execute without
 blocking, or if \verb!X! is an output port and the send statement
 \verb,X!x, would execute without blocking.  
 
+\subsection{Receive expression}\label{sec:receive-expression}
+
+The {\em receive expression\/} is
+\begin{Verbatim}[samepage=true]
+   IPort ?
+\end{Verbatim}
+where \verb!IPort! is an input port of width \verb!W!.  If no value
+has yet been sent by the sender, the receiver is suspended until the
+sender has sent the value, at which time the receive expression
+evaluates by performing a receive as in section~\ref{sec:receive} into
+an anonymous location, and returning that as a value.
+
+For example, the assignment of the receive expression \verb!IPort?! to
+\verb!v!:
+\begin{verbatim}
+   v = IPort? 
+\end{verbatim}
+is equivalent to the receive statement:
+\begin{verbatim}
+   IPort?v 
+\end{verbatim}
+The receive expression can be used in complex expressions without
+introducing variable names for the values received, for example to
+receive two numbers on \verb!A! and \verb!B! and send the product on
+\verb!C!:
+\begin{verbatim}
+   C!(A? * B?)
+\end{verbatim}
+
 \subsection{Peek}\label{sec:peek}
 
-The peek, or {\em receive expression,} The peek is
+The peek is
 \begin{Verbatim}[samepage=true]
    # IPort ?
 \end{Verbatim}
@@ -1730,8 +1888,11 @@ where \verb!IPort! is an input port of width \verb!W!.  If no value
 has yet been sent by the sender, the receiver is suspended until the
 sender has sent the value, at which time the peek evaluates to the
 value that would have been written by executing a receive on the
-channel.  $cR$ is not incremented for the channel.  See
-section~\ref{sec:receive}.
+channel.  $cR$ is not incremented for the channel.  The peek is
+thus a receive expression that does not increment $cR$, and allows
+the same value to be inspected more than once without using a variable
+to store that value between uses.
+See sections~\ref{sec:receive} and~\ref{sec:receive-expression}.
 
 \section{Special functions}
 
@@ -1740,9 +1901,9 @@ We use the format of section~\ref{op-conventions}.
 \subsection{Printing}
 
 \begin{tabular}{l}
-  \verb!print  (x: string)! \\
-  \verb!print  (x: integer)! \\
-  \verb!print  (x: bool)!    \\
+  \verb!print  (string  -x)! \\
+  \verb!print  (Integer -x)! \\
+  \verb!print  (bool    -x)! \\
 \end{tabular}
 
 \verb!print! is a proper procedure that can take a parameter of several
@@ -1764,7 +1925,7 @@ be printed to the terminal.
 \subsubsection{Packing structs}
 
 \begin{tabular}{l}
-  \verb!pack(x: structure) : int! \\
+  \verb!pack(Structure -x) : int! \\
 \end{tabular}
 
 \verb!pack! packs the value of the fields of an instance of any structure
@@ -1793,9 +1954,9 @@ Consider
 
     sss = pack(ss)  
 \end{Verbatim}
-\verb!sss! will contain \verb!0x3020100bb! because \verb!a! gets packed to
+\verb!sss! will contain \verb!0x03020100bb! because \verb!a! gets packed to
 higher-order bits, \verb!b! gets packed to lower-order bits, and within
-\verb!b! the higher indexes are packed to higher order bits.
+\verb!b! the higher indexes are packed to higher-order bits.
 
 Now consider
 \begin{Verbatim}[samepage=true]
@@ -1818,7 +1979,7 @@ higher than \verb!a[1][0]!.
 
 \subsubsection{Unpack}
 \begin{tabular}{l}
-  \verb!unpack(x: structure; y: integer)! \\
+  \verb!unpack(Structure +x, Integer -y)! \\
 \end{tabular}
 
 If \verb!x! and \verb!t! are of the same structure type, and
@@ -1834,8 +1995,8 @@ is equivalent to the statement
 \subsection{Assertions}
 
 \begin{tabular}{l}
-  \verb!assert  (x: bool)! \\
-  \verb!assert  (x: bool; y : string)! \\
+  \verb!assert  (bool -x)! \\
+  \verb!assert  (bool -x, string -y)! \\
 \end{tabular}
 
 For both forms of \verb!assert!, activation of \verb!assert(x)! or
@@ -1850,7 +2011,7 @@ required, to not evaluate \verb!y!.
 
 \subsection{String from integer}
 \begin{tabular}{l}
-  \verb!string  (x, y : integer) : string! \\
+  \verb!string  (Integer -x, -y) : string! \\
 \end{tabular}
 
 If \verb!x! is any integer and \verb!y! is in the range \verb!2..36!,
@@ -1860,7 +2021,7 @@ set \verb!0..9,a..z!.
 
 \subsection{Random numbers}
 \begin{tabular}{l}
-  \verb!random  (x : integer) : int(x)! \\
+  \verb!random  (Integer -x) : int(x)! \\
 \end{tabular}
 
 If \verb!x! is a nonnegative integer, \verb!random(x)! evaluates to
@@ -1903,7 +2064,7 @@ implementation-dependent way.
 An implementation will provide a rudimentary interface for file input.
 
 \begin{tabular}{l}
-  \verb!readHexInts   (path : string; n : integer; data : integer[]) : int! \\
+  \verb!readHexInts   (string -path; Integer -n, +data[]) : int! \\
 \end{tabular}
 
 \verb!readHexInts(path,n,data)! reads at most \verb!n! integers from a
@@ -1924,27 +2085,27 @@ other than ASCII hexadecimal data and proper line comments.
 The implementation will provide the following required functions.
 
 \begin{tabular}{l}
-  \verb!min   (x, y : integer) : int! \\
-  \verb!max   (x, y : integer) : int! \\
+  \verb!min   (Integer -x, -y) : int! \\
+  \verb!max   (Integer -x, -y) : int! \\
 \end{tabular}
 
 \verb!min(x,y)! returns the value of the less positive of the two arguments \verb!x! and \verb!y!; \verb!max(x,y)! returns the value of the more positive of the two arguments \verb!x! and \verb!y!.
 
 \begin{tabular}{l}
-  \verb!b2i   (x : bool) : int(1)! \\
+  \verb!b2i   (bool -x) : int(1)! \\
 \end{tabular}
 
 \verb!b2i(x)! returns 1 if \verb!x! is equal to \verb!true! and 0 if \verb!x! is equal to \verb!false!.
 
 \begin{tabular}{l}
-  \verb!abs   (x : integer) : int! \\
+  \verb!abs   (Integer -x) : int! \\
 \end{tabular}
 
 \verb!abs(x)! returns the value of \verb!x! if \verb!x! is greater than or
 equal to zero; \verb!-x! otherwise.
 
 \begin{tabular}{l}
-  \verb!choose   (x : bool; y, z: integer) : int! \\
+  \verb!choose   (bool -x; Integer -y, -z) : int! \\
 \end{tabular}
 
 \verb!choose(x, y, z)! returns \verb!y! if \verb!x! is equal to
@@ -1953,8 +2114,8 @@ normal function-call rules; in particular, all three actuals are
 always evaluated.
 
 \begin{tabular}{l}
-  \verb!log2   (x : integer) : int! \\
-  \verb!log4   (x : integer) : int! \\
+  \verb!log2   (Integer -x) : int! \\
+  \verb!log4   (Integer -x) : int! \\
 \end{tabular}
 
 \verb!log2(x)! returns the number of binary digits required to represent
@@ -1967,6 +2128,18 @@ any number in the range \verb!0..abs(x - 1)!.  If \verb!x! is positive,
 this is equal to the mathematical expression $\lceil \log_4 \verb!x! \rceil$;
 if \verb!x! is negative, it is equal to $\lceil \log_4 (\verb!-x - 1!) \rceil$.
 
+
+\subsection{Reset function}\label{sec:resetport}
+
+The proper procedure \verb!resetNodes! may be declared within a CSP program.
+If it is present, \verb!resetNodes()! will be called before the CSP program
+begins execution.  Writing initialization within \verb!resetNodes!
+allows the implementation to determine that nodes have been reset
+properly (see section~\ref{sec:nodeport}).
+
+\begin{tabular}{l}
+  \verb!resetNodes ()! \\
+\end{tabular}
 
 
 
