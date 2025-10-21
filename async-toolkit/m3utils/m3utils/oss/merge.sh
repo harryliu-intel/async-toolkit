@@ -8,8 +8,13 @@ MERGEDIR=${ROOT}/merged
 HOME=`pwd`
 MAIN=async-toolkit
 #HOME=`pwd`
-M3INSTALL=/nfs/pdx/disks/or_n3a_disk001/w138/mnystroe/oss/orig/${MAIN}
+M3INSTALL=${SRCDIR}/${MAIN}
 TGTNAME=merged-git
+
+# we point out copyright specially because the MAIN is probably a clean
+# checkout, so it won't contain a built binary...
+
+COPYRIGHT=/nfs/pdx/disks/or_n3a_disk001/w138/mnystroe/m3utils/copyright/AMD64_LINUX/copyright
 
 cd ${SRCDIR}
 repos=`echo *`
@@ -61,7 +66,7 @@ YEAR=2025
 LINE1="Copyright (c) %Y Intel Corporation.  All rights reserved.  See COPYRIGHT for more information."
 LINE2="SPDX-License-Identifier: Apache-2.0"
 
-(find . -type f | xargs -n1 ${M3INSTALL}/copyright/AMD64_LINUX/copyright -year 2025 -line1 ${LINE1} -line2 ${LINE2}) | tee copyright.out 2>&1
+(find . -type f | xargs -n1 ${COPYRIGHT} -line1 ${LINE1} -line2 ${LINE2}) | tee copyright.out 2>&1
 
-(find . -type f -and -name m3makefile | xargs -n1 ${M3INSTALL}/copyright/AMD64_LINUX/copyright -style tex -year ${YEAR} -line1 ${LINE1} -line2 ${LINE2} ) | tee copyright.out 2>&1
+(find . -type f -and -name m3makefile | xargs -n1 ${COPYRIGHT} -style tex -year ${YEAR} -line1 ${LINE1} -line2 ${LINE2} ) | tee copyright.out 2>&1
 
