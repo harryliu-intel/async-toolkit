@@ -8,7 +8,7 @@ MERGEDIR=${ROOT}/merged
 HOME=`pwd`
 MAIN=async-toolkit
 #HOME=`pwd`
-M3INSTALL=/nfs/pdx/disks/or_n3a_disk001/w138/mnystroe/m3utils
+M3INSTALL=/nfs/pdx/disks/or_n3a_disk001/w138/mnystroe/oss/orig/${MAIN}
 TGTNAME=merged-git
 
 cd ${SRCDIR}
