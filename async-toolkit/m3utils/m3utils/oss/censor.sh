@@ -27,7 +27,7 @@ EOF
 
 find . -type d -and -name rtl | grep mby-merged | grep src | sed 's,^\./,,' >> ${paths}
 
-find rechar_flow_tmpl -type f -and -name cell_list.\*  >> ${paths}
+find async-toolkit/rechar_flow_tmpl -type f -and -name cell_list.\*  >> ${paths}
 
 ${remove} --paths-from-file ${paths}
 
