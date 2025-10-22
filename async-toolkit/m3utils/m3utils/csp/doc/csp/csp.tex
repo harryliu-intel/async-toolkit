@@ -1500,7 +1500,7 @@ more than one operation.  In this case, we write a separate signature for
 each of the operations.  For example:
 \begin{Verbatim}[samepage=true]
    + (Integer -a, -b) : int
-     (string  -a, -b) : string
+   + (string  -a, -b) : string
 \end{Verbatim}
 The particular operation will be elected so that each actual argument type
 is of the corresponding formal type or a member of the corresponding
@@ -1513,17 +1513,22 @@ Numeric, boolean, and string literals.
 
 \subsubsection{Numeric literals}
 
-Numeric literals denote constant non-negative integers.  Numeric literals can be specified in a four different ways:
+Numeric literals denote constant non-negative integers.  Numeric literals
+may not contain spaces: the spaces we use below serve to separate components
+of the numeric literals for discussion.
+Numeric literals can be specified in a four different ways:
 \begin{itemize}
 
 \item A sequence of digits is interpreted in base 10 (decimal).
 
-\item The sequence \verb!0x! followed by hexadecimal digits (\verb!0!--\verb!9! and \verb!a!--\verb!f! and \verb!A!--\verb!F! ) is interpreted as a base 16 (hexadecimal) number.
+\item The sequence \verb!0x! followed by hexadecimal digits (\verb!0!--\verb!9! and \verb!a!--\verb!f! and \verb!A!--\verb!F! ) is interpreted as a base 16 (hexadecimal) number.  Example: the number forty-two can be written \verb!0x2a!,
+  \verb!0x002a!, or \verb!0x2A!
   
-\item The sequence \verb!0b! followed by binary digits (\verb!0!--\verb!1!) is interpreted as a base 2 (binary) number.
+\item The sequence \verb!0b! followed by binary digits (\verb!0!--\verb!1!) is interpreted as a base 2 (binary) number.  Example: \verb!0b101010!
 
 \item The sequence \verb!Base _ Number! where \verb!Base! is a base itself expressed in decimal and \verb!Number! is interpreted as a number in that base, expressed in digits
   \verb!0!--\verb!9! and \verb!a!--\verb!z! and \verb!A!--\verb!Z!.
+  Example: \verb!21_20!
 \end{itemize}
 
 \subsubsection{Boolean literals}
@@ -1541,9 +1546,10 @@ The type of a string literal is \verb!string!.
 \end{Verbatim}
 The legal escape sequences are: \verb!\n!, \verb!\r!, \verb!\t!,
 \verb!\b!, \verb!\f!, \verb!\"!, \verb!\'!, \verb!\\!, and arbitrary
-8-bit characters can be written \verb!\x HexNum!, where \verb!HexNum!
-is a hexadecimal number from 0--255, or as \verb!\ OctNum!, where
-\verb!OctNum! is an octal number from 0--255.
+8-bit characters can be written \verb!\xHexNum!, where \verb!HexNum!
+is a hexadecimal number from 0--255, or as \verb!\OctNum!, where
+\verb!OctNum! is an octal number from 0--255.  For example, the
+ASCII character \verb!*! can be written \verb!\02a! or \verb!\052!.
 
 \subsection{Integer expressions}
 
@@ -1562,7 +1568,8 @@ of decreasing binding power in the following table:
   \verb,++ --,                & postfix arithmetic \\
   \verb,**,                   & infix exponentiation \\
   \verb,* / %,                & infix arithmetic \\
-  \verb,<< >>,                & infix arithmetic \\
+  \verb,+ -,                & infix arithmetic \\
+  \verb,<< >>,                & infix bitwise shifts \\
   \verb,< <= >= >,            & infix relations \\
   \verb,== !=,                & infix relations \\
   \verb,&,                    & infix bitwise AND \\
@@ -1608,7 +1615,7 @@ be accessed using the syntax
 \end{Verbatim}
 where \verb!Range! is a range \verb!Hi : Lo! where \verb!Hi! and \verb!Lo!
 are of type \verb!int!, or a single number \verb!k!, which is interpreted as
-\verb!k : k!.  If the range is empty, the value is zero.
+\verb!k : k!.  If the range is empty (that is, if $\verb!Hi! < \verb!Lo!$) then, the value of the expression is zero.
 The bit-access expression is a designator if \verb!e! is a designator; it is
 a writable designator if \verb!e! is a writable designator.  The type of
 \verb!e { Range }! is \verb!uint(Hi - Lo + 1)!.
@@ -1653,7 +1660,7 @@ a writable designator if \verb!e! is a writable designator.  The type of
 \verb! e :: Field! is the declared type of the field.
 
 
-\subsubsection{Arithmetic and string operators}
+\subsection{Arithmetic and string operators}
 
 The basic arithmetic operators are built into the language.  
 
@@ -1700,7 +1707,7 @@ equal to \verb!x - y * (x / y)!.
 
 The \verb!<<! and \verb!>>! operators interpret the first operand as
 being a two's-complement representation of a number.  \verb!x << y!
-denotes left shift, that is, when \verb!y! is positive, the \value!x!
+denotes left shift, that is, when \verb!y! is positive, the value \verb!x!
 shifted \verb!y! bit positions to the left, with the bottom \verb!y!
 bits of the result being zero. \verb!x >> y! with \verb!y! positive
 denotes right shift of \verb!x!, \verb!y! bit positions to the right.
@@ -1716,7 +1723,7 @@ As an infix operator on integers, \verb!**! denotes exponentiation:
 \verb!x ** y! is equal to \verb!x! raised to the \verb!y!th power.
 Unlike all the other operators, \verb!**! is right-associative.
 
-\subsubsection{Relations}
+\subsection{Relations}
 
 Relations are operators that have \verb!bool! as their range.
 
@@ -1744,7 +1751,7 @@ of type.
 equal, \verb!false! if they are not.  They can be applied to two
 integers or to two booleans.
 
-\subsubsection{Logical and bitwise operators}
+\subsection{Logical and bitwise operators}
 
 \begin{tabular}{ll}
   {\em prefix} & \verb!~ (x: Integer)     : int! \\
@@ -1774,7 +1781,7 @@ of \verb!x! and \verb!y! interpreted as two's-complement numbers.
 
 For boolean arguments \verb!x! and \verb!y!, \verb!x | y! is \verb!false! if
 both arguments are \verb!false!, otherwise it is \verb!true!.  
-For integer arguments \verb!x! and \verb!y!, \verb!x & y! is the bitwise OR
+For integer arguments \verb!x! and \verb!y!, \verb!x | y! is the bitwise OR
 of \verb!x! and \verb!y! interpreted as two's-complement numbers.
 
 For boolean arguments \verb!x! and \verb!y!, \verb!x ^ y! is
@@ -1782,7 +1789,7 @@ equivalent to \verb,x != y,. For integer arguments \verb!x! and
 \verb!y!, \verb!x ^ y! is the bitwise XOR of \verb!x! and \verb!y!
 interpreted as two's-complement numbers.
 
-\subsubsection{Logical short-circuit operators}\label{sec:shortcircuit}
+\subsection{Logical short-circuit operators}\label{sec:shortcircuit}
 \begin{tabular}{ll}
 {\em infix} & \verb!&& (bool -x, -y)        : bool! \\
 {\em infix} & \verb!&& (Integer -x, -y)     : bool! \\
@@ -1913,7 +1920,7 @@ using the normal localization rules for character sets, etc.
 
 If \verb!print(x)! is activated and \verb!x! is an integer of any type, 
 an ASCII representation of the absolute value of \verb!x! in hexadecimal digits, drawn
-from the set \verb!0..9,a..f! will be printed to the terminal, preceded by the prefix \verb!0x! if \verb!x! is positive and preceded by the prefix \verb!-0x! if \verb!x! is positive.
+from the set \verb!0..9,a..f! will be printed to the terminal, preceded by the prefix \verb!0x! if \verb!x! is positive and preceded by the prefix \verb!-0x! if \verb!x! is negative.
 
 
 If \verb!print(x)! is activated and \verb!x! is \verb!false!, \verb!0x0! will
