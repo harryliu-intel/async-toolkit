@@ -2289,7 +2289,7 @@ define EUCLID(int A; int B)()
 
 \subsubsection{Simple incrementer}
 A first process \verb!P0! sending an ever-increasing integer
-over a channel of width \verb!WIDTH! bits to a second process \verb!P!, which
+over a channel of width \verb!WIDTH! bits to a second process \verb!P1!, which
 prints them to the terminal.
 
 
@@ -2324,6 +2324,7 @@ Here \verb!bd(WIDTH)! represents a bundled-data channel of width
 \verb!WIDTH! bits, one of the many possible hardware realizations of a CSP
 \verb!WIDTH!-width channel.
 
+\newpage
 \subsection{A bigger example: the Collatz conjecture}
 
 \subsubsection{Common definitions}
@@ -2473,20 +2474,15 @@ define MANAGER(int NWORKERS)(bd(W) +STRT; bd(STATUSW) -STATUS) <+ common
 
        #[ s::tok -> // a return token from the STRT
          outstanding--;
-       //         print("Token!  outstanding=" + outstanding);
          #[ outstanding == 0 ->
             // restart workers once all tokens have been collected
-       print("phase " + bigiter + " complete, re-launching...");
+            print("phase " + bigiter + " complete, re-launching...");
             STRT!bigiter ; outstanding=NWORKERS ; bigiter++
           ];
        ];
 
        #[ s::l::num != save::l::num -> save = s ; doprint = true ];
        
-       //              print ("STATUS? " + fmtStatus(s) + " ( ops = " + s::ops +
-       //            " ; num = " + save::l::num +
-       //            " ; chain = " + save::l::length + " )");
-
        ops += s::ops;
 
        int now       = walltime();
