@@ -4,6 +4,7 @@
 \usepackage[letterpaper, margin=1in]{geometry}
 \usepackage{parskip}
 \setlength{\parindent}{0pt}
+\usepackage[greek,english]{babel}
 
 % Typography
 %\usepackage{times}
@@ -167,6 +168,9 @@ validate the design since the hardware implementation might be
 different.  Accordingly, CSP variables have well-defined initial
 values, and expression-evaluation orders as well as function-parameter
 evaluation orders are strictly specified.
+
+\subsection{CAST : Caltech Asynchronous Tools}
+\label{sec:cast}
 
 Like many (but not all) of its predecessors, CSP does not include
 facilities for process creation or the establishment of communication
@@ -420,7 +424,7 @@ a particular time period.  One justification for this approach is that a
 given code will run the same everywhere, since the rounding, overflow, etc.,
 will occur the same on every machine.
 
-\item Another approach is taken by C, Modula-3, etc.,
+\item Another approach is taken by C, Modula-3, et al.,
 and provides the programmer with a few data types whose widths are not
 specified precisely but can be tested at compile and run time, although
 in practice in this approach, programmers tend to get used to certain
@@ -430,7 +434,7 @@ in reality, the approach is much more similar to Java's in that everybody
 expects certain types to behave in very specific ways.  One justification
 for not specifying the data types precisely in the language reference
 manual is that this allows the runtime to be optimized for whatever
-machine is available at runtime.
+machine is available.
 
 \item The third approach is to provide data types that are arbitrarily
   large and runtimes that allocate memory to represent arbitrarily large
@@ -828,39 +832,43 @@ as an output port.  Hence, channels are point-to-point and have exactly
 one sender and exactly one receiver.  An implementation may permit
 ports to ``loop back,'' that is to connect from a process to itself.
 
-Channels may be elements of arrays.
+Channel ports may be the elements of an array.
 
 \subsection{Nodes}\label{sec:nodeport}
 
 A {\em node\/} is a shared boolean variable that is attached to a node
-port of one or more processes.  It can be read and written as a local
-variable, and it can be used in any context where a scalar boolean local
-variable could be used.  Nodes may be {\em input nodes, output nodes,}
-or {\em inout nodes,} and like channels are declared externally to the
-CSP language.
+port of one or more processes.
+Formally, a node is a set of associations
+\[ \{ (A_0, P_0), (A_1, P_1) \ldots (A_{n-1},P_{n-1}) \} \]
+  where $A_i$ is a process with access to the node and $P_0$ is the
+  name of the node port used within $A_i$ to access the node.
 
-Nodes may be elements of arrays.
 
-If a node is assigned  to (possibly repeatedly) by a single process
-\verb!P! (in which the node is attached to an output or inout node
-port) and also available to a set of other observing processes \verb!Q_0..Q_n-1!
-(in each of which the node is attached to an input or inout node port) then the final assignment within \verb!P! will eventually be available
-to \verb!Q_0..Q_n-1!, but it is not specified in what order the
-observers will observe the update.
+The port $P_i$ attached to a node can be
+read and written as a local variable within $A_i$, and it can be used in any
+context where a scalar boolean local variable could be used.  Node
+ports may be {\em input node ports, output node ports,} or {\em inout
+  node ports,} and like channel ports are declared externally to the CSP
+language.  Node ports access their associated nodes: an assignment to a node
+port results in an assignment to the node, and inspecting the value of
+a node port yields the value of the node.
 
-If a node is assigned to by more than one process \verb!P_0..P_n-1!, and
-all the assigned values \verb!v_i! are the same \verb!v!, the observing processes will eventually observe the node to be \verb!v!, but it is not specified
-in what order the observers will observe the update.
 
-If a node is assigned to by more than one process \verb!P_0..P_n-1!,
-and the final assigned values \verb!v_i! are different, the observing
-processes will eventually observe the node to be some value \verb!w!,
-and that value will be the same across all processes, but it is not
-specified what the value will be other than that it will be one of the
-\verb!v_i!, nor is it specified in what order the observers will observe
-the update.  (Since nodes are boolean, this just means that the
-observed values will eventually converge to \verb!true! or
-\verb!false! across all the \verb!Q_i!.)
+Node ports may be the elements of an array.
+
+If a node \verb!n! is assigned to (possibly repeatedly) by a single
+process \verb!P! (in which the node is attached to an output or inout
+node port) and also available to a set of other observing processes
+\verb!Q_0..Q_n-1!  (in each of which \verb!n! is attached to an input
+or inout node port) then the final assignment within \verb!P! will
+eventually be observed as the value of \verb!n!  by \verb!Q_0..Q_n-1!,
+but it is not specified in what order the observers will observe the
+update.
+
+If a node \verb!n! is assigned to by more than one process
+\verb!P_0..P_n-1!, then the observing processes will eventually
+observe \verb!n! to have a value determined by some sequential
+interleaving of the assignments performed by \verb!P_0..P_n-1!.
 
 Nodes that are members of arrays may be treated by the implementation
 as independent of each other; that is, in case of contention, one
@@ -1053,14 +1061,14 @@ target before it is used as a source.
 
 A statement of the form
 \begin{verbatim}
-   v -
+   v-
 \end{verbatim}
 where \verb!v! is a writable designator referencing a boolean variable
 is equivalent to the statement \verb!v = false!.
 
 A statement of the form
 \begin{verbatim}
-   v +
+   v+
 \end{verbatim}
 where \verb!v! is a writable designator referencing a boolean variable
 is equivalent to the statement \verb!v = true!.
@@ -1319,9 +1327,9 @@ deterministic selections and repetitions.
 \subsubsection{Evaluation order of guarded commands}
 The order in which the the guards are evaluated is indeterminate, and
 the number of times that the guards are evaluated is also indeterminate,
-but if command \verb!Si! executes, the guard \verb!Gi! has been evaluated
+but if command \verb!S_i! executes, the guard \verb!G_i! has been evaluated
 at least once, and this evaluation has taken place before the evaluation
-of \verb!Si! has begun.
+of \verb!S_i! has begun.
 
 
 \subsection{The loop statement}\label{sec:loop-statement}
@@ -1432,7 +1440,8 @@ the sequence of declarations is fixed:
   function declarations;
   program body
 \end{Verbatim}
-the program body is evaluated when the system starts to run.  The evaluation
+The program body is evaluated when the system starts to run, but
+after initialization (see sections~\ref{sec:initialization} and~\ref{sec:resetport}).  The evaluation
 order of different CSP programs within a system is unspecified.
 CSP does not allow forward references: therefore, an implication of the
 declaration order is that functions cannot access variables declared in
@@ -1485,26 +1494,27 @@ The argument to an operation can be required to have a type in a
 particular class, such as an integer type.  In this case the formal parameter
 specifies a type class instead of a type.
 Type classes we use, as opposed to regular CSP types, are
-\verb!Integer! for an integer of any type, and \verb!Structure! for a
-structure type of any type.
+\verb!Integer! for an integer of any type, and \verb!Structure! for any
+structure type.
 
 For example to describe the
 signature of the addition operator \verb!+! we use a function-style
-declaration :
+declaration:
 \begin{Verbatim}[samepage=true]
    + (Integer -a, -b) : int
 \end{Verbatim}
 
 A single operation name can be overloaded, which means that it denotes
-more than one operation.  In this case, we write a separate signature for
-each of the operations.  For example:
+more than one operation.  In this case, we write a separate signature
+for each of the operations, each alternative signature on a line of
+its own.  For example:
 \begin{Verbatim}[samepage=true]
    + (Integer -a, -b) : int
    + (string  -a, -b) : string
 \end{Verbatim}
 The particular operation will be elected so that each actual argument type
-is of the corresponding formal type or a member of the corresponding
-formal type class.
+is of the corresponding formal parameter type or a member of the corresponding
+formal parameter type class.
 
 
 \subsection{Literals}
@@ -1801,13 +1811,15 @@ For boolean \verb!x! and \verb!y!, \verb!x && y! is \verb!false! if
 either \verb!x! or \verb!y! is \verb!false!, and \verb!true!
 otherwise.  If \verb!x! is \verb!false!, \verb!y! is not evaluated.
 For integer \verb!x! and \verb!y!, \verb!x && y! is equivalent to
-\verb,(x != 0) && (y != 0),.
+\verb,(x != 0) && (y != 0),; this means that if \verb!x! is zero, then
+\verb!y! is not evaluated. 
 
 For boolean \verb!x! and \verb!y!, \verb!x || y! is \verb!true! if
 either \verb!x! or \verb!y! is \verb!true!, and \verb!false!
 otherwise.  If \verb!x! is \verb!true!, \verb!y! is not evaluated.
 For integer \verb!x! and \verb!y!, \verb!x || y! is equivalent to
-\verb,(x != 0) || (y != 0),.
+\verb,(x != 0) || (y != 0),; this means that if \verb!x! is nonzero, then
+\verb!y! is not evaluated.
 
 \subsection{Loop expressions}\label{sec:loop-expression}
 A loop expression is
@@ -1895,11 +1907,11 @@ where \verb!IPort! is an input port of width \verb!W!.  If no value
 has yet been sent by the sender, the receiver is suspended until the
 sender has sent the value, at which time the peek evaluates to the
 value that would have been written by executing a receive on the
-channel.  $cR$ is not incremented for the channel.  The peek is
-thus a receive expression that does not increment $cR$, and allows
-the same value to be inspected more than once without using a variable
-to store that value between uses.
-See sections~\ref{sec:receive} and~\ref{sec:receive-expression}.
+channel associated with \verb!IPort!.  $cR$ is not incremented for the
+channel.  The peek is thus a receive expression that does not
+increment $cR$, and allows the same value to be inspected more than
+once without using a variable to store that value between uses.  See
+sections~\ref{sec:receive} and~\ref{sec:receive-expression}.
 
 \section{Special functions}
 
@@ -2066,6 +2078,17 @@ The implementation will provide a function
 that is related to \verb!simtime! and \verb!walltime! in some
 implementation-dependent way.
 
+\subsection{Wait}
+\begin{tabular}{l}
+  \verb!wait (Integer -x)! \\
+\end{tabular}
+
+A process's calling \verb!wait! pauses the execution of that process
+for a given amount of simulation time.
+
+
+
+
 \subsection{File input}
 
 An implementation will provide a rudimentary interface for file input.
@@ -2191,15 +2214,511 @@ C. A. R. Hoare.  Communicating sequential processes.  CACM 21(8), 1978.}
 \bibitem{Pike2009}{
   R. Pike et al.  The Go Programming Language.  2009.}
 
-  \bibitem{Kahn}{G.~Kahn.  The semantics of a simple language for parallel processing.  Information Processing {\bf 74}.  North-Holland, 1974.}
-  
+\bibitem{Kahn}{G.~Kahn.  The semantics of a simple language for parallel processing.  Information Processing {\bf 74}.  North-Holland, 1974.}
 
+\bibitem{Mutex}{E.~W.~Dijkstra.  Solution of a problem in concurrent programming control.  {\it CACM,} {\bf 8}(9), p.~559, 1965.}
+
+  \bibitem{euclid}{Euclid. (\textgreek{Στοιχεῖα}); {\it The Thirteen Books of the Elements,}
+  vol.~2, Book~VII.  Translated by Sir~Thomas Heath.  Second edition,
+  unabridged.  Dover Publications, 1956.  Reprint of edition by
+  Cambridge University Press, 1908.}
+  
+\
 \end{thebibliography}
 
 \chapter{Example Programs}
 \label{app:examples}
 
-Complete example programs illustrating language features.
+We look at some concrete example programs.  As CSP is not a complete
+language once ports, channels, and nodes are involved, the example
+programs will be in a notation we can call CAST-CSP; in other words,
+we will look at CSP programs enclosed inside the CAST language (see
+section~\ref{sec:cast}).
+
+\section{Single-process programs}
+
+\subsection{The simplest program}
+\begin{Verbatim}[samepage=true]
+define SKIP()()
+{
+  csp {
+    skip
+  }
+}
+\end{Verbatim}
+
+
+\subsection{Hello, world}
+
+Obligatory ``hello, world'' program.
+
+\begin{Verbatim}[samepage=true]
+define HELLOWORLD()()
+{
+  csp {
+    print("hello, world!")
+  }
+}
+\end{Verbatim}
+
+\newpage
+\subsection{The Algorithm}
+
+Euclid's algorithm.\cite{euclid}
+
+\begin{Verbatim}[samepage=true]
+define EUCLID(int A; int B)()
+{
+  csp {
+    x = A;
+    y = B;
+
+    *[  x > y -> x = x - y
+     [] x < y -> y = y - x
+     ];
+
+    print ("gcd(" + A + "," + B + ") = " + x)
+  }
+}
+\end{Verbatim}
+
+
+\newpage
+\section{Multi-process programs}
+
+\subsubsection{Simple incrementer}
+A first process \verb!P0! sending an ever-increasing integer
+over a channel of width \verb!WIDTH! bits to a second process \verb!P!, which
+prints them to the terminal.
+
+
+\begin{Verbatim}[samepage=true]
+define P0(int WIDTH)(bd(WIDTH) +R)
+{
+
+  csp {
+    int x;
+    *[ R!x; x++ ]
+  }
+}
+
+define P1(int WIDTH)(bd(WIDTH) -L)
+{
+  csp {
+    *[ L?x ; print(x) ]
+  }
+}
+
+define P0P1(int WIDTH)()
+{
+  subcells {
+    bd(WIDTH) c;
+    P0(WIDTH) p0(c);
+    P1(WIDTH) p1(c);
+  }
+}
+\end{Verbatim}
+
+Here \verb!bd(WIDTH)! represents a bundled-data channel of width
+\verb!WIDTH! bits, one of the many possible hardware realizations of a CSP
+\verb!WIDTH!-width channel.
+
+\subsection{A bigger example: the Collatz conjecture}
+
+\subsubsection{Common definitions}
+\begin{Verbatim}[]
+int W        = 61; // 2^62 < (2 ^ 61 - 1) * 3 + 1  < 2^63
+                   // we need an extra bit for the sign bit
+
+int STATUSW  = 128 + 2 * W + (W + 1); 
+
+define common attributes {
+  csp {
+    
+    structure longest_so_far =
+      (
+       int(W) num;
+       int(W) length;
+       );
+
+    structure status =
+      (
+       bool     tok;
+       sint(W)  id;
+       int(128) ops;
+       longest_so_far l;
+       );
+
+    function fmtStatus(status -s) : string =
+      (
+       fmtStatus =
+       "{id=" + s::id +
+       " tok=" + s::tok +
+       " len=" + s::ops +
+       " num=" + s::l::num  +
+       " length=" + s::l::length +
+       "}"
+      );
+    
+    function sendStatus(bool -tok; int -id, -len, -num, -steps) =
+      (
+       status s;
+       s::tok       = tok;
+       s::id        = id;
+       s::l::length = len;
+       s::l::num    = num;
+       s::ops       = steps;
+
+       int p = pack(s);
+
+       status t;
+       unpack(t, p);
+
+       STATUS!(p);
+       steps = 0;
+       );
+
+    function even(int -n) : bool = ( even = ((n & 1) == 0) );
+
+    function odd(int -n) : bool =  ( odd = ~even(n) );
+
+  }
+} 
+\end{Verbatim}
+
+\subsubsection{Collatz worker}
+\begin{Verbatim}[]
+define WORKER (int NWORKERS) (bd(W) -STRT; bd(STATUSW) +STATUS) <+ common
+{
+  csp {
+
+    bool assert_inrange=false;
+    
+    int(W-log2(NWORKERS)) i;
+    int(W) steps  = 0;
+    int(W) maxlen = 0;
+
+    int(W/2) id;
+    
+    STRT?id;
+    print ("id = " + id);
+    
+    *[int(W) idx = i * NWORKERS + id; // this is the index of the odd number
+      int(W) num = 2 * idx + 1;       // this is the actual number we shall work on
+      int(W) len = 0;
+      int    snum = num;
+      int    newval;
+      
+      // do the Collatz loop
+      *[ num != 1 ->
+         [  odd(num)  -> newval = 3 * num + 1
+         [] even(num) -> newval = num / 2
+         ];
+         num = newval;
+
+         #[ assert_inrange -> assert(num == newval, "overflow!") ];
+         
+         len++
+       ]
+      ;
+      assert(num == 1);
+      steps += len;
+      
+     #[  len > maxlen ->
+         maxlen = len;
+         sendStatus(false, id, len, snum, steps);
+         steps = 0
+      ];
+      
+     #[ (i % 1000 == 0)    ->
+        sendStatus(true, id, 0, 0, steps);
+        steps = 0;
+
+        int dummy;
+        STRT?dummy;
+      ];
+      i++
+    ]
+    }
+}
+\end{Verbatim}
+
+\subsubsection{Collatz manager}
+\begin{Verbatim}[]
+int Billion = 1000**3;
+int printstep = 4;
+
+define MANAGER(int NWORKERS)(bd(W) +STRT; bd(STATUSW) -STATUS) <+ common
+{
+  csp {
+      
+    int ops;
+
+    int(W) bigiter=0;
+    int(log2(NWORKERS)) outstanding;
+    STRT!0; outstanding = NWORKERS; bigiter++;
+    
+    status save;
+
+    int start = walltime();
+    int last  = start; // last time for a print
+    
+    *[ STATUS?x;
+          
+       status s;
+       bool doprint = false;
+
+       unpack(s,x);
+
+       #[ s::tok -> // a return token from the STRT
+         outstanding--;
+       //         print("Token!  outstanding=" + outstanding);
+         #[ outstanding == 0 ->
+            // restart workers once all tokens have been collected
+       print("phase " + bigiter + " complete, re-launching...");
+            STRT!bigiter ; outstanding=NWORKERS ; bigiter++
+          ];
+       ];
+
+       #[ s::l::num != save::l::num -> save = s ; doprint = true ];
+       
+       //              print ("STATUS? " + fmtStatus(s) + " ( ops = " + s::ops +
+       //            " ; num = " + save::l::num +
+       //            " ; chain = " + save::l::length + " )");
+
+       ops += s::ops;
+
+       int now       = walltime();
+       int runtime   = now - start;
+       int runtime_s = runtime / Billion + 1;
+
+       doprint |= (now > (lastprint + printstep * Billion));
+       
+       #[ doprint ->
+
+          print("num = " + save::l::num + " ; chain = " + save::l::length + 
+          " : total steps = " + ops + " wall = " + runtime_s +
+          " ksteps/s = " + (ops/runtime_s/1000));
+
+          lastprint = now
+       ]
+       
+     ]
+  }
+}
+\end{Verbatim}
+
+\subsubsection{Start tree}
+\begin{Verbatim}[samepage=true]
+define STARTSPLIT(int level)(bd(W) -L, +R[0..1]) <+ common
+{
+  csp {
+    *[ L?i; R[0]!i, R[1]!(i + 2**level) ]
+  }
+}
+
+define STARTBUFF()(bd(W) -L, +R) <+ common
+{
+  subcells { L = R; }  // this makes the workers start a bit out of phase
+}
+
+define START_TREE(int level, N)(bd(W) -L, +R[0..N-1]) <+ common
+// level is the level of the output of the tree
+{
+  [ N==1 -> subcells { STARTBUFF b(L, R[0]); } ]
+      [ N==2 -> subcells { STARTSPLIT(level) s(L, R); } ]
+    [ N > 2 ->
+      subcells {
+        bd(W) X[0..(N+1)/2 - 1];
+        <i : 0.. N / 2 - 1 : STARTSPLIT(level)
+           s[i](X[i], {R[2*i], R[2*i + 1]}); >
+           
+        START_TREE(level + 1, (N+1)/2) tree(L, X);
+
+        <i: N/2 .. (N+1)/2 - 1 : STARTBUFF b[i](X[i],R[2*i]);>
+           }
+    ]
+}
+\end{Verbatim}
+
+\subsubsection{Status tree}
+\begin{Verbatim}[]
+define merge_attr attributes <+ common
+{
+  csp {
+    function recv(int -which; status +-s) =
+      (
+       int oldops = s::ops;
+       int oldlen = s::l::length;
+       
+       L[which]?xs;
+       unpack(s, xs);
+       s::l::length  = max(oldlen, s::l::length);
+       s::ops       += oldops;
+       );
+
+    function checksend(status +-os, +-s) =
+      (
+       #[ (os::l::length != s::l::length) || s::tok ->
+             R!s; s::ops = 0; os = s;
+        ]
+       );
+  }
+}
+
+define SMERGE()(bd(STATUSW) -L[0..1], +R) <+ merge_attr
+{
+  csp {
+    status s;
+    
+    *[
+      status os = s;
+      [
+       #L[0] -> recv(0, s)
+       :
+       #L[1] -> recv(1, s)
+       ];
+       checksend(os, s);
+       ]
+  }
+}
+
+define STATUS_TREE(int N)(bd(STATUSW) -L[0..N-1], +R)  <+ common
+{
+  [ N == 1 -> subcells { L[0] = R; } ]
+  [ N == 2 -> subcells { SMERGE m(L, R); } ]
+  [ N > 2  ->
+      subcells {
+        bd(STATUSW) X[0..(N+1)/2 - 1];
+        <i : 0.. N / 2 - 1 : SMERGE m[i]({L[2*i], L[2*i + 1]}, X[i]); >
+        STATUS_TREE((N+1)/2) tree(X, R);
+
+        <i: N/2 .. (N+1)/2 - 1 : L[2*i] = X[i];>
+    }
+  ]
+}
+\end{Verbatim}
+
+\subsubsection{Putting it all together}
+\begin{Verbatim}[samepage=true]
+define COLLATZ(int NWORKERS_ARG)()  <+ common
+{
+  int NWORKERS;
+  [ NWORKERS_ARG > 0 -> NWORKERS = NWORKERS_ARG; ]
+  [ NWORKERS_ARG < 0 -> NWORKERS = -NWORKERS_ARG; ]
+    
+  subcells {
+    bd(W) S, STRT[0..NWORKERS-1];
+    bd(STATUSW) WSTATUS[0..NWORKERS-1], STATUS;
+    MANAGER(NWORKERS) mgr(S, STATUS);
+    START_TREE(0, NWORKERS) start_tree(S, STRT);
+
+    [ NWORKERS_ARG > 0 ->
+      <i:0..NWORKERS-1: WORKER(NWORKERS) wrkr[i](STRT[i], WSTATUS[i]);>]
+
+    STATUS_TREE(NWORKERS) status_tree(WSTATUS, STATUS);
+  }
+}
+\end{Verbatim}
+
+\newpage
+\subsection{Four-phase handshaking in nodes}
+Normally, the four-phase protocol would be implemented inside the channel
+types, so the processes could use the rendezvous.  Here, we do it explicitly,
+so as to exercise the node type.
+
+\begin{verbatim}
+define S()(node -ri, +ro)
+{
+  csp {
+    function resetNodes() = (ro-);
+
+    *[ [ri]; ro+; [~ri]; ro- ]
+  }
+}
+
+define T()(node +-li, +-lo)
+{
+  csp {
+    function resetNodes() = (lo-);
+    *[ lo+; [li]; print(li); lo-; [~li]; print(li) ]
+  }
+}
+
+define FOURPHASE()()
+{
+  subcells {
+    node d, a;
+
+    S() s(a, d);
+    T() t(d, a);
+  }
+}
+\end{verbatim}
+
+
+\newpage
+\subsection{Dijkstra's solution to the mutual exclusion problem}
+Dijkstra's generalization of Dekker's algorithm for mutual exclusion\cite{Mutex}.
+Applied to two processes since assignments to node arrays in CSP are
+non-atomic.
+
+\begin{verbatim}
+int N = 2;
+define COMPUTER(int i)(node b[0..N-1], c[0..N-1], k, busy)
+{
+  csp {
+    function resetNodes() = (b[i]+, c[i]+, k+, busy-);
+    
+    bool Li0 = true;
+    bool Li1 = false;
+    
+    *[ Li0 -> b[i] = false;
+       Li0-, Li1+
+
+     [] Li1 ->
+       wait(random(4));
+       print ("Li1 k=" + k);
+       
+      [ b2i(k) != i ->
+        c[i] = true;
+        #[ b[b2i(k)] -> k = i && i ]
+      [] else ->
+         c[i] = false;
+         bool fail = false;
+        <;j:N: #[ j != i & ~c[j] -> fail = true]> ;
+
+        #[ ~fail ->
+           print ("enter critical section " + i);
+           assert(~busy);
+           busy+;
+           wait(random(4));
+           busy-;
+           print ("leave critical section " + i);
+           c[i] = true; b[i] = true;
+           print ("enter non-critical section " + i);
+           wait(random(4));
+           print ("leave non-critical section " + i);
+           Li0+, Li1- 
+         ]
+        ]
+      ]
+   }
+}
+\end{verbatim}
+\newpage
+\begin{verbatim}
+define DIJKSTRA()()
+{
+  subcells {
+    node b[0..N-1], c[0..N-1], k, busy;
+
+    COMPUTER(0) c0(b, c, k, busy);
+    COMPUTER(1) c1(b, c, k, busy);
+  }
+}
+\end{verbatim}
+
 
 \appendix
 
