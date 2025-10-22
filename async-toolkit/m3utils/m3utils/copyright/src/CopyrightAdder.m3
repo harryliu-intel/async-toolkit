@@ -22,6 +22,7 @@ CONST
   (* Style definitions *)
   Modula3Style   = Style{FALSE, "(* ", " *)"};
   HashStyle      = Style{TRUE, "# ", ""};
+  FortranStyle   = Style{TRUE, "# ", ""};
   CStyle         = Style{FALSE, "/* ", " */"};
   SlashStyle     = Style{TRUE, "// ", ""};
   PercentStyle   = Style{TRUE, "% ", ""};
@@ -48,6 +49,7 @@ CONST
     Mapping{".c",     CStyle},
     Mapping{".h",     CStyle},
     Mapping{".p4",    CStyle},
+    Mapping{".f",     FortranStyle},
     Mapping{".cpp",   SlashStyle},
     Mapping{".java",  SlashStyle}, 
     Mapping{".scala", SlashStyle},
