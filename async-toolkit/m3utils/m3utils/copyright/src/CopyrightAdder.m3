@@ -22,7 +22,7 @@ CONST
   (* Style definitions *)
   Modula3Style   = Style{FALSE, "(* ", " *)"};
   HashStyle      = Style{TRUE, "# ", ""};
-  FortranStyle   = Style{TRUE, "# ", ""};
+  FortranStyle   = Style{TRUE, "C ", ""};
   CStyle         = Style{FALSE, "/* ", " */"};
   SlashStyle     = Style{TRUE, "// ", ""};
   PercentStyle   = Style{TRUE, "% ", ""};
