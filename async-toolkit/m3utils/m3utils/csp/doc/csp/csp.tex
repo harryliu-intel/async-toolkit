@@ -155,6 +155,7 @@ arbitrary-precision arithmetic by default, bit extraction, packing and
 unpacking of structured data, and of course, extremely high levels of
 multithreading.
 
+\section{Design Outline}
 One design goal of CSP has been to as much as possible banish
 unpredictable behaviors from the language.  Unpredictable behaviors
 that might be of little concern in software development can be a much
@@ -277,7 +278,9 @@ the selection with no guards true in Dijkstra was an error (equivalent
 to \verb!abort!).  Martin introduced the idea that the selection
 instead blocks until one of the guards {\em becomes\/} true, which in
 a distributed system can happen owing to events external to the
-process.
+process; if no guard ever becomes true, the program does not continue,
+and that is again equivalent to \verb!abort!, at least for the process
+that does not continue.
 
 Similarly, Dijkstra introduced the \verb!do! loop:
 \begin{verbatim}
@@ -497,7 +500,7 @@ CSP.
 
 This report documents a language intended to describe the behavior of
 hardware systems starting at a very high level of description but also
-applicable for describing highly decomposed hardware systems, at the
+applicable to describing highly decomposed hardware systems, at the
 level of gates and simple sequential elements such as latches or flip-flops.
 The language itself makes no special distinction between constructs that
 are ``easy'' or ``difficult'' to realize  in circuitry.  An implementation
@@ -878,7 +881,7 @@ value \verb!w[l]!.
 
 The implementation may check that nodes are properly reset at the beginning
 of execution and treat a failure of a program to do so as a runtime error.
-See section~\label{sec:resetfunction}.
+See section~\ref{sec:resetfunction}.
 
 
 \section{Functions}
@@ -901,9 +904,9 @@ A function definition has the form:
 where \verb!body! is the body, and \verb!sig! is a signature specification,
 which has the form:
 \begin{Verbatim}[samepage=true]
-   (formal0 ; ...; formaln-1) : R
+   (formal_0 ; ...; formal_n-1) : R
 \end{Verbatim}
-where each \verb!formali! is a formal parameter declaration, as described below and \verb!R! is the result type, which can be any type.  The ``\verb!: R!'' can
+where each \verb!formal_i! is a formal parameter declaration, as described below and \verb!R! is the result type, which can be any type.  The ``\verb!: R!'' can
 be omitted, making the signature that of a proper procedure.
 
 A formal parameter declaration has the form
@@ -1441,7 +1444,7 @@ the sequence of declarations is fixed:
   program body
 \end{Verbatim}
 The program body is evaluated when the system starts to run, but
-after initialization (see sections~\ref{sec:initialization} and~\ref{sec:resetport}).  The evaluation
+after initialization (see sections~\ref{sec:initialization} and~\ref{sec:resetfunction}).  The evaluation
 order of different CSP programs within a system is unspecified.
 CSP does not allow forward references: therefore, an implication of the
 declaration order is that functions cannot access variables declared in
@@ -1753,8 +1756,8 @@ of type.
 \begin{tabular}{ll}
 {\em infix} & \verb!== (Integer -x, -y)     : bool! \\
 {\em infix} & \verb!== (bool -x, -y)        : bool! \\
-{\em infix} & \verb,!= (Integer -x, -y)     : bool, \\
-{\em infix} & \verb,!= (bool -x, -y)        : bool, \\
+{\em infix} & \verb#!= (Integer -x, -y)     : bool# \\
+{\em infix} & \verb#!= (bool -x, -y)        : bool# \\
 \end{tabular}
 
 \verb!==! and \verb,!=, return \verb!true! if the operands are
@@ -2159,7 +2162,7 @@ this is equal to the mathematical expression $\lceil \log_4 \verb!x! \rceil$;
 if \verb!x! is negative, it is equal to $\lceil \log_4 (\verb!-x - 1!) \rceil$.
 
 
-\subsection{Reset function}\label{sec:resetport}
+\subsection{Reset function}\label{sec:resetfunction}
 
 The proper procedure \verb!resetNodes! may be declared within a CSP program.
 If it is present, \verb!resetNodes()! will be called before the CSP program
