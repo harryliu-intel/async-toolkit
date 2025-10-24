@@ -1,0 +1,26 @@
+/*** c2 ***/
+matchcircuit "ADD7M_VCP_NOM23/s_c2"
+matchcircuit "ADD7M_VCP_NOM23/m_c2"
+matchcircuit "ADD7M_VCP_NOM23/l_c2"
+
+matchcircuit "ADD7M_VCP_NOM23/s_c2_rhi"
+matchcircuit "ADD7M_VCP_NOM23/m_c2_rhi"
+matchcircuit "ADD7M_VCP_NOM23/l_c2_rhi"
+
+matchcircuit "ADD7M_VCP_NOM23/s_c2_phi"
+matchcircuit "ADD7M_VCP_NOM23/m_c2_phi"
+matchcircuit "ADD7M_VCP_NOM23/l_c2_phi"
+
+/*** 2*and2 + c2 ***/
+matchcircuit "ADD7M_VCP_NOM23/s_2and2c2"
+matchcircuit "ADD7M_VCP_NOM23/m_2and2c2"
+
+matchcircuit "ADD7M_VCP_NOM23/s_2and2c2_rhi"
+matchcircuit "ADD7M_VCP_NOM23/m_2and2c2_rhi"
+
+/*** and2 + c2 ***/
+matchcircuit "ADD7M_VCP_NOM23/s_and2c2"
+matchcircuit "ADD7M_VCP_NOM23/m_and2c2"
+
+matchcircuit "ADD7M_VCP_NOM23/s_and2c2_rhi"
+matchcircuit "ADD7M_VCP_NOM23/m_and2c2_rhi"

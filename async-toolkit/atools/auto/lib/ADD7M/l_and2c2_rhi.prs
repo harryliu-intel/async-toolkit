@@ -1,0 +1,7 @@
+<wp> ~a & (~_b0 | ~_b1) -> x+
+<wn> _SReset! & a & _b0 & _b1 -> x-
+~_PReset! -> x+
+@staticize(x)
+
+@stretch(n,(wn-32)/4)
+@stretch(p,(wp-64)/4)

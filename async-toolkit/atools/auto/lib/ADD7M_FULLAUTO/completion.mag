@@ -1,0 +1,32 @@
+magic
+tech scmos
+timestamp 969760391
+use m_c4 m_c4_0
+timestamp 969760391
+transform 1 0 128 0 1 -139
+box -19 61 141 197
+use m_c2inv m_c2inv_0
+timestamp 969760391
+transform 1 0 -31 0 1 -201
+box -63 -10 105 43
+use s_or4 s_or4_0
+timestamp 969760391
+transform 1 0 -119 0 1 -372
+box -62 -18 -20 76
+use m_c2inv_rlo m_c2inv_rlo_0
+timestamp 969760391
+transform 1 0 -31 0 1 -265
+box -63 -41 107 32
+use m_c4_rhi m_c4_rhi_0
+timestamp 969760391
+transform 1 0 128 0 1 -252
+box -20 8 144 160
+use m_c2inv_plo m_c2inv_plo_0
+timestamp 969760391
+transform 1 0 -133 0 1 -362
+box 41 -34 213 40
+use m_c4_phi m_c4_phi_0
+timestamp 969760391
+transform 1 0 138 0 1 -420
+box -30 2 134 154
+<< end >>

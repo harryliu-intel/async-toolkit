@@ -1,0 +1,9 @@
+circuit $2
+read "globals.in"
+read "cmos.in"
+width_tolerance 1.1
+read "semiauto_library.in"
+stacks
+read "minimize.in"
+align
+layout $3

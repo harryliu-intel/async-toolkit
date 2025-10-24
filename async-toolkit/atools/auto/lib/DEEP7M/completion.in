@@ -1,0 +1,12 @@
+/*** 1of4 input completion ***/
+matchcircuit "DEEP7M/s_or4"
+
+/*** c2 + inverter ***/
+matchcircuit "DEEP7M/m_c2inv"
+matchcircuit "DEEP7M/m_c2inv_rlo"
+matchcircuit "DEEP7M/m_c2inv_plo"
+
+/*** c4 ***/
+matchcircuit "DEEP7M/m_c4"
+matchcircuit "DEEP7M/m_c4_rhi"
+matchcircuit "DEEP7M/m_c4_phi"

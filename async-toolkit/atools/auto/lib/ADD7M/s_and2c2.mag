@@ -1,0 +1,88 @@
+magic
+tech scmos
+timestamp 965071231
+<< ndiffusion >>
+rect -128 582 -120 583
+rect -115 582 -107 583
+rect -128 574 -120 579
+rect -115 574 -107 579
+rect -128 566 -120 571
+rect -115 566 -107 571
+rect -128 562 -120 563
+rect -115 562 -107 563
+<< pdiffusion >>
+rect -91 587 -75 588
+rect -91 583 -75 584
+rect -83 575 -75 583
+rect -91 574 -75 575
+rect -91 570 -75 571
+rect -91 561 -75 562
+rect -91 557 -75 558
+<< ntransistor >>
+rect -128 579 -120 582
+rect -115 579 -107 582
+rect -128 571 -120 574
+rect -115 571 -107 574
+rect -128 563 -120 566
+rect -115 563 -107 566
+<< ptransistor >>
+rect -91 584 -75 587
+rect -91 571 -75 574
+rect -91 558 -75 561
+<< polysilicon >>
+rect -96 584 -91 587
+rect -75 584 -71 587
+rect -96 582 -93 584
+rect -132 579 -128 582
+rect -120 579 -115 582
+rect -107 579 -93 582
+rect -132 571 -128 574
+rect -120 571 -115 574
+rect -107 571 -91 574
+rect -75 571 -71 574
+rect -132 563 -128 566
+rect -120 563 -115 566
+rect -107 563 -93 566
+rect -96 561 -93 563
+rect -96 558 -91 561
+rect -75 558 -71 561
+<< ndcontact >>
+rect -128 583 -120 591
+rect -115 583 -107 591
+rect -128 554 -120 562
+rect -115 554 -107 562
+<< pdcontact >>
+rect -91 588 -75 596
+rect -91 575 -83 583
+rect -91 562 -75 570
+rect -91 549 -75 557
+<< metal1 >>
+rect -128 583 -120 591
+rect -115 583 -107 591
+rect -91 588 -75 596
+rect -115 575 -83 583
+rect -115 572 -109 575
+rect -126 566 -109 572
+rect -79 570 -75 588
+rect -126 562 -120 566
+rect -91 562 -75 570
+rect -128 554 -120 562
+rect -115 554 -107 562
+rect -91 549 -75 557
+<< labels >>
+rlabel metal1 -87 579 -87 579 1 x
+rlabel metal1 -87 553 -87 553 1 Vdd!
+rlabel polysilicon -74 559 -74 559 1 a
+rlabel polysilicon -129 564 -129 564 3 a
+rlabel metal1 -111 558 -111 558 1 GND!
+rlabel metal1 -111 587 -111 587 5 x
+rlabel metal1 -124 587 -124 587 5 GND!
+rlabel metal1 -124 558 -124 558 1 x
+rlabel polysilicon -129 572 -129 572 3 _b0
+rlabel polysilicon -74 572 -74 572 7 _b0
+rlabel polysilicon -129 580 -129 580 3 _b1
+rlabel polysilicon -74 585 -74 585 7 _b1
+rlabel space -133 554 -128 591 7 ^n
+rlabel space -134 553 -108 592 7 ^n
+rlabel space -84 548 -70 597 3 ^p
+<< end >>

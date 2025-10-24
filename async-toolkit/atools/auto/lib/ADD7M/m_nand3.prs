@@ -1,0 +1,5 @@
+<wn>  a &  b &  c -> x-
+<wp> ~a | ~b | ~c -> x+
+
+@stretch(n,(wn-16)/2)
+@stretch(p,(wp-16)/2)

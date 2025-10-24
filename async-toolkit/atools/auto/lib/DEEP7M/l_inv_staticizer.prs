@@ -1,0 +1,12 @@
+<wn>  _x -> x-
+<wp> ~_x -> x+
+
+@staticize(_x)
+
+@stretch(n,(wn-24)/4)
+@stretch(p,(wp-48)/4)
+
+/*** half normal sizes due to extra width ***/
+@require((wn>=40)|(wp>=60))
+@require(wn<80)
+@require(wp<120)

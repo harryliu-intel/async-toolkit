@@ -1,0 +1,42 @@
+/*** initialize sizing parameters ***/
+echo Reading cmos.in
+read "cmos.in"
+xscale  1.00 // assume 0% horizontal compression
+delay $3
+
+/*** core sizing routines ***/
+echo Reading connect
+read_connect $2
+
+echo Reading instances
+read_instances $2
+
+echo Reading cap
+read_cap $2
+
+echo Relaxing
+BiasType 0 // no bias
+relax 1e-6 // lambda convergence tolerance
+
+// set number of iterations relative to N
+iteration_ratio 0.05
+cleanup_ratio   0.10
+
+echo Sweeping
+sweep $3 $4 $5
+
+/*** debugging ***/
+// print_caps
+// debug_circuits
+// debug_instances
+// debug_aliases
+// debug_labels
+// bifurcation_hints 4.0
+debug_nodetypes external rc
+debug_metric
+
+/*** output ***/
+save_circuits
+
+/*** free memory ***/
+clear_sizing_data

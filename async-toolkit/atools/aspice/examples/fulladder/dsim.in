@@ -1,0 +1,32 @@
+/************************ simulation timing options **********************************/
+
+timed_random           /* enter jitter-random mode */
+timed_delay 0.9 1.1    /* delay variation from 0.9 to 1.1 times nominal delay */
+
+/***************************** typical reset *****************************************/
+
+set $Vdd:1             /* set Vdd to 1 in case it is used in a guard */
+set $GND:0             /* set GND to 0 in case it is used in a guard */
+set $_RESET:0          /* asset reset */
+set ERROR:0            /* set to 0 initially -- some prs may set it to 1 */
+nowarnall              /* suppress warnings about instability and interference */
+ignoreerror            /* don't halt simulation for instability or interference */
+cycle                  /* cycle until event queue is empty */
+output "dsim.U"        /* redirect stdout to file */
+status U               /* report any U nodes */
+output                 /* stdout back to normal */
+set $_RESET:1          /* de-assert reset */
+warnall                /* warn about instaibility and interference again */
+noignoreerror          /* halt on errors */
+
+/*************************** typical simulation **************************************/
+
+watch *                /* watch all nodes */
+trace 10               /* allocate event logging buffer */
+breakpt s.e:1000       /* break on 1000th transition of s.e */
+breakpt ERROR:1        /* break on any ERROR transition */
+output "dsim.log"      /* redirect stdout to file */
+cycle                  /* cycle until breakpt or halt */
+output "dsim.critical" /* redirect stdout to file */
+critical s.e           /* report critical path of s.e from trace buffer */
+output                 /* stdout back to normal */

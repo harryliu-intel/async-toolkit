@@ -1,0 +1,8 @@
+circuit $2
+read "globals.in"
+read "cmos.in"
+width_tolerance 1.1
+matchcircuit $3
+place
+align
+layout $4

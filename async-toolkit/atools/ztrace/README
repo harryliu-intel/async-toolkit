@@ -1,0 +1,49 @@
+the .c and .h files here were copied from m3utils
+
+See:
+
+origin  https://github.com/intel-sandbox/m3utils.git (fetch)
+origin  https://github.com/intel-sandbox/m3utils.git (push)
+
+commit add9d1a1222ea49af910daedda719035b60f70c2 (HEAD -> main, origin/main, origin/HEAD)
+Author: Mika Nystrom <mika.nystroem@intel.com>
+Date:   Wed Jan 25 14:28:16 2023 -0800
+
+    test program works
+
+commit 3796dcae28a5e9f8708ed09be0c566fa07fac144 (HEAD -> main)
+Author: Mika Nystrom <mika.nystroem@intel.com>
+Date:   Wed Jan 25 16:43:27 2023 -0800
+
+    bugfix
+
+Inventory:
+
+rep16.h        Fixed-point underlying format for compressed files
+rep16.c    
+
+arithdecode.h  Arithmetic coding (not enabled as of 1/25/2023)
+arithdecode.c
+
+boolean.h      Definition of Boolean_t
+minmax.h       Definition of MIN and MAX
+
+ztrace_read.h  Binary little-endian read ops
+ztrace_read.c
+
+ztrace.h       Code for the compressed format
+ztrace.c
+
+testmain.c     Test program : run as "testmain <nodeid> <nodeid> ..."
+
+The following are character frequencies in a variety of files.
+
+etaoin.h       English language, roughly.
+108091_freqs.h      
+108091_5ps_freqs.h 
+mac_freqs.h    Macbeth I.1
+
+See m3utils/arithcode/demo for more details on test programs.
+
+The implementation is synchronized with the codec and (de)compressors
+in m3utils, whose implementation should be taken as authoritative.

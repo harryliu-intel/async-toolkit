@@ -1,0 +1,87 @@
+#!/usr/intel/bin/perl -w
+
+# setup
+$trig = "RA[0].e";
+$count = 1000;
+my @cells = (16,32,64,128,256,512,1024);
+my @modes = ("random","norandom","timed_random");
+
+# common reset.in
+my $reset=<<EOF;
+set \$GND:0
+set \$_RESET:0
+set ERROR:0
+nowarnall
+ignoreerror
+cycle
+status U
+set \$_RESET:1
+warnall
+noignoreerror
+breakpt $trig:$count
+cycle
+EOF
+
+# common dsim.asp
+my $dsim=<<EOF;
+.global ERROR;
+dsim
+  {
+  env isochronic after 0 ~"\$GND" -> ERROR-
+  env isochronic after 0 ~"\$GND" -> "\$Vdd"+
+  }
+EOF
+
+# benchmark each cell and mode
+open RESULTS, ">results.txt";
+foreach $mode (@modes) {
+    open DAT, ">$mode.dat";
+    foreach $cell (@cells) {
+
+        # write specific dsim.asp file
+        open OUT, ">dsim.asp";
+        print OUT "$dsim";
+        print OUT ".include \"cell${cell}.asp\"\n";
+        print OUT ".include \"env${cell}.asp\"\n";
+        close OUT;
+        
+        # write specific reset.in file
+        open OUT, ">reset.in";
+        print OUT "$mode\n";
+        print OUT "$reset";
+        close OUT;
+
+        # run aspice
+        my $out = `aspice dsim < reset.in 2> /dev/null`;
+
+        # save results to file
+        open OUT, ">$cell.out";
+        print OUT "$out";
+        close OUT;
+        
+        # extract most important results
+        my @lines = split("\n",$out);
+        foreach $line (@lines) {
+            chomp($line);
+            @args = split(" ",$line);
+            if ($line =~ /for/) {
+            }
+            elsif ($line =~ s/Simulation time=//g) {
+                $time = $line;
+            }
+            elsif ($line =~ s/digital nodes//g) {
+                $nodes = $args[0];
+            }
+            elsif ($line =~ s/digital rules//g) {
+                $rules = $args[0];
+            }
+            elsif ($line =~ s/digital gmas//g) {
+                $gmas = $args[0];
+            }
+        }
+        print DAT "$cell $time\n";
+        print RESULTS "$cell $mode time=$time nodes=$nodes rules=$rules gmas=$gmas\n";
+    }
+    close DAT;
+}
+close RESULTS;

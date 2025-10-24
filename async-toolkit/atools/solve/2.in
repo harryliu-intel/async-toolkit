@@ -1,0 +1,13 @@
+// solve normally first
+include "1.in"
+
+// group independent variables
+group x
+group y
+groups
+
+// needs many steps to converge
+step_weight 1.25
+solve_grouped
+output "solve_grouped.fmla"
+write_groups

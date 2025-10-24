@@ -1,0 +1,14 @@
+// solve on N parallel processors
+// usage: solve N id groups_id.in results_id.fmla < solve_parallel.in
+// launch N threads with different id's.
+
+// load the problem definition
+include "problem.in"
+
+// load the desired group of variables from a file
+include $3
+
+// unroll annealing steps
+step_weight 2
+solve_parallel $1 $2
+write_groups $4

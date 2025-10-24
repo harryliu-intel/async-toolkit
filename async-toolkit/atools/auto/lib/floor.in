@@ -1,0 +1,3 @@
+read "cmos.in"
+load $1
+outputskill $2

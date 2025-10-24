@@ -1,0 +1,20 @@
+read "ADD7M/drc.in"
+echo Setting sizing parameters for average of UMC/TSMC 0.15um technology
+
+/*********************** SIZING OPTIONS *************************************/
+
+/*** geometric mean of tsmc15 and umc15 processes parameters ***/
+
+/*** calibrated capacitances ***/
+gatecap 0.0740e-15  // cap per lambda of gate (Cox*0.15um*0.05um from BSIM3 model)
+wirecap 0.0093e-15  // cap per lambda of wire (half-worst up/down + worst side in fF/lambda)
+mincap  9.3e-15     // minimum node cap, about 1000 lambda worth of wire
+extcap  1e-15       // cap units of .sim file
+
+/*** calibrated resistances of gates in series ***/
+Nresistance 37081  58555  80641  103386  126688  150575  175017
+Presistance 90472 187085 287118
+
+/*** delay biases for gates in series ***/
+Ndelaybias 0.75 0.75 0.75 0.75 0.75 0.75 0.75
+Pdelaybias 1.25 1.25 1.25
