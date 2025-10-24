@@ -1,3 +1,6 @@
+# Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+# SPDX-License-Identifier: Apache-2.0
+
 #################################################################################
 # This is a template file provided for setting up Collage assembly initialization.
 # This includes activities such as

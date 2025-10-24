@@ -1,4 +1,7 @@
 #!/bin/sh -x
+# Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+# SPDX-License-Identifier: Apache-2.0
+
 
 #EXEC=/nfs/site/disks/wdisk.133/mnystroe/1588/sim/AMD64_LINUX/sim1588
 EXEC=../AMD64_LINUX/sim1588

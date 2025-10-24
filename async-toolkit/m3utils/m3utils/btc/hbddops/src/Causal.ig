@@ -1,3 +1,6 @@
+(* Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information. *)
+(* SPDX-License-Identifier: Apache-2.0 *)
+
 (* $Id: Causal.ig,v 1.6 2014/03/23 00:24:28 mika Exp $ *)
 
 GENERIC INTERFACE Causal(Elem, ElemSet, ElemSeq);

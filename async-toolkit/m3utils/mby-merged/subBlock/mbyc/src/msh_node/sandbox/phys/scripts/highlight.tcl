@@ -1,3 +1,6 @@
+# Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+# SPDX-License-Identifier: Apache-2.0
+
 gui_change_highlight -add -color orange         -collection [get_flat_cells *inp_section_0_*]
 gui_change_highlight -add -color red            -collection [get_flat_cells *inp_section_1_*]
 gui_change_highlight -add -color green          -collection [get_flat_cells *inp_section_2_*]

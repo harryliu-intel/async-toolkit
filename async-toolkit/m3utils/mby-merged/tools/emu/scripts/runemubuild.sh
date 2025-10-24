@@ -1,4 +1,7 @@
 #!/bin/csh
+# Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+# SPDX-License-Identifier: Apache-2.0
+
 #
 # run the minimum amount of bman necessary to enable emubuild with the transactors and SPARK TB, 
 #  and only the first time the model is cloned, then run emubuild with the standard options

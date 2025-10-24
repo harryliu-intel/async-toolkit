@@ -1,3 +1,6 @@
+(* Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information. *)
+(* SPDX-License-Identifier: Apache-2.0 *)
+
 (* $Id: TeXHalign.i3,v 1.3 2006/02/26 22:46:30 mika Exp $ *)
 
 INTERFACE TeXHalign;

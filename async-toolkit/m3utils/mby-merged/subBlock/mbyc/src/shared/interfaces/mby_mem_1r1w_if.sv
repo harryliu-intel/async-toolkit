@@ -1,3 +1,6 @@
+// Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+// SPDX-License-Identifier: Apache-2.0
+
 interface mby_mem_1r1w_if #(
 parameter W_DATA = 176,     // Data width
 parameter W_DEEP = 128,     // Address width

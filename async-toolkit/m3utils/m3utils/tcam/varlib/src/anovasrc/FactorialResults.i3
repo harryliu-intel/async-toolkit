@@ -1,3 +1,6 @@
+(* Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information. *)
+(* SPDX-License-Identifier: Apache-2.0 *)
+
 (* $Id: FactorialResults.i3,v 1.2 2005/03/24 11:08:35 mika Exp $ *)
 
 INTERFACE FactorialResults;

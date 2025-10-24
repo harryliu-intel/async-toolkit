@@ -1,3 +1,6 @@
+(* Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information. *)
+(* SPDX-License-Identifier: Apache-2.0 *)
+
 (* $Id: TeXHalign.m3,v 1.4 2006/02/27 23:35:49 mika Exp $ *)
 
 MODULE TeXHalign;

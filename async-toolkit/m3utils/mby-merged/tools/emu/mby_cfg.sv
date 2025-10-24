@@ -1,3 +1,6 @@
+// Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+// SPDX-License-Identifier: Apache-2.0
+
 
 //config mby;
 //  design mby_tb_lib.mby_tb;

@@ -1,3 +1,6 @@
+// Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+// SPDX-License-Identifier: Apache-2.0
+
 //`define SLE_TOP_PCH pch_sle_top
 //`define SLE_SIM
 //`define EMULATION_VEL

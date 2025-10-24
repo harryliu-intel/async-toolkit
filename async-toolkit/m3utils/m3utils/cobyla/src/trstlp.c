@@ -1,3 +1,6 @@
+/* Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information. */
+/* SPDX-License-Identifier: Apache-2.0 */
+
 /* trstlp.f -- translated by f2c (version 20200916).
    You must link the resulting object file with libf2c:
 	on Microsoft Windows system, link with libf2c.lib;

@@ -1,3 +1,6 @@
+(* Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information. *)
+(* SPDX-License-Identifier: Apache-2.0 *)
+
 (* Copyright (c) 2000 Mika Nystrom.  All Rights Reserved. *)
 (* $Id: Quantity.m3,v 1.3 2001/09/18 01:53:27 mika Exp $ *)
 MODULE Quantity;

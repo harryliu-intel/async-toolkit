@@ -1,3 +1,6 @@
+# Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+# SPDX-License-Identifier: Apache-2.0
+
 option set vlog_std sysv
 option set technology HAPS-70
 option set looplimit 16000

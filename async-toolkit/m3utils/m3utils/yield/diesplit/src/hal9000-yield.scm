@@ -1,3 +1,6 @@
+; Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+; SPDX-License-Identifier: Apache-2.0
+
 (define (hal9000-model)
   '(hal9000
     (hal9000-misc 50)

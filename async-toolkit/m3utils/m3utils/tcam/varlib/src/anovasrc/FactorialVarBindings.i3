@@ -1,3 +1,6 @@
+(* Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information. *)
+(* SPDX-License-Identifier: Apache-2.0 *)
+
 (* $Id: FactorialVarBindings.i3,v 1.2 2006/02/23 23:47:53 mika Exp $ *)
 
 INTERFACE FactorialVarBindings;

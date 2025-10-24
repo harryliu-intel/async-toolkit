@@ -1,3 +1,6 @@
+# Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+# SPDX-License-Identifier: Apache-2.0
+
 #override port width mismatches etc. in this file
 #uncomment this to enable collage to report all errors at once.
 #DO NOT TURNIN with ContinueOnError true.

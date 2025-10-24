@@ -1,3 +1,6 @@
+; Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+; SPDX-License-Identifier: Apache-2.0
+
 (load "liberty-utils.scm")
 
 (define *fn* "cdp_lamb_1w1afr_40w_137b__tt_0p75v_85c_typical.lib")

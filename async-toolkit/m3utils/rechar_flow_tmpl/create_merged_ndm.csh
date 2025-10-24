@@ -1,3 +1,6 @@
+# Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+# SPDX-License-Identifier: Apache-2.0
+
 create_workspace -technology /p/hdk/cad/pdk/pdk783_r0.8_23ww24.2/apr/synopsys/tech/m14_2x_1xa_1xb_6ya_2yb_2yc__bm5_1ye_1yf_2ga_mim3x_1gb__bumpp/i0s_160h_50pp_tp1/p1278_icc2.tf -scale_factor 4000 myreflib
 read_ndm -views {frame design} /nfs/site/disks/zsc9_fwr_lib_char_001/mnystroe/release/007.fwr_pdk0p80_r4v1p0_efv_300mV_cmax_cmin.003/bundles/dsiobsolete_lvt/ndm/lib783_i0s_160h_50pp_dsiobsolete_lvt.ndm
 read_ndm -views {frame design} /p/hdk/cad/stdcells/lib783_i0s_160h_50pp/pdk080_r4v1p0_efv/dsiobsolete_lvt/ndm/lib783_i0s_160h_50pp_dsiobsolete_lvt.ndm

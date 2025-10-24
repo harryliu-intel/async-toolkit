@@ -1,3 +1,6 @@
+; Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+; SPDX-License-Identifier: Apache-2.0
+
 ;; code needed to run reports
 
 (define (compute-yield-results model yield-model)

@@ -1,3 +1,6 @@
+# Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+# SPDX-License-Identifier: Apache-2.0
+
 
 
 set ::env(GTR_NDM_TECH_FILE_N5) /nfs/site/proj/tech1/n5/tech-release/v1.1.9p2/snpstech/1P15M_1X_h_1Xb_v_1Xe_h_1Ya_v_1Yb_h_5Y_vhvhv_2Yy2R/TechFile/PRTF_ICC2_N5_15M_1X1Xb1Xe1Ya1Yb5Y2Yy2R_UTRDL_M1P34_M2P35_M3P42_M4P42_M5P76_M6P76_M7P76_M8P76_M9P76_M10P76_M11P76_H210_SHDMIM.11_2a.tf

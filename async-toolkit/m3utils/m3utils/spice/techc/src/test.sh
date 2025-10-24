@@ -1,4 +1,7 @@
 #!/bin/sh
+# Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+# SPDX-License-Identifier: Apache-2.0
+
 
 hsp_dir=/p/hdk/cad/pdk/pdk764_r0.4HP3_22ww20.1
 hspice_model_root=${hsp_dir}/models/core/hspice/m17_6x_2ya_2yb_2yc_2yd_1ye_1ga_mim3x_1gb__bumpp

@@ -1,3 +1,6 @@
+// Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+// SPDX-License-Identifier: Apache-2.0
+
 /*
 	Created by Mike Miller 5/15/03
 	This is to model correct reset behavior for cross coupled init

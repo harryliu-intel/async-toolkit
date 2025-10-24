@@ -1,3 +1,6 @@
+# Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+# SPDX-License-Identifier: Apache-2.0
+
 set generated_clocks [list]
 set root_clocks [list]
 foreach clk [join [::obv_soc_clock::get_soc_clock_lists]] {

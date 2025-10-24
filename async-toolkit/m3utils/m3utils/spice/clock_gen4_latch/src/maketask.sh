@@ -1,4 +1,7 @@
 #!/bin/sh 
+# Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+# SPDX-License-Identifier: Apache-2.0
+
 
 CLOCKGENSIM=${M3UTILS}/spice/clock_gen4_latch/AMD64_LINUX/clockgen
 DATE=`date -Is`

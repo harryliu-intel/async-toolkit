@@ -1,3 +1,6 @@
+; Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+; SPDX-License-Identifier: Apache-2.0
+
 (cnt-sequence-by-name the-map '(mpp 0 shm FWD_TABLE0 1 0 DATA))
 
 (dis (stringify

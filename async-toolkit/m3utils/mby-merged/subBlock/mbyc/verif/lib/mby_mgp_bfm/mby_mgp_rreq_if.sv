@@ -1,3 +1,6 @@
+// Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+// SPDX-License-Identifier: Apache-2.0
+
 `ifndef __MBY_MGP_RREQ_IF__
 `define __MBY_MGP_RREQ_IF__
 import mby_mgp_bfm_pkg::*;

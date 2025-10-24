@@ -1,3 +1,6 @@
+(* Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information. *)
+(* SPDX-License-Identifier: Apache-2.0 *)
+
 MODULE RegModula3 EXPORTS RegModula3, RegModula3Generators, RegModula3Utils;
 IMPORT Wr, Thread, RegAddrmap;
 IMPORT BigInt;

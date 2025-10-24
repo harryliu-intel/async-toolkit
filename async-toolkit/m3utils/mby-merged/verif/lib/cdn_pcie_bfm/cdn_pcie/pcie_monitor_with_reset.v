@@ -1,3 +1,6 @@
+// Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+// SPDX-License-Identifier: Apache-2.0
+
 // Module:                      pcie_monitor_with_reset
 // SOMA file:                   pcie_monitor_with_reset.spc
 // Initial contents file:       

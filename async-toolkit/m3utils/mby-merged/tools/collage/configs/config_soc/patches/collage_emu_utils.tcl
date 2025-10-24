@@ -1,3 +1,6 @@
+# Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+# SPDX-License-Identifier: Apache-2.0
+
 proc collage_emu_add_include_files {design} {
   foreach par [collage_get_par_names] {
     collage_eval_in_component -edit_mi -use_hier_name $par {

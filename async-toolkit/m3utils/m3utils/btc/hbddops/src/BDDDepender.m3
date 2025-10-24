@@ -1,3 +1,6 @@
+(* Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information. *)
+(* SPDX-License-Identifier: Apache-2.0 *)
+
 (* $Id: BDDDepender.m3,v 1.2 2015/02/14 03:49:10 mika Exp $ *)
 
 MODULE BDDDepender;

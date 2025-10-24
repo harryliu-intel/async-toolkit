@@ -1,3 +1,6 @@
+(* Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information. *)
+(* SPDX-License-Identifier: Apache-2.0 *)
+
  T { 0.0d0, UV { -0.0d0/0.0d0, -0.0d0/0.0d0 } }, 
  T { 50.0d0, UV { 0.6233667d0, 0.3376633d0 } }, 
  T { 100.0d0, UV { 0.6233665d0, 0.3376634d0 } }, 

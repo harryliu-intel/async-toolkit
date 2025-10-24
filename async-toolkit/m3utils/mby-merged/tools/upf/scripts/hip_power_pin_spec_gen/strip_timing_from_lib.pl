@@ -1,4 +1,7 @@
 #!/usr/intel/bin/perl
+# Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+# SPDX-License-Identifier: Apache-2.0
+
 # Author: psayyaga
 # Date: WW50.3 '13
 # Strips out timing information from .lib file

@@ -1,3 +1,6 @@
+(* Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information. *)
+(* SPDX-License-Identifier: Apache-2.0 *)
+
 (* $Id: Regression.mg,v 1.4 2008/02/06 10:10:02 mika Exp $ *)
 
 GENERIC MODULE Regression (Matrix2, LU, M2M3);

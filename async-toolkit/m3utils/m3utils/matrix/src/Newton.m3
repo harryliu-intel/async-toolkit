@@ -1,3 +1,6 @@
+(* Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information. *)
+(* SPDX-License-Identifier: Apache-2.0 *)
+
 (* Copyright (c) 2000 Mika Nystrom.  All Rights Reserved. *)
 (* $Id: Newton.m3,v 1.3 2000/12/15 08:46:09 mika Exp $ *)
 MODULE Newton;

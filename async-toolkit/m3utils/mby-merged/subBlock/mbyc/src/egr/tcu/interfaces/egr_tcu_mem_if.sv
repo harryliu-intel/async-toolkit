@@ -1,3 +1,6 @@
+// Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+// SPDX-License-Identifier: Apache-2.0
+
 interface egr_tcu_mem_if #(
 parameter W_DATA = 512,     // Data width
 parameter W_DEEP =  72,     // Address width

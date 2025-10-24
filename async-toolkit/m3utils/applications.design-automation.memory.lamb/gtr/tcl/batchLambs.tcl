@@ -1,4 +1,7 @@
 #!/usr/intel/pkgs/tcl-tk/8.6.8/bin/tclsh
+# Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+# SPDX-License-Identifier: Apache-2.0
+
 
 # Generate Netbatch Feeder File to produce a collection of LAMBs
 # Validate these lambs with SHIP

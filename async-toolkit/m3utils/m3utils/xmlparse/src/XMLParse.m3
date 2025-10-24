@@ -1,3 +1,6 @@
+(* Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information. *)
+(* SPDX-License-Identifier: Apache-2.0 *)
+
 (* $Id: XMLParse.m3,v 1.6 2013/03/30 07:15:28 mika Exp $ *)
 
 UNSAFE MODULE XMLParse EXPORTS XMLParse, XMLParseImpl;

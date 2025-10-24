@@ -1,3 +1,6 @@
+// Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+// SPDX-License-Identifier: Apache-2.0
+
 //`timescale 1ns/100ps
 //  `include "mby_rp_inq_pkg.sv"
 

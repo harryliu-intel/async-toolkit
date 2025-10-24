@@ -1,3 +1,6 @@
+/* Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information. */
+/* SPDX-License-Identifier: Apache-2.0 */
+
 //                                                                             
 // File:            mby_ppe_cgrp_em_map_bios_settings.h                        
 // Creator:         solson                                                     

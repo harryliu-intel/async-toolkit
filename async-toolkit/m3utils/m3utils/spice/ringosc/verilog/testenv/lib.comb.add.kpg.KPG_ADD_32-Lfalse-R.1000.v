@@ -1,3 +1,6 @@
+// Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+// SPDX-License-Identifier: Apache-2.0
+
 module \lib.comb.add.kpg.KPG_ADD_32-Lfalse-R.1000  (
 input \A[0] ,
 input \A[10] ,

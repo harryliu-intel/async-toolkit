@@ -1,3 +1,6 @@
+; Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+; SPDX-License-Identifier: Apache-2.0
+
 (define tfc-expanded-areas
   '(tfc
     (misc 8.0325 ram-area 2.008125 channel-area 2.008125)

@@ -1,4 +1,7 @@
 #!/bin/sh -x
+# Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+# SPDX-License-Identifier: Apache-2.0
+
 
 ASPICE_DIR=/nfs/site/home/mnystroe/work/p4/sw/cad/c/aspice/
 #INCLUDES= -I${ASPICE_DIR}

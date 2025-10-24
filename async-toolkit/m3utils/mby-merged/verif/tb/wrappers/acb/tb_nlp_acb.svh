@@ -1,3 +1,6 @@
+// Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+// SPDX-License-Identifier: Apache-2.0
+
  //-- NLP Assertions Disable Section
  `ifdef NO_PWR_PINS
     `define NLP_ASSERT_CTL(inst_name, sig_name, assert_name)  \

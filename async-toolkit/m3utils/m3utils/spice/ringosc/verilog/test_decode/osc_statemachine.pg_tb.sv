@@ -1,3 +1,6 @@
+// Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+// SPDX-License-Identifier: Apache-2.0
+
 `timescale 1ps/1fs
 
 `include "/p/hdk/cad/stdcells/lib783_i0s_160h_50pp/pdk090_r7v1p0_fv/base_ulvt/verilog/lib783_i0s_160h_50pp_base_ulvt.v"

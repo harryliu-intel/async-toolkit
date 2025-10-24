@@ -1,4 +1,7 @@
 #!/bin/sh -x
+# Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+# SPDX-License-Identifier: Apache-2.0
+
 WRKDIR=reduced_cvs
 SRC=/home/gcap-cvs
 TGT=/usr/home/mika/to_intel/${WRKDIR}

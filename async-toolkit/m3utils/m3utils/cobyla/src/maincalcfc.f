@@ -1,3 +1,6 @@
+C Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+C SPDX-License-Identifier: Apache-2.0
+
       REAL*8 FUNCTION MAINCALCFC (N,M,X,CON)
       IMPLICIT REAL*8 (A-H,O-Z)
       COMMON NPROB

@@ -1,3 +1,6 @@
+; Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+; SPDX-License-Identifier: Apache-2.0
+
 (define (pickle-globals! pfx)
   (let ((wr (FileWr.Open (sa pfx ".dmp"))))
     (dis "dumping compiler state for " pfx dnl)

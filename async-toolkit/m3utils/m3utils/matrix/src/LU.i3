@@ -1,3 +1,6 @@
+(* Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information. *)
+(* SPDX-License-Identifier: Apache-2.0 *)
+
 (* Copyright (c) 2000 Mika Nystrom.  All Rights Reserved. *)
 (* $Id: LU.i3,v 1.2 2006/05/21 23:18:03 mika Exp $ *)
 INTERFACE LU;

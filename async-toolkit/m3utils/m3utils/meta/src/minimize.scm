@@ -1,3 +1,6 @@
+; Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+; SPDX-License-Identifier: Apache-2.0
+
 (define (minimize-01 change!   ;; proc of 1 param that changes indep var
 										 get-var   ;; proc of 0 params that returns indep var
 										 get-val   ;; proc of 0 params that returns dep var

@@ -1,4 +1,7 @@
 #!/bin/sh -x
+# Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+# SPDX-License-Identifier: Apache-2.0
+
 /bin/rm -rf gnuplots
 mkdir gnuplots
 time ../AMD64_LINUX/prsgen -i example.prsgen -o example.prs -gp gnuplots

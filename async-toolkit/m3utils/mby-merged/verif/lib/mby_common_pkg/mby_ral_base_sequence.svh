@@ -1,3 +1,6 @@
+// Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+// SPDX-License-Identifier: Apache-2.0
+
 class mby_ral_base_sequence extends slu_ral_sequence_base;
 
     sla_ral_addr_t reg_addr;

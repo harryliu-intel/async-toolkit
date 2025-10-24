@@ -1,4 +1,7 @@
 #!/bin/sh -x
+# Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+# SPDX-License-Identifier: Apache-2.0
+
 
 SRC=/nfs/sc/disks/mst_104/mwrighto/mst-mst-a0/results/regflow/fxp/output/crif/fxp_top_map_crif.xml 
 

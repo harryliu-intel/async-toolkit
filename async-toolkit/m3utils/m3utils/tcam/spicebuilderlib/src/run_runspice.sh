@@ -1,4 +1,7 @@
 #!/bin/sh -x
+# Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+# SPDX-License-Identifier: Apache-2.0
+
 rm -rf a1
 #runspice.sh a b xa -prog rw -pm io -extractpath tcam.sp -step 10e-12 -assertholdfrac 0.2 -clk 1.0e9 -risefallfrac 0.1 -holdfrac 0.4 -design andrew 
 

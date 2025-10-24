@@ -1,3 +1,6 @@
+// Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+// SPDX-License-Identifier: Apache-2.0
+
 /* Created by Mike Miller */
 module
 \lib.sram.6T.BIT (GND, Vdd, _Reset, a, b0, b1, en);

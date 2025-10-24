@@ -1,3 +1,6 @@
+# Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+# SPDX-License-Identifier: Apache-2.0
+
 set this_dir [file dir [info script]]
 source ${this_dir}/configuration.tcl
 source ${this_dir}/assembler.soc_init.tcl

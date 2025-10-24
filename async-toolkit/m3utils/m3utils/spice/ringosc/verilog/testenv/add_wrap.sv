@@ -1,3 +1,6 @@
+// Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+// SPDX-License-Identifier: Apache-2.0
+
 //////////////////////////////////////////////////////////////////////
 //
 // /nfs/site/disks/zsc9_fwr_sd_001/mnystroe/fwr3_soc-a0/lib.comb.add.kpg.KPG_ADD_32-Lfalse-R.1000.v

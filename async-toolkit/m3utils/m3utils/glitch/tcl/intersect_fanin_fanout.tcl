@@ -1,3 +1,6 @@
+# Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+# SPDX-License-Identifier: Apache-2.0
+
 ######################################################################################
 ######################################################################################
 ## $Purpose: to write out logic cone between flop based afifo reg and rdata reg 

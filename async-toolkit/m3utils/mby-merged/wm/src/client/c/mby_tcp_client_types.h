@@ -1,3 +1,6 @@
+/* Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information. */
+/* SPDX-License-Identifier: Apache-2.0 */
+
 /*****************************************************************************
  * @file	mby_tcp_client_types.h
  * @brief	Client types for reg access through model_server socket

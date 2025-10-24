@@ -1,3 +1,6 @@
+# Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+# SPDX-License-Identifier: Apache-2.0
+
 setenv CONFIG_GEN $::env(COLLAGE_WORK)/gen
 source $::env(REPO_ROOT)/collage/patches/gen_fp_netlist_procs.tcl
 source $::env(REPO_ROOT)/collage/patches/create_upf_supply_net_info.tcl

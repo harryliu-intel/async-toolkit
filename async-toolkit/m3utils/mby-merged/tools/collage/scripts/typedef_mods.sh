@@ -1,4 +1,7 @@
 #!/bin/bash
+# Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+# SPDX-License-Identifier: Apache-2.0
+
 ### This script is workaround for collage/coretool issue during corekit creation where it interprets typedef'd busses as only 1 bit wide
 ### https://hsdes.intel.com/resource/1909279599
 ### Will grab any typedef's busses from specified folder and substitute the values in the src module

@@ -1,3 +1,6 @@
+C Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+C SPDX-License-Identifier: Apache-2.0
+
 C------------------------------------------------------------------------------
 C     Main program of test problems in Report DAMTP 1992/NA5.
 C------------------------------------------------------------------------------

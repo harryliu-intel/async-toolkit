@@ -1,3 +1,6 @@
+(* Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information. *)
+(* SPDX-License-Identifier: Apache-2.0 *)
+
 INTERFACE BnfDefs;
 
 CONST BufSiz = 1024; (* needs to be at least longest token + 1 *)

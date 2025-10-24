@@ -1,3 +1,6 @@
+(* Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information. *)
+(* SPDX-License-Identifier: Apache-2.0 *)
+
 (* $Id: BDDOpsH.m3,v 1.4 2015/02/12 17:27:28 mika Exp $ *)
 
 MODULE BDDOpsH;

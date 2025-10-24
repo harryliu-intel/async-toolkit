@@ -1,3 +1,6 @@
+# Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+# SPDX-License-Identifier: Apache-2.0
+
 setenv HTTP_SEC_FETCH_USER "?1"
 setenv SERVER_PROTOCOL "HTTP/1.1"
 setenv DOCUMENT_ROOT "/var/www/truffles.gcapltd.com/html"

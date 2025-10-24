@@ -1,3 +1,6 @@
+// Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+// SPDX-License-Identifier: Apache-2.0
+
 // vim: noai : ts=3 : sw=3 : expandtab : ft=systemverilog
 //-----------------------------------------------------------------------------
 // Title         : Ingress test library

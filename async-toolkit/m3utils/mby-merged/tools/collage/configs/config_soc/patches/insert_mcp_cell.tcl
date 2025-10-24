@@ -1,3 +1,6 @@
+# Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+# SPDX-License-Identifier: Apache-2.0
+
 
 package require Itcl
 source /p/com/eda/intel/collage/2.7.5/core/common/tcl/utils.tcl

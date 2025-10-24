@@ -1,3 +1,6 @@
+// Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+// SPDX-License-Identifier: Apache-2.0
+
 // This module generates a clock of frequency specified by the input signals
 // The frequency of the generated clock will be  1*numerator/denominator Hz.
 // In future, this module definition will be replaced by a transactor that will be designed to work with emulation, effm, and simulation using EMULATION define

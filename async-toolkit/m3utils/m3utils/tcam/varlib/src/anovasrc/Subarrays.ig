@@ -1,3 +1,6 @@
+(* Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information. *)
+(* SPDX-License-Identifier: Apache-2.0 *)
+
 (* $Id: Subarrays.ig,v 1.1 2006/03/19 00:10:06 mika Exp $ *)
 
 GENERIC INTERFACE Subarrays(Elem);

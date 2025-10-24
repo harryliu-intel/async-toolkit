@@ -1,3 +1,6 @@
+(* Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information. *)
+(* SPDX-License-Identifier: Apache-2.0 *)
+
 MODULE ConstrainedSpace;
 IMPORT LRMatrix2 AS Mat;
 FROM LRMatrix2 IMPORT MulSV, V, M, SumSqV, MulMV, LinearCombinationV, SubV,

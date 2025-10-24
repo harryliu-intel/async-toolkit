@@ -1,3 +1,6 @@
+(* Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information. *)
+(* SPDX-License-Identifier: Apache-2.0 *)
+
 (* Copyright (c) 2000 Mika Nystrom.  All Rights Reserved. *)
 (* $Id: Matrix.i3,v 1.9 2008/01/22 13:45:55 mika Exp $ *)
 INTERFACE Matrix;

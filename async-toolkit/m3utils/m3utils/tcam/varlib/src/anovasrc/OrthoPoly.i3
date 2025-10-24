@@ -1,3 +1,6 @@
+(* Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information. *)
+(* SPDX-License-Identifier: Apache-2.0 *)
+
 (* $Id: OrthoPoly.i3,v 1.2 2005/04/22 14:24:25 mika Exp $ *)
 
 INTERFACE OrthoPoly;

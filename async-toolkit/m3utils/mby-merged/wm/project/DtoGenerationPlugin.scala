@@ -1,3 +1,6 @@
+// Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+// SPDX-License-Identifier: Apache-2.0
+
 import DtoGenerationPlugin.autoImport.createWmServerDtos
 import sbt.Keys.{logLevel, managedSourceDirectories, sLog, sourceGenerators}
 import sbt.{AutoPlugin, Compile, Def, File, Level, file, taskKey}

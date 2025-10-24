@@ -1,3 +1,6 @@
+(* Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information. *)
+(* SPDX-License-Identifier: Apache-2.0 *)
+
 (* $Id: XMLParse.i3,v 1.4 2013/03/30 07:15:28 mika Exp $ *)
 
 INTERFACE XMLParse;

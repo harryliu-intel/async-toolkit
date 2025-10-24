@@ -1,3 +1,6 @@
+// Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+// SPDX-License-Identifier: Apache-2.0
+
 interface egr_tdb_mem_if  ();
     
 localparam RREQ_BUF_W_DATA = 56;

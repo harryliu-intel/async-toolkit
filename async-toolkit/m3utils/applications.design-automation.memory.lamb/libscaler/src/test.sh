@@ -1,4 +1,7 @@
 #!/bin/sh
+# Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+# SPDX-License-Identifier: Apache-2.0
+
 
 /nfs/site/disks/tfc_fe_zsc7_01/mnystroe/applications.design-automation.memory.lamb/gtr/../m3utils/liberty/AMD64_LINUX/editliberty \
 -scm /nfs/site/disks/tfc_fe_zsc7_01/mnystroe/applications.design-automation.memory.lamb/gtr/../m3utils/liberty/src/types.scm \

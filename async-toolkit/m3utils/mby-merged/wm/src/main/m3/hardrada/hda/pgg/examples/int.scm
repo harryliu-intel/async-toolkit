@@ -1,3 +1,6 @@
+; Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+; SPDX-License-Identifier: Apache-2.0
+
 (define-data my-list (my-nil) (my-cons my-car my-cdr)) 
 (define-primitive cons - pure)
 (define-primitive apply - apply)

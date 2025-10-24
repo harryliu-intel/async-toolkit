@@ -1,3 +1,6 @@
+/* Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information. */
+/* SPDX-License-Identifier: Apache-2.0 */
+
 /*** physical constants ***/
 #define Charge_q   1.60219e-19
 #define CONSTboltz 1.3806226e-23

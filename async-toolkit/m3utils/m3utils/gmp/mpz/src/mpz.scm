@@ -1,3 +1,6 @@
+; Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+; SPDX-License-Identifier: Apache-2.0
+
 (
 (gmp_randinit void gmp_randstate_t gmp_randalg_t ...)
 (gmp_randinit_default void gmp_randstate_t)

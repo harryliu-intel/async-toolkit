@@ -1,4 +1,7 @@
 #!/usr/intel/pkgs/perl/5.20.1/bin/perl
+# Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+# SPDX-License-Identifier: Apache-2.0
+
 #--------------------------------------------------------------------------------
 # INTEL CONFIDENTIAL
 #

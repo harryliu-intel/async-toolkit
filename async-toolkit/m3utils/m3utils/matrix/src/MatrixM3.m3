@@ -1,3 +1,6 @@
+(* Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information. *)
+(* SPDX-License-Identifier: Apache-2.0 *)
+
 (* $Id: MatrixM3.m3,v 1.2 2008/01/22 01:52:17 mika Exp $ *)
 
 MODULE MatrixM3;

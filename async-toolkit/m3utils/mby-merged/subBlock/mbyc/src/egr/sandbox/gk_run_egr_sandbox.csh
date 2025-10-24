@@ -1,4 +1,7 @@
 #!/usr/intel/bin/tcsh -f
+# Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+# SPDX-License-Identifier: Apache-2.0
+
 setenv MODEL_ROOT `pwd`
 eval `/p/hdk/rtl/proj_tools/onecfg/master/1.02.07/bin/ToolSetup.pl vcsmx`
 cd $MODEL_ROOT/subBlock/mbyc/src/egr/sandbox

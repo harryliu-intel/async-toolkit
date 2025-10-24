@@ -1,3 +1,6 @@
+/* Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information. */
+/* SPDX-License-Identifier: Apache-2.0 */
+
 // "$Id: //depot/user/aubrey/src/lib/libaag/c_std.h#1 $ AAG";
 #ifndef __c_std_h__
 #define __c_std_h__ 1

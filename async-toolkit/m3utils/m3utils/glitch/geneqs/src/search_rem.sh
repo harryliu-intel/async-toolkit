@@ -1,4 +1,7 @@
 #!/bin/sh 
+# Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+# SPDX-License-Identifier: Apache-2.0
+
 
 REM=/nfs/sc/disks/bfn_pd_cb_02/mnystroe/m3utils/glitch/geneqs/src/remaining.txt
 

@@ -1,3 +1,6 @@
+; Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+; SPDX-License-Identifier: Apache-2.0
+
 (define (convert-send-struct s syms vals tg func-tbl struct-tbl cell-info)
   
   (let ((lhs (get-send-lhs s))

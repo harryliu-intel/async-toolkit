@@ -1,4 +1,7 @@
 #!/bin/tcsh -f
+# Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+# SPDX-License-Identifier: Apache-2.0
+
 
 # only parameter is to pass in pointer to builder tcl script
 set my_tcl = $argv

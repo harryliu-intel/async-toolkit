@@ -1,3 +1,6 @@
+; Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+; SPDX-License-Identifier: Apache-2.0
+
 ;; early-stage analysis to clean up the program
 ;; has to be run initially and after a few transformations
 ;; (such as after function inlining)

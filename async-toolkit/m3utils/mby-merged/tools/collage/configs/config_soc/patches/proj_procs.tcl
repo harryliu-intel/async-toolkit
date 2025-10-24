@@ -1,3 +1,6 @@
+# Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+# SPDX-License-Identifier: Apache-2.0
+
 set curr_dir [file dirname [info script]] 
 proc soc_obv_hook_do_create_clock_latency { hier_name clk } {
   return 1

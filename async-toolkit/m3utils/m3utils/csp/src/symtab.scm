@@ -1,3 +1,6 @@
+; Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+; SPDX-License-Identifier: Apache-2.0
+
 (define (symtabvisit-program the-inits the-text visitor)
   ;; the visitor should take stmt and syms
   (define syms '())

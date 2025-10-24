@@ -1,3 +1,6 @@
+# Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+# SPDX-License-Identifier: Apache-2.0
+
 ###################################################################################
 # pre corekit script to fixup rtl due to collage/coretool issue parsing typedef bus
 # https://hsdes.intel.com/resource/1909279599

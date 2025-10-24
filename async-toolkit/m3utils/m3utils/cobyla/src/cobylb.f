@@ -1,3 +1,6 @@
+C Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+C SPDX-License-Identifier: Apache-2.0
+
       SUBROUTINE COBYLB (N,M,MPP,X,RHOBEG,RHOEND,IPRINT,MAXFUN,
      1  CON,SIM,SIMI,DATMAT,A,VSIG,VETA,SIGBAR,DX,W,IACT,CALCFC,ITAG)
       IMPLICIT REAL*8 (A-H,O-Z)

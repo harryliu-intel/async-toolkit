@@ -1,3 +1,6 @@
+(* Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information. *)
+(* SPDX-License-Identifier: Apache-2.0 *)
+
 MODULE CspExpression;
 IMPORT CspExpressionPublic AS P;
 FROM SchemeUtils IMPORT List2, List3, List4, List5, Cons;

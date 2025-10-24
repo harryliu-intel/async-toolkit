@@ -1,3 +1,6 @@
+# Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+# SPDX-License-Identifier: Apache-2.0
+
 # 1276.4 spice models with PDX installation paths
 setenv hsp_dir /p/hdk/cad/pdk/pdk764_r0.4HP3_22ww20.1
 setenv hspice_lib_models $hsp_dir/cmi/hspice/cmi/lnx86/64bit

@@ -1,3 +1,6 @@
+/* Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information. */
+/* SPDX-License-Identifier: Apache-2.0 */
+
 /* $Id: drdist.c,v 1.2 2005/11/23 10:11:02 mika Exp $ */
 
 /* drdist.f -- translated by f2c (version 20000817).

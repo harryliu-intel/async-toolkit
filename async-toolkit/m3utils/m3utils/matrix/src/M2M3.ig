@@ -1,3 +1,6 @@
+(* Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information. *)
+(* SPDX-License-Identifier: Apache-2.0 *)
+
 (* $Id: M2M3.ig,v 1.5 2008/02/04 00:10:46 mika Exp $ *)
 
 GENERIC INTERFACE M2M3(M2);

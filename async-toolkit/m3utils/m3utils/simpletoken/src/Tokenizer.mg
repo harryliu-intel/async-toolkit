@@ -1,3 +1,6 @@
+(* Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information. *)
+(* SPDX-License-Identifier: Apache-2.0 *)
+
 GENERIC MODULE Tokenizer(Defs);
 FROM Defs IMPORT BufSiz, Special, White, Ident1, Ident2, CComments,
                  DoString, StringQuote;

@@ -1,3 +1,6 @@
+; Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+; SPDX-License-Identifier: Apache-2.0
+
 (define (dotprod n v1 v2 v3)
   (let loop ((n n) (v1 v1) (v2 v2) (v3 v3))
     (if (zero? n)

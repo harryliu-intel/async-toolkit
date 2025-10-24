@@ -1,3 +1,6 @@
+# Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+# SPDX-License-Identifier: Apache-2.0
+
 # Begin_DVE_Session_Save_Info
 # DVE full session
 # Saved on Fri Dec 7 09:44:19 2018

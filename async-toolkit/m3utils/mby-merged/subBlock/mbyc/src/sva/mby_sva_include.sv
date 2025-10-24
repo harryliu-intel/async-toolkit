@@ -1,3 +1,6 @@
+// Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+// SPDX-License-Identifier: Apache-2.0
+
 /*  --------------- Example code  ----------------------
 //a01_FUNC_l2q_rd_conflict_chk_1 : When CMDSEL Issues a READ REQ to CSB1 for L2Q Read there shouldn¿t be a PIPE VALII
 D Set on the MBY_L2Q_RD_REQ_PIPESTAGE

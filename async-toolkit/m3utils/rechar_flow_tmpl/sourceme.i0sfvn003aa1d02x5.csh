@@ -1,3 +1,6 @@
+# Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+# SPDX-License-Identifier: Apache-2.0
+
 setenv RECHAR_TOP          ${WARD}
 setenv RECHAR_CELL_LIST_FN cell_list.i0sfvn003aa1d02x5
 setenv RECHAR_SIS_WORKDIR  siliconsmart.i0sfvn003aa1d02x5

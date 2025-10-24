@@ -1,3 +1,6 @@
+(* Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information. *)
+(* SPDX-License-Identifier: Apache-2.0 *)
+
 (* $Id: BDDDecompose.m3,v 1.3 2015/02/26 05:02:16 mika Exp $ *)
 
 MODULE BDDDecompose;

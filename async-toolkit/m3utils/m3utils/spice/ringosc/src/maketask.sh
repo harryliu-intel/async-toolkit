@@ -1,4 +1,7 @@
 #!/bin/sh 
+# Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+# SPDX-License-Identifier: Apache-2.0
+
 
 RINGOSCSIM=${M3UTILS}/spice/ringosc/AMD64_LINUX/ringosc
 DATE=`date -Is`

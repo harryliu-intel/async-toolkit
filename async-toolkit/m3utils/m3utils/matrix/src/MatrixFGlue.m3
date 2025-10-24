@@ -1,3 +1,6 @@
+(* Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information. *)
+(* SPDX-License-Identifier: Apache-2.0 *)
+
 (* $Id: MatrixFGlue.m3,v 1.3 2010/07/08 08:25:16 mika Exp $ *)
 
 UNSAFE MODULE MatrixFGlue EXPORTS Matrix;

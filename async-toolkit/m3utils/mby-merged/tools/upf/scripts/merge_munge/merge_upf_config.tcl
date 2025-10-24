@@ -1,3 +1,6 @@
+# Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+# SPDX-License-Identifier: Apache-2.0
+
 ## Add below variable to enable creation and substitution of map_power_switch command when not present
 ## in files provided by IP teams
 ##dont_preserve_gated_supplies 1

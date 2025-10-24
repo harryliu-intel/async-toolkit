@@ -1,3 +1,6 @@
+(* Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information. *)
+(* SPDX-License-Identifier: Apache-2.0 *)
+
 (* $Id: ANOVA.m3,v 1.13 2006/03/18 00:18:47 mika Exp $ *)
 
 MODULE ANOVA;

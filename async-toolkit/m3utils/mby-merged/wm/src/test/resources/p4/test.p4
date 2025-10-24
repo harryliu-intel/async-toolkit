@@ -1,3 +1,6 @@
+/* Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information. */
+/* SPDX-License-Identifier: Apache-2.0 */
+
 #include <v1model.p4>
 
 const bit<16> TYPE_IPV4 = 16w0x0800;

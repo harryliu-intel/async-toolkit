@@ -1,3 +1,6 @@
+# Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+# SPDX-License-Identifier: Apache-2.0
+
 setenv hspice_lib_models /p/hdk/cad/process/p1274.2_sim/p1274.2_15ww17.1p1/cmi/14.4.0/synopsys/suse64
 setenv hspice_model_root /p/hdk/cad/process/p1274.2_sim/p1274.2_15ww17.1p1/hsp/
 setenv hspice_model p1274_0x1r1.hsp

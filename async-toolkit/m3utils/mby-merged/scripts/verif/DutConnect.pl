@@ -1,4 +1,7 @@
 #!/usr/intel/bin/perl -w
+# Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+# SPDX-License-Identifier: Apache-2.0
+
 # This script is to generate DUT signal lists and connections from a top level module
 
 # Note: using die instead of die because die doesn't seem to do anything

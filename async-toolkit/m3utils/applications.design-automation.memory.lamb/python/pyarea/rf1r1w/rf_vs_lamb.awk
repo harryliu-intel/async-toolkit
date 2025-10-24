@@ -1,4 +1,7 @@
 #!/usr/bin/awk -f 
+# Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+# SPDX-License-Identifier: Apache-2.0
+
 #
 # compute area ratio between LAMB and RF1R1W
 # RF data from Bin in Excel (converted to CSV)

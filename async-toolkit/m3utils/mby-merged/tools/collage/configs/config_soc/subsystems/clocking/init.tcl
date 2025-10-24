@@ -1,3 +1,6 @@
+# Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+# SPDX-License-Identifier: Apache-2.0
+
 ##############################################################################
 # This file contains tcl code and is sourced as part of the -init stage of 
 # reading a subsystem

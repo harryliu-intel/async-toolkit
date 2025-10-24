@@ -1,3 +1,6 @@
+; Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+; SPDX-License-Identifier: Apache-2.0
+
 (define make-input-symbols '(a b c d e f g h i j k l m n o p q r s t u v w x y z))
 (define (make-input-symbol n)
   (list-ref make-input-symbols (remainder n 26)))

@@ -1,3 +1,6 @@
+(* Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information. *)
+(* SPDX-License-Identifier: Apache-2.0 *)
+
 (* $Id: Matrix2.ig,v 1.8 2009/06/08 03:18:14 mika Exp $ *)
 
 GENERIC INTERFACE Matrix2(Elem);

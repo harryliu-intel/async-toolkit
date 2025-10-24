@@ -1,3 +1,6 @@
+// Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+// SPDX-License-Identifier: Apache-2.0
+
 primitive UDP_WC_TIMING_MGM_IQ_LATCH_UDP( Q, CK, D );
 output Q;
 reg Q;

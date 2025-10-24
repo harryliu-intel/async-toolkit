@@ -1,3 +1,6 @@
+(* Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information. *)
+(* SPDX-License-Identifier: Apache-2.0 *)
+
 (* Copyright (C) 1994, Digital Equipment Corporation                   *)
 (* All rights reserved.                                                *)
 (* See the file COPYRIGHT for a full description.                      *)

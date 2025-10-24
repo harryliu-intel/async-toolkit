@@ -1,3 +1,6 @@
+(* Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information. *)
+(* SPDX-License-Identifier: Apache-2.0 *)
+
 (* $Id: TimeSearcher.m3,v 1.2 2014/03/22 20:47:37 mika Exp $ *)
 
 MODULE TimeSearcher;

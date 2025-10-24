@@ -1,3 +1,6 @@
+// Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+// SPDX-License-Identifier: Apache-2.0
+
 // Fusion Compiler Version U-2022.12-SP5 Verilog Writer
 // Generated on 8/22/2024 at 14:52:21
 // Library Name: osc_statemachine.ndm

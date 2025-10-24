@@ -1,3 +1,6 @@
+# Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+# SPDX-License-Identifier: Apache-2.0
+
 '''
 # Tool mpgen: Memory Partition Generator
 # Description: This tool creates the wrapper of the physical and

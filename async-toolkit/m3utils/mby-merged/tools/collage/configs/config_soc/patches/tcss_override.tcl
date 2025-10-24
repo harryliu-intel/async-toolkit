@@ -1,3 +1,6 @@
+# Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+# SPDX-License-Identifier: Apache-2.0
+
 proc ipi_generate_scan_clock_specs {} {
   #collage_obv_wrapper init 1
 

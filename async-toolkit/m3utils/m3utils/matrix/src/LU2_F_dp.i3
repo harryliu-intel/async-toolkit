@@ -1,3 +1,6 @@
+(* Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information. *)
+(* SPDX-License-Identifier: Apache-2.0 *)
+
 (* $Id: LU2_F_dp.i3,v 1.1 2008/02/02 11:20:22 mika Exp $ *)
 
 INTERFACE LU2_F_dp;

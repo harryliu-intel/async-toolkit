@@ -1,3 +1,6 @@
+/* Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information. */
+/* SPDX-License-Identifier: Apache-2.0 */
+
 /*****************************************************************************
  * @file        mby_tcp_client_sample.c
  * @brief       Sample code for mby_tcp_client_library

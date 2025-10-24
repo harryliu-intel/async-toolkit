@@ -1,3 +1,6 @@
+; Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+; SPDX-License-Identifier: Apache-2.0
+
 ;; we'll keep the maximum size stupidly small for now, just to exercise
 ;; the code without bogging down the machines with printing (which is
 ;; the slow part of the routine)

@@ -1,3 +1,6 @@
+(* Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information. *)
+(* SPDX-License-Identifier: Apache-2.0 *)
+
 INTERFACE StdfTypes;
 IMPORT StdfU1, StdfU2, StdfU4, StdfB1, StdfI2, StdfI4, StdfDn, StdfCn, StdfN1,
        StdfVn, StdfR4;

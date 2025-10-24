@@ -1,3 +1,6 @@
+(* Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information. *)
+(* SPDX-License-Identifier: Apache-2.0 *)
+
 (* $Id: FactorialValues.m3,v 1.5 2009/11/27 13:31:26 mika Exp $ *)
 
 MODULE FactorialValues;
