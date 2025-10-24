@@ -11,8 +11,8 @@ on:
   # https://github.com/ossf/scorecard/blob/main/docs/checks.md#maintained
   
   # UNCOMMENT WHEN USED FOR NEW REPO
-  # schedule:
-    # - cron: "44 15 * * 0"
+  schedule:
+    - cron: "44 15 * * 0"
 
   push:
     branches: [ "main" ]
