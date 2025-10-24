@@ -1,0 +1,11 @@
+The procedure gmf used to uniquify
+
+1. In gmf repo, create a new subIP/lsm_version_mbyx_uniq
+2. copy $IP_MODELS/lsm/lsm_version_mbyx to this new subIP/lsm_version_mbyx_uniq
+3. rm .git* target, regression task_area GATEKEEPER directory
+4. git add and commit
+5. uniquifyme lsm_version_mbyx_uniq gmf
+6. dogitmv    lsm_version_mbyx_uniq gmf
+7. commit
+8. change cfg/IPToolData.pm points to this lsm_version_mbyx_uniq
+9. test regression

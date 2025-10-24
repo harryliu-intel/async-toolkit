@@ -1,0 +1,35 @@
+#!/usr/intel/bin/zsh -x
+
+# runme_final : final steps of Harry's runme script
+
+# ALLOW 64GB 
+
+source rechar_setup_env.zsh
+
+###################################################################
+
+if [[ "${RECHAR_START}" == "" ]]; then
+    flow_running=1
+else
+    flow_running=0
+fi
+
+for step in postprocess compile_ldbs create_ndms rebundle; do
+    if [[ "${RECHAR_START}" == ${step} ]]; then
+        echo "RECHAR_START at ${step}"
+        flow_running=1
+    fi
+
+    if [[ "${flow_running}" == "1" ]]; then
+        ${TOP}/rechar_${step}.zsh
+    else
+        echo "skipping ${step} owing to RECHAR_START/RECHAR_STOP"
+    fi
+    
+    if [[ "${RECHAR_STOP}" == "${step}" ]]; then
+        echo "RECHAR_STOP at ${step} !"
+        exit 0
+    fi
+done
+
+echo "**********  $0 done at `date`"

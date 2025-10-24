@@ -1,0 +1,157 @@
+#!/usr/intel/bin/perl -w
+
+# Wrapper script for gds2plot using parallel compute servers.  First
+# pass launches stripes using qsub, second pass concatenates the
+# results.  Delete *.do.* files to force stripes to rerun.  Uses PDK
+# files for gds2plot.conf and exclude.in.
+
+# defaults
+my $JOBS = 1;
+my $MEM  = 4;      # memory argument for netbatch (GB)
+my $GRID = 1;      # manufacturing grid in GDS units
+my $TILE = 20000;  # tile size relative to manufacturing grid
+my $MAX  = 13200;  # pixels, 22 inches @ 600 DPI, use 25200 for 42 inches @ 600 DPI
+my $BLACK = 95;    # black point for gamma correction
+my $WHITE = 255;   # white point for gamma correction
+my $GAMMA = 0.75;  # gamma for gamma correction
+my $gds;
+my $pdk_dir = ".";
+$pdk_dir = "$ENV{FULCRUM_PDK_ROOT}/share/Fulcrum/plot" if (defined($ENV{FULCRUM_PDK_ROOT}));
+my $conf_file    = "$pdk_dir/gds2plot.conf";
+my $exclude_file = "$pdk_dir/exclude.in";
+my $format = "png"; # output format
+my $quality = 75; # for jpg conversion
+my $cell = "";
+my $monitor = 10; # 10 minutes default monitor period
+
+# parse arguments
+while (@ARGV) {
+    if    ($ARGV[0] =~ /^--jobs=(.*)/)  { $JOBS  = $1; }
+    elsif ($ARGV[0] =~ /^--mem=(.*)/)   { $MEM   = $1; }
+    elsif ($ARGV[0] =~ /^--max=(.*)/)   { $MAX   = $1; }
+    elsif ($ARGV[0] =~ /^--grid=(.*)/)  { $GRID  = $1; }
+    elsif ($ARGV[0] =~ /^--tile=(.*)/)  { $TILE  = $1; }
+    elsif ($ARGV[0] =~ /^--black=(.*)/) { $BLACK = $1; }
+    elsif ($ARGV[0] =~ /^--white=(.*)/) { $WHITE = $1; }
+    elsif ($ARGV[0] =~ /^--gamma=(.*)/) { $GAMMA = $1; }
+    elsif ($ARGV[0] =~ /^--format=(.*)/) { $format = $1; }
+    elsif ($ARGV[0] =~ /^--quality=(.*)/) { $quality = $1; }
+    elsif ($ARGV[0] =~ /^--conf-file=(.*)/) { $conf_file = $1; }
+    elsif ($ARGV[0] =~ /^--exclude-file=(.*)/) { $exclude_file = $1; }
+    elsif ($ARGV[0] =~ /^--cell=(.*)/) { $cell = $1; }
+    elsif ($ARGV[0] =~ /^--monitor=(.*)/) { $monitor = $1; }
+    else { $gds = $ARGV[0]; }
+    shift @ARGV;
+}
+defined($gds) || usage();
+my $name = $gds;
+$name =~ s/\.gds$//;
+
+# usage banner
+sub usage {
+    die "USAGE: plot [options] file.gds\n" .
+        " --max=[$MAX] # maximum x or y pixel dimensions\n" .
+        " --jobs=[$JOBS] # number of parallel jobs to launch with netbatch\n" .
+        " --mem=[$MEM] # memory to request for netbatch jobs (GB)\n" .
+        " # rarely used options\n" .
+        " --grid=[$GRID] # manufacturing grid in GDS units\n" .
+        " --tile=[$TILE] # x/y dimension of tiles to rendor\n" .
+        " --black=[$BLACK] # black level for gamma correction (0-255)\n" .
+        " --white=[$WHITE] # white level for gamma correction (0-255)\n" .
+        " --gamma=[$GAMMA] # gamma factor for gamma correction\n" .
+        " --format=[$format] # [ppm|png|jpg|tiff]\n" .
+        " --quality=[$quality] # jpg quality\n" .
+        " --conf-file=[$conf_file] # GDS to RGBA mapping file\n" .
+        " --exclude-file=[$exclude_file] # file with regular expressions of cell names to exclude\n" .
+        " --cell=[$cell] # top level cell in GDS file (will auto-detect if not given)\n" .
+        " --monitor=[$monitor] # monitor interval in minutes, or 0 to disable\n";
+}
+
+# settings
+$BLACK = $BLACK/255.0;
+$WHITE = $WHITE/255.0;
+my $QSUB = "nbjob run --class ${MEM}G";
+my $PLOT = "gds2plot " .
+    "--conf $conf_file " .
+    "--x $MAX --y $MAX " .
+    "--grid $GRID --tile $TILE " .
+    "--jobs $JOBS " .
+    "--in_min $BLACK --in_max $WHITE --gamma $GAMMA ";
+$PLOT .= "--cell $cell " unless ($cell eq "");
+
+# add exclude regular expressions
+unless ($exclude_file eq "") {
+    open IN, "<$exclude_file" or die "Can't read $exclude_file\n";
+    while (my $line = <IN>) {
+        chomp($line);
+        $PLOT .= "--exclude-regex \"$line\" ";
+    }
+    close IN;
+}
+
+# run stripes
+my $launched=0;
+for (my $i=0; $i<$JOBS; $i++) {
+    if (!(-e "$name.do.$i")) {
+        printf("# Lauching $name, job $i\n");
+        system("touch $name.do.$i");
+        system("rm -f \"$name.out.$i\" \"$name.ppm.$i\"");
+        my $CMD  = "${PLOT} --gds \"$gds\" --ppm \"$name.ppm\" ";
+        if ($JOBS>1) { $CMD = "$QSUB --log-file \"$name.out.$i\" ${CMD} --job $i &"; $launched++; }
+        system($CMD);
+    }
+}
+
+# monitor progress
+if ($monitor>0 && $launched>0) {
+    my $sleep_period = $monitor*60;
+    print "Monitoring progress every $monitor minutes.\n";
+    while(1) {
+        my $jobs_done = 0;
+        for (my $j = 0; $j < $JOBS; $j++) {
+            my $curr_out_file = "${name}.out.${j}";
+            if (-e $curr_out_file) {
+                open (FH, "< $curr_out_file") or
+                    die "Cannot read output progress file $curr_out_file";
+                my @out_file_txt = <FH>;
+                if (grep( /^Finished/ , @out_file_txt)) {
+                    $jobs_done++;
+                }
+                close FH;
+            }
+        }
+        my $curr_time = localtime;
+        print "Progress at $curr_time, $jobs_done of $JOBS finished.\n";
+	catppm();
+        sleep $sleep_period;
+        last if ($jobs_done==$JOBS);
+    }
+}
+catppm();
+convert();
+
+
+# concatenate final image if all stripes exist
+sub catppm {
+    my $ok=1;
+    for (my $i=0; $i<$JOBS; $i++) {
+	if (!(-e "$name.ppm.$i")) { $ok = 0; }
+    }
+    if ($ok) {
+	printf("Concatenating $name.ppm\n");
+	system("rm -f $name.ppm");
+	for (my $i=0; $i<$JOBS; $i++) {
+	    system("cat $name.ppm.$i >> $name.ppm");
+	}
+    }
+}
+
+# convert output format
+sub convert {
+    if (-e "$name.ppm" && !($format eq "ppm")) {
+	my $q = "";
+	$q = "-quality $quality" if ($format eq "jpg");
+	print "Converting $name.ppm to $name.$format\n";
+	system("convert $q $name.ppm $name.$format");
+    }
+}

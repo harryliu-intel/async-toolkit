@@ -1,0 +1,13 @@
+*.log
+*.txt.disablelog
+simv
+simv.vdb
+vc_hdrs.h
+csrc
+*.txt
+*.vpd
+simv.daidir
+ucli.key
+.synopsys_dve_rebuild.tcl
+DVEfiles
+

@@ -1,0 +1,28 @@
+// Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+// SPDX-License-Identifier: Apache-2.0
+
+module endian;
+
+define P()()
+{
+  csp {
+    structure s32 =
+      (int(32) x
+       );
+    
+    structure s8 =
+      (int(8) x[4]
+       );
+
+    s32 x32;
+    s8  x8;
+
+    x32::x = 0xc0edbabe;
+
+    unpack(x8, pack(x32));
+    
+    <i:4: print("x[" + i + "] = " + hex(x8::x[i]))>
+    }
+}
+
+  

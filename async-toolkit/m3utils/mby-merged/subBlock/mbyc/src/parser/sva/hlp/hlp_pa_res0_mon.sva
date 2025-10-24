@@ -1,0 +1,87 @@
+// Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+// SPDX-License-Identifier: Apache-2.0
+
+//------------------------------------------------------------------------------
+//
+//  INTEL CONFIDENTIAL
+//
+//  Copyright 2006 - 2017 Intel Corporation All Rights Reserved.
+//
+//  The source code contained or described herein and all documents related
+//  to the source code ("Material") are owned by Intel Corporation or its
+//  suppliers or licensors. Title to the Material remains with Intel
+//  Corporation or its suppliers and licensors. The Material contains trade
+//  secrets and proprietary and confidential information of Intel or its
+//  suppliers and licensors. The Material is protected by worldwide copyright
+//  and trade secret laws and treaty provisions. No part of the Material may
+//  be used, copied, reproduced, modified, published, uploaded, posted,
+//  transmitted, distributed, or disclosed in any way without Intel's prior
+//  express written permission.
+//
+//  No license under any patent, copyright, trade secret or other intellectual
+//  property right is granted to or conferred upon you by disclosure or
+//  delivery of the Materials, either expressly, by implication, inducement,
+//  estoppel or otherwise. Any license under such intellectual property rights
+//  must be express and approved by Intel in writing.
+//
+//------------------------------------------------------------------------------
+
+// default clock
+default clocking main_clk @(posedge clk);
+endclocking
+
+generate
+  for (genvar s=0; s<16; s++) begin : check_res_stage
+    asrt_pa_res0_a1: assert property
+    (((res0_exp[(s*4)+2].ex.ex_valid ) && ~( res0_exp[(s*4)+1].ex.ex_valid)) 
+     |-> (res0_out_d.results[s].ex.ex_stage  == res0_exp[(s*4)+2].ex.ex_stage));
+    asrt_pa_res0_a2: assert property
+    (((res0_exp[(s*4)+2].ex.ex_valid ) && ~( res0_exp[(s*4)+0].ex.ex_valid)) 
+     |-> (res0_out_d.results[s].ex.ex_stage  == res0_exp[(s*4)+2].ex.ex_stage));
+    
+    asrt_pa_res0_a3: assert property
+    (((res0_exp[(s*4)+3].ex.ex_valid ) && ~( res0_exp[(s*4)+1].ex.ex_valid)) 
+     |-> (res0_out_d.results[s].ex.ex_stage  == res0_exp[(s*4)+3].ex.ex_stage));
+    
+    asrt_pa_res0_a4: assert property
+    (((res0_exp[(s*4)+3].ex.ex_valid ) && ~( res0_exp[(s*4)+0].ex.ex_valid)) 
+     |-> (res0_out_d.results[s].ex.ex_stage  == res0_exp[(s*4)+3].ex.ex_stage));
+    
+    asrt_pa_res0_a5: assert property
+    ((res0_exp[(s*4)+0].ex.ex_valid ) 
+     |-> (res0_out_d.results[s].ex.ex_stage  == res0_exp[(s*4)+0].ex.ex_stage));
+    
+    asrt_pa_res0_a6: assert property
+    ((res0_exp[(s*4)+1].ex.ex_valid ) 
+     |-> (res0_out_d.results[s].ex.ex_stage  == res0_exp[(s*4)+1].ex.ex_stage));
+    
+  end
+endgenerate 
+
+generate
+  for (genvar s=0; s<16; s++) begin : check_res_type
+    asrt_pa_res0_t1: assert property
+    (((res0_exp[(s*4)+2].ex.ex_valid ) && ~( res0_exp[(s*4)+1].ex.ex_valid)) 
+     |-> (res0_out_d.results[s].ex.ex_type  == res0_exp[(s*4)+2].ex.ex_type));
+    asrt_pa_res0_t2: assert property
+    (((res0_exp[(s*4)+2].ex.ex_valid ) && ~( res0_exp[(s*4)+0].ex.ex_valid)) 
+     |-> (res0_out_d.results[s].ex.ex_type  == res0_exp[(s*4)+2].ex.ex_type));
+    
+    asrt_pa_res0_t3: assert property
+    (((res0_exp[(s*4)+3].ex.ex_valid ) && ~( res0_exp[(s*4)+1].ex.ex_valid)) 
+     |-> (res0_out_d.results[s].ex.ex_type  == res0_exp[(s*4)+3].ex.ex_type));
+    
+    asrt_pa_res0_t4: assert property
+    (((res0_exp[(s*4)+3].ex.ex_valid ) && ~( res0_exp[(s*4)+0].ex.ex_valid)) 
+     |-> (res0_out_d.results[s].ex.ex_type  == res0_exp[(s*4)+3].ex.ex_type));
+    
+    asrt_pa_res0_t5: assert property
+    ((res0_exp[(s*4)+0].ex.ex_valid ) 
+     |-> (res0_out_d.results[s].ex.ex_type  == res0_exp[(s*4)+0].ex.ex_type));
+    
+    asrt_pa_res0_t6: assert property
+    ((res0_exp[(s*4)+1].ex.ex_valid ) 
+     |-> (res0_out_d.results[s].ex.ex_type  == res0_exp[(s*4)+1].ex.ex_type));
+    
+  end
+endgenerate 

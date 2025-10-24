@@ -1,0 +1,19 @@
+% Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+% SPDX-License-Identifier: Apache-2.0
+
+import ("cit_util")
+import ("libm3")
+
+Module ("Gds2Cast")
+Module ("MyWx")
+
+Module ("RAC")
+Table ("RacRef", "RAC", "Refany")
+MkSet ("Rac", "RAC")
+MkSetDef ("Rac", "RAC")
+Table ("RacCardSet", "RAC", "CardSet")
+Sequence ("Rac", "RAC")
+Array_sort("Rac", "RAC")
+Table ("CardRacSet", "Cardinal", "RacSet")
+
+library ("gds2cast")

@@ -1,0 +1,36 @@
+<nab> a & b -> _ab-
+<wpab> ~a & ~b -> _ab+
+
+<wncd> c & d -> _cd-
+<wpcd> ~c & ~d -> _cd+
+
+<wnx> _ab & _cd -> x-
+<wpx> ~_ab & ~_cd -> x+
+~_PReset! -> x+
+
+@staticize(_ab)
+@staticize(_cd)
+@staticize(x)
+
+/*** require appropriate sizes ***/
+@require(wnab>=40)
+@require(wncd>=40)
+@require(wnx>=40)
+@require(wpab>=60)
+@require(wpcd>=60)
+@require(wpx>=60)
+
+@require(MAX(MAX((wnab-16)/2,(wncd-16)/2),(wnx-16)/2) + 80 <= nwidth)
+@require(MAX(MAX((wpab-16)/2,(wpcd-16)/2),(wpx-16)/2) + 82 <= pwidth)
+
+/*** stretch by max width of n/p column ***/
+@stretch(n,MAX(MAX((wnab-16)/2,(wncd-16)/2),(wnx-16)/2))
+@stretch(p,MAX(MAX((wpab-16)/2,(wpcd-16)/2),(wpx-16)/2))
+
+/*** unstretch by overshoot ***/
+@stretch(nab,MAX(MAX((wnab-16)/2,(wncd-16)/2),(wnx-16)/2) - (wnab-16)/2)
+@stretch(ncd,MAX(MAX((wnab-16)/2,(wncd-16)/2),(wnx-16)/2) - (wncd-16)/2)
+@stretch(nx, MAX(MAX((wnab-16)/2,(wncd-16)/2),(wnx-16)/2) - (wnx-16)/2)
+@stretch(pab,MAX(MAX((wpab-16)/2,(wpcd-16)/2),(wpx-16)/2) - (wpab-16)/2)
+@stretch(pcd,MAX(MAX((wpab-16)/2,(wpcd-16)/2),(wpx-16)/2) - (wpcd-16)/2)
+@stretch(px, MAX(MAX((wpab-16)/2,(wpcd-16)/2),(wpx-16)/2) - (wpx-16)/2)

@@ -1,0 +1,15 @@
+port_named_template "," "["
+                            "field" "(" reference_name opt_field_reference_0 ")" expression * ":"
+
+                                                        [ "," string ]
+
+
+opt_field_reference_1:
+  dis0 *  T_Col expression
+  dis1 *
+
+opt_field_reference_2:
+  dis0  expression *  opt_field_reference_1
+  dis1 
+
+Reduce dis1_opt_field_reference_1, or shift dis0_opt_field_reference_2? 

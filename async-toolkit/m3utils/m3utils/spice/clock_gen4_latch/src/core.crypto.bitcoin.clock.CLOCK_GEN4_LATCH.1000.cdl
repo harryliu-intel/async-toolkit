@@ -1,0 +1,220 @@
+.SUBCKT i0stdlmuxaa1d06x5 DLY L[0] L[1] R[0] R[1] vcc vssx
+Mchain_0.0 chain_0.9 L[0] y vssx nhpbulvt w=3 l=1.4E-8 lvsExactMatch=1 m=1.0
+Mchain_0.1 vssx _DLY chain_0.9 vssx nhpbulvt w=3 l=1.4E-8 lvsExactMatch=1 m=1.0
+Mchain_1.0 vssx L[1] y vssx nhpbulvt w=3 l=1.4E-8 lvsExactMatch=1 m=1.0
+Mchain_2.0 6 L[0] y vcc phpbulvt w=3 l=1.4E-8 lvsExactMatch=1 m=1.0
+Mchain_3.0 vcc L[1] 6 vcc phpbulvt w=3 l=1.4E-8 lvsExactMatch=1 m=1.0
+Mchain_4.0 6 _DLY y vcc phpbulvt w=3 l=1.4E-8 lvsExactMatch=1 m=1.0
+MR[0].0 R[0] x vssx vssx nhpbulvt w=2 l=1.4E-8 lvsExactMatch=1 m=1.0
+MR[0].1 R[0] x vcc vcc phpbulvt w=2 l=1.4E-8 lvsExactMatch=1 m=1.0
+MR[1].0 R[1] y vssx vssx nhpbulvt w=3 l=1.4E-8 lvsExactMatch=1 m=2.0
+MR[1].1 R[1] y vcc vcc phpbulvt w=3 l=1.4E-8 lvsExactMatch=1 m=2.0
+M_DLY.0 _DLY DLY vssx vssx nhpbulvt w=2 l=1.4E-8 lvsExactMatch=1 m=1.0
+M_DLY.1 _DLY DLY vcc vcc phpbulvt w=2 l=1.4E-8 lvsExactMatch=1 m=1.0
+Mx.0 x.1 DLY vssx vssx nhpbulvt w=2 l=1.4E-8 lvsExactMatch=1 m=1.0
+Mx.1 x L[0] x.1 vssx nhpbulvt w=2 l=1.4E-8 lvsExactMatch=1 m=1.0
+Mx.2 x DLY vcc vcc phpbulvt w=2 l=1.4E-8 lvsExactMatch=1 m=1.0
+Mx.3 x L[0] vcc vcc phpbulvt w=2 l=1.4E-8 lvsExactMatch=1 m=1.0
+.ENDS
+.SUBCKT lib.util.new_tdl.TDL1-L1-R.a0 DLY L R vcc vssx
+Xmux DLY L x x R vcc vssx i0stdlmuxaa1d06x5
+.ENDS
+.SUBCKT lib.util.new_tdl.BFM202_FOLD.a0 L R vcc vssx
+M0 vcc L 1 vcc phpbulvt w=2 l=14n lvsExactMatch=1
+M1 1 L x vcc phpbulvt w=2 l=14n lvsExactMatch=1
+M2 vssx L 2 vssx nhpbulvt w=2 l=14n lvsExactMatch=1
+M3 2 L x vssx nhpbulvt w=2 l=14n lvsExactMatch=1
+M4 vcc x 3 vcc phpbulvt w=2 l=14n lvsExactMatch=1
+M5 3 x R vcc phpbulvt w=2 l=14n lvsExactMatch=1
+M6 vssx x 4 vssx nhpbulvt w=2 l=14n lvsExactMatch=1
+M7 4 x R vssx nhpbulvt w=2 l=14n lvsExactMatch=1
+.ENDS
+.SUBCKT lib.util.new_tdl.DELAY_LOOP-L1_false-R.a0 L R vcc vssx
+Xfold L R vcc vssx lib.util.new_tdl.BFM202_FOLD.a0
+.ENDS
+.SUBCKT lib.util.new_tdl.TDL1-L2-R.a0 DLY L R vcc vssx
+Xmux DLY L y x R vcc vssx i0stdlmuxaa1d06x5
+Xdly x y vcc vssx lib.util.new_tdl.DELAY_LOOP-L1_false-R.a0
+.ENDS
+.SUBCKT lib.util.new_tdl.BFM202.a0 L R vcc vssx
+M0 vcc L 1 vcc phpbulvt w=2 l=14n lvsExactMatch=1
+M1 1 L x vcc phpbulvt w=2 l=14n lvsExactMatch=1
+M2 vssx L 2 vssx nhpbulvt w=2 l=14n lvsExactMatch=1
+M3 2 L x vssx nhpbulvt w=2 l=14n lvsExactMatch=1
+M4 vcc x 3 vcc phpbulvt w=2 l=14n lvsExactMatch=1
+M5 3 x R vcc phpbulvt w=2 l=14n lvsExactMatch=1
+M6 vssx x 4 vssx nhpbulvt w=2 l=14n lvsExactMatch=1
+M7 4 x R vssx nhpbulvt w=2 l=14n lvsExactMatch=1
+.ENDS
+.SUBCKT lib.util.new_tdl.DELAY_LOOP-L3_false-R.a0 L R vcc vssx
+Xdly1[0] L x[1] vcc vssx lib.util.new_tdl.BFM202.a0
+Xfold x[1] y[0] vcc vssx lib.util.new_tdl.BFM202_FOLD.a0
+Xdly2[0] y[0] R vcc vssx lib.util.new_tdl.BFM202.a0
+.ENDS
+.SUBCKT lib.util.new_tdl.TDL1-L4-R.a0 DLY L R vcc vssx
+Xmux DLY L y x R vcc vssx i0stdlmuxaa1d06x5
+Xdly x y vcc vssx lib.util.new_tdl.DELAY_LOOP-L3_false-R.a0
+.ENDS
+.SUBCKT lib.util.new_tdl.DELAY_LOOP-L7_false-R.a0 L R vcc vssx
+Xdly1[0] L x[1] vcc vssx lib.util.new_tdl.BFM202.a0
+Xdly1[1] x[1] x[2] vcc vssx lib.util.new_tdl.BFM202.a0
+Xdly1[2] x[2] x[3] vcc vssx lib.util.new_tdl.BFM202.a0
+Xfold x[3] y[0] vcc vssx lib.util.new_tdl.BFM202_FOLD.a0
+Xdly2[0] y[0] y[1] vcc vssx lib.util.new_tdl.BFM202.a0
+Xdly2[1] y[1] y[2] vcc vssx lib.util.new_tdl.BFM202.a0
+Xdly2[2] y[2] R vcc vssx lib.util.new_tdl.BFM202.a0
+.ENDS
+.SUBCKT lib.util.new_tdl.TDL1-L8-R.a0 DLY L R vcc vssx
+Xmux DLY L y x R vcc vssx i0stdlmuxaa1d06x5
+Xdly x y vcc vssx lib.util.new_tdl.DELAY_LOOP-L7_false-R.a0
+.ENDS
+.SUBCKT core.crypto.bitcoin.clock.TUNABLE_DELAY-L4_1-R.1000 DLY[0] DLY[1]
++DLY[2] DLY[3] GND L R Vdd
+Xdly[0] DLY[0] L x[1] Vdd GND lib.util.new_tdl.TDL1-L1-R.a0
+Xdly[1] DLY[1] x[1] x[2] Vdd GND lib.util.new_tdl.TDL1-L2-R.a0
+Xdly[2] DLY[2] x[2] x[3] Vdd GND lib.util.new_tdl.TDL1-L4-R.a0
+Xdly[3] DLY[3] x[3] R Vdd GND lib.util.new_tdl.TDL1-L8-R.a0
+.ENDS
+.SUBCKT i0sinv000aa1n06x5 a o1 vcc vssx LG=1.4E-8 WG=1.0
+Mg101_D_qna_D_mn3 o1 a vssx vssx nhpbulvt w='3.0*WG' l=LG m=2.0
++lvsExactMatch=1.0
+Mg101_D_qpa_D_mp3 o1 a vcc vcc phpbulvt w='3.0*WG' l=LG m=2.0 lvsExactMatch=1.0
+.ENDS
+.SUBCKT lib.util.operator.MED_INV.a0 GND L R Vdd
+Xinv L R Vdd GND i0sinv000aa1n06x5
+.ENDS
+.SUBCKT i0snand02aa1d12x5 a b o1 vcc vssx LG=1.4E-8 WG=1.0
+Mg0_D_qna_D_mn3 o1 a g0_D_n1 vssx nhpbulvt w='3.0*WG' l=LG m=6.0
++lvsExactMatch=1.0
+Mg0_D_qnb_D_mn3 g0_D_n1 b vssx vssx nhpbulvt w='3.0*WG' l=LG m=6.0
++lvsExactMatch=1.0
+Mg0_D_qpa_D_mp2 o1 a vcc vcc phpbulvt w='2.0*WG' l=LG m=6.0 lvsExactMatch=1.0
+Mg0_D_qpb_D_mp2 o1 b vcc vcc phpbulvt w='2.0*WG' l=LG m=6.0 lvsExactMatch=1.0
+.ENDS
+.SUBCKT i0scinv00aa1d24x5 clk clkout vcc vssx LG=1.4E-8 WG=1.0
+Mg101_D_qna_D_mn3 clkout clk vssx vssx nhpbulvt w='3.0*WG' l=LG m=8.0
++lvsExactMatch=1.0
+Mg101_D_qpa_D_mp3 clkout clk vcc vcc phpbulvt w='3.0*WG' l=LG m=12.0
++lvsExactMatch=1.0
+.ENDS
+.SUBCKT core.crypto.bitcoin.clock.PULSEGEN.1000 A B C GND Vdd
+Xinv GND B _b Vdd lib.util.operator.MED_INV.a0
+Xnand.nand A _b _c Vdd GND i0snand02aa1d12x5
+Xout.inv _c C Vdd GND i0scinv00aa1d24x5
+.ENDS
+.SUBCKT i0sbfm201aa1n03x5 a o vcc vssx LG=1.4E-8 WG=1.0
+Mg101_D_qna_D_mn3 o n2 vssx vssx nhpbulvt w='3.0*WG' l=LG m=1.0
++lvsExactMatch=1.0
+Mg101_D_qpa_D_mp3 o n2 vcc vcc phpbulvt w='3.0*WG' l=LG m=1.0 lvsExactMatch=1.0
+Mqn2_D_mn3 n0 a vssx vssx nhpbulvt w='3.0*WG' l=LG m=1.0 lvsExactMatch=1.0
+Mqn1_D_mn3 n2 a n0 vssx nhpbulvt w='3.0*WG' l=LG m=1.0 lvsExactMatch=1.0
+Mqp2_D_mp3 n1 a vcc vcc phpbulvt w='3.0*WG' l=LG m=1.0 lvsExactMatch=1.0
+Mqp1_D_mp3 n2 a n1 vcc phpbulvt w='3.0*WG' l=LG m=1.0 lvsExactMatch=1.0
+.ENDS
+.SUBCKT lib.util.delay.DELAY-L2-R.1000 GND L R Vdd
+Xdelay[0] L x[1] Vdd GND i0sbfm201aa1n03x5
+Xdelay[1] x[1] R Vdd GND i0sbfm201aa1n03x5
+.ENDS
+.SUBCKT i0scinv00aa1n12x5 clk clkout vcc vssx LG=1.4E-8 WG=1.0
+Mg101_D_qna_D_mn3 clkout clk vssx vssx nhpbulvt w='3.0*WG' l=LG m=4.0
++lvsExactMatch=1.0
+Mg101_D_qpa_D_mp3 clkout clk vcc vcc phpbulvt w='3.0*WG' l=LG m=5.0
++lvsExactMatch=1.0
+.ENDS
+.SUBCKT i0slan003aa1d06x5 clk d o rb vcc vssx LG=1.4E-8 WG=1.0
+Mg1_D_qna_D_mn2 nc1 clk vssx vssx nhpbulvt w='2.0*WG' l=LG m=1.0
++lvsExactMatch=1.0
+Mg1_D_qpa_D_mp2 nc1 clk vcc vcc phpbulvt w='2.0*WG' l=LG m=1.0
++lvsExactMatch=1.0
+Mg2lp1_D_qna_D_mn2 nk2 nk1 vssx vssx nhpbulvt w='2.0*WG' l=LG m=1.0
++lvsExactMatch=1.0
+Mg2lp1_D_qpa_D_mp2 nk2 nk1 vcc vcc phpbulvt w='2.0*WG' l=LG m=1.0
++lvsExactMatch=1.0
+Mg101_D_qna_D_mn3 o nk1 vssx vssx nhpbulvt w='3.0*WG' l=LG m=2.0
++lvsExactMatch=1.0
+Mg101_D_qpa_D_mp3 o nk1 vcc vcc phpbulvt w='3.0*WG' l=LG m=2.0
++lvsExactMatch=1.0
+Mg1lp1_D_qns_D_mn2 nk1 clk n3 vssx nhpbulvt w='2.0*WG' l=LG m=1.0
++lvsExactMatch=1.0
+Mg1lp1_D_qpsb_D_mp2 nk1 nc1 n3 vcc phpbulvt w='2.0*WG' l=LG m=1.0
++lvsExactMatch=1.0
+Mg3lp1_D_qns_D_mn2 nk1 nc1 nk5 vssx nhpbulvt w='2.0*WG' l=LG m=1.0
++lvsExactMatch=1.0
+Mg3lp1_D_qpsb_D_mp2 nk1 clk nk5 vcc phpbulvt w='2.0*WG' l=LG m=1.0
++lvsExactMatch=1.0
+Mg2_D_qna_D_mn3 n3 d g2_D_n1 vssx nhpbulvt w='3.0*WG' l=LG m=2.0
++lvsExactMatch=1.0
+Mg2_D_qnb_D_mn3 g2_D_n1 rb vssx vssx nhpbulvt w='3.0*WG' l=LG m=2.0
++lvsExactMatch=1.0
+Mg2_D_qpa_D_mp2 n3 d vcc vcc phpbulvt w='2.0*WG' l=LG m=2.0 lvsExactMatch=1.0
+Mg2_D_qpb_D_mp2 n3 rb vcc vcc phpbulvt w='2.0*WG' l=LG m=2.0 lvsExactMatch=1.0
+Mg4lp1_D_qna_D_mn2 nk5 nk2 g4lp1_D_n1 vssx nhpbulvt w='2.0*WG' l=LG m=1.0
++lvsExactMatch=1.0
+Mg4lp1_D_qnb_D_mn2 g4lp1_D_n1 rb vssx vssx nhpbulvt w='2.0*WG' l=LG m=1.0
++lvsExactMatch=1.0
+Mg4lp1_D_qpa_D_mp2 nk5 nk2 vcc vcc phpbulvt w='2.0*WG' l=LG m=1.0
++lvsExactMatch=1.0
+Mg4lp1_D_qpb_D_mp2 nk5 rb vcc vcc phpbulvt w='2.0*WG' l=LG m=1.0
++lvsExactMatch=1.0
+.ENDS
+.SUBCKT i0slsn000aa1n06x5 clk d o vcc vssx LG=1.4E-8 WG=1.0
+Mg2_D_qna_D_mn3 n3 d vssx vssx nhpbulvt w='3.0*WG' l=LG m=1.0 lvsExactMatch=1.0
+Mg2_D_qpa_D_mp3 n3 d vcc vcc phpbulvt w='3.0*WG' l=LG m=1.0 lvsExactMatch=1.0
+Mg1_D_qna_D_mn2 nc1 clk vssx vssx nhpbulvt w='2.0*WG' l=LG m=1.0
++lvsExactMatch=1.0
+Mg1_D_qpa_D_mp2 nc1 clk vcc vcc phpbulvt w='2.0*WG' l=LG m=1.0
++lvsExactMatch=1.0
+Mg2lp1_D_qna_D_mn2 nk2 nk1 vssx vssx nhpbulvt w='2.0*WG' l=LG m=1.0
++lvsExactMatch=1.0
+Mg2lp1_D_qpa_D_mp2 nk2 nk1 vcc vcc phpbulvt w='2.0*WG' l=LG m=1.0
++lvsExactMatch=1.0
+Mg1lp1_D_qns_D_mn3 nk1 clk n3 vssx nhpbulvt w='3.0*WG' l=LG m=1.0
++lvsExactMatch=1.0
+Mg1lp1_D_qpsb_D_mp3 nk1 nc1 n3 vcc phpbulvt w='3.0*WG' l=LG m=1.0
++lvsExactMatch=1.0
+Mg101_D_qna_D_mn3 o nk1 vssx vssx nhpbulvt w='3.0*WG' l=LG m=2.0
++lvsExactMatch=1.0
+Mg101_D_qpa_D_mp3 o nk1 vcc vcc phpbulvt w='3.0*WG' l=LG m=2.0
++lvsExactMatch=1.0
+Mg3lp1_D_qnck_D_mn2 nk1 nc1 g3lp1_D_n2 vssx nhpbulvt w='2.0*WG' l=LG m=1.0
++lvsExactMatch=1.0
+Mg3lp1_D_qnd_D_mn2 g3lp1_D_n2 nk2 vssx vssx nhpbulvt w='2.0*WG' l=LG m=1.0
++lvsExactMatch=1.0
+Mg3lp1_D_qpckb_D_mp2 nk1 clk g3lp1_D_n1 vcc phpbulvt w='2.0*WG' l=LG m=1.0
++lvsExactMatch=1.0
+Mg3lp1_D_qpd_D_mp2 g3lp1_D_n1 nk2 vcc vcc phpbulvt w='2.0*WG' l=LG m=1.0
++lvsExactMatch=1.0
+.ENDS
+.SUBCKT core.crypto.bitcoin.clock.CLOCK_GEN4_LATCH.1000 CLK[0] CLK[1] CLK[2]
++CLK[3] GND PW_DLY[0] PW_DLY[1] PW_DLY[2] PW_DLY[3] REFCLK Vdd _RESET
+XclkINV1.inv REFCLK _refclk Vdd GND i0scinv00aa1n12x5
+XclkINV2.inv _refclk refclk Vdd GND i0scinv00aa1n12x5
+Xhold_clk4[0] GND clk3[0] clk4[0] Vdd lib.util.delay.DELAY-L2-R.1000
+Xhold_clk4[1] GND clk3[1] clk4[1] Vdd lib.util.delay.DELAY-L2-R.1000
+Xhold_clk4[2] GND clk3[2] clk4[2] Vdd lib.util.delay.DELAY-L2-R.1000
+Xhold_clk4[3] GND clk3[3] clk4[3] Vdd lib.util.delay.DELAY-L2-R.1000
+Xlatch_clk1[0].latch refclk clk4[3] clk1[0] _RESET Vdd GND i0slan003aa1d06x5
+Xlatch_clk1[1].latch refclk clk4[0] clk1[1] _RESET Vdd GND i0slan003aa1d06x5
+Xinv_clk1[2] GND clk1[0] clk1[2] Vdd lib.util.operator.MED_INV.a0
+Xinv_clk1[3] GND clk1[1] clk1[3] Vdd lib.util.operator.MED_INV.a0
+Xhold_clk2[0] GND clk1[0] clk2[0] Vdd lib.util.delay.DELAY-L2-R.1000
+Xhold_clk2[1] GND clk1[1] clk2[1] Vdd lib.util.delay.DELAY-L2-R.1000
+Xhold_clk2[2] GND clk1[2] clk2[2] Vdd lib.util.delay.DELAY-L2-R.1000
+Xhold_clk2[3] GND clk1[3] clk2[3] Vdd lib.util.delay.DELAY-L2-R.1000
+Xlatch_clk3[0].latch _refclk clk2[0] clk3[0] Vdd GND i0slsn000aa1n06x5
+Xlatch_clk3[1].latch _refclk clk2[1] clk3[1] Vdd GND i0slsn000aa1n06x5
+Xlatch_clk3[2].latch _refclk clk2[2] clk3[2] Vdd GND i0slsn000aa1n06x5
+Xlatch_clk3[3].latch _refclk clk2[3] clk3[3] Vdd GND i0slsn000aa1n06x5
+Xdelay[0] PW_DLY[0] PW_DLY[1] PW_DLY[2] PW_DLY[3] GND clk3[0] clkD[0] Vdd
++core.crypto.bitcoin.clock.TUNABLE_DELAY-L4_1-R.1000
+Xdelay[1] PW_DLY[0] PW_DLY[1] PW_DLY[2] PW_DLY[3] GND clk3[1] clkD[1] Vdd
++core.crypto.bitcoin.clock.TUNABLE_DELAY-L4_1-R.1000
+Xdelay[2] PW_DLY[0] PW_DLY[1] PW_DLY[2] PW_DLY[3] GND clk3[2] clkD[2] Vdd
++core.crypto.bitcoin.clock.TUNABLE_DELAY-L4_1-R.1000
+Xdelay[3] PW_DLY[0] PW_DLY[1] PW_DLY[2] PW_DLY[3] GND clk3[3] clkD[3] Vdd
++core.crypto.bitcoin.clock.TUNABLE_DELAY-L4_1-R.1000
+Xgen[0] clk3[0] clkD[0] CLK[0] GND Vdd core.crypto.bitcoin.clock.PULSEGEN.1000
+Xgen[1] clk3[1] clkD[1] CLK[1] GND Vdd core.crypto.bitcoin.clock.PULSEGEN.1000
+Xgen[2] clk3[2] clkD[2] CLK[2] GND Vdd core.crypto.bitcoin.clock.PULSEGEN.1000
+Xgen[3] clk3[3] clkD[3] CLK[3] GND Vdd core.crypto.bitcoin.clock.PULSEGEN.1000
+.ENDS

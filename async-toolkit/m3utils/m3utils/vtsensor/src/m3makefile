@@ -1,0 +1,73 @@
+% Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+% SPDX-License-Identifier: Apache-2.0
+
+/* $Id$ */
+
+import ("libm3")
+import ("cit_util")
+import ("json")
+import ("splines")
+import ("modula3scheme")
+import ("mscheme")
+import ("sstubgen")
+import ("parseparams")
+import ("minimize")
+import ("integrate")
+
+Module ("DataPoint")
+Interface ("Oscillator")
+Interface ("OscillatorTemp")
+
+Sequence("DataPoint", "DataPoint")
+
+Array_sort("DataPoint", "DataPoint")
+
+Module ("P3")
+Module ("Triangle3")
+List("Triangle3", "Triangle3")
+
+Module ("TriOsc")
+Module ("TriData")
+Module ("TriConfig")
+List ("TriConfig", "TriConfig")
+Sequence ("TriConfig", "TriConfig")
+
+Module ("TriOscExample")
+
+Table ("P3P3", "P3", "P3")
+Table ("LRDataPointSeq", "LongrealType", "DataPointSeq")
+
+SchemeStubs ("Math")
+SchemeStubs ("TextWr")
+SchemeStubs ("FileWr")
+SchemeStubs ("Wr")
+SchemeStubs ("FileRd")
+SchemeStubs ("Rd")
+SchemeStubs ("SchemeEnvironment")
+SchemeStubs ("Fmt")
+SchemeStubs ("LRFunction")
+SchemeStubs ("Solve")
+SchemeStubs ("Bracket")
+SchemeStubs ("RTType")
+SchemeStubs ("Pickle")
+
+SchemeStubs("Debug")
+SchemeStubs("DataPoint")
+SchemeStubs("Oscillator")
+SchemeStubs("OscillatorTemp")
+SchemeStubs("DataPointSeq")
+SchemeStubs("P3")
+SchemeStubs("Triangle3")
+SchemeStubs("TriData")
+SchemeStubs("TriOsc")
+SchemeStubs("TriOscExample")
+SchemeStubs("TriConfig")
+SchemeStubs("TriConfigList")
+SchemeStubs("TriConfigSeq")
+
+ExportSchemeStubs("vtsensor")
+importSchemeStubs()
+
+implementation ("Main")
+
+program ("sensor")

@@ -1,0 +1,78 @@
+magic
+tech scmos
+timestamp 988943070
+<< nselect >>
+rect -46 419 0 471
+<< pselect >>
+rect 0 419 34 463
+<< ndiffusion >>
+rect -40 459 -8 460
+rect -40 455 -8 456
+rect -40 447 -28 455
+rect -40 446 -8 447
+rect -40 442 -8 443
+rect -40 433 -8 434
+rect -40 429 -8 430
+<< pdiffusion >>
+rect 8 449 28 450
+rect 8 441 28 446
+rect 8 433 28 438
+rect 8 429 28 430
+<< ntransistor >>
+rect -40 456 -8 459
+rect -40 443 -8 446
+rect -40 430 -8 433
+<< ptransistor >>
+rect 8 446 28 449
+rect 8 438 28 441
+rect 8 430 28 433
+<< polysilicon >>
+rect -44 456 -40 459
+rect -8 456 6 459
+rect 3 449 6 456
+rect 3 446 8 449
+rect 28 446 32 449
+rect -44 443 -40 446
+rect -8 443 -3 446
+rect -6 441 -3 443
+rect -6 438 8 441
+rect 28 438 32 441
+rect -44 430 -40 433
+rect -8 430 8 433
+rect 28 430 32 433
+<< ndcontact >>
+rect -40 460 -8 468
+rect -28 447 -8 455
+rect -40 434 -8 442
+rect -40 421 -8 429
+<< pdcontact >>
+rect 8 450 28 458
+rect 8 421 28 429
+<< metal1 >>
+rect -40 460 -8 468
+rect -40 442 -32 460
+rect -28 453 -8 455
+rect -28 447 4 453
+rect 8 450 28 458
+rect -40 434 -8 442
+rect -4 429 4 447
+rect -40 421 28 429
+<< labels >>
+rlabel space -47 419 -28 471 7 ^n
+rlabel space 28 419 35 463 3 ^p
+rlabel metal1 -40 434 -32 468 1 GND!|pin|s|0
+rlabel metal1 8 450 28 458 1 Vdd!|pin|s|1
+rlabel metal1 -40 421 28 429 1 x|pin|s|2
+rlabel metal1 -4 421 4 453 1 x|pin|s|2
+rlabel metal1 -28 447 4 453 1 x|pin|s|2
+rlabel polysilicon 28 430 32 433 1 a|pin|w|3|poly
+rlabel polysilicon -1 430 3 433 1 a|pin|w|3|poly
+rlabel polysilicon -44 430 -40 433 1 a|pin|w|3|poly
+rlabel polysilicon -44 443 -40 446 1 b|pin|w|4|poly
+rlabel polysilicon 28 438 32 441 1 b|pin|w|4|poly
+rlabel polysilicon 28 446 32 449 1 c|pin|w|5|poly
+rlabel polysilicon -2 456 2 459 1 c|pin|w|5|poly
+rlabel polysilicon -44 456 -40 459 1 c|pin|w|5|poly
+rlabel metal1 -40 460 -8 468 1 GND!|pin|s|0
+rlabel metal1 -40 434 -8 442 1 GND!|pin|s|0
+<< end >>

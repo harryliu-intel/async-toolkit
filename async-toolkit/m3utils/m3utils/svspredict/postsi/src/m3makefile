@@ -1,0 +1,22 @@
+% Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+% SPDX-License-Identifier: Apache-2.0
+
+import ("libm3")
+import ("cit_util")
+import ("svspredict")
+import ("newuoa")
+
+implementation ("Main")
+
+Module ("LrArray")
+
+Module ("ReadPmroVmin")
+Module ("ReadVmin")
+
+Interface ("DieData")
+interface ("ReadStats")
+
+Table ("LrArrayLR", "LrArray", "LongrealType")
+
+program ("svspostsi")
+

@@ -1,0 +1,85 @@
+magic
+tech scmos
+timestamp 965070614
+<< ndiffusion >>
+rect 153 522 161 523
+rect 153 514 161 519
+rect 153 506 161 511
+rect 153 498 161 503
+rect 153 494 161 495
+<< pdiffusion >>
+rect 177 532 185 533
+rect 177 528 185 529
+rect 177 519 185 520
+rect 177 515 185 516
+rect 177 506 185 507
+rect 177 502 185 503
+rect 177 493 185 494
+rect 177 489 185 490
+<< ntransistor >>
+rect 153 519 161 522
+rect 153 511 161 514
+rect 153 503 161 506
+rect 153 495 161 498
+<< ptransistor >>
+rect 177 529 185 532
+rect 177 516 185 519
+rect 177 503 185 506
+rect 177 490 185 493
+<< polysilicon >>
+rect 163 529 177 532
+rect 185 529 189 532
+rect 163 522 166 529
+rect 149 519 153 522
+rect 161 519 166 522
+rect 172 516 177 519
+rect 185 516 189 519
+rect 172 514 175 516
+rect 149 511 153 514
+rect 161 511 175 514
+rect 149 503 153 506
+rect 161 503 177 506
+rect 185 503 189 506
+rect 149 495 153 498
+rect 161 495 175 498
+rect 172 493 175 495
+rect 172 490 177 493
+rect 185 490 189 493
+<< ndcontact >>
+rect 153 523 161 531
+rect 153 486 161 494
+<< pdcontact >>
+rect 177 533 185 541
+rect 177 520 185 528
+rect 177 507 185 515
+rect 177 494 185 502
+rect 177 481 185 489
+<< metal1 >>
+rect 177 533 185 541
+rect 153 528 173 531
+rect 153 523 185 528
+rect 165 520 185 523
+rect 165 502 173 520
+rect 177 507 185 515
+rect 165 494 185 502
+rect 153 486 161 494
+rect 177 481 185 489
+<< labels >>
+rlabel metal1 181 498 181 498 1 x
+rlabel metal1 181 511 181 511 5 Vdd!
+rlabel metal1 181 485 181 485 1 Vdd!
+rlabel polysilicon 186 504 186 504 1 b
+rlabel polysilicon 186 491 186 491 1 a
+rlabel metal1 181 524 181 524 5 x
+rlabel polysilicon 186 517 186 517 1 c
+rlabel metal1 181 537 181 537 1 Vdd!
+rlabel polysilicon 186 530 186 530 1 d
+rlabel metal1 157 490 157 490 1 GND!
+rlabel polysilicon 152 496 152 496 3 a
+rlabel polysilicon 152 504 152 504 3 b
+rlabel polysilicon 152 512 152 512 3 c
+rlabel metal1 157 527 157 527 1 x
+rlabel polysilicon 152 520 152 520 3 d
+rlabel space 148 486 153 531 7 ^n
+rlabel space 185 481 190 541 3 ^p
+<< end >>

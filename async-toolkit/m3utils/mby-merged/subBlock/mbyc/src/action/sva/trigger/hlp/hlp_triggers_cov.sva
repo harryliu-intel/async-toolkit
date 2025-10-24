@@ -1,0 +1,151 @@
+// Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+// SPDX-License-Identifier: Apache-2.0
+
+//------------------------------------------------------------------------------
+//
+//  Copyright 2006 - 2017 Intel Corporation All Rights Reserved.
+//
+//  The source code contained or described herein and all documents related
+//  to the source code ("Material") are owned by Intel Corporation or its
+//  suppliers or licensors. Title to the Material remains with Intel
+//  Corporation or its suppliers and licensors. The Material contains trade
+//  secrets and proprietary and confidential information of Intel or its
+//  suppliers and licensors. The Material is protected by worldwide copyright
+//  and trade secret laws and treaty provisions. No part of the Material may
+//  be used, copied, reproduced, modified, published, uploaded, posted,
+//  transmitted, distributed, or disclosed in any way without Intel's prior
+//  express written permission.
+//
+//  No license under any patent, copyright, trade secret or other intellectual
+//  property right is granted to or conferred upon you by disclosure or
+//  delivery of the Materials, either expressly, by implication, inducement,
+//  estoppel or otherwise. Any license under such intellectual property rights
+//  must be express and approved by Intel in writing.
+//
+//------------------------------------------------------------------------------
+
+  /////////////////////////////////////////////////////////////////////////////
+  // Covergroup Definitions
+
+
+covergroup hlp_lookup_inputs_grp
+  @(posedge clk iff (rst_n && i_trig_v));
+
+  cp_rate_lim_empty:            coverpoint trigger_rate_lim_empty               { bins value[4]  = {[0:$]}; }
+  cp_mbp_d:                     coverpoint mbp_d                                { bins value[96] = {[0:$]}; } 
+
+  cp_cfg_sa:                    coverpoint TriggerLoop[0].u_trigger_evaluate_hit.cfg_match_sa         { bins value[3] = {0,1,2}; }
+  cp_cfg_da:                    coverpoint TriggerLoop[0].u_trigger_evaluate_hit.cfg_match_da         { bins value[3] = {0,1,2}; }
+  cp_cfg_hit_sa:                coverpoint TriggerLoop[0].u_trigger_evaluate_hit.cfg_match_hit_sa     { bins value[3] = {0,1,2}; }
+  cp_cfg_hit_da:                coverpoint TriggerLoop[0].u_trigger_evaluate_hit.cfg_match_hit_da     { bins value[3] = {0,1,2}; }
+  cp_cfg_hit_sa_da:             coverpoint TriggerLoop[0].u_trigger_evaluate_hit.cfg_match_hit_sa_da  { bins value[3] = {0,1,2}; }
+  cp_cfg_vlan:                  coverpoint TriggerLoop[0].u_trigger_evaluate_hit.cfg_match_vlan       { bins value[3] = {0,1,2}; }
+  cp_cfg_ffu:                   coverpoint TriggerLoop[0].u_trigger_evaluate_hit.cfg_match_ffu        { bins value[3] = {0,1,2}; }
+  cp_cfg_egdomain:              coverpoint TriggerLoop[0].u_trigger_evaluate_hit.cfg_match_egdomain   { bins value[3] = {0,1,2}; }
+  cp_cfg_tc:                    coverpoint TriggerLoop[0].u_trigger_evaluate_hit.cfg_match_tc         { bins value[3] = {0,1,2}; }
+  cp_cfg_ethertype:             coverpoint TriggerLoop[0].u_trigger_evaluate_hit.cfg_match_ethertype  { bins value[3] = {0,1,2}; }
+  cp_cfg_dst_glort:             coverpoint TriggerLoop[0].u_trigger_evaluate_hit.cfg_match_dst_glort  { bins value[3] = {0,1,2}; }
+  cp_cfg_metadata0:             coverpoint TriggerLoop[0].u_trigger_evaluate_hit.cfg_match_metadata0  { bins value[3] = {0,1,2}; }
+  cp_cfg_metadata1:             coverpoint TriggerLoop[0].u_trigger_evaluate_hit.cfg_match_metadata1  { bins value[3] = {0,1,2}; }
+
+  cp_match_sa:                  coverpoint TriggerLoop[0].u_trigger_evaluate_hit.match_sa;
+  cp_cfg_match_sa:              cross cp_cfg_sa, cp_match_sa;
+  cp_match_da:                  coverpoint TriggerLoop[0].u_trigger_evaluate_hit.match_da;
+  cp_cfg_match_da:              cross cp_cfg_da, cp_match_da;
+  cp_match_hit_sa:              coverpoint TriggerLoop[0].u_trigger_evaluate_hit.match_hit_sa;
+  cp_cfg_match_hit_sa:          cross cp_cfg_hit_sa, cp_match_hit_sa;
+  cp_match_hit_da:              coverpoint TriggerLoop[0].u_trigger_evaluate_hit.match_hit_da;
+  cp_cfg_match_hit_da:          cross cp_cfg_hit_da, cp_match_hit_da;
+  cp_match_vlan:                coverpoint TriggerLoop[0].u_trigger_evaluate_hit.match_vlan;
+  cp_cfg_match_vlan:            cross cp_cfg_vlan, cp_match_vlan;
+  cp_match_egdomain:            coverpoint TriggerLoop[0].u_trigger_evaluate_hit.match_egdomain;
+  cp_cfg_match_egdomain:        cross cp_cfg_egdomain, cp_match_egdomain;
+  cp_match_ffu:                 coverpoint TriggerLoop[0].u_trigger_evaluate_hit.match_ffu;
+  cp_cfg_match_ffu:             cross cp_cfg_ffu, cp_match_ffu;
+  cp_match_tc:                  coverpoint TriggerLoop[0].u_trigger_evaluate_hit.match_tc;
+  cp_cfg_match_tc:              cross cp_cfg_tc, cp_match_tc;
+  cp_match_ethertype:           coverpoint TriggerLoop[0].u_trigger_evaluate_hit.match_ethertype;
+  cp_cfg_match_ethertype:       cross cp_cfg_ethertype, cp_match_ethertype;
+  cp_match_dst_glort:           coverpoint TriggerLoop[0].u_trigger_evaluate_hit.match_dst_glort;
+  cp_cfg_match_dst_glort:       cross cp_cfg_dst_glort, cp_match_dst_glort;
+  cp_match_metadata0:           coverpoint TriggerLoop[0].u_trigger_evaluate_hit.match_metadata0;
+  cp_cfg_match_metadata0:       cross cp_cfg_metadata0, cp_match_metadata0;
+  cp_match_metadata1:           coverpoint TriggerLoop[0].u_trigger_evaluate_hit.match_metadata1;
+  cp_cfg_match_metadata1:       cross cp_cfg_metadata1, cp_match_metadata1;
+
+  cp_match_random:              coverpoint TriggerLoop[0].u_trigger_evaluate_hit.match_random;
+  cp_match_class:               coverpoint TriggerLoop[0].u_trigger_evaluate_hit.match_class;
+  cp_match_routed:              coverpoint TriggerLoop[0].u_trigger_evaluate_hit.match_routed;
+  cp_match_amask:               coverpoint TriggerLoop[0].u_trigger_evaluate_hit.match_amask;
+  cp_match_src_port:            coverpoint TriggerLoop[0].u_trigger_evaluate_hit.match_src_port;
+  cp_match_dst_port:            coverpoint TriggerLoop[0].u_trigger_evaluate_hit.match_dst_port;
+  
+endgroup
+
+
+
+covergroup hlp_mgmt_s1_grp
+  @(posedge clk iff (rst_n && i_mgmt_v));
+  cp_mgmt_rw1:              coverpoint i_mgmt.rw;
+  cp_cond_cfg_match:        coverpoint addr_in_range_s1 & ((i_mgmt.addr & TRIGGER_CONDITION_CFG_MASK)==TRIGGER_CONDITION_CFG_ADDR);
+  cp_cond_param_match:      coverpoint addr_in_range_s1 & ((i_mgmt.addr & TRIGGER_CONDITION_PARAM_MASK)==TRIGGER_CONDITION_PARAM_ADDR);
+  cp_cond_ffu_match:        coverpoint addr_in_range_s1 & ((i_mgmt.addr & TRIGGER_CONDITION_FFU_MASK)==TRIGGER_CONDITION_FFU_ADDR);
+  cp_cond_type_match:       coverpoint addr_in_range_s1 & ((i_mgmt.addr & TRIGGER_CONDITION_TYPE_MASK)==TRIGGER_CONDITION_TYPE_ADDR);
+  cp_cond_glort_match:      coverpoint addr_in_range_s1 & ((i_mgmt.addr & TRIGGER_CONDITION_GLORT_MASK)==TRIGGER_CONDITION_GLORT_ADDR);
+  cp_cond_rx_match:         coverpoint addr_in_range_s1 & ((i_mgmt.addr & TRIGGER_CONDITION_RX_MASK)==TRIGGER_CONDITION_RX_ADDR);
+  cp_cond_tx_match:         coverpoint addr_in_range_s1 & ((i_mgmt.addr & TRIGGER_CONDITION_TX_MASK)==TRIGGER_CONDITION_TX_ADDR);
+  cp_cond_amask1_match:     coverpoint addr_in_range_s1 & ((i_mgmt.addr & TRIGGER_CONDITION_AMASK_1_MASK)==TRIGGER_CONDITION_AMASK_1_ADDR);
+  cp_cond_amask2_match:     coverpoint addr_in_range_s1 & ((i_mgmt.addr & TRIGGER_CONDITION_AMASK_2_MASK)==TRIGGER_CONDITION_AMASK_2_ADDR);
+  cp_cond_metadata_match:   coverpoint addr_in_range_s1 & ((i_mgmt.addr & TRIGGER_CONDITION_METADATA_MASK)==TRIGGER_CONDITION_METADATA_ADDR);
+
+  cp_rw1_cfg_match:         cross i_mgmt.rw, cp_cond_cfg_match;
+  cp_rw1_param_match:       cross i_mgmt.rw, cp_cond_param_match;
+  cp_rw1_ffu_match:         cross i_mgmt.rw, cp_cond_ffu_match;
+  cp_rw1_type_match:        cross i_mgmt.rw, cp_cond_type_match;
+  cp_rw1_glort_match:       cross i_mgmt.rw, cp_cond_glort_match;
+  cp_rw1_rx_match:          cross i_mgmt.rw, cp_cond_rx_match;
+  cp_rw1_tx_match:          cross i_mgmt.rw, cp_cond_tx_match;
+  cp_rw1_amask1_match:      cross i_mgmt.rw, cp_cond_amask1_match;
+  cp_rw1_amask2_match:      cross i_mgmt.rw, cp_cond_amask2_match;
+  cp_rw1_metadata_match:    cross i_mgmt.rw, cp_cond_metadata_match;
+endgroup
+
+covergroup hlp_mgmt_s2_grp
+  @(posedge clk iff (rst_n && mgmt_in_v_s2));
+  cp_mgmt_rw2:              coverpoint mgmt_in_s2.rw;
+  cp_action_cfg_1_match:    coverpoint addr_in_range_s2 & ((i_mgmt.addr & TRIGGER_ACTION_CFG_1_MASK)==TRIGGER_ACTION_CFG_1_ADDR);
+  cp_action_drop_match:     coverpoint addr_in_range_s2 & ((i_mgmt.addr & TRIGGER_ACTION_DROP_MASK)==TRIGGER_ACTION_DROP_ADDR);
+
+  cp_rw2_cfg_1_match:       cross mgmt_in_s2.rw, cp_action_cfg_1_match;
+  cp_rw2_drop_match:        cross mgmt_in_s2.rw, cp_action_drop_match;
+endgroup
+
+covergroup hlp_mgmt_s4_grp
+  @(posedge clk iff (rst_n && mgmt_in_v_s4));
+  cp_mgmt_rw4:              coverpoint mgmt_in_s4.rw;
+  cp_action_cfg_2_match:    coverpoint addr_in_range_s4 & ((i_mgmt.addr & TRIGGER_ACTION_CFG_2_MASK)==TRIGGER_ACTION_CFG_2_ADDR);
+  cp_action_glort_match:    coverpoint addr_in_range_s4 & ((i_mgmt.addr & TRIGGER_ACTION_GLORT_MASK)==TRIGGER_ACTION_GLORT_ADDR);
+  cp_action_mirror_match:   coverpoint addr_in_range_s4 & ((i_mgmt.addr & TRIGGER_ACTION_MIRROR_MASK)==TRIGGER_ACTION_MIRROR_ADDR);
+  cp_stats_match:           coverpoint addr_in_range_s4 & ((i_mgmt.addr & TRIGGER_STATS_MASK)==TRIGGER_STATS_ADDR);
+  cp_rate_lim_cfg_2_match:  coverpoint (i_mgmt.addr & TRIGGER_RATE_LIM_CFG_2_MASK)==TRIGGER_RATE_LIM_CFG_2_BASE;
+  cp_action_metadata_match: coverpoint addr_in_range_s4 & ((i_mgmt.addr & TRIGGER_ACTION_METADATA_MASK)==TRIGGER_ACTION_METADATA_ADDR);
+  cp_rate_lim_empty_match:  coverpoint (i_mgmt.addr == TRIGGER_RATE_LIM_EMPTY_ADDR);
+  cp_ip_match:              coverpoint (i_mgmt.addr & TRIGGER_IP_MASK)==TRIGGER_IP_BASE;
+  cp_im_match:              coverpoint (i_mgmt.addr & TRIGGER_IM_MASK)==TRIGGER_IM_BASE;
+
+  cp_rw4_cfg_2_match:       cross mgmt_in_s4.rw, cp_action_cfg_2_match;
+  cp_rw4_glort_match:       cross mgmt_in_s4.rw, cp_action_glort_match;
+  cp_rw4_mirror_match:      cross mgmt_in_s4.rw, cp_action_mirror_match;
+  cp_rw4_stats_match:       cross mgmt_in_s4.rw, cp_stats_match;
+  cp_rw4_lim_cfg_2_match:   cross mgmt_in_s4.rw, cp_rate_lim_cfg_2_match;
+  cp_rw4_metadata_match:    cross mgmt_in_s4.rw, cp_action_metadata_match;
+  cp_rw4_lim_empty_match:   cross mgmt_in_s4.rw, cp_rate_lim_empty_match;
+  cp_rw4_ip_match:          cross mgmt_in_s4.rw, cp_ip_match;
+  cp_rw4_iw_match:          cross mgmt_in_s4.rw, cp_im_match;
+endgroup
+
+
+`HLP_PLUSARGS_COV_GRP_NEW(hlp_lookup_inputs_grp)
+`HLP_PLUSARGS_COV_GRP_NEW(hlp_mgmt_s1_grp)
+`HLP_PLUSARGS_COV_GRP_NEW(hlp_mgmt_s2_grp)
+`HLP_PLUSARGS_COV_GRP_NEW(hlp_mgmt_s4_grp)

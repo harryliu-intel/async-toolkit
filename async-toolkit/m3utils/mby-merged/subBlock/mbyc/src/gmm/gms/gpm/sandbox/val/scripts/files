@@ -1,0 +1,5 @@
+-file $LOGICROOT/gmm/gms/gpm/sandbox/val/scripts/files.common
+-file $LOGICROOT/gmm/gms/gpm/sandbox/val/scripts/files.gpm
+
+-file $LOGICROOT/gmm/gms/gpm/sandbox/val/scripts/files.gpm_tb
+$LOGICROOT/gmm/gms/gpm/sandbox/val/verilog/top.sv

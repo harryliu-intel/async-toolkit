@@ -1,0 +1,34 @@
+#!/bin/csh
+
+## Author: psayyaga, rjstach
+
+unalias rm
+unalias mv
+unalias grep
+unalias cp
+
+## -- Generate pin spec files for all IO models. 
+## This pin spec file is used by Collage during UPF generation
+#############################
+# SoC initialization
+#############################
+#if {  ![info exists $env{CHASSIS_ID} ] } {
+##    set env(CHASSIS_ID) config_$::env(DUT)       
+#    set $env{CHASSIS_ID} config_mby
+#}
+
+#set chassis_config_id $::env(CHASSIS_ID) 
+
+#if {  ![info exists env(COLLAGE_CFG) ] } {
+#    set env(COLLAGE_CFG) $::env(MODEL_ROOT)/tools/collage/configs  
+#}
+
+set HPPSGDIR = "$MODEL_ROOT/tools/upf/scripts/hip_power_pin_spec_gen"
+
+if (-d $MODEL_ROOT/target/mby/upf/gen/hip_power_pins) then
+    rm -rf $MODEL_ROOT/target/mby/upf/gen/hip_power_pins
+endif
+
+mkdir -p $MODEL_ROOT/target/mby/upf/gen/hip_power_pins
+
+$HPPSGDIR/generate_hip_supply_port_mapping.pl -pin_map $HPPSGDIR/hip_pin_bump_mapping.txt -io_list $HPPSGDIR/mby_io.list -out_dir $MODEL_ROOT/target/mby/upf/gen/hip_power_pins | & tee $MODEL_ROOT/target/mby/upf/gen/hip_power_pins/log.hip

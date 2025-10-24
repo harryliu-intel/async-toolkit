@@ -1,0 +1,9 @@
+#!/bin/sh -x
+
+SVFILES=`ls ../*.sv | grep -v _tb.sv`
+
+fulcrum vcs vcs -full64 -timescale=1ns/1ps -sverilog -debug_all +access+rwc+notimingchecks+nospecify \
++define+PRS2VERILOG_TAU=0.050 +define+TXQ_GOLDEN_MODEL=true \
+../enable_new_ecc.v \
+../new_ecc.v \
+../../../unittest/lib/sram/ecc_range_tb.sv

@@ -1,0 +1,18 @@
+include "problem.in"
+include "initial.in"
+include "groups.in"
+verbose 1
+min_gradient 1e-20
+initial_weight 10
+final_weight 1e7
+step_weight 10
+iteration_ratio 2
+tolerance 0.001
+solve
+initial_weight 1e8
+final_weight 1e8
+iteration_ratio 10
+tolerance 0.000001
+solve
+output "solution.out"
+write_all

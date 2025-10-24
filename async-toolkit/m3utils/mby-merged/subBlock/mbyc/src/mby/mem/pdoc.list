@@ -1,0 +1,7 @@
+include hdl_libs/gen_aus/gen_aus.list
+//hdl_libs/gen_aus/share.def
+oc/src/oc.def
+include oc/src/oc.list
+pdoc/src/pdoc.v
+include hdl_libs/cpk_mems/pdoc/src/pdoc_mem.list
+include hdl_libs/mems/src/mems.list

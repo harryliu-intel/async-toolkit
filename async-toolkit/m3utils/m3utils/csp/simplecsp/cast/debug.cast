@@ -1,0 +1,54 @@
+// Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+// SPDX-License-Identifier: Apache-2.0
+
+module debug;
+
+// cosimulate first.SYSTEM {csp,subcells}
+
+int WIDTH = 32;
+int N     = 4 * 128;
+
+int XADD = 13;
+int XMUL = 16807;
+int XMOD = 2147483647;
+
+define func attributes {
+  csp {
+
+    function fz(int -x) : int =
+      (
+       y  = x + XADD;
+       fz = (y * XMUL) % XMOD;
+       );
+    
+  }
+}
+
+define PROC(bool DOSTART)(bd(WIDTH) -L, +R, -DBGC, +DBGR) <+ func
+{
+
+  csp {
+   int(WIDTH) i;
+   [ DOSTART -> i=0; R!0 [] ~DOSTART -> skip ];
+   
+   *[ L?x ;
+
+      [ DOSTART -> print("i = " + i + " x = " + x); i++ [] ~DOSTART -> skip ];
+      
+      R!fz(x)
+      ],
+     *[ DBGC?cmd ; [ cmd == 1 -> DBGR! x [] cmd == 0 -> DBGC ? x ]]
+  }
+}
+
+
+define SYSTEM()()
+{
+  subcells {
+    bd(WIDTH) chan[0..N-1];
+    bd(WIDTH) dbgc[0..N-1], dbgr[0..N-1];
+  
+    <i:N: PROC(i == 0) p[i] (chan[i],chan[(i+1)%N], dbgc[i], dbgr[i]); >
+  } 
+}
+

@@ -1,0 +1,7 @@
+If you want to use a different compiler toolchain (developing changes to such toolchain, for example):
+
+Make sure META_ROOT in the Makefile is set right.
+Make sure CM3 in the Makefile is set right.
+And make sure you setnhdk -w to the current clone.
+
+And make sure CM3_HOME is correct in the meta repo!

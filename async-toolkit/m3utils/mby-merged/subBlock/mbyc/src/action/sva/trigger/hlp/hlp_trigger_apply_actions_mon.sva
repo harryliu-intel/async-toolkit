@@ -1,0 +1,59 @@
+// Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+// SPDX-License-Identifier: Apache-2.0
+
+//------------------------------------------------------------------------------
+//
+//  INTEL CONFIDENTIAL
+//
+//  Copyright 2006 - 2017 Intel Corporation All Rights Reserved.
+//
+//  The source code contained or described herein and all documents related
+//  to the source code ("Material") are owned by Intel Corporation or its
+//  suppliers or licensors. Title to the Material remains with Intel
+//  Corporation or its suppliers and licensors. The Material contains trade
+//  secrets and proprietary and confidential information of Intel or its
+//  suppliers and licensors. The Material is protected by worldwide copyright
+//  and trade secret laws and treaty provisions. No part of the Material may
+//  be used, copied, reproduced, modified, published, uploaded, posted,
+//  transmitted, distributed, or disclosed in any way without Intel's prior
+//  express written permission.
+//
+//  No license under any patent, copyright, trade secret or other intellectual
+//  property right is granted to or conferred upon you by disclosure or
+//  delivery of the Materials, either expressly, by implication, inducement,
+//  estoppel or otherwise. Any license under such intellectual property rights
+//  must be express and approved by Intel in writing.
+//
+//------------------------------------------------------------------------------
+
+`ifndef HLP_TRIGGER_APPLY_ACTIONS_MON_SVA
+`define HLP_TRIGGER_APPLY_ACTIONS_MON_SVA
+
+// Environment assumptions
+// Assertions
+
+`HLP_ASRT_DELAY(atTrigVDelay,
+                1, {i_trig_v},
+                {o_trig_v},
+                "trig_v isn't passed correctly");
+
+
+`HLP_ASRT_DELAY_V_CG(atTrigVCkg,
+                1, i_trig_v,
+                {trig_out_d}, {o_trig},
+                "signal o_trig is not clock-gated by i_trig_v");
+
+`ASSERTS_TRIGGER(atDefaultActionToApplyForNoHit,
+                 i_trig_v & (~i_actions.v),
+                 (trig_out_d.learning_action=='0) & 
+                 (trig_out_d.rate_limit_action=='0) &
+                 (trig_out_d.el2_domain_action=='0) &
+                 (trig_out_d.el3_domain_action=='0) &
+                 (trig_out_d.no_trap_or_log_action=='0) &
+                 (trig_out_d.trap_action=='0) &
+                 (trig_out_d.log_action=='0) & 
+                 (trig_out_d.policer_action=='0),
+                 posedge clk, ~rst_n,
+                 `ERR_MSG("non-default action is passed to hlp_apply even without hit"));
+
+`endif // HLP_TRIGGER_APPLY_ACTIONS_MON_SVA

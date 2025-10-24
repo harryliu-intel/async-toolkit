@@ -1,0 +1,78 @@
+// Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+// SPDX-License-Identifier: Apache-2.0
+
+module loopex;
+
+define P()()
+{
+  csp {
+  function f(int -N, -x) : int =
+    (f = <+i:N:<+j:N+i:x+i+N>>
+     );
+
+  print (f(10,f(11,12)));
+  print (f(10,f(11,12)));
+  }
+}
+
+define Q(int W, N)(bd(W) -L[N])
+{
+  csp {
+    *[[<&i:N: #L[i]> -> print ("yes")]]
+  }
+}
+
+define R(int W, N)(bd(W) -L[N])
+{
+  csp {
+    function g(boolean x) : boolean =
+      (
+       print ("g says hi");
+       g = x
+       );
+    
+    function f() : boolean =
+      (
+       f = <&i:N:<&j:i: g(#L[ (i + j) % N ])>>
+       );
+  
+
+    *[[f() -> print ("yes")]]
+  }
+}
+
+  
+define S(int W, N)(bd(W) -L[N])
+{
+  csp {
+    boolean x;
+    int c=3;
+    int d=4;
+
+    x = #L[(c + d) % N];    // broken
+
+    L[(c + d) % N] ? c;     // OK
+
+    d = L[(c + d) % N] ?;   // broken
+
+    int y[N];
+
+    y[(c + d) % N] = d;     // OK 
+
+    c =     y[(c + d) % N]; // OK
+
+
+    
+  }
+}
+
+define T(int W, N)(bd(W) -L[N])
+{
+  csp {
+    boolean x;
+    int c=3;
+    int d=4;
+
+    x = #L[(c + d) % N];    // broken
+  }
+}

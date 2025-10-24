@@ -1,0 +1,7 @@
+handle SIG64 nostop noprint
+
+run
+
+where
+
+thread apply all bt

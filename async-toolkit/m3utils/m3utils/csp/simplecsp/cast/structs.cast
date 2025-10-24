@@ -1,0 +1,278 @@
+// Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+// SPDX-License-Identifier: Apache-2.0
+
+module structs;
+
+define common attributes {
+  csp {
+  structure struct0 =
+    (int(8) a;
+     int(8) b, d;
+     int(8) c = 13;
+     bool q;
+     string s;
+     string t="does this work";
+     );
+
+  structure struct1 =
+    (int a;
+     string s;
+     bool b;
+     );
+
+  structure struct2 =
+    (int a[255];
+     string s;
+     bool b;
+     );
+  }
+}
+
+int TT = 32;
+
+define PACK()() <+ common
+{
+  csp {
+  structure structp =
+    (int(TT) a = 0xc0edbabe;
+          bool b;
+          bool c;
+          bool d;
+          bool e;
+     );
+
+
+    structp x;
+    int y;
+    y = pack(x);
+    print(y)
+  }
+}
+
+define P()() <+ common
+{
+  csp {
+    struct0 x;
+    int y;
+    y = 2 * x::c;
+
+    print(y);
+   }
+}
+
+int NW=32;
+int NA=7;
+
+define ARRAYS()()
+{
+  csp {
+    structure structa =
+      (int x = NW * 0xc0edbabe + NA;
+       );
+    
+    structure structp =
+      (int(NW) a[NA];
+       bool b;
+       );
+
+    structure structq =
+      (int(128) b[25];
+       structp  p[18];
+      );
+
+    structq x;
+    int xx[3];
+
+    int y = 0xc0edbabf ** 0x2f;
+
+    unpack (x, y);
+
+    int z = x::p[7]::a[3];
+    xx[0] = z;
+    z = xx[0];
+
+    print (y);
+    print (z)
+  }
+}
+
+define A0()()
+{
+  csp {
+    structure s =
+      (int(NW) x[3][4];
+       int(NW) y;
+       );
+
+    s z;
+
+    print (z::x[0][1])
+  }
+}
+
+define A1()()
+{
+  csp {
+    structure s =
+      (int(NW) x[3][4];
+       string  y[1][2][3];
+       int     z = 2;
+       string  str = "hello, world!";
+       bool    b = true;
+       );
+
+    s z, zz;
+
+    z = zz;
+    
+    print (z::x[0][1]  + z::z)
+  }
+}
+
+define A1p()()
+{
+  csp {
+    structure s =
+      (int(NW) x[3][4];
+       string  y[1][2][3];
+       int(8)  z = 2;
+       string  str = "hello, world!";
+       bool    b = true;
+       );
+
+    s z;
+
+    print (z::x[0][1]  + z::z)
+  }
+}
+
+define Q()() <+ common
+{
+  csp {
+    struct2 x[5];
+    int y;
+    int i, j;
+    y = 2 * x[2*i]::a[j%3];
+
+    print(y);
+   }
+}
+  
+define SEND()(bd(32) +R)
+{
+  csp {
+    structure s =
+      (int(32) x;
+       );
+
+    s z;
+
+    z::x = 12;
+
+    R!z
+  }
+}      
+
+define RECV()(bd(32) -L)
+{
+  csp {
+    structure s =
+      (int(32) x;
+       );
+
+    s z;
+
+    L?z;
+
+    print(z::x)
+
+    
+  }
+}      
+
+define PU(int W)()
+{
+  csp {
+    structure struct0 =
+      (
+       int(W) a;
+       int(W) b[3];
+       );
+
+    struct0 s, t;
+
+    s::a = 13;
+    s::b[0] = 17;
+    s::b[1] = 19;
+    s::b[2] = 23;
+
+    int y;
+    int(62) x;
+
+    y = pack(s);
+    x = pack(s);
+    print("y=" + hex(y));
+    print("x=" + hex(x));
+    print("s=" + s::a + " " + s::b[0] + "," + s::b[1] + "," + s::b[2]);
+
+    unpack(t, x);
+    print("t=" + t::a + " " + t::b[0] + "," + t::b[1] + "," + t::b[2]);
+
+    x = pack(t);
+    print("x=" + hex(x));
+  }
+}
+    
+define NARROW()()
+{
+  int W = 32;
+  csp {
+    structure struct0 =
+      (
+       int(W) a;
+       int(W) b[3];
+       );
+    
+    struct0 s;
+    
+    s::a = 13;
+    s::b[0] = 17;
+    s::b[1] = 19;
+    s::b[2] = 23;
+
+    int(63) x;
+
+    x = pack(s);
+
+    print("x=" + hex(x));
+  }
+}
+
+define NARROWER()()
+{
+  int W = 12;
+  csp {
+    structure struct0 =
+      (
+       int(W) a;
+       int(W) b[3];
+       );
+    
+    struct0 s;
+    
+    s::a = 13;
+    s::b[0] = 17;
+    s::b[1] = 19;
+    s::b[2] = 23;
+
+    int(62) x;
+
+    x = pack(s);
+
+    print("x=" + hex(x));
+
+    print("sizeof=" + sizeof(x));
+    
+  }
+}
+        

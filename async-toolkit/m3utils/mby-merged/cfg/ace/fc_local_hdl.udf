@@ -1,0 +1,56 @@
+#---*-perl-*---
+
+%audf = (
+   Includes => ["shdv:cfg/ace/shdv_integ.udf",],
+    
+   HDLSpec  => {
+      mby => {
+         # Imported libraries
+         import => {
+            shdv   => {
+               libs => ['shdv_lib',],
+            },
+         },
+         # Local libraries
+         libs => {
+            #############################################################
+            # SIP shared libraries (not reusable)
+            #############################################################
+            uvm_lib => {
+               -hdl_spec       => ["HDL/verif/uvm.hdl"],
+               -tag            => "nonsynth",
+               -vlog_opts      => ["+define+UVM_REG_DATA_WIDTH=128",],
+           },
+
+            sla_lib => {
+               -hdl_spec       => ["cfg/ace/HDL/verif/sla.hdl"],
+               -tag            => "nonsynth",
+               -dependent_libs => ['uvm_lib',
+               ],
+            },
+            shdv_shared_lib => {
+               -sub_libs       => ["uvm_lib",
+                                   "sla_lib",
+                                   "shdv_lib",
+               ],
+
+            },
+            ext_shared_lib => {
+               -sub_libs       => ["svt_amba_lib",
+                                   "cdn_pcie_lib",
+               ],
+               -dependent_libs => [ 'shdv_shared_lib',
+               ],
+               -tag            => "nonsynth",
+            },
+            #vte_tr_uvm_lib => {
+            #       -hdl_spec       => [ "cfg/ace/HDL/verif/vte_tr_uvm.hdl" ],
+            #       -dependent_libs => [ 'shdv_shared_lib',
+            #                       ],
+            #       -tag            => "nonsynth+nonlint",
+            #},
+            #############################################################
+         }, #libs
+      }, #mby (scope)
+   }, #HdlSpec
+); #%audf

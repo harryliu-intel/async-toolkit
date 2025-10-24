@@ -1,0 +1,9 @@
+(* Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information. *)
+(* SPDX-License-Identifier: Apache-2.0 *)
+
+INTERFACE Likelihood;
+
+PROCEDURE LogLikelihood(x, mu, sigma : LONGREAL) : LONGREAL;
+  (* likelihood (density) of x given it is ~N(mu, sigma) *)
+
+END Likelihood.

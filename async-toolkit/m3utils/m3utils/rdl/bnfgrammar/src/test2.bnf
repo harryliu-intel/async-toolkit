@@ -1,0 +1,29 @@
+
+expression=
+		primary, ";"
+                ;
+
+
+primary=
+               matched_expression
+               | unmatched_expression;
+
+matched_expression = matched_f;
+
+unmatched_expression = unmatched_f;
+
+matched_f= "f",
+	        matched_expression, ":", matched_expression
+                ;
+                
+unmatched_f= f_no_range | f_1_range | f_2_ranges;
+
+f_2_ranges= "f", matched_expression, ":", unmatched_expression ;
+
+f_1_range= "f", unmatched_expression
+                | "f", matched_expression
+                ;
+                
+f_no_range= "f"
+                ;
+                

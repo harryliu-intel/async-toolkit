@@ -1,0 +1,65 @@
+// Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+// SPDX-License-Identifier: Apache-2.0
+
+module unpack;
+
+define P()()
+{
+  csp {
+    structure struct0 =
+      (int(8) a = 1;
+       int(8) b = 1, d = 2;
+       int(8) c = 13;
+       );
+    
+  struct0 x;
+  int y;
+
+  x::a = 2;
+  
+  y = pack(x);
+
+  print ("y = " + y);
+
+  y = 0xc0edbabe;
+  
+  unpack(x,y); // unpack writes its first argument
+  y = pack(x);
+
+  print ("y = " + y);
+  
+  }
+  
+}
+
+define R()()
+{
+  csp {
+    
+    structure struct0 =
+      (int(8) a = 1;
+       int(8) b = 1, d = 2;
+       int(8) c = 13;
+       );
+    
+    struct0 x;
+    int y;
+    y = pack(x);
+  }
+}
+
+define S()()
+{
+  csp {
+    
+    structure struct0 =
+      (int(8) a = 1;
+       int(8) b = 1, d = 2;
+       int(8) c = 13;
+       );
+    
+    struct0 x;
+    int y;
+    pack(x);
+  }
+}

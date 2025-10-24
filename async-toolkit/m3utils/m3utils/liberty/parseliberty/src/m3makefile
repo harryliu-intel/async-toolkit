@@ -1,0 +1,56 @@
+% Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+% SPDX-License-Identifier: Apache-2.0
+
+import("parserlib")
+import("cit_util")
+import("mscheme")
+import("sstubgen")
+import("modula3scheme")
+import("parseparams")
+
+Token("liberty")
+Lexer("liberty", "liberty")
+Parser("liberty", "liberty")
+
+Extended("libertyLexStd")
+Extended("libertyParseStd")
+
+Module ("SpecialScan")
+
+Module ("LibertyComponent")
+Module ("LibertyDefine")
+Module ("LibertyDefineGroup")
+Module ("LibertyBoolean")
+Module ("LibertyAttrVal")
+Module ("LibertyAttrValExpr")
+Module ("LibertyExpr")
+Module ("LibertyNumber")
+Module ("LibertySorI")
+Module ("LibertyParamList")
+Module ("LibertyHead")
+Module ("LibertyComplexAttr")
+Module ("LibertySimpleAttr")
+Interface ("LibertyStatement")
+Module ("LibertyGroup")
+
+Sequence ("LibertyAttrVal", "LibertyAttrVal")
+Sequence ("LibertyStatement", "LibertyStatement")
+
+Table    ("LibertyComponentRef", "LibertyComponent", "Refany")
+MkSet    ("LibertyComponent", "LibertyComponent")
+MkSetDef ("LibertyComponent", "LibertyComponent")
+Sequence ("LibertyComponent", "LibertyComponent")
+
+Module ("LibertyComponentSeqBuilder")
+Interface ("LibertyComponentChildren")
+
+Module ("LibertyParse")
+Module ("LibertyCsv")
+Module ("LibertyArcs")
+
+Module ("LibertyUtils")
+
+library("parseliberty")
+
+
+

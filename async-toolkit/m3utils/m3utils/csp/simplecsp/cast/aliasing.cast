@@ -1,0 +1,23 @@
+// Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+// SPDX-License-Identifier: Apache-2.0
+
+module aliasing;
+
+define P()()
+{
+
+  csp {
+    function f(int +-a[0..0], +-b[0..0]) =
+      (a[0] = 1;
+       b[1] = 2
+       );
+
+    int x[0..1];
+
+    print("x[0] = " + x[0] + " x[1] = " + x[1]);
+
+    f(x,x);
+    
+    print("x[0] = " + x[0] + " x[1] = " + x[1]);
+  }
+}

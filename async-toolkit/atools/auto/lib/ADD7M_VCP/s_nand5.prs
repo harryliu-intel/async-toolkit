@@ -1,0 +1,7 @@
+<wn>  a &  b &  c &  d &  e -> x-
+<wp> ~a | ~b | ~c | ~d | ~e -> x+
+
+@stretch(n,wn-20)
+@stretch(p,wp-32)
+@require(wn + 12 <= nwidth)
+@require(wp + 12 <= pwidth)

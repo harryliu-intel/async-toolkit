@@ -1,0 +1,8 @@
+<wn>  _SReset! &  a -> x-
+<wp>             ~a -> x+
+~_PReset! -> x+
+
+@stretch(n,wn-16)
+@stretch(p,wp-16)
+@require(wn + 25 <= nwidth)
+@require(wp + 25 <= pwidth)

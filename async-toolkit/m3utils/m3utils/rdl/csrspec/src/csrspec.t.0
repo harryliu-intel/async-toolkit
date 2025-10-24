@@ -1,0 +1,4 @@
+%token NUM
+%token IDENTIFIER
+%token INT
+%token STRING

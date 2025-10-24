@@ -1,0 +1,29 @@
+  sreset <= 1'b0;
+repeat(10) @(posedge cclk);  
+  sreset <= 1'b1;
+  grp_a_rx_data_valid <= '0;  
+repeat(10) @(posedge cclk);
+  sreset <= 1'b0;
+repeat(100) @(posedge cclk);
+  csrw(48'h0, 64'h00000000_0303_0303);
+repeat(1) @(posedge cclk);
+  csr0;
+repeat(10) @(posedge cclk);
+  pkt64(0); 
+repeat(1) @(posedge cclk);
+  rxv0(0);
+repeat(10) @(posedge cclk);
+  pkt64(5); 
+repeat(1) @(posedge cclk);
+  rxv0(5);     
+repeat(10) @(posedge cclk);
+$display("100 pkts 400G t= %0d\n", $time);
+  i_pb0_rd <= '0;
+repeat(100) begin 
+  pkt64(0);
+  @(posedge cclk);  
+end
+repeat(1) @(posedge cclk);
+  rxv0(0);
+  i_pb0_rd <= 4'h1;  
+repeat(1000) @(posedge cclk);

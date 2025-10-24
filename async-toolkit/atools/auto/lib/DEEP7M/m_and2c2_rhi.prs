@@ -1,0 +1,10 @@
+<wp> ~a & (~_b0 | ~_b1) -> x+
+<wn> _SReset! & a & _b0 & _b1 -> x-
+~_PReset! -> x+
+@staticize(x)
+
+@require((wp>=60)|(wn>=40))
+@require(wn>=32)
+@require(wp>=24)
+@stretch(p,(wp-24)/2)
+@stretch(n,(wn-32)/2)

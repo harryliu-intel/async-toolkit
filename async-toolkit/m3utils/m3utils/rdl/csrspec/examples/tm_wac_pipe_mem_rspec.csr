@@ -1,0 +1,634 @@
+/*******************************************************************************
+ * BAREFOOT CONFIDENTIAL
+ * 
+ * Copyright (c) 2014 Barefoot Networks, Inc.
+ * All Rights Reserved.
+ * 
+ * NOTICE: All information contained herin is, and remains the property of
+ * Barefoot Networks, Inc. and its suppliers, if any. The intellecual and
+ * technical concepts contained herin are proprietary to Barefoot Networks, Inc.
+ * and its suppliers and may be covered by U.S. and Foreign Patents, patents in
+ * process, and are protected by trade secret, maskwork or copyright law.
+ * Dissemination of this information or reproduction of this material is
+ * strickly forbidden unless prior written permissions is obtained from
+ * Barefoot Networks, Inc.
+ * 
+ * $Id: //cb/main/design/rspec/tm_wac_pipe_mem_rspec.csr#6 $
+ ******************************************************************************/
+
+//##############################################
+// Registers within a SINGLE PRE instance
+//##############################################
+
+#include "templates_rspec.csr"
+property word_size = 16 bytes;
+
+#define NUM_PORTS 73
+#define NUM_HDR_PPG 128
+#define NUM_TOT_PPG 201
+#define NUM_Q 1152
+#define QID_MAP_DEPTH 1152
+#define QID_MAP_WIDTH 80
+#define MGID_MAP_DEPTH 65536
+#define MGID_MAP_WIDTH 72
+  
+//##############################################
+// Define Templates
+//##############################################
+
+////////////////////////////
+//  GROUP           ///////
+////////////////////////////
+  
+// PPG Map RAM Template
+userdefined memory wac_port_ppg_mapping {
+    property title = "Ingress Pipe Port-PPG Map RAM";
+    property description = "This memory is used to map {port_id,icos} to Packet Priority Group\n"
+                	   "The valid port values are 0-72.";
+    property memory_word_count = 292;
+    property memory_width = 22 bits;
+    property memory_initialization = "zeros";
+    property memory_ready_port = true;
+
+    register {
+        // property title = "PPG Map RAM Word";
+        property title = "PktClass PPG Enable and Assigned PPG";
+        property description =
+                    "memory address = {iport,icos[2:1]}\n"
+		    "ppg0 - Priority Group Index for icos[0]==0 map result,  0 - 127\n"
+                    "ppg1 - Priority Group Index for icos[1]==1 map result,  0 - 127\n"
+		    "apid - Application Service Pool ID this PPG belongs to, 0 - 3\n"
+		    "enb  - 1 : Valid ppg index,  0 : Default ppg index\n"
+		    "Invalid ppg will be mapped to  default PG, one per ingress port, indexed by (ingress port number + 128).\n"
+		    "For a particular  PPG/defaultPPG , it can only be assigned to a single Service Pool (apid).\n"
+		    "From a source port, multiple icos can map to a single PPG/defaultPPG, each PPG/defaultPPG only can be assigned to a single source port";
+
+        field {} [21]    enb1;
+        field {} [20:19]    apid1;
+        field {} [18:11]    ppg1;
+        field {} [10]       enb0;
+        field {} [9:8]      apid0;
+        field {} [7:0]      ppg0;
+    } entry [292]; 
+
+}; // wac_port_ppg_mapping
+
+
+
+//new start here
+
+/*
+icos:
+                "PFC message is applied on {port,cos} basis, internal generated PPG PFC states "
+                "need to be reverse mapped to {port,cos},which matches with original packet CoS. \n"
+                "Multiple COS in one PORT can map to a single PPG; A PPG only can be assigned to one PORT.\n"
+                "The valid port values are 0-71, valid PFC PPG values are 0-127.\n"
+		"Please note, packet COS can be modified by Ingress Packet processor to iCoS ,\n"
+		"this table has to be programmed in sync with the table : wac_port_ppg_mapping,wac_port_pfc_en accordingly only use 128";
+
+ ppg_share
+    property title = "Ingress Pipe PPG SHARE Threshold Table";
+    property description = "This memory is used to set buffer share threshold for 201 PGs (128 PPG + 73 Default PGs).\n"
+                "The content is indexed by ppg index which comes from table: `wac_port_ppg_mapping`.\n " 
+		"Entries 0:127 are for PFC PPG, entries 128-200 are for per PORT default PG, one for each ingress port";
+                     "lmt        - Threshold is used for  PPG to set Xoff/Drop state. \n"
+                    "offset_idx - Index to select reset offset from regiser `wac_offset`.\n "
+                    "dyn_en     - Enable Service Pool dynamic sharing. \n"
+		    "In dynamic buffer dynamic mode, Burst Absorbtion Factor (BAF) overlay on  lmt[3:0], indicates"
+		    "percentage of total available buffer space current PPG can use up to at current moment :\n"
+		    " 0: 1.5%, 1: 3%, 2: 5%, 3: 10%, 4: 20%, 5: 33%, 6: 50%, 7: 66%, 8: 80% \n"
+		    "fast_recover_mode - In dynamic mode, option to resume PG when Pool not congested and new shr_count less than new limit\n";
+
+*/
+  //for both ppg and pg when dynamic mode shr_th[5:2]=thrd_baf--to select dyn limit, shr_th[6]:fast_recovery 
+
+userdefined memory wac_ppg_th {
+    property title = "PPG THD";
+    property description = " PPG Threshold Setting ";
+    property memory_word_count = 128; 
+    property memory_width = 19 bits;
+    property memory_ready_port = true;
+
+    register {
+        // property title = "PPG Map RAM Word";
+        property title = "PPG THD";
+        property description =
+                    "*** For ppg_shr_th configuration table, under buffer wac_ppg_off_idx.dyn mode : \n"
+		    "       cnt[5:2] -- thd_baf;  cnt[6] -- fast_recovery\n"
+		    "       thd_baf indicates percentage of total available buffer space current PPG can use up to at current moment :\n"
+		    "       0: 1.5%, 1: 3%, 2: 5%, 3: 10%, 4: 20%, 5: 33%, 6: 50%, 7: 66%, 8: 80% \n"
+		    "*** For ppg_min_th configuration table: "
+		    "       cnt[18:0] -- ppg MIN threshold \n"
+		    "*** For ppg_shr_th static configuration table: "
+		    "       cnt[18:0] -- ppg SHR threshold \n"
+		    "*** For ppg_hdr_th configuration table: "
+		    "       cnt[18:0] -- ppg HDR threshold \n";
+        field {} [18:0] cnt;
+    }  entry [128];
+};
+
+userdefined memory wac_ppg_cnt {
+    property title = "PPG CNT";
+    property description = " ";
+    property memory_word_count = 128; 
+    property memory_width = 19 bits;
+    property memory_ready_port = true;
+
+    register {
+        // property title = "PPG Map RAM Word";
+        property title = "PPG CNT";
+        property description = "PPG cell count\n";
+        field {} [18:0] cnt;
+    }  entry [128];
+};
+
+userdefined memory wac_ppg_pfc{
+    property title = "PPG_PFC";
+    property description = " ";
+    property memory_word_count = 128; 
+    property memory_width = 1 bits;
+    property memory_ready_port = true;
+
+    register {
+        // property title = "PPG Map RAM Word";
+        property title = "PPG PFC";
+        property description =
+                    " 1 - xoff, 0 - xon. Always evaluate from rtl, so SW write value will not stick\n";
+        field {} [0] pfc;
+    }  entry  [128];
+};   
+userdefined memory wac_ppg_icos{
+    property title = "PPG_ICOS";
+    property description = " ";
+    property memory_word_count = 128; 
+    property memory_width = 8 bits;
+    property memory_ready_port = true;
+
+    register {
+        // property title = "PPG Map RAM Word";
+        property title = "PPG ICOS";
+        property description = "Mapping table used to map PPG to iCoS: when current PPG in Xoff/Xon mode, which priorities get affected in PFC TX message.";
+        field {} [7:0] icos;
+    }  entry  [128];
+};   
+userdefined memory wac_ppg_off_idx{
+    property title = "PPG OFSET";
+    property description = " ";
+    property memory_word_count = 128; 
+    property memory_width = 6 bits;
+    property memory_ready_port = true;
+
+    register {
+        // property title = "PPG Map RAM Word";
+        property title = "PPG OFFSET";
+        property description =
+                    "Enable PPG Dynamic Buffer Management; Provide PPG hysteresis offset index.\n";
+        field {} [5]  dyn;
+        field {} [4:0] off_idx;
+    }  entry  [128];
+};   
+
+userdefined memory wac_ppg_drop_st {
+    property title = "PPG DROP_ST";
+    property description = " ";
+    property memory_word_count = 128; 
+    property memory_width = 1 bits;
+    property memory_ready_port = true;
+
+    register {
+        // property title = "PPG Map RAM Word";
+        property title = "PPG DROP_STT";
+        property description =
+                    "always evaluate from rtl, so sf write value will not stick\n";
+        field {} [0] drop_st;
+    }  entry  [128];
+};   
+//
+userdefined memory wac_pg_off_idx{
+    property title = "PG OFSET";
+    property description = " for both ppg and pg when dynamic mode shr_th[5:2]=thrd_baf--to select dyn limit, shr_th[6]:fast_recovery ";
+    property memory_word_count = 73; 
+    property memory_width = 6 bits;
+    property memory_ready_port = true;
+
+    register {
+        // property title = "PG Map RAM Word";
+        property title = "PG OFFSET";
+        property description = "Default PG sharing buffer mode\n"
+			       "dyn - 1, dynamic mode; off_idx : index to table wac_offset for resume hysterisis ";
+        field {} [5]  dyn;
+        field {} [4:0] off_idx;
+    }  entry [73];
+};   
+
+userdefined memory wac_pg_drop_st {
+    property title = "PG DROP_ST";
+    property description = "always evaluate from rtl, so sf write value will not stick ";
+    property memory_word_count = 73; 
+    property memory_width = 1 bits;
+    property memory_ready_port = true;
+
+    register {
+        // property title = "PG Map RAM Word";
+        property title = "PG DROP_STT";
+        property description = "Default PG drop state\n";
+        field {} [0] drop_st;
+    }  entry [73];
+};   
+   
+userdefined memory wac_pg_cnt {
+    property title = "PG CNT";
+    property description = "Default PG CFG/CNT \n";
+    property memory_word_count = 73; 
+    property memory_width = 19 bits;
+    property memory_ready_port = true;
+
+    register {
+        // property title = "PPG Map RAM Word";
+        property title = "PG  CNT";
+        property description = "Default PG cell count\n";
+        field {} [18:0] cnt;
+    }  entry [73] ;
+};
+
+userdefined memory wac_pg_th {
+    property title = "Default PG CFG";
+    property description = "Default PG CFG \n";
+    property memory_word_count = 73; 
+    property memory_width = 19 bits;
+    property memory_ready_port = true;
+
+    register {
+        property title = "Default PG  CFG";
+        property description = 
+                    "*** For pg_shr_th configuration table, under buffer wac_pg_off_idx.dyn mode : \n"
+		    "       cnt[5:2] -- thd_baf;  cnt[6] -- fast_recovery\n"
+		    "       thd_baf indicates percentage of total available buffer space current PG can use up to at current moment :\n"
+		    "       0: 1.5%, 1: 3%, 2: 5%, 3: 10%, 4: 20%, 5: 33%, 6: 50%, 7: 66%, 8: 80% \n"
+		    "*** For pg_min_th configuration table: "
+		    "       cnt[18:0] -- pg MIN threshold \n"
+		    "*** For pg_shr_th static configuration table: "
+		    "       cnt[18:0] -- pg SHR threshold \n";
+        field {} [18:0] cnt;
+    }  entry [73] ;
+};
+
+userdefined memory wac_port_th {
+    property title = "PORT Threshold";
+    property description = "For threshold setting, the lowest 2 bits always tie to 0,\n"
+                "shr_th and hdr_th [18:3] is the threhold compare, while bit[2] is react enable,\n "
+                "write data is always LSB algined \n";
+    property memory_word_count = 73; 
+    property memory_width = 19 bits;
+    property memory_ready_port = true;
+
+    register {
+        // property title = "PORT Map RAM Word";
+        property title = "PORT TH";
+        property description = "PORT TH\n";
+        field {} [18:0] cnt;
+    }  entry [73] ;
+};
+
+userdefined memory wac_port_cnt {
+    property title = "PORT CNT";
+    property description = "RO for port min,hdr, shr counter.\n"
+                	   "port min is only for tracking, there is no action from it,\n "
+                	   "while both port hdr and share can cause pfc/drop reaction.\n ";
+    property memory_word_count = 73; 
+    property memory_width = 19 bits;
+    property memory_ready_port = true;
+
+    register {
+        // property title = "PORT Map RAM Word";
+        property title = "PORT CNT";
+        property description = "PORT CNT\n";
+        field {} [18:0] cnt;
+    }  entry [73] ;
+};
+   
+userdefined memory wac_port_st {
+    property title = "PORT CNT";
+    property description = "RO";
+    property memory_word_count = 73; 
+    property memory_width = 2 bits;
+    property memory_ready_port = true;
+
+    register {
+        // property title = "PORT Map RAM Word";
+        property title = "port state";
+        property description =
+                    "always evaluate from rtl, so sf write value will not stick\n";
+        field {} [1] hdr_lmt;
+        field {} [0] shr_lmt;
+    }  entry [73] ;
+};
+
+userdefined memory wac_pg_wm_cnt {
+    property title = "Ingress Pipe PPG  Water Marker COUNT Table";
+    property description = "This memory is used to track Max cell usege across HeadRoom, Share, Min for 128 PPGs + 73 Default PGs .\n"
+                	   "The content is indexed by ppg index which comes from table `wac_port_ppg_mapping` , or, 128+src_port_num for default PGs"  ;
+    property memory_word_count = NUM_TOT_PPG;
+    property memory_width = 19 bits;
+    property memory_initialization = "zeros";
+    property memory_ready_port = true;
+
+    register {
+        // property title = "PPG Cell Count Table ";
+        property title = "PPG MAX Usage Count";
+        property description = " cnt - PGs Max cell usage count:  MAX(hdr+shr+min) \n"
+			       " Support dynamically SW clear";
+
+        field {} [18:0]    cnt;
+    }  wm_cnt [NUM_TOT_PPG];
+
+}; // wac_ppg_wm_cnt
+
+//userdefined memory wac_drop_count (integer  mem_depth = NUM_TOT_PPG)
+userdefined memory wac_drop_count_ppg 
+	{
+         property title       = "Ingress Buffer Per PIPE Per PG Packet Drop Count Memory ";
+         property description = "This register has Per PG Packet Drop count \n"
+			        "internal 2 banks ram, sf write-> broad cast wr both, rd is sum\n"
+			        "so expect write value*2=read vale \n"
+			        "PPG valid address : 0 - 200;\n"
+				"0-127 : flexibly assigned 128 PPG\n"
+				"128-200: Default PG , one per port. \n"
+			        "PORT valid address : 0 - 72;\n";
+         property memory_word_count = NUM_TOT_PPG;
+         property memory_width = 40 bits;
+         property memory_initialization = "zeros";
+    	 property memory_ready_port = true;
+	 
+         register {
+                property title       = "Inress Buffer  Per PIPE per PG/PORT Packet Drop Count memory address";
+                property description = "Per PG packet drop count, rollover counter \n";
+                field {} [39:0] cnt;
+	 } drop_cnt [NUM_TOT_PPG]; 
+
+}; //wac_drop_count_ppg
+
+userdefined memory wac_drop_count_port 
+	{
+         property title       = "Ingress Buffer Per PIPE Per PORT Packet Drop Count Memory ";
+         property description = "This register has Per PORT Packet Drop count \n"
+			        "PORT valid address : 0 - 72;\n";
+         property memory_word_count = NUM_PORTS;
+         property memory_width = 40 bits;
+         property memory_initialization = "zeros";
+    	 property memory_ready_port = true;
+	 
+         register {
+                property title       = "Inress Buffer  Per PIPE per PORT Packet Drop Count memory address";
+                property description = "Per PORT packet drop count, rollover counter \n";
+                field {} [39:0] cnt;
+	 } drop_cnt[NUM_PORTS]; 
+
+}; //wac_drop_count
+
+userdefined memory wac_pfc_state 
+	{
+         property title       = "per ingress pipe port pfc/pause state ";
+         property description = "pfc final and remote/internal status \n"
+			        "read only, all status write happens in seperate block 0 - 71;\n";
+         property memory_word_count = 72;
+         property memory_width = 25 bits;
+    	 property memory_ready_port = true;
+	 
+         register {
+                property title       = "per ingress pipe port pfc/pause state";
+                property description = "RO\n";
+                field {} [24]     mac_pause_out;
+                field {} [23:16]  mac_pfc_out;
+                field {} [15:8]   rm_pfc_state;
+                field {} [7:0]    port_ppg_state;
+	 } pfc_state [72]; 
+
+}; //wac_drop_count
+
+	   
+//##############################################
+// Define Groups
+//##########################################
+userdefined memory wac_qid_map {
+    property title = "Egress QID Mapping Table";
+    property description = "This table provides mapping from the port logical QID (0-127) pipe logical QID (0-1152)\n"
+			   "Each port can be assigned up to 128 contiguous QID in multiples of 4 queues, with a minimum of 4 queues assiged to an active port\n"
+			   "Each set of 4 contiguous QIDs, can be mapped to any of the 32 QID groups in MAC queue space.\n"
+			   "e.g qid 0-3 can be mapped to qid 64-67 and qid 4-7 can be mapped to qid 124-127.\n"
+			   "This table provides 32 qid mappings for each port split as 16 qid_mid mapping per entry\n"
+			   "Thus each port qid_mapping occupies two locations\n"
+                           "SRAM address  {eport[6:0], ing_qid[6],epipe[2:1]} to look up to get qid[10:0]\n"
+                           "within entry, 16 qid_mid is indexed by ing_qid[5:2]\n"
+                           "the final qid :{mac[3:0], qid_mid[4:0], ing_qid[1:0]} \n"
+                           "software should only use 0-143 entry to program qid_mapping per epipe, hardware broadcast to all ingress pipes internally";
+    property memory_word_count = QID_MAP_DEPTH;
+    property memory_width = QID_MAP_WIDTH bits;
+    property memory_ready_port = true;
+
+    register {
+        // property title = "PPG Map RAM Word";
+        property title = "PktClass PPG Enable and Assigned PPG";
+        property description ="";
+        field {} [79:75]    qid_mid15;
+        field {} [74:70]    qid_mid14;
+        field {} [69:65]    qid_mid13;
+        field {} [64:60]    qid_mid12;
+        field {} [59:55]    qid_mid11;
+        field {} [54:50]    qid_mid10;
+        field {} [49:45]    qid_mid9;
+        field {} [44:40]    qid_mid8;
+        field {} [39:35]    qid_mid7;
+        field {} [34:30]    qid_mid6;
+        field {} [29:25]    qid_mid5;
+        field {} [24:20]    qid_mid4;
+        field {} [19:15]    qid_mid3;
+        field {} [14:10]    qid_mid2;
+        field {} [9:5]      qid_mid1;
+        field {} [4:0]      qid_mid0;
+    } entry [QID_MAP_DEPTH/8]; 
+
+};
+   
+//userdefined memory wac_lcl_qstate {
+//    property title = "QAC QUEUE STATE from Local QAC";
+//    property description = "This memory is updatey by local QAC, indexed with qid\n";
+//    property memory_word_count = NUM_Q;
+//    property memory_width = 4 bits;
+//    property memory_ready_port = true;
+//
+//    register {
+//        property title = "Local(sTM) QAC Egress queue state";
+//        property description ="";
+//        field {} [3]    gre_off;
+//        field {} [2]    yel_off;
+//        field {} [1]    red_off;
+//        field {} [0]    nomin;
+//    } entry [NUM_Q]; 
+//
+//};
+//
+//userdefined memory wac_rmt_qstate {
+//    property title = "QAC QUEUE STATE from remote QAC (rTM partner)";
+//    property description = "This memory is updatey by remote QAC, indexed with qid\n";
+//    property memory_word_count = NUM_Q;
+//    property memory_width = 4 bits;
+//    property memory_ready_port = true;
+//
+//    register {
+//        property title = "Remote(rTM) QAC Egress queue state";
+//        property description ="";
+//        field {} [3]    gre_off;
+//        field {} [2]    yel_off;
+//        field {} [1]    red_off;
+//        field {} [0]    nomin;
+//    } entry [NUM_Q]; 
+//
+//};  
+//
+//
+//userdefined memory wac_qacq_ap_config {
+//    property title = "FA for QAC QUEUE AP CONFIG";
+//    property description = "This memory is programmed by software, indexed with qid, exactly same table in qac pipe:qac_queue_ap_config \n";
+//    property memory_word_count = NUM_Q;
+//    property memory_width = 4 bits;
+//    property memory_ready_port = true;
+//
+//    register {
+//        property title = "Egress PIPE Queue Application Service Pool Configuration";
+//        property description = "sp_id: ap_id           - Application Service Pool ID\n" 
+//			       "yel_red_drop_en: q_color_drop_en - Enable Queue tail Color Drop on Yellow/Read packets\n"
+//			       "gre_drop_en: q_drop_en       - Enable Queue tail Drop on all packets" ;
+//        field {} [3]    gre_drop_en;
+//        field {} [2]    yel_red_drop_en;
+//        field {} [1:0]  sp_id;
+//    } entry [NUM_Q]; 
+//
+//}; 
+
+userdefined memory wac_pvt_map {
+   property title = "PVT (Pipe vector Table) mapping table for WAC ";
+   property description = " This memory is used to program the pipe_vector for multicasts "
+                          " Specifies 1-8 pipes that an MGIC maps to (bits 0-7). Also specifies"
+                          " if any of those pipes contain a 400GB/s member port (bit 8)."
+			  " Each entry holds pipe vector data for 8 MGID values.";
+   property memory_width = MGID_MAP_WIDTH;
+   property memory_word_count = MGID_MAP_DEPTH/8;
+   property memory_ready_port = true;
+                    
+   register {
+     property title = "Pipe vector table entry for MGID";
+     property description = " If a MGID has ports in pipe 0 and 3 with no 400G ports then"
+                            " pipe vector would be 0_0000_0101."
+                            " An MGID with members in pipe 1, 4, 6 with a 400G port would have"
+                            " pipe vector of 1_0101_0001";
+     field {} [71:63]   mgid_map_7;
+     field {} [62:54]   mgid_map_6;
+     field {} [53:45]   mgid_map_5;
+     field {} [44:36]   mgid_map_4;
+     field {} [35:27]   mgid_map_3;
+     field {} [26:18]   mgid_map_2;
+     field {} [17:9]    mgid_map_1;
+     field {} [8:0]     mgid_map_0;
+  } entry [MGID_MAP_DEPTH/8];
+
+};
+   
+   
+
+//############################################
+// Define Register Address Space
+//############################################
+
+userdefined addressmap {
+   property title = "PVT Table address map";
+   property description =  " This structure provides the encapsulation for the PVT tables for the two Multicast group IDs"
+                           " The higher order bit of the address determines which PVT table gets accessed"
+                           " MSB = 0 accesses mgid1_tbl"
+                           " MSB = 0 accesses mgid2_tbl"
+                           " Software may choose to read both the tables for RAM ECC error";
+   property addressmap_ready_port = true;
+   property addressmap_bus_input_pipeline_stage  = true;
+   property addressmap_bus_output_pipeline_stage = true;
+
+   //wac_pvt_map   mgid1_tbl[MGID_MAP_DEPTH/8];
+   //wac_pvt_map   mgid2_tbl[MGID_MAP_DEPTH/8];
+   wac_pvt_map   mgid1_tbl;
+   wac_pvt_map   mgid2_tbl;
+} tm_wac_pvt_table;
+   
+   
+ 
+   
+addressmap {
+
+    property title = "Registers for single WAC.";
+    property description = "Registers for a single instance of the TM  Write Access Control  (WAC)";
+    property addressmap_ready_port = true;
+    property addressmap_error_port = true;
+    property addressmap_ready_port = "csr_mem_ready";
+    property addressmap_error_port = "csr_mem_error";
+    property addressmap_read_data_port = "csr_mem_read_data";
+    property addressmap_write_access_port = "csr_mem_write_access";
+    property addressmap_read_access_port = "csr_mem_read_access";
+    property addressmap_address_port = "csr_mem_address";
+    property addressmap_write_data_port = "csr_mem_write_data";
+    property addressmap_clock_port = "clk";
+    property addressmap_undefined_value = 0x0bad0bad;
+    property size = 1 << 32;
+
+    property addressmap_bus_input_pipeline_stage  = true;
+    property addressmap_bus_output_pipeline_stage = true;
+
+    //pipe_mem      wac_mem;
+   wac_port_ppg_mapping       csr_memory_wac_port_ppg_mapping;
+   wac_ppg_cnt                csr_memory_wac_ppg_min_cnt;
+   wac_ppg_cnt                csr_memory_wac_ppg_shr_cnt;
+   wac_ppg_cnt                csr_memory_wac_ppg_hdr_cnt;
+	    //all _th and _wm has lowest 2 bit reserved, port th [1:0]reserve, [2] gate_enable
+   wac_ppg_th                csr_memory_wac_ppg_min_th;
+   wac_ppg_th                csr_memory_wac_ppg_shr_th;
+   wac_ppg_th                csr_memory_wac_ppg_hdr_th;
+
+   wac_ppg_pfc                csr_memory_wac_ppg_pfc;
+   wac_ppg_icos               csr_memory_wac_ppg_icos;
+
+   wac_ppg_drop_st            csr_memory_wac_ppg_drop_st;
+   wac_pg_drop_st             csr_memory_wac_pg_drop_st;
+
+   wac_ppg_off_idx            csr_memory_wac_ppg_off_idx;
+   wac_pg_off_idx             csr_memory_wac_pg_off_idx;
+	    
+   wac_pg_cnt                 csr_memory_wac_pg_min_cnt;
+   wac_pg_cnt                 csr_memory_wac_pg_shr_cnt;
+   wac_pg_th                  csr_memory_wac_pg_min_th;
+   wac_pg_th                  csr_memory_wac_pg_shr_th;
+
+
+   wac_port_th               csr_memory_wac_port_shr_th ;
+   wac_port_th               csr_memory_wac_port_hdr_th ;
+   wac_port_cnt               csr_memory_wac_port_wm ;
+   wac_port_cnt               csr_memory_wac_port_min_cnt ;
+   wac_port_cnt               csr_memory_wac_port_hdr_cnt ;
+   wac_port_cnt               csr_memory_wac_port_shr_cnt ;
+
+   wac_port_st                csr_memory_wac_port_st ;
+
+   wac_pg_wm_cnt              csr_memory_wac_pg_wm_cnt;
+   wac_drop_count_ppg         csr_memory_wac_drop_count_ppg;
+   wac_drop_count_port        csr_memory_wac_drop_count_port ;
+   wac_pfc_state              csr_memory_wac_pfc_state;
+
+   wac_qid_map                csr_memory_wac_qid_map;
+   //wac_lcl_qstate             csr_memory_wac_lcl_qstate;
+   //wac_rmt_qstate             csr_memory_wac_rmt_qstate;
+   //wac_qacq_ap_config         csr_memory_wac_qacq_ap_config;
+
+   //wac_pvt_map                csr_memory_wac_mgid_pvt_tbl [2];
+   //wac_pvt_map                csr_memory_wac_mgid2_pvt_tbl;
+	    
+   tm_wac_pvt_table           csr_memory_wac_pvt_table;
+	    
+} tm_wac_pipe_mem_rspec;
+
+

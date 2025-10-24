@@ -1,0 +1,18 @@
+% Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+% SPDX-License-Identifier: Apache-2.0
+
+import ("libm3")
+import ("tcp")
+import ("udp")
+import ("cit_util")
+
+module ("UdpDatagram")
+sequence ("UdpDatagram", "UdpDatagram")
+module ("UdpAdapter")
+module ("ReorderUdpAdapter")
+interface ("NestedUdpAdapter")
+module ("RtaUdpAdapter")
+
+implementation ("Main")
+
+program ("udptest")

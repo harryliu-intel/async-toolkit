@@ -1,0 +1,49 @@
+# config file for VCD replay
+# LOAD_VCD,~/GLS_RELEASE/gls-ebg-a0-RTL0p0v4_17ww06a/fc-ebg-a0_NEW/fcdft_jtag_cltap_idcode.dft_rtl_dbg.replay.vcd
+LOAD_VCD,/nfs/pdx/proj/acd/fe.80/work/gkaragat/ebg/EBG_TOT/fcdft_jtag_cltap_idcode.dft_no_dut.replay.vcd
+
+CONFIG,SAMPLE_PERIOD,1ns
+CONFIG,CHECK_PERIOD,10ns 
+START_CHECK_TIME,PATTERN,^fc_hdl_top.*,80us
+TOLERANCE,PATTERN,^fc_hdl_top.*,1us
+# RTL_PATH_MOD,PATTERN,data_sprw_soft.*ARRAY,<0.66>\<67.130> <131.$>
+# GLS_PATH_MOD,PATTERN,mode_atpg.*ARRAY,<0.73>_<75.75>_<78.140>_<142.$>
+# GLS_PATH_MOD,PATH,top.pch.parrtc.parrtc_rtcwell_wrapper.pmcrtcunit_wrapper1.slp_s3_val_rtc,top.pch.parrtc.parrtc_rtcwell_wrapper.pmcrtcunit_wrapper1.pmcdsw_dcr_slpout_slp_s3_val_rtc
+# GLS_PATH_MOD,PATH,top.pch.parrtc.parrtc_rtcwell_wrapper.pmcrtcunit_wrapper1.slp_a_val_rtc,top.pch.parrtc.parrtc_rtcwell_wrapper.pmcrtcunit_wrapper1.pmcdsw_dcr_slpout_slp_a_val_rtc
+# GLS_PATH_MOD,PATH,top.pch.lbgns_io_wrapper.io_pwell_wrapper.isclk1.i_c73p1isclk_xtal_ro_top.xtal_ro.o_clkro120mhz_clkack_prescan,top.pch.lbgns_io_wrapper_io_pwell_wrapper_isclk1.i_c73p1isclk_xtal_ro_top.xtal_ro.o_clkro120mhz_clkack_prescan
+# fake remap due to netlist being changed
+# GLS_PATH_MOD,PATH,top.pch.parfuse.parfuse_pwell_wrapper.fuse_top1.i_chassis_fuse_controller_top.i_fuse_array_cntrl.i_fuse_sense_fsm.bypass_pwron_sense,top.pch.edm0
+
+# i_c73p1rfslvm1r1w512x32hb4_dfx_wrapper_data_sprw_soft.mode_atpg.c73p1rfslvm1r1w512x32hb4.ARRAY
+# top.pch.parfuse.parfuse_pwell_wrapper.fuse_top1.i_fuse_ram_wrapper.rf_data[0].i_c73p1rfslvm1r1w512x32hb4_dfx_wrapper_data_sprw_soft.mode_atpg.c73p1rfslvm1r1w512x32hb4.ARRAY[50]
+# top.pch.parfuse.parfuse_pwell_wrapper.fuse_top1.i_fuse_ram_wrapper.rf_data_lower_0_i_c73p1rfslvx1r1w128x20hb4_dfx_wrapper_data_sprw_soft.mode_atpg_c73p1rfslvx1r1w128x20hb4
+
+# GLS_PATH_MOD,PATTERN,mode_atpg.*ARRAY,<0.73>_lower_0_<78.140>_<142.$>
+
+# IGNORE,PATTERN,^top.pch.spi
+
+# drive fuses
+# DRIVE,PATTERN,parfuse_pwell_wrapper.fuse_top.*ARRAY
+# force fuse sense bypass
+# DRIVE,PATH,top.pch.parfuse.parfuse_pwell_wrapper.fuse_top1.i_chassis_fuse_controller_top.i_fuse_array_cntrl.i_fuse_sense_fsm.bypass_pwron_sense
+# ignore edm behavior
+# IGNORE,PATTERN,^top.pch.edm
+# IGNORE,PATTERN,^PMC_RTL_LIB
+
+# ignore all signals in NODUT model (unless overridden)
+# NODUT_IGNORE,PATTERN,^top.pch
+
+# drive signals based on searches
+# drive individual signals
+# DRIVE,PATH,top.pch.jtag_tck
+# DRIVE,PATH,top.pch.jtag_tdi
+# DRIVE,PATH,top.pch.jtag_tms
+# DRIVE,PATH,fc_hdl_top.dut.jtag_tck
+# DRIVE,PATH,fc_hdl_top.dut.jtag_tdi
+# DRIVE,PATH,fc_hdl_top.dut.jtag_tms
+# DRIVE,PATH,top.pch.*
+DRIVE,PATTERN,fc_hdl_top.dut.*
+
+# check signals
+#CHECK,PATH,top.pch.jtag_tdo
+

@@ -1,0 +1,29 @@
+% Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+% SPDX-License-Identifier: Apache-2.0
+
+import ("libm3")
+import ("set")
+import ("parseparams")
+%import ("mscheme")
+
+%import ("modula3scheme")
+%import ("m3readline")
+%import ("schemereadline")
+%import ("sstubgen")
+
+import ("bdd")
+
+m3_optimize("T")
+
+sequence ("BDD", "BDD")
+table("CardBDD", "Cardinal", "BDD")
+
+module ("BDDSetHash")
+
+table ("BDDSetHashRef", "BDDSetHash", "Refany")
+table ("BDDIntPair", "BDD", "IntPair")
+table ("IntPairBDD", "IntPair", "BDD")
+
+implementation ("Main")
+
+program ("schedule")

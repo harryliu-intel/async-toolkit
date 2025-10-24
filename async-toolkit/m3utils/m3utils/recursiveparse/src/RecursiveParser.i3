@@ -1,0 +1,35 @@
+(* Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information. *)
+(* SPDX-License-Identifier: Apache-2.0 *)
+
+INTERFACE RecursiveParser;
+FROM ParseError IMPORT E;
+FROM RecursiveLexer IMPORT Buffer, String;
+IMPORT Text;
+
+TYPE
+  T <: Public;
+
+  Public = OBJECT END;
+
+CONST Brand = "RecursiveParser";
+
+PROCEDURE GetToken(t : T; READONLY tok : ARRAY OF CHAR) : BOOLEAN RAISES { E };
+PROCEDURE PeekToken(t : T; READONLY tok : ARRAY OF CHAR) : BOOLEAN ;
+PROCEDURE Next(t : T) RAISES { E };
+PROCEDURE MustBeToken(t : T; READONLY tok : ARRAY OF CHAR) RAISES { E } ;
+PROCEDURE MustNotBeChar(t : T; c : CHAR) RAISES { E } ;
+PROCEDURE MustBeChars(t : T; READONLY a : ARRAY OF CHAR) RAISES { E } ;
+PROCEDURE MustBeCharSet(t : T; s : SET OF CHAR; VAR c : CHAR) RAISES { E } ;
+PROCEDURE BrackOrEmpty(txt : TEXT) : TEXT ;
+
+PROCEDURE GetChar(t : T; c : CHAR) : BOOLEAN RAISES { E } ;
+PROCEDURE MustBeChar(t : T;  c : CHAR) RAISES { E } ;
+PROCEDURE GetCharSet(t : T; s : SET OF CHAR; VAR c : CHAR) : BOOLEAN RAISES { E } ;
+PROCEDURE MustBeSingle(t : T; VAR c : CHAR) RAISES { E } ;
+
+PROCEDURE GetSingle(t : T; VAR c : CHAR) : BOOLEAN RAISES { E } ;
+
+CONST A2T = Text.FromChars;
+PROCEDURE S2T(READONLY buff : Buffer; s : String) : TEXT;
+
+END RecursiveParser.

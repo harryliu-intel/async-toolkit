@@ -1,0 +1,13 @@
+set style data linespoints
+
+set format y "%.1s%c"
+set format x "%.0s%c"
+
+set xlabel "E/[J]"
+set ylabel "f/[Hz]"
+
+######################################################################
+
+
+unset title
+unset label

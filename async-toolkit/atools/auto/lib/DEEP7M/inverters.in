@@ -1,0 +1,13 @@
+/*** inverters which reset high ***/
+matchcircuit "DEEP7M/m_inv_rhi"
+matchcircuit "DEEP7M/s_inv_rhi"
+
+/*** inverters which staticize their input ***/
+matchcircuit "DEEP7M/l_inv_staticizer"
+matchcircuit "DEEP7M/m_inv_staticizer"
+
+/*** inverters ***/
+matchcircuit "DEEP7M/h_inv"
+matchcircuit "DEEP7M/l_inv"
+matchcircuit "DEEP7M/m_inv"
+matchcircuit "DEEP7M/s_inv"

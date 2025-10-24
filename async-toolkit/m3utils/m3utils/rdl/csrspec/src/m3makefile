@@ -1,0 +1,20 @@
+% Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+% SPDX-License-Identifier: Apache-2.0
+
+import ("libm3")
+import ("cit_util")
+import ("parserlib")
+import ("parseparams")
+
+_exec(["../../bnfgrammar/" & BUILD_DIR & "/bnfgrammar","-f","../src/csrspec.bnf","-r","source_text","-d",".","-Hy","../src/csrspec.y.0","-Hl","../src/csrspec.l.0","-Ht","../src/csrspec.t.0"])
+
+include ("../" & BUILD_DIR & "/derived.m3m") % shd really be in DERIVED_DIR
+
+Extended ("source_text_lexExt")
+Extended ("source_text_parseExt")
+
+Module("SourceTextSTRING")
+List("SourceTextSTRING","SourceTextSTRING")
+
+implementation ("Main")
+program ("csrspec")

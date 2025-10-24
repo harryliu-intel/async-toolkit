@@ -1,0 +1,1 @@
+echo 'magic_subcells $2' | auto 1 $1

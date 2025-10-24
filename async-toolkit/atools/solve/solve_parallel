@@ -1,0 +1,22 @@
+#!/usr/intel/bin/perl
+
+# get argument
+@ARGV == 1 or die "USAGE: solve_parallel N";
+$N = $ARGV[0];
+
+# delete old fmla files
+system "rm -rf *.fmla *.qsub";
+
+# create qsub do files
+$qsub = "/usr/local/PBS/bin/qsub -l walltime=24:00:00";
+$i = 0;
+while ( $i < $N ) {
+    open OUT, ">$i.qsub" or die "couldn't open ${file} for writing";
+    print OUT "#!/bin/sh\n";
+    print OUT "cd $ENV{PWD}\n";
+    print OUT "./solve $N $i groups_${i}.in results_${i}.fmla < solve_parallel.in\n";
+    close OUT;
+    system "chmod +x ${i}.qsub";
+    system "$qsub -o ${i}.out -e ${i}.err ${i}.qsub";
+    $i = $i + 1;
+}

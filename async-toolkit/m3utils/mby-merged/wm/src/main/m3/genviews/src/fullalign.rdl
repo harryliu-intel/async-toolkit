@@ -1,0 +1,8 @@
+addrmap some_map {
+  addressing = fullalign;
+  reg { field {} a; } a; 
+  reg { regwidth=64; field {} a; } b; 
+  reg { field {} a; } c[20];
+};
+  
+

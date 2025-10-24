@@ -1,0 +1,31 @@
+#!/usr/intel/bin/zsh -x
+
+# postprocess lib files
+# calls out to postprocess.tcl
+# if $internal isn't set, uses sislaunch
+
+if [[ -z $internal ]]; then
+    rm -f $sislaunchfile
+    echo "CLEARENV" > $sislaunchfile
+    env | sed 's/^/ENV:/' >> $sislaunchfile
+fi
+
+for lib; do
+    lib=$(realpath $lib)
+    bundle=${lib:h:h:h:t}
+    pvt=${lib:h:h:h:h:t}
+    mappedpvt=`echo $pvt | awk -F_ '{printf "%s_%sv_%sc_%s_%s\n", $1, $2, $3, $4, $5}'`
+    libname=${fulllib}_${bundle}_${mappedpvt}_ccslnt
+    [[ -z $libname ]] && echo "Can't find libname for: $1" && exit 1
+    if [[ -z $internal ]]; then
+        echo "CMD:${lib:h}:${sispath} ${0:h}/postprocess.tcl $lib $libname" >> $sislaunchfile
+    else
+        (cd ${lib:h} && siliconsmart ${0:h}/postprocess.tcl $lib $libname)
+    fi
+done
+
+if [[ -z $internal ]]; then
+    date
+    pwd
+    $sislaunch -pllcmds $pllcmds -sisworkers $workers -sispath $sispath $sislaunchfile 
+fi

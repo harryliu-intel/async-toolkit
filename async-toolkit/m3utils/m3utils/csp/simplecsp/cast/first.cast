@@ -1,0 +1,134 @@
+// Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+// SPDX-License-Identifier: Apache-2.0
+
+module first;
+
+// cosimulate first.SYSTEM {csp,subcells}
+
+int WIDTH = 32;
+int N     = 4 * 1024;
+
+define PROC(bool DOSTART)(bd(WIDTH) -L, +R)
+{
+
+  csp {
+   int(WIDTH) i;
+   [ DOSTART -> i=0; R!0 [] ~DOSTART -> skip ];
+   
+   *[ int x; // no declaration, let's see what happens
+      L?x ;
+
+      [ DOSTART -> print("i = " + i + " x = " + x); i++ [] ~DOSTART -> skip ];
+      
+      y = x + 13;
+      z = (y * 16807) % 2147483647;
+      
+      R!z
+    ]
+  }
+}
+
+define PROC1(bool DOSTART)(bd(WIDTH) -L, +R)
+{
+
+  csp {
+   int(WIDTH) i;
+   [ DOSTART -> i=0; R!0 [] ~DOSTART -> skip ];
+   
+   *[ int x; // no declaration, let's see what happens
+      int t;
+
+      x = t;
+      L?x ;
+
+      [ DOSTART -> print("i = " + i + " x = " + x); i++ [] ~DOSTART -> skip ];
+      
+      y = x + 13;
+      z = (y * 16807) % 2147483647;
+      t = z;
+      
+      R!z
+    ]
+  }
+}
+
+define SYSTEM()()
+{
+  subcells {
+    bd(WIDTH) chan[0..N-1];
+  
+    <i:N: PROC(i == 0) p[i] (chan[i],chan[(i+1)%N]); >
+  } 
+}
+
+define PROC0 <: PROC(true) {}
+
+define PROCi <: PROC(false) {}
+
+define IF0 () ()
+{
+  csp {
+    [ false -> skip [] true -> skip ];
+    boolean b;
+    print ("abc " + b)
+  }
+}
+  
+define SA()()
+{
+  csp {
+    print ("hello" + ", " + "world" + "!")
+  }
+}
+
+define CHATTY()()
+{
+  csp {
+
+    function g(string -s) : string =
+      (
+       g = s + s
+     );
+
+    function f(string -s) : string =
+      (
+       f = g(g(s))
+     );
+
+    function e(string -s) : string =
+      (
+       e = f(f(s))
+     );
+
+    function d(string -s) : string =
+      (
+       d = e(e(s))
+     );
+
+      print (d("I talk too much... "))
+   }
+}
+
+  
+define LR()(bd(32) -L, +R)
+{
+
+  csp {
+    R! L?
+  }
+  
+  
+}
+
+define LRb()(bd(32) -L, +R)
+{
+
+  csp {
+    boolean x;
+    x = (L? != 0);
+    
+    R! x
+  }
+  
+  
+}

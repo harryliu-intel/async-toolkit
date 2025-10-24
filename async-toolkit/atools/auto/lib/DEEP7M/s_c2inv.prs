@@ -1,0 +1,17 @@
+<wn1>  a &  b -> _x-
+<wp1> ~a & ~b -> _x+
+
+<wn2>  _x -> x-
+<wp2> ~_x -> x+
+
+@staticize(_x)
+
+@stretch(n1,wn1-4)
+@stretch(p1,wp1-4)
+@stretch(n2,(wn2-12)/2)
+@stretch(p2,(wp2-8)/2)
+
+@require(wn1<40)
+@require(wp1<60)
+@require(wn2<80)
+@require(wp2<120)

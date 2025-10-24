@@ -1,0 +1,931 @@
+% Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+% SPDX-License-Identifier: Apache-2.0
+
+\documentclass{article}
+\usepackage{appendix}
+\usepackage{tocloft}
+\usepackage{graphicx}
+\usepackage{fancyhdr}
+\usepackage{sectsty}
+%\usepackage{prs}\noiosubscripts
+
+\usepackage{float}
+\allsectionsfont{\mdseries\sc}
+\usepackage{caption}
+\captionsetup{margin=2pc,font=small,labelfont=bf}
+
+\newenvironment{absolutelynopagebreak}
+  {\par\nobreak\vfil\penalty0\vfilneg
+   \vtop\bgroup}
+  {\par\xdef\tpd{\the\prevdepth}\egroup
+   \prevdepth=\tpd}
+
+%%%%%%%%%%%%%%Mika's figure macro%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\def\ins_epsfig#1#2#3{
+  \begin{figure}[tbph]
+  \bigskip
+  \begin{center}
+  \includegraphics[angle=-90,width=#1]{#2}
+  \end{center}
+  \caption{#3}\label{fig:#2}
+  \bigskip
+  \end{figure}
+}
+
+\def\inss_epsfig#1#2#3{
+  \begin{figure}[tbph]
+  \bigskip
+  \begin{center}
+  \includegraphics[height=#1]{#2}
+  \end{center}
+  \caption{#3}\label{fig:#2}
+  \bigskip
+  \end{figure}
+}
+
+\title{Error-Conversion Rates in \\ Ternary Content-Addressable Memories}
+\author{Mika Nystr\"om \\ {\tt mika.nystroem@intel.com}}
+\date{September 4, 2015}
+
+\begin{document}
+
+\maketitle
+
+\parindent=0pt
+\parskip=3ex
+
+\begin{abstract}
+Soft errors in ternary content-addressable memories (TCAMs) are
+generally held to be problematic as there is no easy way to deploy
+error-correcting codes (ECCs) in such structures.  We study error
+rates in $N$ entry by $W$ symbol (``$N \times W$'') TCAMs, which na\"{\i}vely would appear
+to have the error rate of $2 \cdot N \cdot W$ bits of storage.  We
+show that worst-case soft-error rates are slightly less than the error rates of
+a single TCAM key ($W$ bits) plus a single bit per key ($N$ bits), that is, slightly less than the error rate of $N+W$ bits of storage.  We
+further show that under relatively reasonable constrained-random
+assumptions on the TCAM configuration, expected error rates are much
+lower still, on the order of the error rate expected in a single
+$W$-bit register.
+\end{abstract}
+
+\section{Structure of Document}
+
+\begin{itemize}
+\item {\em Background\/} on the problem: description of what a TCAM is, definitions, prior work.  Sections~\ref{sec:background} and~\ref{sec:defs}.
+
+\item {\em Worst-case TCAM SER under any conceivable configuration and search pattern.}  Section~\ref{sec:worst}.
+
+\item {\em Average-case TCAM SER under a given model of configurations.}  Section~\ref{sec:ave} with section~\ref{sec:diverse_search_strings} for a brief discussion of more subtle models with nonuniform probabilities.
+
+\item {\em Brief discussion of multi-bit errors.}  Section~\ref{sec:multi}.
+
+\item {\em Conclusion.}  Section~\ref{sec:concl}.
+
+\end{itemize}
+
+\section{Background}\label{sec:background}
+
+A {\em ternary content-addressable memory\/} (TCAM)~\cite{trw} is a kind of
+pattern-matching hardware.  In general, a TCAM consists of an array of
+{\em symbols\/}, each of which can take on values out of the set 
+$\{ {\bf 0}, {\bf 1}, \hbox{\bf ?}\}$.  A TCAM of {\em width\/} $W$ and {\em depth\/} $N$ consists
+of an array of $N \times W$ symbols, written 
+\[
+{C} \quad = \matrix{
+c_{0,0}  &\ldots  & c_{0,j} & \ldots & c_{0,W-1}\cr
+\vdots  & \ddots & \vdots & \ddots & \vdots\cr
+c_{i,0}  &\ldots & c_{i,j} & \ldots & c_{i,W-1}\cr
+\vdots  & \ddots & \vdots & \ddots & \vdots\cr
+c_{N-1,0}  &\ldots  & c_{N-1,j} & \ldots & c_{N-1,W-1}\cr
+}
+\]
+and can be used to match incoming {\em search strings\/} of length $W$ {\em
+  bits\/}, where a bit is the standard binary digit, either $0$ or
+$1$.  We refer to each of the $N$ $W$-symbol entries in the TCAM as a
+{\em key\/} $K_i$ and the collection of the $N$ symbols in each of the $W$
+bit positions as a {\em column} $Q_j$.
+
+If for a given $W$-bit search string $M=(m_0,\ldots,m_{W-1})$ and key $K_i, i \in
+  {0\ldots N-1}$,
+\begin{equation} 
+\forall j : 0 \le j \le W-1 : K_i[j] = c_{i,j} = \hbox{\bf ?} \lor K_i[j] = c_{i,j} = m_i\quad, 
+\end{equation}
+then we say that $M$ {\em matches\/} key $K_i$, else we say that $M$ {\em
+  misses\/} key $K_i$.
+
+For a general TCAM, the output of the hardware is a $N$-bit vector $V$ for which  $V_i$ is $1$ if and only if $M$ matches key $i$.
+
+Figure~\ref{fig:general.eps} illustrates a (unusually small) general TCAM.
+\inss_epsfig{3.0truein}{general.eps}{$8 \times 6$ general TCAM illustrating multiple hits.}
+
+\subsection{Priority-encoded TCAMs}
+
+\inss_epsfig{3.0truein}{prio.eps}{$8 \times 6$ priority-encoded TCAM illustrating multiple hits.}
+
+It is clear that the designer that incorporates a general TCAM in his
+design immediately has to manage the situation that multiple matches
+occur in a single lookup.  In many, if not most, applications, the
+correct approach is to prioritize the rules using a {\em priority
+  encoder}, which is a device that, when presented with $V$, produces
+the index of the lowest $i$ such that $V_i$ is true, and if $V$ is all
+zeros by convention produces the result $N$. (Recall that $i \in
+\{0\ldots N-1\}$.)
+
+Figure~\ref{fig:prio.eps} illustrates a (unusually small) priority-encoded TCAM with the same configuration as the general TCAM of figure~\ref{fig:general.eps}.
+
+In the following, we shall restrict our attention to priority-encoded
+TCAMs only and use the word ``TCAM'' only to refer to such structures.
+
+\subsection{How big are TCAMs?}
+
+Intel's Networking Products Group is involved in an effort to produce
+a hard IP TCAM for networking applications.
+For reference, the NPG TCAM is built out of macros that are up to 512~keys
+deep times 40~symbols per key and generally cascaded into TCAMs that
+are 1K to 16K (per priority encoder).  As will become obvious in the
+following, it is the number of keys per priority encoder that
+determines the soft-error conversion rates.  Thus, consider $N \in
+[1024,16384]$ and $W \approx 40$.
+
+Commercially available specialized TCAM chips are available in much
+larger sizes; for example, Renesas produces TCAM chips of up to
+20~megasymbols per die.
+
+Another common way of providing TCAM functionality is to code it
+directly in an RTL such as Verilog and allowing the silicon compiler
+to generate the functionality.  This approach costs area and power,
+and for reasons discussed below, it allows the designer to avoid the
+issues raised in this document.
+
+We will consider $8{\rm K} \times 40$ to be the canonical TCAM size
+for example calculations.
+
+
+
+\def\miss#1{\hbox{\bf miss#1}}
+
+\subsection{Encoding of TCAM symbols}
+
+We stated above that the TCAM symbols are chosen from the set $\{ {\bf
+  0}, {\bf 1}, {\hbox{\bf ?}}\}$ and have seen that while ${\bf 0}$
+and ${\bf 1}$ have their normal meanings, the ${\hbox{\bf ?}}$ symbol
+is a ``wildcard'' that matches either possible input.  The simplest
+implementation of the three-valued logic is using two bits of state,
+which immediately poses the question, what is the meaning of the
+fourth state, in a ``quatenary TCAM''?  While this fourth state may
+not be of much interest in most discussions of TCAM functionality,
+since it is not normally programmed in, its existence and properties
+will be seen to be of importance in the present document, since we are
+studying the effects of bit corruptions of the TCAM state.
+
+It turns out that the standard encoding of the TCAM is to use one bit
+to denote that each of the two possible input values is {\em not\/} to
+match.  We call these bits \miss0 and \miss1 .  We introduce the
+fourth state $\hbox{\bf -}$ like so:
+
+\[\vbox{\offinterlineskip\halign{\strut\hfil\quad#\quad\hfil&\vrule # &\quad\hfil#\hfil&\quad\hfil#\hfil\cr
+state     &&\miss0 &\miss1\cr
+\omit     &height 2pt& \omit & \omit \cr
+\noalign{\hrule}
+\omit     &height 2pt& \omit & \omit \cr
+\bf 0     &&   0   &   1  \cr
+\bf 1     &&   1   &   0  \cr
+\bf ?     &&   0   &   0  \cr
+\bf -     &&   1   &   1  \cr
+}}\]
+
+By simple generalization, then, since a $\hbox{\bf ?}$ symbol matches
+any input, $\hbox{\bf -}$ is a symbol that matches no input.
+
+\subsection{Soft errors}
+
+In modern VLSI technologies, state bits (SRAM cells or register bits)
+are susceptible to {\em soft errors\/} resulting from alpha-particle
+or neutron impacts in the silicon substrate.  The TCAM state bits,
+being essentially regular register bits, are susceptible to such
+errors.  Soft errors are also referred to as {\em single-event
+  upsets\/} (SEUs), as the most likely event is a single-bit change.
+In SRAMs and register files, this property can be used to correct the errors
+using error-correcting codes (ECCs) such as Hamming codes.  
+
+In a TCAM, the stored key is not read out as part of a matching
+operation.~\cite{tcamchecker}  Therefore, it is not convenient to use an ECC to detect
+soft errors in TCAMs, and known error-correcting solutions have
+very high area and power overhead (at least $2\times$).~\cite{tcamecc}
+
+RTL-coded TCAMs can be coded to provide redundancy and soft-error
+protection at a smaller incremental cost than for arrays, almost
+completely avoiding the issues raised in this document.  If such
+redundancy is {\em not\/} added by the designer, they are susceptible
+to the same soft errors as hard TCAM macros and subject to the
+considerations discussed here.
+
+\subsection{Error rates and Failures In Time (FITs)}
+
+The usual unit for measuring soft-error rates (SERs) is the Failures
+In Time (FIT) rate, which is a count of the number of errors expected
+in a billion ($10^9$) hours of operation.  For example, an SRAM bit might have
+a failure rate a small fraction of 1~FIT, whereas a large block of
+random logic might have a failure rate of a few FIT.  Failure rates
+are further subdivided into DUE (Detected Uncorrected Error) and the
+more serious SDC (Silent Data Corruption).  Intel has 
+specific limits in terms of FIT for DUE and SDC for server products.    We will abbreviate FIT rates as $\Phi$ in the
+following.  For instance, we will write the rate of errors in SRAM
+bits (uncommanded bit flips) as $\Phi_{\rm BIT}$ and the rate of
+errors by a given TCAM array as $\Phi_{\rm TCAM}$, etc.
+
+Note that while it is convenient to give the specific event of a bit
+of state's being corrupted by radiation the name ``a failure'' and use
+the same units to measure its rate of occurrence, strictly speaking, a
+corrupted bit of state is not ``a failure'' within the context of FIT
+rates, as failures refer to customer-visible failures.  A state-bit
+corruption rate is converted into a customer-visible FIT rate by
+multiplying the state-bit corruption rate with various factors
+denoting the probability that the corruption at one level of the
+system will proceed through the various layers of the system design to
+finally become visible in customer data.  It is precisely one of these
+layers of system design, viz., the TCAM mechanism, and its rate of
+passing through state-bit corruptions, that is the topic of the
+present document.
+
+\subsection{Context for FIT rates}
+
+Making a direct comparison between FIT rates for TCAMs and FIT rates for
+SRAMs is a difficult.  In a commercial application, what one is attempting
+to guarantee is that customers can ``see'' only an insignficant amount of
+data corruption.  Intel defines the maximum FIT rate on this basis.  For
+regular SRAMs and register files, the achieved FIT rate is compared to the
+specification by calculating the total number of expected error corruptions
+and then multiplying them by a measured or assumed ``uprating factor'' that
+accounts for the fact that many register/memory bits are never accessed
+before they are overwritten with fresh data.
+
+Since TCAMs do not have ECC and there are concerns that the TCAMs can be
+large sources of soft errors, a common approach is to use a {\em
+sweeper process,} which is a piece of hardware or software that repeatedly
+reads the TCAM keys and compares them to a known-good master copy stored
+in ECC-protected memory elsewhere (parity calculations can be used to
+reduce the bandwidth of these operations).  If a mismatch is detected by
+the sweeper, then that address in the TCAM is rewritten with the correct
+data.
+
+In networking products, the effect of a TCAM upset is potentially
+quite different from what occurs in a server application with an upset
+SRAM memory.  While it is assumed that a memory error is a ``single''
+error, the TCAM error can cause many packets to be misclassified.  To
+account for this difference, one can treat every misclassified packet
+as a {\em separate\/} failure.  The overall FIT rate of the TCAM then 
+becomes the product of three factors:
+\begin{enumerate}
+\item The expected rate at which configuration bits in the TCAM are corrupted by radiation.
+
+\item The expected fraction of TCAM configuration errors that are converted to erroneous TCAM classifications (the main subject of the present document).
+
+\item The expected time between a TCAM configuration upset and its subsequent correction by the sweeper process.
+\end{enumerate}
+
+It should be pointed out that to be fair, a ``single'' SRAM error in
+program memory could easily cause many decisions, and therefore much
+data, to be corrupted.  One of the differences is that SRAMs do not
+have sweepers, and therefore, once an SRAM error has occurred it can
+persist for an arbitrarily long period of time.  Our definition of FIT
+rates for TCAMs therefore even to begin with overestimates the
+severity of TCAM errors relative to how SRAM and register-file errors
+are accounted for.  Solving the problem of equating TCAM and SRAM FIT
+rates under these very different circumstances is outside the scope of
+the present document.
+
+\section{Definitions and Preliminary Considerations}\label{sec:defs}
+
+In this section, we define technical nomenclature to be used below.
+
+\subsection{Hamming distance}
+If two bit strings $M$ and $N$ are given, the {\em Hamming distance\/}
+between the strings is written $H(M,N)$ and represents the number of
+bits in which $M$ and $N$ differ.
+
+\subsection{Canonical search example and types of errors} 
+
+Let us assume that a $N \times W$ symbol priority-encoded TCAM has
+been programmed with configuration $C$ and presented with a search string $M$.
+We define the {\em lookup result\/} $k_C$ as follows:
+\begin{equation} k_C = \left\{ \qquad\hbox{index of lowest-numbered matching rule in } C
+                    \atop
+               \qquad N \hbox{\quad if no matching rule}\hfill
+\right.          \end{equation}
+
+The actual lookup is not run against $C$, the programmed
+configuration, but against the adulterated configuration $C'$, which
+has a single bit of configuration state changed from $C$ (it has
+Hamming distance of 1 from $C$).  We can similarly define $k_{C'}$ and
+make the further observation that the only ways the priority-encoded
+TCAM can make an error is by producing a new, erroneous match with a
+lower index than $k_C$, or (a mutually exclusive event) by losing the old match $k_C$ and therefore resulting in a higher $k_{C'}$.
+
+{\em Definition.}  If $k_{C'} < k_C$ we say that the TCAM has produced a {\em false positive.}  (A rule that was not supposed to match matched.)
+
+{\em Definition.}  If $k_{C'} > k_C$ we say that the TCAM has produced a {\em false negative.}  (The rule that was supposed to match did not match.)
+
+Obviously, if $k_{C'} = k_C$, the TCAM has not made an observable
+classification error.
+
+A false positive is illustrated in figure~\ref{fig:falsepos.eps}.  
+A false negative is illustrated in figure~\ref{fig:falseneg.eps}.  
+
+\inss_epsfig{3.0truein}{falsepos.eps}{False positive in $8 \times 6$ priority-encoded TCAM.  Original configuration is that of figure~\ref{fig:prio.eps} with a single-bit error in the $i=0$ key causing it to match erroneously.}
+
+\inss_epsfig{3.0truein}{falseneg.eps}{False negative in $8 \times 6$ priority-encoded TCAM.  Original configuration is that of figure~\ref{fig:prio.eps} with a single-bit error in the $i=5$ key causing it to miss erroneously.}
+
+\subsection{Error cross-section}
+
+It is clear that for any given initial configuration ${C}_0$, there are
+$2NW$ configurations that differ from ${C}_0$ in precisely one bit; we may
+call these 
+\[{C}'_{0,0}, {C}'_{0,1} \ldots {C}'_{0,2NW-1},\]
+and the set of these 
+\[\{{C}'_{0,0}, {C}'_{0,1} \ldots {C}'_{0,2NW-1}\} = {\mathcal C}'_0.  \]
+It is further clear that
+for a given search string $M$, some {\em sensitive subset\/} ${\mathcal C}^*_{0,M} \subseteq {\mathcal C}'_0$ of the configurations will lead to classification errors
+(i.e., different classifications from ${C_0}$ on $M$).  This subset can be
+empty.   
+
+{\em Definition.} The {\em error cross-section\/} of a combination of
+configuration ${C}$ and search string $M$ $({C},M)$ is the size (cardinality)
+of the sensitive subset ${\mathcal C}^*_{M}$, that is, 
+\begin{equation} \sigma_{{C},M} = ||{\mathcal C}^*_{M}||. \end{equation}
+In other words $\sigma_{{C},M}$ is the number of
+bits in ${C}$, out of the total $2NW$ bits, for which the TCAM will classify $M$ differently if those
+bits are flipped.  The main task of the present document is to
+calculate $\sigma_{{C},M}$ for different scenarios.
+
+
+
+
+\subsection{Error conversion rate}
+
+A TCAM array has a certain expected rate of being subjected to bit errors
+in the configuration bits.  From a user's point of view, this error
+rate is only part of what he is interested in: what is important is
+the ``user-observable'' SDC and DUE FIT rates.  While the exact
+definition of what is user-observable and what is not user-observable
+is subtle and beyond the scope of this document, we can make the
+following general statement: a TCAM soft error is user-observable only
+if 
+\begin{enumerate}
+
+\item there is a soft error to begin with,
+
+\item that TCAM soft error causes
+the TCAM to make an erroneous matching decision, and 
+
+\item that erroneous
+matching decision causes user-observable misbehavior. 
+
+\end{enumerate}
+The first condition is a matter of electrical studies and models of
+radiation and performed by tools, such as SOFA at Intel, which produce
+a raw FIT rate for the storage bits.  The third condition, a
+(dimensionless) probability, is beyond the scope of the present
+analysis.  The second condition, a probability, is the subject of the
+present analysis.  We call this factor the {\em error conversion
+  rate\/} (ECR) and denote it by $r$.
+
+It is clear that for a given configuration $({C},M)$, 
+\begin{equation} r_{{C},M} = { \sigma_{{C},M} \over 2NW }. \end{equation}
+
+What is more interesting, however, is an ``expected'' ECR over an
+ensemble of potentially interesting configurations and search strings 
+\begin{equation}
+{\mathcal E} = \{({C}_0,M_0), ({C}_1,M_1),\ldots\}\quad,
+\end{equation}
+where the occurrence rates of the different members might be equally
+or unequally weighted.  We generalize (``lift''~\cite{lifting}) the definition of the
+ECR from a single configuration to a weighted mean across an ensemble.
+The ECR for any ensemble is written $r_{\mathcal E}$ and takes into
+account the weights.  We may similarly generalize $\sigma$, $\Phi$, etc., to 
+denote averages over ensembles (whenever appropriate).
+
+Some interesting ensembles are the worst-case ensemble and various average-case ensembles.
+
+Finally, for any given ECR over an ensemble ${\mathcal E}$, $r_{\mathcal E}$, we can calculate the overall FIT $\Phi_{{\rm TCAM},{\mathcal E}}$ of the 
+TCAM as
+\begin{equation} 
+\Phi_{{\rm TCAM},{\mathcal E}} = 2NW r_{\mathcal E} \Phi_{{\rm BIT}}\quad . 
+\end{equation}
+
+
+
+\section{Worst-Case TCAM ECR}\label{sec:worst}
+
+Let's consider the following scenario.  A TCAM of fixed size is
+configured by an adversary with configuration $C$ and presented with
+search string $M$; the output of the TCAM is $k_C$.  A particular bit
+$b$ of $C$ is chosen with uniform random probability to be changed so
+that $H(C',C)=1$.  The search string $M$ is presented again; the output of the TCAM is $l$.  What is the configuration $C$ and message $M$ that
+maximizes the probability that $k_{C'} \neq k_C$?
+
+To be absolutely clear the situation is the following:
+\begin{enumerate}
+
+\item The probability of upsetting any given bit in the TCAM is the same as the probability of upsetting any other given bit, i.e., which bit is to be upset is {\em not\/} under the control of the adversary.
+
+\item The TCAM configuration $C$ is under control of the adversary and has been chosen to maximize the probability of output error.
+
+\item The search string $M$ is also under the control of the adversary and has also been chosen (jointly with $C$) to maximize the probability of output error.
+
+\end{enumerate}
+
+We call any combination $(C,M)$ that has the above properties a  {\em worst-case scenario.}
+
+\subsection{Data independence}\label{sec:doesntmatter}
+Let us first argue the following\par {\bf Lemma}: if $(C,M)$ is a
+worst-case scenario, then for any $\tilde{M}$ there exists a
+worst-case scenario.  
+
+The {\bf Proof} is constructive: for if $C$ is the configuration that
+together with $M$ maximizes the error probability, then consider
+$\Delta M = M \oplus \tilde M$ where $\oplus$ is the XOR operator.
+Now generate $\tilde C$ as follows: for every bit set in $\Delta M$,
+swap the 0 and 1 bits in the corresponding column of $C$ to make the
+corresponding column in $\tilde C$. For every clear bit in $\Delta M$,
+copy the 0 and 1 bits from that column in $C$ to $\tilde C$.  The expected error
+conversion rate of $(\tilde C,\tilde M)$ will be equal to that of
+$(C,M)$.  The rest of the proof is left as an exercise for the reader.
+
+In light of the above lemma, we choose $M=0$ (Verilog {\tt '0}) and can 
+determine what the worst case $C$ is for that $M$.
+
+\subsection{Worst-case TCAM ECR for false negatives}
+
+Assume the search string is $M=0$ and it matches key number $k<N$.
+Then the \miss0 bits of key $K_k$ are all 0.  The error cross-section of
+this search string is $\sigma_- = W$ since there are $W$ \miss0 bits,
+setting any of which will cause the search to miss key $K_k$.  Note that
+$\sigma_-$ is a measure per rule but also for the entire TCAM since
+there can only be a single false negative in the entire array (since
+there can only be a single ``true positive'').
+
+\subsection{Worst-case TCAM ECR for false positives}
+\label{sec:worst_pos}
+Assume, again, that the search string is $M=0$ and that for some key
+$K_l$, it would normally miss, and a single bit flip in key $K_l$ causes
+it to hit.  This means that $\sigma_+ = 1$ {\em per rule\/} for false
+positives, in the worst case.  This is because the configuration of
+the {\bf miss0} bits must have been of the regular expression pattern
+\hbox{0*10*} since any other configuration would have $H(\hbox{\bf
+  miss0},M) \geq 2$ and would not be able to match after a single bit-flip.
+
+\subsection{Worst-case overall TCAM ECR}
+
+The worst-case overall TCAM ECR is when $N-1$ keys are primed to be
+the worst case for false positives and a single rule is the worst case for
+false negatives, that is
+
+\begin{equation} \sigma_{\rm TCAM} = (N-1) \sigma_+ + \sigma_- = (N-1) + W \end{equation}
+
+Note that the ECR, i.e., {\em fraction\/} of bits that are exposed to upset is relatively
+small, namely the following:
+\begin{equation} 
+{ \sigma_{\rm TCAM} \over 2NW } = 
+{ (N-1) + W \over 2NW } = 
+\left({ N-1 \over N} \right) {1 \over 2W} + {1 \over 2N} < 
+{1 \over 2W} + { 1 \over 2N } 
+\end{equation}
+For a $8{\rm K} \times 40$ TCAM, the worst-case ECR is then roughly $1/80$, or 1.25\%.
+
+\section{Average-Case TCAM ECR}\label{sec:ave}
+
+In the previous section, we determined the absolute worst-case
+error-conversion rate of the TCAM to be no more than $1/2(1/W + 1/N)$.
+In most practical situations, the conversion rate is likely to be much
+lower, but in order to answer how much lower, we must make assumptions
+about the expected configuration and search strings.  These assumptions
+may be controversial and should be carefully vetted with architects
+and customers before being applied to published specifications.  With this in
+mind, the following discussion should be taken as an example and its value
+is relative to the application where the TCAM is employed.
+
+\subsection{Problem assumptions}
+\label{sec:ave_case_assumptions}
+
+We shall assume a randomized configuration of the TCAM.  It should be
+clear that for most TCAMs of interest, $2^W \gg N$, which implies that
+a totally random configuration would have an expected number of
+matching keys negligibly far from zero for any search string.
+Likewise, very few keys would be expected to have a Hamming distance
+of one from the search string, so the error cross-section would also be 
+negligible.
+
+
+
+Instead of a totally random configuration, we will constrain the
+configuration so that the {\em expected number of matching rules\/} is
+constant, but with an otherwise random configuration.  We write the
+expected number of matching rules as $\zeta$ and call the probability that
+any given rule matches the search string the {\em rule density,} which
+we write
+\begin{equation} \rho = {\zeta \over N} \quad . \end{equation}
+The rationale for choosing $\zeta$ is that in many applications, the
+expected rate of key matches is known with some precision.  For
+example, in a pure packet classification application, we might have
+$\zeta=1$ (expecting precisely one match per search string).  In an
+application to intrusion detection, we might expect $\zeta=10^{-4}$, based on
+observed traffic patterns in the Internet.  And so forth.
+
+A further important observation is that while the TCAM is capable of
+$W$-bit matches, this $W$ is in some sense arbitrary, in that it
+reflects an available hardware resource (``more is always better''),
+and a particular application may only use a subset $U$ of the $W$
+bits, $1 \leq U \leq W$.
+
+We shall therefore consider the following constrained random
+configuration: a matching density of $\rho$, with $U$ bits in use (and
+$W-U$ bits set as wildcards), and all other configuration parameters
+chosen with independently distributed uniform randomness. 
+
+\subsection{Uniform search-string statistics}\label{sec:uniform_search_strings}
+
+We will further assume that the search-string statistics are {\em
+uniform\/} in the sense that the probabilities apply equally to {\em
+every\/} search string.  That is, every search string has an equal
+{\em a priori\/} probability of matching each row in the TCAM as every
+other search string.\footnote{We are admittedly doing something tricky
+here for the purpose of making the math tractable.  If we consider
+the kinds of search-string statistics that would be required to
+result in uniform probabilities across all search strings, we will find
+that the uniformity requirement reduces the diversity of allowable search
+strings.  We can either accept this as a quirk of mathematical expedience
+or proceed to section~\ref{sec:diverse_search_strings} for an analysis 
+showing that adding diversity to the search strings will reduce the 
+error cross-section further.}  Under this assumption, we can treat each
+search string independently of all the others.
+
+\subsection{Canonical average-case configuration}
+\label{sec:random_constraints}
+With a search string of $M=0$ and a probability of a match in a given key
+of $\rho$, with $U$ bits in use, and a uniform random distribution, we
+have that each of the $W-U$ ``unused'' bits are configured as
+wildcards, and the remaining $U$ ``active'' bits are configured so
+that the probability of a hit is $\rho$.  A hit occurs when all \miss0
+bits are clear.  Therefore we have the following probability matrix
+for the configurations, where we denote the wildcard bits as
+\null$_{W-U}$ and the active bits as \null$_U$:
+\[\vbox{\offinterlineskip\halign{\strut\quad #\quad\hfil&\quad\vrule #&\quad\hfil #\hfil \hfil&\quad\hfil$#$\hfil\quad\cr
+\hfil bit            && $P({\rm bit}=0)$   & P({\rm bit}=1)\cr
+\omit          & height 2pt& \omit & \omit \cr
+\noalign{\hrule}
+\omit          & height 3pt& \omit & \omit \cr
+\miss0$_U$     && $(1/\rho)^{1/U}$ & 1-(1/\rho)^{1/U}\cr
+\miss0$_{W-U}$  && $1 $              & 0\cr
+\miss1$_U$     &&   $1/2$          &   $1/2$  \cr
+\miss1$_{W-U}$  && $1$               & 0\cr
+}}\]
+
+For example, in a VLAN matching application we might have $\zeta=1$,
+$U=10$.  If we use our canonical example TCAM of $8{\rm K} \times 40$,
+we have $\rho=1/(8{\rm K})$ and therefore
+\begin{eqnarray}
+P({\miss0}_U=0)  &=& 1/8192^{1/10} = 2^{-13/10}    \approx 41\%,\\
+P({\miss0}_U=1)  &=& 1-1/8192^{1/10} = 1-2^{-13/10}  \approx 59\%.
+\end{eqnarray}
+
+\subsection{Search string}
+
+As justified in sections~\ref{sec:doesntmatter}
+and~\ref{sec:uniform_search_strings}, the uniformity of the assumed
+statistics implies that we can use any search string; therefore, for
+simplicity, we shall use $M=0$ as the search key.
+
+\subsection{Average-case ECR for false negatives}
+
+The cross section for generating a false negative is always the same,
+{\em given\/} that there is a true positive; the cross section is
+always the number of matching \miss{.} bits, for our canonical $M=0$, it
+is the specific \miss0 bits of the first matching entry in the TCAM.
+
+In the average case we are studying, the probability that there is a 
+true positive can be calculated as follows:
+\begin{eqnarray}
+P(\exists\hbox{true positive}) &=& P(\hbox{\# of matches} \geq 1) \nonumber \\
+                      &=& 1-P(\hbox{\# of matches} = 0)  \nonumber \\
+                      &=& 1-P(\hbox{a single line misses})^N \nonumber \\
+                      &=& 1-(1-\rho)^N = 1-\left(1-{\zeta \over N}\right)^N
+\end{eqnarray}
+
+The cross section for a false negative is, then,
+\begin{equation}\sigma_{\rm{ave},-} = W \cdot P(\exists\hbox{true positive}) = W\Bigg(1-\left(1-{\zeta \over N}\right)^N\Bigg)\quad,\end{equation}
+and therefore the ECR is
+\begin{equation}\label{eq:negcross}
+r_{\rm{ave},-} = {1 \over 2NW} \sigma_{\rm{ave},-} = {1 \over 2N} \Bigg(1-\left(1-{\zeta \over N}\right)^N \Bigg)\quad.
+\end{equation}
+This result is exact under the given assumptions.
+
+\subsubsection{Discussion}
+
+The important number to keep in mind here is the cross section in equation~\ref{eq:negcross}.  It is $W$ times a configuration-dependent factor,
+\begin{equation}
+1-\left(1-{\zeta \over N}\right)^N < 1\quad,
+\end{equation}
+which implies that the error cross-section of the TCAM for false
+negatives is always no greater than that of $W$ register bits.  In
+fact, this cross section is always precisely the {\em cross section of the
+register bits that expectedly match the search string.}
+
+We define the rate at which the exposed bits are susceptible to errors somewhat arbitrarily to be the {\em error conversion efficacy,} which we write as
+\begin{equation}
+\xi_{\rm{ave},-,N}(\rho) = 
+1-\left(1-{\zeta \over N}\right)^N =
+1-(1-\rho)^N \quad .
+\end{equation}
+
+\subsubsection{Example}
+
+For our canonical example of $\zeta=1$ in a $8{\rm K} \times 40$ TCAM, 
+\begin{eqnarray}r_{\rm{ave},-} &=& {1 \over 16384} \Bigg(1-\left(1-{1 \over 8192}\right)^{8192}\Bigg)\quad,\nonumber \\
+&\approx& {1\over 16384} 0.63 \nonumber \\
+&\approx& 3.86 \cdot 10^{-5}, 
+\end{eqnarray}
+or written differently,
+\begin{equation}
+\sigma_{\rm{ave},-} \approx 40 \cdot 0.63\quad ,
+\end{equation}
+that is, the 40~bits of configuration referring to the matching rule
+are exposed with 63\% probability, precisely the probability of having
+a match in the TCAM under the stated conditions.
+
+A plot of $\xi(\rho)$ for $N=8192$ is shown in figure~\ref{fig:sparse.eps}.
+\ins_epsfig{4.75truein}{sparse.eps}{Error-conversion efficacy $\xi(\rho)$ for false negatives in a $N=8192$-entry TCAM.}
+
+\subsection{Average-case ECR for false positives}
+
+The average-case ECR for false positives is more difficult to calculate,
+since the probability of a false positive depends on the position in the 
+TCAM.  We shall build up the calculation from several components.
+
+\subsubsection{Conditional probability of a false positive for a single key}
+
+Let us first investigate the following scenario: 
+\begin{itemize}
+\item {\em Given that\/} key $K_i$ has
+been upset in one bit
+
+\item what is the probability that that will lead the key $K_i$
+to match falsely? 
+
+\end{itemize}
+We shall assume the canonical search string $M=0$.
+
+For a key to go from a miss to a match, both the following have to be true:
+\begin{enumerate}
+\item $K_i$ must have had precisely one \miss0 bit set. 
+\item The affected configuration bit within $K_i$ must have been the specific \miss0 bit that was set.  That is, 
+\begin{equation}P(K_i \hbox{ matches falsely} | \left( K_i \hbox{ has one {\bf miss0} bit set} \land K_i \hbox{ is upset}\right)) = {1 \over 2W}\end{equation} 
+since there are $2W$ bits of configuration
+for every key.
+
+\end{enumerate}
+What is the probability that $K_i$ had one bit set?  In our example of
+uniform probabilities within the constraints of
+section~\ref{sec:random_constraints}, the count of \miss0 bits set
+follows a binomial distribution with parameters $(U,\rho^{1/U})$.
+Therefore, the probability that a given key has exactly one bit set is
+\begin{eqnarray}
+P(K_i \hbox{ has exactly one bit set}) &=& 
+   \left( { U \atop 1 } \right) \left( \rho^{1/U} \right)^{U-1} \left( 1 - \rho^{1/U} \right)^1 \\
+&=& U\rho(\rho^{-1/U}-1)\quad. 
+\end{eqnarray}
+
+Therefore,
+\begin{equation} 
+P(\hbox{key $K_i$ falsely matches$|$key $K_i$ is upset}) =
+            {U \over 2W} \rho(\rho^{-1/U}-1)\quad. 
+\end{equation}
+Also, what we are really interested in is not the probability that 
+we have an error given that a particular key is upset, but the probability of an error given that a bit anywhere in the TCAM array is upset.  Upset probabilities for the $N$ TCAM keys are independent, therefore
+\begin{equation} \label{eq:upset_single_rule}
+P(\hbox{key $K_i$ falsely matches$|$any TCAM upset}) =
+            {U \over 2NW} \rho(\rho^{-1/U}-1)\quad. 
+\end{equation}
+
+These probabilities does not take into account the action of the priority encoder
+that follows the TCAM array, but only captures the probability that any given key falsely matches the search string under the model statistics.  We will study 
+the influence of the priority encoder in the next section.
+
+
+
+\subsubsection{Probability that a falsely matching key produces a false positive}
+Intuitively, it seems clear that the probability of generating false
+matches will go up as $\rho$ goes up, because there will be more rules
+in the TCAM that almost match the search string.  (Recall that the
+worst case for false positives is that every rule in the TCAM has a
+Hamming distance of precisely one from the search string.)  At the
+same time, when $\rho$ gets high enough (higher than about $1/N$), we
+start expecting multiple matches in the TCAM; at this point, the priority
+encoder ensures that we see only the first match out of the TCAM,
+whether that is a true or false match.  In other words, at high enough
+$\rho$, a smaller and smaller part of the TCAM is exposed to upset.
+
+If we consider a hypothetical upset key at key position (row) $l$ in
+the TCAM, we can ask, what is the probability that there is no true match
+earlier than $l$ in the TCAM?  Since we have assumed that all the statistics and
+layouts are uniform, the probability that any one rule matches is equal to $\rho$.  Therefore,
+\begin{equation} \label{eq:no_early_match}
+P(\hbox{first $l$ rules do not match}) = (1-\rho)^l \quad .
+\end{equation}
+
+And the conditions that must obtain for $l$ to be a false positive are:
+\begin{eqnarray} &&\hbox{first $l$ rules do not match} \nonumber \\
+&\land& \hbox{rule $l$ has exactly one \miss0 bit set} \nonumber \\
+&\land& \hbox{precisely the set \miss0 bit in rule $l$ is upset} 
+\end{eqnarray}
+These are independent conditions, so combining the results of equation~\ref{eq:upset_single_rule} and equation~\ref{eq:no_early_match},
+we have that
+\begin{eqnarray}P(\hbox{false positive result $l$}) &=& P(\hbox{first $l$ rules do not match}) \nonumber \\ 
+&&\times P(\hbox{rule $l$ has exactly one \miss0 bit set}) \nonumber\\
+&&\times P(\hbox{precisely the set \miss0 bit in rule $l$ upset}) \nonumber \\
+&=& (1-\rho)^l U\rho(\rho^{-1/U}-1) {1 \over 2NW } \quad .
+\end{eqnarray}
+
+Finally, considering mismatches in the different keys as separate events, all these events are mutually exclusive.  Therefore
+\begin{eqnarray} 
+P(\hbox{any false positive result}) &=& \sum_{l=0}^{N-1} P(\hbox{false positive result for $l$})\quad \\
+ &=& { U\rho(\rho^{-1/U}-1) \over 2NW } \sum_{l=0}^{N-1} (1-\rho)^l \\
+ &=& { U\rho(\rho^{-1/U}-1) \over 2NW } {1 -(1-\rho)^N \over 1 - (1 - \rho)} \\
+ &=& {U \over 2NW} (\rho^{-1/U}-1) ( 1 - (1-\rho)^N ) \quad .
+\end{eqnarray}
+
+\subsubsection{Discussion}
+
+In other words, the cross section is
+\begin{equation}
+\sigma_{\rm{ave},+} = {U} (\rho^{-1/U}-1) ( 1 - (1-\rho)^N ) \quad ,
+\end{equation}
+from which we define the error conversion efficacy relative to $U$ bits as
+\begin{eqnarray}
+\sigma_{\rm{ave},+} &=& {U}\xi(\rho) \\
+\xi_{\rm{ave},+,N,U}(\rho) &=& (\rho^{-1/U}-1) ( 1 - (1-\rho)^N )\quad .
+\end{eqnarray}
+
+
+
+\subsubsection{Example}
+
+For our canonical example of $N=8K$, $W=40$, $U=10$, $\zeta=1$, we have, then,
+\begin{eqnarray}r_{\rm{ave},+} &=& {10 \over 16384} \Bigg(\left( 1 \over 8192\right)^{-1/10}-1 \Bigg) \Bigg(1 - \left( 8191 \over 8192 \right)^{8192} \Bigg)      \nonumber \\
+&\approx& {10 \over 16384} \cdot 1.462 \cdot 0.632 \\
+&\approx& {10 \over 16384} \cdot 0.924 \\
+&\approx& 5.64 \cdot 10^{-4}\quad ,
+\end{eqnarray}
+or written differently,
+\begin{equation}
+\sigma_{\rm{ave},+} \approx 10 \cdot 0.924\quad ,
+\end{equation}
+that is, about 92.4\% of ``the 10~bits selected'' are exposed to false
+positive upset.  Clearly this is a small fraction of the total $2NW = 2\cdot 8192 \cdot 40 = 655360$~bits in the array.
+
+\subsubsection{Further discussion}
+
+In the case of false positives, 
+\[
+\xi_{\rm{ave},+,N,U}(\rho) = (\rho^{-1/U}-1) ( 1 - (1-\rho)^N )
+\]
+is a little tricky to characterize, as it is a transcendental expression.
+We can observe that for $U=1$ (only a single bit configured), it reduces
+to the worst case of section~\ref{sec:worst_pos}, but as we have already 
+remarked, this is not likely to be a normal way to configure a TCAM.
+For reference, we show the graph of the two factors $(\rho^{-1/U}-1)$ and  $( 1 - (1-\rho)^N )$ as well as $\xi$ itself (in between the two) for the worst case $U=1$ in figure~\ref{fig:worstxi.eps}.
+\ins_epsfig{4.75truein}{worstxi.eps}{Error-conversion efficacy $\xi(\rho)$ (red curve) for false positives in a $N=8192$-entry, $W=40$-symbol TCAM with $U=1$ (worst case).}
+
+A more standard configuration scenario would have $U=10$, for example, but even then, our assumptions imply that rules are repeated eight times in the TCAM, which is not sensible.  See figure~\ref{fig:xi10.eps}.
+\ins_epsfig{4.75truein}{xi10.eps}{Error-conversion efficacy $\xi(\rho)$ (red curve) for false positives in a $N=8192$-entry , $W=40$-symbol TCAM with $U=10$.}
+
+
+It turns out that for $U \approx 11$ or greater, $\xi$ never exceeds unity.  For example, for $U=13$ we show the error conversion efficacy in figure~\ref{fig:xi13.eps}.
+\ins_epsfig{4.75truein}{xi13.eps}{Error-conversion efficacy $\xi(\rho)$ (red curve) for false positives in a $N=8192$-entry, $W=40$-symbol  TCAM with $U=13$.}
+
+Note that $U=13$ is the smallest value of $U$ for which we can have only unique rules
+in the TCAM without resorting to wildcard patterns.  For this $U$, $\xi$ is always less than unity.  In other words, the cross section for false positives in
+the TCAM under these conditions is less than $U$ bits.
+
+A final observation worth making is that for very small $\rho$, the error conversion efficacy goes as $\rho^{1-1/U}$, that is, it always goes to zero.  This is because for very small $\rho$, $(1-(1-\rho)^N) \approx N\rho$ as can be seen from the Maclaurin expansion
+\begin{equation}
+(1-x)^N = 1 - \left( {N \atop 1}\right)x + \left( {N \atop 2}\right)x^2 - \left( {N \atop 3}\right)x^3 + \hbox {H.O.T.}
+\end{equation}
+and therefore
+\begin{equation}
+\lim_{\rho \rightarrow 0} 1-(1-\rho)^N = N\rho
+\end{equation}
+and finally
+\begin{equation}
+\lim_{\rho \rightarrow 0} (\rho^{-1/U}-1)(1-(1-\rho)^N) = 
+\rho^{-1/U} N\rho = 
+N \rho^{1-{1 \over U}}\quad.
+\end{equation}
+
+\subsection{Diverse search-string statistics}\label{sec:diverse_search_strings}
+
+The reader may have taken issue with the assumption that the search
+strings have uniform interactions with the TCAM configuration, that
+is, that the {\em a priori\/} probabilities of hitting and missing are
+the same for every search string and key combination.  Let's briefly
+consider a slightly different scenario.
+
+Assume that instead of being constrained to supplying a configuration
+and search-string sequence that has uniform statistics, the adversary
+is constrained to partition the TCAM space into a number of
+equal-sized and disjoint regions of size $N_R<N$ and that the search
+strings are also partitioned in the same way, so that the statistical assumptions
+of section~\ref{sec:ave_case_assumptions} apply independently to each region of the TCAM and each corresponding subset of search strings.  In this case, we
+have the following:
+\begin{enumerate}
+
+\item A fraction $N_R/N$ of the search strings tends to hit in a fraction $N_R/N$ of the TCAM with an expected number of matches $\zeta$.
+
+\item The expected number of matches of a search string in a
+non-corresponding region of the TCAM is negligible under all normal
+statistical assumptions.
+
+\item The expected number of ``almost'' matches (with $H(K,M)=1$) of a
+search string in a non-corresponding region of the TCAM is
+negligible under all normal statistical assumptions.
+
+\end{enumerate}
+It follows that each search string interacts with only its own
+corresponding region of the TCAM with probability close to~1 and
+interacts with other regions with probability close to~0.
+
+In other words, the statistics in this case are those of a smaller
+TCAM, namely one of size $N_R$, but with all the other parameters
+($W$, $U$, $\zeta$) held constant.
+
+A moment's reflection will show that this sort of partitioning of the
+TCAM makes the probability of errors drop.  The probability of a false
+negative is the same as always, and we need only consider false
+positives.  We will approach this by graphing the error-conversion
+efficacy $\xi$ for a few cases of interest.  In
+figure~\ref{fig:partition_tcam.eps} we see the error-conversion
+efficacy for our standard example of $W=40$, $U=10$, $\zeta=1$, for TCAM
+arrays of different sizes $N$.  Note that the efficacy exceeds~1 only
+for the generally uninteresting cases that $N>2^U$.  (Recall that the
+error cross-section $\sigma$ is by definition $\sigma = U \xi$.
+Hence, $\xi=1$ means that $U=10$ bits are exposed to upset, whereas
+$\xi=0.1$ means only $0.1 U = 1$ bit is exposed to upset.)
+
+\ins_epsfig{4.75truein}{partition_tcam.eps}{Error-conversion efficacy
+  for $W=40$, $\zeta=1$ and variable $N$.  Top (red) curve, $U=10$; bottom
+  (green) curve, $U=W=40$.}
+
+\section{Multiple-Bit Errors}\label{sec:multi}
+
+It is important to realize that while multiple-event errors will
+change the mathematics, they cannot change the conclusions, as unlike
+the situation in a register file or SRAM, we do not have ECC to start
+with.  Multiple errors will therefore not push the error analysis into
+a different domain.  Rather than this, multiple errors will simply
+multiply the probability of false negatives; the probability of false
+positives from multiple errors is very low.
+
+
+\section{Conclusion}\label{sec:concl}
+
+We have derived worst-~and average-case formulas for soft-error rates
+in TCAMs under particular assumptions for the distribution of
+configurations and also under the assumption that only single-event
+errors occur.  We have shown that {\em in the worst case\/} only a
+single bit per TCAM key is exposed to upset causing false positive
+errors (false matches) and that {\em in the worst case as well as the
+  average case\/} only those bits that actually match the search key
+are exposed to upset causing false negative errors (false misses).  We
+have further shown that under reasonably permissive statistics on the
+TCAM configuration, the {\em average-case error rate\/} expected for
+constrained random configuration {\em is generally less (sometimes much
+less) than the error rate expected from a single register wide enough
+to hold the search key.}
+
+
+\section{Acknowledgements}
+
+Thanks are due to the many helpful engineers at Intel's Ethernet
+Switch Silicon office.
+
+Discussions with Wen Zhang, Yinzi Bao,
+Alain Gravel, Jon Dama, Anti Gyori, Karl Papadantonakis, and Bhavana Jonnalagadda formed the basis of
+the work.  Finally, Danlei Chen and Naoki Eto graciously checked and re-checked all the algebra, and Robert Southworth insisted on clarifications, but should not be blamed for any remaining mistakes.
+
+\newpage
+\begin{thebibliography}{99}
+
+\bibitem{lifting} {E.~W.~Dijkstra.  Lifting, orders, and the Galois connection.  EWD1185.  1994.  {\tt https://www.cs.utexas.edu/users/EWD/ewd11xx/EWD1185.PDF}}
+
+
+
+
+\bibitem{tcamecc}{S.~C.~Krishnan, R.~Panigraphy, S.~Parthasarathy.  Error-correcting codes for ternary content addressable memories.  {\it IEEE Trans.~on Computers.}  {\bf 58}(2), February 2009.}
+
+\bibitem{tcamchecker}{M.~Z.~Shafiq, C.~Meiners, Z.~Qin, K.~Shen, and A.~X.~Liu.  TCAMChecker: A Software Approach to the Error Detection and Correction of TCAM-Based Networking Systems.  {\it J. Netw. Syst. Manage.\/} (2013)~21:335--352.}
+
+\bibitem{trw}{TRW Computer Division.  First Interim Report on Optimum Utilization of Computers and Computing Techniques in Shipboard Weapons Control Systems.  BuWeps-Project~RM1004~M88-3U1.  Canoga Park, Calif.:~June, 1963.  }
+
+\end{thebibliography}
+
+\end{document}

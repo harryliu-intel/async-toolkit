@@ -1,0 +1,51 @@
+# MBY Top-level 
+################################################################
+#  Create power domain
+################################################################
+#create_power_domain top_domain
+create_power_domain pd_mby_top -include_scope
+
+################################################################
+#  Load subsystem UPFs
+################################################################
+load_upf msh_top.upf -scope instance_name
+load_upf mpp_top.upf -scope instance_name
+load_upf epc_top.upf -scope instance_name
+
+################################################################
+#  Create and connect supply nets and ports
+################################################################
+# Port: vcc1p2
+create_supply_port vcc1p2 -domain pd_mby_top -direction in
+create_supply_net  vcc1p2 -domain pd_mby_top
+connect_supply_net vcc1p2 -ports {vcc1p2 inst1/vcc1p2 inst2/vcc1p2}
+
+# Port: vcc1
+create_supply_port vcc1 -domain pd_mby_top -direction in
+create_supply_net  vcc1 -domain pd_mby_top
+connect_supply_net vcc1 -ports {vcc1 inst1/vcc1 inst2/vcc1}
+
+# Port: vcc2
+create_supply_port vcc2 -domain pd_mby_top -direction in
+create_supply_net  vcc2 -domain pd_mby_top
+connect_supply_net vcc2 -ports {vcc2 inst1/vcc2 inst2/vcc2}
+
+# Port: vss
+create_supply_port vss -domain pd_mby_top -direction in
+create_supply_net  vss -domain pd_mby_top
+connect_supply_net vss -ports {vss inst1/vss inst2/vss}
+
+################################################################
+# Signal grouping (assuming top-level ports are all in the vcc1 or vcc1p2 domain)
+################################################################
+set vcc1_collection [ list port1 port2 ]
+set vcc2_collection [ list port3 port4 ]
+set vcc1p2_collection [ list port5 port6 ]
+
+################################################################
+# Set related supply nets for ports
+################################################################
+set_related_supply_net -power vcc1 -ground vss -object_list $vcc1_collection
+set_related_supply_net -power vcc2 -ground vss -object_list $vcc2_collection
+set_related_supply_net -power vcc1p2 -ground vss -object_list $vcc1p2_collection
+

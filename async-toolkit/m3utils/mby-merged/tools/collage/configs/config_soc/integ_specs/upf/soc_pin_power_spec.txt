@@ -1,0 +1,2 @@
+PWRGOOD           input   vccinfaon {ext_off 1.00}
+QSPI_CLK          output  vccinfaon {ext_off 1.00}

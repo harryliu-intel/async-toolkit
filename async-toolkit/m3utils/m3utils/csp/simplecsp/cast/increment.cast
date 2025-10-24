@@ -1,0 +1,36 @@
+// Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+// SPDX-License-Identifier: Apache-2.0
+
+module increment;
+
+define P()()
+{
+  csp {
+
+    function postinc(int -+x) : int =
+      (postinc = x;
+       x++
+       );
+
+    int i = 0;
+    int z[0..3];
+
+    print ("z[0] = " + z[0]);
+    print ("z[1] = " + z[1]);
+    print ("z[2] = " + z[2]);
+    print ("z[3] = " + z[3]);
+
+    print ("i    = " + i);
+    z[postinc(i)]++;
+
+    print ("z[0] = " + z[0]);
+    print ("z[1] = " + z[1]);
+    print ("z[2] = " + z[2]);
+    print ("z[3] = " + z[3]);
+
+    print ("i    = " + i);
+
+  }
+}
+    
+     

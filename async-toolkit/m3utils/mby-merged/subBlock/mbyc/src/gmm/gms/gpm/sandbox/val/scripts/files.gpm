@@ -1,0 +1,16 @@
++incdir+$LOGICROOT/gmm/gms/top/rtl
+-y $LOGICROOT/gmm/gms/top/rtl
+$LOGICROOT/gmm/gms/top/rtl/mby_gms_pkg.sv
+$LOGICROOT/gmm/gms/gpm/rtl/mby_gpm_pkg.sv
+
+
++incdir+$LOGICROOT/gmm/gms/gpm/rtl
+-y $LOGICROOT/gmm/gms/gpm/rtl
+
+
++incdir+$MODEL_ROOT/target/mby/mgm_run/rtl/
++incdir+$MODEL_ROOT/target/mby/mgm_run/gpm/src/
++incdir+$MODEL_ROOT/target/mby/mgm_run/gpm/src/mem_wrap/
+-y $MODEL_ROOT/target/mby/mgm_run/rtl/
+-y $MODEL_ROOT/target/mby/mgm_run/gpm/src/
+-y $MODEL_ROOT/target/mby/mgm_run/gpm/src/mem_wrap

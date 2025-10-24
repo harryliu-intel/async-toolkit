@@ -1,0 +1,24 @@
+% Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+% SPDX-License-Identifier: Apache-2.0
+
+import ("libm3")
+import ("cit_util")
+import ("parseparams")
+import ("spicelib")
+import ("varlib")
+import ("spicebuilderlib")
+
+Interface ("LambVerb")
+Module ("LambSequencer")
+Module ("LambSimulation")
+Interface("Lamb")
+Module ("LambModel")
+Module("LambPrograms")
+
+Sequence ("LambCommand", "LambCommand")
+Interface ("LambCommand")
+
+resource ("template_spice_includes")
+bundle ("LambTemplate")
+
+library ("lambbuilderlib")

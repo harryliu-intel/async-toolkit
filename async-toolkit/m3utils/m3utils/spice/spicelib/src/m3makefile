@@ -1,0 +1,38 @@
+% Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+% SPDX-License-Identifier: Apache-2.0
+
+import ("libm3")
+import ("cit_util")
+import ("parseparams")
+import ("gds2cast")
+
+Module ("Dims")
+Interface ("Sim")
+Interface ("ProbeMode")
+Module ("Assertion")
+List ("Assertion","Assertion")
+
+Module ("SpiceFormat")
+Interface ("SpiceFileFormat")
+
+Module ("SpiceObject")
+Interface ("SpiceObjectParse")
+Sequence ("SpiceObject","SpiceObject")
+Interface ("SpiceCircuit")
+List ("SpiceCircuit","SpiceCircuit")
+Table ("TextSpiceCircuit", "Text", "SpiceCircuit")
+
+MkSet("SpiceObject", "SpiceObject")
+MkSetDef("SpiceObject", "SpiceObject")
+Table("SpiceObjectRef", "SpiceObject", "Refany")
+Table("TextSpiceObjectSet", "Text", "SpiceObjectSet")
+
+Table("TextSpiceObject", "Text", "SpiceObject")
+
+Interface ("SpiceError")
+
+module ("SpiceParse")
+
+Module ("SpiceTranslate")
+
+library ("spicelib")

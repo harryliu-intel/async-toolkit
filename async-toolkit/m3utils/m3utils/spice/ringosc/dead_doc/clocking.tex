@@ -1,0 +1,235 @@
+% Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+% SPDX-License-Identifier: Apache-2.0
+
+\documentclass{article}
+\usepackage{graphicx}
+\usepackage{epsf}
+
+\usepackage{floatflt}
+\usepackage{fancyhdr}
+\usepackage{array}
+
+\usepackage{sectsty}
+%\allsectionsfont{\mdseries\sffamily}
+\allsectionsfont{\mdseries\sc}
+
+\usepackage{caption}
+\captionsetup{margin=2pc,font=small,labelfont=bf}
+
+%%%%%%%%%%%%%%Mika's figure macro%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\def\listcaption_ins_epsfig#1#2#3#4{
+  \begin{figure}[!tbph!]
+  \bigskip
+  \begin{center}
+  \includegraphics[width=#1]{#2}
+  \end{center}
+  \caption[#4]{#3}\label{fig:#2}
+  \bigskip
+  \end{figure}
+}
+
+\def\ins_epsfig#1#2#3{
+  \begin{figure}[!tbph!]
+  \bigskip
+  \begin{center}
+  \includegraphics[width=#1]{#2}
+  \end{center}
+  \caption{#3}\label{fig:#2}
+  \bigskip
+  \end{figure}
+}
+
+\def\rotins_epsfig_listcaption#1#2#3#4#5{
+  \begin{figure}[!tbph!]
+  \bigskip
+  \begin{center}
+  \includegraphics[angle=#4,width=#1]{#2}
+  \end{center}
+  \caption[#5]{#3}\label{fig:#2}
+  \bigskip
+  \end{figure}
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\oddsidemargin=0.15in
+\evensidemargin=0.15in
+\topmargin=0.2in
+\textwidth=6.2truein
+
+
+\pagestyle{fancy}
+\lhead{\scriptsize\bfseries\sffamily DRAFT---INTEL CONFIDENTIAL---DRAFT}
+\chead{}\rhead{\thepage}
+\lfoot{}\cfoot{}\rfoot{}
+\renewcommand{\headrulewidth}{0pt}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\title{Generating Multiphase Clocks \\ for Ultra-Low-Energy Computing}
+\author{Mika Nystr\"om \\ {\tt mika.nystroem@intel.com} \\
+Ganesh Iyer \\ {\tt ganesan.iyer@intel.com}}
+%\date{January 22, 2018}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+\parindent=0pt
+\parskip=1.5ex
+
+\arraycolsep=1.4pt\def\arraystretch{1.5}
+
+\begin{abstract}
+\end{abstract}
+
+\tableofcontents
+\listoffigures
+\listoftables
+
+\section{Background}
+
+Many highly parallel algorithms imply a demand for what we can term
+lowest-total-cost computing, where the designer's objective is to
+minimize the sum of the silicon and energy costs of computing a
+certain function.  Some such algorithms have the further property that
+they are very dense in logic and therefore operate at relatively very
+high power levels.  The optimal operating point of such algorithms in
+CMOS technology is at a lower-than-standard operating voltage using
+relatively short critical paths between state elements and also
+specially designed low-power state elements.  Clock generation for
+such hardware is difficult, partly because the headroom between the
+required logic performance to be competitive and the potential
+performance of clock logic is not that great (owing to the shallow
+critical paths between state elements).  System considerations can add
+further requirements, such as synchronous operation across large
+silicon areas, where communications are kept local for simplicity
+(e.g., systolic array computation).  The work described in this report
+is in the context of cryptocurrency (Bitcoin) mining, which is
+probably the most extreme application of cost-sensitive highly
+parallel computing architectures with high compute intensity, but the
+techniques are expected to be applicable broadly to problems with
+similar requirements, such as custom AI training or inference hardware.
+
+\subsection{Latch-based design}
+
+A compelling design approach for minimum-cost computing
+microarchitectures is the use of latch-based logic with multiphase
+clocks, which is in fact a classic design style for CMOS
+circuits\cite{m+c,g+d}.  In classic designs, clocks were arranged to
+be non-overlapping but with as short inactive periods as possible.
+This approach leads to static timing calculations that are difficult
+to perform because clock borrowing is a natural feature of such
+arrangements: when there are more than two clock phases, in
+particular, all clocks except consecutive ones are generally set to
+overlap.  More recent practice is more amenable to static timing
+tools: these approaches use relatively narrow active clock pulses that
+are exclusive of each other.  With narrow clock pulses, clock borrowing still
+happens in practice, of course, but the static timing problem can be closed
+in a conservative mode where we assume that no borrowing occurs; this makes
+the static-timing problem feasible in practice while leaving some extra
+performance margin in the fabricated chip.
+
+(Insert some figures here: 1. multiphase clocking from Glasser and Dobberpuhl; 2. timing constraints in pulsed logic in FIN/FON/FWR.)
+
+\subsection{Timing constraints for pulsed latches}
+
+To review, (now-standard) flip-flop timing is based on the concept of
+an {\em active clock edge,} from which setup and hold timing is
+defined.  The clock edge itself is modeled to occur at an instant in
+time, and inputs to sequential elements are required to remain stable
+from the setup time instant to the hold time instant: we can call the
+interval between the setup time instant and the clock edge the setup
+interval and the interval between the clock edge and the hold time
+instant the hold interval.  As a convention, the setup time is
+positive for a setup time instant before the clock edge, and the hold
+time is positive for a hold time instant after the clock edge.  A
+negative setup time therefore means that the input data is allowed to
+change up to and including a time after the active clock edge (and
+will be registered), and a negative hold time conversely means that
+the input data is allowed to change before the active clock edge
+(without being registered).
+
+Pulsed-latch timing is similar to flip-flop timing except that the
+clock pulse is taken as having finite width, and the setup and hold
+times are calculated conservatively based on the pulse width.  That
+is, inputs are required to be ready (setup) at a time defined off the
+leading edge of the clock pulse, outputs are expected to change starting from
+the leading edge of the same pulse (as the latch becomes transparent at that time), and 
+
+
+
+\subsection{Clock network design decisions}
+
+(Table/figure here: illustrate OCV fraction of cycle/delay as function of supply voltage for 18A)
+
+(Figure: pulse width as function of depth of network...?)
+
+
+
+
+
+
+
+
+
+
+
+
+\section{Conclusion}
+
+
+\section{Acknowledgements}
+
+
+\begin{thebibliography}{99}
+
+\bibitem{whitenoise} {D.~C.~Chu.  Time Interval Averaging: Theory,
+  Problems, and Solutions.  {\it Hewlett-Packard Journal}, June 1974.}
+
+\bibitem{hppatent}{D.~C.~Chu.  Double vernier time interval
+  measurement using triggered phase-locked oscillators.
+  U.S.~Patent~4,164,648.  Published August 14, 1979.}
+      
+\bibitem{vernier} {D.~C.~Chu, M.~S.~Allen, and A.~S.~Foster.
+  Universal Counter Resolves Picoseconds in Time Interval
+  Measurements.  {\it Hewlett-Packard Journal}, August 1978.}
+
+\bibitem{euclid}{Euclid. {\it The Thirteen Books of the Elements,}
+  vol.~2, Book~VII.  Translated by Sir~Thomas Heath.  Second edition,
+  unabridged.  Dover Publications, 1956.  Reprint of edition by
+  Cambridge University Press, 1908.}
+  
+\bibitem{hardy}{G.~H.~Hardy and E.~M.~Wright.  {\it An Introduction to
+    the Theory of Numbers.}  Oxford:\ Clarendon Press, 1938.}
+
+\bibitem{horowitz+hill} {P.~Horowitz and W.~Hill.  {\it The Art of
+    Electronics}, second edition, chapter~15.  Cambridge University
+  Press, 1989.}
+
+\bibitem{leviton}{D.~B.~Leviton and B.~J.~Frey.  Temperature-dependent
+  absolute refractive index measurements of synthetic fused silica.
+  NASA Goddard Space Flight Center, 2008.}
+
+\bibitem{spwm3}{G.~Nelson, ed.  {\it Systems Programming with
+    Modula-3.}  Prentice-Hall Series in Innovative Technology.
+  Prentice-Hall, 1991.}
+  
+\bibitem{newton}{I.~Newton.  {\it Philosophi\ae{} Naturalis Principia
+    Mathematica,} Book 1.  London:\ S.~Pepys, Royal Society Press,
+  1686.}
+
+\bibitem{vernier-orig}{P.~Vernier.  {\it La construction, l'usage, et les propri\'et\'es du quadrant nouveau de math\'ematique.}  Brussels 1631.}
+
+\bibitem{sv}{ANSI/IEEE 1800-2017.  {\it IEEE Standard for
+    SystemVerilog-Unified Hardware Design, Specification, and
+    Verification Language.}  American National Standards Institute,
+  2017.}
+
+\bibitem{g+d}{L.~A.~Glasser and D.~W.~Dobberpuhl. {\it The Design and Analysis of VLSI Circuits.} Addison-Wesley, 1985.}
+
+\bibitem{m+c}{C.~A.~Mead and L.~A.~Conway.  {\it Introduction to VLSI Systems.}  Addison-Wesley, 1980.}
+  
+  
+
+\end{thebibliography}
+
+\end{document}

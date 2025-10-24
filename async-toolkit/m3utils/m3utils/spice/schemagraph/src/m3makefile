@@ -1,0 +1,25 @@
+% Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+% SPDX-License-Identifier: Apache-2.0
+
+import ("libm3")
+import ("cit_util")
+import ("parseparams")
+import ("tracelib")
+import ("mscheme")
+
+Module ("SchemaGraph")
+Interface ("Field")
+Module ("FData")
+
+Sequence ("FData", "FData")
+
+Module ("SchemaEntry")
+Sequence ("SchemaEntry", "SchemaEntry")
+Table("TextSchemaEntrySeq", "Text", "SchemaEntrySeq")
+Array_sort("SchemaEntry","SchemaEntry")
+
+Interface("Schema")
+
+%implementation ("Main")
+
+library ("schemagraph")

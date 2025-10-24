@@ -1,0 +1,283 @@
+************************************************************************
+* auCdl Netlist:
+* 
+* Library Name:  ganesani_lib_pulse_gen
+* Top Cell Name: pulse_gen_logic_ff
+* View Name:     schematic
+* Netlisted on:  Apr 23 06:41:06 2024
+************************************************************************
+
+*.BIPOLAR
+*.RESI = 2000 
+*.RESVAL
+*.CAPVAL
+*.DIOPERI
+*.DIOAREA
+*.EQUATION
+*.SCALE METER
+*.MEGA
+.PARAM
+
+
+
+************************************************************************
+* Library Name: intel78prim
+* Cell Name:    nflextor_pcell_0
+* View Name:    schematic
+************************************************************************
+
+.SUBCKT nflextor_pcell_0 b d g s
+*.PININFO b:B d:B g:B s:B
+Mmn3 d g s b nhpbulvt W=3.0 L=14n m=2 lvsExactMatch=1
+.ENDS
+
+************************************************************************
+* Library Name: intel78prim
+* Cell Name:    nflextor_pcell_1
+* View Name:    schematic
+************************************************************************
+
+.SUBCKT nflextor_pcell_1 b d g s
+*.PININFO b:B d:B g:B s:B
+Mmn3 d g s b nhpbulvt W=3.0 L=14n m=1 lvsExactMatch=1
+.ENDS
+
+************************************************************************
+* Library Name: intel78prim
+* Cell Name:    nflextor_pcell_2
+* View Name:    schematic
+************************************************************************
+
+.SUBCKT nflextor_pcell_2 b d g s
+*.PININFO b:B d:B g:B s:B
+Mmn3 d g s b nhpbulvt W=3.0 L=14n m=4 lvsExactMatch=1
+.ENDS
+
+************************************************************************
+* Library Name: intel78prim
+* Cell Name:    pflextor_pcell_3
+* View Name:    schematic
+************************************************************************
+
+.SUBCKT pflextor_pcell_3 b d g s
+*.PININFO b:B d:B g:B s:B
+Mmp3 d g s b phpbulvt W=3.0 L=14n m=6 lvsExactMatch=1
+.ENDS
+
+************************************************************************
+* Library Name: intel78prim
+* Cell Name:    nflextor_pcell_4
+* View Name:    schematic
+************************************************************************
+
+.SUBCKT nflextor_pcell_4 b d g s
+*.PININFO b:B d:B g:B s:B
+Mmn3 d g s b nhpbulvt W=3.0 L=14n m=6 lvsExactMatch=1
+.ENDS
+
+************************************************************************
+* Library Name: i3modules
+* Cell Name:    i3inc000f_pcell_5
+* View Name:    schematic
+************************************************************************
+
+.SUBCKT i3inc000f_pcell_5 clk clkout vcc vssx
+*.PININFO clk:I clkout:O vcc:B vssx:B
+Xqp0 vcc clkout clk vcc / pflextor_pcell_3
+Xqn0 vssx clkout clk vssx / nflextor_pcell_4
+.ENDS
+
+************************************************************************
+* Library Name: intel78prim
+* Cell Name:    pflextor_pcell_6
+* View Name:    schematic
+************************************************************************
+
+.SUBCKT pflextor_pcell_6 b d g s
+*.PININFO b:B d:B g:B s:B
+Mmp2 d g s b phpbulvt W=2.0 L=14n m=2 lvsExactMatch=1
+.ENDS
+
+************************************************************************
+* Library Name: intel78prim
+* Cell Name:    nflextor_pcell_7
+* View Name:    schematic
+************************************************************************
+
+.SUBCKT nflextor_pcell_7 b d g s
+*.PININFO b:B d:B g:B s:B
+Mmn2 d g s b nhpbulvt W=2.0 L=14n m=2 lvsExactMatch=1
+.ENDS
+
+************************************************************************
+* Library Name: intel78pgate
+* Cell Name:    finv_pcell_8
+* View Name:    schematic
+************************************************************************
+
+.SUBCKT finv_pcell_8 a o vccxx vssxx
+*.PININFO a:I o:O vccxx:B vssxx:B
+Xqpa vccxx o a vccxx / pflextor_pcell_6
+Xqna vssxx o a vssxx / nflextor_pcell_7
+.ENDS
+
+************************************************************************
+* Library Name: lib783_i0s_160h_50pp_clk_ulvt
+* Cell Name:    i0scbf000aa1n18x5
+* View Name:    schematic
+************************************************************************
+
+.SUBCKT i0scbf000aa1n18x5 clk clkout vcc vssx
+*.PININFO clk:I clkout:O vcc:B vssx:B
+Xg101 nc1 clkout vcc vssx / i3inc000f_pcell_5
+Xg0 clk nc1 vcc vssx / finv_pcell_8
+.ENDS
+
+************************************************************************
+* Library Name: intel78prim
+* Cell Name:    pflextor_pcell_9
+* View Name:    schematic
+************************************************************************
+
+.SUBCKT pflextor_pcell_9 b d g s
+*.PININFO b:B d:B g:B s:B
+Mmp3 d g s b phpbulvt W=3.0 L=14n m=1 lvsExactMatch=1
+.ENDS
+
+************************************************************************
+* Library Name: intel78prim
+* Cell Name:    pflextor_pcell_10
+* View Name:    schematic
+************************************************************************
+
+.SUBCKT pflextor_pcell_10 b d g s
+*.PININFO b:B d:B g:B s:B
+Mmp3 d g s b phpbulvt W=3.0 L=14n m=2 lvsExactMatch=1
+.ENDS
+
+************************************************************************
+* Library Name: intel78prim
+* Cell Name:    pflextor_pcell_11
+* View Name:    schematic
+************************************************************************
+
+.SUBCKT pflextor_pcell_11 b d g s
+*.PININFO b:B d:B g:B s:B
+Mmp3 d g s b phpbulvt W=3.0 L=14n m=4 lvsExactMatch=1
+.ENDS
+
+************************************************************************
+* Library Name: intel78prim
+* Cell Name:    pflextor_pcell_12
+* View Name:    schematic
+************************************************************************
+
+.SUBCKT pflextor_pcell_12 b d g s
+*.PININFO b:B d:B g:B s:B
+Mmp3 d g s b phpbulvt W=3.0 L=14n m=2 lvsExactMatch=1
+.ENDS
+
+************************************************************************
+* Library Name: intel78prim
+* Cell Name:    nflextor_pcell_13
+* View Name:    schematic
+************************************************************************
+
+.SUBCKT nflextor_pcell_13 b d g s
+*.PININFO b:B d:B g:B s:B
+Mmn3 d g s b nhpbulvt W=3.0 L=14n m=2 lvsExactMatch=1
+.ENDS
+
+************************************************************************
+* Library Name: i3modules
+* Cell Name:    i3inc000f_pcell_14
+* View Name:    schematic
+************************************************************************
+
+.SUBCKT i3inc000f_pcell_14 clk clkout vcc vssx
+*.PININFO clk:I clkout:O vcc:B vssx:B
+Xqp0 vcc clkout clk vcc / pflextor_pcell_12
+Xqn0 vssx clkout clk vssx / nflextor_pcell_13
+.ENDS
+
+************************************************************************
+* Library Name: intel78prim
+* Cell Name:    pflextor_pcell_15
+* View Name:    schematic
+************************************************************************
+
+.SUBCKT pflextor_pcell_15 b d g s
+*.PININFO b:B d:B g:B s:B
+Mmp3 d g s b phpbulvt W=3.0 L=14n m=1 lvsExactMatch=1
+.ENDS
+
+************************************************************************
+* Library Name: intel78prim
+* Cell Name:    nflextor_pcell_16
+* View Name:    schematic
+************************************************************************
+
+.SUBCKT nflextor_pcell_16 b d g s
+*.PININFO b:B d:B g:B s:B
+Mmn3 d g s b nhpbulvt W=3.0 L=14n m=1 lvsExactMatch=1
+.ENDS
+
+************************************************************************
+* Library Name: intel78pgate
+* Cell Name:    finv_pcell_17
+* View Name:    schematic
+************************************************************************
+
+.SUBCKT finv_pcell_17 a o vccxx vssxx
+*.PININFO a:I o:O vccxx:B vssxx:B
+Xqpa vccxx o a vccxx / pflextor_pcell_15
+Xqna vssxx o a vssxx / nflextor_pcell_16
+.ENDS
+
+************************************************************************
+* Library Name: lib783_i0s_160h_50pp_clk_ulvt
+* Cell Name:    i0scbf000aa1n06x5
+* View Name:    schematic
+************************************************************************
+
+.SUBCKT i0scbf000aa1n06x5 clk clkout vcc vssx
+*.PININFO clk:I clkout:O vcc:B vssx:B
+Xg101 nc1 clkout vcc vssx / i3inc000f_pcell_14
+Xg0 clk nc1 vcc vssx / finv_pcell_17
+.ENDS
+
+************************************************************************
+* Library Name: ganesani_lib_pulse_gen
+* Cell Name:    pulse_gen_logic_ff
+* View Name:    schematic
+************************************************************************
+
+.SUBCKT pulse_gen_logic_ff clk d q qb rstb vcc vssx
+*.PININFO clk:I d:I rstb:I q:O qb:O vcc:B vssx:B
+XI31 vssx vssx c q / nflextor_pcell_0
+XI1 vssx vssx c net1 / nflextor_pcell_0
+XI28 vssx vssx net1 e / nflextor_pcell_1
+XI29 vssx vssx net1 qb / nflextor_pcell_0
+Xqns vssx vssx net5 a / nflextor_pcell_0
+XI7 vssx net3 a b / nflextor_pcell_0
+XI8 vssx e b c / nflextor_pcell_0
+XI4 vssx vssx clk_int e / nflextor_pcell_2
+XI3 vssx vssx clk_int net3 / nflextor_pcell_0
+Xcbf01 clk clk_int vcc vssx / i0scbf000aa1n18x5
+XI40 vcc c rstb vcc / pflextor_pcell_9
+XI38 vcc net4 b vcc / pflextor_pcell_9
+XI39 vcc a net5 net4 / pflextor_pcell_9
+XI37 vcc b c net6 / pflextor_pcell_9
+XI0 vcc net1 c vcc / pflextor_pcell_10
+Xqpsb vcc net61 net5 vcc / pflextor_pcell_11
+XI36 vcc net6 a vcc / pflextor_pcell_9
+XI6 vcc a clk_int net61 / pflextor_pcell_11
+XI26 vcc c net1 net2 / pflextor_pcell_9
+XI25 vcc net2 clk_int vcc / pflextor_pcell_9
+XI27 vcc qb net1 vcc / pflextor_pcell_10
+XI2 vcc b clk_int vcc / pflextor_pcell_10
+XI5 vcc c b vcc / pflextor_pcell_10
+XI30 vcc q c vcc / pflextor_pcell_10
+Xcbf00 d net5 vcc vssx / i0scbf000aa1n06x5
+.ENDS
+

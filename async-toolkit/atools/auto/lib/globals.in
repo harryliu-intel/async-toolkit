@@ -1,0 +1,4 @@
+global Vdd
+global GND
+global _PReset
+global _SReset

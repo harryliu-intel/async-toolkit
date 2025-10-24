@@ -1,0 +1,14 @@
+// Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+// SPDX-License-Identifier: Apache-2.0
+
+module castdecl;
+
+define P(int X, WX)()
+{
+  csp {
+    int(X) x = X;
+    print (x);
+  }
+}
+  
+define Q(int Y)() <: P(2*Y, 17) {}

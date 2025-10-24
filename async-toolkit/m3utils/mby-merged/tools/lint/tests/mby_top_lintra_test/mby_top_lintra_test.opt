@@ -1,0 +1,19 @@
+{
+ %opts = (
+     -static_check_top => "fc_top_lib.soc",
+     -static_check_tools => [ "lintra", ],
+     -lintra_goal               => (defined $ENV{FE2BE_ROOT}) ? "flg":"lint",
+#     -lintra_goal               => "flg",
+     -lintra_post_process_modes => "AceLintra_default",
+     -post_process_pattern_file => "$ENV{ACE_HOME}/udf/ace_base_postsim.pp",
+     #-lira_exe_opts             => [ "-D SVA_OFF -D INTEL_SVA_OFF  -bb $ENV{MODEL_ROOT}/src/rtl/tools/lintra/bb_ctech.txt -bb implicit:$ENV{MODEL_ROOT}/src/rtl/tools/lintra/bb_mem.txt -bb $ENV{MODEL_ROOT}/src/rtl/tools/lintra/bb_other.txt -bb $ENV{MODEL_ROOT}/src/rtl/tools/lintra/bb_partitions.txt"  ],
+     -lira_exe_opts             => [ "-D SVA_OFF -D INTEL_SVA_OFF" ],
+     #-lintra_exe_opts => [ "-r 70036" ], 
+     #-lintra_waiver_files => [
+     #           # permanent waivers 
+     #             "$ENV{MODEL_ROOT}/src/rtl/tools/lintra/fmc_top_w.xml",
+     #             "$ENV{MODEL_ROOT}/src/rtl/tools/lintra/fmc_ebb_modules_w.xml",
+     #           # temp waivers 
+     # ],
+ );
+}

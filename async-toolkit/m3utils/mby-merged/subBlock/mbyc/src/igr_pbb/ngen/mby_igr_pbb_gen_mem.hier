@@ -1,0 +1,8 @@
+// IGR_PBB block
+
+mby_igr_pbb_gen_mem [
+  igr_pbb_shells_wrapper of igr_pbb_shells_wrapper with igr_shells_wrapper.map
+  igr_pbb_sram_mems of igr_pbb_sram_mems with igr_sram_mems.map
+  igr_pbb_rf_mems of igr_pbb_rf_mems with igr_rf_mems.map
+  igr_pbb_ff_mems of igr_pbb_ff_mems with igr_ff_mems.map
+]

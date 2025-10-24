@@ -1,0 +1,97 @@
+% Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+% SPDX-License-Identifier: Apache-2.0
+
+import ("libm3")
+import ("cit_util")
+import ("parserlib")
+import ("parseparams")
+
+Token("rdl")
+Lexer("rdl","rdl")
+Parser("rdl","rdl")
+
+Extended("rdlLexExt")
+Extended("rdlParseExt")
+%derived_extended("rdlParseExt", VISIBLE)
+
+%library("rdlparse")
+
+derived_interface ("RdlPredefProperty", VISIBLE)
+derived_interface ("RdlPropertyModifier", VISIBLE)
+derived_interface ("RdlPropertyComponent", VISIBLE)
+derived_interface ("RdlPropertyRvalueKeyword", VISIBLE)
+derived_interface ("RdlComponentDefType", VISIBLE)
+derived_interface ("RdlOrigin",VISIBLE)
+derived_interface ("RdlPropertyRefType",VISIBLE)
+
+template("symtab")
+Generic_module("Symtab")
+
+Interface ("RdlRootElem")
+Interface ("RdlComponentDef")
+List ("RdlComponentDef", "RdlComponentDef")
+Interface ("RdlEnumDef")
+Interface ("RdlComponentDefClass")
+Interface ("RdlPropertyComponentDisjunction")
+Interface ("RdlPropertyDefault")
+Interface ("RdlPropertyType")
+Interface ("RdlPropertyBody")
+
+Interface ("RdlStr")
+Module    ("RdlNum")
+
+Table ("TextPropertyBody", "Text", "RdlPropertyBody")
+
+Interface ("RdlEnumPropertyAssign")
+List ("RdlEnumPropertyAssign", "RdlEnumPropertyAssign")
+
+Interface ("RdlPropertyAssign")
+Interface ("RdlPropertyAssignClass")
+List ("RdlPropertyAssign", "RdlPropertyAssign")
+Interface ("RdlEnumEntry")
+List ("RdlEnumEntry","RdlEnumEntry")
+Interface ("RdlEnumDef")
+Interface ("RdlArray")
+Interface ("RdlComponentInstElem")
+List ("RdlComponentInstElem", "RdlComponentInstElem")
+
+Interface ("RdlComponentDefElem")
+List ("RdlComponentDefElem", "RdlComponentDefElem")
+Interface ("RdlAnonComponentInstElems")
+
+Interface ("RdlExplicitComponentInst")
+
+Module    ("RdlExplicitPropertyAssign")
+Interface ("RdlPostPropertyAssign")
+Module    ("RdlInstanceRef")
+Module    ("RdlPropertyAssignRhs")
+
+Module ("RdlInstanceRefElem")
+Sequence ("RdlInstanceRefElem", "RdlInstanceRefElem")
+Interface ("RdlPropertyRvalueConstant")
+Interface ("RdlConcatElem")
+List ("RdlConcatElem","RdlConcatElem")
+
+Module ("RdlProperty")
+Interface ("RdlPropertyDef")
+Interface ("RdlRootElem")
+List ("RdlRootElem", "RdlRootElem")
+Interface ("RdlRootElemLstRecord")
+
+Table("RdlExplicitPropertyAssign", "RdlProperty", "RdlExplicitPropertyAssign")
+Table("RdlPostPropertyAssign", "RdlInstanceRef", "RdlPostPropertyAssign")
+
+%Module ("RdlPropertySymtab")
+Symtab("RdlProperty", "RdlProperty", "RdlExplicitPropertyAssign", "RdlExplicitPropertyAssignTbl")
+
+Table("TextRdlComponentDef", "Text", "RdlComponentDef")
+Module("TextFormat")
+Symtab("RdlComponentDef", "TextFormat", "RdlComponentDef", "TextRdlComponentDefTbl")
+
+Module ("RdlComponentDefLstRecord")
+
+%implementation ("Main")
+
+library("rdlparse")
+
+%program ("parserdl")

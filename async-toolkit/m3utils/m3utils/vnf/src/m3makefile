@@ -1,0 +1,29 @@
+% Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+% SPDX-License-Identifier: Apache-2.0
+
+import("parserlib")
+import("cit_util")
+
+Token("vnf")
+Lexer("vnf", "vnf")
+Parser("vnf", "vnf")
+
+Extended("vnfLexStd")
+Extended("vnfParseStd")
+
+interface ("Vnf")
+interface ("VnfInstance")
+interface ("VnfModule")
+interface ("VnfBundle")
+interface ("VnfBundleType")
+
+List ("VnfInstance", "VnfInstance")
+Sequence ("VnfBundle", "VnfBundle")
+
+List ("VnfModule", "VnfModule")
+
+interface ("VnfDecl")
+
+implementation ("Main")
+
+program ("vnf")

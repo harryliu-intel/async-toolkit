@@ -1,0 +1,5 @@
+/*** output mag file with locations of labels used for spanning trees ***/
+read "cmos.in"
+read_connect $2
+read_instances $2
+debug_labels

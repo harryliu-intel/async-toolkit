@@ -1,0 +1,191 @@
+GDS plotting package
+gds2plot & plot
+Authors: Andrew Lines & Aubrey Grey
+Contributors: Alicia Klinefelter
+Inspired by: Mika Nystroem's "magplot"
+Copyright: Intel, 2015
+Support: andrew.lines@intel.com
+
+----------------------------- BACKGROUND ---------------------------------------
+
+Gds2plot is a C program that renders high quality plots of a GDS file.
+A required configuration file, usually called gds2plot.conf, defines
+the layer mapping from GDS to RGBA values.  The syntax is:
+
+#     R     G     B     A       (boolean expression of gds2 layernum:datatype)
+paint 0-255 0-255 0-255 0.0-1.0 layer # comment
+paint ...
+
+The GDS layer can be defined as layernum or layernum:datatype and
+combined into boolean expressions with (, ), ||, &&, !, ==, != boolean
+operators.  Typical uses of this feature are to imply n-diff from
+diffusion and n-implant, or to merge B and C metal colorings.
+
+The layers are painted in order starting with a white background.
+Alpha is the opacity of the layer, where 1.0 means completely opaque
+(replaces the previous color) and 0.0 is completely transparent.
+Experience has shown that the lowest layers should be opaque, and
+upper layers get gradually more transparent.  The colors of the lower
+layers came from Magic's default palette circa 1994.
+
+Gds2plot loads the GDS database into memory, then renders at
+manufacturing grid resolution (just like making masks).  To reduce
+memory consumption, it only renders one tile (typically 20000 pixels
+square) at a time.  After the tile is rendered, it is down-scaled to
+the output resolution.  Once all the tiles in horizontal stripe are
+rendered, the data is written to a ppm file.
+
+For large GDS files, it saves a lot of memory and runtime to stream
+out a GDS file with only relevant layernum:datatype and no labels.
+The gds2plot_layer_map.rules is an example compatible with Virtuoso.
+
+For best results, it is recommended to distinguish fill shapes and
+power wires with different GDS datatypes and exclude these datatypes
+from the conf file.  Otherwise the plots look almost solid color.
+
+------------------------- WRAPPER ----------------------------------------------
+
+Plot is a perl script wrapper that is the normal way to use gds2plot.
+It breaks the task into parallel jobs using netbatch, then stitches
+the stripes back together and converts the final image to a standard
+format like png.  Typical usage is "plot --jobs=16 myfile" which will
+plot myfile.gds to myfile.png using default options.  If you run in
+another directory you should create sym-links or specify the conf-file
+and exclude-file arguments and include the gds2plot directory in your
+search path.  If you want to plot a subcell, use the --cell option to
+specify its GDS name.  By default gds2plot will auto-detect the
+top-level cell (a cell which is not instantiated by any other cell).
+
+An --exclude-file=exclude.in contains a set of regular expressions
+(perl style) of cell names to skip when plotting.  This is typically
+used to skip fill cells so that "empty" space actually looks empty.  A
+sample exclude.in is provided to skip D04 fill cells.
+
+If you specify jobs>0 plot will use netbatch to launch multiple
+stripes in parallel.  Netbatch will use the environment variables
+NBPOOL, NBQSLOT, NBCLASS.  The output of each job is saved to
+basename.out.# where # is the job number.  It creates a basename.do.#
+file which prevents a subsequent call of plot from launching that job
+again.  If a job crashes, delete that basename.do.# file and run plot
+again, and it will just rerun jobs for the missing do files.  After
+the jobs have finished (or partially finished) you can run plot again
+with the same arguments to concatenate the basename.ppm.# files into a
+single file and convert it to the desired output format (png).  It is
+wise to log into one of the netbatch servers to check the memory
+usage, and in subsequent runs specify the --mem option appropriately.
+If --monitor=10 (the default) the host will query the progress of the
+jobs every 10 minutes and concatenate the ppm file for early viewing.
+After all have completed, it will convert the ppm to another image
+format (--format=png by default) using the "convert" utility.
+
+-------------------------------- USAGE -----------------------------------------
+
+Run "$GDS2PLOT_DIR/plot" with no arguments to get a usage banner with
+simple comments.
+
+(1) Create a scratch_dir directory.  Sym-link or copy the
+    gds2plot.conf and exclude.in, as well as your_file.gds file:
+
+    cd $scratch_dir
+    ln -s $GDS2PLOT_DIR/exclude.in    .
+    ln -s $GDS2PLOT_DIR/gds2plot.conf .
+    ln -s your_file.gds               .
+
+(2) Set netbatch environment variables (required if you specify
+    --jobs=# argument).  Example:
+
+    setenv NBPOOL pdx_normal
+    setenv NBQSLOT /ilabs/wcr
+    setenv NBCLASS SLES10_EM64T_16G
+
+(3) Run the plot script.  Example:
+
+    $GDS2PLOT_DIR/plot --jobs=16 --cell=your_top_cell your_file
+
+(4) If you're netbatching the run, you will see the jobs get launched
+    and then queued:
+
+    # Lauching your_file, job 0
+    ...
+    # Lauching your_file, job 15
+    Your job has been queued (JobID 2365671187, Class EXPR, Queue Slot /ilabs/wcr)
+    ...
+    Your job has been queued (JobID 2365671220, Class EXPR, Queue Slot /ilabs/wcr)
+
+(5) Monitor progress by checking the your_file.out.# files.
+    Individual runs are completed when you see the "Finished" message,
+    such as:
+
+    ...
+    Top cell is your_top_cell
+    Computing bounding boxes at 33s
+    xsize=11929 ysize=13137 Nsubpixels=191
+    x0=-191 y0=-191 x1=2278248 y1=2508976 tile=20055
+    Rendering rows 403201 <= y < 423256 at 111s
+    ...
+    Finished at 7713s
+
+(6) If the run was netbatched, all your_file.ppm.# files need to be
+    concatenated.  Re-run the plot command with the same arguments as
+    step (3) to complete this.  You can also specify --format to
+    choose between common image formats to convert to (i.e. jpg, png).
+
+    $GDS2PLOT_DIR/plot --jobs=16 --cell=your_top_cell --format=png your_file
+
+    Concatenating your_file.ppm
+
+(7) View the result with "gimp your_file.png".  Gimp is useful for
+    scaling the image to make smaller plots (for e-mail or PowerPoint)
+    and for converting image formats.
+
+------------------------- PRINTING & FRAMING -----------------------------------
+
+To produce high quality posters, first choose your resolution very
+carefully.  I recommend 600DPI for color plots on high-end printers
+with a native resolution of 2400DPI (sub-pixels are necessary to mix
+colors).  Calculate your desired size and leave an inch for margin.
+The default --max=13200 is intended for 24x24 inch plots with 1 inch
+margin.  That is, 22x22 inches of image at 600DPI.
+
+Convert the image to a PDF file using a tool like "gimp".  Open the
+ppm or png, use Image/Print Size menu to set X/Y resolution to 600DPI.
+Use Image/Canvas Size set Width/Height to 24 inches.  Then File/Export
+As to a pdf file.  This sets the meta-data in the PDF file correctly
+so that when a print shop imports it, it will automatically have the
+right DPI and margins.  Otherwise there is a risk that they will
+accidentally scale your image, degrading the quality.  Burn images to
+a DVD, or use a USB stick if you have a big one (a typical image is
+250MB).
+
+For printing, I recommend 65lb gloss paper.  Typical printing costs
+are $5 setup plus $8/ft^2 per copy.  So a color plot of 2x2 feet
+should be around $32.  CopyMan in downtown Portland is quite
+competent.
+
+After printing, have the paper dry-mounted to a 3/16 inch deep foam
+core.  This supports the paper and prevents it from wrinkling over
+many years.  For temporary displays this is all you need.  Blick's
+does dry-mounting for about $25 for 2x2 foot.
+
+For framing, I recommend Nelison Bainbridge black metal frame kits
+with 13/32 inch depth.  These come as 2 sets of 2 edges with 1 inch
+multiples, so make sure you target integer inch sizes.  If you want to
+buy a complete frame, be aware that only a few sizes are available
+(24x24 and 24x18 are fairly common).  Custom frames sizes are
+unnecessarily expensive.  Mounting kits are sold separately.  The
+frame kits and mounting kit should cost around $30, also readily
+available at Blick's.
+
+Finally, you need a plexiglass/acrylic/lexan sheet of 1/8 inch thick.
+Glass is too heavy for larger sizes.  This should cost around $25 for
+2x2 feet.  Check the available sizes, since only a few are widely
+stocked.  Some internet suppliers will cut them, but Blick's will not.
+I have had bad luck with many suppliers, with imperfections in several
+items.  They are usually covered in protective film so you can't
+inspect them carefully, but definitely look for visible scratches.  Be
+prepared to return them if they are damaged.
+
+Assembly takes about 10 minutes, which you can get down to 5 minutes
+with some practice.  Keep everything sealed and protected from dust.
+
+The total cost of a 2x2 framed poster should be around $100-$125.

@@ -1,0 +1,10 @@
+*.ass
+*.ic0
+*.lis
+*.simulator
+*.spice 
+*.st0
+*.tr0
+*.avg
+*.names
+*.trace

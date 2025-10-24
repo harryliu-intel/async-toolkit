@@ -1,0 +1,53 @@
+##############################################################################
+# This file contains global clock connectivity specs that are not automated
+# It should NOT include other connectivity specs
+# See $COLLAGE_ROOT/templates/ad_hoc_connections.txt for syntax
+##############################################################################
+
+## Temp; refclk will come from a serdes phy in EPC
+C   /HSS_REFCLK_DP[0]   mby_parclk/ref_clk   ref_clk
+
+## temp, not sure if these go direct to EPC or supposed to go through some other IO buffer first
+## also, which EPC they connect to will be determined by circuit/SD folks, need input
+Ci  /HSS_REFCLK_DP[0]   mby_ec_top_0/i_serdes_refclk_p
+Ci  /HSS_REFCLK_DN[0]   mby_ec_top_0/i_serdes_refclk_n
+Ci  /HSS_REFCLK_DP[0]   mby_ec_top_1/i_serdes_refclk_p
+Ci  /HSS_REFCLK_DN[0]   mby_ec_top_1/i_serdes_refclk_n
+Ci  /HSS_REFCLK_DP[1]   mby_ec_top_2/i_serdes_refclk_p
+Ci  /HSS_REFCLK_DN[1]   mby_ec_top_2/i_serdes_refclk_n
+Ci  /HSS_REFCLK_DP[1]   mby_ec_top_3/i_serdes_refclk_p
+Ci  /HSS_REFCLK_DN[1]   mby_ec_top_3/i_serdes_refclk_n
+Ci  /HSS_REFCLK_DP[2]   mby_ec_top_4/i_serdes_refclk_p
+Ci  /HSS_REFCLK_DN[2]   mby_ec_top_4/i_serdes_refclk_n
+Ci  /HSS_REFCLK_DP[2]   mby_ec_top_5/i_serdes_refclk_p
+Ci  /HSS_REFCLK_DN[2]   mby_ec_top_5/i_serdes_refclk_n
+Ci  /HSS_REFCLK_DP[3]   mby_ec_top_6/i_serdes_refclk_p
+Ci  /HSS_REFCLK_DN[3]   mby_ec_top_6/i_serdes_refclk_n
+Ci  /HSS_REFCLK_DP[3]   mby_ec_top_7/i_serdes_refclk_p
+Ci  /HSS_REFCLK_DN[3]   mby_ec_top_7/i_serdes_refclk_n
+
+## Connect PLL clock outputs to SS clks
+C   mby_parclk/mclk_out     mby_msh_0/mclk     mclk
+C   mby_parclk/cclk_out     mby_msh_0/cclk     cclk
+C   mby_parclk/cclk_out     mby_gmn_0/cclk     cclk
+C   mby_parclk/cclk_out     mby_gms_0/cclk     cclk
+//;for {set mppindx 0} {$mppindx<8} {incr mppindx} {
+C   mby_parclk/cclk_out     mby_mpp_${mppindx}/cclk       cclk
+C   mby_parclk/cclk_out     mby_ec_top_${mppindx}/cclk    cclk
+C   mby_parclk/eclk_out     mby_ec_top_${mppindx}/eclk    eclk
+//;}
+
+# imc clocks - aclk, sclk, pclk
+# temp dummysyscon clk connection; for now, using cclk so dummy syscon can line up resets properly; cclk may not be used for real syscon
+C   mby_parclk/cclk_out     mby_syscon/clk     cclk
+
+# other?
+
+##############################################################################
+# Text editor settings
+# Local Variables:
+# mode: conf
+# End:
+# vim: set expandtab tabstop=2 shiftwidth=2 softtabstop=2 :
+
+

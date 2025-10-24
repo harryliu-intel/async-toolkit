@@ -1,0 +1,71 @@
+
+foreach $i (0..1) {
+
+   //1'b0  >> PB$i$_MD_RAM_$j$_CFG_reg_sel
+   //1'b0  >> PB$i$_MD_RAM_$j$_STATUS_reg_sel
+   1'b0  >> IGR_POST_BODY_LL_RAM_$i$_CFG_reg_sel
+   1'b0  >> IGR_POST_BODY_LL_RAM_$i$_STATUS_reg_sel
+   
+   igr_post_body_ll_if.rd_adr__$i$__    >> igr_post_body_ll_ram_$i$_rd_adr
+   igr_post_body_ll_if.wr_adr__$i$__    >> igr_post_body_ll_ram_$i$_wr_adr
+   1'b0                                 >> igr_post_body_ll_ram_$i$_mem_ls_enter
+   igr_post_body_ll_if.rd_en__$i$__     >> igr_post_body_ll_ram_$i$_rd_en
+   igr_post_body_ll_if.wr_data__$i$__   >> igr_post_body_ll_ram_$i$_wr_data
+   igr_post_body_ll_if.wr_en__$i$__     >> igr_post_body_ll_ram_$i$_wr_en
+   igr_post_body_ll_if.rd_data__$i$__   >> igr_post_body_ll_ram_$i$_rd_data
+   igr_post_body_ll_if.rd_valid__$i$__  >> igr_post_body_ll_ram_$i$_rd_valid
+                                        >> igr_post_body_ll_ram_$i$_ecc_uncor_err
+                                        >> igr_post_body_ll_ram_$i$_init_done
+}
+
+
+foreach $i (0..3) {
+   foreach $j (0..3) {
+   
+      1'b0  >> IGR_POST_SOP_FIFO_$i$_RAM_$j$_CFG_reg_sel
+      1'b0  >> IGR_POST_SOP_FIFO_$i$_RAM_$j$_STATUS_reg_sel
+      
+      igr_post_sop_fifo_$i$_if.rd_adr__$j$__    >> igr_post_sop_fifo_$i$_ram_$j$_rd_adr
+      igr_post_sop_fifo_$i$_if.wr_adr__$j$__    >> igr_post_sop_fifo_$i$_ram_$j$_wr_adr
+      1'b0                                     >> igr_post_sop_fifo_$i$_ram_$j$_mem_ls_enter
+      igr_post_sop_fifo_$i$_if.rd_en__$j$__     >> igr_post_sop_fifo_$i$_ram_$j$_rd_en
+      igr_post_sop_fifo_$i$_if.wr_data__$j$__   >> igr_post_sop_fifo_$i$_ram_$j$_wr_data
+      igr_post_sop_fifo_$i$_if.wr_en__$j$__     >> igr_post_sop_fifo_$i$_ram_$j$_wr_en
+      igr_post_sop_fifo_$i$_if.rd_data__$j$__   >> igr_post_sop_fifo_$i$_ram_$j$_rd_data
+      igr_post_sop_fifo_$i$_if.rd_valid__$j$__  >> igr_post_sop_fifo_$i$_ram_$j$_rd_valid
+                                               >> igr_post_sop_fifo_$i$_ram_$j$_ecc_uncor_err
+                                               >> igr_post_sop_fifo_$i$_ram_$j$_init_done
+   }
+}
+
+
+foreach $i (0..2) {
+   1'b0  >> IGR_PTR_CACHE_RAM_$i$_CFG_reg_sel
+   1'b0  >> IGR_PTR_CACHE_RAM_$i$_STATUS_reg_sel
+   
+   igr_ptr_cache_ram_if.rd_adr__$i$__    >> igr_ptr_cache_ram_$i$_rd_adr
+   igr_ptr_cache_ram_if.wr_adr__$i$__    >> igr_ptr_cache_ram_$i$_wr_adr
+   1'b0                                  >> igr_ptr_cache_ram_$i$_mem_ls_enter
+   igr_ptr_cache_ram_if.rd_en__$i$__     >> igr_ptr_cache_ram_$i$_rd_en
+   igr_ptr_cache_ram_if.wr_data__$i$__   >> igr_ptr_cache_ram_$i$_wr_data
+   igr_ptr_cache_ram_if.wr_en__$i$__     >> igr_ptr_cache_ram_$i$_wr_en
+   igr_ptr_cache_ram_if.rd_data__$i$__   >> igr_ptr_cache_ram_$i$_rd_data
+   igr_ptr_cache_ram_if.rd_valid__$i$__  >> igr_ptr_cache_ram_$i$_rd_valid
+                                         >> igr_ptr_cache_ram_$i$_ecc_uncor_err
+                                         >> igr_ptr_cache_ram_$i$_init_done
+}
+
+
+ 1'b0 >> POST_PPE_ECC_COR_ERR_reg_sel
+ 1'b0 >> POST_PPE_ECC_UNCOR_ERR_reg_sel
+
+ 1'b1 >> unified_regs_rd
+ '0  >> unified_regs_wr_data
+      >> post_ppe_ecc_int
+      >> post_ppe_init_done
+      >> unified_regs_ack
+      >> unified_regs_rd_data
+
+cclk    >> clk
+reset_n >> reset_n
+

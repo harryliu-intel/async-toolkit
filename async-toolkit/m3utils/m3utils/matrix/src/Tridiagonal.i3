@@ -1,0 +1,39 @@
+(* Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information. *)
+(* SPDX-License-Identifier: Apache-2.0 *)
+
+(* $Id: Tridiagonal.i3,v 1.1 2005/04/20 00:08:49 mika Exp $ *)
+
+INTERFACE Tridiagonal;
+IMPORT Matrix, LRVector;
+
+(* Tridiagonal methods *)
+
+PROCEDURE Reduce(VAR a : Matrix.S; 
+                 VAR d, e : LRVector.S);
+(* reduce real symmetric a to tridiagonal form by Householder reduction *)
+(* a replaced by orthogonal Q effecting transformation,
+   d by diagonal elements of tridiagonal,
+   e by off-diagonal elements.
+   e[0] = 0 *)
+
+PROCEDURE QLi(VAR d, e : LRVector.S;
+              VAR z : Matrix.S);
+(* QL algorithm with implicit shifts.  Use output of reduce.  
+   d returns eigenvalues
+   e is destroyed
+   z returns eigenvectors, column by column *)
+
+END Tridiagonal.
+
+
+
+
+
+
+
+
+
+
+
+
+

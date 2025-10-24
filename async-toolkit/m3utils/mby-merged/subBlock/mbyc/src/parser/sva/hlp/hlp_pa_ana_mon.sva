@@ -1,0 +1,51 @@
+// Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+// SPDX-License-Identifier: Apache-2.0
+
+//------------------------------------------------------------------------------
+//
+//  INTEL CONFIDENTIAL
+//
+//  Copyright 2006 - 2017 Intel Corporation All Rights Reserved.
+//
+//  The source code contained or described herein and all documents related
+//  to the source code ("Material") are owned by Intel Corporation or its
+//  suppliers or licensors. Title to the Material remains with Intel
+//  Corporation or its suppliers and licensors. The Material contains trade
+//  secrets and proprietary and confidential information of Intel or its
+//  suppliers and licensors. The Material is protected by worldwide copyright
+//  and trade secret laws and treaty provisions. No part of the Material may
+//  be used, copied, reproduced, modified, published, uploaded, posted,
+//  transmitted, distributed, or disclosed in any way without Intel's prior
+//  express written permission.
+//
+//  No license under any patent, copyright, trade secret or other intellectual
+//  property right is granted to or conferred upon you by disclosure or
+//  delivery of the Materials, either expressly, by implication, inducement,
+//  estoppel or otherwise. Any license under such intellectual property rights
+//  must be express and approved by Intel in writing.
+//
+//------------------------------------------------------------------------------
+
+// check output validity
+`HLP_ASRT_DELAY(CheckAnaValid, 1, i_ana_data_v, o_ana_data_v);
+
+// Assert code to check the cam matches
+ana_action_t model__action;
+logic [31:0] model__match;
+always_comb begin
+  model__action  = actions[0];
+  model__match   = '0;
+  for (int i=0; i<N_PARSER_RULES; i++) begin
+    if (((i_ana_data.w0    & c_pa_key_w[i].w0_mask) == c_pa_key_w[i].w0_value) &
+        ((i_ana_data.w1    & c_pa_key_w[i].w1_mask) == c_pa_key_w[i].w1_value) &
+        ((i_ana_data.state & c_pa_key_s[i].state_mask) ==
+         c_pa_key_s[i].state_value)) begin
+      model__action   = actions[i];
+      model__match[i] = 1'b1;
+    end
+  end
+end
+
+
+asrt_pa_ana_tcam_match: assert property
+  (@(posedge clk) disable iff(rst_n!==1) action == model__action );

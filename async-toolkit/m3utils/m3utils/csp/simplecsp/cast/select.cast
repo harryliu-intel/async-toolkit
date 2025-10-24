@@ -1,0 +1,447 @@
+// Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+// SPDX-License-Identifier: Apache-2.0
+
+module select;
+import lib.bd.6T.ecc.ecc_constants;
+import lib.bd.6T.ecc.ecc;
+
+// cosimulate first.SYSTEM {csp,subcells}
+
+int WIDTH = 32;
+int N     = 4 * 1024;
+
+define IF()()
+{
+  csp {
+    int x = 13;
+    x++;
+    
+    [  x == 14 -> print ("fourteen")
+    [] else    -> print ("not fourteen")
+    ]
+  }
+}
+
+define DRIVE()(bd(WIDTH) +R0, +R1, -L)
+{
+  csp {
+    int x;
+    *[ R0!0 ; L?x ; R1!1 ; L?x ]
+  }
+}
+
+define RANDOMP()(bd(WIDTH) +R0, +R1, -L)
+{
+  csp {
+
+    int x;
+    *[ int r = random(1);
+       print(r);
+       [  r == 0 -> R0!(x + 13)
+       [] r == 1 -> R1!(x * 17)
+       ];
+       L?x
+     ]
+  }
+}
+
+define SELECT()(bd(WIDTH) -L0, -L1, +R)
+{
+
+   csp {
+     int i, x;
+     
+     *[[  #L0 -> L0?x
+       [] #L1 -> L1?x
+       ];
+       #[ i % 10000 == 0 -> print ("i/10000 = " + i/10000 + " x = " + x) ];
+       i++;
+       R!x
+      ]
+   }
+}
+
+define SIMPLE()(bd(WIDTH) -L0, -L1, +R)
+{
+  csp {
+     int i, x;
+     
+     *[[  #L0 -> L0?x
+       [] #L1 -> L1?x
+       ];
+       R!x
+      ]
+   }
+}
+
+
+
+define P()(bd(WIDTH) -L[0..1], -M, +R; node +-n)
+{
+  csp {
+    function f(int i) : bool =
+      (f = #L[i] //; print(b2i(f))
+      );
+
+    *[[ f(0) -> L[0]?x
+      : f(1) -> L[1]?x
+      ];
+      print(x);
+      R!x
+      ]
+      }
+}
+
+define P1()(bd(WIDTH) -L[0..1], -M, +R; node +-n)
+{
+  csp {
+    function f(int i) : bool =
+      (f = #L[i] //; print(b2i(f))
+      );
+
+    function g(bool x) : bool =
+      (g = x;
+       print(" g is here! " + x);
+       );
+
+    *[[ g(g(g(f(0)))) -> L[0]?x
+      : f(1) -> L[1]?x
+      ];
+      print(x);
+      R!x
+      ]
+      }
+}
+
+define P2()(bd(WIDTH) -L[0..1], -M, +R; node +-n)
+{
+  csp {
+    function f(int i) : bool =
+      (f = #L[i] //; print(b2i(f))
+      );
+
+    function g(bool x) : bool =
+      (g = x;
+       print(" g is here! " + x);
+       );
+
+    function select() : int =
+      (int x;
+       
+       [ g(g(g(f(0)))) -> L[0]?x
+       : f(1) -> L[1]?x
+       ];
+
+       select = x
+      );
+
+    *[
+      x = select();
+      print(x);
+      R!x;
+      x = select();
+      print(x);
+      R!x;
+      x = select();
+      print(x);
+      R!x
+     ]
+      
+      }
+}
+
+define P3()(bd(WIDTH) -L[0..1], -M, +R; node +-n)
+{
+  csp {
+    function f(int i) : bool =
+      (f = #L[i] //; print(b2i(f))
+      );
+
+    function g(bool x) : bool =
+      (g = x;
+       print(" g is here! " + x);
+       );
+
+    function select() : int =
+      (int x;
+       
+       [ g(g(g(f(0)))) -> L[0]?x
+       : f(1) -> L[1]?x
+       ];
+
+       select = 0
+      );
+
+    function select2() : int =
+      (int x;
+       
+       [ g(g(g(f(0)))) -> L[select()]?x
+       : f(1) -> L[1]?x
+       ];
+
+       select2 = x
+      );
+
+    *[
+      x = select2();
+      print(x);
+      R!x;
+      x = select2();
+      print(x);
+      R!x;
+      x = select2();
+      print(x);
+      R!x
+     ]
+      
+      }
+}
+
+define Q0()(bd(WIDTH) -L[0..1], -M, +R; node +-n)
+{ // meaningless but syntactically unobjectionable
+  csp {
+    function f(int i) : bool =
+      (f = #L[i] //; print(b2i(f))
+      );
+
+    bool verbose = false;
+    
+    *[*[ f(0) -> L[0]?x
+       : f(1) -> L[1]?x
+         ];
+      #[ verbose -> print("" + x + x + hex(x) + x) ];
+      R!x
+      ]
+      }
+}
+
+define BITGEN()(bd(WIDTH) +R)
+{
+  csp { *[ R!0 ] }
+}
+
+define SYSTEM(int C)()
+{
+  subcells {
+    bd(WIDTH) c[0..1], cx, m;
+    node n = Vdd;
+  
+    [ C==0 -> SELECT() select(c[0], c[1], cx); ]
+    [ C==1 -> P() select(c, m, cx, n); BITGEN bitgen(m); ]
+    [ C==2 -> Q0() select(c, m, cx, n); BITGEN bitgen(m); ]
+    [ C==3 -> P1() select(c, m, cx, n); BITGEN bitgen(m); ]
+    [ C==4 -> P2() select(c, m, cx, n); BITGEN bitgen(m); ]
+    [ C==5 -> P3() select(c, m, cx, n); BITGEN bitgen(m); ]
+    [ C==6 -> SIMPLE() select(c[0], c[1], cx); ]
+
+    [ C!=6 -> DRIVE() drive(c[0], c[1], cx); ]
+    [ C==6 -> RANDOMP() drive(c[0], c[1], cx); ]
+  } 
+}
+
+bool verbose = false;
+
+
+define FORWARD(int PORT, Q, W, WX, WY, WZ, WP, NMC, NBS)()
+  <+ my_mesh_forward(Q,WX,WY,WZ,WP) {
+  csp {
+    nextHop(0,0);
+  }
+}
+
+define FORWARD1(int PORT, Q, W, WX, WY, WZ, WP, NMC, NBS)()
+  <+ mesh_forward(Q,WX,WY,WZ,WP) <+ ecc(W+1,8)
+{
+  int W_D=W+1;     // data+tail bits for ecc encoding
+  int W_P=8;       // ecc bits (for >=57b datapath)
+  csp {
+    nextHop(0,0);
+  }
+}
+
+
+define my_mesh_forward(int Q, WX, WY, WZ, WP) attributes
+  <+ fix_int0 <+ standard.attributes.functions {
+
+  // computed constants
+  int WDST=WX+WY+WZ+WP; // destination width
+  int QD=Q-2*int(WX!=0)-2*int(WY!=0)-2*int(WZ!=0); // number of local ports
+  int PORT_U=QD;
+  int PORT_D=PORT_U+int(WZ!=0);
+  int PORT_N=PORT_D+int(WZ!=0);
+  int PORT_S=PORT_N+int(WY!=0);
+  int PORT_E=PORT_S+int(WY!=0);
+  int PORT_W=PORT_E+int(WX!=0);
+  int TO_U=2**PORT_U;
+  int TO_D=2**PORT_D;
+  int TO_N=2**PORT_N;
+  int TO_S=2**PORT_S;
+  int TO_E=2**PORT_E;
+  int TO_W=2**PORT_W;
+  int MASK_P =(2**WP-1);
+  int MASK_UD=(2**WZ-1)*2**(WP);
+  int MASK_NS=(2**WY-1)*2**(WZ+WP);
+  int MASK_EW=(2**WX-1)*2**(WY+WZ+WP);
+
+  // CFG constant with X=1, Y=1, Z=1 use for performance tests
+  int perf_cfg = int(WX!=0)*2**(WY+WZ+WP) | int(WY!=0)*2**(WZ+WP) | int(WZ!=0)*2**(WP);
+
+  // compute dimension priority of a port
+  int DIM[0..Q-1];
+  <i:QD: DIM[i]=0; >
+  [WX!=0 -> DIM[PORT_E]=3; DIM[PORT_W]=3; ]
+  [WY!=0 -> DIM[PORT_N]=2; DIM[PORT_S]=2; ]
+  [WZ!=0 -> DIM[PORT_U]=1; DIM[PORT_D]=1; ]
+
+  csp {
+    function print2(string -x) =
+      ( print(x) );
+    
+        function nextHop(int(WDST) -H; int(WDST) -cfg) : int(Q) =
+      (//assert(QD>=0,"need more ports");
+       int(WX+NO_INT0) x;// x{WX-1:0}=H>>(WY+WZ+WP);
+       int(WY+NO_INT0) y;// y{WY-1:0}=H>>(WZ+WP);
+       int(WZ+NO_INT0) z; // z{WZ-1:0}=truncate(WZ,H>>(WP));
+       int(WP+NO_INT0) p; // p{WP-1:0}=truncate(WP,H);
+
+       /*       int(WX+NO_INT0) mx; mx{WX-1:0}=cfg>>(WY+WZ+WP);
+       int(WY+NO_INT0) my; my{WY-1:0}=cfg>>(WZ+WP);
+       int(WZ+NO_INT0) mz; mz{WZ-1:0}=truncate(WZ,cfg>>(WP));
+       int(log2(QD)+NO_INT0) localPort;
+       #[QD>1 -> localPort{log2(QD)-1:0}=min(QD-1,p{WP-1:WP-log2(QD)})]; // TODO: shouldn't need guard
+       int(QD) localHop=1<<localPort;
+       [ x>mx -> nextHop=TO_E
+       []x<mx -> nextHop=TO_W
+       []else ->
+         [ y>my -> nextHop=TO_N
+         []y<my -> nextHop=TO_S
+         []else ->
+           [ z>mz-> nextHop=TO_U
+           []z<mz-> nextHop=TO_D
+           []else ->
+             nextHop=localHop
+           ]
+         ]
+         ];*/
+       #[verbose ->
+         print("mesh_forward H=" + hex(H) + " X=" + x + " Y=" + y + " Z=" + z +
+               " P=" + p + " nextHop=" + get_msb_pos(Q,nextHop))
+        ]
+       );
+  }
+}
+
+    
+define R(int PORT, Q)() <: FORWARD(PORT, Q, 64, 6, 6, 0, 2, 8, 4) 
+{}
+
+define S(int PORT, Q)() <: FORWARD1(PORT, Q, 64, 6, 6, 0, 2, 8, 4)
+{
+
+  csp {
+    print (ecc_parity(10));
+  }
+
+}
+
+define T()(bd(32) -L[0..1])
+{
+  csp {
+    function f() : int =
+      (f = 1);
+
+    int x;
+    L[f()]?x
+  }
+}
+
+define U()(bd(32) -L[0..1], +R[0..1])
+{
+  csp {
+    function f() : int =
+      (f = 1);
+
+    int x[2];
+    L[f()]?x[f()];
+
+    R[f()]!x[f()]
+    
+  }
+}
+
+define V()()
+{
+  csp {
+    print("hi");
+    wait(100);
+    print("bye");
+  }
+}
+
+define W()()
+{
+  csp {
+    print("hi"),
+    print("bye");
+
+    wait(100);
+  }
+}
+
+define X()()
+{
+  csp {
+    boolean b, c, d;
+
+    [ b -> skip [] c -> skip [] d -> skip ]
+  }
+}  
+    
+define Y()(bd(32) -L[0..1])
+{
+  csp {
+    *[  #L[0] -> print ( L[0]? )
+     [] #L[1] -> print ( L[1]? )
+     ]
+  }
+}
+
+define YY()(bd(WIDTH) -L[0..1])
+{
+  csp {
+    *[[  #L[0] -> print ( L[0]? )
+      :  #L[1] -> print ( L[1]? )
+     ]]
+  }
+}
+
+define GEN(int i)(bd(WIDTH) +R)
+{
+  csp { *[ R!i ] }
+}
+
+define YYS()()
+{
+  subcells {
+    bd(WIDTH) c[0..1];
+
+    YY     yy(c);
+    GEN(0) g0(c[0]);
+    GEN(1) g1(c[1]);
+
+  }
+}
+    
+define Z()(bd(32) -L[0..1])
+{
+  csp {
+    boolean b;
+    b = true;
+    
+    *[ print ( L[0]? )
+     ]
+  }
+}
+    
+
+  

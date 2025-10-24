@@ -1,0 +1,30 @@
+(* Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information. *)
+(* SPDX-License-Identifier: Apache-2.0 *)
+
+(* Copyright (c) 2000 Mika Nystrom.  All Rights Reserved. *)
+(* $Id: LU.i3,v 1.2 2006/05/21 23:18:03 mika Exp $ *)
+INTERFACE LU;
+IMPORT Matrix;
+
+PROCEDURE Decompose(m : Matrix.T; 
+                    indx : REF ARRAY OF INTEGER; 
+                    VAR d : LONGREAL) RAISES { Matrix.Singular };
+
+
+PROCEDURE BackSubstitute(READONLY m : Matrix.T; 
+                           READONLY indx : REF ARRAY OF INTEGER; 
+                           b : Matrix.Vector);
+
+PROCEDURE BackSubstituteArray(READONLY m : Matrix.T; 
+                           READONLY indx : REF ARRAY OF INTEGER; 
+                           VAR b : ARRAY OF LONGREAL);
+
+PROCEDURE DecomposeR(m : Matrix.T; 
+                    vv : Matrix.Vector;
+                    indx : REF ARRAY OF INTEGER; 
+                    VAR d : LONGREAL) RAISES { Matrix.Singular };
+  (* non-allocating version of Decompose.  Call with vv as 
+     scratch space with NUMBER(m^) members *)
+
+
+END LU.

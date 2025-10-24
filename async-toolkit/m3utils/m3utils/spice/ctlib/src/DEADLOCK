@@ -1,0 +1,252 @@
+Thread 8 (Thread 0x2aaab4401700 (LWP 8629) "ct"):
+#0  0x00002aaaab221442 in sigsuspend () from /lib64/libc.so.6
+#1  0x00000000004d7527 in ThreadPThread__sigsuspend () at ../src/thread/PTHREAD/ThreadPThreadC.c:113
+#2  0x00000000004d5f2a in ThreadPThread__SignalHandler (M3_DLS2Hj_sig=<error reading variable: inner value printing not implemented for language "Auto">, M3_AJWxb1_info=<error reading variable: inner value printing not implemented for language "Auto">, M3_AJWxb1_context=<error reading variable: inner value printing not implemented for language "Auto">) at ../src/thread/PTHREAD/ThreadPThread.m3:1276
+#3  0x00000000004d7498 in SignalHandlerC (signo=64, info=0x2aaab44000f0, context=0x2aaab43fffc0) at ../src/thread/PTHREAD/ThreadPThreadC.c:91
+#4  <signal handler called>
+#5  0x00002aaaaafdcbfb in __lll_lock_wait () from /lib64/noelision/libpthread.so.0
+#6  0x00002aaaaafd7745 in pthread_mutex_lock () from /lib64/noelision/libpthread.so.0
+#7  0x00000000004d7e84 in ThreadPThread__pthread_mutex_lock (mutex=0xfa10a0 <heapMu>) at ../src/thread/PTHREAD/ThreadPThreadC.c:520
+#8  0x00000000004d6f7e in RTOS__LockHeap () at ../src/thread/PTHREAD/ThreadPThread.m3:1645
+#9  0x00000000004b6fa4 in RTAllocator__AllocTraced (M3_Cwb5VA_dataSize=<error reading variable: inner value printing not implemented for language "Auto">, M3_Cwb5VA_dataAlignment=<error reading variable: inner value printing not implemented for language "Auto">, M3_A1A6Wn_thread=<error reading variable: inner value printing not implemented for language "Auto">) at ../src/runtime/common/RTAllocator.m3:365
+#10 0x00000000004b6088 in RTAllocator__GetTracedObj (M3_Eic7CK_def=<error reading variable: inner value printing not implemented for language "Auto">) at ../src/runtime/common/RTAllocator.m3:224
+#11 0x00000000004b5a2b in RTHooks__AllocateTracedObj (M3_AJWxb1_defn=<error reading variable: inner value printing not implemented for language "Auto">) at ../src/runtime/common/RTAllocator.m3:122
+#12 0x00000000004b0a6d in FilePosix__NewPipe (M3_AcxOUs_fd=<error reading variable: inner value printing not implemented for language "Auto">, M3_BCrClK_ds=<error reading variable: inner value printing not implemented for language "Auto">) at ../src/os/POSIX/FilePosix.m3:80
+#13 0x0000000000481aff in Pipe__Open (M3_DtK3Qj_hr=<error reading variable: inner value printing not implemented for language "Auto">, M3_DtK3Qj_hw=<error reading variable: inner value printing not implemented for language "Auto">) at ../src/os/POSIX/PipePosix.m3:15
+#14 0x0000000000466506 in ProcUtils__GimmeWr (M3_C22BEM_wr=<error reading variable: inner value printing not implemented for language "Auto">) at ../src/ProcUtils.m3:762
+#15 0x000000000041adc9 in Fsdb__GenApply (M3_C3iQJw_cl=<error reading variable: inner value printing not implemented for language "Auto">) at ../src/Fsdb.m3:1100
+#16 0x00000000004d36f2 in ThreadPThread__RunThread (M3_DMxDjQ_me=<error reading variable: inner value printing not implemented for language "Auto">) at ../src/thread/PTHREAD/ThreadPThread.m3:617
+#17 0x00000000004d333e in ThreadPThread__ThreadBase (M3_AJWxb1_param=<error reading variable: inner value printing not implemented for language "Auto">) at ../src/thread/PTHREAD/ThreadPThread.m3:590
+#18 0x00002aaaaafd56ca in start_thread () from /lib64/noelision/libpthread.so.0
+#19 0x00002aaaab2d917d in clone () from /lib64/libc.so.6
+
+Thread 7 (Thread 0x2aaab4200700 (LWP 8628) "ct"):
+#0  0x00002aaaab221442 in sigsuspend () from /lib64/libc.so.6
+#1  0x00000000004d7527 in ThreadPThread__sigsuspend () at ../src/thread/PTHREAD/ThreadPThreadC.c:113
+#2  0x00000000004d5f2a in ThreadPThread__SignalHandler (M3_DLS2Hj_sig=<error reading variable: inner value printing not implemented for language "Auto">, M3_AJWxb1_info=<error reading variable: inner value printing not implemented for language "Auto">, M3_AJWxb1_context=<error reading variable: inner value printing not implemented for language "Auto">) at ../src/thread/PTHREAD/ThreadPThread.m3:1276
+#3  0x00000000004d7498 in SignalHandlerC (signo=64, info=0x2aaab41ff170, context=0x2aaab41ff040) at ../src/thread/PTHREAD/ThreadPThreadC.c:91
+#4  <signal handler called>
+#5  0x00002aaaaafdcbfb in __lll_lock_wait () from /lib64/noelision/libpthread.so.0
+#6  0x00002aaaaafd7745 in pthread_mutex_lock () from /lib64/noelision/libpthread.so.0
+#7  0x00000000004d7e84 in ThreadPThread__pthread_mutex_lock (mutex=0xfa1020 <initMu>) at ../src/thread/PTHREAD/ThreadPThreadC.c:520
+#8  0x00000000004d0858 in ThreadPThread__InitMutex (M3_BIFvRV_m=<error reading variable: inner value printing not implemented for language "Auto">, M3_Af40ku_root=<error reading variable: inner value printing not implemented for language "Auto">, M3_Cg3DND_Clean=<error reading variable: inner value printing not implemented for language "Auto">) at ../src/thread/PTHREAD/ThreadPThread.m3:134
+#9  0x00000000004d0987 in ThreadPThread__LockMutex (M3_AYIbX3_m=<error reading variable: inner value printing not implemented for language "Auto">) at ../src/thread/PTHREAD/ThreadPThread.m3:153
+#10 0x00000000004688cf in ProcUtils__Apply (M3_AvH76O_self=<error reading variable: inner value printing not implemented for language "Auto">) at ../src/ProcUtils.m3:375
+#11 0x00000000004d36f2 in ThreadPThread__RunThread (M3_DMxDjQ_me=<error reading variable: inner value printing not implemented for language "Auto">) at ../src/thread/PTHREAD/ThreadPThread.m3:617
+#12 0x00000000004d333e in ThreadPThread__ThreadBase (M3_AJWxb1_param=<error reading variable: inner value printing not implemented for language "Auto">) at ../src/thread/PTHREAD/ThreadPThread.m3:590
+#13 0x00002aaaaafd56ca in start_thread () from /lib64/noelision/libpthread.so.0
+#14 0x00002aaaab2d917d in clone () from /lib64/libc.so.6
+
+Thread 6 (Thread 0x2aaaabf92700 (LWP 8627) "ct"):
+#0  0x00002aaaab2e56dc in __lll_lock_wait_private () from /lib64/libc.so.6
+#1  0x00002aaaab269180 in arena_get2.isra () from /lib64/libc.so.6
+#2  0x00002aaaab26a06a in calloc () from /lib64/libc.so.6
+#3  0x00000000004da337 in Cstdlib__calloc (a=1, b=72) at ../src/C/Common/CstdlibC.c:28
+#4  0x00000000004b6ad1 in RTAllocator__GetUntracedOpenArray (M3_Eic7CK_def=<error reading variable: inner value printing not implemented for language "Auto">, M3_ANmeAM_s=<error reading variable: inner value printing not implemented for language "Auto">) at ../src/runtime/common/RTAllocator.m3:319
+#5  0x00000000004b5b2d in RTHooks__AllocateUntracedOpenArray (M3_AJWxb1_defn=<error reading variable: inner value printing not implemented for language "Auto">, M3_ANmeAM_s=<error reading variable: inner value printing not implemented for language "Auto">) at ../src/runtime/common/RTAllocator.m3:151
+#6  0x00000000004c2d41 in RTCollector__GrowHeap (M3_AcxOUs_pp=<error reading variable: inner value printing not implemented for language "Auto">) at ../src/runtime/common/RTCollector.m3:2670
+#7  0x00000000004c142c in RTCollector__FindFreePages (M3_AcxOUs_n=<error reading variable: inner value printing not implemented for language "Auto">, M3_AkrKTu_notAfter=<error reading variable: inner value printing not implemented for language "Auto">) at ../src/runtime/common/RTCollector.m3:2330
+#8  0x00000000004bcf5a in RTHeapRep__LongAlloc (M3_Cwb5VA_dataSize=<error reading variable: inner value printing not implemented for language "Auto">, M3_Cwb5VA_dataAlignment=<error reading variable: inner value printing not implemented for language "Auto">, M3_DV2wYB_pool=<error reading variable: inner value printing not implemented for language "Auto">) at ../src/runtime/common/RTCollector.m3:1448
+#9  0x00000000004bce12 in RTCollector__AllocCopy (M3_Cwb5VA_dataSize=<error reading variable: inner value printing not implemented for language "Auto">, M3_Cwb5VA_dataAlignment=<error reading variable: inner value printing not implemented for language "Auto">, M3_DV2wYB_pool=<error reading variable: inner value printing not implemented for language "Auto">) at ../src/runtime/common/RTCollector.m3:1411
+#10 0x00000000004b94e0 in RTCollector__Move (M3_BVudqN_self=<error reading variable: inner value printing not implemented for language "Auto">, M3_AJWxb1_cp=<error reading variable: inner value printing not implemented for language "Auto">) at ../src/runtime/common/RTCollector.m3:444
+#11 0x00000000004fc8cd in RTHeapMap__Walk (M3_AJWxb1_x=<error reading variable: inner value printing not implemented for language "Auto">, M3_AJWxb1_pc=<error reading variable: inner value printing not implemented for language "Auto">, M3_Deq2V9_v=<error reading variable: inner value printing not implemented for language "Auto">) at ../src/runtime/common/RTHeapMap.m3:202
+#12 0x00000000004fc064 in RTHeapMap__DoWalkRef (M3_Eic7CK_t=<error reading variable: inner value printing not implemented for language "Auto">, M3_AJWxb1_a=<error reading variable: inner value printing not implemented for language "Auto">, M3_Deq2V9_v=<error reading variable: inner value printing not implemented for language "Auto">) at ../src/runtime/common/RTHeapMap.m3:62
+#13 0x00000000004fc023 in RTHeapMap__DoWalkRef (M3_Eic7CK_t=<error reading variable: inner value printing not implemented for language "Auto">, M3_AJWxb1_a=<error reading variable: inner value printing not implemented for language "Auto">, M3_Deq2V9_v=<error reading variable: inner value printing not implemented for language "Auto">) at ../src/runtime/common/RTHeapMap.m3:57
+#14 0x00000000004fc023 in RTHeapMap__DoWalkRef (M3_Eic7CK_t=<error reading variable: inner value printing not implemented for language "Auto">, M3_AJWxb1_a=<error reading variable: inner value printing not implemented for language "Auto">, M3_Deq2V9_v=<error reading variable: inner value printing not implemented for language "Auto">) at ../src/runtime/common/RTHeapMap.m3:57
+#15 0x00000000004fbfbe in RTHeapMap__WalkRef (M3_BqecFS_h=<error reading variable: inner value printing not implemented for language "Auto">, M3_Deq2V9_v=<error reading variable: inner value printing not implemented for language "Auto">) at ../src/runtime/common/RTHeapMap.m3:47
+#16 0x00000000004bbc3b in RTCollector__CleanBetween (M3_BqecFS_h=<error reading variable: inner value printing not implemented for language "Auto">, M3_BqecFS_he=<error reading variable: inner value printing not implemented for language "Auto">, M3_AicXUJ_clean=<error reading variable: inner value printing not implemented for language "Auto">) at ../src/runtime/common/RTCollector.m3:1103
+#17 0x00000000004bb97d in RTCollector__CleanPage (M3_BoRUYE_page=<error reading variable: inner value printing not implemented for language "Auto">) at ../src/runtime/common/RTCollector.m3:1075
+#18 0x00000000004bb05b in RTCollector__CollectSomeInStateZero () at ../src/runtime/common/RTCollector.m3:896
+#19 0x00000000004ba78f in RTCollector__CollectSome () at ../src/runtime/common/RTCollector.m3:731
+#20 0x00000000004ba40a in RTHeapRep__CollectEnough () at ../src/runtime/common/RTCollector.m3:665
+#21 0x00000000004b6fae in RTAllocator__AllocTraced (M3_Cwb5VA_dataSize=<error reading variable: inner value printing not implemented for language "Auto">, M3_Cwb5VA_dataAlignment=<error reading variable: inner value printing not implemented for language "Auto">, M3_A1A6Wn_thread=<error reading variable: inner value printing not implemented for language "Auto">) at ../src/runtime/common/RTAllocator.m3:367
+#22 0x00000000004b6088 in RTAllocator__GetTracedObj (M3_Eic7CK_def=<error reading variable: inner value printing not implemented for language "Auto">) at ../src/runtime/common/RTAllocator.m3:224
+#23 0x00000000004b5a2b in RTHooks__AllocateTracedObj (M3_AJWxb1_defn=<error reading variable: inner value printing not implemented for language "Auto">) at ../src/runtime/common/RTAllocator.m3:122
+#24 0x00000000004b0a6d in FilePosix__NewPipe (M3_AcxOUs_fd=<error reading variable: inner value printing not implemented for language "Auto">, M3_BCrClK_ds=<error reading variable: inner value printing not implemented for language "Auto">) at ../src/os/POSIX/FilePosix.m3:80
+#25 0x0000000000481aff in Pipe__Open (M3_DtK3Qj_hr=<error reading variable: inner value printing not implemented for language "Auto">, M3_DtK3Qj_hw=<error reading variable: inner value printing not implemented for language "Auto">) at ../src/os/POSIX/PipePosix.m3:15
+#26 0x0000000000466506 in ProcUtils__GimmeWr (M3_C22BEM_wr=<error reading variable: inner value printing not implemented for language "Auto">) at ../src/ProcUtils.m3:762
+#27 0x000000000041adc9 in Fsdb__GenApply (M3_C3iQJw_cl=<error reading variable: inner value printing not implemented for language "Auto">) at ../src/Fsdb.m3:1100
+#28 0x00000000004d36f2 in ThreadPThread__RunThread (M3_DMxDjQ_me=<error reading variable: inner value printing not implemented for language "Auto">) at ../src/thread/PTHREAD/ThreadPThread.m3:617
+#29 0x00000000004d333e in ThreadPThread__ThreadBase (M3_AJWxb1_param=<error reading variable: inner value printing not implemented for language "Auto">) at ../src/thread/PTHREAD/ThreadPThread.m3:590
+#30 0x00002aaaaafd56ca in start_thread () from /lib64/noelision/libpthread.so.0
+#31 0x00002aaaab2d917d in clone () from /lib64/libc.so.6
+
+Thread 5 (Thread 0x2aaaabd91700 (LWP 8626) "ct"):
+#0  0x00002aaaab221442 in sigsuspend () from /lib64/libc.so.6
+#1  0x00000000004d7527 in ThreadPThread__sigsuspend () at ../src/thread/PTHREAD/ThreadPThreadC.c:113
+#2  0x00000000004d5f2a in ThreadPThread__SignalHandler (M3_DLS2Hj_sig=<error reading variable: inner value printing not implemented for language "Auto">, M3_AJWxb1_info=<error reading variable: inner value printing not implemented for language "Auto">, M3_AJWxb1_context=<error reading variable: inner value printing not implemented for language "Auto">) at ../src/thread/PTHREAD/ThreadPThread.m3:1276
+#3  0x00000000004d7498 in SignalHandlerC (signo=64, info=0x2aaaabd90230, context=0x2aaaabd90100) at ../src/thread/PTHREAD/ThreadPThreadC.c:91
+#4  <signal handler called>
+#5  0x00002aaaab26918e in arena_get2.isra () from /lib64/libc.so.6
+#6  0x00002aaaab26a06a in calloc () from /lib64/libc.so.6
+#7  0x00000000004da337 in Cstdlib__calloc (a=1, b=152) at ../src/C/Common/CstdlibC.c:28
+#8  0x00000000004b636f in RTAllocator__GetUntracedRef (M3_Eic7CK_def=<error reading variable: inner value printing not implemented for language "Auto">) at ../src/runtime/common/RTAllocator.m3:244
+#9  0x00000000004b5a66 in RTHooks__AllocateUntracedRef (M3_AJWxb1_defn=<error reading variable: inner value printing not implemented for language "Auto">) at ../src/runtime/common/RTAllocator.m3:129
+#10 0x00000000004d392a in Thread__Fork (M3_EMTrVz_closure=<error reading variable: inner value printing not implemented for language "Auto">) at ../src/thread/PTHREAD/ThreadPThread.m3:641
+#11 0x0000000000465a22 in ProcUtils__Run (M3_EkTcCb_source=<error reading variable: inner value printing not implemented for language "Auto">, M3_CLOP3Y_stdout=<error reading variable: inner value printing not implemented for language "Auto">, M3_CLOP3Y_stderr=<error reading variable: inner value printing not implemented for language "Auto">, M3_BfT4nq_stdin=<error reading variable: inner value printing not implemented for language "Auto">, M3_Bd56fi_wd0=<error reading variable: inner value printing not implemented for language "Auto">, M3_EaJKrn_env=<error reading variable: inner value printing not implemented for language "Auto">) at ../src/ProcUtils.m3:182
+#12 0x000000000041af36 in Fsdb__GenApply (M3_C3iQJw_cl=<error reading variable: inner value printing not implemented for language "Auto">) at ../src/Fsdb.m3:1104
+#13 0x00000000004d36f2 in ThreadPThread__RunThread (M3_DMxDjQ_me=<error reading variable: inner value printing not implemented for language "Auto">) at ../src/thread/PTHREAD/ThreadPThread.m3:617
+#14 0x00000000004d333e in ThreadPThread__ThreadBase (M3_AJWxb1_param=<error reading variable: inner value printing not implemented for language "Auto">) at ../src/thread/PTHREAD/ThreadPThread.m3:590
+#15 0x00002aaaaafd56ca in start_thread () from /lib64/noelision/libpthread.so.0
+#16 0x00002aaaab2d917d in clone () from /lib64/libc.so.6
+
+Thread 4 (Thread 0x2aaaabb90700 (LWP 8625) "ct"):
+#0  0x00002aaaab221442 in sigsuspend () from /lib64/libc.so.6
+#1  0x00000000004d7527 in ThreadPThread__sigsuspend () at ../src/thread/PTHREAD/ThreadPThreadC.c:113
+#2  0x00000000004d5f2a in ThreadPThread__SignalHandler (M3_DLS2Hj_sig=<error reading variable: inner value printing not implemented for language "Auto">, M3_AJWxb1_info=<error reading variable: inner value printing not implemented for language "Auto">, M3_AJWxb1_context=<error reading variable: inner value printing not implemented for language "Auto">) at ../src/thread/PTHREAD/ThreadPThread.m3:1276
+#3  0x00000000004d7498 in SignalHandlerC (signo=64, info=0x2aaaabb8efb0, context=0x2aaaabb8ee80) at ../src/thread/PTHREAD/ThreadPThreadC.c:91
+#4  <signal handler called>
+#5  0x00002aaaaafdcbfb in __lll_lock_wait () from /lib64/noelision/libpthread.so.0
+#6  0x00002aaaaafd7745 in pthread_mutex_lock () from /lib64/noelision/libpthread.so.0
+#7  0x00000000004d7e84 in ThreadPThread__pthread_mutex_lock (mutex=0xfa10a0 <heapMu>) at ../src/thread/PTHREAD/ThreadPThreadC.c:520
+#8  0x00000000004d6f7e in RTOS__LockHeap () at ../src/thread/PTHREAD/ThreadPThread.m3:1645
+#9  0x00000000004c08db in RTHeapRep__RegisterFinalCleanup (M3_Af40ku_r=<error reading variable: inner value printing not implemented for language "Auto">, M3_Dr08L6_p=<error reading variable: inner value printing not implemented for language "Auto">) at ../src/runtime/common/RTCollector.m3:2161
+#10 0x00000000004d08df in ThreadPThread__InitMutex (M3_BIFvRV_m=<error reading variable: inner value printing not implemented for language "Auto">, M3_Af40ku_root=<error reading variable: inner value printing not implemented for language "Auto">, M3_Cg3DND_Clean=<error reading variable: inner value printing not implemented for language "Auto">) at ../src/thread/PTHREAD/ThreadPThread.m3:139
+#11 0x00000000004d0987 in ThreadPThread__LockMutex (M3_AYIbX3_m=<error reading variable: inner value printing not implemented for language "Auto">) at ../src/thread/PTHREAD/ThreadPThread.m3:153
+#12 0x0000000000465b22 in ProcUtils__Run (M3_EkTcCb_source=<error reading variable: inner value printing not implemented for language "Auto">, M3_CLOP3Y_stdout=<error reading variable: inner value printing not implemented for language "Auto">, M3_CLOP3Y_stderr=<error reading variable: inner value printing not implemented for language "Auto">, M3_BfT4nq_stdin=<error reading variable: inner value printing not implemented for language "Auto">, M3_Bd56fi_wd0=<error reading variable: inner value printing not implemented for language "Auto">, M3_EaJKrn_env=<error reading variable: inner value printing not implemented for language "Auto">) at ../src/ProcUtils.m3:185
+#13 0x000000000041af36 in Fsdb__GenApply (M3_C3iQJw_cl=<error reading variable: inner value printing not implemented for language "Auto">) at ../src/Fsdb.m3:1104
+#14 0x00000000004d36f2 in ThreadPThread__RunThread (M3_DMxDjQ_me=<error reading variable: inner value printing not implemented for language "Auto">) at ../src/thread/PTHREAD/ThreadPThread.m3:617
+#15 0x00000000004d333e in ThreadPThread__ThreadBase (M3_AJWxb1_param=<error reading variable: inner value printing not implemented for language "Auto">) at ../src/thread/PTHREAD/ThreadPThread.m3:590
+#16 0x00002aaaaafd56ca in start_thread () from /lib64/noelision/libpthread.so.0
+#17 0x00002aaaab2d917d in clone () from /lib64/libc.so.6
+
+Thread 3 (Thread 0x2aaaab98f700 (LWP 8621) "ct"):
+#0  0x00002aaaab221442 in sigsuspend () from /lib64/libc.so.6
+#1  0x00000000004d7527 in ThreadPThread__sigsuspend () at ../src/thread/PTHREAD/ThreadPThreadC.c:113
+#2  0x00000000004d5f2a in ThreadPThread__SignalHandler (M3_DLS2Hj_sig=<error reading variable: inner value printing not implemented for language "Auto">, M3_AJWxb1_info=<error reading variable: inner value printing not implemented for language "Auto">, M3_AJWxb1_context=<error reading variable: inner value printing not implemented for language "Auto">) at ../src/thread/PTHREAD/ThreadPThread.m3:1276
+#3  0x00000000004d7498 in SignalHandlerC (signo=64, info=0x2aaaab98dd70, context=0x2aaaab98dc40) at ../src/thread/PTHREAD/ThreadPThreadC.c:91
+#4  <signal handler called>
+#5  0x00002aaaaafdd8b4 in waitpid () from /lib64/noelision/libpthread.so.0
+#6  0x00000000004d8acd in Uexec__waitpid (i=8622, j=0x2aaaab98e3a8, k=0) at ../src/unix/Common/Uexec.c:70
+#7  0x00000000004d49c8 in SchedulerPosix__WaitProcess (M3_DLS2Hj_pid=<error reading variable: inner value printing not implemented for language "Auto">, M3_BfWXEe_status=<error reading variable: inner value printing not implemented for language "Auto">) at ../src/thread/PTHREAD/ThreadPThread.m3:826
+#8  0x0000000000483f03 in Process__Wait (M3_AUwVTW_p=<error reading variable: inner value printing not implemented for language "Auto">) at ../src/os/POSIX/ProcessPosixCommon.m3:284
+#9  0x00000000004682b6 in ProcUtils__Apply__Exec.1242 () at ../src/ProcUtils.m3:320
+#10 0x0000000000469231 in ProcUtils__Apply (M3_AvH76O_self=<error reading variable: inner value printing not implemented for language "Auto">) at ../src/ProcUtils.m3:438
+#11 0x00000000004d36f2 in ThreadPThread__RunThread (M3_DMxDjQ_me=<error reading variable: inner value printing not implemented for language "Auto">) at ../src/thread/PTHREAD/ThreadPThread.m3:617
+#12 0x00000000004d333e in ThreadPThread__ThreadBase (M3_AJWxb1_param=<error reading variable: inner value printing not implemented for language "Auto">) at ../src/thread/PTHREAD/ThreadPThread.m3:590
+#13 0x00002aaaaafd56ca in start_thread () from /lib64/noelision/libpthread.so.0
+#14 0x00002aaaab2d917d in clone () from /lib64/libc.so.6
+
+Thread 2 (Thread 0x2aaaab78e700 (LWP 8620) "ct"):
+#0  0x00002aaaab221442 in sigsuspend () from /lib64/libc.so.6
+#1  0x00000000004d7527 in ThreadPThread__sigsuspend () at ../src/thread/PTHREAD/ThreadPThreadC.c:113
+#2  0x00000000004d5f2a in ThreadPThread__SignalHandler (M3_DLS2Hj_sig=<error reading variable: inner value printing not implemented for language "Auto">, M3_AJWxb1_info=<error reading variable: inner value printing not implemented for language "Auto">, M3_AJWxb1_context=<error reading variable: inner value printing not implemented for language "Auto">) at ../src/thread/PTHREAD/ThreadPThread.m3:1276
+#3  0x00000000004d7498 in SignalHandlerC (signo=64, info=0x2aaaab78d670, context=0x2aaaab78d540) at ../src/thread/PTHREAD/ThreadPThreadC.c:91
+#4  <signal handler called>
+#5  0x00002aaaaafda529 in pthread_cond_timedwait@@GLIBC_2.3.2 () from /lib64/noelision/libpthread.so.0
+#6  0x00000000004d7e16 in ThreadPThread__pthread_cond_timedwait (cond=0xfb3750, mutex=0xfb58d0, m3timeout=1704718877.0484221) at ../src/thread/PTHREAD/ThreadPThreadC.c:478
+#7  0x00000000004d4264 in ThreadPThread__XPause (M3_DMxDjQ_self=<error reading variable: inner value printing not implemented for language "Auto">, M3_CtKayy_n=<error reading variable: inner value printing not implemented for language "Auto">, M3_AicXUJ_alertable=<error reading variable: inner value printing not implemented for language "Auto">) at ../src/thread/PTHREAD/ThreadPThread.m3:721
+#8  0x00000000004d4376 in Thread__Pause (M3_CtKayy_n=<error reading variable: inner value printing not implemented for language "Auto">) at ../src/thread/PTHREAD/ThreadPThread.m3:736
+#9  0x00000000004c08db in RTHeapRep__RegisterFinalCleanup (M3_Af40ku_r=<error reading variable: inner value printing not implemented for language "Auto">, M3_Dr08L6_p=<error reading variable: inner value printing not implemented for language "Auto">) at ../src/runtime/common/RTCollector.m3:2161
+#10 0x00000000004d08df in ThreadPThread__InitMutex (M3_BIFvRV_m=<error reading variable: inner value printing not implemented for language "Auto">, M3_Af40ku_root=<error reading variable: inner value printing not implemented for language "Auto">, M3_Cg3DND_Clean=<error reading variable: inner value printing not implemented for language "Auto">) at ../src/thread/PTHREAD/ThreadPThread.m3:139
+#11 0x00000000004d0987 in ThreadPThread__LockMutex (M3_AYIbX3_m=<error reading variable: inner value printing not implemented for language "Auto">) at ../src/thread/PTHREAD/ThreadPThread.m3:153
+#12 0x0000000000465b22 in ProcUtils__Run (M3_EkTcCb_source=<error reading variable: inner value printing not implemented for language "Auto">, M3_CLOP3Y_stdout=<error reading variable: inner value printing not implemented for language "Auto">, M3_CLOP3Y_stderr=<error reading variable: inner value printing not implemented for language "Auto">, M3_BfT4nq_stdin=<error reading variable: inner value printing not implemented for language "Auto">, M3_Bd56fi_wd0=<error reading variable: inner value printing not implemented for language "Auto">, M3_EaJKrn_env=<error reading variable: inner value printing not implemented for language "Auto">) at ../src/ProcUtils.m3:185
+#13 0x000000000041af36 in Fsdb__GenApply (M3_C3iQJw_cl=<error reading variable: inner value printing not implemented for language "Auto">) at ../src/Fsdb.m3:1104
+#14 0x00000000004d36f2 in ThreadPThread__RunThread (M3_DMxDjQ_me=<error reading variable: inner value printing not implemented for language "Auto">) at ../src/thread/PTHREAD/ThreadPThread.m3:617
+#15 0x00000000004d333e in ThreadPThread__ThreadBase (M3_AJWxb1_param=<error reading variable: inner value printing not implemented for language "Auto">) at ../src/thread/PTHREAD/ThreadPThread.m3:590
+#16 0x00002aaaaafd56ca in start_thread () from /lib64/noelision/libpthread.so.0
+#17 0x00002aaaab2d917d in clone () from /lib64/libc.so.6
+
+Thread 3 (Thread 0x2aaaab98f700 (LWP 8621) "ct"):
+#0  0x00002aaaab221442 in sigsuspend () from /lib64/libc.so.6
+#1  0x00000000004d7527 in ThreadPThread__sigsuspend () at ../src/thread/PTHREAD/ThreadPThreadC.c:113
+#2  0x00000000004d5f2a in ThreadPThread__SignalHandler (M3_DLS2Hj_sig=<error reading variable: inner value printing not implemented for language "Auto">, M3_AJWxb1_info=<error reading variable: inner value printing not implemented for language "Auto">, M3_AJWxb1_context=<error reading variable: inner value printing not implemented for language "Auto">) at ../src/thread/PTHREAD/ThreadPThread.m3:1276
+#3  0x00000000004d7498 in SignalHandlerC (signo=64, info=0x2aaaab98dd70, context=0x2aaaab98dc40) at ../src/thread/PTHREAD/ThreadPThreadC.c:91
+#4  <signal handler called>
+#5  0x00002aaaaafdd8b4 in waitpid () from /lib64/noelision/libpthread.so.0
+#6  0x00000000004d8acd in Uexec__waitpid (i=8622, j=0x2aaaab98e3a8, k=0) at ../src/unix/Common/Uexec.c:70
+#7  0x00000000004d49c8 in SchedulerPosix__WaitProcess (M3_DLS2Hj_pid=<error reading variable: inner value printing not implemented for language "Auto">, M3_BfWXEe_status=<error reading variable: inner value printing not implemented for language "Auto">) at ../src/thread/PTHREAD/ThreadPThread.m3:826
+#8  0x0000000000483f03 in Process__Wait (M3_AUwVTW_p=<error reading variable: inner value printing not implemented for language "Auto">) at ../src/os/POSIX/ProcessPosixCommon.m3:284
+#9  0x00000000004682b6 in ProcUtils__Apply__Exec.1242 () at ../src/ProcUtils.m3:320
+#10 0x0000000000469231 in ProcUtils__Apply (M3_AvH76O_self=<error reading variable: inner value printing not implemented for language "Auto">) at ../src/ProcUtils.m3:438
+#11 0x00000000004d36f2 in ThreadPThread__RunThread (M3_DMxDjQ_me=<error reading variable: inner value printing not implemented for language "Auto">) at ../src/thread/PTHREAD/ThreadPThread.m3:617
+#12 0x00000000004d333e in ThreadPThread__ThreadBase (M3_AJWxb1_param=<error reading variable: inner value printing not implemented for language "Auto">) at ../src/thread/PTHREAD/ThreadPThread.m3:590
+#13 0x00002aaaaafd56ca in start_thread () from /lib64/noelision/libpthread.so.0
+#14 0x00002aaaab2d917d in clone () from /lib64/libc.so.6
+
+Thread 2 (Thread 0x2aaaab78e700 (LWP 8620) "ct"):
+#0  0x00002aaaab221442 in sigsuspend () from /lib64/libc.so.6
+#1  0x00000000004d7527 in ThreadPThread__sigsuspend () at ../src/thread/PTHREAD/ThreadPThreadC.c:113
+#2  0x00000000004d5f2a in ThreadPThread__SignalHandler (M3_DLS2Hj_sig=<error reading variable: inner value printing not implemented for language "Auto">, M3_AJWxb1_info=<error reading variable: inner value printing not implemented for language "Auto">, M3_AJWxb1_context=<error reading variable: inner value printing not implemented for language "Auto">) at ../src/thread/PTHREAD/ThreadPThread.m3:1276
+#3  0x00000000004d7498 in SignalHandlerC (signo=64, info=0x2aaaab78d670, context=0x2aaaab78d540) at ../src/thread/PTHREAD/ThreadPThreadC.c:91
+#4  <signal handler called>
+#5  0x00002aaaaafda529 in pthread_cond_timedwait@@GLIBC_2.3.2 () from /lib64/noelision/libpthread.so.0
+#6  0x00000000004d7e16 in ThreadPThread__pthread_cond_timedwait (cond=0xfb3750, mutex=0xfb58d0, m3timeout=1704718877.0484221) at ../src/thread/PTHREAD/ThreadPThreadC.c:478
+#7  0x00000000004d4264 in ThreadPThread__XPause (M3_DMxDjQ_self=<error reading variable: inner value printing not implemented for language "Auto">, M3_CtKayy_n=<error reading variable: inner value printing not implemented for language "Auto">, M3_AicXUJ_alertable=<error reading variable: inner value printing not implemented for language "Auto">) at ../src/thread/PTHREAD/ThreadPThread.m3:721
+#8  0x00000000004d4376 in Thread__Pause (M3_CtKayy_n=<error reading variable: inner value printing not implemented for language "Auto">) at ../src/thread/PTHREAD/ThreadPThread.m3:736
+--Type <RET> for more, q to quit, c to continue without paging--
+#9  0x000000000041da9f in Fsdb__TickApply (M3_Byx4rz_cl=<error reading variable: inner value printing not implemented for language "Auto">) at ../src/Fsdb.m3:1605
+#10 0x00000000004d36f2 in ThreadPThread__RunThread (M3_DMxDjQ_me=<error reading variable: inner value printing not implemented for language "Auto">) at ../src/thread/PTHREAD/ThreadPThread.m3:617
+#11 0x00000000004d333e in ThreadPThread__ThreadBase (M3_AJWxb1_param=<error reading variable: inner value printing not implemented for language "Auto">) at ../src/thread/PTHREAD/ThreadPThread.m3:590
+#12 0x00002aaaaafd56ca in start_thread () from /lib64/noelision/libpthread.so.0
+#13 0x00002aaaab2d917d in clone () from /lib64/libc.so.6
+
+Thread 1 (Thread 0x2aaaaaaf1100 (LWP 8617) "ct"):
+#0  0x00002aaaab221442 in sigsuspend () from /lib64/libc.so.6
+#1  0x00000000004d7527 in ThreadPThread__sigsuspend () at ../src/thread/PTHREAD/ThreadPThreadC.c:113
+#2  0x00000000004d5f2a in ThreadPThread__SignalHandler (M3_DLS2Hj_sig=<error reading variable: inner value printing not implemented for language "Auto">, M3_AJWxb1_info=<error reading variable: inner value printing not implemented for language "Auto">, M3_AJWxb1_context=<error reading variable: inner value printing not implemented for language "Auto">) at ../src/thread/PTHREAD/ThreadPThread.m3:1276
+#3  0x00000000004d7498 in SignalHandlerC (signo=64, info=0x7ffffffecbf0, context=0x7ffffffecac0) at ../src/thread/PTHREAD/ThreadPThreadC.c:91
+#4  <signal handler called>
+#5  0x00002aaaaafdcbfb in __lll_lock_wait () from /lib64/noelision/libpthread.so.0
+#6  0x00002aaaaafd7745 in pthread_mutex_lock () from /lib64/noelision/libpthread.so.0
+#7  0x00000000004d7e84 in ThreadPThread__pthread_mutex_lock (mutex=0xfa1020 <initMu>) at ../src/thread/PTHREAD/ThreadPThreadC.c:520
+#8  0x00000000004d0858 in ThreadPThread__InitMutex (M3_BIFvRV_m=<error reading variable: inner value printing not implemented for language "Auto">, M3_Af40ku_root=<error reading variable: inner value printing not implemented for language "Auto">, M3_Cg3DND_Clean=<error reading variable: inner value printing not implemented for language "Auto">) at ../src/thread/PTHREAD/ThreadPThread.m3:134
+#9  0x00000000004d0987 in ThreadPThread__LockMutex (M3_AYIbX3_m=<error reading variable: inner value printing not implemented for language "Auto">) at ../src/thread/PTHREAD/ThreadPThread.m3:153
+#10 0x00000000004161ed in Fsdb__GenMultiThreaded (M3_Cwb5VA_threads=<error reading variable: inner value printing not implemented for language "Auto">, M3_CCUXHU_idxMap=<error reading variable: inner value printing not implemented for language "Auto">, M3_DRfo9P_timesteps=<error reading variable: inner value printing not implemented for language "Auto">, M3_DKVH8C_fileTab=<error reading variable: inner value printing not implemented for language "Auto">, M3_DTKgE4_wdWr=<error reading variable: inner value printing not implemented for language "Auto">, M3_BySCJy_wdPth=<error reading variable: inner value printing not implemented for language "Auto">, M3_Bd56fi_cmdPath=<error reading variable: inner value printing not implemented for language "Auto">, M3_Bd56fi_fsdbPath=<error reading variable: inner value printing not implemented for language "Auto">, M3_Ehfbg0_compress=<error reading variable: inner value printing not implemented for language "Auto">, M3_CtKayy_voltageScaleFactor=<error reading variable: inner value printing not implemented for language "Auto">, M3_CtKayy_voltageOffset=<error reading variable: inner value printing not implemented for language "Auto">, M3_CtKayy_interpolate=<error reading variable: inner value printing not implemented for language "Auto">, M3_CtKayy_unit=<error reading variable: inner value printing not implemented for language "Auto">) at ../src/Fsdb.m3:272
+#11 0x00000000004188f9 in Fsdb__Parse (M3_Bd56fi_wd=<error reading variable: inner value printing not implemented for language "Auto">, M3_Bd56fi_ofn=<error reading variable: inner value printing not implemented for language "Auto">, M3_DKdYgt_names=<error reading variable: inner value printing not implemented for language "Auto">, M3_Cwb5VA_maxFiles=<error reading variable: inner value printing not implemented for language "Auto">, M3_B4NT1D_nFiles=<error reading variable: inner value printing not implemented for language "Auto">, M3_CtKayy_timeScaleFactor=<error reading variable: inner value printing not implemented for language "Auto">, M3_CtKayy_timeOffset=<error reading variable: inner value printing not implemented for language "Auto">, M3_CtKayy_voltageScaleFactor=<error reading variable: inner value printing not implemented for language "Auto">, M3_CtKayy_voltageOffset=<error reading variable: inner value printing not implemented for language "Auto">, M3_Bd56fi_dutName=<error reading variable: inner value printing not implemented for language "Auto">, M3_Bd56fi_fsdbPath=<error reading variable: inner value printing not implemented for language "Auto">, M3_AicXUJ_wait=<error reading variable: inner value printing not implemented for language "Auto">, M3_CT76zs_restrictNodes=<error reading variable: inner value printing not implemented for language "Auto">, M3_DbnU2S_restrictRegEx=<error reading variable: inner value printing not implemented for language "Auto">, M3_Cwb5VA_maxNodes=<error reading variable: inner value printing not implemented for language "Auto">, M3_AicXUJ_translate=<error reading variable: inner value printing not implemented for language "Auto">, M3_AicXUJ_noX=<error reading variable: inner value printing not implemented for language "Auto">, M3_Bd56fi_scopesep=<error reading variable: inner value printing not implemented for language "Auto">, M3_Bd56fi_cmdPath=<error reading variable: inner value printing not implemented for language "Auto">, M3_Ehfbg0_compress=<error reading variable: inner value printing not implemented for language "Auto">, M3_Cwb5VA_threads=<error reading variable: inner value printing not implemented for language "Auto">, M3_CtKayy_interpolate=<error reading variable: inner value printing not implemented for language "Auto">, M3_CtKayy_maxTime=<error reading variable: inner value printing not implemented for language "Auto">) at ../src/Fsdb.m3:826
+#12 0x000000000040c576 in ConvertTrace_M3 (M3_AcxOUs_mode=<error reading variable: inner value printing not implemented for language "Auto">) at ../src/ConvertTrace.m3:533
+#13 0x00000000004c58da in RTLinker__RunMainBody (M3_DjPxE3_m=<error reading variable: inner value printing not implemented for language "Auto">) at ../src/runtime/common/RTLinker.m3:408
+#14 0x00000000004c4ae5 in RTLinker__AddUnitI (M3_DjPxE3_m=<error reading variable: inner value printing not implemented for language "Auto">) at ../src/runtime/common/RTLinker.m3:115
+#15 0x00000000004c4b91 in RTLinker__AddUnit (M3_DjPxE5_b=<error reading variable: inner value printing not implemented for language "Auto">) at ../src/runtime/common/RTLinker.m3:124
+#16 0x00000000004061f8 in main (argc=16, argv=0x7ffffffee7a8, envp=0x7ffffffee830) at _m3main.c:31
+
+
+========================================
+
+
+Thread 8:
+
+sigsuspend
+GenApply calling GimmeWr (Fsdb.m3:1100)
+bottoms in RTOS__LockHeap (pthread lock of heapMu)
+
+Thread 7:
+
+sigsuspend
+ProcUtils.m3:375
+LOCK self.mu DO self.state := State.Parsing END
+-> InitMutex -> lock initMu
+
+Thread 6:
+
+__lll_lock_wait_private
+GenApply calling GimmeWr (Fsdb.m3:1100)
+AllocTraced
+bottoms in calloc -> arena_get2 -> lock_wait_private
+
+Thread 5:
+
+sigsuspend
+GenApply Fsdb.m3:1104
+ProcUtils.Run -> calloc -> area_get2 -> signal handler
+
+Thread 4:
+
+sigsuspend
+GenApply Fsdb.m3:1104
+ProcUtils.Run -> LockMutex -> InitMutex -> RTHeapRep__RegisterFinalCleanup -> RTOS__LockHeap
+
+Thread 3:
+
+sigsuspend
+ProcUtils.m3:320 -> Process.Wait
+
+Thread 2:
+
+sigsuspend
+Fsdb.TickApply -> Thread__Pause -> pthread_cond_timedwait
+
+Thread 1:
+
+sigsuspend
+Fsdb__GenMultiThreaded -> LockMutex -> InitMutex -> pthread_mutex_lock (initMu)

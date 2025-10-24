@@ -1,0 +1,29 @@
+C Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+C SPDX-License-Identifier: Apache-2.0
+
+c
+c     $Id: muld.f,v 1.3 2008/01/22 06:30:35 mika Exp $
+c
+      subroutine muld(a, b, p, ar, ac, bc)
+      implicit none
+c
+c     Modula-3/C array indexing M(COLS,ROWS)
+c
+      integer ar, ac, bc
+      double precision a(ac,ar), b(bc,ac), p(bc,ar)
+
+      integer row, col, term
+      double precision elem
+
+      do 200 row = 1, ar
+         do 150 col = 1, bc
+            p(col,row) = 0.0
+            do 100 term = 1, ac
+               p(col,row) = p(col,row) + a(term,row) * b(col,term)
+ 100        continue
+ 150     continue
+ 200  continue
+      end
+
+cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+

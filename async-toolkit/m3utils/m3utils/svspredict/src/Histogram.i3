@@ -1,0 +1,32 @@
+(* Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information. *)
+(* SPDX-License-Identifier: Apache-2.0 *)
+
+INTERFACE Histogram;
+IMPORT OSError, Wr, Thread;
+
+CONST Brand = "Histogram";
+
+PROCEDURE Do(ofn          : TEXT;
+             
+             READONLY res : ARRAY OF LONGREAL;
+             (* must be sorted *)
+
+             low          : BOOLEAN;
+             (* denotes whether desired value is low or high, for the
+                yield loss chart *)
+
+             H            : CARDINAL := DefaultBuckets (* # of buckets *);
+
+             G            : CARDINAL := DefaultLossSteps;
+
+             forceMin                := AutomaticMin;
+             forceMax                := AutomaticMax
+  ) RAISES { OSError.E, Wr.Failure, Thread.Alerted };
+
+CONST DefaultBuckets   = 15;
+      DefaultLossSteps = 1000;
+
+      AutomaticMin     = LAST (LONGREAL);
+      AutomaticMax     = FIRST(LONGREAL);
+
+END Histogram.

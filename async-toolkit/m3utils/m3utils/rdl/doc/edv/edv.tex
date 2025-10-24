@@ -1,0 +1,418 @@
+% Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+% SPDX-License-Identifier: Apache-2.0
+
+\documentclass{article}
+\usepackage{graphicx}
+\usepackage{epsf}
+
+\usepackage{floatflt}
+\usepackage{fancyhdr}
+\usepackage{array}
+\usepackage{amsmath}
+\usepackage{sectsty}
+\usepackage{breqn}
+%\allsectionsfont{\mdseries\sffamily}
+\allsectionsfont{\mdseries\sc}
+
+\usepackage{caption}
+\captionsetup{margin=2pc,font=small,labelfont=bf}
+
+\usepackage{tikz}
+\def\checkmark{\tikz\fill[scale=0.15](0,.35) -- (.25,0) -- (1,.7) -- (.25,.15) -- cycle;}
+\def\check#1{\overset{\checkmark}{#1}}
+
+%%%%%%%%%%%%%%Mika's figure macro%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\def\listcaption_ins_epsfig#1#2#3#4{
+  \begin{figure}[!tbph!]
+  \bigskip
+  \begin{center}
+  \includegraphics[width=#1]{#2}
+  \end{center}
+  \caption[#4]{#3}\label{fig:#2}
+  \bigskip
+  \end{figure}
+}
+
+\def\ins_epsfig#1#2#3{
+  \begin{figure}[!tbph!]
+  \bigskip
+  \begin{center}
+  \includegraphics[width=#1]{#2}
+  \end{center}
+  \caption{#3}\label{fig:#2}
+  \bigskip
+  \end{figure}
+}
+
+\def\rotins_epsfig_listcaption#1#2#3#4#5{
+  \begin{figure}[!tbph!]
+  \bigskip
+  \begin{center}
+  \includegraphics[angle=#4,width=#1]{#2}
+  \end{center}
+  \caption[#5]{#3}\label{fig:#2}
+  \bigskip
+  \end{figure}
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\oddsidemargin=0.15in
+\evensidemargin=0.15in
+\topmargin=0.2in
+\textwidth=6.2truein
+
+
+\pagestyle{fancy}
+\lhead{\scriptsize\bfseries\sffamily DRAFT---INTEL CONFIDENTIAL---DRAFT}
+\chead{}\rhead{\thepage}
+\lfoot{}\cfoot{}\rfoot{}
+\renewcommand{\headrulewidth}{0pt}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\input{build/hash}
+
+\title{Dope Vectors \\ and \\ Hardware Modeling}
+\author{Mika Nystr\"om \\ {\tt mika.nystroem@intel.com}}
+
+\date{\today}
+
+\begin{document}
+
+\maketitle
+\parindent=0pt
+\parskip=1.5ex
+
+\arraycolsep=1.4pt\def\arraystretch{1.5}
+\begin{abstract}
+
+\end{abstract}
+
+%\tableofcontents
+%\listoffigures
+%\listoftables
+
+\section{Hardware modeling}
+We shall use the term {\em hardware modeling\/} to describe a wide
+range of activities.  Almost any runtime view of a piece of hardware
+can be thought of as a hardware model: a C model of a chip used for
+software testing or design verification, a kernel driver's view of the
+state of a chip, a Verilog simulator's view of the state of a chip, a
+documentation set in \LaTeX, and we can even view the hardware as a model
+of itself.
+
+The problems we shall discuss in this paper relate to the
+representation of what is generally known as the {\em Configuration
+  and Status Registers\/} (CSRs) of a hardware device.  The CSRs are
+generally mapped as a memory space with an embedded structure of
+registers at fixed addresses.
+
+The CSR space of a hardware device is generally described in a formal
+way using an application-specific language such as Accelera's Register
+Description Language (RDL) \cite{rdl}.
+
+The work we report on here was developed in the context of Intel's
+Madison Bay (MBY) Ethernet switch project.  Madison Bay is a chip
+design with a very large number of registers (over two million individual fields
+are present in the latest version of the MBY RDL).
+
+The primary consumer of our CSR view was the C model developed by the
+MBY Functional Modeling (FM) Team.  The FM, in turn, was used for multiple purposes:
+\begin{itemize}
+\item Design verification (DV) ``golden model''
+
+\item Early (``shift left'') development of C software drivers
+
+\item Formal documentation of the architecture
+
+\item (Planned) SIMICS\cite{simics} model integration
+  
+\end{itemize}
+Other consumers of the CSR view also exist
+\begin{itemize}
+\item Informal (human readable) documentation of the architecture
+
+\item Software driver development
+
+\item Verilog RTL (Register Transfer Language) hardware development activities
+\end{itemize}
+but have not, as of the time of this writing, been converted to using the
+methods described in this paper.  In particular incorporating some of our
+ideas in software-driver development appears a promising future avenue of
+exploration.
+
+\section{Dope vector representation of arrays}
+
+{\em Dope vectors\/} originated in Fortran\cite{fortran. fortran77} as a way of
+representing array types (layouts) in memory.  
+
+Consider the following Fortran-77 declaration of a matrix-vector multiplication subroutine:
+\begin{verbatim}
+      subroutine matvec (m, n, A, x, y)
+      integer m, n, lda
+      real x(n), y(m), A(m,n)
+\end{verbatim}
+Here the arrays \verb!x! and \verb!y! represent vectors and the array
+\verb!A! represents a $\verb!m! \times \verb!n!$ matrix.  If we now consider the (inefficient) program
+fragment
+\begin{verbatim}
+      do 20 i = 1, m
+          y(i) = 0.0
+          do 10 j = 1, n
+              y(i) = y(i) + A(i,j) * x(j)
+10        continue
+20    continue
+\end{verbatim}
+it is clear that the Fortran compiler must arrange for the generated object code to compute the addresses of \verb!x(j)!,
+\verb!y(i)!, and \verb!A(i,j)!.  Let's introduce the operator $\alpha(x)$ to denote the address of object $x$.  Since Fortran-77 implementations use dense
+array representations and pass subroutine parameters by reference, computing
+the addresses of \verb!x(j)! and \verb!y(i)! is easy:\footnote{In this section, we assume for ease of exposition that no special extra alignment padding is necessary.  As we shall see later, that
+  restriction is not necessary.}
+\begin{equation}
+  \alpha(\verb!x(j)!) = \verb!j! \cdot \text{\sl sizeof\/}(\verb!real!) + \alpha(\verb!x!) \quad ,
+\end{equation}
+where $\text{\sl sizeof\/}(T)$ is the function that computes the in-memory size of a value of type $T$; on most computer architectures, the unit of address is called a {\em byte.}  We call $\text{\sl sizeof\/}(\verb!real!)$ the {\em stride\/} of \verb!x! and \verb!y!.  On most contemporary machines, the stride of these vectors will be 4~bytes, as \verb!real! usually represents IEEE754 single-precision floating point numbers.
+
+The computation of $\alpha(\verb!A(i,j)!)$ presents more difficulty.  The two-dimensional array \verb!A! has two strides.  Its stride in the first dimension, \verb!i!, is $\text{\sl sizeof\/}(\verb!real!)$, same as for \verb!x! and \verb!y!.  However, in the second dimension, the stride is $\verb!m! \cdot \text{\sl sizeof\/}(\verb!real!)$ and therefore we may write
+\begin{equation}
+  \alpha(\verb!A(i,j)!) = \verb!i! \cdot \text{\sl sizeof\/}(\verb!real!) + \verb!j! \cdot \verb!m! \cdot \text{\sl sizeof\/}(\verb!real!)  + \alpha(\verb!A!) \quad .
+\end{equation}
+
+We can now write the stride itself of \verb!A! as a vector
+\begin{equation}
+  \sigma_A = ( \quad
+    \text{\sl sizeof\/}(\verb!real!)
+    \quad
+    \verb!m! \cdot \text{\sl sizeof\/}(\verb!real!)
+    \quad ) \quad ,
+\end{equation}
+and this is the {\it dope vector\/} in Fortran terminology.  Note that the stride of the second dimension of \verb!A! is a function of \verb!m!, that is, it must be computed at runtime.  In this view, of course, we may write the index into an array itself as a vector
+\begin{equation}
+  {\bf v} = \verb!(i,j)!
+\end{equation}
+and we can write
+\begin{equation}
+  \alpha(\verb!A!({\bf v})) = {\bf v} \cdot \sigma_A + \alpha(\verb!A!) 
+\end{equation}
+where $\cdot$ represents the standard vector dot product.  As a final observation, let's observe that $\sigma_A$ is not actually directly a function of $\verb!A!$ but of the {\em type\/} of \verb!A!.  Suppose \verb!A! has type $T$; then we can abstract away \verb!A! entirely by speaking of the offset $\Omega$ of an element of \verb!A! from the beginning of \verb!A! as follows:
+\begin{equation}
+  \begin{aligned}
+  \Omega_T({\bf v}) &=& \alpha(\verb!A!({\bf v})) - \alpha(\verb!A!)
+                    &=&  {\bf v} \cdot \sigma_T
+  \end{aligned}
+\end{equation}
+    
+
+\section{Dense data structures}\label{sec:dense_system}
+Systems programming languages such as C\cite{k+r} and Pascal\cite{pascal} have a richer
+language of structured data types than does Fortran-77.  Here we shall concern
+ourselves only with {\em dense\/} so-called value data structures in
+these languages, except union types.  By {\em dense\/} we mean a data
+type that is allocated as a single contiguous block of memory.
+
+Dense data structures in C are arrays, structs, and base types of the
+language ({\tt int}, {\tt char}, {\tt real}, etc.) and
+combinations of these types.  For example,
+\begin{verbatim}
+typedef struct dense0 { 
+  int a;
+  int b;
+} dense0_t;
+\end{verbatim}
+and
+\begin{verbatim}
+typedef int dense1_t[10];
+\end{verbatim}
+represent the dense type definitions \verb!dense0_t! and
+\verb!dense1_t!; \verb!dense0_t! is a type of two-member records, and 
+\verb!dense1_t! is a type of 10-entry integer arrays (yes, that is really the correct syntax for this typedef in C).  We will use modified ALGOL\cite{algol60} syntax for such
+definitions in the following, taken from the Modula-3 programming
+language (a modern descendant of Pascal)\cite{spwm3}.  Modula syntax for the same types is a little bit
+more sane, viz.:
+\begin{verbatim}
+TYPE 
+  dense0_t = RECORD
+    a : INTEGER;
+    b : INTEGER;
+  END;
+\end{verbatim}
+and
+\begin{verbatim}
+TYPE dense1_t = ARRAY [0..9] OF INTEGER;
+\end{verbatim}
+But we can now consider more complex examples, such as
+\begin{verbatim}
+TYPE 
+  dense2_t = RECORD
+    a : ARRAY [0..1023] OF dense0_t;
+    b : ARRAY [0..1023] OF dense1_t;
+  END;
+
+  dense3_t = RECORD (*1*)
+    a : dense2_t;
+    b : ARRAY [0..1023] OF dense0_t;
+  END; 
+\end{verbatim}
+et cetera.
+
+Any dense type can be fully expanded to base types, for example, the fully-expanded definition
+\begin{verbatim}
+TYPE 
+  dense3_t = RECORD (*2*)
+    a : RECORD
+      a : ARRAY [0..1023] OF RECORD
+        a : INTEGER;
+        b : INTEGER;
+      END;
+      b : ARRAY [0..1023] OF ARRAY [0..9] OF INTEGER;
+    END;
+    b : ARRAY [0..1023] OF RECORD
+      a : INTEGER;
+      b : INTEGER;
+    END;
+  END; 
+\end{verbatim}
+is equivalent to the definition \verb!(*1*)! above as regards memory
+layout.\footnote{In some programming languages, the definitions
+  {\tt (*1*)} and {\tt (*2*)} are equivalent in memory layout
+  but not considered type compatible because of naming differences.
+  The Modula-3 programming language uses structural equivalence rather
+  than name equivalence for type compatibility, so in that language
+  the two types are entirely compatible, i.e., a value of one type is
+  assignable to the other and can be used in any context where a value
+  of the other type could legally be used.  These considerations are
+  outside the scope of the present discussion because we would
+  generally not have both definitions available.}
+We would normally
+have only the expanded definition in \verb!(*1*)! available, and
+this is because significant software-engineering advantages result
+from having the names of the internal sub-records available rather
+than treating the internal types as anonymous.  Using the expanded
+names, we can for example define procedures that operate on any
+desired sub-record of the overall type, and we can also re-use the
+sub-records in multiple super-record type definitions.  Technically, we
+can build a {\em directed acyclic graph\/} (DAG) of type definitions, with
+base types at the leaves and {\tt ARRAY} and {\tt RECORD} combinations
+internally.
+
+The fully-expanded version of the dense types shows that it is
+possible to compute the memory offset of any particular member of a
+dense type at {\em compile time.}  The computation of the offsets is
+somewhat intricate and depends on particular implementation issues
+such as compiler or ABI\footnote{Application Binary Interface.}
+alignment rules, and these computations are implemented by the compiler (Modula-3, C, etc.)
+
+\subsection{Properties of dense data structures}\label{sec:denseproperties}
+
+While we can leave the details of the address computations of dense types
+to the compiler, there are two important properties of dense type definitions
+that we shall have
+occasion to use:
+\begin{itemize}
+\item The addressing offset of any member of a given {\tt RECORD} type from the beginning address of that {\tt RECORD} is always the same, no matter what the context of the declaration.
+
+\item The addressing stride of any {\tt ARRAY} type is always constant, regardless of how complex the type of the {\tt ARRAY} element is.
+\end{itemize}
+In other words, if we know the address offset of a {\tt RECORD} member
+from the beginning of its {\tt RECORD} and if we know the address delta
+between any two consecutive elements of an {\tt ARRAY} and if we know
+this information for just one instance of every unique {\tt RECORD}
+member and {\tt ARRAY} type, we can at least in principle compute the
+offset of every member of every {\tt RECORD} and of every element of
+every {\tt ARRAY}---or in other words the offset of every base
+datum---from the beginning of the top-level {\tt RECORD} or {\tt
+  ARRAY}.
+  
+\subsection{Dense data structures in hardware models}
+It should be clear that the view of dense data structures of
+section~\ref{sec:dense_system} is not far removed from the embedding
+of a register set in the CSR space of a hardware device.  In fact,
+register-set description languages such as RDL generally generate CSR
+address maps subject to the same restrictions from section~\ref{sec:denseproperties} that we find for dense
+data structures in systems programming languages, namely that arrays
+have fixed stride and record components are located at fixed offsets
+from each other (records are variously called ``register files'' or
+``address maps'' in the context of CSRs, but the abstraction has most
+of the same properties as a software record).
+
+Languages such as RDL provide finer control over addressing than do most software environments, but while these controls
+certainly change the addresses that are generated, they do not in fact destroy
+the two properties of section~\ref{sec:denseproperties}.  The main
+differences between hardware register layouts and software record layouts
+are that first of all, the programmer has bit-level control over register
+layouts in hardware design, and secondly, the programmer normally has a wider
+range of data types available in hardware designs than in systems programming languages.
+
+
+We should say a few words about bit fields here.  While programming
+languages like Modula-3 and C have limited control over bit layouts by
+using bit fields, these methods are not as expressive as what is
+available in RDL.  Some designers attempt to lay out bit fields to
+exactly match their CSR register set, but this comes at a high cost:
+only being able to use the CSR data types that are available in the
+software model.  (This is a two-way ``least common denominator'' type
+of decision: Pascal-derived languages such as Modula provide integer
+subrange types such as \verb![0..257]! which are not constrained
+to fit in a specific number of bits, and the hardware implementation
+probably cannot ``model'' such software either.)  Our goal here is
+explicitly not to match the hardware design entirely in the software
+models we are building, but to {\em model\/} the hardware.  So, for
+example, an unaligned 7-bit bit field from RDL can be modeled in the
+software model by, for example, a byte-aligned 8-bit value of type
+\verb![0..255]! or possibly even by a value of type \verb!INTEGER!,
+which is 64 bits wide on contemporary machines.  Some models may even
+use something far more elaborate to model such a bit field, such as a
+Java/Smalltalk style object.
+
+\subsection{Summary}
+
+We can thus abstract away from the specific implementation of a CSR
+space (hardware, C model, etc.) and use a uniform addressing scheme
+for the different implementations---the addressing scheme will differ
+in terms of the addresses computed, but will have a language-~and
+implementation-independent indexing scheme.  Connecting back to the
+Fortran example we started with, the indices will be the same, but the
+dope ``vectors'' will be different---we put ``vectors'' in quotes,
+because the dope will no longer be plain vectors (see below).  In
+short, the dope for two implementations of a CSR space will have the
+same shape but may contain different constants (array strides and
+field offsets).
+
+\section{Addressing in dense data structures}
+
+We have investigated a few methods of addressing objects in
+dense data structures as described in section~\ref{sec:dense_system}.
+
+\begin{thebibliography}{99}
+
+\bibitem{scheme} W.~Clinger and J.~Rees, eds. {Revised$^4$ Report on the Algorithmic Language Scheme.}  In {\it ACM Lisp Pointers IV}, July--September 1991.
+
+\bibitem{algol60}{J.~W.~Backus, F.~L.~Bauer, J.~Green, C.~Katz, J.~McCarthy,
+P.~Naur, A.~J.~Perlis, H.~Rutishauser, K.~Samelson, B.~Vauquois, J.~H.~Wegstein, A.~van~Wijngaarden, and M.~Woodger. {\it Revised Report on the Algorithmic Language}~{\scshape Algol 60}.  Berlin:\ Springer-Verlag, 1969.}
+
+\bibitem{spwm3}{G.~Nelson, ed.  {\it Systems Programming with Modula-3.} Englewood Cliffs, N.J.:\ Prentice Hall, 1991.}
+
+\bibitem{fortran}{J.~W.~Backus.  Preliminary Report: Specifications for The IBM Mathematical FORmula TRANslating System, FORTRAN.  New York, N.Y.:\ International Business Machines Corp., 1954.}
+
+\bibitem{fortran77}{ANSI standard X3J3/90.4.  FORTRAN 77 Full Language Specification.  (Also ISO 1539:1980.)  New York, N.Y.:\ American National Standards Institute, 1978.  See also MIL-STD-1753, 1978.}
+
+\bibitem{simics}{Simics Reference Manual. San Jose, Calif.:\ Wind River Systems, 2019.}
+
+\bibitem{pascal}{N.~Wirth.}
+
+\bibitem{k+r}{B.~Kernighan and D.~Ritchie.}
+
+\bibitem{rdl}{Accelera.}
+
+\end{thebibliography}
+
+
+\section{Version}
+The Git hash of the head was {\tt \hash}.
+
+  
+  
+    
+
+
+\end{document}
+

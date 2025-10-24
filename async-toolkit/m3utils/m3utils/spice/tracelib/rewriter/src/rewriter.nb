@@ -1,0 +1,10 @@
+#!/bin/sh -x
+DIR=/nfs/site/disks/zsc3_fon_fe_0001/mnystroe/m3utils/spice/tracelib/rewriter
+DERIVDIR=AMD64_LINUX
+TOOL=rewriter
+
+EXEC=${DIR}/${DERIVDIR}/${TOOL}
+
+unset DEBUGLEVEL
+
+nbjob run --target zsc3_normal --qslot /XCC/LBM/RTL --mode interactive ${EXEC} $*

@@ -1,0 +1,6 @@
+#################################################################################
+# This file contains Test Island parameter values that are processed during 
+# Testbench generation
+# 
+# It would typically include one or more PT and PI commands
+#################################################################################

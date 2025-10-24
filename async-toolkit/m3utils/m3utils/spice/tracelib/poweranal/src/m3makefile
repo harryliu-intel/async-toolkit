@@ -1,0 +1,36 @@
+% Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+% SPDX-License-Identifier: Apache-2.0
+
+import ("libm3")
+import ("cit_util")
+import ("spicelib")
+import ("tracelib")
+import ("regression")
+import ("ctlib")
+import ("spicecompress")
+import ("mscheme")
+import ("modula3scheme")
+import ("sstubgen")
+import ("minimize")
+import ("integrate")
+
+implementation ("PowerAnal")
+
+Table        ("TextTextLR", "Text", "TextLongRealTbl")
+Sorted_table ("TextTextLR", "Text", "TextLongRealTbl")
+
+Sorted_table ("TextLongReal", "Text", "LongrealType")
+
+Table        ("TextSortedTextLR", "Text", "SortedTextLongRealTbl")
+Sorted_table ("TextSortedTextLR", "Text", "SortedTextLongRealTbl")
+
+Table        ("TextTextSeq", "Text", "TextSeq")
+Sorted_table ("TextTextSeq", "Text", "TextSeq")
+
+Interface ("Measurement")
+Sequence ("Measurement", "Measurement")
+
+Interface ("HierData")
+Table ("TextHier", "Text", "HierData")
+
+program ("poweranal")

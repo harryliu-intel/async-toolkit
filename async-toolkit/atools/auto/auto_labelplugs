@@ -1,0 +1,4 @@
+#!/bin/csh
+foreach i ( $*)
+  auto 1 "$i.mag" < $CAST_HOME/lib/auto/labelplugs.in
+end

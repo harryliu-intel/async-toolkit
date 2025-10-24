@@ -1,0 +1,5 @@
+BUILD/
+*.done
+.cth_setup_files/
+*.conf
+*~

@@ -1,0 +1,134 @@
+// Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+// SPDX-License-Identifier: Apache-2.0
+
+///
+///  INTEL CONFIDENTIAL
+///
+///  Copyright 2018 Intel Corporation All Rights Reserved.
+///
+///  The source code contained or described herein and all documents related
+///  to the source code ("Material") are owned by Intel Corporation or its
+///  suppliers or licensors. Title to the Material remains with Intel
+///  Corporation or its suppliers and licensors. The Material contains trade
+///  secrets and proprietary and confidential information of Intel or its
+///  suppliers and licensors. The Material is protected by worldwide copyright
+///  and trade secret laws and treaty provisions. No part of the Material may
+///  be used, copied, reproduced, modified, published, uploaded, posted,
+///  transmitted, distributed, or disclosed in any way without Intel's prior
+///  express written permission.
+///
+///  No license under any patent, copyright, trade secret or other intellectual
+///  property right is granted to or conferred upon you by disclosure or
+///  delivery of the Materials, either expressly, by implication, inducement,
+///  estoppel or otherwise. Any license under such intellectual property rights
+///  must be express and approved by Intel in writing.
+///
+// ---------------------------------------------------------------------------------------------------------------------
+// -- Author : Scott Hussong 
+// -- Project Name : Madison Bay (MBY) 
+// -- Description  : MIM read interface
+//
+
+// =====================================================================================================================
+
+// FIXME:  use msh_rd_if and get rid of this file 
+
+interface mim_rd_if ();
+  // old interface
+  import mby_egr_pkg::*;
+  // new interface
+  import mby_msh_pkg::*;
+
+
+
+  // old interface
+  logic                    mim_rreq_valid;
+  logic [W_SEG_PTR-1:0]    mim_seg_ptr;      //[19:0]
+  logic [W_SEMA-1:0]       mim_sema;         //[ 3:0]
+  logic [W_WD_SEL-1:0]     mim_wd_sel;       //[ 2:0]
+  logic [W_REQ_ID-1:0]     mim_req_id;       //[12:0]
+  
+  logic [W_XACT_CREDITS-1:0] mim_rreq_credits; // temp value   
+  
+  
+  logic                         mim_rrsp_valid;
+  logic [W_RRSP_DEST_BLOCK-1:0] mim_rrsp_dest_block;  //[2:0]
+  logic [W_REQ_ID-1:0]          mim_rrsp_req_id;      //[12:0]
+  logic [W_WORD_BITS-1:0]       mim_rd_data;          //64 x 8
+
+
+    // new interface
+    mshpt_rreq_t     msh_rreq;
+
+    logic            msh_rd_lat_sat;
+    logic            msh_crdt_rtn_for_rreq;
+    logic            msh_mcast_crdt_rtn_for_rreq;
+    
+    logic            msh_crdt_rtn_for_rrsp;
+    logic            msh_mcast_crdt_rtn_for_rrsp;
+
+    mshpt_rrsp_t     msh_rrsp;
+
+    msh_data_t       msh_rd_data;
+    
+    modport request(
+
+        // old interface
+    output mim_rreq_valid,
+    output mim_seg_ptr,
+    output mim_sema,
+    output mim_wd_sel,
+    output mim_req_id,
+    input  mim_rreq_credits,
+    input  mim_rrsp_valid,
+    input  mim_rrsp_dest_block,
+    input  mim_rrsp_req_id,    
+    input  mim_rd_data,
+
+        // new interface
+        output msh_rreq,
+
+        input  msh_rd_lat_sat,
+        input  msh_crdt_rtn_for_rreq,
+        input  msh_mcast_crdt_rtn_for_rreq,
+    
+        output msh_crdt_rtn_for_rrsp,
+        output msh_mcast_crdt_rtn_for_rrsp,
+
+        input  msh_rrsp,
+
+        input  msh_rd_data
+    
+        );  
+
+    modport receive(
+
+        // old interface
+    input  mim_rreq_valid,
+    input  mim_seg_ptr,
+    input  mim_sema,
+    input  mim_wd_sel,
+    input  mim_req_id,
+    output mim_rreq_credits,
+    output mim_rrsp_valid,
+    output mim_rrsp_dest_block,
+    output mim_rrsp_req_id,    
+    output mim_rd_data,
+
+        // new interface
+        input  msh_rreq,
+
+        output msh_rd_lat_sat,
+        output msh_crdt_rtn_for_rreq,
+        output msh_mcast_crdt_rtn_for_rreq,
+    
+        input  msh_crdt_rtn_for_rrsp,
+        input  msh_mcast_crdt_rtn_for_rrsp,
+
+        output msh_rrsp,
+
+        output msh_rd_data
+    
+    );
+
+endinterface : mim_rd_if

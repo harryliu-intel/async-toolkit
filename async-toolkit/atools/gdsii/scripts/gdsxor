@@ -1,0 +1,299 @@
+#!/usr/intel/bin/perl -l
+# AAG
+# $Id$
+# $DateTime$
+
+use strict;
+use Getopt::Long;
+use IPC::Open2;
+
+my $debug=0;
+my $verbose=0;
+my @topcell=();
+my $argtopcell="";
+my @argtopcell=("","");
+my $layerlist;
+my %layerlist=();
+my $large="";
+
+sub usage {
+    print "$_[0]" if $_[0];
+    print <<EU;
+Usage: gdsxor [options] gds1 gds2
+    --debug    : keeps all temp files
+    --verbose  : shows progress
+    --topcell=topcell   : override automatic topcell for both files
+    --topcell1=topcell1 : override topcell for 1st file
+    --topcell2=topcell2 : override topcell for 2nd file
+    --layerlist=s       : list of layer-purpose pairs to check
+                          e.g. --layerlist='31;0,31;1,3;0'
+    --large             : large files requires split data
+EU
+exit 1;
+}
+
+GetOptions (
+    "debug" => \$debug,
+    "verbose" => \$verbose,
+    "topcell=s" => \$argtopcell,
+    "topcell1=s" => \$argtopcell[0],
+    "topcell2=s" => \$argtopcell[1],
+    "layerlist=s", \$layerlist,
+    "large" => \$large,
+) or usage;
+
+$argtopcell[0] = $argtopcell if ($argtopcell[0] eq "");
+$argtopcell[1] = $argtopcell if ($argtopcell[1] eq "");
+$verbose = 1 if $debug;
+my $prefix="tempxor$$";
+if ($large) {
+    $large = " ?diskList (";
+    for (my $n=0; $n < 20; $n++) {
+        $large .= sprintf("(\"$prefix/%d\" 2G) ", $n);
+    }
+    $large .= ")";
+}
+my $start=time;
+my $user = `whoami`;
+chomp $user;
+my $dir;
+if ( ! $debug and defined ($ENV{TMP}) and $ENV{TMP} =~ /scratch/) {
+    $dir = "$ENV{TMP}";
+}
+else {
+    $dir="/scratch/$user";
+}
+system "mkdir -p '$dir'";
+my $xorrul = <<EL;
+; Auto generated file
+ 
+drcExtractRules(
+  layerDefs("gds2") ;  to trick parser: *WARNING* rcReadLMD: cannot read file "".
+ 
+  ks="layerDefs( \\"gds2\\" "
+  FOREACHLIST ) \\
+    ks = strcat(ks sprintf(nil "(d1l%d_%d=layer(%d type(%d)))" nth( 0 lpp) nth( 1 lpp) nth( 0 lpp) nth( 1 lpp))) \\
+  )
+  ks=strcat(ks ")")
+  apply(stringToFunction(ks) nil)
+ 
+  ks="layerDefs2( \\"gds2\\" "
+  FOREACHLIST ) \\
+    ks = strcat(ks sprintf(nil "(d2l%d_%d=layer(%d type(%d)))" nth( 0 lpp) nth( 1 lpp) nth( 0 lpp) nth( 1 lpp))) \\
+  )
+  ks=strcat(ks ")")
+  apply(stringToFunction(ks) nil)
+ 
+  ks=""
+  FOREACHLIST ) \\
+  ks=strcat(ks sprintf(nil "errorLayer(xor%d_%d=geomXor(d1l%d_%d d2l%d_%d)) " \\
+      nth( 0 lpp) nth( 1 lpp) nth( 0 lpp) nth( 1 lpp) nth( 0 lpp) nth( 1 lpp))) \\
+  )
+  apply(stringToFunction(ks) nil)
+ 
+) ; drcExtractRules complete
+EL
+
+my $xorrsf = <<ES;
+avParameters(?outputErrorLib t ?flagMalformed nil)
+
+outFile( "gds2" "$prefix" "$dir/$prefix.gds2"
+
+   OUTLAYERDEF
+)
+
+avParameters(
+  ?inputLayout ( "gds2" "GDSXORFILE1" )
+  ?inputLayout2 ( "gds2" "GDSXORFILE2" )
+  ?cellName "GDSXORCELL1"
+  ?cellName2 "GDSXORCELL2"
+  ?rulesFile "$dir/$prefix.rul"
+  ?viewName "layout"
+  ?overwrite t
+  ?avrpt t
+$large
+  ?workingDirectory "$dir"
+  ?runName "$prefix"
+) ; avParameters completed
+ES
+
+my (@files)=(@ARGV);
+usage "No files" if ( !defined $files[1] );
+usage "$files[0] is not readable" if ( ! -r $files[0] );
+usage "$files[1] is not readable" if ( ! -r $files[1] );
+
+sub readfile {
+    my ($file,$ndx)=@_;
+    print "Reading $file" if $verbose;
+    my $aaggds=`which aaggds 2>/dev/null`;
+    chomp $aaggds;
+    my $topcell;
+    my %sname = ();
+    my %strname = ();
+    my $geom = 0;
+    my $set = 0;
+    my $layer = 0;
+    my $type = 0;
+    if ( -x $aaggds) {
+        my $pid=open2(\*RD, \*WR, "$aaggds '$file' 2>\&1");
+        print WR "t";
+        $_=<RD>;
+        chomp;
+        my @f=split;
+        $topcell=$f[2] if defined($f[2]) and $f[2] ne "NONE";
+        print WR "lys\nq\n";
+        while (<RD>) {
+            chomp;
+            my ($layer,$datatype, $geom,$text)=split;
+            if (/^STRNAME/) {
+                $strname{$datatype}=1;
+            }
+            elsif ($geom > 0) {
+                $layerlist{"$layer $datatype"}=1;
+            }
+        }
+        close WR;
+        close RD;
+        waitpid ($pid, 0);
+        if (($argtopcell[$ndx] eq "" or ! $strname{$argtopcell[$ndx]}) and defined ($topcell)) {
+            $topcell[$ndx]=$topcell;
+        }
+        else {
+            $topcell[$ndx]=$argtopcell[$ndx];
+        }
+    }
+    else {
+        open (P, "rdgds '$file' |");
+        while (<P>) {
+            chomp;
+            if (/BOUNDARY/ or /BOX/ or /PATH/) {
+                $geom=1;
+                $set=1;
+                $layer=0;
+                $type=0;
+            }
+            elsif (/ENDEL/) {
+                if ($geom) {
+                    $layerlist{"$layer $type"} = 1 if $layerlist eq "";
+                }
+                $geom = 0;
+            }
+            if (/LAYER/) {
+                my @f=split;
+                $layer=$f[1];
+            }
+            if (/DATATYPE/) {
+                my @f=split;
+                $type = $f[1];
+            }
+            if (/STRNAME/) {
+                my @f=split;
+                $strname{$f[1]}=1;
+            }
+            if (/SNAME/ or /ANAME/) {
+                my @f=split;
+                $sname{$f[1]}=1;
+            }
+        }
+        close P;
+        print STDERR "$argtopcell[$ndx] is not in $file" if (! $strname{$argtopcell[$ndx]} and $argtopcell[$ndx] ne "");
+        if ($argtopcell[$ndx] eq "" or ! $strname{$argtopcell[$ndx]}) {
+            foreach my $s (keys %strname) {
+                if ( ! $sname{$s} ) {
+                    if (defined ($topcell) and $topcell ne "") {
+                        warn "Topcell ambiguous in $file ($topcell,$s)";
+                    }
+                    $topcell = $s;
+                }
+            }
+            $topcell[$ndx]=$topcell;
+        }
+        else {
+            $topcell[$ndx]=$argtopcell[$ndx];
+        }
+    }
+}
+
+if ($layerlist ne "") {
+    foreach my $lpp (split(/,/,$layerlist)) {
+        my ($layer,$type) = split(/;/,$lpp);
+        $type = 0 if $type eq "";
+        $layerlist{"$layer $type"}=1;
+    }
+}
+$topcell[0] = $argtopcell[0] if $argtopcell[0] ne "";
+$topcell[1] = $argtopcell[1] if $argtopcell[1] ne "";
+readfile ($files[0],0) if ( $argtopcell[0] eq "" or $layerlist eq "");
+readfile ($files[1],1) if ( $argtopcell[1] eq "" or $layerlist eq "");
+#usage "No geometry layers found in either GDS file" if ($#layers < 0 or $#types < 0);
+$" = " ";
+my $foreachlist="  foreach( lpp list( ";
+foreach my $ll (sort keys %layerlist) {
+    my ($l,$t) = split(/ /,$ll);
+    $foreachlist .= sprintf " list( %d %d )", $l,$t;
+}
+$xorrul =~ s/FOREACHLIST/$foreachlist/g;
+open P, ">$dir/$prefix.rul";
+print P "$xorrul";
+close P;
+
+#my @topcell=("FUSE_32","FUSE_32");
+$xorrsf =~ s/GDSXORFILE1/$files[0]/g;
+$xorrsf =~ s/GDSXORFILE2/$files[1]/g;
+$xorrsf =~ s/GDSXORCELL1/$topcell[0]/g;
+$xorrsf =~ s/GDSXORCELL2/$topcell[1]/g;
+my $outlayer="";
+foreach my $ll (sort keys %layerlist) {
+    my ($l,$t) = split(/ /,$ll);
+    $outlayer .= sprintf "  outLayer( xor%d_%d %d type(%d))\n", $l,$t,$l,$t;
+}
+$xorrsf =~ s/OUTLAYERDEF/$outlayer/;
+open P, ">$dir/$prefix.rsf";
+print P "$xorrsf";
+close P;
+print "$ENV{ASSURA_SCRIPT} assura $dir/$prefix.rsf" if $verbose;
+open P, "$ENV{ASSURA_SCRIPT} assura $dir/$prefix.rsf 2>\&1 |";
+my $err=0;
+open Q, ">$dir/$prefix.log" if $debug;
+while (<P>) {
+    chomp;
+    if (/abnormal/i or /warning/i or /ERROR/ ) {
+        $err++;
+        print;
+    }
+    if (/errorLayer/) {
+        my @f=split;
+        if ($f[5] or $f[6]) {
+            s/ xor/ /;
+            s/_/ /g;
+            s/error//;
+            $err++;
+            print;
+            print Q;
+        }
+        elsif ($debug) {
+            s/ xor/ /;
+            s/_/ /g;
+            s/error//;
+            print Q;
+        }
+    }
+}
+close P;
+close Q;
+if ( ! $debug ) {
+    opendir (P, "$dir");
+    my @temp=grep (/^$prefix/,readdir(P));
+    closedir P;
+    foreach my $f (@temp) {
+        if (($f =~ /^$prefix\./) or $f eq $prefix) {
+            unlink "$dir/$f";
+            if ( -e "$dir/$f") {
+                system "/bin/rm -rf '$dir/$f'";
+            }
+        }
+    }
+}
+else {
+    print "Debug files in \"$dir\"";
+}

@@ -1,0 +1,262 @@
+ct quick-start guide
+====================
+
+ct is a program loosely based on Andrew Lines's convert_trace
+
+Overview
+========
+
+ct takes an input file in either FSDB or the old ASCII format (CSDF)
+from Hspice (or PrimeSim XA or other compatible tools) and converts the
+file into one of two formats:
+
+-- aspice/aplot .trace format, in timestep-major order ("reordered" format)
+-- aplot .ztrace format, in timestep-major order
+
+In both cases, a matching .names file is generated.  Both .ztrace and .trace
+formats are timestep-oriented.  .ztrace is however highly compressed, and for
+reasonable settings, can compress 10X over the original FSDB file, and 100X or
+more over the same data in standard .trace format.
+
+This is a quick start document.  Technical details of the .ztrace format are
+discussed elsewhere.
+
+
+Command-line usage
+==================
+
+The basic command-line usage of ct is as follows:
+
+ct [-help]
+
+-- or --
+
+ct [-fsdb <fsdbPath> | -F | -Fnetbatch]
+   [-compress <compressPath>]
+   [-rename <dutName>]
+   [-scaletime <timeScaleFactor>]
+   [-offsettime <timeOffset>]
+   [-offsetvoltage <voltageOffset>]
+   [-dosources]
+   [-dofiles]
+   [ [-n <nodename>] ...]
+   [-threads <fsdb_threads>]
+   [-wthreads <write_threads>]
+   [-fromworkdir]
+   [-maxtime <seconds>]
+   [-maxnodes <nodes>]
+   [-wait]
+   [-prec <precision>]
+   [-translate]
+   [ [ -copyrootname | -C ] <inFileName0> [<inFileName1> ...] |
+     <inFileName0> <outFileRoot0> [ <inFileName1> <outFileRoot1> ] ... ]
+   
+
+Output files
+============
+
+The output files are named
+
+<outFileRoot>.[z]trace and <outFileRoot>.names
+
+
+Detailed command-line option documentation
+==========================================
+
+Command-line option meaning is as follows
+
+  -help|--help be helpful
+
+  -fsdb        read FSDB format.  Argument is absolute path
+               to FSDB reading program (can be a shell script
+               launching via Netbatch).  Usually nanosimrd.
+
+               default format is CSDF if this is not provided.
+
+               If CT_NANOSIMRD_PATH is set in the environment,
+               that value is used as if we had typed "-fsdb <value>"
+
+  -F           read FSDB format using default FSDB reading program
+
+               ${M3UTILS}/spice/fsdb/src/nanosimrd
+
+  -Fnetbatch   read FSDB format using default FSDB Netbatch reading program
+
+               ${M3UTILS}/spice/fsdb/src/nanosimrd.nb
+
+  -compress    Compress waveform data.  Argument is absolute path to 
+               compression program (usually spicestream).
+
+               Note that if -fsdb is used, this path needs to be correct
+               for the environment in which the FSDB reading program is run.
+ 
+               For example, if nanosimrd is run via Netbatch, the compression
+               program needs to be accessible from the Netbatch compute 
+               slaves, since it will be launched from within the fsdb
+               conversion program.
+
+               Note that if -compress is given without -z, then the output
+               file will be stored in the uncompressed (aspice reordered)
+               format.
+
+               If CT_COMPRESS_PATH is set in the environment, that
+               value is used as if we had typed "-compress <value>"
+
+               If nothing is set, the default is
+
+               ${M3UTILS}/spice/spicecompress/spicestream/AMD64_LINUX/spicestream
+
+  -resample    resample data at timestep given [short form -R]
+
+  -fromworkdir skips the parsing and generates the 
+               trace file from the work directory directly
+               NOT YET IMPLEMENTED!   SOON!!
+
+  -notrace     do not generate final .trace output
+
+  -dosources   generate PWL sources for all observed signals
+
+  -threads     how many threads to use for reading FSDB
+  
+  -wthreads    how many threads to use for writing .trace
+               (recommendation is TO NOT USE this option)
+
+  -maxfiles    max # of files to use in temp directory (default 1000)
+
+  -n           restrict attention to nodes mentioned on cmd line
+
+  -r           restrict attention to nodes matching regex
+
+  -workdir     rename working directory ( default : ct.work ) [short form: -wd]
+  
+  -maxtime     max time to output in trace (in seconds) -- only for FSDB
+               N.B. applied before scaling of time by timeScaleFactor
+
+  -format      Chosen output format:
+               Unreordered  -- aspice node-major order [not supported]
+               Reordered    -- aspice timestep-major order
+               CompressedV1 -- ztrace compressed format, version 1
+               Modifying    -- file is being modified
+               
+  -z           equiv to -format CompressedV1
+
+  -maxnodes    Only pick the first N nodes for the output
+
+  -translate   Convert GDS names to CAST names
+
+  -noX         Remove all occurrences of the letter X in node names
+
+  -prec        Set precision of CompressedV1 format as a fraction of the full
+               range of each signal.  [default: 0.01]
+
+  -wait        ???
+
+  <inFileName> is name of input file in FSDB or CSDF format
+
+  -quick       Run faster, but compress less
+
+  -execute     Run the program as requested.  Default is to run a wrapper,
+               which in turn uses -execute, and attempts to re-run the program
+               repeatedly if it crashes
+
+  -starttime   Use together with -execute to denote the time the job was
+               started.  Output files that are newer than -starttime are
+               assumed to have been created by this program and are not
+               re-created
+
+  -force|-f    Equal to setting -starttime to the end of time (LAST(Time.T))
+               so all output files are re-generated
+
+  -copyrootname Use prefix of inFileName before last period as outfileRoot
+
+  -C           Same as -copyrootname
+
+  <outfileRoot> is the root of the output files
+
+Illustrative examples
+=====================
+
+Locally running example
+-----------------------
+The following script converts an fsdb file named <fsdbroot>.fsdb to <fsdbroot>_5ps.{ztrace,names}
+when run as
+
+<script-name> <fsdbroot>
+
+It does so running the nanosimrd helper program from its location within the same build tree as
+ct itself.
+
+#!/bin/sh
+# usage: $0 <fsdb root>
+
+ROOT=$1
+
+M3UTILS=/nfs/site/disks/zsc3_fon_fe_0001/mnystroe/m3utils
+NANORD=${M3UTILS}/spice/fsdb/src/nanosimrd
+CT=${M3UTILS}/spice/ct/AMD64_LINUX/ct
+SPICEZ=${M3UTILS}/spice/spicecompress/spicestream/AMD64_LINUX/spicestream
+STEPPS=5
+XAOUT=${ROOT}_${STEPPS}ps
+FORMAT=CompressedV1
+
+${CT} -fsdb ${NANORD} -threads 4 -R ${STEPPS}e-12 -compress ${SPICEZ} -format ${FORMAT} -translate -wd ${ROOT}.ctwork ${ROOT}.fsdb ${XAOUT}
+
+Netbatch example
+----------------
+The recommended way to use ct with Netbatch is to create a script that launches nanosimrd
+interactively over Netbatch.  Note that nanosimrd and ct use stdin/stdout to communicate.
+
+An example script to launch nanosimrd in netbatch is as follows:
+
+#!/bin/sh
+
+# script to run nanosimrd via netbatch
+
+NANOSIMRD=/nfs/site/disks/or_lhdk75_disk0037/w137/gorda/mnystroe/m3utils/spice/fsdb/src/nanosimrd
+
+nbjob run --target ${NBPOOL} --qslot ${NBQSLOT} --mode interactive ${NANOSIMRD} $*
+
+Here it is assumed that NBPOOL and NBQSLOT are already set in the environment.
+
+With this script in existence, the launching of ct is simply changed to point to the netbatch
+version of nanosimrd:
+
+#!/bin/sh -x
+# usage: $0 <fsdb file>
+
+FSDB=$1
+ROOT=`echo ${FSDB} | sed s/\.fsdb//`
+XAOUT=$ROOT
+
+M3UTILS=/nfs/site/disks/or_lhdk75_disk0037/w137/gorda/mnystroe/m3utils
+SCRIPTDIR=/nfs/site/disks/or_lhdk75_disk0037/w137/gorda/mnystroe/bin.script
+NANORD=${SCRIPTDIR}/nanosimrd.nb
+
+CT=${M3UTILS}/spice/ct/AMD64_LINUX/ct
+SPICEZ=${M3UTILS}/spice/spicecompress/spicestream/AMD64_LINUX/spicestream
+
+STEPPS=10
+THREADS=50
+
+FORMAT=CompressedV1
+
+${CT} -fsdb ${NANORD} -threads ${THREADS} -wthreads 1 -R ${STEPPS}e-12 -compress ${SPICEZ} -format ${FORMAT} -translate -wd ${ROOT}.ctwork ${ROOT}.fsdb ${XAOUT}
+
+Note that in this case, we pass the full name of the fsdb file in, e.g., as in
+
+<script-name> xa.fsdb
+
+and the script will strip the .fsdb suffix.
+
+Lastly, consider that the spicestream program will be launched on the
+remote machines, so the path that is used must be valid on those
+systems.
+
+ct in compression mode is capable of very large numbers of worker threads,
+on the order of 3,000 or more, if that much compute is available.  
+
+
+
+
+mika.nystroem@intel.com
+May, 2023

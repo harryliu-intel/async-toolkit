@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Composite xmlns="http://www.swtxml.com/swt" 
+           xmlns:sv="http://www.dvteclipse.com/xmlns/customdialog/sv" 
+           xmlns:dvt="http://www.dvteclipse.com/xmlns/customdialog" 
+           id="DVT Run With Dialog Demo"
+           layout="layout:grid;">
+
+  <Composite
+    layout="layout:grid;numColumns:4;"
+    layoutData="horizontalAlignment:CENTER; 
+                verticalAlignment:CENTER;   
+                grabExcessHorizontalSpace:true;
+                grabExcessVerticalSpace:true;">
+
+ <Group text="Enter Model name" layout="layout:grid;numColumns:2;">
+                <Text id=" -model " style="BORDER" text="model" />
+  </Group>
+
+ <!--             
+ <Group text="Select Models"
+             layout="layout:fill;type:VERTICAL;">
+        <Button style="CHECK" id=" mby  "           text="mby" selection="true"/>
+        <Button style="CHECK" id=" mplex_np_nphy"   text="mplex_np_nphy" selection="true"/>
+        
+      </Group>
+-->
+
+        <Group text="Select Libraries"
+             layout="layout:fill;type:VERTICAL;">
+        <Button style="CHECK" id=" -full  "         text="Full build" selection="true"/>
+        <Button style="CHECK" id=" -vcs  "          text="VCS only" selection="true"/>
+        
+    
+      </Group>
+
+      
+       <Group text="Bman -sched "
+             layout="layout:fill;type:VERTICAL;">
+        <Button style="CHECK" id=" -sched local " text="Local" selection="true" />
+      </Group>
+      
+
+
+      <!-- 
+       <Group text="Send Message "
+             layout="layout:fill;type:VERTICAL;">
+        <Button style="CHECK" id=" -text TextMe.sh " text="Text Me "  />
+        <Button style="CHECK" id=" -email EmailMe.sh " text="Email Me"  />
+      </Group>
+  -->
+  </Composite>
+</Composite>
+     

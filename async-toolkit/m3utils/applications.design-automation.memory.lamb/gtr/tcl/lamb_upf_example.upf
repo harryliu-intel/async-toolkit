@@ -1,0 +1,46 @@
+# Template UPF for LAMBs
+# this is just an example!
+# the file is integrated into gtr_lamb_gen_upf.tcl
+
+#Define All Design Level UPF Attributes
+set_design_attributes -elements {.} -attribute terminal_boundary TRUE
+set_design_attributes -elements { reinit_msg_blk reinit_top_blk} -models {@MODNAM@} -attribute SNPS_reinit TRUE
+set_design_attributes -elements { reinit_uut_blkA reinit_uut_blkB  reinit_fault_blk } -models {generic_behav_@MODNAM@} -attribute SNPS_reinit TRUE
+set_design_attributes -elements { mes_all_valid_old } -models {@MODNAM@} -attribute UPF_dont_touch TRUE
+set_design_attributes -elements { mes_all_valid } -models {generic_behav_@MODNAM@} -attribute UPF_dont_touch TRUE
+
+# Define power intent for top level scope that corresponds to memory periphery 
+# ****************************************************************************** 
+# Create Supply Sets
+create_supply_set SS_Peri_AO
+
+# Supply Port, Supply Net Connections
+create_supply_port VSS
+create_supply_port VDD
+
+create_supply_net VSS
+create_supply_net VDD
+
+connect_supply_net VSS -ports VSS
+connect_supply_net VDD -ports VDD
+
+
+# Supply Sets update
+create_supply_set SS_Peri_AO -function {power VDD} -function {ground VSS} -update
+
+#Define Power Domains
+create_power_domain PDP -elements {.}   -supply { primary SS_Peri_AO }
+
+
+
+#Define Supply States
+
+add_port_state VDD -state {ON  0.675 0.75 0.825} -state {OFF off}
+add_port_state VSS -state {GND 0.0 }
+
+create_pst inst_pst -supplies 		    		{VDD  VSS }
+add_pst_state normal -pst inst_pst -state    		{ON     GND}
+add_pst_state allOFF -pst inst_pst -state    		{OFF    GND}
+#Define Boundary Supplies
+set_port_attributes -elements {.} -attribute related_supply_default_primary true
+

@@ -1,0 +1,1 @@
+This is a wrapper for partial evaluators. This mostly exists because we used to use pgg for partial evaluation. It was difficult to partially evaluate when you did things like loading files and such, so this wrapper became necessary. Now that we're using Simiilix, it doesn't seem as relevant. The code is still here though.

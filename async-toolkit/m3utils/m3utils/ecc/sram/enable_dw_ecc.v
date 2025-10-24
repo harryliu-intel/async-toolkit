@@ -1,0 +1,11 @@
+// Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+// SPDX-License-Identifier: Apache-2.0
+
+// INTEL TOP SECRET
+// Copyright 2013 Intel Corporation. All Rights Reserved.
+
+// include this file OR enable_new_ecc.v in your filelist
+
+`ifdef NEW_ECC
+`undef NEW_ECC
+`endif

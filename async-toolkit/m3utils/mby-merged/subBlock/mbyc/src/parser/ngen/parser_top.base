@@ -1,0 +1,43 @@
+// -- Author       : Jon Bagge <jon.bagge@intel.com>
+// -- Project Name : MBY
+// -- Description  : parser netlist.
+// -------------------------------------------------------------------
+ngen_mod_name
+
+ngen_IO_list
+ngen_IO_end
+
+ngen_wires
+
+logic reset_n;
+print "assign reset_n = !reset;\n";
+logic [1:0] input_fifo_wr_en;
+logic [1:0][2:0] input_fifo_wr_adr;
+logic [1:0][1095:0] input_data_fifo_wr_data;
+logic [1:0] input_fifo_rd_en;
+logic [1:0][2:0] input_fifo_rd_adr;
+logic [1:0][1095:0] input_data_fifo_rd_data;
+logic [1:0][123:0] input_md_fifo_wr_data;
+logic [1:0][123:0] input_md_fifo_rd_data;
+logic [1:0] md_dly_fifo_wr_en;
+logic [1:0][5:0] md_dly_fifo_wr_adr;
+logic [1:0][123:0] md_dly_fifo_wr_data;
+logic [1:0] md_dly_fifo_rd_en;
+logic [1:0][5:0] md_dly_fifo_rd_adr;
+logic [1:0][123:0] md_dly_fifo_rd_data;
+logic [1:0] tail_dly_fifo_wr_en;
+logic [1:0][5:0] tail_dly_fifo_wr_adr;
+logic [1:0][30:0] tail_dly_fifo_wr_data;
+logic [1:0] tail_dly_fifo_rd_en;
+logic [1:0][5:0] tail_dly_fifo_rd_adr;
+logic [1:0][30:0] tail_dly_fifo_rd_data;
+logic [79:0] extract_cfg_wr_en;
+logic [79:0][3:0] extract_cfg_wr_adr;
+logic [79:0][15:0] extract_cfg_wr_data;
+logic [79:0] extract_cfg_rd_en;
+logic [79:0][3:0] extract_cfg_rd_adr;
+logic [79:0][15:0] extract_cfg_rd_data;
+
+ngen_submodules
+
+ngen_endmodule

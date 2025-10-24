@@ -1,0 +1,20 @@
+CLOCK        698.11e6  # scheduler clock speed in Hz
+N            512       # schedule slots
+UNDERRUNMAX    2.0     # allowable underrun from long-term average per port
+MINPORTREP     4       # ports may not repeat more often than this
+DELTAGAPMAX    3       # max allowable jitter within a single port speed       
+MINREPBITS   672.0     # minimum bits at port speed, per segment
+
+PORT 100.0e9           # port speed in b.p.s.
+PORT 100.0e9
+PORT 100.0e9
+PORT 100.0e9
+PORT  10.0e9
+PORT  10.0e9
+PORT  10.0e9
+PORT  10.0e9
+PORT  10.0e9
+PORT  10.0e9
+PORT   1.0e9
+PORT   1.0e9
+PORT   1.0e9

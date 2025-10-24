@@ -1,0 +1,506 @@
+% Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+% SPDX-License-Identifier: Apache-2.0
+
+xstage0 li0 lo0 ro0 ri0 resetn vdd vssx @STAGE@
+cstage_lo0 rim1 vssx   5f
+rstage_lo0 lo0 rim1 200
+cstage_ro0 li1 vssx   5f
+rstage_ro0 ro0 li1 200
+xstage1 li1 lo1 ro1 ri1 resetn vdd vssx @STAGE@
+cstage_lo1 ri0 vssx   5f
+rstage_lo1 lo1 ri0 200
+cstage_ro1 li2 vssx   5f
+rstage_ro1 ro1 li2 200
+xstage2 li2 lo2 ro2 ri2 resetn vdd vssx @STAGE@
+cstage_lo2 ri1 vssx   5f
+rstage_lo2 lo2 ri1 200
+cstage_ro2 li3 vssx   5f
+rstage_ro2 ro2 li3 200
+xstage3 li3 lo3 ro3 ri3 resetn vdd vssx @STAGE@
+cstage_lo3 ri2 vssx   5f
+rstage_lo3 lo3 ri2 200
+cstage_ro3 li4 vssx   5f
+rstage_ro3 ro3 li4 200
+xstage4 li4 lo4 ro4 ri4 resetn vdd vssx @STAGE@
+cstage_lo4 ri3 vssx   5f
+rstage_lo4 lo4 ri3 200
+cstage_ro4 li5 vssx   5f
+rstage_ro4 ro4 li5 200
+xstage5 li5 lo5 ro5 ri5 resetn vdd vssx @STAGE@
+cstage_lo5 ri4 vssx   5f
+rstage_lo5 lo5 ri4 200
+cstage_ro5 li6 vssx   5f
+rstage_ro5 ro5 li6 200
+xstage6 li6 lo6 ro6 ri6 resetn vdd vssx @STAGE@
+cstage_lo6 ri5 vssx   5f
+rstage_lo6 lo6 ri5 200
+cstage_ro6 li7 vssx   5f
+rstage_ro6 ro6 li7 200
+xstage7 li7 lo7 ro7 ri7 resetn vdd vssx @STAGE@
+cstage_lo7 ri6 vssx   5f
+rstage_lo7 lo7 ri6 200
+cstage_ro7 li8 vssx   5f
+rstage_ro7 ro7 li8 200
+xstage8 li8 lo8 ro8 ri8 resetn vdd vssx @STAGE@
+cstage_lo8 ri7 vssx   5f
+rstage_lo8 lo8 ri7 200
+cstage_ro8 li9 vssx   5f
+rstage_ro8 ro8 li9 200
+xstage9 li9 lo9 ro9 ri9 resetn vdd vssx @STAGE@
+cstage_lo9 ri8 vssx   5f
+rstage_lo9 lo9 ri8 200
+cstage_ro9 li10 vssx   5f
+rstage_ro9 ro9 li10 200
+xstage10 li10 lo10 ro10 ri10 resetn vdd vssx @STAGE@
+cstage_lo10 ri9 vssx   5f
+rstage_lo10 lo10 ri9 200
+cstage_ro10 li11 vssx   5f
+rstage_ro10 ro10 li11 200
+xstage11 li11 lo11 ro11 ri11 resetn vdd vssx @STAGE@
+cstage_lo11 ri10 vssx   5f
+rstage_lo11 lo11 ri10 200
+cstage_ro11 li12 vssx   5f
+rstage_ro11 ro11 li12 200
+xstage12 li12 lo12 ro12 ri12 resetn vdd vssx @STAGE@
+cstage_lo12 ri11 vssx   5f
+rstage_lo12 lo12 ri11 200
+cstage_ro12 li13 vssx   5f
+rstage_ro12 ro12 li13 200
+xstage13 li13 lo13 ro13 ri13 resetn vdd vssx @STAGE@
+cstage_lo13 ri12 vssx   5f
+rstage_lo13 lo13 ri12 200
+cstage_ro13 li14 vssx   5f
+rstage_ro13 ro13 li14 200
+xstage14 li14 lo14 ro14 ri14 resetn vdd vssx @STAGE@
+cstage_lo14 ri13 vssx   5f
+rstage_lo14 lo14 ri13 200
+cstage_ro14 li15 vssx   5f
+rstage_ro14 ro14 li15 200
+xstage15 li15 lo15 ro15 ri15 resetn vdd vssx @STAGE@
+cstage_lo15 ri14 vssx   5f
+rstage_lo15 lo15 ri14 200
+cstage_ro15 li16 vssx   5f
+rstage_ro15 ro15 li16 200
+xstage16 li16 lo16 ro16 ri16 resetn vdd vssx @STAGE@
+cstage_lo16 ri15 vssx   5f
+rstage_lo16 lo16 ri15 200
+cstage_ro16 li17 vssx   5f
+rstage_ro16 ro16 li17 200
+xstage17 li17 lo17 ro17 ri17 resetn vdd vssx @STAGE@
+cstage_lo17 ri16 vssx   5f
+rstage_lo17 lo17 ri16 200
+cstage_ro17 li18 vssx   5f
+rstage_ro17 ro17 li18 200
+xstage18 li18 lo18 ro18 ri18 resetn vdd vssx @STAGE@
+cstage_lo18 ri17 vssx   5f
+rstage_lo18 lo18 ri17 200
+cstage_ro18 li19 vssx   5f
+rstage_ro18 ro18 li19 200
+xstage19 li19 lo19 ro19 ri19 resetn vdd vssx @STAGE@
+cstage_lo19 ri18 vssx   5f
+rstage_lo19 lo19 ri18 200
+cstage_ro19 li20 vssx   5f
+rstage_ro19 ro19 li20 200
+xstage20 li20 lo20 ro20 ri20 resetn vdd vssx @STAGE@
+cstage_lo20 ri19 vssx   5f
+rstage_lo20 lo20 ri19 200
+cstage_ro20 li21 vssx   5f
+rstage_ro20 ro20 li21 200
+xstage21 li21 lo21 ro21 ri21 resetn vdd vssx @STAGE@
+cstage_lo21 ri20 vssx   5f
+rstage_lo21 lo21 ri20 200
+cstage_ro21 li22 vssx   5f
+rstage_ro21 ro21 li22 200
+xstage22 li22 lo22 ro22 ri22 resetn vdd vssx @STAGE@
+cstage_lo22 ri21 vssx   5f
+rstage_lo22 lo22 ri21 200
+cstage_ro22 li23 vssx   5f
+rstage_ro22 ro22 li23 200
+xstage23 li23 lo23 ro23 ri23 resetn vdd vssx @STAGE@
+cstage_lo23 ri22 vssx   5f
+rstage_lo23 lo23 ri22 200
+cstage_ro23 li24 vssx   5f
+rstage_ro23 ro23 li24 200
+xstage24 li24 lo24 ro24 ri24 resetn vdd vssx @STAGE@
+cstage_lo24 ri23 vssx   5f
+rstage_lo24 lo24 ri23 200
+cstage_ro24 li25 vssx   5f
+rstage_ro24 ro24 li25 200
+xstage25 li25 lo25 ro25 ri25 resetn vdd vssx @STAGE@
+cstage_lo25 ri24 vssx   5f
+rstage_lo25 lo25 ri24 200
+cstage_ro25 li26 vssx   5f
+rstage_ro25 ro25 li26 200
+xstage26 li26 lo26 ro26 ri26 resetn vdd vssx @STAGE@
+cstage_lo26 ri25 vssx   5f
+rstage_lo26 lo26 ri25 200
+cstage_ro26 li27 vssx   5f
+rstage_ro26 ro26 li27 200
+xstage27 li27 lo27 ro27 ri27 resetn vdd vssx @STAGE@
+cstage_lo27 ri26 vssx   5f
+rstage_lo27 lo27 ri26 200
+cstage_ro27 li28 vssx   5f
+rstage_ro27 ro27 li28 200
+xstage28 li28 lo28 ro28 ri28 resetn vdd vssx @STAGE@
+cstage_lo28 ri27 vssx   5f
+rstage_lo28 lo28 ri27 200
+cstage_ro28 li29 vssx   5f
+rstage_ro28 ro28 li29 200
+xstage29 li29 lo29 ro29 ri29 resetn vdd vssx @STAGE@
+cstage_lo29 ri28 vssx   5f
+rstage_lo29 lo29 ri28 200
+cstage_ro29 li30 vssx   5f
+rstage_ro29 ro29 li30 200
+xstage30 li30 lo30 ro30 ri30 resetn vdd vssx @STAGE@
+cstage_lo30 ri29 vssx   5f
+rstage_lo30 lo30 ri29 200
+cstage_ro30 li31 vssx   5f
+rstage_ro30 ro30 li31 200
+xstage31 li31 lo31 ro31 ri31 resetn vdd vssx @STAGE@
+cstage_lo31 ri30 vssx   5f
+rstage_lo31 lo31 ri30 200
+cstage_ro31 li32 vssx   5f
+rstage_ro31 ro31 li32 200
+xstage32 li32 lo32 ro32 ri32 resetn vdd vssx @STAGE@
+cstage_lo32 ri31 vssx   5f
+rstage_lo32 lo32 ri31 200
+cstage_ro32 li33 vssx   5f
+rstage_ro32 ro32 li33 200
+xstage33 li33 lo33 ro33 ri33 resetn vdd vssx @STAGE@
+cstage_lo33 ri32 vssx   5f
+rstage_lo33 lo33 ri32 200
+cstage_ro33 li34 vssx   5f
+rstage_ro33 ro33 li34 200
+xstage34 li34 lo34 ro34 ri34 resetn vdd vssx @STAGE@
+cstage_lo34 ri33 vssx   5f
+rstage_lo34 lo34 ri33 200
+cstage_ro34 li35 vssx   5f
+rstage_ro34 ro34 li35 200
+xstage35 li35 lo35 ro35 ri35 resetn vdd vssx @STAGE@
+cstage_lo35 ri34 vssx   5f
+rstage_lo35 lo35 ri34 200
+cstage_ro35 li36 vssx   5f
+rstage_ro35 ro35 li36 200
+xstage36 li36 lo36 ro36 ri36 resetn vdd vssx @STAGE@
+cstage_lo36 ri35 vssx   5f
+rstage_lo36 lo36 ri35 200
+cstage_ro36 li37 vssx   5f
+rstage_ro36 ro36 li37 200
+xstage37 li37 lo37 ro37 ri37 resetn vdd vssx @STAGE@
+cstage_lo37 ri36 vssx   5f
+rstage_lo37 lo37 ri36 200
+cstage_ro37 li38 vssx   5f
+rstage_ro37 ro37 li38 200
+xstage38 li38 lo38 ro38 ri38 resetn vdd vssx @STAGE@
+cstage_lo38 ri37 vssx   5f
+rstage_lo38 lo38 ri37 200
+cstage_ro38 li39 vssx   5f
+rstage_ro38 ro38 li39 200
+xstage39 li39 lo39 ro39 ri39 resetn vdd vssx @STAGE@
+cstage_lo39 ri38 vssx   5f
+rstage_lo39 lo39 ri38 200
+cstage_ro39 li40 vssx   5f
+rstage_ro39 ro39 li40 200
+xstage40 li40 lo40 ro40 ri40 resetn vdd vssx @STAGE@
+cstage_lo40 ri39 vssx   5f
+rstage_lo40 lo40 ri39 200
+cstage_ro40 li41 vssx   5f
+rstage_ro40 ro40 li41 200
+xstage41 li41 lo41 ro41 ri41 resetn vdd vssx @STAGE@
+cstage_lo41 ri40 vssx   5f
+rstage_lo41 lo41 ri40 200
+cstage_ro41 li42 vssx   5f
+rstage_ro41 ro41 li42 200
+xstage42 li42 lo42 ro42 ri42 resetn vdd vssx @STAGE@
+cstage_lo42 ri41 vssx   5f
+rstage_lo42 lo42 ri41 200
+cstage_ro42 li43 vssx   5f
+rstage_ro42 ro42 li43 200
+xstage43 li43 lo43 ro43 ri43 resetn vdd vssx @STAGE@
+cstage_lo43 ri42 vssx   5f
+rstage_lo43 lo43 ri42 200
+cstage_ro43 li44 vssx   5f
+rstage_ro43 ro43 li44 200
+xstage44 li44 lo44 ro44 ri44 resetn vdd vssx @STAGE@
+cstage_lo44 ri43 vssx   5f
+rstage_lo44 lo44 ri43 200
+cstage_ro44 li45 vssx   5f
+rstage_ro44 ro44 li45 200
+xstage45 li45 lo45 ro45 ri45 resetn vdd vssx @STAGE@
+cstage_lo45 ri44 vssx   5f
+rstage_lo45 lo45 ri44 200
+cstage_ro45 li46 vssx   5f
+rstage_ro45 ro45 li46 200
+xstage46 li46 lo46 ro46 ri46 resetn vdd vssx @STAGE@
+cstage_lo46 ri45 vssx   5f
+rstage_lo46 lo46 ri45 200
+cstage_ro46 li47 vssx   5f
+rstage_ro46 ro46 li47 200
+xstage47 li47 lo47 ro47 ri47 resetn vdd vssx @STAGE@
+cstage_lo47 ri46 vssx   5f
+rstage_lo47 lo47 ri46 200
+cstage_ro47 li48 vssx   5f
+rstage_ro47 ro47 li48 200
+xstage48 li48 lo48 ro48 ri48 resetn vdd vssx @STAGE@
+cstage_lo48 ri47 vssx   5f
+rstage_lo48 lo48 ri47 200
+cstage_ro48 li49 vssx   5f
+rstage_ro48 ro48 li49 200
+xstage49 li49 lo49 ro49 ri49 resetn vdd vssx @STAGE@
+cstage_lo49 ri48 vssx   5f
+rstage_lo49 lo49 ri48 200
+cstage_ro49 li50 vssx   5f
+rstage_ro49 ro49 li50 200
+xstage50 li50 lo50 ro50 ri50 resetn vdd vssx @STAGE@
+cstage_lo50 ri49 vssx   5f
+rstage_lo50 lo50 ri49 200
+cstage_ro50 li51 vssx   5f
+rstage_ro50 ro50 li51 200
+xstage51 li51 lo51 ro51 ri51 resetn vdd vssx @STAGE@
+cstage_lo51 ri50 vssx   5f
+rstage_lo51 lo51 ri50 200
+cstage_ro51 li52 vssx   5f
+rstage_ro51 ro51 li52 200
+xstage52 li52 lo52 ro52 ri52 resetn vdd vssx @STAGE@
+cstage_lo52 ri51 vssx   5f
+rstage_lo52 lo52 ri51 200
+cstage_ro52 li53 vssx   5f
+rstage_ro52 ro52 li53 200
+xstage53 li53 lo53 ro53 ri53 resetn vdd vssx @STAGE@
+cstage_lo53 ri52 vssx   5f
+rstage_lo53 lo53 ri52 200
+cstage_ro53 li54 vssx   5f
+rstage_ro53 ro53 li54 200
+xstage54 li54 lo54 ro54 ri54 resetn vdd vssx @STAGE@
+cstage_lo54 ri53 vssx   5f
+rstage_lo54 lo54 ri53 200
+cstage_ro54 li55 vssx   5f
+rstage_ro54 ro54 li55 200
+xstage55 li55 lo55 ro55 ri55 resetn vdd vssx @STAGE@
+cstage_lo55 ri54 vssx   5f
+rstage_lo55 lo55 ri54 200
+cstage_ro55 li56 vssx   5f
+rstage_ro55 ro55 li56 200
+xstage56 li56 lo56 ro56 ri56 resetn vdd vssx @STAGE@
+cstage_lo56 ri55 vssx   5f
+rstage_lo56 lo56 ri55 200
+cstage_ro56 li57 vssx   5f
+rstage_ro56 ro56 li57 200
+xstage57 li57 lo57 ro57 ri57 resetn vdd vssx @STAGE@
+cstage_lo57 ri56 vssx   5f
+rstage_lo57 lo57 ri56 200
+cstage_ro57 li58 vssx   5f
+rstage_ro57 ro57 li58 200
+xstage58 li58 lo58 ro58 ri58 resetn vdd vssx @STAGE@
+cstage_lo58 ri57 vssx   5f
+rstage_lo58 lo58 ri57 200
+cstage_ro58 li59 vssx   5f
+rstage_ro58 ro58 li59 200
+xstage59 li59 lo59 ro59 ri59 resetn vdd vssx @STAGE@
+cstage_lo59 ri58 vssx   5f
+rstage_lo59 lo59 ri58 200
+cstage_ro59 li60 vssx   5f
+rstage_ro59 ro59 li60 200
+xstage60 li60 lo60 ro60 ri60 resetn vdd vssx @STAGE@
+cstage_lo60 ri59 vssx   5f
+rstage_lo60 lo60 ri59 200
+cstage_ro60 li61 vssx   5f
+rstage_ro60 ro60 li61 200
+xstage61 li61 lo61 ro61 ri61 resetn vdd vssx @STAGE@
+cstage_lo61 ri60 vssx   5f
+rstage_lo61 lo61 ri60 200
+cstage_ro61 li62 vssx   5f
+rstage_ro61 ro61 li62 200
+xstage62 li62 lo62 ro62 ri62 resetn vdd vssx @STAGE@
+cstage_lo62 ri61 vssx   5f
+rstage_lo62 lo62 ri61 200
+cstage_ro62 li63 vssx   5f
+rstage_ro62 ro62 li63 200
+xstage63 li63 lo63 ro63 ri63 resetn vdd vssx @STAGE@
+cstage_lo63 ri62 vssx   5f
+rstage_lo63 lo63 ri62 200
+cstage_ro63 li64 vssx   5f
+rstage_ro63 ro63 li64 200
+xstage64 li64 lo64 ro64 ri64 resetn vdd vssx @STAGE@
+cstage_lo64 ri63 vssx   5f
+rstage_lo64 lo64 ri63 200
+cstage_ro64 li65 vssx   5f
+rstage_ro64 ro64 li65 200
+xstage65 li65 lo65 ro65 ri65 resetn vdd vssx @STAGE@
+cstage_lo65 ri64 vssx   5f
+rstage_lo65 lo65 ri64 200
+cstage_ro65 li66 vssx   5f
+rstage_ro65 ro65 li66 200
+xstage66 li66 lo66 ro66 ri66 resetn vdd vssx @STAGE@
+cstage_lo66 ri65 vssx   5f
+rstage_lo66 lo66 ri65 200
+cstage_ro66 li67 vssx   5f
+rstage_ro66 ro66 li67 200
+xstage67 li67 lo67 ro67 ri67 resetn vdd vssx @STAGE@
+cstage_lo67 ri66 vssx   5f
+rstage_lo67 lo67 ri66 200
+cstage_ro67 li68 vssx   5f
+rstage_ro67 ro67 li68 200
+xstage68 li68 lo68 ro68 ri68 resetn vdd vssx @STAGE@
+cstage_lo68 ri67 vssx   5f
+rstage_lo68 lo68 ri67 200
+cstage_ro68 li69 vssx   5f
+rstage_ro68 ro68 li69 200
+xstage69 li69 lo69 ro69 ri69 resetn vdd vssx @STAGE@
+cstage_lo69 ri68 vssx   5f
+rstage_lo69 lo69 ri68 200
+cstage_ro69 li70 vssx   5f
+rstage_ro69 ro69 li70 200
+xstage70 li70 lo70 ro70 ri70 resetn vdd vssx @STAGE@
+cstage_lo70 ri69 vssx   5f
+rstage_lo70 lo70 ri69 200
+cstage_ro70 li71 vssx   5f
+rstage_ro70 ro70 li71 200
+xstage71 li71 lo71 ro71 ri71 resetn vdd vssx @STAGE@
+cstage_lo71 ri70 vssx   5f
+rstage_lo71 lo71 ri70 200
+cstage_ro71 li72 vssx   5f
+rstage_ro71 ro71 li72 200
+xstage72 li72 lo72 ro72 ri72 resetn vdd vssx @STAGE@
+cstage_lo72 ri71 vssx   5f
+rstage_lo72 lo72 ri71 200
+cstage_ro72 li73 vssx   5f
+rstage_ro72 ro72 li73 200
+xstage73 li73 lo73 ro73 ri73 resetn vdd vssx @STAGE@
+cstage_lo73 ri72 vssx   5f
+rstage_lo73 lo73 ri72 200
+cstage_ro73 li74 vssx   5f
+rstage_ro73 ro73 li74 200
+xstage74 li74 lo74 ro74 ri74 resetn vdd vssx @STAGE@
+cstage_lo74 ri73 vssx   5f
+rstage_lo74 lo74 ri73 200
+cstage_ro74 li75 vssx   5f
+rstage_ro74 ro74 li75 200
+xstage75 li75 lo75 ro75 ri75 resetn vdd vssx @STAGE@
+cstage_lo75 ri74 vssx   5f
+rstage_lo75 lo75 ri74 200
+cstage_ro75 li76 vssx   5f
+rstage_ro75 ro75 li76 200
+xstage76 li76 lo76 ro76 ri76 resetn vdd vssx @STAGE@
+cstage_lo76 ri75 vssx   5f
+rstage_lo76 lo76 ri75 200
+cstage_ro76 li77 vssx   5f
+rstage_ro76 ro76 li77 200
+xstage77 li77 lo77 ro77 ri77 resetn vdd vssx @STAGE@
+cstage_lo77 ri76 vssx   5f
+rstage_lo77 lo77 ri76 200
+cstage_ro77 li78 vssx   5f
+rstage_ro77 ro77 li78 200
+xstage78 li78 lo78 ro78 ri78 resetn vdd vssx @STAGE@
+cstage_lo78 ri77 vssx   5f
+rstage_lo78 lo78 ri77 200
+cstage_ro78 li79 vssx   5f
+rstage_ro78 ro78 li79 200
+xstage79 li79 lo79 ro79 ri79 resetn vdd vssx @STAGE@
+cstage_lo79 ri78 vssx   5f
+rstage_lo79 lo79 ri78 200
+cstage_ro79 li80 vssx   5f
+rstage_ro79 ro79 li80 200
+xstage80 li80 lo80 ro80 ri80 resetn vdd vssx @STAGE@
+cstage_lo80 ri79 vssx   5f
+rstage_lo80 lo80 ri79 200
+cstage_ro80 li81 vssx   5f
+rstage_ro80 ro80 li81 200
+xstage81 li81 lo81 ro81 ri81 resetn vdd vssx @STAGE@
+cstage_lo81 ri80 vssx   5f
+rstage_lo81 lo81 ri80 200
+cstage_ro81 li82 vssx   5f
+rstage_ro81 ro81 li82 200
+xstage82 li82 lo82 ro82 ri82 resetn vdd vssx @STAGE@
+cstage_lo82 ri81 vssx   5f
+rstage_lo82 lo82 ri81 200
+cstage_ro82 li83 vssx   5f
+rstage_ro82 ro82 li83 200
+xstage83 li83 lo83 ro83 ri83 resetn vdd vssx @STAGE@
+cstage_lo83 ri82 vssx   5f
+rstage_lo83 lo83 ri82 200
+cstage_ro83 li84 vssx   5f
+rstage_ro83 ro83 li84 200
+xstage84 li84 lo84 ro84 ri84 resetn vdd vssx @STAGE@
+cstage_lo84 ri83 vssx   5f
+rstage_lo84 lo84 ri83 200
+cstage_ro84 li85 vssx   5f
+rstage_ro84 ro84 li85 200
+xstage85 li85 lo85 ro85 ri85 resetn vdd vssx @STAGE@
+cstage_lo85 ri84 vssx   5f
+rstage_lo85 lo85 ri84 200
+cstage_ro85 li86 vssx   5f
+rstage_ro85 ro85 li86 200
+xstage86 li86 lo86 ro86 ri86 resetn vdd vssx @STAGE@
+cstage_lo86 ri85 vssx   5f
+rstage_lo86 lo86 ri85 200
+cstage_ro86 li87 vssx   5f
+rstage_ro86 ro86 li87 200
+xstage87 li87 lo87 ro87 ri87 resetn vdd vssx @STAGE@
+cstage_lo87 ri86 vssx   5f
+rstage_lo87 lo87 ri86 200
+cstage_ro87 li88 vssx   5f
+rstage_ro87 ro87 li88 200
+xstage88 li88 lo88 ro88 ri88 resetn vdd vssx @STAGE@
+cstage_lo88 ri87 vssx   5f
+rstage_lo88 lo88 ri87 200
+cstage_ro88 li89 vssx   5f
+rstage_ro88 ro88 li89 200
+xstage89 li89 lo89 ro89 ri89 resetn vdd vssx @STAGE@
+cstage_lo89 ri88 vssx   5f
+rstage_lo89 lo89 ri88 200
+cstage_ro89 li90 vssx   5f
+rstage_ro89 ro89 li90 200
+xstage90 li90 lo90 ro90 ri90 resetn vdd vssx @STAGE@
+cstage_lo90 ri89 vssx   5f
+rstage_lo90 lo90 ri89 200
+cstage_ro90 li91 vssx   5f
+rstage_ro90 ro90 li91 200
+xstage91 li91 lo91 ro91 ri91 resetn vdd vssx @STAGE@
+cstage_lo91 ri90 vssx   5f
+rstage_lo91 lo91 ri90 200
+cstage_ro91 li92 vssx   5f
+rstage_ro91 ro91 li92 200
+xstage92 li92 lo92 ro92 ri92 resetn vdd vssx @STAGE@
+cstage_lo92 ri91 vssx   5f
+rstage_lo92 lo92 ri91 200
+cstage_ro92 li93 vssx   5f
+rstage_ro92 ro92 li93 200
+xstage93 li93 lo93 ro93 ri93 resetn vdd vssx @STAGE@
+cstage_lo93 ri92 vssx   5f
+rstage_lo93 lo93 ri92 200
+cstage_ro93 li94 vssx   5f
+rstage_ro93 ro93 li94 200
+xstage94 li94 lo94 ro94 ri94 resetn vdd vssx @STAGE@
+cstage_lo94 ri93 vssx   5f
+rstage_lo94 lo94 ri93 200
+cstage_ro94 li95 vssx   5f
+rstage_ro94 ro94 li95 200
+xstage95 li95 lo95 ro95 ri95 resetn vdd vssx @STAGE@
+cstage_lo95 ri94 vssx   5f
+rstage_lo95 lo95 ri94 200
+cstage_ro95 li96 vssx   5f
+rstage_ro95 ro95 li96 200
+xstage96 li96 lo96 ro96 ri96 resetn vdd vssx @STAGE@
+cstage_lo96 ri95 vssx   5f
+rstage_lo96 lo96 ri95 200
+cstage_ro96 li97 vssx   5f
+rstage_ro96 ro96 li97 200
+xstage97 li97 lo97 ro97 ri97 resetn vdd vssx @STAGE@
+cstage_lo97 ri96 vssx   5f
+rstage_lo97 lo97 ri96 200
+cstage_ro97 li98 vssx   5f
+rstage_ro97 ro97 li98 200
+xstage98 li98 lo98 ro98 ri98 resetn vdd vssx @STAGE@
+cstage_lo98 ri97 vssx   5f
+rstage_lo98 lo98 ri97 200
+cstage_ro98 li99 vssx   5f
+rstage_ro98 ro98 li99 200
+xstage99 li99 lo99 ro99 ri99 resetn vdd vssx @STAGE@
+cstage_lo99 ri98 vssx   5f
+rstage_lo99 lo99 ri98 200
+cstage_ro99 li100 vssx   5f
+rstage_ro99 ro99 li100 200
+
+* tie end off
+vend0 li100 ri99 0

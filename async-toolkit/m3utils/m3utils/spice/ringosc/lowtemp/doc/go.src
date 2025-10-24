@@ -1,0 +1,10 @@
+set style data linespoints
+  set xlabel "T/[degC]"
+  set title "FIN 3 leakage fraction / 1278.3 TTTT"
+  set ylabel "phi/[1]"
+  set title "FIN 3 leakage fraction"
+  set term png size 900,600
+  set output "leakfrac.png"
+ plot [:][0:] "leakfrac300.dat" title "300 mV", "leakfrac500.dat" title "500 mV"
+  set term qt 
+  replot

@@ -1,0 +1,919 @@
+/*******************************************************************************
+ * BAREFOOT CONFIDENTIAL
+ * 
+ * Copyright (c) 2014 Barefoot Networks, Inc.
+ * All Rights Reserved.
+ * 
+ * NOTICE: All information contained herin is, and remains the property of
+ * Barefoot Networks, Inc. and its suppliers, if any. The intellecual and
+ * technical concepts contained herin are proprietary to Barefoot Networks, Inc.
+ * and its suppliers and may be covered by U.S. and Foreign Patents, patents in
+ * process, and are protected by trade secret, maskwork or copyright law.
+ * Dissemination of this information or reproduction of this material is
+ * strickly forbidden unless prior written permissions is obtained from
+ * Barefoot Networks, Inc.
+ * 
+ * $Id: //cb/main/design/rspec/templates_rspec.csr#5 $
+ ******************************************************************************/
+#ifndef __TEMPLATES_RSPEC_CSR__
+#define __TEMPLATES_RSPEC_CSR__
+
+//##############################################
+// Define Global Parameters
+//##############################################
+
+#define PIPE_CHAN_ADDR_W      7
+#define MACS_PER_PIPE         9
+
+property word_size = 4 bytes;
+// Default alignment mode is "address" which means that every object takes
+//  up a power of two size. This doesn't work with the mau[12] followed
+//  by the parser because csrCompile allocates space for 16 maus.
+// Any of the other modes work: array, object or compact
+property alignment_mode = "array";
+
+
+
+//##############################################
+//Interrupt status register field template
+//##############################################
+//
+//Usage example:
+//int_stat_field_template mac_tx_dr_empty (title = "MAC TX DR Empty", 
+//                                         description = "Set when the MAC TX DR goes from not empty to empty",
+//                                         type = "rising_edge",
+//                                         active = "high");
+
+field int_stat_field_template (
+      string title = "",
+      string description = "",
+      string type = "",
+      string active = ""
+      ) 
+{
+        property title = title;
+        property description = description;
+        property interrupt_type = type;
+        property interrupt_source_active = active;
+        property field_type = "interrupt";
+        property write_function = "one_clear";
+};
+
+field int_stat_field_out_template (
+      string title = "",
+      string description = "",
+      string type = "",
+      string active = ""
+      ) 
+{
+        property title = title;
+        property description = description;
+        property interrupt_type = type;
+        property interrupt_source_active = active;
+        property field_type = "interrupt";
+        property write_function = "one_clear";
+        property output_port = true;
+};
+
+
+//##############################################
+//Interrupt Injection register field template
+//##############################################
+field int_inj_field_template (
+      string title = "",
+      string description = ""
+      ) 
+{
+        property title = title;
+        property description = description;
+        property output_port = true;
+        property clear = true;
+};
+
+//##############################################
+// Reserved field template. So you don't have to keep typing in a rsvd field...
+//
+// NOTE: ONLY IF YOU WANT TO BE ABLE TO WRITE TO A RSVD FIELD.
+//##############################################
+//
+// Example:
+// =======
+// register my_register {
+//       property title = "Total Blocks";
+//       property description = "Total number of Blocks in PSM available to PSC.";
+// 
+//       field {} [7:0] a_real_field;
+// 
+//          rsvd_fld [31:8] rsvd;      /* <----- reserved field */
+// };
+
+
+field rsvd_fld {
+     property title        = "Reserved";
+     property description = "This is reserved for future use";
+     property read_access = true;
+     property write_access = false;
+     property reset_value = 0;
+};
+
+
+
+//##############################################
+// Saturating Counter field template
+//##############################################
+// 
+//     Args: ctr_width = width of counter (1-32)   (not sure about meeting timing for >32)
+//           inc_width = width of increment amount. 
+//                       If this is 1 then you just get an increment enable.
+//                       If this is > 1 then you get two input ports:
+//                          1) increment_enable
+//                          2) increment_amount
+// 
+// Example 1: 32 bit counter with 4 bit increment:
+// ==========
+// 
+//     register ctr32_cor_sat_varinc0_15
+//     {
+//           property title       = "32 bit Counter.";
+//           property description = "32 bit Saturating Clear-on-Read counter. Increment is 0-15 (4 bits).";
+//           ctr_cor_sat_varinc ctr32 ( ctr_width = 32, inc_width = 4 ) ;
+//     } ;
+// 
+//     ctr32_cor_sat_varinc0_15 ctr32;
+// 
+// 
+// Example2: Adding an alias to the ctr32 in Example 1 that allows read/write access rather than clear-on-read.
+// ==========
+// 
+// NOTE: this seems to add redundant 'increment' and 'increment_amount' ports.
+//
+//     register ctr32_alias {
+//         alias ctr32.ctr32   {
+//             property title        = "Aliased Counter32";
+//             property description  = "Provides normal Read/Write Access to a Ctr32 which is otherwise Clear-on-Read.";
+//             property write_access = true;
+//             property read_effect  = "none";
+//         } rd_wr_ctr32;
+//     } rd_wr_ctr32;
+// 
+
+field ctr_cor_sat_varinc ( 
+      string title      = "Saturating Clear-on-Read Counter.",
+      integer ctr_width = 32, 
+      integer inc_width = 1 
+      ) 
+{
+        property title = title;
+        if (inc_width == 1 )
+        {
+              property description  = "Saturating counter " + ctr_width + " bits wide.\n"
+                                      " Counter is Clear-on-Read.";
+        } else {
+              property description  = "Saturating counter " + ctr_width + " bits wide.\n"
+                                      " Has " + inc_width + " bit increment value."
+                                      " Counter is Clear-on-Read.";
+        } 
+
+        property write_access = false; 
+        property field_type   = "counter";
+        property width        = ctr_width;
+        property read_effect  = "clear";
+        property increment_saturating = true;
+
+        if ( inc_width > 1 ) 
+        {
+               property increment_amount = true;
+               property increment_width  = inc_width;
+        }
+
+};
+
+
+
+
+//##############################################
+// Saturating Read/Write Counter field template  (useful for 64 b counters)
+//##############################################
+// 
+//     Args: ctr_width = width of counter (1-64)  
+//           inc_width = width of increment amount. 
+//                       If this is 1 then you just get an increment enable.
+//                       If this is > 1 then you get two input ports:
+//                          1) increment_enable
+//                          2) increment_amount
+// 
+// Example : Wide 64 bit saturating counter with read/write access and 1 bit increment:
+// ====================================================================================
+// 
+//     register ctr64_reg
+//          {
+//                property title       = "64 bit Counter.";
+//                property description = "64 bit Saturating Read/Write Counter. Increment is 1.";
+//                property atomic_access = "lsb";
+//     
+//                ctr_sat_varinc_f ctr64 ( ctr_width = 64, inc_width = 1 ) ;
+//          } ;
+//       
+// 
+// 
+
+field ctr_sat_varinc_f ( 
+      string title       = "Saturating counter with Read and Write access.",
+      string description = "",
+      integer ctr_width  = 32, 
+      integer inc_width  = 1 
+      ) 
+{
+        property title = title;
+        if (inc_width == 1 )
+        {
+              property description  = description + "counter " + ctr_width + " bits wide.";
+        } else {
+              property description  = description +  "counter " + ctr_width + " bits wide.\n"
+                                      " Has " + inc_width + " bit increment value.";
+        } 
+
+        property write_access = true; 
+        property field_type   = "counter";
+        property width        = ctr_width;
+        property reset_value  = 0x0;
+        property increment_saturating = true;
+
+        if ( inc_width > 1 ) 
+        {
+               property increment_amount = true;
+               property increment_width  = inc_width;
+        }
+
+};  // end ctr_sat_varinc_f
+
+field ctr_wrap_varinc_f ( 
+      string title      = "Wrap around counter with Read and Write access.",
+      string description = "",
+      integer ctr_width = 32, 
+      integer inc_width = 1 
+      ) 
+{
+        property title = title;
+        if (inc_width == 1 )
+        {
+              property description  = description + "counter " + ctr_width + " bits wide.";
+        } else {
+              property description  = description + "counter " + ctr_width + " bits wide.\n"
+                                      " Has " + inc_width + " bit increment value.";
+        } 
+
+        property write_access = true; 
+        property field_type   = "counter";
+        property width        = ctr_width;
+        property reset_value  = 0x0;
+        property increment_saturating = false;
+
+        if ( inc_width > 1 ) 
+        {
+               property increment_amount = true;
+               property increment_width  = inc_width;
+        }
+
+};  // end ctr_wrap_varinc_f
+//##############################################
+// ECC/Parity Control Register template
+//
+//Usage example:
+//  ecc_control_r    ecc_control (names=["memA", "memBBB"]); // for 2 memories
+//  parity_control_r parity_control (names=["memA"]);
+//
+//##############################################
+
+// ECC Control register field with reset zero
+field ecc_control_dischk_f (string title) {
+    property title = title;
+
+    property field_type = "configuration";
+    property reset_value = 0x0;
+    property output_port = true;
+    property width = 1;
+}; // ecc_control_dischk_f
+
+field ecc_control_injerr_f (string title) {
+    property title = title;
+
+    property field_type = "configuration";
+    property reset_value = 0x0;
+    property clear = true;
+    property output_port = true;
+    property width = 1;
+}; // ecc_control_injerr_f
+
+
+// ECC Control register with variable number of fields
+// This supports up to 8 ECC Module Controls with 32 bit width. For more
+// entries, the register will be wide-register implementation.
+register ecc_control_r  ( 
+    string names[],
+    string types[]
+) 
+{
+    property title = "ECC Generation and Checker Controls";
+    property description = 
+        """This register can be used to disable ECC checker or force error on
+        ECC generation. Error check is disabled when 'disable_check' is set to '1'
+        and no interrupt event can be generated.
+
+        Only 1 transaction will have error injected when 'inject' field is set
+        to '1'. The 'inject' field is cleared by hardware when error injection is done.""";
+
+    string type = "both";
+    integer i;
+    for (i = 0; i < @names; i = i + 1) {
+        if (defined(types)) {
+            assign type = types[i];
+        }
+
+        if (type != "gen_only") {
+            ecc_control_dischk_f [4*i+0] {names[i] + "_disable_check"}  (title=names[i]+" : Disable Error Checking");
+        }
+        if (type != "chk_only") {
+            ecc_control_injerr_f [4*i+1] {names[i] + "_inject_sbe"}     (title=names[i]+" : Inject Single Bit Error");
+            ecc_control_injerr_f [4*i+2] {names[i] + "_inject_mbe"}     (title=names[i]+" : Inject Multiple Bit Error");
+        }
+    }
+}; // ecc_control_r
+
+
+// Parity Control register with variable number of fields
+// This supports up to 16 Parity Module Controls with 32 bit width. For more
+// entries, the register will be wide-register implementation.
+register parity_control_r  ( 
+    string names[],
+    string types[]
+) 
+{
+    property title = "Parity Generation and Checker Controls";
+    property description = 
+        """This register can be used to disable Parity checker or force error on
+        Parity generation.""";
+
+    string type = "both";
+    integer i;
+    for (i = 0; i < @names; i = i + 1) {
+        if (defined(types)) {
+            assign type = types[i];
+        }
+
+        if (type != "gen_only") {
+            ecc_control_dischk_f [4*i+0] {names[i] + "_disable_check"}  (title=names[i]+" : Disable Error Checking");
+        }
+        if (type != "chk_only") {
+            ecc_control_injerr_f [4*i+1] {names[i] + "_inject_sbe"}     (title=names[i]+" : Inject Parity Error");
+        }
+    }
+}; // parity_control_r
+
+
+//##############################################
+// Scracth Register template
+//##############################################
+
+register scratch_r {
+    property title = "Scratch Register";
+    property description = "Scratch register for the software";
+    property register_reset_value = 0x0;
+
+    field {
+        property title = "Scratch space";
+        property description = "Scratch space for software";
+    } [31:0] value;
+}; // scratch_r
+
+
+
+//##############################################
+// Debug Bus Register template
+//##############################################
+field debug_bus_sel_template (
+      string sel_description = ""
+    )
+{
+      property title       = "Debug Bus Select";
+      property description = sel_description;
+      property width       = 7;
+      property output_port = true;
+};
+
+register debug_bus_ctrl_template (
+    integer sub_buses = 4,
+    string sel_description = ""
+    )
+{
+    property title = "Debug Bus Register";
+    property description = "Debug bus control Register";
+    property register_reset_value = 0x00000000;
+    integer i;
+    for (i=0;i<sub_buses;i=i+1) {
+    field {
+        property title = "Debug Bus Enable";
+        property description = "When set, enables the corresponding debug sub bus";
+        property output_port = true;
+    } {"en" + i};
+    debug_bus_sel_template {"sel" + i} (sel_description = sel_description);
+    }
+}; // debug_bus_ctrl_template
+
+
+//##############################################
+// SW writtable rollover counter
+//##############################################
+field rollover_counter_template ( 
+        string title      = "Rollover RW Counter.",
+        integer ctr_width = 48,
+        integer inc_width = 1
+        ) 
+{
+        property title                = title;
+        property description          = "Rollover RW counter " + ctr_width + " bits wide";
+        property write_access         = true; 
+        property field_type           = "counter";
+        property width                = ctr_width;
+        property increment_saturating = false;
+        property increment            = true;
+        property reset_value          = 0x0;
+
+        if ( inc_width > 1 ) {
+            property increment_amount = true;
+            property increment_width  = inc_width;
+        }
+};
+
+
+//##############################################
+// Interrupt  Register Group Template
+//
+// This includes 4 registers:
+//      1. Status (Interrupt event capture)
+//      2. Enable 0 (Low Priority Enable)
+//      3. Enable 1 (High Priority Enable)
+//      4. Injection (Interrupt Injection for SW to test driver)
+//
+// Template allows variable number of interrupts to be passed as arguments.
+// User only needs to instantiate group template with proper arguments and
+// things will be built.
+//
+// There is a need of RTL module to use 'status', 'enable0' and 'enable1'
+// outputs of CSR to to produce final interrupt output.
+//
+// Usage example: (showing 2 interrupt events)
+//  interrupt_register_g     int (
+//                                 interrupts  = ["lostpkt",
+//                                                "linkmem_det_err"],
+//                                 titles      = ["Lost Packet",
+//                                                "Free Address Link Memory Uncorrectable Bit Error"],
+//                                 descriptions= ["Set when CAA loses a Packet due to unavailability of free block",
+//                                                """Asserted when Link Memory SRAM gets
+//                                                uncorrectable error."""],
+//                                 types       = ["rising_edge",
+//                                                "rising_edge"],
+//                                 actives     = ["high",
+//                                                "high"]
+//                                 output_ports= [false,
+//                                                false]
+//                                );
+//##############################################
+
+field interrupt_status_f (
+      string title = "",
+      string description = "",
+      string type = "edge",
+      string active = "high",
+      bool output_port = false,
+      string source,
+      reference inject
+) 
+{
+    property reset_value = 0x0;
+    property title = title;
+    property description = description;
+    if (type == "reserved") {
+      property field_type = "reserved";
+    } else {
+      property interrupt_type = type;
+      property interrupt_source = source;
+      property interrupt_source_active = active;
+      property field_type = "interrupt";
+      property write_function = "one_clear";
+      property output_port = output_port;
+      property set = inject;
+    }
+}; // interrupt_status_f
+
+field interrupt_general_f (integer reset_value = 0x0, bool rtz = false,
+                           bool rsvd = false)
+{
+   property field_type = "configuration";
+   property reset_value = reset_value;
+   if (rsvd) {
+     property field_type = "reserved";
+   } else {
+     property return_to_zero = rtz;
+   }
+}; // interrupt_general_f
+
+register interrupt_status_r (
+    string interrupts[],
+    string titles[],
+    string descriptions[],
+    string types[],
+    string actives[],
+    bool output_ports[],
+    reference inject_reg
+)
+{
+    property title = "Interrupt Status Register";
+    property description = 
+        """This register latches various interrrupt events. Fields are cleared
+        when written '1' to it.""";
+    // property register_interrupt_output_port = true;
+    // property register_interrupt_flop        = true;
+    property register_output_port = true;
+
+    integer i;
+    string title = "";
+    string description = "";
+    string type = "edge";
+    string active = "high";
+    bool output_port = false;
+    for (i = 0; i < @interrupts; i = i + 1) {
+
+        if (defined(titles)) {
+            assign title = titles[i];
+        }
+        if (defined(descriptions)) {
+            assign description = descriptions[i];
+        }
+        if (defined(types)) {
+            assign type = types[i];
+        }
+        if (defined(actives)) {
+            assign active = actives[i];
+        }
+        if (defined(output_ports)) {
+            assign output_port = output_ports[i];
+        }
+
+        interrupt_status_f {interrupts[i]} (
+                                            title = title,
+                                            description = description,
+                                            type = type,
+                                            active = active,
+                                            output_port = output_port,
+                                            source = (interrupts[i] + "_interrupt_source"),
+                                            inject = field((inject_reg).(interrupts[i]))
+                                           );
+    }
+}; // interrupt_status_r
+
+
+register interrupt_enable_r (
+    string interrupts[],
+    integer priority,
+    string types[],
+    integer reset_value = 0x0
+)
+{
+    property title = "Interrupt Enable Register (Priority " + priority + ")";
+    property description = 
+        """This register implements enable bits for each interrupt event. If
+        a field is set to '0' here, interrupt will not be raised to CPU for
+        this priority. However interrupt event is still logged in 'status'
+        register.""";
+    property register_output_port = true;
+
+    integer i;
+    bool rsvd = false;
+    for (i = 0; i < @interrupts; i = i + 1) {
+        if (defined(types)) {
+            assign rsvd = types[i] == "reserved";
+        }
+        interrupt_general_f {interrupts[i]} (reset_value = reset_value,
+                                             rsvd = rsvd);
+    }
+}; // interrupt_enable_r
+
+register interrupt_inject_r (string interrupts[], string types[])
+{
+    property title = "Interrupt Event Inject Register";
+    property description = 
+        """This register implements force interrupt injection field for each
+        interrupt event. If a field is set to '1' here, interrupt will be
+        raised to CPU at the enabled priority. Interrupt event is logged in 'status'
+        register. The field is cleared by harware after written as 1.""";
+
+    integer i;
+    bool rsvd = false;
+    for (i = 0; i < @interrupts; i = i + 1) {
+        if (defined(types)) {
+            assign rsvd = types[i] == "reserved";
+        }
+        interrupt_general_f {interrupts[i]} (rtz = true, rsvd = rsvd);
+    }
+}; // interrupt_inject_r
+
+register interrupt_freeze_enable_r (string interrupts[], string types[])
+{
+    property title = "Freeze-on-Interrupt Enable Register";
+    property description = 
+        """This register implements enable bits to control if design is to
+        freeze its status when an interrupt 'status' is set.""";
+    property register_output_port = true;
+
+    integer i;
+    bool rsvd = false;
+    for (i = 0; i < @interrupts; i = i + 1) {
+        if (defined(types)) {
+            assign rsvd = types[i] == "reserved";
+        }
+        interrupt_general_f {interrupts[i]} (rsvd = rsvd);
+    }
+}; // interrupt_freeze_enable_r
+
+
+group interrupt_register_g (
+    string interrupts[],
+    string titles[],
+    string descriptions[],
+    string types[],
+    string actives[],
+    bool output_ports[]
+) {
+
+    interrupt_status_r          stat (
+                                         interrupts = interrupts,
+                                         titles = titles,
+                                         descriptions = descriptions,
+                                         types = types,
+                                         actives = actives,
+                                         output_ports = output_ports,
+                                         inject_reg = register(inj)
+                                       );
+   interrupt_enable_r           en0 (
+                                          interrupts = interrupts,
+                                          types = types,
+                                          priority = 0,
+                                          reset_value = 0x0
+                                        );
+   interrupt_enable_r           en1 (
+                                          interrupts = interrupts,
+                                          types = types,
+                                          priority = 1,
+                                          reset_value = 0x0
+                                        );
+   interrupt_inject_r           inj  (interrupts = interrupts, types = types);
+   interrupt_freeze_enable_r    freeze_enable (interrupts = interrupts, types = types);
+}; // interrupt_register_g
+
+
+
+//##############################################
+// Interrupt Log Register Template
+//
+// These registers record the data/address of the errored event. Only
+// first event data is captured until SW clears the interrupt event in
+// 'status' register.
+//
+// Usage example: (showing 2 fields with 'rsvd' field in between)
+//  interrupt_log_r          err_log (
+//                                   title       = "Interrupt Log Register for AAA MEM Uncorrectable Error",
+//                                   intrfield   = field(intr.status.mem_mbe),
+//                                   field_names = ["addr",
+//                                                  "rsvd",
+//                                                  "sram"],
+//                                   field_widths= [12,
+//                                                  4,
+//                                                  6]
+//                                  );
+//##############################################
+
+field interrupt_log_f   (
+    string title       = "Interrupt Log Register Field",
+    string description = "",
+    integer width,
+    reference fieldref
+)  {
+    property title = title;
+    property description = description;
+    property width = width;
+    property reset_value = 0x0;
+
+    property input_value = true;   // for input port
+    property load_enable = fieldref;
+    property load_enable_active = "low";
+}; // interrupt_log_f
+
+
+register interrupt_log_r  (
+    string title       = "Interrupt Log Register",
+    string description =
+        """Interrupt Log Register latches first error event
+        until event is cleared in 'status' register.""",
+    reference intrfield,
+    string field_names[],
+    string field_titles[],
+    string field_descriptions[],
+    integer field_widths[]
+)  {
+    property title       = title;
+    property description = description;
+    property register_reset_value = 0x0;
+  (* NO_HW_RESET_TEST  = true *)
+    integer i;
+    string ftitle = "";
+    string fdescription = "";
+    for (i = 0; i < @field_names; i = i + 1) {
+
+        if (defined(field_titles)) {
+            assign ftitle = field_titles[i];
+        }
+        if (defined(field_descriptions)) {
+            assign fdescription = field_descriptions[i];
+        }
+
+        if (field_names[i] == "rsvd") {
+            field rsvd_fld (integer width) {
+                property title        = "Reserved";
+                property description = "This is reserved for future use";
+                property read_access = true;
+                property write_access = false;
+                property width = width;
+                property reset_value = 0;
+            } {"rsvd" + i} (width = field_widths[i]);
+        } else {
+            interrupt_log_f {field_names[i]} (
+                                              title = ftitle,
+                                              description = fdescription,
+                                              width = field_widths[i],
+                                              fieldref = intrfield
+                                             );
+        }
+    }
+
+}; // interrupt_log_r
+
+
+
+//##############################################
+// DFT CSR
+//##############################################
+//
+
+register dft_csr_memctrl_r {
+    property title = "DFT CSR Register";
+    property description = "Register for the DFT CSR";
+    property register_output_port = true;
+    property register_reset_value = 0x00000000;
+			    (* NO_HW_RESET_TEST  = true *)
+    field { property title = "CSR__RTSEL0"; }    [0:0]   CSR_RTSEL0;
+    field { property title = "CSR__RTSEL1"; }    [1:1]   CSR_RTSEL1;
+    field { property title = "CSR__RTSEL2"; }    [2:2]   CSR_RTSEL2;
+    field { property title = "CSR__WTSEL0"; }    [3:3]   CSR_WTSEL0;
+    field { property title = "CSR__WTSEL1"; }    [4:4]   CSR_WTSEL1;
+    field { property title = "CSR__WTSEL2"; }    [5:5]   CSR_WTSEL2;
+    field { property title = "CSR__MTSEL0"; }    [6:6]   CSR_MTSEL0;
+    field { property title = "CSR__MTSEL1"; }    [7:7]   CSR_MTSEL1;
+    field { property title = "CSR__RTSEL_UL0"; } [8:8]   CSR_RTSEL_UL0;
+    field { property title = "CSR__RTSEL_UL1"; } [9:9]   CSR_RTSEL_UL1;
+    field { property title = "CSR__RTSEL_UL2"; } [10:10] CSR_RTSEL_UL2;
+    field { property title = "CSR__WTSEL_UL0"; } [11:11] CSR_WTSEL_UL0;
+    field { property title = "CSR__WTSEL_UL1"; } [12:12] CSR_WTSEL_UL1;
+    field { property title = "CSR__WTSEL_UL2"; } [13:13] CSR_WTSEL_UL2;
+    field { property title = "CSR__MTSEL_UL0"; } [14:14] CSR_MTSEL_UL0;
+    field { property title = "CSR__MTSEL_UL1"; } [15:15] CSR_MTSEL_UL1;
+    field { property title = "CSR__RCT0"; }      [16:16] CSR_RCT0;
+    field { property title = "CSR__RCT1"; }      [17:17] CSR_RCT1;
+    field { property title = "CSR__WCT0"; }      [18:18] CSR_WCT0;
+    field { property title = "CSR__WCT1"; }      [19:19] CSR_WCT1;
+    field { property title = "CSR__KP0"; }       [20:20] CSR_KP0;
+    field { property title = "CSR__KP1"; }       [21:21] CSR_KP1;
+    field { property title = "CSR__BPEnable"; }  [22:22] CSR_BPEnable;
+    field { property title = "CSR__ScanOnFE"; }  [23:23] CSR_ScanOnFE;
+    field { property title = "Reserved"; }       [31:24] rsvd;
+
+}; // dft_csr_memctrl_r
+
+
+//##############################################
+// Port/Channel rate configuration 
+//##############################################
+
+field chnl_rate_f   (
+    string title       = "Channel rate configuration field",
+    string description = """Specifies current rate for this channel: 
+                        0=10G,  1=25G,  2=40G, 3=50G, 4=unused, 5=100G,
+                        6=200G, 7=400G """
+  )  {
+    property title = title;
+    property description = description;
+    property width = 3;
+    property output_port = true;
+}; // chnl_rate_f
+
+
+// Register to specify Channel rates for all of N channels in a port.
+// instantiate with something such as:
+//   port_rate_cfg_template myport ( title = "MYTITLE", description = "MYDESC", num_channels = 4 );
+
+register port_rate_cfg_template (
+    integer num_channels = 8,
+    string title = "Port rate configuration",
+    string description = "Specifies per-channel rate for each channel in this MAC/port. e.g. for 8 channels:"
+                         " Ch 0 : [ 400G - 10G ], Ch 1 : [ 50G - 10G ], Ch 2 : [ 100G - 10G ], Ch 3 : [ 50G - 10G ], "
+                         " Ch 4 : [ 200G - 10G ], Ch 5 : [ 50G - 10G ], Ch 6 : [ 100G - 10G ], Ch 7 : [ 50G - 10G ].",
+    integer reset_value = 0,
+    bool written_port = false
+    )
+{
+    property title = title;
+    property description = description;
+    property register_reset_value = reset_value; // default to chan0 = 400G, others unused.
+    property register_written_port = written_port;
+
+    chnl_rate_f chnl_rate[num_channels];
+
+}; // port_rate_cfg_template
+
+//##############################################
+// Port/Channel enable/disable configuration 
+//##############################################
+// e.g. : port_chnl_en_template    myport  ( title = "MYTITLE", description = "MYDESC", num_channels = 3, reset_value =3 );
+
+register port_chnl_en_template (
+    integer num_channels = 8,
+    string title = "Port per-channel enable configuration",
+    string description = "Specifies whether each channel is enabled (1) or disabled (0) for each channel in this port.",
+    integer reset_value = 1,  // only chanl 0 is enabled by default.
+    bool written_port = false
+    )
+{
+    property title = title;
+    property description = description;
+    property register_reset_value = reset_value;
+    property register_written_port = written_port;
+
+    field ( integer num_channels ) {
+        property width       = num_channels;
+        property output_port = true;
+    } enbl ( num_channels = num_channels );
+
+}; // port_chnl_en_template
+
+//##############################################
+// Watermark-style register
+//##############################################
+//
+// The value of the reg is provided by hardware via a load enable.
+// A CPU write will pulse a signal that can be used to clear the hardware value.
+
+register watermark_template (
+    string title        = "Watermark",
+    string description  = "Watermark register.",
+    integer width       = 32,  // size of register
+    integer reset_value = 0
+    )
+{
+    property title = title;
+    property description = description;
+    property register_reset_value = reset_value;
+
+    field ( integer width ) {
+        property width        = width;
+        property written_port = true;
+        property input_value  = true;
+        property load_enable  = true;
+    } value ( width = width );
+
+}; // watermark_template
+
+//##############################################
+// ParDe ring2csr station time offset
+//##############################################
+//
+// Each ring2csr stations needs a time offset. Use this template
+#define TIME_OFFSET_W   20
+register r2c_time_offset_r (
+    string title        = "Time Offset",
+    string description  = "PBUS station to ring2csr station time offset"
+    )
+{
+  property title = title;
+  property description = description;
+
+  field {
+    property title = "Offset";
+    property width = TIME_OFFSET_W;
+    property field_type = "configuration";
+    property output_port = true;        
+    property reset_value = 0;
+  } offset;
+}; // r2c_time_offset_r
+
+
+#endif // #ifndef __TEMPLATES_RSPEC_CSR__

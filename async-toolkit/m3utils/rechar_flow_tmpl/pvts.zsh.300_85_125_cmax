@@ -1,0 +1,25 @@
+# the characterization PVTs to run
+
+# for now we support: a list of voltages (in millivolts)
+# a single temperature
+
+# can change in future!
+
+# corners are given in temp/millivolts/trancorner/metalcorner/capcorner/metaltemp format
+# metaltemp given as "m40" or "100" or whatnot
+# voltage given as integer millivolts
+#
+# note that
+#    extract_pvt=${metaltemp}c_${metalcorner}_${capcorner}
+# must exist in the PDK's spf files
+#
+# note that corners given must also be mapped in run_postprocess
+#
+# code currently doesn't work for >= 1000 millivolts (I don't think)
+#
+
+#corners_list=("100/300/tttt/tttt/cmax/100" "100/300/tttt/tttt/cmin/100" "100/275/tttt/tttt/cmax/100" "100/450/tttt/tttt/cmax/100")
+corners_list=("85/300/tttt/pcss/cmax/125")
+
+cell_list_fn="cell_list"
+

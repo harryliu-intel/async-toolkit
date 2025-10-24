@@ -1,0 +1,21 @@
+// Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+// SPDX-License-Identifier: Apache-2.0
+
+module testassert;
+
+define P()()
+{
+  csp {
+    assert(true);
+    assert(true, "hey");
+    assert(true, "a" + "b");
+    string s = "yep";
+    assert(true, s);
+
+    int x = 0;
+    x++;
+    
+    assert(true, s + " " + string(x, 10));
+    assert(false, "this should crash");
+  }
+}

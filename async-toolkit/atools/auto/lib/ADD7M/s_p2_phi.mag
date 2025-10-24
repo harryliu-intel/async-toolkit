@@ -1,0 +1,101 @@
+magic
+tech scmos
+timestamp 965421252
+<< ndiffusion >>
+rect -45 75 -41 78
+rect -45 67 -41 72
+rect -15 63 -7 64
+rect -45 59 -41 62
+rect -15 59 -7 60
+<< pdiffusion >>
+rect 23 75 27 78
+rect -72 71 -64 72
+rect -72 63 -64 68
+rect 9 63 17 64
+rect -72 59 -64 60
+rect 9 59 17 60
+rect 23 59 27 71
+rect 54 64 58 69
+rect 46 63 58 64
+rect 46 59 58 60
+<< ntransistor >>
+rect -45 72 -41 75
+rect -45 62 -41 67
+rect -15 60 -7 63
+<< ptransistor >>
+rect -72 68 -64 71
+rect -72 60 -64 63
+rect 23 71 27 75
+rect 9 60 17 63
+rect 46 60 58 63
+<< polysilicon >>
+rect -49 72 -45 75
+rect -41 72 -29 75
+rect -76 68 -72 71
+rect -64 68 -60 71
+rect -76 60 -72 63
+rect -64 60 -60 63
+rect -49 62 -45 67
+rect -41 62 -37 67
+rect -1 63 3 74
+rect 19 71 23 75
+rect 27 74 31 75
+rect 27 71 29 74
+rect -19 60 -15 63
+rect -7 60 9 63
+rect 17 60 21 63
+rect 42 60 46 63
+rect 58 60 62 63
+<< ndcontact >>
+rect -45 78 -37 86
+rect -15 64 -7 72
+rect -45 51 -37 59
+rect -15 51 -7 59
+<< pdcontact >>
+rect -72 72 -64 80
+rect 23 78 31 86
+rect 9 64 17 72
+rect -72 51 -64 59
+rect 9 51 17 59
+rect 46 64 54 72
+rect 23 51 31 59
+rect 46 51 58 59
+<< polycontact >>
+rect -3 74 5 82
+rect -32 64 -24 72
+rect 29 66 37 74
+<< metal1 >>
+rect -45 82 -37 86
+rect 23 82 31 86
+rect -72 72 -64 80
+rect -45 78 51 82
+rect -3 74 5 78
+rect -32 70 -24 72
+rect -15 70 -7 72
+rect 9 70 17 72
+rect 29 70 37 74
+rect -32 66 37 70
+rect 46 72 51 78
+rect -32 64 -24 66
+rect -15 64 -7 66
+rect 9 64 17 66
+rect 46 64 54 72
+rect -72 51 -64 59
+rect -45 51 -7 59
+rect 9 51 58 59
+<< labels >>
+rlabel polysilicon -73 61 -73 61 3 a
+rlabel metal1 -68 55 -68 55 1 Vdd!
+rlabel metal1 -68 76 -68 76 1 x
+rlabel polysilicon -73 69 -73 69 3 b
+rlabel space -64 51 -59 80 3 ^p
+rlabel ndcontact -11 55 -11 55 1 GND!
+rlabel pdcontact 13 55 13 55 1 Vdd!
+rlabel polysilicon -46 63 -46 63 1 _SReset!
+rlabel metal1 -41 82 -41 82 1 x
+rlabel metal1 27 55 27 55 1 Vdd!
+rlabel metal1 27 82 27 82 1 x
+rlabel metal1 50 55 50 55 8 Vdd!
+rlabel polysilicon 59 61 59 61 7 _PReset!
+rlabel metal1 -41 55 -41 55 1 GND!
+<< end >>

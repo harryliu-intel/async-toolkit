@@ -1,0 +1,25 @@
+ignore 2.1.6.f 
+ignore 2.1.6.e 
+ignore 2.1.6.c 
+ignore 2.1.6.b 
+ignore 2.1.6.a.1 
+ignore 2.1.6.a.2 
+ignore 2.1.7.h MBY dont use LEC
+ignore 2.1.7.g MBY dont use LEC
+ignore 2.1.7.f MBY dont use LEC
+ignore 2.1.7.a.2 MBY dont use LEC
+ignore 2.1.7.c MBY dont use LEC
+ignore 2.1.7.a.1 MBY dont use LEC
+ignore 2.1.8.s MBY dont supprot this in RTL 0.8 realase.
+ignore 2.1.8.o MBY dont supprot this in RTL 0.8 realase.
+ignore 2.1.8.v MBY dont supprot this in RTL 0.8 realase.
+ignore 2.1.8.w MBY dont supprot this in RTL 0.8 realase.
+ignore 2.2.17 Please review MBY version file : script/scc_toolfile.dat
+ignore 2.2.18 Please review MBY version file : script/scc_toolfile.dat
+ignore 2.2.23 mby_fuse_env extends MBY_Fuse_Map_env which extends sla_fuse_env
+ignore 2.2.24 MBY don't have Straps.
+ignore 2.2.6 (MBY dont use this verif method)
+ignore 2.2.2.d (MBY dont use this verif method)
+ignore 2.2.21.b MBY dont have straps
+ignore 2.2.21.d MBY dont have tap
+ignore 2.3.3 it_pbj.txt not relevant to MBY

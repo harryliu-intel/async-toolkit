@@ -1,0 +1,51 @@
+// Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+// SPDX-License-Identifier: Apache-2.0
+
+
+int WORD=32;
+
+define OBSCENE()()
+{
+  csp {
+    function push(int -+stack, int(32) -item) =
+      (stack = (stack << 32) | item);
+
+    function pop (int -+stack) : int(32) =
+      (pop = stack; stack = stack >> 32);
+
+    function times(int -+stack) : int =
+      (int x = pop(stack);
+       int y = pop(stack);
+
+       push (stack, x * y);
+
+       times = RETURN
+       );
+    
+    function fact0(int -+stack) : int =
+      (
+       int n = pop(stack);
+       int c = pop(stack);
+
+       [  n == 0 -> push(stack, 1); // return by not pushing continuation
+          
+       [] n >  0 -> push(c);  // this isn't right
+                    push(FACT1);
+                    push(stack, n - 1);
+                    push(stack, FACT0);
+       ]
+       );
+
+    function fact1(int -+stack) : int =
+      (
+      
+
+
+
+    function machine(int -+stack) : int =
+      (
+       int op = pop(stack);
+       [  op == FACT  -> result = fact(stack)
+       [] op == TIMES -> result = times(stack)
+       )
+    

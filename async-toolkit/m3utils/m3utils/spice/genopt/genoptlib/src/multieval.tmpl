@@ -1,0 +1,23 @@
+% Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+% SPDX-License-Identifier: Apache-2.0
+
+readonly proc _multiEval(nm, field, type, typeseq, vis) is
+         build_generic_intf("MultiEval" & nm, "MultiEval", [field, type, typeseq], vis)
+         build_generic_impl("MultiEval" & nm, "MultiEval", [field, type, typeseq])
+         build_generic_intf("MultiEvalResult" & nm, "MultiEvalResult", ["MultiEval" & nm], vis)
+         build_generic_intf("PointMetric" & nm, "PointMetric", ["MultiEval" & nm], vis)
+         build_generic_impl("PointMetric" & nm, "PointMetric", ["MultiEval" & nm])
+         build_generic_intf("PointEvaluator" & nm, "PointEvaluator", [field], vis)
+         build_generic_impl("PointEvaluator" & nm, "PointEvaluator", [field, type])
+
+         Sequence("PointEvaluator" & nm, "PointEvaluator" & nm)
+
+end
+
+readonly proc multiEval(nm, field, type, typeseq) is
+         _multiEval(nm, field, type, typeseq, HIDDEN)
+end
+
+readonly proc MultiEval(nm, field, type, typeseq) is
+         _multiEval(nm, field, type, typeseq, VISIBLE)
+end            

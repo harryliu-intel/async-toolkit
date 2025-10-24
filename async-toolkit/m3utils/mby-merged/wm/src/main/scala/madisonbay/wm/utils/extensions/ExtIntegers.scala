@@ -1,0 +1,36 @@
+// Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+// SPDX-License-Identifier: Apache-2.0
+
+package madisonbay.wm.utils.extensions
+
+import ExtIntegers._
+
+object ExtIntegers {
+
+  val SaturationUByte: Long   = 0xffL
+
+  val SaturationUShort: Long  = 0xffffL
+
+  val SaturationUInt: Long    = 0xffffffffL
+
+}
+
+trait ExtIntegers[A] {
+
+  def addWithSaturation(number1: A, number2: Long, limit: Long): A
+
+  def incWithSaturation(number: A, limit: Long): A = addWithSaturation(number, 1, limit)
+
+  def incWithUByteSaturation(number: A): A = incWithSaturation(number, SaturationUByte)
+
+  def incWithUShortSaturation(number: A): A = incWithSaturation(number, SaturationUShort)
+
+  def incWithUIntSaturation(number: A): A = incWithSaturation(number, SaturationUInt)
+
+  def addWithUByteSaturation(number: A, number2: Long): A = addWithSaturation(number, number2, SaturationUByte)
+
+  def addWithUShortSaturation(number: A, number2: Long): A = addWithSaturation(number, number2, SaturationUShort)
+
+  def addWithUIntSaturation(number: A, number2: Long): A = addWithSaturation(number, number2, SaturationUInt)
+
+}

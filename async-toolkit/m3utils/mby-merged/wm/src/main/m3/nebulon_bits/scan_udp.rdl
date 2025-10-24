@@ -1,0 +1,297 @@
+<% if ($SCAN_UDP) { 
+   } else {
+   $SCAN_UDP = 1;
+%>
+
+//------------------------------------------------------------------------------
+// User Defined Properties (UDP) Library
+//
+// This contains all of the UDPs that are used globally throughout all register
+// descriptions.  UDP should not be declared anywhere else.
+//
+//------------------------------------------------------------------------------
+
+///////////////////////////////////// Properties aligned to a SCAN
+property ScanNetworkID  {
+    component = addrmap;
+    type      = number;
+    default   = 0;
+}; 
+
+
+property ScanInstName {
+    component = addrmap;
+    type      = string;
+    default   = "";
+};
+property ScanModuleName {
+    component = addrmap;
+    type      = string;
+    default   = "";
+};
+property ScanMiscUserText {
+    component = addrmap;
+    type      = string;
+    default   = "";
+};
+
+
+property ScanRtlPath  {
+    component = addrmap;
+    type      = string;
+    default   = "";
+};
+
+property ScanPowerGoodSignal {
+    component = addrmap;
+    type      = string;
+    default   = "";
+};
+property ScanRmtDrSignalPrefix {
+    component = addrmap;
+    type      = string;
+    default   = "";
+};
+property ScanPowerName {
+    component = addrmap;
+    type      = string;
+    default   = "";
+};
+property ChopID {
+    component = addrmap | reg | field;
+    type      = string;
+    default   = "";
+};
+
+
+
+
+
+////////////////////////////////////// Properties aligned to a Scan Register
+
+property ScanTotalNumRegBits {
+    component = reg;
+    type      = number;
+    default   = 0;
+};
+property ScanShiftRegLength {
+    component = reg;
+    type      = number;
+    default   = 0;
+};
+
+property ScanRegResetType {
+    component = reg;
+    type      = string;
+    default   = "";
+};
+property ScanDrIsFixedSize {
+    component = reg;
+    type      = boolean;
+    default   = true;
+};
+property ScanShadowSignal {
+    component = reg | field;
+    type      = string;
+    default   = "";
+};
+property ScanRcvrSignal {
+    component = reg | field;
+    type      = string;
+    default   = "";
+};
+property ScanPriSignal {
+    component = reg | field;
+    type      = string;
+    default   = "";
+};
+property ScanUseSignalID {
+    component = reg | field;
+    type      = boolean;
+    default   = false;
+};
+property ScanIsFieldTemplateReg {
+  component = reg;
+    type = boolean;
+    default  = false;
+ };
+
+
+/////////////////////////////////// Properties aligned to a Scan Bit field properties
+property AccessType {
+    component = field; 
+    type      = string;
+    default   = "";
+};
+property ScanFieldSliceID {
+    component = field; 
+    type      = string;
+    default   = "";
+};
+property ScanFieldIsVarSize {
+    component = field; 
+    type      = boolean;
+    default   = false;
+};
+property ScanWrEnField {
+    component = field; 
+    type      = string;
+    default   = "";
+};
+property ScanWrEnPolarity {
+    component = field; 
+    type      = number;
+    default   = 1;
+};
+property ScanFieldIsNoInit {
+    component = field; 
+    type      = boolean;
+    default   = false;
+};
+property ScanFieldTemplate {
+  component = field;
+    type = string;
+    default = "";
+};
+
+
+
+
+
+
+
+
+property SampleMode {
+    component = reg;
+    type      = string;
+    default   = "FD_RW_SAMPLE";
+};
+
+property CoverageMode {
+    component = reg | field;
+    type      = string;
+    default   = "COVERAGE_ON";
+};
+
+
+// individual registers will be intantiated in OVM only, by default to include in OVM output
+property ValInstanceReg {
+    component = reg;
+    type      = boolean;
+    default   = true;
+};
+
+
+// this UDP defines the power well for both reg & field level:
+property PowerWell {
+    component = reg | field;
+    type      = string;
+    default   = "";
+};
+
+property ValLegalValues {
+    component = field;
+    type      = string;
+    default   = "";
+};
+
+property ValRandomize {
+    component = field;
+    type      = boolean;
+    default   = false;
+};
+
+
+///////
+//Added per HSD 5254186
+property ScanParentName {
+  component = addrmap;
+  type = string;
+  default = "";
+ };
+
+property ScanSystemType {
+  component = addrmap;
+  type = string;     //regional, cluster, master
+  default = "";
+ };
+
+property ScanType {
+  component = addrmap;
+  type = string;      //lssd, muxd
+  default = "";
+ };
+ 
+property ScanRegionName {
+  component = addrmap;
+  type = string;
+  default = "";
+ };
+property ScanNumGroups {
+  component = addrmap;
+  type = number;
+  default = 0;
+ };
+
+property ScanTapName {
+  component = addrmap;
+  type = string;
+  default = "";
+ };
+
+
+
+property ScanFuncClockNum {
+  component = addrmap;
+  type = number;
+  default = 0;
+ };
+ 
+ property ScanChainNum {
+  component = addrmap | reg;    //extended to reg level as per HSD 5271275
+  type = number;
+  default = 0;                  //Defaults to null in nebulon hash if not defined in RDL
+ };
+
+ property ScanCompressRatio {
+  component = addrmap;
+  type = number;
+  default = 0;
+ };
+
+ property ScanChainInterfaceWidth {
+  component = addrmap;
+  type = number;
+  default = 0;
+ };
+
+ property ScanDrIndex {
+  component = reg;
+  type = number;
+  default = 0;
+ };
+
+ property ScanDrType {
+  component = reg;
+  type = string;     //sdi, cdi
+  default = "";
+ };
+
+ property ScanFieldType {
+  component = field;
+  type = string;     //rtp, chain, sasc, src, scc, edt
+  default = "";
+ };
+
+
+//New UDPs added per HSD 5271275
+ 
+ property ScanFieldAbsIdx {
+  component = field;
+  type = number;
+  default = 0;              //Defaults to null in nebulon hash if not defined in RDL
+ };
+
+
+
+<% }; %>

@@ -1,0 +1,161 @@
+.TH ASPICE 1 
+.UC 4
+.SH NAME
+aspice \- analog/digital circuit simulator
+.SH SYNOPSIS
+.B aspice
+.I file
+[
+.I -include file
+]
+[
+.I -path path
+]
+[
+.I -dir workdir
+]
+[
+.I -batch
+]
+[
+.I -noreorder
+]
+[
+.I -restore
+]
+[
+.I -noR
+]
+[
+.I -minCC C
+]
+[
+.I -traceInternal
+]
+[
+.I -traceR
+]
+[
+.I -traceAll
+]
+[
+.I -verbose
+]
+[
+.I -smoothV
+]
+[
+.I -count_scenarios
+]
+[
+.I -top TopCellType
+]
+[
+.I -seed srand_seed
+]
+
+.SH DESCRIPTION
+Aspice reads a circuit description from file.asp and performs mixed
+analog/digital simulation on it.  The file.asp is a complex language
+which allows subcells and expression evaluation.  Usually file.asp is
+generated with "jflat --tool=aspice --cell=fqcn:env" which allows
+everything to be specified in CAST format instead.  By convention, the
+file.asp also includes file.aspice (the extracted circuit from
+rc_spice2aspice).  Aspice saves the namespace to file.names, the node
+voltages over time to file.trace, and checkpoints to file.checkpoint.
+Waveforms are typically viewed with aplot.
+ 
+Command line options:
+
+.TP 1.0i
+.B -include file
+Sources the specified file as input to the interactive interface.
+
+.TP 1.0i
+.B -path path
+Takes a colon separated path.  Used to find any include files or spice
+models.
+
+.TP 1.0i
+.B -dir workdir
+Directory for trace/names/checkpoint files.  Uses . by default.
+
+.TP 1.0i
+.B -batch
+Disables interactive command line shell.
+
+.TP 1.0i
+.B -noreorder
+At the end of a simulation, aspice reorders the trace file for faster
+plotting with aplot.  Specifying -noreorder supresses this.
+
+.TP 1.0i
+.B -restore
+Continue simulating from checkpoint.  If your simulation crashes or
+you want to extend the simulation duration, you can continue your
+simulation from the last checkpoint, provided you have not yet
+reordered the trace file.
+
+.TP 1.0i
+.B -noR
+Turns resistors into wires.
+
+.TP 1.0i
+.B -minCC C
+Converts capacitors less than C farads from coupling capacitors to
+lumped capacitance to GND.
+
+.TP 1.0i
+.B -traceInternal
+Saves traces for internal unnamed nodes.
+
+.TP 1.0i
+.B -traceR
+Saves traces for all nodes which touch any active device (not just
+resistors or capacitors).
+
+.TP 1.0i
+.B -traceAll
+Saves traces for all nodes.  Meant only for debugging.
+
+.TP 1.0i
+.B -verbose
+Emits more output information, such as Relevant Devices in alint.
+This is used for EM analysis.
+
+.TP 1.0i
+.B -smoothV
+Internally aspice applies an EWMA smoothing function to waveforms for
+computing analog to digital events.  The default saves the actual
+waveform, but this option saves the smoothed waveform instead for
+debugging of A2S warnings.
+
+.TP 1.0i
+.B -count_scenarios
+Enumerates alint scenarios without simulating them.
+
+.TP 1.0i
+.B -top TopCellType
+Instantiates TopCellType's contents with no hierarchy prefix.
+
+.TP 1.0i
+.B -seed srand_seed
+Seeds random number generator and enables AGAUSS SPICE function to
+do Monte Carlo simulation.
+
+.SH SEARCH PATH
+
+The .include and .bsim4 commands use the searchpath
+".:$ASPICE_PATH", where $ASPICE_PATH can be a colon separated list of
+path prefixes to try.  Can override with -path command line option.
+
+.SH "SEE ALSO"
+aplot\|(1), rc_spice2aspice\|(1)
+
+.SH AUTHOR
+Andrew Lines, Caltech, 1996 - Fulcrum, 2007 - Intel, 2011.
+
+.SH BUGS
+Poor error reporting.  Bad circuit characteristics may cause
+segmentation faults or floating point errors.  Avoid small resistors
+and make sure the timestep is small enough.

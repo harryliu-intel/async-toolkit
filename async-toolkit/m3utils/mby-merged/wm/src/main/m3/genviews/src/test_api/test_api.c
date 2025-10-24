@@ -1,0 +1,414 @@
+/* Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information. */
+/* SPDX-License-Identifier: Apache-2.0 */
+
+#include <malloc.h>
+#include <stdio.h>
+
+#define __USE_BSD /* strdup() */
+#include <string.h>
+#undef __USE_BSD
+
+#define __USE_BSD /* random() */
+#include <stdlib.h>
+#undef __USE_BSD
+
+#include <sys/time.h>
+
+#include "ragged2arcs.h"
+#include "addr2ragged.h"
+#include "mby_top_map.h"
+#include "raggedindex.h"
+#include "ragged2ptr.h"
+#include "ptr2ragged.h"
+#include "hostptr_setup.h"
+
+void
+print_ragged(const raggedindex_t *s)
+{
+  int i=0;
+  printf("(");
+  while(s->d[i] !=-1) {
+    printf(" %d", s->d[i]);
+    ++i;
+  }
+  printf(" )");
+}
+
+#define ASPRINTF(x, ...)                                   \
+  do {                                                     \
+    size_t _sz = 1 + snprintf(NULL, 0, __VA_ARGS__);       \
+    char *_buff = malloc(_sz);                             \
+    sprintf(_buff, __VA_ARGS__);                           \
+    x = _buff;                                             \
+  } while(0)
+
+int
+inc_ragged_last(raggedindex_t *seq)
+{
+  /* XXX UNTESTED CODE */
+  /* increment ragged in the last valid position */
+  /* not sure this is a really useful operation? */
+  const arc_t **arcs;
+  int p=0;
+  
+  while(seq->d[p] != -1) ++p;
+  /* p points to end marker */
+
+  if(p == 0)
+    return 0;                /* we were given the null address */
+  
+  arcs = ragged2arcs(seq);
+    
+  /* p != 0 */
+  assert(arcs[seq->d[p-1]]); /* d[p-1] is valid */
+
+  if (arcs[seq->d[p-1]+1]) 
+    return ++(seq->d[p-1]);  /* return last index incremented */
+  else
+    return 0;                /* at the last index already */
+}
+
+#define MATCH_NONE       0 /* mismatch                                   */
+#define MATCH_PARTIAL    1 /* match a partial path (higher level match)  */
+#define MATCH_COMPLETE   2 /* complete match -- matches a specific field */
+
+int
+name2ragged(const char       *name,
+            raggedindex_t    *seq_a)
+/* 
+   convert a single dotted, arrayed name to a ragged index
+
+   ex. a.b.c[14][32].x.y.z
+
+   if z is a field then MATCH_COMPLETE is returned
+
+   if z is not a field, then MATCH_PARTIAL is returned
+
+   if the string does not match anything
+   OR an array index is out of bounds
+   OR a syntax error exists in the string (ex. a.b[3.d]4),
+   then MATCH_NONE is returned
+*/
+{
+  raggedindex_t qqq, *seq=&qqq;
+  const char *p=name;
+  const arc_t **arcs;
+  int k;
+
+  k = 0;
+  seq->d[k] = -1;
+
+  while(*p) {
+    arcs = ragged2arcs(seq);
+    
+    if (!arcs) {
+      if(*p)
+        return MATCH_NONE; /* more string -- no match found */
+      else {
+        /* entire string consumed but arcs not */
+        *seq_a = *seq;
+        return MATCH_PARTIAL;
+      }
+    }
+    
+    if (arcs && arcs[0]->arr) {
+      // array case
+      int idx = 0;
+      if (*p++ != '[')
+        return MATCH_NONE; /* not an array index */
+      
+      while ('0' <= *p && *p <= '9')
+        idx = idx * 10 + (*p++ - '0');
+
+      if (*p++ != ']')
+        return MATCH_NONE; /* syntax error */
+      
+      if (idx >= arcs[0]->arr->size)
+        return MATCH_NONE; /* out of range */
+      
+      printf("match! [%d]\n", idx);
+      seq->d[k] = idx;
+      seq->d[++k] = -1;
+    } else {
+      // non-array case
+      int i = 0, matched = 0;
+
+      while(arcs[i]) {
+        size_t len;
+        assert(arcs[i]->sym);
+
+        len = strlen(arcs[i]->sym);
+        
+        printf("matching p = %s  against  arc .%s\n", p, arcs[i]->sym);
+        if (*p=='.' && strncmp(p+1, arcs[i]->sym, len) == 0) {
+          printf("match! .%s\n", arcs[i]->sym);
+          p += len+1;
+          seq->d[k] = i;
+          seq->d[++k] = -1;
+          matched = 1;
+          break;
+        }
+        ++i;
+      }/*elihw*/
+      if (!matched)
+        return MATCH_NONE; /* component not found */
+    }
+  }
+  /* get here if both arcs and *p are exhausted */
+  *seq_a = *seq;
+  return MATCH_COMPLETE;
+}
+
+void
+ragged2nameseq(const raggedindex_t *s, const char **seq)
+{
+  raggedindex_t ss;
+  int i = 0;
+
+  while(s->d[i] != -1) {
+    const arc_t **arcs;
+    
+    ss = *s;
+    ss.d[i] = -1;
+    arcs = ragged2arcs(&ss);
+
+    if (arcs && arcs[0]->arr) {
+      // array case
+      assert(s->d[i] < arcs[0]->arr->size);
+      ASPRINTF(seq[i],"[%d]",s->d[i]);
+    } else {
+      ASPRINTF(seq[i], ".%s", arcs[s->d[i]]->sym);
+    }
+    ++i;
+  }
+  seq[i] = NULL;
+}
+
+void
+test_print_ragged(void)
+{
+  for (int i=0; i<1000*100; ++i) {
+    chipaddr_t a=random() % 1000*1000*10, rem;
+    raggedindex_t rp;
+    const char *seq[MAXDEPTH];
+
+    rem = addr2ragged(a, &rp);
+    print_ragged(&rp);
+    printf(" rem=%ld\n", rem);
+
+    ragged2nameseq(&rp, seq);
+
+    for (const char **s=seq; *s; ++s)
+      printf("%s", *s);
+    
+    printf("\n");
+  }
+}
+
+void
+print_time_delta(const struct timeval *tv0,
+                 const struct timeval *tv1,
+                 const char *msg,
+                 long int ops)
+{
+  double delta = (tv1->tv_usec-tv0->tv_usec)*1e-6 + tv1->tv_sec - tv0->tv_sec;
+
+  assert(msg);
+  printf("time_delta %s : %lf ms per op: %le s ops/s: %le\n",
+         msg,
+         delta*1000,
+         delta/ops,
+         ops/delta);
+
+}
+
+void
+test_time_ragged(void)
+{
+  const int ops = 10*1000*1000;
+  
+  struct timeval tv0, tv1;
+  gettimeofday(&tv0,NULL);
+  for (int i=0; i<ops; ++i) {
+    chipaddr_t a=random() % (1000*1000), rem;
+    raggedindex_t rp;
+
+    rem = addr2ragged(a, &rp);
+  }
+  gettimeofday(&tv1,NULL);
+  print_time_delta(&tv0,&tv1,"test_time_ragged", ops);
+}
+
+void
+test_api_struct(void)
+{
+  mby_top_map *map;
+  size_t mapsiz = sizeof(mby_top_map);
+
+  printf("mby_top_map is %ld bytes.\n", mapsiz);
+  
+  map = malloc(mapsiz);
+
+  for (int i=0; i<100*1000; ++i) {
+    chipaddr_t a=random() % (1000*1000*10), rem;
+    raggedindex_t rp;
+    void *localptr;
+    long localoff, localcalc;
+    const char *seq[MAXDEPTH];
+
+    rem = addr2ragged(a, &rp);
+    localptr = mby_top_map__getptr(map, rp.d);
+    localoff = (const char *)localptr-(const char *)map;
+    localcalc = (long)(const char *)ragged2ptr(&rp);
+      
+    printf("addr=%#10lx ragged=", a);
+    print_ragged(&rp);
+    printf(" rem=%ld localoff=%#lx localcalc=%#lx nm=", rem, localoff, localcalc);
+
+    ragged2nameseq(&rp, seq);
+
+    for (const char **s=seq; *s; ++s)
+      printf("%s", *s);
+    
+    printf("\n");
+  }
+}
+
+/**********************************************************************/
+
+typedef struct suggestion_list {
+  char *suggestion;
+  struct suggestion_list *next;
+} suggestion_list_t;
+
+suggestion_list_t *
+name2suggest(const char *name) 
+{
+  raggedindex_t qqq, *seq=&qqq;
+  const char *p=name;
+  const arc_t **arcs;
+  int k;
+
+  k = 0;
+  seq->d[k] = -1;
+
+  while(*p) {
+    arcs = ragged2arcs(seq);
+    
+    if (!arcs) {
+      if(*p)
+        return NULL; /* more string -- no match found */
+      else {
+        /* entire string consumed but arcs not */
+        /* here we need to make a list of potential matches and return that */
+        assert(0);
+        return NULL;
+      }
+    }
+
+    /* note change below from exact-match version, if the string ends,
+       i.e., if !(*p) holds, the checks for mismatch do not hold, and
+       we fall thru instead . . . */
+    
+    if (arcs && arcs[0]->arr) {
+      // array case
+      int idx = 0;
+      if (*p && *p++ != '[')
+        return NULL; /* not an array index */
+
+      /* need to look for things like partial matches if we run out 
+         of p ... */
+      
+      while ('0' <= *p && *p <= '9')
+        idx = idx * 10 + (*p++ - '0');
+
+      if (*p && *p++ != ']')
+        return NULL; /* syntax error */
+      
+      if (idx >= arcs[0]->arr->size)
+        return NULL; /* out of range */
+      
+      printf("match! [%d]\n", idx);
+      seq->d[k] = idx;
+      seq->d[++k] = -1;
+    } else {
+      // non-array case
+      int i = 0, matched = 0;
+
+      /* we need to make a complicated match here, could be several hits */
+      while(arcs[i]) {
+        size_t len;
+        assert(arcs[i]->sym);
+
+        len = strlen(arcs[i]->sym);
+        
+        printf("matching p = %s  against  arc .%s\n", p, arcs[i]->sym);
+        if (*p=='.' && strncmp(p+1, arcs[i]->sym, len) == 0) {
+          printf("match! .%s\n", arcs[i]->sym);
+          p += len+1;
+          seq->d[k] = i;
+          seq->d[++k] = -1;
+          matched = 1;
+          break;
+        }
+        ++i;
+      }/*elihw*/
+      if (!matched)
+        return NULL; /* component not found -- not sure this is right */
+    }
+  }
+  {
+    /* get here if both arcs and *p are exhausted */
+    /* perfect match -- return copy of input */
+    suggestion_list_t *s = malloc(sizeof(suggestion_list_t));
+    s->suggestion = strdup(name);
+    s->next = NULL;
+    return s;
+  }
+}
+
+/**********************************************************************/
+
+int
+main(void/*int argc, char **argv*/)
+{
+  raggedindex_t s;
+  const arc_t **arcs;
+
+  init_raggedindex(&s);
+  arcs = ragged2arcs(&s);
+
+  {
+    int i=0;
+    while(arcs[i]) {
+      const structarc_t *sym = arcs[i]->sym;
+      const arrayarc_t  *arr = arcs[i]->arr;
+      
+      printf("arcs[%d] sym %s arr %d\n",
+             i, sym ? sym : "NULL", arr ? arr->size : -1);
+      i++;
+    }
+  }
+
+  {
+    raggedindex_t seq;
+    init_raggedindex(&seq);
+    const char *tgt =
+      ".mpp[0].mgp[0].rx_ppe.mapper.MAP_DOMAIN_ACTION1[3668].L3_POLICER";
+    
+    int matched = name2ragged(tgt, &seq);
+
+    printf("tgt %s match? %d -> ", tgt, matched);
+    print_ragged(&seq);
+    printf("\n");
+  }
+  
+#if 0
+  test_print_ragged();
+  test_time_ragged();
+#endif
+  init_hostptr();
+  test_api_struct();
+
+  return 0;
+}
