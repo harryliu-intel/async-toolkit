@@ -1,4 +1,7 @@
 #!/bin/sh -x
+# Copyright (c) 2025 Intel Corporation.  All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
+
 
 ROOT=/nfs/site/disks/or_lhdk75_disk0037/w137/gorda/mnystroe/oss
 SRCDIR=${ROOT}/orig
@@ -8,7 +11,7 @@ MERGEDIR=${ROOT}/merged
 HOME=`pwd`
 MAIN=async-toolkit
 #HOME=`pwd`
-M3INSTALL=${SRCDIR}/${MAIN}
+M3INSTALL=${SRCDIR}/m3utils
 TGTNAME=merged-git
 
 # we point out copyright specially because the MAIN is probably a clean
@@ -29,8 +32,10 @@ for r in ${repos}; do
     git clone --no-local ${SRCDIR}/${r} > ${r}.clone.out 2>&1
 
     cd ${PATHSDIR}/${r}
-    git filter-repo --to-subdirectory-filter \
-        ${MAIN}/${r}
+    if [ "${r}" != "${MAIN}" ]; then
+        git filter-repo --to-subdirectory-filter \
+            ${MAIN}/${r}
+    fi
 done
 
 # do the actual merge
@@ -52,7 +57,8 @@ for r in ${repos}; do
         echo "merging ${r}"
         git remote add ${r} ${PATHSDIR}/${r}
         git fetch ${r} --tags
-        git merge --no-edit --allow-unrelated-histories ${r}/master > ${r}.merge.out 2>&1
+        git merge --no-edit --allow-unrelated-histories ${r}/master > ${r}.master.merge.out 2>&1
+        git merge --no-edit --allow-unrelated-histories ${r}/main > ${r}.main.merge.out 2>&1
     fi
 done
 

@@ -1,4 +1,7 @@
 #!/bin/sh -x
+# Copyright (c) 2025 Intel Corporation.  All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
+
 
 # run at the directory holding the repo
 
