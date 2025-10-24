@@ -1,0 +1,189 @@
+1. make sure you're in cth2 and the WARD is correct
+
+2. make sure that you started cth2 with the correct PDK settings.
+
+two examples:
+
+1278p3 0p5 PDK:
+
+# /p/hdk/bin/cth_psetup -p ipde/2023.16.04 -cfg 78p3_opt9_r05.cth -nowash -tool ipde_all -x '$SETUP_IPDE'
+
+1278p3 0p8 PDK:
+
+# /p/hdk/bin/cth_psetup -p ipde/2023.31.02.p2 -cfg 78p3_opt12_r08.cth -nowash -tool ipde_all -x '$SETUP_IPDE'
+
+as of 8/23 we are using the latter for FWR.
+
+cth2 must be started in the top-level dir.
+
+
+NEW FLOW 12/6/2023:
+
+create a setup.* file with a memorable name.  The setup file should
+define four variables and then call (source) do_setup.sh, for example:
+
+#!/bin/sh
+
+cells=cell_list.tc2
+workdir=siliconsmart.tc2
+env=env.zsh.0p9eu1
+pvts=pvts.zsh.300_85_cmin
+
+. ./do_setup.sh
+
+
+each of the lines points at a file in the CWD, which should exist and
+should be in the git repository.  If it does not already exist, create it and
+add it to git.  
+
+Then add this the setup file itself to git.
+
+Then run the setup file.  This will create the proper symlinks. 
+
+2b. make sure SP variables are set correctly if doing asfit (4 vars)
+    -- check them for matching PDK in any case, even if not doing asfit!
+   (check for them in env.zsh)
+
+2c. if doing asfit, worry about the extraction quality between the cell data
+from the standard cell library and the UPF being used for simulation.
+
+3. make sure siliconsmart dir exists and is empty (check symlink):
+
+create appropriately named work directory, e.g.,
+
+rm siliconsmart # assuming siliconsmart is a symlink
+rm -rf siliconsmart.mine
+mkdir siliconsmart.mine
+ln -sf siliconsmart.mine siliconsmart
+
+"siliconsmart" MUST point to an empty directory (or BE an empty directory)
+
+4. check env.zsh for stdcell_dir -- should match desired starting lib
+
+5. check env.zsh for SILICONSMART_ROOT_DIR -- should match WARD!  (This is automatic now.)
+
+6. check cell_list for being correct---cell_list can be a symlink (rec'm'd)
+
+7. if doing spcl cells, make sure the required special cell is included:
+
+(in 1278.3)
+
+spcl_ulvt i0sddtih0aa1d02x5
+spcl_ulvt i0sddtil0aa1d02x5
+
+spcl_lvt i0sddtih0ab1d02x5
+spcl_lvt i0sddtil0ab1d02x5
+
+etc (this "trick" fixes up various power rails)
+
+From Harry:
+
+>>>>>>>
+I don’t have a clear grasp on the actual requirement, but the heuristic I made up in my head is that all libs in an NDM should have identical set of “voltage_name” references:
+
+plxcqy259% gzip -dc lib783_i0s_160h_50pp_spcl_ulvt_tttt_0p650v_100c_tttt_cmax_ccslnt.lib.gz | grep voltage_name | sort -u
+      voltage_name : vcc ;
+      voltage_name : vcc_in ;
+      voltage_name : vssx ;
+
+plxcqy259% gzip -dc lib783_i0s_160h_50pp_spcl_ulvt_tttt_0p300v_85c_tttt_cmax_ccslnt.lib.gz | grep voltage_name | sort -u
+      voltage_name : vcc ;
+      voltage_name : vssx ;
+
+Then I looked for a simple cell we can add to make this true for the 0p300v lib.
+<<<<<<<
+
+
+8. check runme / pvts.zsh for correct temp and voltage(s)
+  8a.  Make sure corners exist in the run_postprocess script!
+
+9. For parallel runs, you must have M3UTILS set, e.g.,
+
+setenv M3UTILS /nfs/site/disks/zsc9_fwr_sd_001/mnystroe/m3utils
+
+The dependency is on the sislaunch program for parallel runs.  Parallel runs
+can also be disabled in env.zsh (that will not completely disable parallelism,
+but will reduce performance especially for runs consisting of a small number
+of cells in a large number of bundles).
+
+10. LAUNCH:
+
+./runme cell_list |& tee runme.mine.log
+
+---- WAIT A LONG TIME ----
+
+11. while you are waiting:
+
+cd siliconsmart
+ls -ltra
+cd <most recent PVT dir>
+ls -ltra
+cd <most recent bundle dir>
+tail -f siliconsmart.log
+
+if a job gets STUCK (sits several hours with a single worker), use
+
+nbstatus jobs
+
+figure out where it is running; log in to that machine; kill the siliconsmart process there
+
+the master siliconsmart process will figure out to relaunch the job.
+
+12. If anything goes wrong, fix it.  It is allowable to, e.g., cut back PVTs
+or bundles.
+
+13. In case of fixes, can rebundle the final bundles using
+
+./runme_postchar cell_list
+
+Note that ./runme_postchar is called from a specific point in the runme script.
+Please read the scripts to understand what is happening so that runme_postchar
+is starting in an appropriate environment.
+
+14. In case of splitting the flow (doing runme in one place and
+runme_postchar separately), which is OK to do, ensure that the files are
+set up right!  Pay special attention to PVTs and env.zsh contents!  Plus
+make sure that the CTH2 setup matches in the two runs.
+
+15. Set the RECHAR_START environment variable to have the flow start with a
+particular step.
+
+16. Set the RECHAR_STOP environment variable to have the flow stop after a
+particular step.
+
+17. If you are running a long characterization job, and the siliconsmart invocations
+start to exit and you're left with just a few hosts running the remaining jobs, run
+the script
+
+./checkprogress.sh
+
+from ${TOP}
+
+After having done that, load the rebalanced host counts by running
+
+./rebalance.sh 
+
+which was created by checkprogress.sh .  Note that Siliconsmart only updates its 
+host counts about once per half hour (by default).
+
+----  BASIC QC  ----
+
+pushd siliconsmart/bundles
+
+zgrep i0s */lib/lib783_i0s_160h_50pp_*_*${PVT}*.lib.gz | grep "cell.i0s" | sed -e 's/.*cell.//' -e 's/).*//' > ../../cells_done
+
+popd
+
+awk '{print $2}' cell_list > cells_reqd
+cat cells_reqd cells_reqd cells_done | sort | uniq -c | sort -g | less
+
+2 means : requested but not done
+1 means : done but not requested
+3 means : requested and done
+
+Also run ./checkmissing.sh
+
+
+
+
+

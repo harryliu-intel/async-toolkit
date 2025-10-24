@@ -1,0 +1,18 @@
+MANIFEST                     - this file
+CHECKLIST                    - start here!
+runme                        - overall run script
+runme_final                  - post-characterization steps of flow
+env.zsh                      - environment settings
+pvts.zsh                     - desired PVTs of characterization
+anal.sh                      - ?
+checkmissing.sh              - check missing cells after run
+copy_thresholds.sh           - ensure a cell_list has all lvt+ulvt versions
+create_merged_ndm.csh        - merge NDM example from Mostafa
+expand_cell_list.sh          - ensure missing cells are included
+find_cells.sh                - given list of cells, find bundles
+merge_releases_ndm.sh        - (do not use)
+mk_list_fwr.sh               - attempt to make complete list of FWR cells
+mk_list_latches.sh           - make list of latches
+select_0p9_23ww29.2_beta.csh - select the 0p9_23ww29.2_beta UPF
+select_lvasfit_hsp.csh       - select the asfit UPF
+try.zsh                      - build a specific cell_list

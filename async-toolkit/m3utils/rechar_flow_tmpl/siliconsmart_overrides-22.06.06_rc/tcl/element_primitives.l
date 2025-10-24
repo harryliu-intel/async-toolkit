@@ -1,0 +1,1 @@
+/p/hdk/cad/vmac/22.06.06_rc/release/siliconsmart_overrides/tcl/element_primitives.l

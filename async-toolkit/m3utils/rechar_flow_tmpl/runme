@@ -1,0 +1,81 @@
+#!/usr/intel/bin/zsh -x
+#
+# ALLOW 64GB 
+#
+# The following is an old comment---take with grain of salt:
+# The Siliconsmart recharacterization flow reads an existing Liberty file, runs
+# SPICE simulations at different operating conditions, then writes out a new
+# Liberty file with new data but preserving the same structure.  For FON, I
+# wrote some scripts to recharacterize selected cells from the 1276.4
+# pdk050_r3v0p0_efv library at low voltages, and to rebundle the result.  FON
+# also included new custom cells from both Andrew and Anupama, but I have
+# cleaned up the scripts to focus only on recharacterization.  This script
+# exercises the flow on some inverters as a demo.  I also point out some
+# caveats.
+#
+# Start Cheetah 2 environment then run this script.  A sample command to start
+# Cheetah 2 is:
+# /p/hdk/bin/cth_psetup -p ipde/2023.16.04 -cfg 78p3_opt9_r05.cth -nowash -tool ipde_all -x '$SETUP_IPDE'
+# /p/hdk/bin/cth_psetup -p ipde/2023.31.02.p2 -cfg 78p3_opt12_r08.cth -nowash -tool ipde_all -x '$SETUP_IPDE'
+# /p/hdk/bin/cth_psetup -p ipde/2023.46.04 -cfg 78p3_opt12_r08hp2.cth -nowash -tool ipde_all -x '$SETUP_IPDE'
+#
+# To investigate other available releases, examine the area /p/hdk/etc/Projects/ipde
+#
+# Then set license (SNPSLMD_LICENSE_FILE/LM_PROJECT) and NetBatch (NBQSLOT)
+# environment variables, or use your own Cheetah project which may already have
+# configured them.
+#
+# Careful that all Cheetah files are needed---do not delete!
+#
+# Run this script from $TOP.  (Its own home.)  Cheetah settings will cause
+# data to go to $WARD.
+#
+# spcl_ulvt must include the zaonssaa cell for the flow to work
+#
+#
+# disk layout:
+#
+# char directory:    tttt_0p350_50  # e.g.
+# ndm staging dir:   ndms           # build area for ndms
+# output dir:        bundles        # all outputs here, not used during char
+#
+# bundles and ndms are NOT referenced while running flow
+#
+#
+# so in theory $TOP (location of scripts) and $WARD (location of run area)
+# could be different, but do we need that?
+
+
+echo "**********  $0 start at `date`"
+
+source rechar_setup_env.zsh
+
+if [[ "${RECHAR_START}" == "" ]]; then
+    flow_running=1
+else
+    flow_running=0
+fi
+
+
+for step in extract import scale characterize; do
+    if [[ "${RECHAR_START}" == ${step} ]]; then
+        echo "RECHAR_START at ${step}"
+        flow_running=1
+    fi
+    
+    if [[ "${flow_running}" == "1" ]]; then
+        ${TOP}/rechar_${step}.zsh
+    else
+        echo "skipping ${step} owing to RECHAR_START/RECHAR_STOP"
+    fi
+
+    if [[ "${RECHAR_STOP}" == "${step}" ]]; then
+        echo "RECHAR_STOP at ${step} !"
+        exit 0
+    fi
+done
+
+${TOP}/runme_postchar
+
+echo "**********  $0 done at `date`"
+
