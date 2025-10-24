@@ -1,0 +1,8 @@
+source /p/cloudbreak/tools/barefoot/etc/barefoot.cshrc
+module avail hspice
+module load hspice
+
+nbjob run --target ${EC_SITE}_normal --qslot /bfn/fe --class "SLES12&&20G" hspice -i out_6b_16d_read.spice -o out_6b_16d_read_2 -x
+
+# add --mode interactive to be interactive!
+
