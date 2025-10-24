@@ -1,0 +1,6 @@
+INTERFACE Rdr;
+IMPORT Intf;
+
+TYPE  T = Intf.T BRANDED OBJECT END;
+
+END Rdr.

@@ -1,0 +1,13 @@
+import ("libm3")
+import ("cit_util")
+import ("parseparams")
+import ("varosc")
+import ("techc")
+import ("normaldev")
+
+implementation ("Main")
+
+KeyPair ("TextLR", "Text", "LongrealType")
+Array_sort("TextLRPair", "TextLRPair")
+
+program ("vary")

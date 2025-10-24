@@ -1,0 +1,7 @@
+/* $Id: m3makefile,v 1.1 2008/01/22 01:52:17 mika Exp $ */
+
+import ("matrix")
+
+implementation ("Main")
+
+program ("test_mul")

@@ -1,0 +1,42 @@
+/* $Id: m3makefile,v 1.4 2015/02/15 20:47:37 mika Exp $ */
+
+import ("cit_util")
+import ("parserlib")
+import ("bdd")
+import ("sop")
+import ("modula3scheme")
+
+Module   ("BoolArrayOps")
+
+Table    ("BDDBDDSeq", "BDD", "BDDSeq")
+
+Module   ("BDDDepender")
+Module   ("BDDOpsH")
+
+Table    ("BDDBDDSet", "BDD", "BDDSet")
+
+Table    ("BDDLongreal", "BDD", "LongrealType")
+Table    ("BDDPairLongreal", "BDDPair", "LongrealType")
+
+Generic_module("Causal")
+template("causal")
+
+Causal   ("BDDCausal", "BDD", "BDDPair", "BDDLongrealTbl", "BDDPairLongrealTbl", "BDDBDDSetTbl", "BDDSeq", "BDDRefTbl")
+
+Module   ("TimeSearcher")
+
+Generic_module("SetToList")
+template("settolist")
+
+Table    ("TextBDD", "Text", "BDD")
+Table    ("BDDCard", "BDD", "Cardinal")
+Table    ("BDDRefList", "BDD", "RefList")
+
+Module   ("BDDDecompose")
+implementation("BDDDecomposeMinterms")
+Module   ("BDDScanner")
+Module   ("BDDCanon")
+
+SetToList("BDDSetToList", "BDD", "BDDSet")
+
+library ("hbddops")

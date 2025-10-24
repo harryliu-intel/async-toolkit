@@ -1,0 +1,33 @@
+CLOCK        698.11e6  # scheduler clock speed in Hz
+N            512       # schedule slots
+UNDERRUNMAX    2.0     # allowable underrun from long-term average per port
+MINPORTREP     4       # logical ports may not repeat more often than this
+MINPHYSREP     4       # physical quads may not repeat more often than this
+QUADWIDTH      4       # width of a physical quad
+DELTAGAPMAX    1       # max allowable jitter within a single port speed       
+MINREPBITS   672.0     # minimum bits at port speed, per segment
+JITTERSPEED   10.0e9   # max speed for which max jitter enforced (inclusive)
+SINGLESPEED   25.0e9   # max speed for which quadfurcation not necessary
+ATTEMPTS      10
+
+
+
+#     <phys-port> <log-port> <speed in b.p.s.>
+PORT            0          0           25.0e9   
+PORT            1          1           10.0e9
+PORT            2          2           10.0e9
+PORT            3          3           25.0e9
+
+PORT            4          4           25.0e9
+PORT            5          5           25.0e9
+PORT            6          6           10.0e9
+PORT            7          7           10.0e9
+
+PORT            12         12          100.0e9
+
+PORT            16         1           40.0e9
+
+PORT            8          8           10.0e9
+PORT            9          9           10.0e9
+PORT            10         10          10.0e9
+PORT            11         11          10.0e9

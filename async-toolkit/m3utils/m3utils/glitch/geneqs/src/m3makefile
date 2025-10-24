@@ -1,0 +1,30 @@
+import("parserlib")
+import("cit_util")
+import("bdd")
+import("parseparams")
+
+module ("Gate")
+list ("Gate", "Gate")
+
+module ("GateExpr")
+implementation ("Main")
+module ("Aliases")
+
+Token("gate")
+Lexer("gate", "gate")
+Parser("gate", "gate")
+
+Table("TextGateExpr", "Text", "GateExpr")
+
+Table("TextGate", "Text", "Gate")
+
+Extended("gateLexStd")
+Extended("gateParseStd")
+
+Module ("Edge")
+Sequence ("Edge", "Edge")
+
+Interface("RegExIntf")
+List("RegEx", "RegExIntf")
+
+program("geneqs")

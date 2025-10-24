@@ -1,0 +1,80 @@
+import ("libm3")
+import ("cit_util")
+import ("parseparams")
+import ("simpletoken")
+import ("mscheme")
+import ("modula3scheme")
+import ("sstubgen")
+import ("parseparams")
+import ("cspgrammar")
+import ("mpz")
+
+if defined("CM3_VERSION")
+	 m3_optimize("T")
+end
+
+Module   ("DynamicInt")
+
+Module   ("FiniteInterval") %% dead code?
+Module   ("VaryBits")       %% dead code?
+
+
+Module   ("WideInt")
+Module   ("NativeInt")
+
+Module         ("CspCompiledProcess")
+Interface      ("CspFrame")
+Table          ("TextFrame", "Text", "CspFrame")
+Sequence       ("CspFrame", "CspFrame")
+Interface      ("CspClosure")
+Sequence       ("CspClosure", "CspClosure")
+Table          ("TextClosure", "Text", "CspClosure")
+
+Interface      ("CspScheduler")
+Generic_module ("CspCompiledScheduler")
+Module         ("CspBoolean")
+Interface      ("CspString")
+
+Module   ("CspIntrinsics")
+c_source ("CspIntrinsicsC")
+interface("CspIntrinsicsP")
+
+Generic_module ("Channel")
+template ("channel")
+
+Generic_interface ("Node")
+template ("node")
+
+Module    ("CspPort")
+Interface ("CspPortObject")
+Table     ("TextPort", "Text", "CspPortObject")
+
+Interface ("CspNode")
+Module    ("CspChannel")
+Interface ("CspChannelUpdate")
+Interface ("CspChannelRep") % needs to be VISIBLE
+
+Generic_module ("CspChannelOps")
+
+Sequence ("CspPort", "CspPort")
+Table("AtomCspPortSeq", "Atom", "CspPortSeq")
+Table("TextCspPortSeq", "Text", "CspPortSeq")
+
+Module ("CspSim")
+
+Module ("CspRemote")
+Module ("CspWorker")
+Module ("CspMaster")
+Module ("CspSimUtils")
+
+Generic_module ("WideIntOps")
+Generic_module ("NarrowIntOps")
+template("intops")
+
+Interface ("CspRemoteChannel")
+
+Table ("TextRemoteChannel", "Text", "CspRemoteChannel")
+
+library ("cspsimlib")
+
+

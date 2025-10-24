@@ -1,0 +1,110 @@
+import ("libm3")
+import ("cit_util")
+import ("parseparams")
+import ("simpletoken")
+import ("mscheme")
+import ("modula3scheme")
+import ("sstubgen")
+import ("parseparams")
+import ("cspgrammar")
+import ("cspsimlib")
+import ("mpfr")
+
+%SYSTEM_LIBS{"MPZ"} = [ "-lgmp" ]
+%SYSTEM_LIBORDER += [ "MPZ" ] % need this, too
+
+%import ("mpz")
+%if defined("CM3_VERSION")
+%        m3_optimize("T")
+%end
+
+Module ("FileFinder")
+Module ("MakeConstant")
+
+Smodule ("CspCompilerDriver")
+Smodule ("M3Ident")
+Smodule ("FingerprintFinder")
+
+SchemeStubs ("CspExpression")
+SchemeStubs ("CspExpressionPublic")
+SchemeStubs ("CspExpressionSeq")
+
+SchemeStubs ("CspStatement")
+SchemeStubs ("CspStatementPublic")
+SchemeStubs ("CspStatementSeq")
+
+SchemeStubs ("CspType")
+SchemeStubs ("CspTypePublic")
+SchemeStubs ("CspStructMember")
+SchemeStubs ("CspStructMemberSeq")
+
+SchemeStubs ("CspAst")
+
+SchemeStubs ("CspGuardedCommand")
+SchemeStubs ("CspGuardedCommandSeq")
+
+SchemeStubs ("CspDeclaration")
+SchemeStubs ("CspDeclarationPublic")
+SchemeStubs ("CspDeclarationSeq")
+
+SchemeStubs ("CspDirection")
+SchemeStubs ("CspRange")
+SchemeStubs ("CspInterval")
+
+SchemeStubs ("CspDeclarator")
+SchemeStubs ("CspDeclaratorSeq")
+SchemeStubs ("CspStructDeclarator")
+SchemeStubs ("CspStructDeclaratorSeq")
+
+SchemeStubs ("CspSyntax")
+
+SchemeStubs ("CspPort")
+SchemeStubs ("CspPortSeq")
+SchemeStubs ("AtomCspPortSeqTbl")
+SchemeStubs ("TextCspPortSeqTbl")
+
+SchemeStubs ("FiniteInterval")
+SchemeStubs ("VaryBits")
+
+SchemeStubs ("DynamicInt")
+SchemeStubs ("WideInt")
+SchemeStubs ("NativeInt")
+SchemeStubs ("Debug")
+SchemeStubs ("BigInt")
+SchemeStubs ("Math")
+SchemeStubs ("Text")
+SchemeStubs ("TextWr")
+SchemeStubs ("FileWr")
+SchemeStubs ("Wr")
+SchemeStubs ("FileRd")
+SchemeStubs ("Rd")
+SchemeStubs ("TextRd")
+SchemeStubs ("SchemeEnvironment")
+SchemeStubs ("SchemeUtils")
+SchemeStubs ("Fmt")
+SchemeStubs ("Atom")
+SchemeStubs ("Word")
+SchemeStubs ("Env")
+SchemeStubs ("CitTextUtils")
+SchemeStubs ("FS")
+SchemeStubs ("FileFinder")
+SchemeStubs ("RegEx")
+SchemeStubs ("TextSeq")
+SchemeStubs ("Fingerprint")
+SchemeStubs ("Mpfr")
+
+SchemeStubs ("Wx")
+
+SchemeStubs ("Mpz")
+%SchemeStubs ("MpzP")
+
+SchemeStubs ("MakeConstant")
+
+ExportSchemeStubs ("cspc")
+importSchemeStubs()
+
+implementation ("Main")
+
+program ("cspc")
+
+

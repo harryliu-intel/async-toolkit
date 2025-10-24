@@ -1,0 +1,6 @@
+INTERFACE TestQf;
+
+PROCEDURE DoIt();
+
+END TestQf.
+  

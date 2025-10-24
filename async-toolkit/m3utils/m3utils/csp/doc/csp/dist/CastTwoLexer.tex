@@ -1,0 +1,325 @@
+\begin{longtable}[]{@{}l@{}}
+\toprule
+\endhead
+\begin{minipage}[t]{0.97\columnwidth}\raggedright
+Grammar CastTwoLexer\\
+\href{http://www.ANTLR.org}{ANTLR}-generated HTML file from CastTwo.g
+
+Terence Parr, \href{http://www.magelang.com}{MageLang Institute}\\
+ANTLR Version 2.7.5 (20050128); 1989-2005\strut
+\end{minipage}\tabularnewline
+\bottomrule
+\end{longtable}
+
+\begin{verbatim}
+Definition of lexer CastTwoLexer, which is a subclass of CharScanner.
+
+/** Lexer nextToken rule:
+ *  The lexer nextToken rule is synthesized from all of the user-defined
+ *  lexer rules.  It logically consists of one big alternative block with
+ *  each user-defined rule being an alternative.
+ */
+mARROW 
+|   mEXP 
+|   mPLUS 
+|   mMINUS 
+|   mTIMES 
+|   mDIV 
+|   mMOD 
+|   mAND 
+|   mOR 
+|   mXOR 
+|   mNOT 
+|   mCOMMA 
+|   mSEMI 
+|   mCOLON 
+|   mASSIGN 
+|   mEQ 
+|   mNE 
+|   mLT 
+|   mLE 
+|   mGE 
+|   mGT 
+|   mLPAREN 
+|   mRPAREN 
+|   mLCURLY 
+|   mRCURLY 
+|   mLBRACK 
+|   mRBRACK 
+|   mDOT 
+|   mDOTDOT 
+|   mPOUND 
+|   mCELEM_ARROW 
+|   mCOMB_ARROW 
+|   mLT_AND 
+|   mLT_OR 
+|   mLT_COMMA 
+|   mWS 
+|   mCOMMENT_1 
+|   mCOMMENT_2 
+|   mIDENT 
+|   mNUM_INT 
+|   mDOT_IDENT 
+|   mQuotedString 
+|   mESCAPED_VERILOG_IDENT 
+mARROW
+    :   "->" 
+    ;
+
+mEXP
+    :   "**" 
+    ;
+
+mPLUS
+    :   '+' 
+    ;
+
+mMINUS
+    :   '-' 
+    ;
+
+mTIMES
+    :   '*' 
+    ;
+
+mDIV
+    :   '/' 
+    ;
+
+mMOD
+    :   '%' 
+    ;
+
+mAND
+    :   '&' 
+    ;
+
+mOR
+    :   '|' 
+    ;
+
+mXOR
+    :   '^' 
+    ;
+
+mNOT
+    :   '~' 
+    ;
+
+mCOMMA
+    :   ',' 
+    ;
+
+mSEMI
+    :   ';' 
+    ;
+
+mCOLON
+    :   ':' 
+    ;
+
+mASSIGN
+    :   '=' 
+    ;
+
+mEQ
+    :   "==" 
+    ;
+
+mNE
+    :   "!=" 
+    ;
+
+mLT
+    :   '<' 
+    ;
+
+mLE
+    :   "<=" 
+    ;
+
+mGE
+    :   ">=" 
+    ;
+
+mGT
+    :   '>' 
+    ;
+
+mLPAREN
+    :   '(' 
+    ;
+
+mRPAREN
+    :   ')' 
+    ;
+
+mLCURLY
+    :   '{' 
+    ;
+
+mRCURLY
+    :   '}' 
+    ;
+
+mLBRACK
+    :   '[' 
+    ;
+
+mRBRACK
+    :   ']' 
+    ;
+
+mDOT
+    :   '.' 
+    ;
+
+mDOTDOT
+    :   ".." 
+    ;
+
+mPOUND
+    :   "#" 
+    ;
+
+mCELEM_ARROW
+    :   "#>" 
+    ;
+
+mCOMB_ARROW
+    :   "=>" 
+    ;
+
+mLT_AND
+    :   "<&" 
+    ;
+
+mLT_OR
+    :   "<|" 
+    ;
+
+mLT_COMMA
+    :   "<," 
+    ;
+
+mWS
+    :   (   ' ' 
+        |   '\t' 
+        |   '\f' 
+        |   ( '\n' ) 
+        |   '\r' 
+        ) 
+        
+    ;
+
+mCOMMENT_1
+    :   "/*" 
+        (   '*' 
+        |   '\n' 
+        |   (   '*' 
+            |   '\n' 
+            ) 
+        )* 
+        "*/" 
+    ;
+
+mCOMMENT_2
+    :   "//" ( ~'\n' )* '\n' 
+    ;
+
+mIDENT
+    :   mREAL_IDENT 
+    |   mESCAPED_IDENT 
+    ;
+
+protected mREAL_IDENT
+    :   (   mLETTER 
+        |   '_' 
+        ) 
+        (   mLETTER 
+        |   '_' 
+        |   mDIGIT 
+        )* 
+        
+    ;
+
+protected mESCAPED_IDENT
+    :   '"' 
+        (   mLETTER 
+        |   mDIGIT 
+        |   '_' 
+        |   '!' 
+        )+ 
+        '"' 
+    ;
+
+protected mLETTER
+    :           'a'..'z' 
+    |           'A'..'Z' 
+    ;
+
+protected mDIGIT
+    :           '0'..'9' 
+    ;
+
+mNUM_INT
+    :   mDIGIT mLETTER 
+        (   mDIGIT 
+        |   'A' 
+        |   'B' 
+        |   'C' 
+        |   'D' 
+        |   'E' 
+        |   'F' 
+        |   'a' 
+        |   'b' 
+        |   'c' 
+        |   'd' 
+        |   'e' 
+        |   'f' 
+        )+ 
+        
+    |   ( mDIGIT )+ 
+        (   mIDENT 
+        |   
+        ) 
+        (   '.' ( mDIGIT )+ 
+            (   mEXPONENT 
+            |   
+            ) 
+            
+        |   
+        ) 
+    ;
+
+protected mEXPONENT
+    :   (   'e' 
+        |   'E' 
+        ) 
+        (   '+' 
+        |   '-' 
+        |   
+        ) 
+        ( mDIGIT )+ 
+    ;
+
+mDOT_IDENT
+    :   '.' 
+        (   mIDENT 
+        |   mNUM_INT 
+        ) 
+        
+    ;
+
+mQuotedString
+    :   '\'' ( ~'\'' )* '\'' 
+    ;
+
+mESCAPED_VERILOG_IDENT
+    :   '\\' ( (  ' ' 
+            |   '\t' 
+            |   '\n' 
+            |   '\r' 
+            ) )+ 
+    ;
+\end{verbatim}

@@ -1,0 +1,10 @@
+#!/bin/sh -x
+FILE=schedule
+#TEXINPUTS=/home/mika/6/asynctools/asynctools_binary_dist_2001_09_27/lib/tex/:${TEXINPUTS}
+TEXINPUTS=.:/p/work/mnystroe/lib/tex/macros/:${TEXINPUTS}
+export TEXINPUTS
+latex ${FILE}
+latex ${FILE}
+dvips ${FILE} -o ${FILE}.ps
+ps2pdf ${FILE}.ps
+#cp ${FILE}.pdf ~/public_html

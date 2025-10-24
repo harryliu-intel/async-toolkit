@@ -1,0 +1,7 @@
+readonly proc _node (nm, of, vis) is
+        build_generic_intf("Node" & nm, "Node", [of], vis)        
+%        build_generic_impl("Node" & nm, "Node", [of])
+end
+
+readonly proc Node (nm, of) is _node (nm, of, VISIBLE) end
+readonly proc node (nm, of) is _node (nm, of, HIDDEN) end

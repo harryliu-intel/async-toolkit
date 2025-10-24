@@ -1,0 +1,10 @@
+import ("libm3")
+import ("set")
+import ("parseparams")
+import ("mscheme")
+import ("arithcode")
+import ("cit_util")
+
+implementation ("TestMain")
+
+program ("arithcode")

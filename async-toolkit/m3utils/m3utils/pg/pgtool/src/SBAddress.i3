@@ -1,0 +1,5 @@
+INTERFACE SBAddress;
+
+TYPE T = CARDINAL;
+
+END SBAddress.

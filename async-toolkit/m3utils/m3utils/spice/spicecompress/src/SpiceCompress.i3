@@ -1,0 +1,54 @@
+INTERFACE SpiceCompress;
+IMPORT Matrix;
+IMPORT Wr;
+IMPORT TripleRefTbl;
+IMPORT Rd;
+IMPORT PolySegment16Serial;
+
+TYPE
+  Norm = RECORD
+    min, max : LONGREAL;
+  END;
+
+CONST
+  NormSerialSize = 4 + 4;
+
+CONST
+  IllegalNorm = Norm { LAST(LONGREAL), FIRST(LONGREAL) };
+  
+PROCEDURE CompressArray(rn            : TEXT;
+                        (* for debug *)
+                        
+                        VAR darr : ARRAY OF LONGREAL;
+                        (* input data---will be normalized in place *)
+                        
+                        VAR rarr : ARRAY OF LONGREAL;
+                        (* workspace *)
+                        
+                        targMaxDev : LONGREAL;
+                        doAllDumps : BOOLEAN;
+
+                        wr : Wr.T;
+                        (* can be NIL *)
+
+                        VAR norm   : Norm;
+
+                        mem : TripleRefTbl.T := NIL;
+
+                        doDump := FALSE;
+                        (* dump darr and rarr *)
+                        quick  := FALSE;
+                        )
+  
+  RAISES { Matrix.Singular };
+
+PROCEDURE DecompressArray(rd       : Rd.T;
+                          VAR rarr : ARRAY OF LONGREAL)
+  RAISES { Rd.Failure, PolySegment16Serial.Error, Rd.EndOfFile };
+  (* returns array of normalized values, expanded to fit.
+     normalization must follow a different path. (not handled within this
+     format) *)
+
+PROCEDURE FormatNorm(READONLY n : Norm) : TEXT;
+
+END SpiceCompress.

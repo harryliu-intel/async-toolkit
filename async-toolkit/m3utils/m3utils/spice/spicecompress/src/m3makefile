@@ -1,0 +1,15 @@
+import ("libm3")
+import ("cit_util")
+import ("spicelib")
+import ("regression")
+import ("arithcode")
+
+m3_optimize("T")
+
+import ("rep16")
+
+Module ("SpiceCompress")
+
+Table ("TripleRef", "IntTriple", "Refany")
+
+library ("spicecompress")

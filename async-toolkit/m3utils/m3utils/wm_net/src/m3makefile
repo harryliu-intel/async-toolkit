@@ -1,0 +1,19 @@
+import ("libm3")
+import ("wm_support")
+
+Interface("Byte")
+Sequence("Byte","Byte")
+
+Module ("NetTypes")
+
+Module ("RdNet")
+Module ("WrNet")
+Module ("StructField")
+
+Interface ("NetError")
+Interface ("NetContext")
+
+Module("ServerPacket")
+implementation("ServerPacketDbg")
+
+library ("wm_net")

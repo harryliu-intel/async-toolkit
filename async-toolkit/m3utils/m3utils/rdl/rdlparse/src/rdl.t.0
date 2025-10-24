@@ -1,0 +1,13 @@
+%char [|@.{};:?()+\-*/,\]\[%]
+
+%const ERROR
+
+%const T_EQ
+%token T_mID
+%token T_mVNUM
+%token T_mNUM
+%token T_mSTR
+%const T_mINC
+%const T_mMOD
+%const T_mDREF
+%token T_mPROPERTY

@@ -1,0 +1,79 @@
+INTERFACE NameControl;
+IMPORT TextSet;
+IMPORT RegExList;
+IMPORT CardSeq;
+IMPORT Pathname;
+IMPORT Wr;
+IMPORT CardTextSetTbl;
+IMPORT TextSeqSeq;
+IMPORT Thread;
+IMPORT TextSeq;
+IMPORT CardRacSetTbl;
+
+PROCEDURE MakeIdxMap (nameIdTbl     : CardTextSetTbl.T;
+                      restrictNodes : TextSet.T;
+                      regExList     : RegExList.T;
+                      maxNodes      : CARDINAL;
+                      names         : TextSeqSeq.T;
+                      translate, noX: BOOLEAN) : CardSeq.T;
+
+  (* for given fsdbNames table, generate:
+
+     names, restrictNodes, regExList
+     generate: CardSeq that contains the mapping of each input index to 
+     its output index.
+
+     If no mapping, LAST(CARDINAL) will be placed.
+  *)
+
+PROCEDURE MakeIdxMap2(nameIdTbl     : CardRacSetTbl.T;
+                      restrictNodes : TextSet.T;
+                      regExList     : RegExList.T;
+                      maxNodes      : CARDINAL;
+                      names         : TextSeqSeq.T;
+                      translate, noX: BOOLEAN) : CardSeq.T;
+
+CONST NoMapping = LAST(CARDINAL);
+
+PROCEDURE SanitizeNames(idxMap : CardSeq.T;
+                        names  : TextSeqSeq.T);
+  (* remove unmapped names so that the names file and set of nodes to 
+     generate match *)
+
+PROCEDURE CountActiveNodes(seq : CardSeq.T) : CARDINAL;
+  (* number of entries in seq that aren't NoMapping *)
+
+PROCEDURE WriteNames(wd, ofn       : Pathname.T;
+
+                     names         : TextSeqSeq.T;
+
+                     idxMap        : CardSeq.T;
+                     (* map of input node to output node *)
+                     
+                     maxFiles      : CARDINAL;
+
+                     VAR nFiles    : CARDINAL;
+
+                     VAR wdWr      : REF ARRAY OF Wr.T;
+                     VAR wdPth     : REF ARRAY OF Pathname.T;
+
+                     includeIdNames := TRUE) : CARDINAL;
+
+PROCEDURE FileIndex(nFiles, nNodes, nodeIndex : CARDINAL) : CARDINAL;
+  (* get the file number of the node identified by nodeIndex.
+     need to know how many nodes and how many files are present in 
+     system *)
+  
+PROCEDURE PutNames(wr             : Wr.T;
+                   i              : CARDINAL;
+                   seq            : TextSeq.T;
+                   includeIdNames : BOOLEAN)
+  RAISES { Wr.Failure, Thread.Alerted };
+  (* put names for a single node *)
+
+PROCEDURE CompareText(a, b : TEXT) : [-1..1];
+  (* compare node names in an order such that lesser node names are more
+     canonical *)
+
+END NameControl.
+  

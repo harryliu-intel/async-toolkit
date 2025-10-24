@@ -1,0 +1,86 @@
+;;
+;; generic higher-order Scheme stuff
+;; 
+
+(define (caddddr x) (car (cddddr x)))
+(define (cadaddr x) (car (cdaddr x)))
+(define (cadddddr x) (caddr (cdddr x)))
+(define (caddddddr x) (caddr (cddddr x)))
+(define (cadadadr x) (cadr (cadadr x)))
+(define (cdaadadr x) (cdar (cadadr x)))
+(define (caadadr x) (car (cadadr x)))
+(define (caddadr x) (caddr (cadr x)))
+(define (cadddadr x) (cadddr (cadr x)))
+
+
+(define (identity x) x)
+
+(define (curry1 f x) (lambda(y)(f x y)))
+
+(define (curry2 f x y) (lambda(z)(f x y z)))
+
+(define (curry f . x) (lambda r (apply f (append x r))))
+
+(define (yrruc f . x) (lambda r (apply f (append r x))))
+
+(define (make-fixpoint-func f)
+
+  (define (iterate x)
+    (let ((fx (f x)))
+;;      (dis x " -> " fx dnl)
+      (if (equal? fx x) x (iterate fx))))
+
+  (lambda(x)(iterate x))
+  )
+
+;; filter ops
+(define (filter-not filter-pred)
+  (lambda(x)(not (filter-pred x))))
+
+(define (filter-and filter-p0 filter-p1)
+  (lambda(x)(and (filter-p0 x) (filter-p1 x))))
+                         
+(define (filter-or filter-p0 filter-p1)
+  (lambda(x)(or (filter-p0 x) (filter-p1 x))))
+                         
+(define (iterate-until-false f maxcnt)
+  (let ((res (f)))
+    (cond ((= 0 maxcnt)
+           (dis "iterate-until-false : giving up : " f dnl)
+           )
+
+          (res (iterate-until-false f (- maxcnt 1)))
+
+          (else res)
+          
+          );;dnoc
+    );;tel
+  )
+
+;; predicates
+(define (exists pred? lst)
+  (eval (apply or (map pred? lst)))) ;; why do we need eval?
+
+(define Exists exists)
+
+(define (forall pred? lst)
+  (eval (apply and (map pred? lst)))) ;; why do we need eval?
+
+(define Forall forall)
+
+(define (count-execute n f)
+  ;; given n, execute (f 0) .. (f (- n 1) )
+
+  (let loop ((i 0)
+             (res '())
+             )
+    (if (= i n)
+        (reverse res)
+        (loop (+ i 1)
+              (cons (f i) res))
+        );;fi
+    );;tel
+  )
+  
+(define (compose f g)
+  (lambda r (f (apply g r))))

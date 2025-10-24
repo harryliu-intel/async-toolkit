@@ -1,0 +1,15 @@
+import ("libm3")
+import ("cit_util")
+import ("spicelib")
+
+implementation ("ListCaps")
+
+module ("Comp")
+sequence ("Comp", "Comp")
+array_sort ("Comp", "Comp")
+
+table ("TextComp", "Text", "Comp")
+
+program ("listcaps")
+
+

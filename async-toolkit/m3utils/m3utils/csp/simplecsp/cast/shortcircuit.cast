@@ -1,0 +1,74 @@
+module shortcircuit;
+
+define PROG()()
+{
+  csp {
+
+    function f(int -+cnt; bool -b) : bool =
+      (
+       // function that counts the # of evaluations
+       cnt++;
+       f = b;
+       );
+
+    
+    int cnt;
+    
+    int x;
+    int y;
+
+    x++;   // compiler doesnt know x after this
+
+    y = 1; // compiler can fold this
+    
+    // x and y are 1
+
+    bool b;
+
+    b = x == 0;
+    
+    print("x==0: " + f(cnt, x == 0));
+    print("b   : " + f(cnt, b));
+    print("y==0: " + f(cnt, y == 0));
+    print("cnt = " + cnt);
+
+    // need to check up on CSP operator precedence
+    print("&&x : " + (f(cnt, x == 0) && f(cnt, x == 0)));
+    print("&&y : " + (f(cnt, y == 0) && f(cnt, y == 0)));
+    print("&&b : " + (f(cnt, b)      && f(cnt, b)));
+    print("cnt = " + cnt);
+
+    print("||x : " + (f(cnt, x == 0) || f(cnt, x == 0)));
+    print("||y : " + (f(cnt, y == 0) || f(cnt, y == 0)));
+    print("||b : " + (f(cnt, b)      || f(cnt, b)));
+    print("cnt = " + cnt);
+
+  }
+}
+
+define P()()
+{
+  csp {
+    function f(int -+x) : bool =
+      ( f = false; x++ );
+
+    int x;
+    //    x = 1 && 2; // error
+    bool b = f(x) && f(x);
+
+    print("result= " + b + " x= " + x)
+      }
+}
+
+define P0()()
+{
+  csp {
+    bool a = true;
+    bool c = false;
+
+    bool b = a && a;
+
+    bool d = a == a;
+  }
+}
+    

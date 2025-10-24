@@ -1,0 +1,56 @@
+import ("libm3")
+import ("cit_util")
+import ("parseparams")
+import ("simpletoken")
+import ("mscheme")
+import ("modula3scheme")
+import ("sstubgen")
+import ("parseparams")
+import ("mpfr")
+import ("minimize")
+import ("integrate")
+
+%if defined("CM3_VERSION")
+%        m3_optimize("T")
+%end
+
+module ("YieldModel")
+
+Table("LongrealMpfr", "LongReal", "Mpfr")
+Sorted_table("LongrealMpfr", "LongReal", "Mpfr")
+
+Module ("Polynomial")
+
+Module ("FmtFrac")
+Module ("IncompleteGamma")
+
+SchemeStubs ("YieldModel")
+SchemeStubs ("Math")
+SchemeStubs ("TextWr")
+SchemeStubs ("FileWr")
+SchemeStubs ("Wr")
+SchemeStubs ("FileRd")
+SchemeStubs ("Rd")
+SchemeStubs ("Mpfr")
+SchemeStubs ("Polynomial")
+SchemeStubs ("SortedLongrealMpfrTbl")
+SchemeStubs ("LongrealMpfrTbl")
+SchemeStubs ("SchemeEnvironment")
+SchemeStubs ("Fmt")
+SchemeStubs ("LRFunction")
+SchemeStubs ("Solve")
+SchemeStubs ("Bracket")
+SchemeStubs ("FmtFrac")
+SchemeStubs ("IntegrateTrap")
+SchemeStubs ("PolInt")
+SchemeStubs ("NR4p4")
+SchemeStubs ("IncompleteGamma")
+
+ExportSchemeStubs ("diesplit")
+importSchemeStubs()
+
+implementation ("Main")
+
+program ("diesplit")
+
+

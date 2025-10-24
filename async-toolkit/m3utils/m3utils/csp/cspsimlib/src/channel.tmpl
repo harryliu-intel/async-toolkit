@@ -1,0 +1,7 @@
+readonly proc _channel (nm, of, vis) is
+        build_generic_intf(nm & "Chan", "Channel", [of], vis)        
+        build_generic_impl(nm & "Chan",  "Channel", [of, "CspDebug"])
+end
+
+readonly proc Channel (nm, of) is _channel (nm, of, VISIBLE) end
+readonly proc channel (nm, of) is _channel (nm, of, HIDDEN) end

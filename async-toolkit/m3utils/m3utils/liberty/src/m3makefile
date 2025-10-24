@@ -1,0 +1,69 @@
+import("cit_util")
+import("mscheme")
+import("sstubgen")
+import("modula3scheme")
+import("parseparams")
+import("parseliberty")
+
+implementation ("TestParse")
+
+% stubs for the parser types
+SchemeStubs ("LibertyComponent")
+SchemeStubs ("LibertyDefine")
+SchemeStubs ("LibertyDefineGroup")
+SchemeStubs ("LibertyBoolean")
+SchemeStubs ("LibertyAttrVal")
+SchemeStubs ("LibertyAttrValExpr")
+SchemeStubs ("LibertyExpr")
+SchemeStubs ("LibertyNumber")
+SchemeStubs ("LibertySorI")
+SchemeStubs ("LibertyParamList")
+SchemeStubs ("LibertyHead")
+SchemeStubs ("LibertyComplexAttr")
+SchemeStubs ("LibertySimpleAttr")
+SchemeStubs ("LibertyStatement")
+SchemeStubs ("LibertyGroup")
+
+% stubs for complex types
+SchemeStubs ("LibertyAttrValSeq")
+
+% stubs for utility code
+SchemeStubs ("LibertyComponentChildren")
+SchemeStubs ("LibertyComponentSeq")
+SchemeStubs ("LibertyStatementSeq")
+SchemeStubs ("LibertyParse")
+SchemeStubs ("LibertyCsv")
+SchemeStubs ("LibertyArcs")
+
+% general M3 stubs needed by us
+SchemeStubs ("RTType") % needed for type reflection ops
+
+SchemeStubs ("TextWr") % stuff for writing output
+SchemeStubs ("FileWr")
+SchemeStubs ("Wr")
+SchemeStubs ("TextRd")
+SchemeStubs ("FileRd")
+SchemeStubs ("Rd")
+
+SchemeStubs ("Pickle")
+
+SchemeStubs ("CitTextUtils")
+SchemeStubs ("Text")
+SchemeStubs ("TextList")
+
+SchemeStubs ("ParseParams")
+SchemeStubs ("Stdio")
+
+SchemeStubs ("LibertyUtils")
+SchemeStubs ("SpecialScan")
+SchemeStubs ("Scan")
+SchemeStubs ("Fmt")
+SchemeStubs ("Env")
+
+ExportSchemeStubs ("liberty")
+importSchemeStubs()
+
+program("editliberty")
+
+
+

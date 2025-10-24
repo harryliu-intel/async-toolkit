@@ -1,0 +1,513 @@
+module collatz;
+
+// for CSPC:
+//DSim> cosimulate collatz.COLLATZ(41, 100000000) {csp, subcells}
+//                        100,000,000--^
+// or maybe 10,000,000 is better...
+//DSim> cosimulate collatz.COLLATZ(32, 10000000) {csp, subcells}
+//
+// for jdsim, change update interval to say 1000
+
+
+//int NWORKERS = 20;
+int W        = 61;
+// 2^62 < (2 ^ 61 - 1) * 3 + 1  < 2^63
+// we need an extra bit for the sign bit
+
+int STATUSW = 128 + 2 * W + (W + 1); // why can't this go in attributes cell?
+int INTERVAL = 10000;
+
+define common attributes {
+  csp {
+    
+    structure longest_so_far =
+      (
+       int(W) num;
+       int(W) length;
+       );
+
+    structure status =
+      (
+       bool     tok;
+       sint(W)  id;
+       int(128) ops;
+       longest_so_far l;
+       );
+
+    function fmtStatus(status -s) : string =
+      (
+       fmtStatus =
+       "{id=" + s::id +
+       " tok=" + s::tok +
+       " len=" + s::ops +
+       " num=" + s::l::num  +
+       " length=" + s::l::length +
+       "}"
+      );
+    
+    function sendStatus(bool -tok; int -id, -len, -num, -steps) =
+      (
+       status s;
+       s::tok       = tok;
+       s::id        = id;
+       s::l::length = len;
+       s::l::num    = num;
+       s::ops       = steps;
+
+       int p = pack(s);
+
+       //              print ("sendStatus : id=" + id +
+       //                     " tok=" + tok + 
+       //            ": sending status=" + fmtStatus(s) +
+       //            " pack=" + hex(p)); 
+
+       status t;
+       unpack(t, p);
+
+       //       print("sendStatus : unpack p : t=" + fmtStatus(t));
+       
+       STATUS!(p);
+       steps = 0;
+       );
+
+    function even(int -n) : bool =
+      ( even = ((n & 1) == 0) );
+
+    function odd(int -n) : bool =
+      ( odd = ~even(n) );
+
+  }
+}
+
+define PACK()(bd(STATUSW) +STATUS) <+ common
+{
+  csp {
+    sendStatus(0, 7, 3, 7)
+  }
+}
+
+define UNPACK()(bd(STATUSW) -STATUS) <+ common
+{
+  csp {
+    STATUS?x ;
+    status s;
+    
+    unpack(s,x);
+    
+    print ("STATUS? x=" + hex(x) + " ( ops = " + s::ops +
+           " ; num = " + s::l::num +
+           " ; chain = " + s::l::length + " )")
+    }
+}
+
+define PU()()
+{
+  subcells {
+    bd(STATUSW) c;
+    PACK   pack  (c);
+    UNPACK unpack(c);
+  }
+}
+
+define SIMPLE()() <+ common
+{
+  csp {
+    status s, t;
+    int x;
+    s::l::length =  7;
+    s::l::num    = 13;
+    s::ops       = 17;
+
+    print ("s=" + fmtStatus(s));
+    x = pack(s);
+    print ("x=" + hex(x));
+    print ("s=" + fmtStatus(s));
+    print ("t=" + fmtStatus(t));
+    
+    unpack(t, x);
+    print ("x=" + hex(x));
+    print ("s=" + fmtStatus(s));
+    print ("t=" + fmtStatus(t));
+
+    x = pack(t);
+    print ("x=" + hex(x));
+      
+  }
+}
+
+define DUMB()() <+ common
+{
+  csp {
+    int x = 0x440000000000000068000000000000007;
+    x++;
+    x--;
+
+    status t;
+    unpack(t, x);
+    print ("t=" + fmtStatus(t));
+  }
+}
+
+define WORKER
+  (int NWORKERS, UPDATEINTERVAL)
+  (bd(W) -STRT; bd(STATUSW) +STATUS) <+ common
+{
+  csp {
+
+    bool assert_inrange=false;
+    
+    int(W-log2(NWORKERS)) i;
+    int(W) steps  = 0;
+    int(W) maxlen = 0;
+
+    int(W/2) id;
+    
+    STRT?id;
+    print ("id = " + id);
+    
+    *[ //id == 0 ->
+      int(W) idx = i * NWORKERS + id; // this is the index of the odd number
+      int(W) num = 2 * idx + 1;       // this is the actual number we shall work on
+      int(W) len = 0;
+      int    snum = num;
+      int    newval;
+      
+      // do the Collatz loop -- see below for assembly
+      *[ num != 1 ->
+         [  odd(num)  -> newval = 3 * num + 1
+         [] even(num) -> newval = num / 2
+         ];
+         num = newval;
+
+         #[ assert_inrange -> assert(num == newval, "overflow!") ];
+         
+         len++
+       ]
+      ;
+      assert(num == 1);
+      steps += len;
+      
+      [  len > maxlen ->
+         maxlen = len;
+         sendStatus(false, id, len, snum, steps);
+         steps = 0
+      [] else -> skip
+      ];
+      
+      [ (i % UPDATEINTERVAL == 0)    ->
+        sendStatus(true, id, 0, 0, steps);
+        steps = 0;
+
+        int dummy;
+        STRT?dummy;
+        //        print("id=" + id + " phase=" + (dummy - id))
+
+      [] else -> skip   
+      ];
+      i++
+    ]
+    }
+}
+
+define DUMMY(int NWORKERS)(bd(W) -STRT; bd(STATUSW) +STATUS) <+ common
+{
+  csp {
+
+    int(W) i;
+    int(W) steps  = 0;
+    int(W) maxlen = 0;
+
+    int(W) id;
+    
+    STRT?id;
+    print ("id = " + id);
+    
+    *[ //id == 0 ->
+      int(W) idx = i * NWORKERS + id; // this is the index of the odd number
+      int(W) num = 2 * idx + 1;       // this is the actual number we shall work on
+      int(W) len = 0;
+      int    snum = num;
+
+      len = num;
+      steps += len;
+      
+      [  len > maxlen ->
+         maxlen = len;
+         sendStatus(id, len, snum, steps);
+         steps = 0
+         
+         //      [] (len <= maxlen) && (i % UPDATEINTERVAL == 0)    ->
+         //         sendStatus(0, 0, steps);
+         //         steps = 0
+
+      [] else -> skip   
+      ];
+      i++
+    ]
+    }
+}
+
+int Billion = 1000**3;
+int printstep = 4;
+
+define MANAGER(int NWORKERS)(bd(W) +STRT; bd(STATUSW) -STATUS) <+ common
+{
+  csp {
+      
+    int ops;
+
+    int(W) bigiter=0;
+    int(log2(NWORKERS)) outstanding;
+    STRT!0; outstanding = NWORKERS; bigiter++;
+    
+    status save;
+
+    int start = walltime();
+    int last  = start; // last time for a print
+    
+    *[ STATUS?x;
+          
+       status s;
+       bool doprint = false;
+
+       unpack(s,x);
+
+       #[ s::tok -> // a return token from the STRT
+         outstanding--;
+       //         print("Token!  outstanding=" + outstanding);
+         #[ outstanding == 0 ->
+            // restart workers once all tokens have been collected
+       print("phase " + bigiter + " complete, re-launching...");
+            STRT!bigiter ; outstanding=NWORKERS ; bigiter++
+          ];
+       ];
+
+       #[ s::l::num != save::l::num -> save = s ; doprint = true ];
+       
+       //              print ("STATUS? " + fmtStatus(s) + " ( ops = " + s::ops +
+       //            " ; num = " + save::l::num +
+       //            " ; chain = " + save::l::length + " )");
+
+       ops += s::ops;
+
+       int now       = walltime();
+       int runtime   = now - start;
+       int runtime_s = runtime / Billion + 1;
+
+       doprint |= (now > (lastprint + printstep * Billion));
+       
+       #[ doprint ->
+
+          print("num = " + save::l::num + " ; chain = " + save::l::length + 
+                " : total steps = " + ops + " wall = " + runtime_s + " ksteps/s = " + (ops/runtime_s/1000));
+
+          lastprint = now
+       ]
+       
+     ]
+  }
+
+}
+
+define merge_attr attributes <+ common
+{
+  csp {
+    function recv(int -which; status +-s) =
+      (
+       int oldops = s::ops;
+       int oldlen = s::l::length;
+       
+       L[which]?xs;
+
+       unpack(s, xs);
+       //       print ("recv " + fmtStatus(s));
+
+       s::l::length  = max(oldlen, s::l::length);
+       s::ops       += oldops;
+       );
+
+    function checksend(status +-os, +-s) =
+      (
+       //       print ("in checksend s::ops=" + s::ops + " os::ops=" + os::ops);
+       //       print ("checksend : os-interval " + (os::ops % INTERVAL) +
+       //              " s-interval " + (s::ops % INTERVAL) + " os-length " +
+       //              os::l::length + " s-length " + s::l::length);
+
+       #[ (os::l::length != s::l::length) || s::tok ->
+       //        print ("sending s : " + fmtStatus(s));
+       R!s; s::ops = 0; os = s;
+
+       //       print ("s::ops=" + s::ops + " os::ops=" + os::ops);
+          ]
+       );
+  }
+}
+
+define SMERGE()(bd(STATUSW) -L[0..1], +R) <+ merge_attr
+{
+  csp {
+    status s;
+    
+    *[
+      //      print("start");
+      status os = s;
+      //print ("at start s::ops=" + s::ops + " os::ops=" + os::ops);
+      [
+       //       #L[0] & #L[1] -> recv(0,s); recv(1,s) // BUG
+       //       :
+       #L[0] -> recv(0, s)
+       :
+       #L[1] -> recv(1, s)
+       ];
+      //      print("received");
+      // print ("pre checksend s::ops=" + s::ops + " os::ops=" + os::ops);
+      checksend(os, s);
+      
+      ]
+  }
+}
+
+define DMERGE()(bd(STATUSW) -L[0..1], +R) <+ merge_attr
+{
+  csp {
+    status s;
+    
+    *[
+      status os = s;
+      recv(0, s);
+      checksend(os, s);
+      recv(1, s);
+      checksend(os, s);
+     ]
+  }
+}
+
+define SEND()(bd(STATUSW) +R) <+ common
+{
+  csp {
+    status s;
+    s::ops       = 11;
+    s::l::num    = 13;
+    s::l::length = 17;
+
+    R!s;
+
+    int x;
+    x = pack(s);
+
+    R!x
+  }
+}
+
+define RECV()(bd(STATUSW) -L) <+ common
+{
+  csp {
+    *[
+    int x;
+    L?x;
+    status s;
+    unpack(s, x);
+    print(fmtStatus(s));
+    ]
+  }
+}
+
+define SYS()()
+{
+  subcells {
+    bd(STATUSW) c;
+
+    SEND send(c);
+    RECV recv(c);
+  }
+}
+
+define TEST()() <+ common
+{
+  csp {
+    status s, q;
+
+    q::ops += 1;
+    
+    s::ops += q::ops;
+
+    print(s::ops)
+  }
+}
+
+define STATUS_TREE(int N)(bd(STATUSW) -L[0..N-1], +R)  <+ common
+{
+  [ N == 1 -> subcells { L[0] = R; } ]
+  [ N == 2 -> subcells { SMERGE m(L, R); } ]
+  [ N > 2  ->
+      subcells {
+        bd(STATUSW) X[0..(N+1)/2 - 1];
+        <i : 0.. N / 2 - 1 : SMERGE m[i]({L[2*i], L[2*i + 1]}, X[i]); >
+        STATUS_TREE((N+1)/2) tree(X, R);
+
+        <i: N/2 .. (N+1)/2 - 1 : L[2*i] = X[i];>
+    }
+
+      ]
+}
+
+define COLLATZ(int NWORKERS_ARG, UPDATEINTERVAL)()  <+ common
+{
+  int NWORKERS;
+  [ NWORKERS_ARG > 0 -> NWORKERS = NWORKERS_ARG; ]
+  [ NWORKERS_ARG < 0 -> NWORKERS = -NWORKERS_ARG; ]
+    
+  subcells {
+    bd(W) S, STRT[0..NWORKERS-1];
+    bd(STATUSW) WSTATUS[0..NWORKERS-1], STATUS;
+    MANAGER(NWORKERS) mgr(S, STATUS);
+    START_TREE(0, NWORKERS) start_tree(S, STRT);
+
+    [ NWORKERS_ARG > 0 ->
+      <i:0..NWORKERS-1: WORKER(NWORKERS, UPDATEINTERVAL)
+                           wrkr[i](STRT[i], WSTATUS[i]);>]
+
+    [ NWORKERS_ARG < 0 ->
+      <i:0..NWORKERS-1: DUMMY(NWORKERS) wrkr[i](STRT[i], WSTATUS[i]);>]
+
+
+      
+    STATUS_TREE(NWORKERS) status_tree(WSTATUS, STATUS);
+  }
+}
+
+define STARTSPLIT(int level)(bd(W) -L, +R[0..1]) <+ common
+{
+  csp {
+    *[ L?i; R[0]!i, R[1]!(i + 2**level) ]
+  }
+}
+
+define STARTBUFF()(bd(W) -L, +R) <+ common
+{
+  //  csp {
+  //    *[ L?i; R!i ]
+  //  }
+  subcells { L = R; }  // this makes the workers start a bit out of phase
+}
+
+define START_TREE(int level, N)(bd(W) -L, +R[0..N-1]) <+ common
+// level is the level of the output of the tree
+{
+  [ N==1 -> subcells { STARTBUFF b(L, R[0]); } ]
+      [ N==2 -> subcells { STARTSPLIT(level) s(L, R); } ]
+    [ N > 2 ->
+      subcells {
+        bd(W) X[0..(N+1)/2 - 1];
+        <i : 0.. N / 2 - 1 : STARTSPLIT(level)
+           s[i](X[i], {R[2*i], R[2*i + 1]}); >
+           
+        START_TREE(level + 1, (N+1)/2) tree(L, X);
+
+        <i: N/2 .. (N+1)/2 - 1 : STARTBUFF b[i](X[i],R[2*i]);>
+           }
+    ]
+}
+
+
+      

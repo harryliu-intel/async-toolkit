@@ -1,0 +1,21 @@
+% automatically generated quake file for MySQL
+
+
+% compiled / works with with CM3 ver 5.8
+
+if SYSTEM_LIBS contains "MYSQL"
+	import_sys_lib ("MYSQL")
+else
+	import_lib("mysqlclient","/usr/lib")
+end
+
+include_dir("class")
+
+import("libm3")
+Module("MySQLRaw")
+Module("MySQL")
+
+c_source("dump")
+c_source("mysql_glue")
+
+library("m3mysql")

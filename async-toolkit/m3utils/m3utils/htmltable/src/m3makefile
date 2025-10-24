@@ -1,0 +1,86 @@
+/* Copyright (c) 2000, 2005, Mika Nystrom.  All Rights Reserved. */
+/* $Id$ */
+
+import("cit_util")
+import("libm3")
+import("postgresql")
+import("mysql")
+
+import ("sstubgen")
+
+Module("PGSQLScan")
+Interface("DBerr")
+Module("Request")
+Module("URL")
+/* Module("Utils") */ /* conts. moved to cit_util/src/TextUtils */
+Module("Session")
+Module("Database")
+Interface("DatabaseTable")
+Module("DatabaseUtils")
+
+/* Module("Site") */ /* moved to vf */
+Module("TextTable")
+Module("HTML")
+Module("HTMLTable")
+Module("HTMLText")
+Module("HTMLList")
+Module("HTMLPage")
+Module("HTMLOutput")
+Module("HTMLForm")
+Module("HTMLInput")
+Module("HTMLTextArea")
+Module("HTMLLink")
+Module("Pages")
+
+Sequence("HTML", "HTML")
+
+Module("WebAppUtils")
+
+if equal(TARGET, "NT386GNU")
+	implementation("UnsafeDatabaseWin")
+else
+	implementation("UnsafeDatabase")
+end
+
+implementation("UnsafeDatabaseMySQL")
+
+interface("DatabaseClass")
+
+Interface("PageDispatch")
+Module("HTMLFormatting")
+
+Interface("Pickles")
+
+/*
+   under CM3, we use Pickles2; not provided in PM3, therefore we have to do the following:
+   (in the long run, we should just delete PM3 support and use Pickles2 on all targets)
+ */
+
+if defined("CM3_VERSION")
+	implementation("Pickles")
+else
+	implementation("PicklesPM3")
+end
+
+SchedulerWrap("PQ")
+
+implementation ("DatabaseStatic")
+implementation ("UnsafeDatabaseMySQL")
+
+interface ("DatabaseVector")
+sequence ("DatabaseVector", "DatabaseVector")
+
+Module ("UnixPermissions")
+Module ("UnixGid")
+Module ("UnixGroupList")
+
+MkSet ("UnixGid", "UnixGid")
+MkSetDef ("UnixGid", "UnixGid")
+Table ("UnixGidRef", "UnixGid", "Refany")
+
+interface("UnixGetIds")
+c_source("UnixGetIds")
+
+Module ("CheckUnixPermissions")
+
+library ("htmltable")

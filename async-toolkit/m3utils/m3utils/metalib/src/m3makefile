@@ -1,0 +1,52 @@
+import ("libm3")
+import ("set")
+import ("parseparams")
+import ("mscheme")
+
+import ("modula3scheme")
+import ("m3readline")
+import ("schemereadline")
+import ("sstubgen")
+
+import ("splines")
+
+
+m3_optimize("T")
+
+Module ("Name")
+
+Module ("Dsim")
+implementation ("DsimRuleFormat")
+Module ("Directives")
+implementation ("DirectivesInterpolate")
+implementation ("DirectivesTable")
+Module ("NodePair")
+
+Table ("NodePairRef", "NodePair", "Refany")
+
+Module ("Lexer")
+
+%implementation ("Main")
+
+Table ("NameName", "Name", "Name")
+Table ("NameRef", "Name", "Refany")
+MkSet ("Name", "Name")
+MkSetDef ("Name", "Name")
+MkSetList ("Name", "Name")
+List ("Name", "Name")
+Sequence ("Name", "Name")
+Table ("NameNameList", "Name", "NameList")
+%Table ("NameNameSeq", "Name", "NameSeq")
+Table ("NameRefList", "Name", "RefList")
+
+Table("NameNameSet", "Name", "NameSet")
+
+Module ("MyAtom")
+list ("MyAtom", "MyAtom")
+Table ("MyAtomMyAtom", "MyAtom", "MyAtom")
+
+Module("MetaUtils")
+implementation("MetaUtilsOpen")
+Module("TypeTables")
+
+library ("metalib")

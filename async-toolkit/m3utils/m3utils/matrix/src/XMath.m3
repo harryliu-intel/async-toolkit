@@ -1,0 +1,9 @@
+MODULE XMath;
+IMPORT Math;
+
+PROCEDURE sqrt(x : EXTENDED) : EXTENDED =
+  BEGIN
+    RETURN FLOAT(Math.sqrt(FLOAT(x, LONGREAL)), EXTENDED)
+  END sqrt;
+
+BEGIN END XMath.

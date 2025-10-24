@@ -1,0 +1,9 @@
+import ("libm3")
+import ("cit_util")
+import ("parseparams")
+
+Table ("TextCard", "Text", "Cardinal")
+
+implementation ("Main")
+
+program ("parsetiming")

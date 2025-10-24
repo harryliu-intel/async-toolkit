@@ -1,0 +1,7 @@
+INTERFACE Euclid;
+
+PROCEDURE GCD(a, b : CARDINAL) : CARDINAL;
+
+PROCEDURE Lowest(n, d : INTEGER; VAR nn, dd : INTEGER);
+
+END Euclid.

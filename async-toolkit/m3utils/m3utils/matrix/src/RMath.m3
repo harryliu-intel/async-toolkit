@@ -1,0 +1,9 @@
+MODULE RMath;
+IMPORT Math;
+
+PROCEDURE sqrt(x : REAL) : REAL =
+  BEGIN
+    RETURN FLOAT(Math.sqrt(FLOAT(x, LONGREAL)), REAL)
+  END sqrt;
+
+BEGIN END RMath.

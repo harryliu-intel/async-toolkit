@@ -1,0 +1,2747 @@
+\documentclass[11pt]{report}
+
+% Page layout
+\usepackage[letterpaper, margin=1in]{geometry}
+\usepackage{parskip}
+\setlength{\parindent}{0pt}
+\usepackage[greek,english]{babel}
+
+% Typography
+%\usepackage{times}
+%\usepackage[T1]{fontenc}
+
+% Math and symbols
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{longtable}
+\usepackage{fancyvrb}
+\usepackage{booktabs}
+
+% Code listings for syntax
+\usepackage{listings}
+\lstset{
+    basicstyle=\ttfamily\small,
+    columns=fullflexible,
+    keepspaces=true,
+    showstringspaces=false,
+    breaklines=true,
+    frame=none,
+    xleftmargin=2em,
+}
+
+% For BNF-style syntax rules
+\usepackage{syntax}
+\setlength{\grammarparsep}{4pt}
+\setlength{\grammarindent}{8em}
+
+% Hyperlinks
+\usepackage[colorlinks=true, linkcolor=blue, urlcolor=blue, citecolor=blue]{hyperref}
+
+% Headers and footers
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\textit{The Fulcrum CSP Language}}
+\fancyhead[R]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+% Section formatting
+\usepackage{titlesec}
+\titleformat{\section}{\large\bfseries}{\thesection}{1em}{}
+\titleformat{\subsection}{\normalsize\bfseries}{\thesubsection}{1em}{}
+
+% Custom commands
+\newcommand{\keyword}[1]{\texttt{\textbf{#1}}}
+\newcommand{\type}[1]{\textit{#1}}
+\newcommand{\term}[1]{\textit{#1}}
+\newcommand{\nonterminal}[1]{\textit{#1}}
+
+% Title page
+\title{\textbf{The Fulcrum CSP Language}}
+\author{Edited by\\
+  Mika Nystr\"om \\
+  Neuromorphic Computing Laboratory \\
+Intel Corporation}
+\date{Version 0.0\\
+\today}
+
+\begin{document}
+
+\maketitle
+
+\vspace{1em}
+
+\noindent
+
+\vspace{1em}
+
+\noindent
+ Copyright \copyright\ 2025 Intel Corporation
+ 
+ Licensed under the Apache License, Version 2.0 (the ``License'');
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+ 
+ {\tt http://www.apache.org/licenses/LICENSE-2.0}
+ 
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an ``AS IS'' BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+
+\bigskip\bigskip
+ 
+Portions may be
+
+Copyright \copyright\ 1989 Digital Equipment Corporation, Ing.~C.~Olivetti and~C., SpA.
+
+``This work may not be copied or reproduced in whole or in part for any
+commercial purpose.  Permission to photocopy in whole or in part
+without payment of fee is granted for nonprofit educational and
+research purposes provided that all such copies include the following:
+a notice that such copying is by permission of the Systems Research
+Center of Digital Equipment Corporation in Palo Alto, California and
+the Olivetti Research Center of Ing.~C.~Olivetti and~C., SpA in Menlo
+Park, California; an acknowledgment of the authors and individual
+contributors to the work; and all applicable portions of the copyright
+notice.  All rights reserved.''
+
+
+\clearpage
+
+\tableofcontents
+
+\clearpage
+
+% ========================================
+% INTRODUCTION
+% ========================================
+
+\bigskip
+\chapter{Introduction}
+
+\bigskip
+\begin{center}
+\textit{The language designer should be familiar with many alternative\\
+features designed by others, and should have excellent judgment in\\
+choosing the best and rejecting any that are mutually inconsistent...\\
+One thing he should not do is to include untried ideas of his own.\\
+His task is consolidation, not innovation.}
+
+---C.A.R. Hoare
+\end{center}
+\section{History}
+Starting in the 1980s, Alain Martin at Caltech started to use a
+variant of Hoare's Communicating Sequential Processes to describe
+asynchronous circuit designs, and while the basic syntax and semantics of the
+language was well established by Martin and his students, the usage
+model and many implementation details were left informal.  A detailed
+implementation effort followed at Fulcrum Microsystems in the early
+2000s, and the resulting language was used to describe the high-level
+design of numerous Fulcrum products throughout the 2000s and 2010s,
+and later at Intel, in the Neuromorphic Computing Lab of Intel Labs.
+The initial implementation was structured as a circuit simulator, but
+over time, a direct-to-silicon compiler was also developed at Fulcrum,
+Intel, and Timeless Design Automation.  At the time of writing, CSP
+has seen over two decades of successful use as a hardware description
+and validation language.
+
+CSP, like its 1970s namesake, is a programming language based on a
+static graph of many small independent processes, which do not share
+internal state but use the rendezvous for communication.  CSP supports
+many features that are helpful in hardware design, such as
+arbitrary-precision arithmetic by default, bit extraction, packing and
+unpacking of structured data, and of course, extremely high levels of
+multithreading.
+
+\section{Design Outline}
+One design goal of CSP has been to as much as possible banish
+unpredictable behaviors from the language.  Unpredictable behaviors
+that might be of little concern in software development can be a much
+bigger concern in hardware description, because CSP is used both as
+the input to a silicon compiler and to a software runtime (called a
+``simulator''), and the software implementation is used to validate
+the design before fabrication.  Unspecified constructs in the language
+would allow the two implementations to diverge, meaning that results
+from software simulation of the design could not be relied on to
+validate the design since the hardware implementation might be
+different.  Accordingly, CSP variables have well-defined initial
+values, and expression-evaluation orders as well as function-parameter
+evaluation orders are strictly specified.
+
+\subsection{CAST : Caltech Asynchronous Tools}
+\label{sec:cast}
+
+Like many (but not all) of its predecessors, CSP does not include
+facilities for process creation or the establishment of communication
+channels between processes.  In the Fulcrum system, these tasks are
+handled by an enclosing language environment called CAST (Caltech
+ASynchronous Tools).  In other words, when a CSP program starts
+executing, the entire process graph has already been created and
+connected.  This of course closely matches the distinction between
+fabrication and operation that is present in all hardware.
+Nevertheless, it is not difficult to imagine a system that uses CSP to
+describe processes that will be created and connected by a means other
+than CAST: for example a dynamic means, such as might be desired in a
+software system.  CAST is not a subject of this report, and mentions
+of that language can be read as simply referring to the process
+creation and connection that must occur before a CSP process begins
+execution.  That being said, one of the main uses of CSP is to serve
+as a vehicle for performing process decomposition (``Martin synthesis'')
+and it is the CAST framework that establishes the relationship between
+different CSP descriptions of the same computational process.
+
+\subsection{The name ``CSP''}
+This report describes the syntax and semantics of {\em Fulcrum CSP,} a
+programming language developed at Fulcrum Microsystems in the early
+2000s, before that company was acquired by Intel in 2011.  The
+language takes its name from Hoare's 1978 {\em Communicating
+  Sequential Processes,} what the wider programming community knows as
+``CSP'', but has seen significant changes from that language, in
+particular following the {\em Communicating Hardware Processes\/} (CHP)
+described (but not yet named) by Martin in 1986.  In any case, the
+name ``CSP'' will be used to mean Fulcrum CSP throughout this report unless
+qualified otherwise.
+
+
+\section{Overview}
+
+The remainder of the introduction covers the main features of Fulcrum
+CSP informally and gives some perspective and background information about
+the authors of the language.  The next chapter gives a more formal reference manual
+for the language.  The final chapter covers a few practical example
+programs, showing some of the CSP features in action.  Finally, the
+appendix gives the syntax equations for the language, extracted from
+the ANTLR grammar used at Fulcrum to construct the CSP parser.
+
+\subsection{Note on syntax}
+
+To avoid confusion, throughout this report we will use the
+machine-readable syntax used in Fulcrum CSP, rather than a syntax
+``for publication.''  Accordingly, assignment will be written \verb!=!
+  (not $:=$), the test for equality will be written \verb!==! (not
+$=$), the probe will be written \verb!#A! (not $\overline{A}$), etc.
+
+\section{Features}
+
+CSP has a number of features that may need introduction for those
+familiar with the majority of software or hardware languages, and the
+remainder of the section will discuss these.
+
+\subsubsection{Process decomposition}
+
+The basic language as developed initially by Martin and his students
+was used for {\em Martin synthesis\/} of asynchronous circuits.  This
+is a method of program derivation done in the spirit of Edsger
+Dijkstra's work, usually on a blackboard, with ``toy'' programs that
+still show the essentials of the programs being operated on.  A key
+aspect of Martin synthesis is {\em process decomposition,} whereby a
+large, complex program is decomposed into a communicating network of
+smaller programs, written in a form of Hoare's CSP, with a few changes
+to better support hardware-oriented programming. Martin called this
+language {\em Communicating Hardware Processes (CHP).}  
+
+\subsubsection{Guarded commands}
+
+Guarded commands were introduced as a reasoning model for
+nondeterministic programs by Dijkstra in 1975.  Hoare's CSP and its
+descendants have used these for looping and branching.  Following
+Dijkstra and unlike if-else statements of the kind introduced in
+Algol, guarded commands are symmetric---there is no particular order in
+which guards are evaluated (until the \verb!else! keyword is introduced).
+
+In short, instead of
+\begin{Verbatim}[samepage=true]
+   if e then
+     S0
+   else if f then
+     S1
+   else
+     S2
+   end
+\end{Verbatim}
+Dijkstra introduced the {\em selection\/}:
+\begin{Verbatim}[samepage=true]
+   if 
+     e -> S0
+   []
+     f -> S1
+   []
+     ~e & ~f -> S2
+   fi
+\end{Verbatim}
+with the semantic difference that if both \verb!e! and \verb!f! are
+true, the choice between \verb!S0! and \verb!S1! is nondeterministic
+and not determined by the syntactic order of the guards.  Activating
+the selection with no guards true in Dijkstra was an error (equivalent
+to \verb!abort!).  Martin introduced the idea that the selection
+instead blocks until one of the guards {\em becomes\/} true, which in
+a distributed system can happen owing to events external to the
+process; if no guard ever becomes true, the program does not continue,
+and that is again equivalent to \verb!abort!, at least for the process
+that does not continue.
+
+Similarly, Dijkstra introduced the \verb!do! loop:
+\begin{verbatim}
+   do
+     e -> S0
+   []
+     f -> S1
+   od
+\end{verbatim}
+which repeats until neither \verb!e! nor \verb!f! is true, and then
+terminates, using the same nondeterministic selection rules as for the
+selection until then.
+
+Our semantics follow Dijkstra and Martin and use Hoare's syntax of
+\begin{Verbatim}[samepage=true]
+   [ 
+     e -> S0
+   []
+     f -> S1
+   []
+     ~e & ~f -> S2
+   ]
+\end{Verbatim}
+for the selection, and
+\begin{verbatim}
+   *[
+     e -> S0
+   []
+     f -> S1
+   ]
+\end{verbatim}
+for the do-loop.
+
+\subsubsection{The rendezvous}
+
+In CSP, program variables are local to each process in which they are
+declared and used.  Processes communicate entirely through the {\em
+  rendezvous,} a combined synchronization and communication primitive.
+The rendezvous is a distributed assignment statement.  As a simple
+example, consider two processes \verb!P! and \verb!Q! where \verb!P!
+is the sending process, in which case its text includes a send
+operation of a local value \verb!v! on a {\em port\/} \verb!X!:
+\begin{Verbatim}[samepage=true]
+   X!v
+\end{Verbatim}
+and further that the receiving process \verb!Q! performs a receive operation
+on a port \verb!Y! into a local variable \verb!w!:
+\begin{Verbatim}[samepage=true]
+   Y?w
+\end{Verbatim}
+Consider further that (by a mechanism external to CSP itself) the ports
+\verb!P.X! and \verb!Q.Y! have been connected together and therefore form
+a {\em channel.}  Then the semantics of the rendezvous are as follows:
+\begin{itemize}
+\item If \verb!P! reaches \verb,X!v, and \verb!Q! has not reached \verb,Y?w,
+  then process \verb!P! is suspended until \verb!Q! reaches \verb,Y?w,.
+
+\item If \verb!Q! reaches \verb,Y?w, and \verb!P! has not reached \verb,X!v,
+  then process \verb!Q! is suspended until \verb!P! reaches \verb,X!v,.
+
+\item When both \verb!P! has reached \verb,X!v,
+  and \verb!Q! has reached \verb,Y?w, then the {\em distributed assignment}
+\begin{Verbatim}[samepage=true]
+   w = v
+\end{Verbatim}
+is executed and \verb!P! and \verb!Q! continue execution at their next statements.  See section~\ref{sec:rendezvous}.
+  
+\end{itemize}
+The simple semantics given here can be modified by the addition of {\em slack\/} to the channel.  If the channel has slack $n$, then \verb,P.X!v, can complete
+$n$ more times than \verb,Q.Y?w, before \verb,P, is suspended, following
+Martin 1981\cite{Martin1981}.  Values entering the channel appear on the
+output in FIFO order.  The simple semantics above then illustrates
+the case $n=0$, {\em slack-zero\/} communication.  See section~\ref{sec:slack}.
+
+The explicit synchronization provided by the rendezvous allows distributed
+systems to be built without an additional synchronization mechanism such as
+a clock.  The Martin synthesis method can be applied starting from a high
+level specification (such as an architecture manual for a specific computer) and be performed repeatedly until the resulting system
+consists of, essentially, communicating processes that represent
+single logic gates.  Since at every point, the rendezvous is used for
+synchronization, by this method hardware systems can be constructed out
+of logic gates entirely without explicit clocks' being added.
+
+\subsubsection{The probe}
+
+The {\em probe\/} was introduced by Martin in 1985 and describes a simple
+mechanism for describing reactive programming constructs without introducing
+auxiliary variables.  Consider a process that handles inputs from two
+unrelated places as these inputs arrive.  Call the ports on the process
+\verb!A! and \verb!B!.  If the process is merging inputs from places that
+are truly unrelated, there may be no way of knowing in what sequence inputs
+will arrive on \verb!A! and \verb!B!.  Simply receiving the inputs is not
+a solution, since if we attempt to code this as
+\begin{Verbatim}[samepage=true]
+   A?a ; B?b
+\end{Verbatim}
+and only one of the two ports has an input arriving, our system will
+deadlock with this process waiting for an input to arrive on the other
+ports.  The probe is the solution to this problem.  The probe is written
+\verb!#A! and is a boolean value that is true exactly when performing an
+action on \verb!A! can proceed without suspension.  The coding of our
+example then is
+\begin{Verbatim}[samepage=true]
+   [  #A -> A?a ; // handle a
+   [] #B -> B?b ; // handle b
+   ]
+\end{Verbatim}
+
+More complex expressions can then be constructed using the usual logical
+operators, as needed.
+
+The probe can be used to describe a simple reactive process structure,
+where the process waits for inputs and handles each input in turn, doing
+nothing else:
+\begin{Verbatim}[samepage=true]
+   *[[ #A -> A?a ; // handle a
+    [] #B -> B?b ; // handle b
+    ]]
+\end{Verbatim}
+See section~\ref{sec:probe}.
+
+\subsubsection{Node data type}
+
+While CSP is based on the idea of independent parallel processes that
+communicate across channels using the rendezvous, it also includes a
+more basic {\em node\/} data type for unstructured communcation.
+While the majority of hardware design can be accomodated by the
+channel structures, some algorithms need access to a lower-level,
+shared data type.  An example of something that is difficult to accomodate
+with channels is global configuration state, which in a hardware system
+may be fixed at power-up, or provided to a module as a shared constant
+that does not change during operation.
+
+\subsubsection{Arbitrary-precision arithmetic}
+
+In software, there are three common approaches to arithmetic
+precision.
+
+\begin{itemize}
+\item Some languages (such as Java) define arithmetic to be the same on every
+machine, with a limited number of data types and bit widths available,
+usually a set chosen based on hardware that is widely available during
+a particular time period.  One justification for this approach is that a
+given code will run the same everywhere, since the rounding, overflow, etc.,
+will occur the same on every machine.
+
+\item Another approach is taken by C, Modula-3, et al.,
+and provides the programmer with a few data types whose widths are not
+specified precisely but can be tested at compile and run time, although
+in practice in this approach, programmers tend to get used to certain
+specific types' being available.  As a result, even though the
+programmer's reference manual may say that bit widths are unspecified,
+in reality, the approach is much more similar to Java's in that everybody
+expects certain types to behave in very specific ways.  One justification
+for not specifying the data types precisely in the language reference
+manual is that this allows the runtime to be optimized for whatever
+machine is available.
+
+\item The third approach is to provide data types that are arbitrarily
+  large and runtimes that allocate memory to represent arbitrarily large
+  numbers as the result of computations.  Many Lisp dialects use this
+  approach. 
+\end{itemize}
+
+When describing hardware, none of the above approaches is really right.
+We are describing a new machine, so there is really no justification for
+tying our data types to existing hardware, and we need the flexibility to
+describe a wide variety of hardware.  Another issue is that arithmetic
+expressions can contain a wide variety of anonymous values.  Most programming
+languages (even Verilog) provide only limited widths for these values,
+and often very complicated rules for knowing how the values are treated.
+
+CSP takes an approach that expressions use arbitrary precision
+arithmetic, but variables can either have arbitrary precision {\em
+  or\/} specified precision, in which case the programmer-designer
+specifies the precise bit width of the variable (and whether it is
+signed or not).  In this way, the rules for expressions are very simple
+(arbitrary precision) but it is still possible to specify exactly
+the width of registers, etc., which is important for silicon compilation.
+Only two's-complement arithmetic is directly
+supported.  See section~\ref{sec:integer-types}.
+
+
+\subsubsection{Structured types}
+
+Structured types (records in Pascal parlance) are common in hardware-oriented
+languages.  CSP's structures are called {\em structs\/} and are by default
+packed, with a specified packing order, and bitwise control over layout
+and data widths.  See section~\ref{sec:struct}.
+
+\subsubsection{Variable initialization and evaluation orders}
+
+To avoid as much as possible unspecified behaviors in the language,
+all variables have specific default values.  Furthermore, unlike in most
+software languages, the evaluation orders of expressions and
+function parameters is fully specified.  See section~\ref{sec:initialization}.
+
+\subsubsection{Functions}
+
+In CSP, functions (procedures in Pascal parlance) have value or
+value-result semantics and cannot access any global variables
+(excepted predeclared constants from outside the CSP environment).
+See section~\ref{sec:functions}.
+
+
+\subsubsection{Memory management}
+
+CSP has two variable-sized types: strings and the special
+arbitrary-precision integer \verb!int!.  There is no memory allocation
+or freeing as such.  An implementation is expected to use garbage
+collection to manage the memory used for strings and arbitrary-precision
+integers, but this is not visible to the programmer-designer working in
+CSP.
+
+
+\section{Synthesizable subset}
+
+This report documents a language intended to describe the behavior of
+hardware systems starting at a very high level of description but also
+applicable to describing highly decomposed hardware systems, at the
+level of gates and simple sequential elements such as latches or flip-flops.
+The language itself makes no special distinction between constructs that
+are ``easy'' or ``difficult'' to realize  in circuitry.  An implementation
+may declare that a certain part of the language is {\em synthesizable,}
+meaning that CSP written using only that subset can be automatically
+compiled to an efficient hardware realization.  This distinction of a
+synthesizable subset is entirely part of a given implementation and
+will not be covered in this report.
+
+\section{Perspective}
+
+The vast majority of chip design today is performed in variants of the
+Verilog language.  Verilog was introduced in 1984 as a means of
+circuit description and simulation, and is subject to an IEEE
+standardization process.  Over the years, the simplicity of the
+original Verilog idea has been transformed into a veritable
+encyclopedia of design, description, and verification capabilities.
+Verilog today is used for many tasks throughout a chip-design process
+where each task uses only a small subset of the language.  
+Verilog shares some fundamental design aspects with CSP; in
+particular, Verilog's semantics allow for descriptions with a very
+high level of concurrency, and another similarity is that both
+languages make it difficult (but not impossible) to allocate storage
+space dynamically, as this is not something that has a sensible
+implementation in silicon.  At the same time, the wide variety of
+computational models supported by Verilog make that language extremely
+difficult to describe and extremely demanding of programming
+methodology---in particular when it comes to communication between
+different system modules.  In contrast, CSP provides specific,
+restricted communication constructs representing the rendezvous and
+Martin's probe, which leads to highly structured communicating
+processes.  Unlike the situation in Verilog, where the
+programmer-designer must specify the details of sequencing for every
+gate, CSP allows the implementation of sequencing to be abstracted into
+the chosen implementation for the rendezvous.
+
+\section{Background}
+
+The design and implementation of Fulcrum CSP was done at Fulcrum Microsystems
+in the early 2000s and continuing, after the company was acquired, at Intel
+by the Fulcrum/Intel software team, including
+Kevin Duncklee,
+Mike Davies,
+Aaron Denney,
+Mika Nystr\"om,
+Prasad Joshi,
+Yi-hsin Weng,
+Don Banh,
+Piyush Prakash,
+Mark Hesselink,
+Kim Wallmark,
+Patrick Pelletier,
+Robert Karmazin,
+Christopher Brichford,
+Andrew Lines,
+Peter Beerel,
+Frederik Eaton,
+David Hilvert,
+Jesse Rosenstock,
+and Harry Liu.
+
+The present report came out of an effort by Mika Nystr\"om to write a
+compiler for the Fulcrum CSP language at Intel in early 2025; this compiler
+was written in Scheme and targets Modula-3 as the output format, and it
+is available for download at \verb!github.com!.  Many dark
+corners of the language had to be brought out and examined for the first
+time in many years, and this document represents an attempt to capture
+what was learned during that effort.
+
+\section{Acknowledgments}
+We aspire to be as clear as Greg Nelson's {\em
+  Systems Programming with Modula-3\/} and the present editor
+gratefully acknowledges the influence of that book, and parts of the
+language definition have been shamelessly stolen from that book as
+well as the Modula-3 Report from Digital's Systems Research Center (DEC SRC),
+with contributions from Luca Cardelli, James Donahue, Lucille
+Glassman, Mick Jordan, Bill Kalsow, Paul Rovner, and Greg Nelson.  We
+also gratefully acknowledge that text and inspiration has been
+borrowed from the Asynchronous Circuit Toolkit (ACT) of Rajit
+Manohar's group at Yale.
+
+\chapter{Language Definition}
+% ========================================
+% DEFINITIONS
+% ========================================
+\section{Definitions}
+\label{sec:definitions}
+
+A CSP program specifies a computation that acts on a sequence of
+digital components called {\em locations.}  A CSP program describes
+a {\em process\/} within a distributed system.  Within a single process,
+a location can be referenced by and shared between different statements, but 
+a single location is bound to only one process.
+
+A {\em static error\/} is an error that the implementation must detect
+before program execution.  Violations of the language definition are
+static errors unless they are explicitly classified as runtime errors.
+
+A {\em checked runtime error\/} is an error that the implementation
+must detect and report at runtime.  The method for reporting such
+errors is implementation-dependent.  This means that an implementation
+is not required to halt execution on every runtime error; however, the
+implementation must ensure that the execution of the program is {\em
+  safe\/} regardless of the presence of errors.  This means that, even
+in the presence of errors, the implementation must guarantee that the
+runtime system is not corrupted in a way that makes further execution
+of the program not faithful to the language semantics.
+
+An {\em unchecked runtime error\/} is an error that is not guaranteed to
+be detected, and can cause the subsequent behavior of the computation to
+be arbitrary.  Unchecked runtime errors cannot occur in CSP.
+
+An {\em identifier\/} is a symbol declared as a name for a variable,
+type, port, function, etc.  The region of the program over a which a
+declaration applies is called the {\em scope\/} of the declaration.
+The meaning of an identifier is determined by the enclosing scope.
+Declaring an identifier so that it is visible more than once in
+a single scope is a static error.
+
+A {\em variable\/} is a
+set of locations that represents a mathematical value according to a
+convention determined by the variable's {\em type.}  If a value can be
+represented by some variable of type \verb!T!, then we say that the
+value is a {\em member\/} of \verb!T! and \verb!T! {\em contains\/} the
+value.
+
+An {\em expression\/} specifies a computation that produces a value or
+variable.  Expressions that produce variables are called {\em
+  designators.}  A designator can denote either a variable or the
+value of that variable, depending on the context.  Some designators
+are {\em readonly,} which means that they cannot be used in contexts
+that might change the value of the variable.  A designator that is not
+readonly is called {\em writable.}   Expressions whose values can be determined
+statically are called {\em constant expressions;} they are never
+designators.
+
+A {\em port\/} is a means for a process to communicate with other
+processes.  A port can be either an {\em output port,} or an {\em
+  inout port,} in which case values written to the port will appear in
+another process, or an {\em input port,} in which case values will
+appear at the port that were written in another process.
+
+A {\em deadlock\/} is a state in which some number of processes are
+permanently blocked from making progress.  An implementation is
+permitted but not required to treat a deadlock as a runtime error.  If
+an implementation is able to detect a {\em partial deadlock\/}, that
+is, a deadlock involving only a subset of processes, it should offer
+an option not to treat such a deadlock as an error.
+
+\section{Comments}
+Anything within a comment is ignored by the implementation.  Comments
+are treated as whitespace, so they can be used to separate language
+tokens that are required to be separated by whitespace.
+
+CSP allows two types of comments:
+
+Block comments are written
+\begin{Verbatim}[samepage=true]
+   /* This is a comment */
+\end{Verbatim}
+and allow newlines to be present for multi-line comments.  Anything
+following \verb!/*!, including \verb!/*! itself, is ignored, until
+the next occurrence of \verb!*/! in the file.  (That is, block
+comments do not nest.)
+
+Line comments are written
+\begin{Verbatim}[samepage=true]
+   // This is a comment 
+\end{Verbatim}
+and anything following \verb!//!, including the \verb!//! itself, until
+the following newline, is part of the comment.
+
+\section{Types}
+\label{sec:types}
+
+\subsection{Integer types}
+\label{sec:integer-types}
+There are three kinds of integer types: \verb!int!, {\em signed integers,}
+and {\em unsigned integers.} \verb!int! contains zero, all positive integers
+(Peano natural numbers), and the negation of the positive integers.
+
+Signed integers are declared \verb!sint(W)! where \verb!W! is the
+type's width in bits, which is a constant expression.  A type \verb!sint(W)! contains the values
+$[-2^{{\tt W}-1}..2^{{\tt W}-1}-1]$.
+
+Unsigned integers are declared \verb!int(W)! where \verb!W! is the
+type's width in bits, which is a constant expression.  A type \verb!int(W)! contains the values
+$[0..2^{{\tt W}}-1]$.
+
+Note that all integer types contain the value zero.
+
+\subsection{Boolean}
+
+The type \verb!bool! contains two values: \verb!false! and \verb!true!.
+
+In cases where a boolean variable is implicitly converted to \verb!int!,
+\verb!false! is interpreted as 0 and \verb!true! is interpreted as -1.
+
+\subsection{String}
+
+The type \verb!string! contains all sequences of characters, where a
+character is one of 256 constant values.  The visual representation of
+the characters is system dependent but generally follows 7-bit ASCII
+for the lower half (0..127) with a system-dependent upper half.
+
+The shortest string is the empty string.  There is no ``null string'' in CSP.
+
+\subsection{Structure types}
+\label{sec:struct}
+
+A {\em structure type\/} is a sequence of named variables, called the
+{\em fields\/} of the structure type. Different fields can have
+different types.  The name and type of each field is statically
+determined by the structure type's declaration.
+
+A structure type declaration has the form:
+\begin{Verbatim}[samepage=true]
+  structure T =
+   (
+    FieldList
+   );
+\end{Verbatim}
+where \verb!FieldList! is a list of field declarations, each of which has the
+form:
+\begin{Verbatim}[samepage=true]
+   Type fieldName = initial;
+\end{Verbatim}
+where \verb!fieldName! is an identifier, \verb!Type! is any type, and
+\verb!initial! is a constant expression.  The field names must be
+distinct.  Empty structure types are not allowed.
+
+
+An instance of a structure type is called a {\em structure\/} and is declared
+by stating the name of the structure type.  See sections~\ref{sec:declarations}
+and~\ref{sec:struct-field-access}.
+
+
+The constant \verb!initial! is a initial value used when a structure is
+constructed.  The \verb!= initial! can be omitted, in which case the default
+value for the type will be used for initialization.
+
+\subsection{Array types}\label{sec:array-types}
+
+An {\em array\/} is an indexed collection of component variables,
+called the {\em elements\/} of the array.  The indexes are of type
+\verb!int!.  The elements all have the same type,
+called the {\em element type\/} of the array.
+
+The {\em shape\/} of a multi-dimensional array is the sequence of its
+lengths in each dimension.  More precisely, the shape of an array is
+its length followed by the shape of any of
+its elements; the shape of a non-array is the empty sequence.
+The {\em layout\/} of a multi-dimensional array is the sequence of
+its lengths and starting indexes in each dimension; the layout of a non-array
+is the empty sequence.
+
+All arrays are {\em fixed\/} in CSP, meaning that the layout of every array is
+determined before program startup.
+
+An array declaration has the form:
+\begin{Verbatim}[samepage=true]
+  Element Id Layout;
+\end{Verbatim}
+where \verb!Element! is the element type and \verb!Layout! represents
+the layout of the array.  The layout can be specified in one of
+two equivalent ways: either as a comma separated list of ranges \verb!lo..hi!
+between brackets or as a list of ranges \verb!lo..hi! within separate brackets:
+\begin{Verbatim}[samepage=true]
+  T a[0..2,0..2];
+  T b[0..2][0..2];
+\end{Verbatim}
+here \verb!a! and \verb!b! have equivalent declarations.  Any array dimension
+can also be specified with a single number \verb!length! in which case the
+index ranges over \verb!0..length - 1!.  Hence the following are equivalent:
+\begin{Verbatim}[samepage=true]
+  T c[0..2,0..5];
+  T d[3][6];
+\end{Verbatim}
+
+Types that are not array types are called {\em scalar types,} and instances
+of such types are called {\em scalars.}
+
+
+
+   
+
+
+\subsection{Packed and fixed-width types}
+The following types are of fixed width: signed integers,
+unsigned integers, and booleans.
+
+If a structure type contains only fixed-width fields, then the
+structure type is a {\em packed structure type.}  A packed structure
+type is itself of fixed width.
+
+If the element type of an array is of fixed width, then the array is a
+{\em packed array type.}  A packed array type is itself of fixed width.
+
+By elimination, the following types are not of fixed width: strings,
+the \verb!int! type, and structure types and arrays containing strings
+or the \verb!int! type, whether directly or indirectly.
+
+
+\subsection{Ports}
+
+Two kinds of ports are provided for processes to communicate with
+other processes.
+
+\begin{itemize}
+\item {\em Channel ports\/} (section~\ref{sec:chanport})
+
+\item {\em Node ports\/} (section~\ref{sec:nodeport})
+\end{itemize}
+
+\subsection{Channels}\label{sec:chanport}
+
+A channel is used for communication between two concurrent processes, using
+the rendezvous operations send and receive.
+Formally, a channel is an ordered 6-tuple $(S, P_S, R, P_R, W,
+\Sigma)$ where $S$ is a process called the {\em sender,} $P_S$ is the
+name of the output port in the sender, $R$ is a process called the
+{\em receiver,} $P_R$ is the name of the input port in the receiver,
+$W$ is an integer called the {\em width\/} of the channel, and
+$\Sigma$ is an integer called the {\em slack\/} of the channel.
+Channels are not declared within the CSP language but described
+externally.  Values transacted over a channel are of type
+\verb!int(W)! (see section~\ref{sec:integer-types}.)
+
+
+Within a CSP process, a channel is visible either as an input port or
+as an output port.  Hence, channels are point-to-point and have exactly
+one sender and exactly one receiver.  An implementation may permit
+ports to ``loop back,'' that is to connect from a process to itself.
+
+Channel ports may be the elements of an array.
+
+\subsection{Nodes}\label{sec:nodeport}
+
+A {\em node\/} is a shared boolean variable that is attached to a node
+port of one or more processes.
+Formally, a node is a set of associations
+\[ \{ (A_0, P_0), (A_1, P_1) \ldots (A_{n-1},P_{n-1}) \} \]
+  where $A_i$ is a process with access to the node and $P_0$ is the
+  name of the node port used within $A_i$ to access the node.
+
+
+The port $P_i$ attached to a node can be
+read and written as a local variable within $A_i$, and it can be used in any
+context where a scalar boolean local variable could be used.  Node
+ports may be {\em input node ports, output node ports,} or {\em inout
+  node ports,} and like channel ports are declared externally to the CSP
+language.  Node ports access their associated nodes: an assignment to a node
+port results in an assignment to the node, and inspecting the value of
+a node port yields the value of the node.
+
+
+Node ports may be the elements of an array.
+
+If a node \verb!n! is assigned to (possibly repeatedly) by a single
+process \verb!P! (in which the node is attached to an output or inout
+node port) and also available to a set of other observing processes
+\verb!Q_0..Q_n-1!  (in each of which \verb!n! is attached to an input
+or inout node port) then the final assignment within \verb!P! will
+eventually be observed as the value of \verb!n!  by \verb!Q_0..Q_n-1!,
+but it is not specified in what order the observers will observe the
+update.
+
+If a node \verb!n! is assigned to by more than one process
+\verb!P_0..P_n-1!, then the observing processes will eventually
+observe \verb!n! to have a value determined by some sequential
+interleaving of the assignments performed by \verb!P_0..P_n-1!.
+
+Nodes that are members of arrays may be treated by the implementation
+as independent of each other; that is, in case of contention, one
+node in the array may converge to a value \verb!w[k]! independently of
+and notwithstanding the convergence of another node in the array to a
+value \verb!w[l]!.  
+
+The implementation may check that nodes are properly reset at the beginning
+of execution and treat a failure of a program to do so as a runtime error.
+See section~\ref{sec:resetfunction}.
+
+
+\section{Functions}
+\label{sec:functions}
+A {\em function\/} is a triple consisting of:
+\begin{itemize}
+\item the {\em name,} which is an identifier.
+  
+\item the {\em body,} which is a statement.
+
+\item the {\em signature,} which specifies the function's formal parameters and
+  result type.
+\end{itemize}
+A function that returns a result is also called a {\em function procedure\/}; a function that does not return a result is called a {\em proper procedure.}
+
+A function definition has the form:
+\begin{Verbatim}[samepage=true]
+   function F sig = ( body );
+\end{Verbatim}
+where \verb!body! is the body, and \verb!sig! is a signature specification,
+which has the form:
+\begin{Verbatim}[samepage=true]
+   (formal_0 ; ...; formal_n-1) : R
+\end{Verbatim}
+where each \verb!formal_i! is a formal parameter declaration, as described below and \verb!R! is the result type, which can be any type.  The ``\verb!: R!'' can
+be omitted, making the signature that of a proper procedure.
+
+A formal parameter declaration has the form
+\begin{Verbatim}[samepage=true]
+   Type Mode Name Layout = Initial
+\end{Verbatim}
+where
+\begin{itemize}
+\item \verb!Type! is the type of the parameter if the parameter is scalar, or the element type of the parameter if the parameter type is an array type
+  
+\item \verb!Mode! is a parameter mode, which can be \verb!-!,
+  \verb!+!, or \verb!+-!.  \verb!Mode! can be omitted, in which case
+  it is taken to be \verb!+-!.  See section~\ref{sec:funccall} for a
+  discussion of the semantics of the parameter modes.
+
+\item \verb!Name! is an identifier that names the parameter.
+
+\item \verb!Layout! specifies the array layout for an array parameter; if it is
+  omitted, the parameter is scalar.
+
+\item\verb!Initial! specifies the initial value of a scalar parameter whose mode is \verb!+!.  \verb!= Initial! can be omitted.  
+\end{itemize}
+When a series of parameters share the same type, \verb!Mode Name Layout = Initial! can be a replaced with a comma-separated list of mode, name, layout, and initial value, in which case the type is repeated for each parameter.  That is:
+\begin{Verbatim}[samepage=true]
+   Type Mode0 Name0 Layout0 = Initial0, Mode1 Name1 Layout1 = Initial1, ...
+\end{Verbatim}
+is shorthand for
+\begin{Verbatim}[samepage=true]
+   Type Mode0 Name0 Layout0 = Initial0; Type Mode1 Name1 Layout1 = Initial1; ...
+\end{Verbatim}
+A function definition is also a function declaration.
+
+\section{Initialization}\label{sec:initialization}
+
+All declared variables, whether explicitly declared or implicitly
+declared as type \verb!int! by being used without a declaration, are
+initialized before their first use.
+
+In the following rules (and only in the following rules), the word
+``variable'' is taken to encompass all declared variables of the basic
+integer, boolean, and string types whether declared as identifiable
+variables in their own right or as structure fields or array elements.
+
+\begin{itemize}
+\item If a variable declaration carries
+  an initializer, that value is used.
+
+\item If a variable is introduced as a
+function parameter without \verb!-! in its parameter mode and an initializer
+is present, that initializer is used.
+
+\item If a variable is introduced as a function parameter with \verb!-! in its
+  parameter mode, the variable is initialized by copying the value of
+  the actual parameter at the time that the function is called.
+  
+\item If a variable appears as a field
+  within a struct and the structure type declaration contains an initializer
+  for that field, that initializer is used.
+
+\item In all other cases, the default initializer for the variable is used.
+\end{itemize}
+
+The default initializers are:
+\begin{itemize}
+\item For all integer types, zero
+
+\item For the \verb!bool! type, \verb!false!
+
+\item For the \verb!string! type, the empty string, written \verb!""!
+\end{itemize}
+
+
+
+\section{Statements}
+\label{sec:statements}
+
+Executing a statement produces a computation that can 
+terminate (halt), cause a checked runtime error, or loop forever.
+
+\subsection{Skip}
+
+The no-op {\em skip\/} statement
+\begin{Verbatim}[samepage=true]
+   skip
+\end{Verbatim}
+when activated in any state, terminates in the same state.
+
+\subsection{Error}
+
+The abortion statement {\em error\/} 
+\begin{Verbatim}[samepage=true]
+   error
+\end{Verbatim}
+when activated in any state, causes a checked runtime error and does
+not terminate.  (It is called {\em abort\/} in most other languages.)
+
+\subsection{Assignment}
+
+We specify assignment rules by enumeration.
+
+\subsubsection{General assignability rule}
+
+A value is assignable to a variable of the same type.  If the type of a
+value differs from the target variable, the value is not assignable to
+the variable, with the exceptions below.
+
+\subsubsection{Integer assignment}
+
+The three kinds of integer types are all assignable to each other by
+virtue of the fact that all integer right-hand-sides are interpreted
+as being of type \verb!int!.  Assigning a value of type \verb!int! to a
+variable of type \verb!int(W)! or \verb!sint(W)! is done by interpreting
+the RHS as a two's-complement number and performing a bitwise
+assignment into the locations representing the LHS, also interpreted
+as a two's-complement number, discarding any bits that do not fit in
+the target locations.
+
+
+\subsubsection{Array assignment}
+
+Arrays are assignable if they have the same shape and their element types
+are assignable.
+
+\subsubsection{Integer to string assignment}
+
+An integer value is assignable to a string variable.  The value assigned
+to the string variable is the human-readable string corresponding
+to the value of the integer in decimal base.  For example, the assignment
+\begin{Verbatim}[samepage=true]
+   s = "The answer is " + (4 * 10 + 2)
+\end{Verbatim}
+will result in \verb!s! containing the string:
+\begin{Verbatim}[samepage=true]
+   The answer is 42
+\end{Verbatim}
+
+\subsubsection{Expression assignment}\label{sec:expr-ass}
+
+An expression \verb!e! is {\em assignable\/} to a type \verb!T! if \verb!e! is
+assignable to a variable of type \verb!T!.
+
+An assignment statement has the form:
+\begin{Verbatim}[samepage=true]
+   v = e
+\end{Verbatim}
+where \verb!v! is a writable designator and \verb!e! is an expression
+assignable to the variable designated by \verb!v!.  The statement sets
+\verb!v! to the value of \verb!e!.  \verb!v! is always evaluated before
+\verb!e!, and \verb!v! is updated after \verb!e! is evaluated.  In
+particular, if \verb!v! and \verb!e! are overlapping subarrays, the
+assignment is performed in such a way that no element is used as a
+target before it is used as a source.
+
+\subsubsection{Boolean assignment shorthands}
+
+A statement of the form
+\begin{verbatim}
+   v-
+\end{verbatim}
+where \verb!v! is a writable designator referencing a boolean variable
+is equivalent to the statement \verb!v = false!.
+
+A statement of the form
+\begin{verbatim}
+   v+
+\end{verbatim}
+where \verb!v! is a writable designator referencing a boolean variable
+is equivalent to the statement \verb!v = true!.
+
+\subsubsection{Assignment by operation shorthands}
+
+CSP provides the assignment-by-operation shorthands
+\verb!+=!,
+\verb!-=!,
+\verb!*=!,
+\verb!/=!,
+\verb!%=!,
+\verb!&=!,
+\verb!|=!,
+\verb!^=!,
+\verb!<<=!,
+and
+\verb!>>=!.
+For each assignment-by-operation statement of the form
+\begin{Verbatim}[samepage=true]
+   v Op= e
+\end{Verbatim}
+where \verb!Op=! is the token formed by appending the suffix \verb!=! to
+an operation token,
+this is equivalent to 
+\begin{Verbatim}[samepage=true]
+   v = v Op e
+\end{Verbatim}
+with the exception that \verb!v! is evaluated only once.  For example,
+\begin{Verbatim}[samepage=true]
+   v *= w
+\end{Verbatim}
+means 
+\begin{Verbatim}[samepage=true]
+   v = v * w
+\end{Verbatim}
+except that \verb!v! is only evaluated once.
+
+See section~\ref{sec:expressions} for a specification of each operation \verb!Op! in this context.
+
+The two special operations \verb!x++! and \verb!x--! are syntactic sugar for
+\verb!x += 1! and \verb!x -= 1! respectively.
+
+
+\subsection{Function call}\label{sec:funccall}
+
+A function call has the form:
+\begin{Verbatim}[samepage=true]
+   F(Bindings)
+\end{Verbatim}
+where \verb!F! is the name of a function and \verb!Bindings! is a list
+of bindings.  A binding has the form \verb!actual!, where \verb!actual! is
+an expression, which is called the {\em actual parameter.}  If the list of bindings is empty, the parentheses are still
+required.
+
+Function parameters are passed by value-result.  This means that for
+each formal parameter that has \verb!-! in its mode, the binding is turned
+into an assignment
+\begin{Verbatim}[samepage=true]
+   Name = actual
+\end{Verbatim}
+where \verb!Name! is the name of the formal parameter.  This assignment is evaluated before
+the body of the function (during the {\em function prolog\/}).  For a formal that does not have \verb!-! in its
+mode, the binding is instead turned into an assignment
+\begin{Verbatim}[samepage=true]
+   Name = initial
+\end{Verbatim}
+where \verb!initial! is the initial value from the function signature
+for that parameter, or a declaration without an initialization, subject
+to the normal initialization rules, if no initial value is provided in the
+function signature.
+For each formal parameter that has \verb!+! in its mode,
+the binding is turned into an assignment
+\begin{Verbatim}[samepage=true]
+   actual = Name 
+\end{Verbatim}
+which is evaluated after the body of the function (during the {\em function epilog\/}).
+
+Finally, for function
+procedures, the return value of the function is declared using the function's
+own name (e.g., \verb!F!) before the
+body of the function as having type \verb!R! (the return type of the function),
+and upon return of the function the returned value is \verb!F!.
+
+To execute the call, the function's parameters are evaluated
+left-to-right,
+\begin{itemize}
+
+\item the formal parameters are assigned (the prolog)
+
+\item the body of the procedure is executed
+
+\item and \verb!+! parameters and the
+  function result (if present) are assigned (the epilog)
+\end{itemize}
+
+For example, consider:
+\begin{Verbatim}[samepage=true]
+  function F(int +x = 12, -y) : int = ( x = x * y; F = x + y );
+  q = 2;
+  z = F(q, 3);
+\end{Verbatim}
+following the rules above, this is equivalent to:
+\begin{Verbatim}[samepage=true]
+  q = 2;
+
+  // prolog
+  int x = 12; 
+  int y = 3;
+  int F;
+
+  // body
+  x = x * y; // x is 36
+  F = x + y; // F is 39
+
+  // epilog
+  q = x;     // q is 36
+
+  // return site
+  z = F;     // z is 39
+\end{Verbatim}
+where if necessary \verb!x! and \verb!y! are renamed so they do not
+clash with existing variables in the current scope.  (\verb!F! does
+not need to be renamed since it would already clash with an existing
+variable of the same name.)
+
+If \verb!+! parameters are aliased, that is, if following the value-result
+rules listed above would lead to a situation in which
+two or more \verb!+! parameters reference the same locations, the two
+values are independent of each other during execution of the function,
+but the order in which the results are assigned in the function epilog
+is indeterminate.
+
+\subsection{Sequential composition}\label{sec:sequential-composition}
+A statement of the form
+\begin{Verbatim}[samepage=true]
+   S1; S2
+\end{Verbatim}
+represents {\em sequential composition,} and is operationally defined that it
+executes \verb!S1!, and then if the outcome is normal, executes \verb!S1!.  If
+the outcome of \verb!S1! is other than terminating normally, \verb!S2! is ignored.
+
+\subsection{Parallel composition}\label{sec:parallel-composition}
+A statement of the form
+\begin{Verbatim}[samepage=true]
+   S1, S2
+\end{Verbatim}
+represents {\em parallel composition,} and is operationally defined
+that when activated, \verb!S1! and \verb!S2! are executed in some
+arbitrary order, or even in such a way that if there are observable
+states within \verb!S1! and \verb!S2!, the executions of \verb!S1!
+and \verb!S1! may be interleaved in some arbitrary way, or even
+executed entirely in parallel.  If either of \verb!S1! or \verb!S2!
+loops forever, the other statement still executes.  If either of
+\verb!S1!  or \verb!S2! terminates with a runtime error, the
+implementation is allowed to terminate the execution of the other
+statement.
+
+Syntactically, \verb!,! binds tighter than \verb!;!.
+
+\subsection{Parenthesization}
+
+Parentheses \verb!(! \verb!)! can be used around statements and statement
+compositions.  For example,
+\begin{Verbatim}[samepage=true]
+   S0; S1, S2; S3
+\end{Verbatim}
+means ``first execute \verb!S0!, then execute \verb!S1! and \verb!S2! in parallel, and finally execute \verb!S3!'' whereas
+\begin{Verbatim}[samepage=true]
+   (S0; S1), (S2; S3)
+\end{Verbatim}
+means ``execute \verb!S0! followed by \verb!S1! in parallel with executing \verb!S2! followed by \verb!S3!.''
+
+
+
+\subsection{Guarded commands}
+
+A {\em guarded command list\/} is a statement of the form:
+\begin{Verbatim}[samepage=true]
+  Start G_0 -> S_0 Sep G_1 -> S_1 Sep ... G_n-1 -> S_n-1 Sep else -> S_n End
+\end{Verbatim}
+where
+
+
+\begin{itemize}
+\item  \verb!Start! is a starting bracket, either \verb!*[!, \verb![!, or \verb!#[!.
+\item the \verb!G_i! are boolean expressions called the {\em guards.}
+\item the \verb!S_i! are statements called the {\em guarded commands.}
+\item \verb!Sep! is a separator, either \verb![]! or \verb!:!.
+\item \verb!End! is the ending bracket \verb!]!.
+\end{itemize}
+
+\subsubsection{Selection statement}
+When \verb!Start! is \verb![!, the statement is a {\em selection statement.}
+When the selection statement is activated,
+execution is suspended until at least one \verb!G_i! is true, at which time
+a \verb!S_j! for which \verb!G_j! is true is executed, after which
+the selection statement terminates.
+
+The shorthand \verb![ G ]! is short for \verb![ G -> skip ]! and hence means
+``wait until \verb!G! holds.''
+
+\verb!else -> S_n! may be omitted.  If present, \verb!else! is interpreted
+as the expression \verb?!G_0 & !G_1 & ... & !G_n-1?.
+
+Activation of a selection statement without an \verb!else! in a state
+where none of \verb!G_0..G_n-1! holds and the implementation is able to
+detect that none of \verb!G_0..G_n-1! can ever hold (e.g., because they
+refer only to local variables of the process containing the statement) may
+be treated by the implementation as an error.
+
+\subsubsection{Simple if statement}
+When \verb!Start! is \verb!#[!, the statement is a {\em simple if statement.}
+When the selection statement is activated,
+an arbitrary \verb!Sj! for which \verb!G_j! is true is executed, after which
+the selection statement terminates.  If no \verb!G_j! is true, the simple
+if statement is equivalent to \verb!skip!.
+
+The simple if statement:
+\begin{Verbatim}[samepage=true]
+   #[ G_0 -> S_0 [] G_1 -> S_1 [] ... [] G_n-1 -> S_n-1 ]
+\end{Verbatim}
+is equivalent to the selection:
+\begin{Verbatim}[samepage=true]
+    [ G_0 -> S_0 [] G_1 -> S_1 [] ... [] G_n-1 -> S_n-1 [] else -> skip ]
+\end{Verbatim}
+
+An \verb!else! clause is not permitted in the simple if statement.
+
+
+\subsubsection{Repetition statement}
+When \verb!Start! is \verb!*[!, the statement is {\em a repetition
+  statement.}  When the repetition statement is activated, it amounts
+to the execution of \verb!skip! if no \verb!G_i! is true; otherwise an
+arbitrary \verb!S_j! for which \verb!G_j! is true is executed, after which
+the repetition statement is repeated.
+
+The shorthand \verb!*[ S ]! is short for \verb![ true -> S ]! and hence means
+``repeat \verb!S! forever.''
+
+\verb!else -> Sn! may be omitted.  If present, \verb!else! is interpreted
+as the expression  \verb?!G_0 & !G_1 & ... & !G_n-1?. 
+
+\subsubsection{Deterministic and nondeterministic guarded commands}
+When \verb!Sep! is \verb![]!, the selection or repetition statement
+is a {\em deterministic\/} selection or repetition statement.  This means
+that the programmer-designer guarantees that either exactly zero or
+exactly one guard is true at all times.  When \verb!Sep! is \verb!:!,
+the selection or repetition statement is a {\em nondeterministic\/} selection
+or repetition statement, and there is no restriction on the number
+of guards that may be true.  The implementation is permitted to use
+a more expensive implementation for nondeterministic than for
+deterministic selections and repetitions.
+
+
+\subsubsection{Evaluation order of guarded commands}
+The order in which the the guards are evaluated is indeterminate, and
+the number of times that the guards are evaluated is also indeterminate,
+but if command \verb!S_i! executes, the guard \verb!G_i! has been evaluated
+at least once, and this evaluation has taken place before the evaluation
+of \verb!S_i! has begun.
+
+
+\subsection{The loop statement}\label{sec:loop-statement}
+The loop construct is
+\begin{Verbatim}[samepage=true]
+   < Op Id : Range : Statement >
+\end{Verbatim}
+where
+\begin{itemize}
+
+\item \verb!Op! is either \verb!;! or \verb!,! referencing sequential composition (section~\ref{sec:sequential-composition}) or parallel composition (section~\ref{sec:parallel-composition}),
+
+\item  \verb!Id! is an identifier,
+  
+\item \verb!Range! is an integer range \verb!Lo .. Hi! or
+  an integer value \verb!N!, which is interpreted identically to \verb!0 .. N - 1!,
+\item \verb!Statement! is a CSP statement (including a sequential or parallel composition)
+\end{itemize}
+The loop statement is interpreted as \verb!Hi - Lo + 1! textual
+repetitions of \verb!(Statement)! with the name \verb!Id! bound to the
+values \verb!Lo! to \verb!Hi! in succession, with \verb!Op! as a
+separator.  This means that within \verb!Statement!, \verb!Id! takes
+on the constant \verb!int! value of the index of that iteration of the
+loop, and \verb!Id! is a readonly designator.  The empty range is
+allowed and if present, the loop is equivalent to
+\verb!skip!. \verb!Lo! and \verb!Hi! need not be compile-time
+constants, but an implementation is allowed to require that \verb!Lo!
+and \verb!Hi! be compile-time constants when \verb!Op! is \verb!,!.
+
+\verb!Op! can be omitted, in which case the statement is treated as if
+\verb!Op! were \verb!;!.
+
+
+\subsection{The rendezvous}\label{sec:rendezvous}
+
+The rendezvous is implemented with two kinds of statements: {\em
+  send,} and {\em receive,} collectively called {\em communications
+  actions.} The rendezvous operations take place on ports and are used
+for {\em synchronization\/} and {\em distributed assignment\/} between
+{\em communicating processes.}  See section~\ref{sec:chanport} for
+details on ports and channels.
+
+\subsubsection{Slack}\label{sec:slack}
+
+Communications actions on the two ports of a channel are synchronized.
+Call the number of send actions that have been completed on a channel
+$cS$ and the number of receive actions on that channel $cR$.  Since values
+cannot be received before they are sent, we have that
+\[
+cR \leq cS
+\]
+and the difference $cS - cR$ is the number of messages sent that have not
+yet been received.  The slack $\Sigma$ of the channel is the limit on this
+difference, so that:
+\[
+0 \leq cS - cR \leq \Sigma 
+\]
+The sender and receiver processes will be suspended if a send or receive
+action would violate this constraint. 
+
+\subsubsection{Send}
+
+The send statement is
+\begin{Verbatim}[samepage=true]
+   OPort ! e
+\end{Verbatim}
+where \verb!OPort! an output port of width \verb!W! and
+\verb!e! is an expression assignable to a variable of type \verb!int(W)!.
+(Compare to section~\ref{sec:expr-ass}.)
+
+The statement \verb,OPort ! e, results in an assignment to a writable
+designator in the receiver associated with the channel of the value
+\verb!e!.  If the channel is not ready, the sender is suspended until
+the channel is ready, at which time the sender proceeds and $cS$ for
+the channel is incremented.  See section~\ref{sec:slack}.
+
+
+\subsubsection{Receive}\label{sec:receive}
+
+The receive statement is
+\begin{Verbatim}[samepage=true]
+   IPort ? v
+\end{Verbatim}
+where \verb!IPort! is an input port of width \verb!W!
+and \verb!v! is a writable designator assignable from an expression
+of type \verb!int(W)!.
+(Compare to section~\ref{sec:expr-ass}.)
+
+The statement \verb,IPort ? v, results in the assignment to \verb!v!
+of the value \verb!e! sent on the associated port in the sender.  If the
+value has not yet been sent by the sender, the receiver is suspended
+until the sender has sent the value, at which time the receiver proceeds
+and $cR$ for the channel is incremented.
+See section~\ref{sec:slack}.
+
+See also section~\ref{sec:peek}.
+
+
+
+\section{Declarations}
+\label{sec:declarations}
+CSP declarations in a program occur in a specified order.  Certain
+constants, functions, and structure types can be pre-declared by the
+CAST environment of a CSP program.  Within a single CSP program,
+the sequence of declarations is fixed:
+\begin{Verbatim}[samepage=true]
+  structure type declarations;
+  function declarations;
+  program body
+\end{Verbatim}
+The program body is evaluated when the system starts to run, but
+after initialization (see sections~\ref{sec:initialization} and~\ref{sec:resetfunction}).  The evaluation
+order of different CSP programs within a system is unspecified.
+CSP does not allow forward references: therefore, an implication of the
+declaration order is that functions cannot access variables declared in
+the program body.  Functions can however access structure type declarations
+and constants declared in CAST.
+
+Declarations of structure types are described in
+section~\ref{sec:struct}, and declarations and definitions of
+functions are described in section~\ref{sec:functions}.
+
+Variables are declared anywhere in the program body.  The program body is a
+scope, and a guarded command is a scope.  A variable declaration has
+the format
+\begin{Verbatim}[samepage=true]
+   Type Id Layout ;
+\end{Verbatim}
+\begin{itemize}
+\item \verb!Type! is the type of the variable, if the variable is scalar, or the type of an element, if the variable is an array.
+\item \verb!Id! is an identifier that becomes bound to the variable
+\item \verb!Layout! is optional, and if present, declares that the variable is an array of \verb!Type! with the specified layout (see section~\ref{sec:array-types}.)
+\end{itemize}
+
+Variables that appear in the program text without being declared are implicitly
+declared to have type \verb!int! (section~\ref{sec:integer-types}).
+
+
+% ========================================
+% EXPRESSIONS
+% ========================================
+\section{Expressions}
+\label{sec:expressions}
+
+An expression prescribes a computation that produces a value or
+variable.  Syntactically, an expression is an operand, or an operation
+applied to arguments, which are themselves expressions.  Operands are
+identifiers or literals.  An expression is evaluated by recursively
+evaluating its arguments and performing the operation.  The order of
+argument operation is left-to-right for every subexpression at equal
+precedence, and subexpressions are evaluated exactly once, except
+for subexpressions of \verb!&&! and \verb!||! (see section~\ref{sec:shortcircuit}).
+
+\subsection{Conventions for describing operations}\label{op-conventions}
+
+To describe the argument and result types of operations, we use a
+notation like function declarations (section~\ref{sec:functions}).
+But since most operations are too general to be described by a true
+function signature, we extend the notation in several ways.
+
+The argument to an operation can be required to have a type in a
+particular class, such as an integer type.  In this case the formal parameter
+specifies a type class instead of a type.
+Type classes we use, as opposed to regular CSP types, are
+\verb!Integer! for an integer of any type, and \verb!Structure! for any
+structure type.
+
+For example to describe the
+signature of the addition operator \verb!+! we use a function-style
+declaration:
+\begin{Verbatim}[samepage=true]
+   + (Integer -a, -b) : int
+\end{Verbatim}
+
+A single operation name can be overloaded, which means that it denotes
+more than one operation.  In this case, we write a separate signature
+for each of the operations, each alternative signature on a line of
+its own.  For example:
+\begin{Verbatim}[samepage=true]
+   + (Integer -a, -b) : int
+   + (string  -a, -b) : string
+\end{Verbatim}
+The particular operation will be elected so that each actual argument type
+is of the corresponding formal parameter type or a member of the corresponding
+formal parameter type class.
+
+
+\subsection{Literals}
+
+Numeric, boolean, and string literals.
+
+\subsubsection{Numeric literals}
+
+Numeric literals denote constant non-negative integers.  Numeric literals
+may not contain spaces: the spaces we use below serve to separate components
+of the numeric literals for discussion.
+Numeric literals can be specified in a four different ways:
+\begin{itemize}
+
+\item A sequence of digits is interpreted in base 10 (decimal).
+
+\item The sequence \verb!0x! followed by hexadecimal digits (\verb!0!--\verb!9! and \verb!a!--\verb!f! and \verb!A!--\verb!F! ) is interpreted as a base 16 (hexadecimal) number.  Example: the number forty-two can be written \verb!0x2a!,
+  \verb!0x002a!, or \verb!0x2A!
+  
+\item The sequence \verb!0b! followed by binary digits (\verb!0!--\verb!1!) is interpreted as a base 2 (binary) number.  Example: \verb!0b101010!
+
+\item The sequence \verb!Base _ Number! where \verb!Base! is a base itself expressed in decimal and \verb!Number! is interpreted as a number in that base, expressed in digits
+  \verb!0!--\verb!9! and \verb!a!--\verb!z! and \verb!A!--\verb!Z!.
+  Example: \verb!21_20!
+\end{itemize}
+
+\subsubsection{Boolean literals}
+
+The boolean literals are \verb!false! and \verb!true!.  The type of boolean
+literals is \verb!bool!.
+
+\subsubsection{String literals}
+
+A string literal is a pair of double quotes enclosing a sequence of
+ISO-Latin-1 printing charcters (excluding double quote) and escape sequences.
+The type of a string literal is \verb!string!.
+\begin{Verbatim}[samepage=true]
+   " String "
+\end{Verbatim}
+The legal escape sequences are: \verb!\n!, \verb!\r!, \verb!\t!,
+\verb!\b!, \verb!\f!, \verb!\"!, \verb!\'!, \verb!\\!, and arbitrary
+8-bit characters can be written \verb!\xHexNum!, where \verb!HexNum!
+is a hexadecimal number from 0--255, or as \verb!\OctNum!, where
+\verb!OctNum! is an octal number from 0--255.  For example, the
+ASCII character \verb!*! can be written \verb!\02a! or \verb!\052!.
+
+\subsection{Integer expressions}
+
+Every integer expression has type \verb!int! regardless of the types
+of its operands.
+
+\subsection{Operation syntax}\label{sec:opsyntax}
+
+The operators that have special syntax are classified and listed in order
+of decreasing binding power in the following table:
+
+\begin{tabular}{ll}
+  \verb,x::a,                 & structure field \\
+  \verb,f(x) a[i] b{hi:lo},   & applicative \verb!(!, \verb![!, \verb!{! \\
+  \verb,- ~,                  & prefix negation, prefix not \\
+  \verb,++ --,                & postfix arithmetic \\
+  \verb,**,                   & infix exponentiation \\
+  \verb,* / %,                & infix arithmetic \\
+  \verb,+ -,                & infix arithmetic \\
+  \verb,<< >>,                & infix bitwise shifts \\
+  \verb,< <= >= >,            & infix relations \\
+  \verb,== !=,                & infix relations \\
+  \verb,&,                    & infix bitwise AND \\
+  \verb,^,                    & infix bitwise XOR \\
+  \verb,|,                    & infix bitwise OR \\
+  \verb,&&,                   & infix logical AND \\
+  \verb,||,                   & infix logical OR \\
+\end{tabular}
+
+All infix operators are left associative except exponentiation \verb!**!, which
+is right associative.
+
+\subsection{Designators}\label{sec:designators}
+
+An identifier is a writable designator if it is declared as a
+variable, as an output node or inout node, an array of output nodes or
+inout nodes, , or is a function parameter.  An identifier is a
+readonly designator if it is an input node, an array of input nodes, the index of a loop
+statement (section~\ref{sec:loop-statement}), or the index of a loop
+expression (section~\ref{sec:loop-expression}).  CAST constants are
+not designators: they are constant expressions.
+
+The only operations that produce designators are subscripting, array slicing,
+bit accessing, and structure-field accessing.
+
+
+\subsection{Function application}
+
+A function call is an expression if the function returns a result (is
+a function procedure).  The type of the expression is the result type
+of the function.
+
+\subsection{Bit, array, and struct accessors}
+
+The only expressions that may create designators are bit-slicing,
+array, and struct accessor expressions.
+
+\subsubsection{Bit access}
+If \verb!e! is an integer expression, a range of bits of \verb!e! can
+be accessed using the syntax
+\begin{Verbatim}[samepage=true]
+   e { Range }
+\end{Verbatim}
+where \verb!Range! is a range \verb!Hi : Lo! where \verb!Hi! and \verb!Lo!
+are of type \verb!int!, or a single number \verb!k!, which is interpreted as
+\verb!k : k!.  If the range is empty (that is, if $\verb!Hi! < \verb!Lo!$) then, the value of the expression is zero.
+The bit-access expression is a designator if \verb!e! is a designator; it is
+a writable designator if \verb!e! is a writable designator.  The type of
+\verb!e { Range }! is \verb!uint(Hi - Lo + 1)!.
+
+
+\subsubsection{Array access}
+If \verb!e! is an array expression of any type, a {\em slice\/} of the array
+is denoted by
+\begin{Verbatim}[samepage=true]
+   e [ I_0 , I_1, I_2 , ... , I_n-1]
+\end{Verbatim}
+where \verb!I_0!..\verb!I_n-1! are indexes into the first \verb!n! dimensions
+of the array; \verb!I_0!..\verb!I_n-1! must be integers.
+
+If \verb!n! is equal to the dimensionality of \verb!e!, the value of
+the expression is an element of \verb!e!.  If \verb!n! is less than
+the dimensionality of \verb!e!, the value of the expression is the
+indicated subarray of \verb!e!.  It is a static error for \verb!n! to
+be greater than the dimensionality of \verb!e!, and it is a checked
+runtime error for any of the indexes to overrun the length of any
+corresponding dimension of the array.  The array-access expression is
+a designator if \verb!e! is a designator; it is a writable designator
+if \verb!e! is a writable designator.  The type of
+\verb!e [ I_0 , I_1, I_2 , ... , I_n-1]! is the element type of \verb!e!
+  if \verb!n! is equal to the dimensionality of \verb!e!, else it is
+  an array with the shape of the remaining unspecified dimensions of
+  \verb!e!.
+
+Note that ranges
+cannot be used as array accessors even though they can be used to
+declare arrays: this implies that ``partial array slices'' are not
+available in CSP.
+
+\subsubsection{Struct field access}\label{sec:struct-field-access}
+If \verb!e! is a struct, the expression
+\begin{Verbatim}[samepage=true]
+  e :: Field
+\end{Verbatim}
+where \verb!Field! names a field of the structure type of \verb!e!, denotes
+the value of the corresponding field.  The struct-access expression is a designator if \verb!e! is a designator; it is
+a writable designator if \verb!e! is a writable designator.  The type of
+\verb! e :: Field! is the declared type of the field.
+
+
+\subsection{Arithmetic and string operators}
+
+The basic arithmetic operators are built into the language.  
+
+\begin{tabular}{rl}
+{\em infix} & \verb!+  (Integer -x, -y)         : int! \\
+{\em infix} & \verb!+  (string  -x, -y)         : int! \\
+{\em infix} & \verb!+  (Integer -x, string  -y) : int! \\
+{\em infix} & \verb!+  (string  -x, Integer -y) : int! \\
+\end{tabular}
+
+As an infix operator on integer arguments, \verb!+! denotes addition.
+
+As an infix operator on strings, \verb!+! denotes string concatenation.
+
+As an infix operator where one argument is a string and the other an integer, \verb!+! denotes string concatenation with the integer argument converted to a
+string denoting the number in decimal.
+
+\begin{tabular}{rl}
+{\em prefix} & \verb!-  (Integer -x)           : int! \\
+{\em infix}  & \verb!-  (Integer -x, -y)       : int! \\
+\end{tabular}
+
+As a prefix operator, \verb!-! denotes integer negation.
+As an infix operator on integer arguments, \verb!-! denotes subtraction.
+
+\begin{tabular}{rl}
+{\em infix}  & \verb!*  (Integer -x, -y)          : int! \\
+{\em infix}  & \verb!/  (Integer -x, -y)          : int! \\
+{\em infix}  & \verb!%  (Integer -x, -y)          : int! \\
+\end{tabular}
+
+\verb!*! denotes integer multiplication. For \verb!x! and \verb!y! both
+positive or both negative, \verb!x / y! is the floor of the quotient
+of \verb!x! and \verb!y!.  For one of \verb!x! and \verb!y! negative
+and the other positive, \verb!x / y! is the ceiling of the quotient of
+\verb!x! and \verb!y!.  For \verb!y! equal to zero, \verb!x / y! is zero.
+For any integers \verb!x! and \verb!y!, \verb!x % y! is defined to be
+equal to \verb!x - y * (x / y)!.
+
+\begin{tabular}{rl}
+{\em infix}  & \verb!>>  (Integer -x, -y)          : int! \\
+{\em infix}  & \verb!<<  (Integer -x, -y)          : int! \\
+\end{tabular}
+
+The \verb!<<! and \verb!>>! operators interpret the first operand as
+being a two's-complement representation of a number.  \verb!x << y!
+denotes left shift, that is, when \verb!y! is positive, the value \verb!x!
+shifted \verb!y! bit positions to the left, with the bottom \verb!y!
+bits of the result being zero. \verb!x >> y! with \verb!y! positive
+denotes right shift of \verb!x!, \verb!y! bit positions to the right.
+If \verb!x! is negative, it is sign extended.  If \verb!y! is negative
+then \verb!x >> y! is defined as \verb!x << -y!, and \verb!x << y! is defined
+as \verb!x >> -y!.
+
+\begin{tabular}{rl}
+  {\em infix}  & \verb!**  (Integer -x, -y)          : int! \\
+ \end{tabular}
+
+As an infix operator on integers, \verb!**! denotes exponentiation:
+\verb!x ** y! is equal to \verb!x! raised to the \verb!y!th power.
+Unlike all the other operators, \verb!**! is right-associative.
+
+\subsection{Relations}
+
+Relations are operators that have \verb!bool! as their range.
+
+\begin{tabular}{ll}
+{\em infix} & \verb!<  (Integer -x, -y)     : bool! \\
+{\em infix} & \verb!<= (Integer -x, -y)     : bool! \\
+{\em infix} & \verb!>  (Integer -x, -y)     : bool! \\
+{\em infix} & \verb!>= (Integer -x, -y)     : bool! \\
+\end{tabular}
+
+The regular less than, less than or equal to, greater than, greater than
+or equal to operators operate on two integers \verb!x! and \verb!y! and
+compute a boolean according to the normal rules.  As with all other
+expressions in CSP, the operands are interpreted as \verb!int! regardless
+of type.
+
+\begin{tabular}{ll}
+{\em infix} & \verb!== (Integer -x, -y)     : bool! \\
+{\em infix} & \verb!== (bool -x, -y)        : bool! \\
+{\em infix} & \verb#!= (Integer -x, -y)     : bool# \\
+{\em infix} & \verb#!= (bool -x, -y)        : bool# \\
+\end{tabular}
+
+\verb!==! and \verb,!=, return \verb!true! if the operands are
+equal, \verb!false! if they are not.  They can be applied to two
+integers or to two booleans.
+
+\subsection{Logical and bitwise operators}
+
+\begin{tabular}{ll}
+  {\em prefix} & \verb!~ (x: Integer)     : int! \\
+  {\em prefix} & \verb!~ (x: bool)        : bool! \\
+\end{tabular}
+
+\verb!~! represents logical inversion.  If \verb!x! is an integer,
+\verb!~x! is the bitwise inversion of \verb!x!, interpreted as a
+two's-complement number.  If \verb!x! is a boolean, and the value of
+\verb!x! is \verb!true!, then the value of \verb!~x! is \verb!false!
+and if the value of \verb!x! is \verb!false! then the value of
+\verb!~x! is \verb!true!.
+
+\begin{tabular}{ll}
+{\em infix} & \verb!& (Integer -x, -y)     : int! \\
+{\em infix} & \verb!& (bool -x, -y)        : bool! \\
+{\em infix} & \verb!| (Integer -x, -y)     : int! \\
+{\em infix} & \verb!| (bool -x, -y)        : bool! \\
+{\em infix} & \verb!^ (Integer -x, -y)     : int! \\
+{\em infix} & \verb!^ (bool -x, -y)        : bool! \\
+\end{tabular}
+
+For boolean arguments \verb!x! and \verb!y!, \verb!x & y! is \verb!true! if
+both arguments are \verb!true!, otherwise it is \verb!false!.
+For integer arguments \verb!x! and \verb!y!, \verb!x & y! is the bitwise AND
+of \verb!x! and \verb!y! interpreted as two's-complement numbers.
+
+For boolean arguments \verb!x! and \verb!y!, \verb!x | y! is \verb!false! if
+both arguments are \verb!false!, otherwise it is \verb!true!.  
+For integer arguments \verb!x! and \verb!y!, \verb!x | y! is the bitwise OR
+of \verb!x! and \verb!y! interpreted as two's-complement numbers.
+
+For boolean arguments \verb!x! and \verb!y!, \verb!x ^ y! is
+equivalent to \verb,x != y,. For integer arguments \verb!x! and
+\verb!y!, \verb!x ^ y! is the bitwise XOR of \verb!x! and \verb!y!
+interpreted as two's-complement numbers.
+
+\subsection{Logical short-circuit operators}\label{sec:shortcircuit}
+\begin{tabular}{ll}
+{\em infix} & \verb!&& (bool -x, -y)        : bool! \\
+{\em infix} & \verb!&& (Integer -x, -y)     : bool! \\
+{\em infix} & \verb!|| (bool -x, -y)        : bool! \\
+{\em infix} & \verb!|| (Integer -x, -y)     : bool! \\
+\end{tabular}
+
+For boolean \verb!x! and \verb!y!, \verb!x && y! is \verb!false! if
+either \verb!x! or \verb!y! is \verb!false!, and \verb!true!
+otherwise.  If \verb!x! is \verb!false!, \verb!y! is not evaluated.
+For integer \verb!x! and \verb!y!, \verb!x && y! is equivalent to
+\verb,(x != 0) && (y != 0),; this means that if \verb!x! is zero, then
+\verb!y! is not evaluated. 
+
+For boolean \verb!x! and \verb!y!, \verb!x || y! is \verb!true! if
+either \verb!x! or \verb!y! is \verb!true!, and \verb!false!
+otherwise.  If \verb!x! is \verb!true!, \verb!y! is not evaluated.
+For integer \verb!x! and \verb!y!, \verb!x || y! is equivalent to
+\verb,(x != 0) || (y != 0),; this means that if \verb!x! is nonzero, then
+\verb!y! is not evaluated.
+
+\subsection{Loop expressions}\label{sec:loop-expression}
+A loop expression is
+\begin{Verbatim}[samepage=true]
+   < Op Id : Range : Expr >
+\end{Verbatim}
+where
+\begin{itemize}
+
+\item \verb!Op! is \verb!+!, \verb!*!, \verb!&!, \verb!|!, \verb!^!
+
+\item  \verb!Id! is an identifier,
+  
+\item \verb!Range! is an integer range \verb!Lo .. Hi! or
+  an integer value \verb!N!, which is interpreted identically to \verb!0 .. N - 1!,
+\item \verb!Expr! is an expression
+\end{itemize}
+The loop expression is interpreted as \verb!Hi - Lo + 1! textual repetitions of
+ \verb!(Expr)! with the name \verb!Id! bound to the values
+\verb!Lo! to \verb!Hi! in succession, with \verb!Op! as a separator.
+This means that within \verb!Expr!, \verb!Id! takes on the constant
+\verb!int! value of the index of that iteration of the loop, and \verb!Id! is
+a readonly designator.
+The empty range is allowed and if present, the loop expression is
+equal to the zero element of \verb!Op! as it applies to the type of \verb!Expr!, according to the following table
+
+\begin{tabular}{llr}
+\verb!+!  & \verb!int! & 0 \\
+\verb!*!  & \verb!int! & 1 \\
+\verb!&! & \verb!int! & -1 \\
+\verb!&! & \verb!bool! & \verb!true! \\
+\verb!|! & \verb!int! & 0 \\
+\verb!|! & \verb!bool! & \verb!false! \\
+\verb!^! & \verb!int! & 0 \\
+\verb!^! & \verb!bool! & \verb!false! \\
+\end{tabular}
+
+\subsection{Probe}\label{sec:probe}
+
+If \verb!X! is an input port or an output port, the expression
+\begin{verbatim}
+   #X
+\end{verbatim}
+is called the probe of \verb!X!.  \verb!#X! is true if \verb!X! is an
+input port and the receive statement \verb!X?x! would execute without
+blocking, or if \verb!X! is an output port and the send statement
+\verb,X!x, would execute without blocking.  
+
+\subsection{Receive expression}\label{sec:receive-expression}
+
+The {\em receive expression\/} is
+\begin{Verbatim}[samepage=true]
+   IPort ?
+\end{Verbatim}
+where \verb!IPort! is an input port of width \verb!W!.  If no value
+has yet been sent by the sender, the receiver is suspended until the
+sender has sent the value, at which time the receive expression
+evaluates by performing a receive as in section~\ref{sec:receive} into
+an anonymous location, and returning that as a value.
+
+For example, the assignment of the receive expression \verb!IPort?! to
+\verb!v!:
+\begin{verbatim}
+   v = IPort? 
+\end{verbatim}
+is equivalent to the receive statement:
+\begin{verbatim}
+   IPort?v 
+\end{verbatim}
+The receive expression can be used in complex expressions without
+introducing variable names for the values received, for example to
+receive two numbers on \verb!A! and \verb!B! and send the product on
+\verb!C!:
+\begin{verbatim}
+   C!(A? * B?)
+\end{verbatim}
+
+\subsection{Peek}\label{sec:peek}
+
+The peek is
+\begin{Verbatim}[samepage=true]
+   # IPort ?
+\end{Verbatim}
+where \verb!IPort! is an input port of width \verb!W!.  If no value
+has yet been sent by the sender, the receiver is suspended until the
+sender has sent the value, at which time the peek evaluates to the
+value that would have been written by executing a receive on the
+channel associated with \verb!IPort!.  $cR$ is not incremented for the
+channel.  The peek is thus a receive expression that does not
+increment $cR$, and allows the same value to be inspected more than
+once without using a variable to store that value between uses.  See
+sections~\ref{sec:receive} and~\ref{sec:receive-expression}.
+
+\section{Special functions}
+
+We use the format of section~\ref{op-conventions}.
+
+\subsection{Printing}
+
+\begin{tabular}{l}
+  \verb!print  (string  -x)! \\
+  \verb!print  (Integer -x)! \\
+  \verb!print  (bool    -x)! \\
+\end{tabular}
+
+\verb!print! is a proper procedure that can take a parameter of several
+types.  If \verb!print(x)! is activated and \verb!x! is a \verb!string!, a
+representation of that string will be printed to the terminal
+using the normal localization rules for character sets, etc.
+
+If \verb!print(x)! is activated and \verb!x! is an integer of any type, 
+an ASCII representation of the absolute value of \verb!x! in hexadecimal digits, drawn
+from the set \verb!0..9,a..f! will be printed to the terminal, preceded by the prefix \verb!0x! if \verb!x! is positive and preceded by the prefix \verb!-0x! if \verb!x! is negative.
+
+
+If \verb!print(x)! is activated and \verb!x! is \verb!false!, \verb!0x0! will
+be printed to the terminal, and if \verb!x! is \verb!true!, \verb!-0x1! will
+be printed to the terminal.
+
+\subsection{Packing and unpacking of structs}
+
+\subsubsection{Packing structs}
+
+\begin{tabular}{l}
+  \verb!pack(Structure -x) : int! \\
+\end{tabular}
+
+\verb!pack! packs the value of the fields of an instance of any structure
+type into an integer.  Structures are packed into higher-order bits first,
+lower-order bits later.  Arrays within structures are packed into lower-order
+bits first and higher-order bits later.  Multi-dimensional arrays are
+packed with the earlier indexes changing slowest.
+
+\subsubsection{Examples}
+
+Consider
+\begin{Verbatim}[samepage=true]
+    structure s = (
+      int(8) a[4];
+      int(8) b;
+    );
+
+    s ss;
+
+    ss::a[0] = 0;
+    ss::a[1] = 1;
+    ss::a[2] = 2;
+    ss::a[3] = 3;
+
+    ss::b    = 0xbb;
+
+    sss = pack(ss)  
+\end{Verbatim}
+\verb!sss! will contain \verb!0x03020100bb! because \verb!a! gets packed to
+higher-order bits, \verb!b! gets packed to lower-order bits, and within
+\verb!b! the higher indexes are packed to higher-order bits.
+
+Now consider
+\begin{Verbatim}[samepage=true]
+    structure t = (
+      int(8) a[2][2];
+    );
+
+    t tt;
+
+    tt::a[0][0] = 0x00;
+    tt::a[0][1] = 0x01;
+    tt::a[1][0] = 0x10;
+    tt::a[1][1] = 0x11;
+
+    ttt = pack(tt)
+\end{Verbatim}
+\verb!ttt! will contain \verb!0x11100100! because \verb!a[1]! is packed
+to higher-order-bits and within \verb!a[1]!, \verb!a[1][1]! is packed
+higher than \verb!a[1][0]!.
+
+\subsubsection{Unpack}
+\begin{tabular}{l}
+  \verb!unpack(Structure +x, Integer -y)! \\
+\end{tabular}
+
+If \verb!x! and \verb!t! are of the same structure type, and
+\verb!y! is equal to \verb!pack(t)! then
+\begin{Verbatim}[samepage=true]
+   unpack(x, y)
+\end{Verbatim}
+is equivalent to the statement
+\begin{Verbatim}[samepage=true]
+   x = t
+\end{Verbatim}
+
+\subsection{Assertions}
+
+\begin{tabular}{l}
+  \verb!assert  (bool -x)! \\
+  \verb!assert  (bool -x, string -y)! \\
+\end{tabular}
+
+For both forms of \verb!assert!, activation of \verb!assert(x)! or
+\verb!assert(x, y)! when \verb!x! is \verb!true! is equivalent to
+\verb!skip!.  When \verb!x! is \verb!false!, activation of either
+version of the statement is a checked runtime error, the handling of
+which is determined by the implementation.  The implementation may use
+the argument \verb!y! to determine how to handle the error; \verb!y!
+may be used to generate an error message or for any other purpose.
+If \verb!x! is \verb!true!, the implementation is permitted, but not
+required, to not evaluate \verb!y!.
+
+\subsection{String from integer}
+\begin{tabular}{l}
+  \verb!string  (Integer -x, -y) : string! \\
+\end{tabular}
+
+If \verb!x! is any integer and \verb!y! is in the range \verb!2..36!,
+\verb!string(x, y)! converts the number \verb!x! to an ASCII string
+representation in the base \verb!y!, where the digits are drawn from the
+set \verb!0..9,a..z!.
+
+\subsection{Random numbers}
+\begin{tabular}{l}
+  \verb!random  (Integer -x) : int(x)! \\
+\end{tabular}
+
+If \verb!x! is a nonnegative integer, \verb!random(x)! evaluates to
+a number whose \verb!x! least-significant bits are randomly chosen to
+be \verb!0! or \verb!1!.  \verb!random(0)! evaluates to \verb!0!.
+Activating \verb!random(x)! with \verb!x! a negative number is a checked
+runtime error.
+
+\subsection{Timing functions}
+\begin{tabular}{l}
+  \verb!simtime   () : int! \\
+  \verb!walltime  () : int! \\
+\end{tabular}
+
+\verb!simtime! and \verb!walltime! are timing functions.
+\verb!simtime()! returns an integer that increases at some rate with
+respect to the execution of the system of processes.  Repeated calls
+to \verb!simtime! are not required to be strictly increasing but are
+guaranteed to be nondecreasing as long as the calls are occuring within
+the same CSP process.  An implementation is permitted to violate this
+requirement if the calls to \verb!simtime! occur in different CSP processes.
+
+\verb!walltime()! returns an integer that increases at a nominal rate
+of one billion per second of real time, with some unspecified
+granularity.  Its offset to TAI (Temps Atomique International,
+International Atomic Time) is unspecified but should be constant at
+least across a single execution of a system of CSP processes.
+
+The implementation will provide a function 
+
+\begin{tabular}{l}
+  \verb!time   () : int! \\
+\end{tabular}
+
+that is related to \verb!simtime! and \verb!walltime! in some
+implementation-dependent way.
+
+\subsection{Wait}
+\begin{tabular}{l}
+  \verb!wait (Integer -x)! \\
+\end{tabular}
+
+A process's calling \verb!wait! pauses the execution of that process
+for a given amount of simulation time.
+
+
+
+
+\subsection{File input}
+
+An implementation will provide a rudimentary interface for file input.
+
+\begin{tabular}{l}
+  \verb!readHexInts   (string -path; Integer -n, +data[]) : int! \\
+\end{tabular}
+
+\verb!readHexInts(path,n,data)! reads at most \verb!n! integers from a
+file in the local filesystem that can be reached through the path
+\verb!path!, using local system conventions for naming, filesystem
+links, access rights, etc.  These integers are expected to be provided
+in ASCII hexadecimal notation (without a \verb!0x! or any other
+prefix) within this file.  \verb!//! line comments are respected
+within this file: if the strong \verb!//! appears in the file, any
+text from, and including, \verb!//! to the end of that line is
+ignored.
+
+It is a checked runtime error for the referenced file to contain anything
+other than ASCII hexadecimal data and proper line comments.
+
+\subsection{Miscellaneous required functions}
+
+The implementation will provide the following required functions.
+
+\begin{tabular}{l}
+  \verb!min   (Integer -x, -y) : int! \\
+  \verb!max   (Integer -x, -y) : int! \\
+\end{tabular}
+
+\verb!min(x,y)! returns the value of the less positive of the two arguments \verb!x! and \verb!y!; \verb!max(x,y)! returns the value of the more positive of the two arguments \verb!x! and \verb!y!.
+
+\begin{tabular}{l}
+  \verb!b2i   (bool -x) : int(1)! \\
+\end{tabular}
+
+\verb!b2i(x)! returns 1 if \verb!x! is equal to \verb!true! and 0 if \verb!x! is equal to \verb!false!.
+
+\begin{tabular}{l}
+  \verb!abs   (Integer -x) : int! \\
+\end{tabular}
+
+\verb!abs(x)! returns the value of \verb!x! if \verb!x! is greater than or
+equal to zero; \verb!-x! otherwise.
+
+\begin{tabular}{l}
+  \verb!choose   (bool -x; Integer -y, -z) : int! \\
+\end{tabular}
+
+\verb!choose(x, y, z)! returns \verb!y! if \verb!x! is equal to
+\verb!true! and \verb!z! otherwise; \verb!choose! adheres to the
+normal function-call rules; in particular, all three actuals are
+always evaluated.
+
+\begin{tabular}{l}
+  \verb!log2   (Integer -x) : int! \\
+  \verb!log4   (Integer -x) : int! \\
+\end{tabular}
+
+\verb!log2(x)! returns the number of binary digits required to represent
+any number in the range \verb!0..abs(x - 1)!.  If \verb!x! is positive,
+this is equal to the mathematical expression $\lceil \log_2 \verb!x! \rceil$;
+if \verb!x! is negative, it is equal to $\lceil \log_2 (\verb!-x - 1!) \rceil$.
+
+\verb!log4(x)! returns the number of quaternary digits required to represent
+any number in the range \verb!0..abs(x - 1)!.  If \verb!x! is positive,
+this is equal to the mathematical expression $\lceil \log_4 \verb!x! \rceil$;
+if \verb!x! is negative, it is equal to $\lceil \log_4 (\verb!-x - 1!) \rceil$.
+
+
+\subsection{Reset function}\label{sec:resetfunction}
+
+The proper procedure \verb!resetNodes! may be declared within a CSP program.
+If it is present, \verb!resetNodes()! will be called before the CSP program
+begins execution.  Writing initialization within \verb!resetNodes!
+allows the implementation to determine that nodes have been reset
+properly (see section~\ref{sec:nodeport}).
+
+\begin{tabular}{l}
+  \verb!resetNodes ()! \\
+\end{tabular}
+
+
+
+
+
+
+\begin{thebibliography}{99}
+
+\bibitem{spwm3}{G.~Nelson, ed.  {\it Systems Programming with
+    Modula-3.}  Prentice-Hall Series in Innovative Technology.
+  Prentice-Hall, 1991.}
+
+\bibitem{Martin1981}{
+  A. J. Martin.  An axiomatic definition of synchronization primitives.
+  Acta Informatica {\bf 16}, 1981, pp.~219--235.}
+
+\bibitem{Martin1985}{
+  A. J. Martin.  The probe: An addition to communication primitives.
+  Information Processing Letters {\bf 20}, 1985, pp.~125--130.}
+
+\bibitem{Martin1986}{
+A. J. Martin.  Compiling communicating processes into
+delay-insensitive VLSI circuits.  Distributed Computing 1, 1986.}
+
+\bibitem{Martin1991}{
+A. J. Martin.  Synthesis of Asynchronous VLSI Circuits.  Caltech Computer Science Technical Report CS-TR-93-28.  California Institute of Technology, 1991.}
+
+\bibitem{Dijkstra1975a}{
+E. W. Dijkstra.  Guarded Commands, Nondeterminacy, and Formal
+Derivation of Programs.  1975.}
+
+\bibitem{Dijkstra1975b}{
+E. W. Dijkstra.  A Discipline of Programming.  1975.}
+
+\bibitem{Hoare1974}{
+C. A. R. Hoare.  Monitors : An operating system structuring concept.
+CACM 17(10), 1974.}
+
+\bibitem{Hoare1978}{
+C. A. R. Hoare.  Communicating sequential processes.  CACM 21(8), 1978.}
+
+\bibitem{Pike2009}{
+  R. Pike et al.  The Go Programming Language.  2009.}
+
+\bibitem{Kahn}{G.~Kahn.  The semantics of a simple language for parallel processing.  Information Processing {\bf 74}.  North-Holland, 1974.}
+
+\bibitem{Mutex}{E.~W.~Dijkstra.  Solution of a problem in concurrent programming control.  {\it CACM,} {\bf 8}(9), p.~559, 1965.}
+
+\bibitem{euclid}{Euclid. {\it The Thirteen Books of the Elements,}
+  (\textgreek{Στοιχεῖα}), 
+  vol.~2, Book~VII.  Translated by Sir~Thomas Heath.  Second edition,
+  unabridged.  Dover Publications, 1956.  Reprint of edition by
+  Cambridge University Press, 1908.}
+  
+\
+\end{thebibliography}
+
+\chapter{Example Programs}
+\label{app:examples}
+
+We look at some concrete example programs.  As CSP is not a complete
+language once ports, channels, and nodes are involved, the example
+programs will be in a notation we can call CAST-CSP; in other words,
+we will look at CSP programs enclosed inside the CAST language (see
+section~\ref{sec:cast}).
+
+\section{Single-process programs}
+
+\subsection{The simplest program}
+\begin{Verbatim}[samepage=true]
+define SKIP()()
+{
+  csp {
+    skip
+  }
+}
+\end{Verbatim}
+
+
+\subsection{Hello, world}
+
+Obligatory ``hello, world'' program.
+
+\begin{Verbatim}[samepage=true]
+define HELLOWORLD()()
+{
+  csp {
+    print("hello, world!")
+  }
+}
+\end{Verbatim}
+
+\newpage
+\subsection{The Algorithm}
+
+Euclid's algorithm.\cite{euclid}
+
+\begin{Verbatim}[samepage=true]
+define EUCLID(int A; int B)()
+{
+  csp {
+    x = A;
+    y = B;
+
+    *[  x > y -> x = x - y
+     [] x < y -> y = y - x
+     ];
+
+    print ("gcd(" + A + "," + B + ") = " + x)
+  }
+}
+\end{Verbatim}
+
+
+\newpage
+\section{Multi-process programs}
+
+\subsubsection{Simple incrementer}
+A first process \verb!P0! sending an ever-increasing integer
+over a channel of width \verb!WIDTH! bits to a second process \verb!P1!, which
+prints them to the terminal.
+
+
+\begin{Verbatim}[samepage=true]
+define P0(int WIDTH)(bd(WIDTH) +R)
+{
+
+  csp {
+    int x;
+    *[ R!x; x++ ]
+  }
+}
+
+define P1(int WIDTH)(bd(WIDTH) -L)
+{
+  csp {
+    *[ L?x ; print(x) ]
+  }
+}
+
+define P0P1(int WIDTH)()
+{
+  subcells {
+    bd(WIDTH) c;
+    P0(WIDTH) p0(c);
+    P1(WIDTH) p1(c);
+  }
+}
+\end{Verbatim}
+
+Here \verb!bd(WIDTH)! represents a bundled-data channel of width
+\verb!WIDTH! bits, one of the many possible hardware realizations of a CSP
+\verb!WIDTH!-width channel.
+
+\newpage
+\subsection{A bigger example: the Collatz conjecture}
+
+\subsubsection{Common definitions}
+\begin{Verbatim}[]
+int W        = 61; // 2^62 < (2 ^ 61 - 1) * 3 + 1  < 2^63
+                   // we need an extra bit for the sign bit
+
+int STATUSW  = 128 + 2 * W + (W + 1); 
+
+define common attributes {
+  csp {
+    
+    structure longest_so_far =
+      (
+       int(W) num;
+       int(W) length;
+       );
+
+    structure status =
+      (
+       bool     tok;
+       sint(W)  id;
+       int(128) ops;
+       longest_so_far l;
+       );
+
+    function fmtStatus(status -s) : string =
+      (
+       fmtStatus =
+       "{id=" + s::id +
+       " tok=" + s::tok +
+       " len=" + s::ops +
+       " num=" + s::l::num  +
+       " length=" + s::l::length +
+       "}"
+      );
+    
+    function sendStatus(bool -tok; int -id, -len, -num, -steps) =
+      (
+       status s;
+       s::tok       = tok;
+       s::id        = id;
+       s::l::length = len;
+       s::l::num    = num;
+       s::ops       = steps;
+
+       int p = pack(s);
+
+       status t;
+       unpack(t, p);
+
+       STATUS!(p);
+       steps = 0;
+       );
+
+    function even(int -n) : bool = ( even = ((n & 1) == 0) );
+
+    function odd(int -n) : bool =  ( odd = ~even(n) );
+
+  }
+} 
+\end{Verbatim}
+
+\subsubsection{Collatz worker}
+\begin{Verbatim}[]
+define WORKER (int NWORKERS) (bd(W) -STRT; bd(STATUSW) +STATUS) <+ common
+{
+  csp {
+
+    bool assert_inrange=false;
+    
+    int(W-log2(NWORKERS)) i;
+    int(W) steps  = 0;
+    int(W) maxlen = 0;
+
+    int(W/2) id;
+    
+    STRT?id;
+    print ("id = " + id);
+    
+    *[int(W) idx = i * NWORKERS + id; // this is the index of the odd number
+      int(W) num = 2 * idx + 1;       // this is the actual number we shall work on
+      int(W) len = 0;
+      int    snum = num;
+      int    newval;
+      
+      // do the Collatz loop
+      *[ num != 1 ->
+         [  odd(num)  -> newval = 3 * num + 1
+         [] even(num) -> newval = num / 2
+         ];
+         num = newval;
+
+         #[ assert_inrange -> assert(num == newval, "overflow!") ];
+         
+         len++
+       ]
+      ;
+      assert(num == 1);
+      steps += len;
+      
+     #[  len > maxlen ->
+         maxlen = len;
+         sendStatus(false, id, len, snum, steps);
+         steps = 0
+      ];
+      
+     #[ (i % 1000 == 0)    ->
+        sendStatus(true, id, 0, 0, steps);
+        steps = 0;
+
+        int dummy;
+        STRT?dummy;
+      ];
+      i++
+    ]
+    }
+}
+\end{Verbatim}
+
+\subsubsection{Collatz manager}
+\begin{Verbatim}[]
+int Billion = 1000**3;
+int printstep = 4;
+
+define MANAGER(int NWORKERS)(bd(W) +STRT; bd(STATUSW) -STATUS) <+ common
+{
+  csp {
+      
+    int ops;
+
+    int(W) bigiter=0;
+    int(log2(NWORKERS)) outstanding;
+    STRT!0; outstanding = NWORKERS; bigiter++;
+    
+    status save;
+
+    int start = walltime();
+    int last  = start; // last time for a print
+    
+    *[ STATUS?x;
+          
+       status s;
+       bool doprint = false;
+
+       unpack(s,x);
+
+       #[ s::tok -> // a return token from the STRT
+         outstanding--;
+         #[ outstanding == 0 ->
+            // restart workers once all tokens have been collected
+            print("phase " + bigiter + " complete, re-launching...");
+            STRT!bigiter ; outstanding=NWORKERS ; bigiter++
+          ];
+       ];
+
+       #[ s::l::num != save::l::num -> save = s ; doprint = true ];
+       
+       ops += s::ops;
+
+       int now       = walltime();
+       int runtime   = now - start;
+       int runtime_s = runtime / Billion + 1;
+
+       doprint |= (now > (lastprint + printstep * Billion));
+       
+       #[ doprint ->
+
+          print("num = " + save::l::num + " ; chain = " + save::l::length + 
+          " : total steps = " + ops + " wall = " + runtime_s +
+          " ksteps/s = " + (ops/runtime_s/1000));
+
+          lastprint = now
+       ]
+       
+     ]
+  }
+}
+\end{Verbatim}
+
+\subsubsection{Start tree}
+\begin{Verbatim}[samepage=true]
+define STARTSPLIT(int level)(bd(W) -L, +R[0..1]) <+ common
+{
+  csp {
+    *[ L?i; R[0]!i, R[1]!(i + 2**level) ]
+  }
+}
+
+define STARTBUFF()(bd(W) -L, +R) <+ common
+{
+  subcells { L = R; }  // this makes the workers start a bit out of phase
+}
+
+define START_TREE(int level, N)(bd(W) -L, +R[0..N-1]) <+ common
+// level is the level of the output of the tree
+{
+  [ N==1 -> subcells { STARTBUFF b(L, R[0]); } ]
+      [ N==2 -> subcells { STARTSPLIT(level) s(L, R); } ]
+    [ N > 2 ->
+      subcells {
+        bd(W) X[0..(N+1)/2 - 1];
+        <i : 0.. N / 2 - 1 : STARTSPLIT(level)
+           s[i](X[i], {R[2*i], R[2*i + 1]}); >
+           
+        START_TREE(level + 1, (N+1)/2) tree(L, X);
+
+        <i: N/2 .. (N+1)/2 - 1 : STARTBUFF b[i](X[i],R[2*i]);>
+      }
+    ]
+}
+\end{Verbatim}
+
+\subsubsection{Status tree}
+\begin{Verbatim}[]
+define merge_attr attributes <+ common
+{
+  csp {
+    function recv(int -which; status +-s) =
+      (
+       int oldops = s::ops;
+       int oldlen = s::l::length;
+       
+       L[which]?xs;
+       unpack(s, xs);
+       s::l::length  = max(oldlen, s::l::length);
+       s::ops       += oldops;
+       );
+
+    function checksend(status +-os, +-s) =
+      (
+       #[ (os::l::length != s::l::length) || s::tok ->
+             R!s; s::ops = 0; os = s;
+        ]
+       );
+  }
+}
+
+define SMERGE()(bd(STATUSW) -L[0..1], +R) <+ merge_attr
+{
+  csp {
+    status s;
+    
+    *[
+      status os = s;
+      [#L[0] -> recv(0, s)
+      :#L[1] -> recv(1, s)
+      ];
+      checksend(os, s);
+     ]
+  }
+}
+
+define STATUS_TREE(int N)(bd(STATUSW) -L[0..N-1], +R)  <+ common
+{
+  [ N == 1 -> subcells { L[0] = R; } ]
+  [ N == 2 -> subcells { SMERGE m(L, R); } ]
+  [ N > 2  ->
+      subcells {
+        bd(STATUSW) X[0..(N+1)/2 - 1];
+        <i : 0.. N / 2 - 1 : SMERGE m[i]({L[2*i], L[2*i + 1]}, X[i]); >
+        STATUS_TREE((N+1)/2) tree(X, R);
+
+        <i: N/2 .. (N+1)/2 - 1 : L[2*i] = X[i];>
+    }
+  ]
+}
+\end{Verbatim}
+
+\subsubsection{Putting it all together}
+\begin{Verbatim}[samepage=true]
+define COLLATZ(int NWORKERS_ARG)()  <+ common
+{
+  int NWORKERS;
+  [ NWORKERS_ARG > 0 -> NWORKERS = NWORKERS_ARG; ]
+  [ NWORKERS_ARG < 0 -> NWORKERS = -NWORKERS_ARG; ]
+    
+  subcells {
+    bd(W) S, STRT[0..NWORKERS-1];
+    bd(STATUSW) WSTATUS[0..NWORKERS-1], STATUS;
+    MANAGER(NWORKERS) mgr(S, STATUS);
+    START_TREE(0, NWORKERS) start_tree(S, STRT);
+
+    [ NWORKERS_ARG > 0 ->
+      <i:0..NWORKERS-1: WORKER(NWORKERS) wrkr[i](STRT[i], WSTATUS[i]);>]
+
+    STATUS_TREE(NWORKERS) status_tree(WSTATUS, STATUS);
+  }
+}
+\end{Verbatim}
+
+\newpage
+\subsection{Four-phase handshaking in nodes}
+Normally, the four-phase protocol would be implemented inside the channel
+types, so the processes could use the rendezvous.  Here, we do it explicitly,
+so as to exercise the node type.
+
+\begin{verbatim}
+define S()(node -ri, +ro)
+{
+  csp {
+    function resetNodes() = (ro-);
+
+    *[ [ri]; ro+; [~ri]; ro- ]
+  }
+}
+
+define T()(node +-li, +-lo)
+{
+  csp {
+    function resetNodes() = (lo-);
+    *[ lo+; [li]; print(li); lo-; [~li]; print(li) ]
+  }
+}
+
+define FOURPHASE()()
+{
+  subcells {
+    node d, a;
+
+    S() s(a, d);
+    T() t(d, a);
+  }
+}
+\end{verbatim}
+
+
+\newpage
+\subsection{Dijkstra's solution to the mutual exclusion problem}
+Dijkstra's generalization of Dekker's algorithm for mutual exclusion\cite{Mutex}.
+Applied to two processes since assignments to node arrays in CSP are
+non-atomic.
+
+\begin{verbatim}
+int N = 2;
+define COMPUTER(int i)(node b[0..N-1], c[0..N-1], k, busy)
+{
+  csp {
+    function resetNodes() = (b[i]+, c[i]+, k+, busy-);
+    
+    bool Li0 = true;
+    bool Li1 = false;
+    
+    *[ Li0 -> b[i] = false;
+       Li0-, Li1+
+
+     [] Li1 ->
+       wait(random(4));
+       print ("Li1 k=" + k);
+       
+      [ b2i(k) != i ->
+        c[i] = true;
+        #[ b[b2i(k)] -> k = i && i ]
+      [] else ->
+         c[i] = false;
+         bool fail = false;
+        <;j:N: #[ j != i & ~c[j] -> fail = true]> ;
+
+        #[ ~fail ->
+           print ("enter critical section " + i);
+           assert(~busy);
+           busy+;
+           wait(random(4));
+           busy-;
+           print ("leave critical section " + i);
+           c[i] = true; b[i] = true;
+           print ("enter non-critical section " + i);
+           wait(random(4));
+           print ("leave non-critical section " + i);
+           Li0+, Li1- 
+         ]
+        ]
+      ]
+   }
+}
+\end{verbatim}
+\newpage
+\begin{verbatim}
+define DIJKSTRA()()
+{
+  subcells {
+    node b[0..N-1], c[0..N-1], k, busy;
+
+    COMPUTER(0) c0(b, c, k, busy);
+    COMPUTER(1) c1(b, c, k, busy);
+  }
+}
+\end{verbatim}
+
+
+\appendix
+
+\chapter{Syntax}
+
+\section{CSP Lexer}
+\include{dist/CspLexer}
+
+\section{CSP Parser}
+\include{dist/CspParser}
+
+\section{CAST Lexer}
+\include{dist/CastTwoLexer}
+
+\section{CAST Parser}
+\include{dist/CastTwoParser}
+
+\section{CAST Tree Parser}
+\include{dist/CastTwoTreeParser}
+
+
+% ========================================
+% INDEX (optional)
+% ========================================
+% \printindex
+
+
+\end{document}

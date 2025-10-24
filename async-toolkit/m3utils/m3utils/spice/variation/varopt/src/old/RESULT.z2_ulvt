@@ -1,0 +1,22 @@
+start:
+BaseEval : q = 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
+running : nbjob run --target zsc3_normal --class 4C --mode interactive /nfs/site/disks/zsc3_fon_fe_0001/mnystroe/m3utils/spice/variation/varspice/AMD64_LINUX/vary -single -thresh ulvt -z 2 -T ../../varosc/src/circuit.sp -r run_2_ulvt/000000 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
+Ran command output was Your job has been queued (JobID 4682072817231461, Class 4C, Queue zsc3_normal, Slot /XCC/LBM/RTL)
+3.5164022e-9
+
+
+
+Minimize : 0 iters, 3681 funcc; f = -3.942549602634463e-9; NEWUOAs terminates because the first-order optimality is approximately achieved.
+0 0 0 0 0 0 0 0 0 0 0 0.125 0 0 0 0 -0.015625 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1.75 0 5.0001220703125 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+
+
+======
+
+new FO3
+
+Ran command output was Your job has been queued (JobID 6362476041887682, Class SLES12, Queue zsc9_normal, Slot /de/blk/fe)
+3.3098667e-9
+
+WARNING: DefSubspace returns an empty basis
+Minimize : 0 iters, 3681 funcc; f = -3.862995974323396e-9; NEWUOAs terminates because the first-order optimality is approximately achieved.
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.0078125 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.03125 1.75 0 5 0 0 0 0 -0.001953125 0 0 0.0625 0 0 0 0 0 0 0 0 0.125 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 

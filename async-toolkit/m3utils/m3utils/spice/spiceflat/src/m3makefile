@@ -1,0 +1,23 @@
+import ("libm3")
+import ("cit_util")
+import ("spicelib")
+import ("m3readline")
+
+Table("TextTextSet", "Text", "TextSet")
+
+Module ("TextCard")
+Array_sort ("TextCard", "TextCard")
+
+Module ("SpiceInstance")
+
+MkSet("SpiceInstance", "SpiceInstance")
+MkSetDef("SpiceInstance", "SpiceInstance")
+Table("SpiceInstanceRef", "SpiceInstance", "Refany")
+
+Table("TextSpiceInstanceSet", "Text", "SpiceInstanceSet")
+
+Module ("FlatUI")
+
+Module ("SpiceFlat")
+
+library ("spiceflat")

@@ -1,0 +1,10 @@
+/* $Id$ */
+
+import ("regresslib")
+import ("htmltable")
+import ("cit_util")
+
+implementation("Main")
+module("GCSite")
+
+program("htmltable")

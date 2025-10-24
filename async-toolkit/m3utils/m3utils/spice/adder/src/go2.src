@@ -1,0 +1,70 @@
+set style data linesp
+
+set xlabel "E/[fJ]"
+set ylabel "phi/[K * Hz/m^2]"
+
+unset title
+unset label
+
+low=27
+high=45
+lowf=400e6
+hif=2.5e9
+
+unset logscale y
+
+unset label
+
+load "graphs0p0/p1278_3_tt_ulvt_adder_dyn_hspice_i0s_85_0_0_default_fd_eflabels.src"
+load "graphs0p0/p1278_3_tt_ulvt_adder_dyn_hspice_i0m_85_0_0_default_fd_eflabels.src"
+load "graphs9p0/p1278_3_tt_ulvt_adder_dyn_hspice_i0s_85_9_0_default_fd_eflabels.src"
+load "graphs9p0/p1278_3_tt_ulvt_adder_dyn_hspice_i0m_85_9_0_default_fd_eflabels.src"
+
+
+plot [low:][lowf:] \
+"graphs0p0/p1278_3_tt_ulvt_adder_dyn_hspice_i0s_85_0_0_default_fd.dat"\
+title "i0s 0 sigma",\
+"graphs0p0/p1278_3_tt_ulvt_adder_dyn_hspice_i0m_85_0_0_default_fd.dat"\
+title "i0m 0 sigma",\
+"graphs9p0/p1278_3_tt_ulvt_adder_dyn_hspice_i0s_85_9_0_default_fd.dat"\
+title "i0s 9 sigma",\
+"graphs9p0/p1278_3_tt_ulvt_adder_dyn_hspice_i0m_85_9_0_default_fd.dat"\
+title "i0m 9 sigma"
+
+set term png size 900,600
+set output "adder_ulvt_85_0_9_sigma_fd.png"
+replot
+set term qt
+replot
+quit
+
+######################################################################
+
+
+set xlabel "E/[fJ]"
+set ylabel "f/[Hz]"
+
+unset label
+
+load "graphs0p0/p1278_3_tt_ulvt_adder_dyn_hspice_i0s_85_0_0_default_eflabels.src"
+load "graphs0p0/p1278_3_tt_ulvt_adder_dyn_hspice_i0m_85_0_0_default_eflabels.src"
+load "graphs9p0/p1278_3_tt_ulvt_adder_dyn_hspice_i0s_85_9_0_default_eflabels.src"
+load "graphs9p0/p1278_3_tt_ulvt_adder_dyn_hspice_i0m_85_9_0_default_eflabels.src"
+
+
+plot [low:high][lowf:hif] \
+"graphs0p0/p1278_3_tt_ulvt_adder_dyn_hspice_i0s_85_0_0_default.dat"\
+title "i0s 0 sigma",\
+"graphs0p0/p1278_3_tt_ulvt_adder_dyn_hspice_i0m_85_0_0_default.dat"\
+title "i0m 0 sigma",\
+"graphs9p0/p1278_3_tt_ulvt_adder_dyn_hspice_i0s_85_9_0_default.dat"\
+title "i0s 9 sigma",\
+"graphs9p0/p1278_3_tt_ulvt_adder_dyn_hspice_i0m_85_9_0_default.dat"\
+title "i0m 9 sigma"
+
+set term png size 900,600
+set output "adder_ulvt_85_0_9_sigma.png"
+replot
+set term qt
+replot
+#quit

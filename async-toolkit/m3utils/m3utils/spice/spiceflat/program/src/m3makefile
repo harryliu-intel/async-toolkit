@@ -1,0 +1,9 @@
+import ("libm3")
+import ("parseparams")
+import ("spicelib")
+import ("spiceflat")
+import ("m3readline")
+
+implementation ("Main")
+
+program ("spiceflat")

@@ -1,0 +1,27 @@
+************************************************************************************
+
+.SUBCKT INV I O VDD VSS
+M_0 VSS I O VSS nch_lvt15_mac l=150.0n nfin=20 m=8
+M_1 VDD I O VDD pch_lvt15_mac l=150.0n nfin=20 m=8
+.ENDS INV
+
+.SUBCKT INVX2 I0 I1 O0 O1  VDD VSS
+M_0 VSS I0 O0 VSS nch_lvt15_mac l=150.0n nfin=20 m=8
+M_1 VDD I0 O0 VDD pch_lvt15_mac l=150.0n nfin=20 m=8
+M_2 VSS I1 O1 VSS nch_lvt15_mac l=150.0n nfin=20 m=8
+M_3 VDD I1 O1 VDD pch_lvt15_mac l=150.0n nfin=20 m=8
+.ENDS INVX2
+
+.SUBCKT NAND2 I0 I1 O VDD VSS
+M_0 VSS I0 INT VSS nch_lvt15_mac l=150.0n nfin=20 m=8
+M_1 INT I1 O VSS nch_lvt15_mac l=150.0n nfin=20 m=8
+M_2 VDD I0 O VDD pch_lvt15_mac l=150.0n nfin=20 m=8
+M_3 VDD I1 O VDD pch_lvt15_mac l=150.0n nfin=20 m=8
+.ENDS NAND2
+
+.SUBCKT NOR2 I0 I1 O VDD VSS
+M_0 VSS I0 O VSS nch_lvt15_mac l=150.0n nfin=20 m=8
+M_1 VSS I1 O VSS nch_lvt15_mac l=150.0n nfin=20 m=8
+M_2 VDD I0 INT VDD pch_lvt15_mac l=150.0n nfin=20 m=8
+M_3 INT I1 O VDD pch_lvt15_mac l=150.0n nfin=20 m=8
+.ENDS NOR2

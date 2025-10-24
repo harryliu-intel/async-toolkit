@@ -1,0 +1,297 @@
+module math;
+
+define P()()
+{
+  csp {
+
+  int x = 0xc0edbabe;
+
+  print ("x = " + hex(x));
+
+  x = x << 4;
+
+  print ("x = " + hex(x));
+
+  x = -x;
+
+  print ("x = " + hex(x));
+
+  x = x >> 4;
+
+  print ("x = " + hex(x));
+
+  x = x >> 1024;
+
+  print ("x = " + hex(x));
+
+
+  x = -0xc0edbabe;
+
+  print ("x = " + hex(x));
+
+  <i:0..32:
+    sint(64) y = x >> i;
+    int (64) z = x >> i;
+    print ("x >> " + i + " = " + hex(x >> i));
+  
+    print ("y     = " + hex(y));
+    print ("z     = " + hex(z))
+   >
+
+  }
+
+}
+
+
+define Q()()
+{
+  csp {
+  function f(int -a, -b) =
+    (
+    print (" " + a + " / " + b + " = " + ( a/ b));
+    print ("-" + a + " / " + b + " = " + (-a/ b));
+    print (" " + a + " /-" + b + " = " + ( a/-b));
+    print ("-" + a + " /-" + b + " = " + (-a/-b));
+
+    print (" " + a + " % " + b + " = " + ( a% b));
+    print ("-" + a + " % " + b + " = " + (-a% b));
+    print (" " + a + " %-" + b + " = " + ( a%-b));
+    print ("-" + a + " %-" + b + " = " + (-a%-b));
+
+    print (" " + a + " ** " + b + " = " + (  a** b));
+    print ("-" + a + " ** " + b + " = " + ((-a)** b)); 
+    print (" " + a + " **-" + b + " = " + (  a**-b));
+    print ("-" + a + " **-" + b + " = " + ((-a)**-b));
+
+     );
+
+    
+    f(1,3);
+    f(7,3);
+    f(9,3);
+    f(9,2);
+    f(9,303);
+    f(9,302);
+    f(0,0);
+    f(1,0);
+    f(0,1);
+    f(2,0);
+    f(2,1);
+    f(2,2);
+    f(1,1);
+  }
+}
+    
+define SHIFT()()
+  {
+  csp {
+  function f(int -a, -b) =
+    (
+    print (" " + a + " << " + b + " = " + ( a<< b));
+    print ("-" + a + " << " + b + " = " + (-a<< b));
+    print (" " + a + " <<-" + b + " = " + ( a<<-b));
+    print ("-" + a + " <<-" + b + " = " + (-a<<-b));
+
+    print (" " + a + " >> " + b + " = " + ( a>> b));
+    print ("-" + a + " >> " + b + " = " + (-a>> b));
+    print (" " + a + " >>-" + b + " = " + ( a>>-b));
+    print ("-" + a + " >>-" + b + " = " + (-a>>-b));
+
+     );
+
+    
+    f(1,3);
+    f(7,3);
+    f(9,3);
+    f(9,2);
+    f(9,303);
+    f(9,302);
+    f(0,0);
+    f(1,0);
+    f(0,1);
+    f(2,1);
+    f(2,2);
+    f(1,1);
+  }
+}
+    
+
+define LOG2()()
+{
+  csp {
+    x = log2(4);
+
+    print("" + x);
+  }
+}
+
+define A()()
+{
+  csp {
+    int(32) x;
+    x = 0xc0edbabe;
+    x++;
+
+    print("x = " + x)
+  }
+}
+      
+define A12()()
+{
+  csp {
+    int(32) x;
+    x = 12;
+    x++;
+
+    print("x = " + x)
+  }
+}
+
+define AA12()()
+{
+  csp {
+    int(32) x;
+    x = 12;
+    t = x;
+    x = t + 1;
+
+    print("x = " + x)
+  }
+}
+      
+
+define A0()()
+{
+  csp {
+    int(32) x;
+
+    x++;
+
+    print("x = " + x)
+  }
+}
+
+define A00()()
+{
+  csp {
+    int(32) x;
+
+
+    print("x = " + x)
+  }
+}
+      
+
+    
+define P00()()
+{
+  csp {
+    print(0**0);
+  }
+}
+
+
+define WIDE()(bd(64) -L)
+{
+  csp {
+    L?x ; print(x)
+  }
+}
+
+define NARROWR()(bd(32) -L)
+{
+  csp {
+    L?x ;
+    //x++;
+    y = x + 12;
+    print("y = " + y)
+  }
+}
+
+define NARROWS()(bd(32) +R)
+{
+  csp {
+    R!12
+  }
+}
+
+define NARROWSYS()()
+{
+  subcells {
+    bd(32) c;
+    NARROWS s(c);
+    NARROWR r(c);
+  }
+}
+
+define OVERFLOW()()
+{
+  csp {
+    function f(int(4) -+z) =
+    (
+     z++;
+     print("z = " + z);
+     );
+  
+    int(4) x;
+    x = 14;
+    f(x);
+    f(x);
+  }
+}
+
+define SOVERFLOW()()
+{
+  csp {
+    function f(sint(4) -+z) =
+    (
+     z++;
+     print("z = " + z);
+     );
+  
+    sint(4) x;
+    x = 6;
+    f(x);
+    f(x);
+    f(x);
+  }
+}
+    
+define XW(int W)()
+{
+  csp {
+    int(W) x;
+    x = 2**W-1;
+    print(x); // all ones
+    x++;
+    print(x); // zero
+    x = -3;
+    print(x); // ....1101
+
+    sint(W) y;
+    y = 2**W-1;
+    print(y); // -1
+    y++;
+    print(y); // 0
+    y = -3;
+    print(y); // -3
+  }
+}
+
+define RANDOM()()
+{
+  csp {
+    print(random(1));
+
+    x = random(8);
+
+    print(x);
+    
+    y = random(128);
+
+    print(y);
+
+    print(random(255));
+
+  }
+}

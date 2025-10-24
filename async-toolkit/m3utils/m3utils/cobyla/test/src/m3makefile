@@ -1,0 +1,9 @@
+import ("libm3")
+import ("cit_util")
+import ("matrix")
+import ("minimize")
+import ("cobyla")
+
+implementation("Main")
+program ("testcobyla")
+

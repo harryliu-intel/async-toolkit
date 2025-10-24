@@ -1,0 +1,11 @@
+module bits;
+
+define A()()
+{
+  csp {
+    x = 0xc0edbabe;
+    y = 12;
+    print("x{y} = " + x{2*y:y})
+  }
+}
+        

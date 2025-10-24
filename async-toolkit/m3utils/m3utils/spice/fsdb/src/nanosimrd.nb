@@ -1,0 +1,5 @@
+#!/bin/sh
+# NBQSLOT s/b set in env
+# NBPOOL s/b set in env
+
+nbjob run --mode interactive ${M3UTILS}/spice/fsdb/src/nanosimrd $*

@@ -1,0 +1,94 @@
+import ("libm3")
+import ("cit_util")
+import ("parseparams")
+import ("tracelib")
+import ("mscheme")
+import ("schemagraph")
+import ("modula3scheme")
+import ("sstubgen")
+import ("newuoa")
+import ("cobyla")
+import ("minimize")
+import ("normaldev")
+
+Interface ("OptVar")
+Sequence ("OptVar", "OptVar")
+Interface ("OptCallback")
+Interface ("StatComponent")
+
+Module ("LineProblem")
+Sequence ("LineProblem", "LineProblem")
+
+KeyPair ("LRVectorLR", "LRVector", "LongrealType")
+KeyPair ("LRVector", "LRVector", "LRVector")
+
+Table ("LRVectorLRPairText", "LRVectorLRPair", "Text")
+Table ("LRVectorPairText", "LRVectorPair", "Text")
+Module ("LineMinimizer")
+
+Array_sort("LineProblem", "LineProblem")
+
+Module ("StatFits")
+Interface ("Likelihood")
+Module ("StatFitsCmp")
+Sequence("StatFits", "StatFits")
+Array_sort("StatFits", "StatFits")
+
+Module("SurfaceRep")
+
+%Module ("PointMetric")
+Array_sort("PointMetricLR", "PointMetricLR")
+Sequence("PointMetricLR", "PointMetricLR")
+Array_sort("PointMetricLRVector", "PointMetricLRVector")
+Sequence("PointMetricLRVector", "PointMetricLRVector")
+
+Module ("GenOptUtils")
+
+Interface ("ResponseModel")
+Sequence ("ResponseModel", "ResponseModel")
+
+%Module ("MultiEval")
+%Interface ("MultiEvalResult")
+%Interface ("MultiEvalClass")
+
+Generic_interface("MultiEval")
+Generic_interface("MultiEvalResult")
+Generic_implementation("MultiEval")
+
+Generic_interface("PointMetric")
+Generic_implementation("PointMetric")
+
+Generic_interface("PointEvaluator")
+Generic_implementation("PointEvaluator")
+
+template("multieval")
+
+MultiEval("LR",       "LRScalarField", "MELRType"      , "LongRealSeq")
+MultiEval("LRVector", "LRVectorField", "MELRVectorType", "LRVectorSeq")
+
+Module ("MELRType")
+Module ("MELRVectorType")
+
+%Module ("PointEvaluator")
+
+Module ("PointResult")
+Sequence ("PointResult","PointResult")
+
+Module("WLRVector")
+Sequence("WLRVector", "WLRVector")
+
+Table("LRVectorMR" , "LRVector", "MultiEvalResultLR")
+Table("LRVectorMRV", "LRVector", "MultiEvalResultLRVector")
+
+Module ("GenOpt")
+
+Module("GenOptEnv")
+
+Sequence ("LRVector", "LRVector")
+
+Module ("VectorUtils")
+
+Module ("Scatter")
+
+library ("genoptlib")
+

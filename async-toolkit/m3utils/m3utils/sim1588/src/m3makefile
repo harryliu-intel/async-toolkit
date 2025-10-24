@@ -1,0 +1,10 @@
+import ("libm3")
+import ("cit_util")
+
+module         ("Clock")
+interface      ("ClockSpec")
+interface      ("Tyme")
+module         ("Euclid")
+implementation ("P1588")
+
+program ("sim1588")

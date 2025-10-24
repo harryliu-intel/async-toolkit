@@ -1,0 +1,3 @@
+MODULE TestMpz EXPORTS Main;
+
+BEGIN END TestMpz.

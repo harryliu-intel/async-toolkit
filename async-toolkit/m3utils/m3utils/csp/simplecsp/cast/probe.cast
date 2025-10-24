@@ -1,0 +1,8 @@
+module probe;
+
+define P()(bd(32) -L)
+{
+  csp {
+    print(true && #L)
+      }
+}

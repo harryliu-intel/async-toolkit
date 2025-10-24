@@ -1,0 +1,10 @@
+import ("libm3")
+import ("cit_util")
+import ("parseparams")
+import ("spicelib")
+
+sequence("LongRealPair", "LongRealPair")
+
+implementation ("Main")
+
+program ("prsgen")

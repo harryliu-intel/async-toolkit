@@ -1,0 +1,42 @@
+import ("libm3")
+import ("parseparams")
+import ("cit_util")
+import ("tracelib")
+
+Interface ("TechConfig")
+Interface ("TechProcess")
+
+Interface ("N5TechProcess")
+Interface ("N3TechProcess")
+Interface ("N3ETechProcess")
+
+Interface ("P1276p4TechProcess")
+Interface ("P1276p4_g1m_TechProcess") % this is the 4nm lib in the 3nm proc
+Interface ("P1276p4_aml1_TechProcess") % Andrews extracted 2-fin
+Interface ("P1276p4_aml2_TechProcess") % Andrews extracted 2-fin
+Interface ("P1278p3TechProcess")
+Interface ("P1278p3_i0m_TechProcess")
+
+Interface ("TechTechs")
+
+%Module ("Watchdog")
+Module ("TechKill")
+Module ("TechConvert")
+Module ("TechMeasure")
+
+Module ("TechSetup")
+Interface ("TechTemplate")
+
+Module ("TechLookup")
+Module ("TechCleanup")
+
+/* actual program follows */
+
+Module ("TechSimulate")
+Interface ("TechProgress")
+Module ("SimWatcher")
+
+%implementation ("Main")
+
+library ("techc")
+%program ("techc")

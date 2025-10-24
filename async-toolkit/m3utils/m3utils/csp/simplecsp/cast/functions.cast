@@ -1,0 +1,230 @@
+module functions;
+
+define common attributes {
+  csp {
+    //  function f(int -x; int +-y) : int = // error to declare here
+    //    (y *= x;
+    //     print("wrong " + y);
+    //     f = 0
+    //     );
+
+    //  function  g(int -x; int +-y) : int = // error to declare here
+    //    (y += x;
+    //     print("wrong " + y);
+    //     g = 0
+    //     );
+
+  function  h(int -x; int +-y) : int =
+    (y += x;
+     print("right " + y);
+     h = 1
+     );
+  }
+}
+
+define P0(int WIDTH)(bd(WIDTH) +R) <+ common
+{
+  csp {
+    //    function f(int -x; int +-y) : int = // error to declare here
+    //    (y ^= x;
+    //     print("wrong " + y);
+    //     f = 0
+    //     );
+
+    function g(int -x; int +-y) : int =
+    (y -= x;
+     print("right " + y);
+     g = 1
+     );
+  }
+}
+
+define P00(int X)  <: P0(2 * X)
+{
+  csp {
+    function printjunk() : int =
+      (
+       print ("JUNKJUNKJUNK!");
+       printjunk = 0
+       );
+    
+    function f(int -x=printjunk(); int +-y=345) : int =
+    (y &= x;
+     print("f right " + y);
+     f = 1
+     );
+
+    function ff(int -x) : int =
+      (ff = 2 * x
+       );
+
+    int x, y = ff(2);
+    string q;
+    x = 131531;
+    y = 234655;
+    int z = ff(x + y);
+    zzz = X;
+    bool b;
+
+    [ true ->
+
+      int k, l, m = 12;
+      ud_x = ff(44);
+
+      ud_x++;
+
+      [  ud_x > 5 -> ud_y = ud_x * 10 + zzz; print("ud_y = " + ud_y)
+      [] ud_x < 5 -> int d_z = ud_x * 2047; print("d_z = " + d_z)
+      [] ud_x == 5 -> int d_z = ud_x / 2; print("d_z = " + d_z)
+      ];
+
+      print (" f = " + f(x, y));
+      print (" g = " + g(x, y));
+      print (" h = " + h(x, y));
+      print (" q = " + q);
+      print (" b = " + b);
+      R!0
+    ]
+    
+  }
+}
+
+define P1(int W)(bd(W) -L)
+{
+  csp {
+    *[ L?x; print (x) ]
+      }
+}
+define SYSTEM()()
+{
+  subcells {
+    bd(64) c;
+
+    P00(32)p00(c);
+    P1(64) p1(c);
+  }
+}
+
+define Q()()
+{
+  csp {
+    function f(int -x) : int =
+      (f = 2 * x;
+       print(f)
+       );
+
+    int y, z;
+    y = 1;
+    z = f(y)
+    }
+}
+
+define R()()
+{
+  csp {
+    function f(int -x) : int =
+      (f = 2 * x;
+       print(f)
+       );
+
+    int y, z;
+    y = 1;
+    /* eval */ f(y) 
+    }
+}
+
+
+
+define S()()
+{
+  csp {
+    function f(int -+x) =
+      (x = 2 * x;
+       );
+
+    int y;
+    y = 1;
+    f(y);
+  }
+}
+
+define T()()
+{
+  csp {
+    function f(int -+x) =
+      (x *= 2;
+       );
+
+    int y;
+    y = 1;
+    f(y);
+  }
+}
+
+define U()()
+{
+  csp {
+    function f(int -x) : int =
+      (f = 2 * x;
+       print(f)
+       );
+
+    int z, y = 1;
+
+    z = f(y);
+
+    z = f(y);
+
+    z = f(y + y);
+    
+    z = f(f(y));
+
+    z = f(f(f(f(f(f(y))))));
+  }
+}
+
+define V()()
+{
+  csp {
+    function f(int -x) : int =
+      (f = 2 * x;
+       print(f)
+       );
+
+    int z, y = 1;
+
+    z = f(f(y));
+  }
+}
+
+define W()()
+{
+  csp {
+    function h(int -x) : int =
+      (h = 2 * x;
+       print(h)
+       );
+
+    function g(int -x) : int =
+      (g = h(x);
+       print(g)
+       );
+
+    function f(int -x) : int =
+      (f = h(g(x)+g(h(x)));
+       print(f)
+       );
+
+    int z, y = 1;
+
+    z = f(2*f(f(y)+f(y)));
+  }
+}
+
+define X()()
+{
+  csp {
+    int(32) x = keep_msb_bit(12, 11);
+  }
+}
+ 

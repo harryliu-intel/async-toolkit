@@ -1,0 +1,218 @@
+module loops;
+
+int WIDTH=32;
+int N=4;
+
+define G(int i)(bd(WIDTH) +R)
+{
+  csp {
+    int j = i;
+    *[ R!i ; i++ ]
+  }
+}
+
+define P(int n)(bd(WIDTH) -L[0..n-1])
+{
+  csp {
+    *[int x[0..n-1];
+      bool z;
+
+      z = 3*3 < 8;
+
+      int zz;
+
+      zz = 3*3 ** 8;
+      
+      zz++;
+      zz/=3;
+      zz*=3;
+
+      print("zz=" + zz);
+      
+      print("start loop");
+      
+      <,i:n: L[i]?x[i] ; print("i = " + i + ", x = " + x[i])> ;
+
+      <;i:0..n-1: L[i]?x[i] ; print("i = " + i + ", x = " + x[i])> ;
+
+      print("and now for something different...");
+      
+      <,i:x[<^j:n:L[j]?> % n] % n: L[i]?x[i] ; print("i = " + i + ", x = " + x[i])> ;
+
+      sum = <+i:n: x[i]> ;
+
+      xor = <^i:n: x[i]> ;
+      
+      print("sum = " + sum);
+      print("xor = " + xor);
+
+      ]
+  }
+}
+
+define SYSTEM()()
+{
+  subcells {
+    bd(WIDTH) c[0..N - 1];
+    
+    <i:N: G(i) g[i](c[i]);>
+    P(N)    p(c);
+  }
+
+}
+
+define Q()()
+{
+  csp {
+    bool x;
+    int n;
+
+    n = 5;
+    
+    x = (<+i:n:i>)>10;
+  }
+}
+
+
+define R()()
+{
+  csp {
+    function f(int -x) : int =
+      (f = 2 * x
+       );
+    
+    int y = 1;
+    int z;
+
+    <;i:10:print(i)>;
+
+    z = f(<+i:10: i + i>);
+
+    [ true -> bool i; i = z < 3 ];
+    print (z);
+
+    z{3} = 1;
+    print(z);
+    
+  }
+}
+
+define S()()
+{
+  csp {
+    function f(int -x) : int =
+      (f = x;
+       );
+
+    int y[3];
+    int z;
+
+    y[f(0)] = 1;
+    
+    z{y[f(y[0])]} = 1;
+  }
+}
+
+define T()()
+{
+  csp {
+    int(32)   x;
+    int(1024) y;
+
+    int       z;
+
+    z = x;
+
+    print (x);
+    print (y);
+    print (z);
+  }
+}
+    
+define U()()
+{
+  csp {
+    <,i:10:print("" + i)> // will turn into a sequential loop
+  }
+}
+
+define UU()()
+{
+  csp {
+    int N = 1000;
+    <,i:N .. N + 10:print("" + i)> // will turn into a sequential loop
+  }
+}
+
+define UUU()()
+{
+  csp {
+    int N = 999;
+    N++;
+    <,i:1000 .. N + 10:print("" + i)> // will turn into a sequential loop
+  }
+}
+
+define V()()
+{
+  csp {
+    *[ skip ]
+  }
+}
+
+define W()(bd(32) -L)
+{
+  csp {
+    <,i:2:print("" + L? + i)> // will NOT turn into a sequential loop
+  }
+}
+
+define WW()(bd(32) -L)
+{
+  csp {
+    <,i:3: L?y ; <,j:4:print("" + L? + i + 17 * j)> > // will NOT turn into a sequential loop
+  }
+}
+define WWW()(bd(32) -L)
+{
+  csp {
+    int(38) z;
+    
+    <, k : 10: <,i:3: L?y ; z += y; <,j:4:print("" + L? + i + 17 * j)> > >
+  }
+}
+
+define Wseq()(bd(32) -L)
+{
+  csp {
+    <;i:10:print("" + L?)> // will turn into a sequential loop
+  }
+}
+
+define X()()
+{
+  csp {
+    print("hello, world!")
+  }
+}
+
+define Y()(bd(32) -L)
+{
+  csp {
+    <,i:3: <,j:4: L?x >; wait(0); print(x) >
+  }
+}
+
+define Z()(bd(32) -L)
+{
+  csp {
+    <,i:3: <,j:4: L?x >; wait(1234); print(x) >
+  }
+}
+
+define ZZ()(bd(32) -L0, -L1)
+{
+  csp {
+    L0?x, L1?y; print (x + y)
+  }
+}

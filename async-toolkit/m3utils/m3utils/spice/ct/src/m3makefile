@@ -1,0 +1,16 @@
+import ("libm3")
+import ("cit_util")
+import ("parseparams")
+import ("spicelib")
+import ("ctlib")
+
+implementation ("ConvertTrace")
+
+resource ("../doc/ct.txt")
+bundle ("CtDocBundle")
+
+interface ("Conversion")
+
+list ("Conversion", "Conversion")
+
+program ("ct")

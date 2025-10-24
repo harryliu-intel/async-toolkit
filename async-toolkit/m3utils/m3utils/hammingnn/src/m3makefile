@@ -1,0 +1,19 @@
+import ("libm3")
+import ("cit_util")
+import ("set")
+
+Module ("Hnn")
+Interface ("HnnSettings")
+Interface ("HnnPrivate")
+
+Module ("HnnHrep")
+Sequence ("HnnHrep", "HnnHrep")
+
+Table ("HnnHrepRef", "HnnHrep", "Refany")
+Table ("HnnHrepCard", "HnnHrep", "Cardinal")
+MkSet("HnnHrepRef","HnnHrep")
+
+Sequence ("CardPair", "CardPair")
+Array_sort ("CardPair", "CardPair")
+
+library ("hammingnn")

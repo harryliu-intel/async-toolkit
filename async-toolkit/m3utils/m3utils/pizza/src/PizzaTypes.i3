@@ -1,0 +1,18 @@
+INTERFACE PizzaTypes;
+
+TYPE
+  Base = LONGREAL;
+  V3 = ARRAY [0..2] OF Base;
+  V4 = ARRAY [0..3] OF Base;
+  M3 = ARRAY [0..2] OF V3;
+  M4 = ARRAY [0..3] OF V4;
+
+PROCEDURE V3V4(READONLY v3 : V3; VAR v4 : V4);
+PROCEDURE V4V3(READONLY v4 : V4; VAR v3 : V3);
+PROCEDURE M3M4(READONLY m3 : M3; VAR m4 : M4);
+PROCEDURE M4M3(READONLY m4 : M4; VAR m3 : M3);
+
+CONST Brand = "PizzaTypes";
+
+END PizzaTypes.
+  

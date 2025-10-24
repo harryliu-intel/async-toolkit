@@ -1,0 +1,8 @@
+INTERFACE V01X;
+
+TYPE
+  T = { V0, V1, VX };
+
+CONST Brand = "V01X";
+
+END V01X.

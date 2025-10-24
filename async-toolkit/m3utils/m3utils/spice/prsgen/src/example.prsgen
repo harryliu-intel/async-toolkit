@@ -1,0 +1,70 @@
+# digital stimulus file
+
+# length of data set to be generated
+param length 50e-9
+
+# param statement.  params: rise, fall
+# param name value
+param rise    100e-12
+param fall    100e-12
+param period 1000e-12
+param duty      0.50
+
+# clock statement
+# rise, fall, period, duty must be pre-defined
+clock clk 
+
+# doffset is how long after the clock to trigger the data changes
+# measurement is relative to the half-crossing
+param doffset 600e-12 
+
+# params can also be stated on cmd line
+
+# params can be changed as desired and apply to following statements
+param rise 150e-12
+param fall 150e-12
+
+
+# signal is held if nothing else is stated
+drive reset_n       001
+
+# repeat group of four:
+# are arrays always little endian?
+drive addr[0:9]     0     0       0     10101(0101)
+drive bigaddr[0:9]  =10_0 =10_511 =10_0 (=16_1ff =0 =0)
+drive data[0]       00010001(0001)
+
+# make wen a bit later as a demonstration
+param doffset 650e-12
+drive wen           00010101(0101)
+
+drive data[1:39]    0
+
+#spaces are OK:
+drive ren           0 0 0 
+
+drive ken           0
+drive mask[0:39]    0
+
+# sign extension...
+drive lhit[0:511]   1
+
+drive cfg[0:11]     =0=16_cf9
+
+
+probe addr[0:6]
+probe cfg[0:11]
+
+# ranges dont have to go from 0, nor do they have to go up
+# down is OK (means same thing, though, unlike in Verilog)
+probe test_node[0:3][10:1]
+probe lotsa_dimensions[0:3][0:2][11:13][109:111]
+
+# why % here?
+probe islice64_40/chunk_btm/arr[0]/tbit0[31]%a[0]
+
+initial islice64_40/chunk_btm/arr[0]/tbit0[0]:x0[0] 1
+initial islice64_40/chunk_btm/arr[0]/tbit0[0]:x0[1] 0
+initial islice64_40/chunk_btm/arr[0]/tbit0[0]:x1[0] 0
+initial islice64_40/chunk_btm/arr[0]/tbit0[0]:x1[1] 1
+

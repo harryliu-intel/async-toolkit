@@ -1,0 +1,524 @@
+MODULE Circuit;
+IMPORT PRS;
+IMPORT Fmt, Name, Directives;
+IMPORT NameNameSetTbl;
+IMPORT TransitionList;
+IMPORT ArithP, ArithR;
+FROM ArithP IMPORT GetX, GetY, NewPair;
+FROM ArithR IMPORT NewFunc, NewLiteral;
+FROM ArithOps IMPORT Plus;
+FROM Directives IMPORT Data, DelayBlock;
+IMPORT Debug, NodePair;
+IMPORT Dsim;
+IMPORT TimingModel;
+IMPORT RefList;
+IMPORT NameSet, NameSetDef;
+IMPORT NameRefTbl;
+IMPORT AtomRefTbl;
+IMPORT Atom;
+IMPORT Arith;
+IMPORT ArithRep;
+FROM ArithRep IMPORT XY;
+IMPORT NodePairLongRealPairTbl;
+IMPORT LongRealPair;
+
+TYPE P = ArithP.T; R = ArithR.T;
+
+REVEAL
+  CktTimingModel = PubTimingModel BRANDED OBJECT
+    mu : MUTEX;
+    tbl : Directives.Table;
+    arbPairs : Pair := NIL;
+    aliasTbl : NameNameSetTbl.T;
+
+    directiveNodes : NameSet.T;
+    
+    arbcnt := -1;
+    symtab : AtomRefTbl.T;
+    varcounter := 0;
+  METHODS
+    lookupAliases(of : Name.T) : NameSet.T := LookupAliases;
+    (* get all the aliases of name *)
+
+  OVERRIDES
+    init                   := InitCTM;
+    transitionTime         := TransitionTime;
+    addArbitraryDelay      := AddArbitraryDelay;
+    getVar                 := GetVar;
+  END;
+
+PROCEDURE GetVar(tm : CktTimingModel; nam : Atom.T) : Arith.T =
+  VAR
+    r : REFANY := NIL;
+  BEGIN
+    IF nam = NIL THEN 
+      Debug.Error("NIL passed to Circuit.GetVar") ;
+      <*ASSERT FALSE*>
+    END;
+    EVAL tm.symtab.get(nam,r); RETURN r
+  END GetVar;
+
+PROCEDURE LookupAliases(tm : CktTimingModel; of : Name.T) : NameSet.T =
+  VAR set : NameSet.T;
+  BEGIN
+    WITH hadIt = tm.aliasTbl.get(of,set) DO 
+      IF hadIt THEN 
+        RETURN set
+      ELSE
+        Debug.Error("Circuit.LookupAliases: No aliases for \"" & 
+          Name.Format(of) & "\""); 
+        <*ASSERT FALSE*>
+      END
+    END
+  END LookupAliases;
+
+<*NOWARN*>PROCEDURE FormatSet(set : NameSet.T) : TEXT =
+  VAR res := "{ "; 
+      n : Name.T;
+  BEGIN
+    WITH iter = set.iterate() DO
+      WHILE iter.next(n) DO res := res & Name.Format(n) & " " END
+    END; 
+    RETURN res & "}"
+  END FormatSet;
+
+PROCEDURE InitCTM(ctm      : CktTimingModel; 
+                  tbl      : Directives.Table;
+                  aliasTbl : NameNameSetTbl.T) : CktTimingModel =
+  BEGIN
+    ctm.mu := NEW(MUTEX);
+    ctm.aliasTbl := aliasTbl;
+    ctm.tbl := tbl;
+
+    ctm.symtab := NEW(AtomRefTbl.Default).init();
+
+    (* get all the names from directives.0 and stuff them in the 
+       directiveNodes auxiliary table *)
+
+    ctm.directiveNodes := NEW(NameSetDef.T).init();
+    WITH iter = ctm.tbl.iterate() DO
+      VAR np   : NodePair.T;
+          ref  : REFANY;
+      BEGIN
+        WHILE iter.next(np,ref) DO 
+          EVAL ctm.directiveNodes.insert(np.fanout) ;
+          EVAL ctm.directiveNodes.insert(np.fanin) 
+        END
+      END
+    END;
+
+    RETURN ctm
+  END InitCTM;
+
+TYPE Pair = OBJECT in, out : Name.T; nxt : Pair := NIL END;
+
+PROCEDURE AddArbitraryDelay(ctm : CktTimingModel;
+                            fanin, fanout : Name.T) =
+  BEGIN
+    ctm.arbPairs := NEW(Pair, in := fanin, out := fanout, nxt := ctm.arbPairs)
+  END AddArbitraryDelay;
+
+TYPE 
+  O = ArithR.F OBJECT 
+    v : LongRealPair.T;
+  OVERRIDES
+    eval     := EvalOR;
+    evalDmin := EvalOMin;
+    evalDmax := EvalOMax;
+  END;
+
+PROCEDURE EvalOR(o : O; <*UNUSED*>at : LONGREAL) : ArithR.R =
+  BEGIN
+    <*ASSERT o.v.k2 > o.v.k1*>
+    RETURN ArithR.NewRange( o.v.k1, o.v.k2 )
+  END EvalOR;
+
+PROCEDURE EvalOMin(o : O; <*UNUSED*>at : LONGREAL) : ArithR.R =
+  BEGIN
+    RETURN ArithR.NewConstant( o.v.k1 )
+  END EvalOMin;
+
+PROCEDURE EvalOMax(o : O; <*UNUSED*>at : LONGREAL) : ArithR.R =
+  BEGIN
+    RETURN ArithR.NewConstant( o.v.k2 )
+  END EvalOMax;
+
+PROCEDURE FmtLRP(x : LongRealPair.T) : TEXT =
+  BEGIN
+    RETURN Fmt.F("[%s,%s]", Fmt.LongReal(x.k1), Fmt.LongReal(x.k2))
+  END FmtLRP;
+
+
+TYPE F = ArithR.F OBJECT data : Directives.Interpolator END;
+
+PROCEDURE EvalSlew(f : F; at : LONGREAL) : ArithR.R =
+  BEGIN 
+    WITH d = Directives.Interpolate(f.data, at) DO
+      RETURN ArithR.NewRange ( d[Data.MinSlew], d[Data.MaxSlew] )
+    END
+  END EvalSlew;
+
+PROCEDURE EvalDelay(f : F; at : LONGREAL) : ArithR.R =
+  BEGIN 
+    WITH d = Directives.Interpolate(f.data, at) DO
+      RETURN ArithR.NewRange ( d[Data.MinDelay], d[Data.MaxDelay] )
+    END
+  END EvalDelay;
+
+(****************************************)
+
+PROCEDURE EvalDDelayMin(f : F; at : LONGREAL) : ArithR.R =
+  BEGIN
+    WITH d = Directives.InterpolateDeriv(f.data, at) DO
+      RETURN ArithR.NewConstant( d[Data.MinDelay] )
+    END
+  END EvalDDelayMin;
+
+PROCEDURE EvalDDelayMax(f : F; at : LONGREAL) : ArithR.R =
+  BEGIN
+    WITH d = Directives.InterpolateDeriv(f.data, at) DO
+      RETURN ArithR.NewConstant( d[Data.MaxDelay] )
+    END
+  END EvalDDelayMax;
+
+
+PROCEDURE EvalDSlewMin(f : F; at : LONGREAL) : ArithR.R =
+  BEGIN
+    WITH d = Directives.InterpolateDeriv(f.data, at) DO
+      RETURN ArithR.NewConstant( d[Data.MinSlew] )
+    END
+  END EvalDSlewMin;
+
+PROCEDURE EvalDSlewMax(f : F; at : LONGREAL) : ArithR.R =
+  BEGIN
+    WITH d = Directives.InterpolateDeriv(f.data, at) DO
+      RETURN ArithR.NewConstant( d[Data.MaxSlew] )
+    END
+  END EvalDSlewMax;
+
+CONST NoOverride = LongRealPair.T { FIRST(LONGREAL), LAST(LONGREAL) };
+
+
+PROCEDURE TimingP(tm            : CktTimingModel;
+                  inTrans       : P; 
+                  d             : DelayBlock;
+                  minMult       : LONGREAL;
+                  overrideDelay : LongRealPair.T) : P =
+  VAR
+    inTime := GetX(inTrans);
+    inSlew := GetY(inTrans);
+    interpolator := Directives.MakeInterpolator(d.data^, minMult);
+    delay : ArithR.R;
+  BEGIN
+    LOCK tm.mu DO
+      IF overrideDelay # NoOverride THEN
+        delay := NewFunc(NEW(O, v := overrideDelay), 
+                         inSlew, 
+                         "override(" & NodePair.Format(d.nodes) & "=" &
+                         FmtLRP(overrideDelay)& ")")
+      ELSE
+        delay := NewFunc(NEW(F, 
+                             data := interpolator,
+                             eval := EvalDelay,
+                             evalDmin := EvalDDelayMin,
+                             evalDmax := EvalDDelayMax), 
+                         inSlew,
+                         "delta(" & NodePair.Format(d.nodes) & ")");
+      END;
+
+    WITH 
+         slew   = NewFunc(NEW(F, 
+                              data := interpolator, 
+                              eval := EvalSlew,
+                              evalDmin := EvalDSlewMin,
+                              evalDmax := EvalDSlewMax),  
+                          inSlew,
+                          "sigma(" & NodePair.Format(d.nodes) & ")" ),
+
+         dNam = Atom.FromText("delay" & Fmt.Int(tm.varcounter)),
+         tNam = Atom.FromText("time" & Fmt.Int(tm.varcounter)),
+         sNam = Atom.FromText("slew" & Fmt.Int(tm.varcounter)),
+
+         delayRes = NewLiteral(dNam),
+         timeRes  = NewLiteral(tNam),
+         slewRes  = NewLiteral(sNam),
+
+         time   = Plus(inTime, delayRes)
+
+    DO
+
+      INC(tm.varcounter);
+
+      EVAL tm.symtab.put(tNam,time);
+      EVAL tm.symtab.put(sNam,slew);
+      EVAL tm.symtab.put(dNam,delay);
+
+      RETURN NewPair(timeRes, slewRes)
+    END
+    END
+  END TimingP;
+
+PROCEDURE CalcTrans(tm      : CktTimingModel;
+                    fanin   : Name.T;
+                    newIn   : BOOLEAN;
+                    fanout  : Name.T;
+                    newOut  : BOOLEAN;
+                    inTrans : P;
+                    minMult : LONGREAL) : P =
+  TYPE S = Dsim.Sense;
+  CONST Sense = ARRAY BOOLEAN OF S { S.Down, S.Up };
+  VAR d : DelayBlock;
+  BEGIN
+    VAR ptr := tm.arbPairs; BEGIN
+      WHILE ptr # NIL DO
+        IF ptr.in = fanin AND ptr.out = fanout THEN
+          INC(tm.arbcnt);
+          RETURN NewPair(Plus(GetX(inTrans),
+                              NewLiteral(Atom.FromText("arbitrary_"&Name.Format(fanout) & 
+                              "_"&Fmt.Int(tm.arbcnt)))),
+                         GetY(inTrans))
+        END;
+        ptr := ptr.nxt
+      END
+    END;
+
+    VAR 
+      p := NodePair.T { fanout, fanin, Sense[newOut], Sense[newIn] };
+      overrideDelay := NoOverride;
+    BEGIN
+(*
+      Debug.Out("CalcTrans: \"" & Name.Format(fanin) & "\" -> \""&
+        Name.Format(fanout) & "\" " & NodePair.Format(p));
+*)
+
+      IF overrideTbl.get(p, overrideDelay) THEN
+        Debug.Out("Circuit.CalcTrans: OVERRIDING !!!! FROM \"" &
+          Name.Format(fanin) & "\" -> \""&
+          Name.Format(fanout) & "\" : " & FmtLRP(overrideDelay))
+      END;
+
+      IF NOT FindMatchingDelay(tm, 
+                               fanout, fanin, 
+                               Sense[newOut], Sense[newIn],
+                               d) THEN
+        Debug.Error("No timing data for \"" & Name.Format(fanin) & "\" -> \""&
+          Name.Format(fanout) & "\"")
+      END;
+
+      RETURN TimingP(tm, inTrans, d, minMult, overrideDelay)
+    END
+  END CalcTrans;
+
+PROCEDURE FindMatchingDelay(tm                : CktTimingModel;
+                            out, in           : Name.T; 
+                            outSense, inSense : Dsim.Sense;
+                            VAR d             : DelayBlock) : BOOLEAN =
+  VAR inA, outA : Name.T;
+      r : REFANY;
+  BEGIN
+    (* look up aliases in alias table *)
+    WITH outAliases = tm.lookupAliases(out),
+         inAliases  = tm.lookupAliases(in),
+
+         knownNodes = tm.tbl.allNodes(),
+
+         outNames = knownNodes.intersection(outAliases),
+         inNames  = knownNodes.intersection(inAliases),
+
+         iIter = inNames.iterate() DO
+         
+      WHILE iIter.next(inA) DO
+        WITH oIter = outNames.iterate() DO
+          WHILE oIter.next(outA) DO
+            WITH np = NodePair.T { outA, inA, outSense, inSense } DO
+              IF tm.tbl.get(np,r) THEN
+                d := r; RETURN TRUE
+              END
+            END
+          END
+        END
+      END
+    END;
+    RETURN FALSE
+  END FindMatchingDelay;
+  
+
+PROCEDURE TransitionTime(tm       : CktTimingModel;
+                         of       : Name.T;
+                         newValue : BOOLEAN;
+                         fanins   : TransitionList.T;
+                         minMult  : LONGREAL) : ArithP.T =
+  VAR 
+    n := TransitionList.Length(fanins);
+    by  := NEW(REF ARRAY OF R, n);
+    val := NEW(REF ARRAY OF P, n);
+    i := 0;
+    p := fanins;
+  BEGIN
+    <*ASSERT n > 0 *>
+    WHILE p # NIL DO
+      by[i]  := ArithP.GetX(p.head.at);
+      val[i] := CalcTrans(tm,
+                          p.head.name, p.head.newValue, 
+                          of, newValue,
+                          p.head.at,
+                          minMult);
+      p := p.tail; INC(i)
+    END;
+
+    LOCK tm.mu DO
+      WITH pair = ArithP.SelectMin(by,val),
+           
+           time = NEW(ArithRep.RFromPair, p := pair, whch := XY.X),
+           slew = NEW(ArithRep.RFromPair, p := pair, whch := XY.Y),
+           
+           tNam = Atom.FromText("time" & Fmt.Int(tm.varcounter)),
+           sNam = Atom.FromText("slew" & Fmt.Int(tm.varcounter)),
+           
+           timeRes  = NewLiteral(tNam),
+           slewRes  = NewLiteral(sNam)    DO
+        
+        INC(tm.varcounter);
+        
+        EVAL tm.symtab.put(tNam,time);
+        EVAL tm.symtab.put(sNam,slew);
+        
+        RETURN NewPair(timeRes, slewRes)
+      END
+    END
+  END TransitionTime;
+
+PROCEDURE Build(types         : NameRefTbl.T;
+                define        : Dsim.Define;
+                instanceName  : Name.T;
+                tm            : TimingModel.T;
+                globalNames   : NameSet.T;
+                skipTargets   : NameSet.T;
+                canonicalizer : Canonicalizer) : PRS.T =
+
+  PROCEDURE Canon(n : Name.T) : Name.T =
+    BEGIN RETURN canonicalizer.canon(n) END Canon;
+
+  PROCEDURE DoDefine(iname : Name.T; def : Dsim.Define) =
+
+    PROCEDURE Rewrite(name : Name.T) : Name.T =
+      BEGIN
+        IF iname = NIL OR globalNames.member(name) THEN 
+          RETURN name
+        ELSE
+          RETURN Name.Append(iname,name)
+        END
+      END Rewrite;
+      
+    PROCEDURE CopyRule(rule : Dsim.Rule) : Dsim.Rule =
+      BEGIN
+        WITH tgt = Canon(Rewrite(rule.target)),
+             new = NEW(Dsim.Rule, 
+                       target := tgt,
+                       sense := rule.sense,
+                       attrs := rule.attrs,
+                       delay := rule.delay) DO
+          VAR cp := rule.conjuncts; BEGIN
+            WHILE cp # NIL DO
+              WITH oc = NARROW(cp.head, Dsim.Conjunct) DO
+                new.conjuncts := RefList.Cons(NEW(Dsim.Conjunct,
+                                                  input := Canon(Rewrite(oc.input)),
+                                                  sense := oc.sense),
+                                              new.conjuncts)
+              END;
+              cp := cp.tail
+            END
+          END;
+          RETURN new
+        END
+      END CopyRule;
+
+    PROCEDURE DoRules(dsimBody : Dsim.DsimBody) =
+      VAR
+        p   := dsimBody.rules;
+      BEGIN
+        WHILE p # NIL DO
+          WITH analogousRule = CopyRule(p.head) DO
+            IF NOT skipTargets.member(analogousRule.target) THEN
+              Debug.Out("DoRules: " & Dsim.FormatRule(analogousRule));
+              prs.rules := RefList.Cons(analogousRule, prs.rules)
+            END
+          END;
+          p := p.tail
+        END
+      END DoRules;
+      
+    PROCEDURE DoSubcells(define : Dsim.Define) =
+      VAR
+        p := define.decls;
+        r : REFANY;
+      BEGIN
+        WHILE p # NIL DO
+          WITH decl   = NARROW(p.head,Dsim.Decl),
+               hadIt  = types.get(decl.type,r),
+               subDef = NARROW(r,Dsim.Define) DO
+            
+            IF NOT hadIt THEN 
+              Debug.Error("Circuit.DoDefine: cant find type \"" & 
+                Name.Format(decl.type) & "\"") 
+            END;
+
+            (* aliases come from elsewhere... *)
+            DoDefine(Rewrite(decl.id), subDef)
+          END;
+          p := p.tail
+        END
+      END DoSubcells;
+      
+    BEGIN
+      Debug.Out("Circuit.Build.DoDefine: " & 
+        Name.Format(def.typeName) & " " & Name.Format(iname));
+      IF def.dsimBody # NIL THEN DoRules    (def.dsimBody) END;
+      DoSubcells (def) 
+    END DoDefine;
+
+  VAR
+    prs := NEW(PRS.T).init(tm);
+    n : Name.T;
+  BEGIN
+    DoDefine(instanceName,define);
+    WITH set  = ScanForNames(prs.rules),
+         iter = set.iterate()            DO
+      (* create PRS.Node data structures *)
+      WHILE iter.next(n) DO EVAL prs.node(n) END
+    END;
+    RETURN prs
+  END Build;
+
+PROCEDURE ScanForNames(rules : RefList.T) : NameSet.T =
+  VAR 
+    res := NEW(NameSetDef.T).init();
+    p := rules;
+
+  PROCEDURE ScanRule(r : Dsim.Rule) =
+    VAR c := r.conjuncts;
+    BEGIN
+      EVAL res.insert(r.target);
+      WHILE c # NIL DO
+        EVAL res.insert(NARROW(c.head,Dsim.Conjunct).input);
+        c := c.tail
+      END
+    END ScanRule;
+
+  BEGIN
+    WHILE p # NIL DO ScanRule(p.head); p := p.tail END;
+    RETURN res
+  END ScanForNames;
+
+VAR overrideTbl := NEW(NodePairLongRealPairTbl.Default).init();
+
+PROCEDURE AddOverride(p : NodePair.T; lo, hi : LONGREAL) =
+  BEGIN
+    WITH lrp =  LongRealPair.T { lo, hi } DO
+      Debug.Out("Circuit.AddOverride: " & NodePair.Format(p) & 
+        "=" & FmtLRP(lrp));
+      EVAL overrideTbl.put(p, lrp)
+    END
+  END AddOverride;
+
+BEGIN END Circuit.

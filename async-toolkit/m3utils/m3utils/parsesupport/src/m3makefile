@@ -1,0 +1,25 @@
+/* $Id: m3makefile,v 1.9 2009/04/26 08:44:35 mika Exp $ */
+
+import("libm3")
+import("cit_util")
+import("mscheme")
+import("schemesig")
+import("modula3scheme")
+import("parseparams")
+import("schemereadline")
+import("sstubgen")
+
+SchemeStubs("Text")
+SchemeStubs("Rd")
+SchemeStubs("Wr")
+SchemeStubs("FileWr")
+SchemeStubs("FileRd")
+SchemeStubs("CitTextUtils")
+SchemeStubs("Debug")
+SchemeStubs("FS")
+ExportSchemeStubs("parsesupport") 
+importSchemeStubs() 
+
+implementation("Main")
+
+program("parsesupport")

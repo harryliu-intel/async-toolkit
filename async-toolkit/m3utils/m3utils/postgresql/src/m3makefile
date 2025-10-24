@@ -1,0 +1,28 @@
+%
+% Copyright 1996, Critical Mass, Inc.  All rights reserved.
+% Updated for PostgreSQL v6.0 (970201) by Ernesto Rico-Schmidt
+% 06.02.1997
+%
+
+%
+% Where to find the C libraries:
+% link using -L/usr/local/postgresql-6.0/lib -lpq
+%
+
+if equal(TARGET, "AMD64_LINUX")
+	import_sys_lib("POSTGRES95")
+else
+	import_lib ("pq","/usr/local/lib")
+end
+
+import ("libm3")
+
+%
+Interface ("PQ")
+Interface ("PQtypes")
+Interface ("PQcomm")
+Interface ("PostgreSQL")
+Interface ("PGRES")
+
+%
+Library ("postgresql")

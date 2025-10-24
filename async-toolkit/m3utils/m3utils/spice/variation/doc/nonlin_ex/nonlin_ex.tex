@@ -1,0 +1,218 @@
+\documentclass{article}
+\usepackage{graphicx}
+\usepackage{epsf}
+
+\usepackage{floatflt}
+\usepackage{fancyhdr}
+\usepackage{array}
+
+\usepackage{sectsty}
+%\allsectionsfont{\mdseries\sffamily}
+\allsectionsfont{\mdseries\sc}
+
+\usepackage{caption}
+\captionsetup{margin=2pc,font=small,labelfont=bf}
+
+%%%%%%%%%%%%%%Mika's figure macro%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\def\listcaption_ins_epsfig#1#2#3#4{
+  \begin{figure}[!tbph!]
+  \bigskip
+  \begin{center}
+  \includegraphics[width=#1]{#2}
+  \end{center}
+  \caption[#4]{#3}\label{fig:#2}
+  \bigskip
+  \end{figure}
+}
+
+\def\ins_epsfig#1#2#3{
+  \begin{figure}[!tbph!]
+  \bigskip
+  \begin{center}
+  \includegraphics[width=#1]{#2}
+  \end{center}
+  \caption{#3}\label{fig:#2}
+  \bigskip
+  \end{figure}
+}
+
+\def\rotins_epsfig_listcaption#1#2#3#4#5{
+  \begin{figure}[!tbph!]
+  \bigskip
+  \begin{center}
+  \includegraphics[angle=#4,width=#1]{#2}
+  \end{center}
+  \caption[#5]{#3}\label{fig:#2}
+  \bigskip
+  \end{figure}
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\oddsidemargin=0.15in
+\evensidemargin=0.15in
+\topmargin=0.2in
+\textwidth=6.2truein
+
+
+\pagestyle{fancy}
+\lhead{\scriptsize\bfseries\sffamily DRAFT---INTEL CONFIDENTIAL---DRAFT}
+\chead{}\rhead{\thepage}
+\lfoot{}\cfoot{}\rfoot{}
+\renewcommand{\headrulewidth}{0pt}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\title{An Example in Statistics}
+\author{Mika Nystr\"om \\ {\tt mika.nystroem@intel.com} }
+
+\date{July 10, 2023}
+
+\begin{document}
+
+\maketitle
+\parindent=0pt
+\parskip=1.5ex
+
+\arraycolsep=1.4pt\def\arraystretch{1.5}
+
+\begin{abstract}
+Abstract.
+\end{abstract}
+
+\tableofcontents
+\listoffigures
+\listoftables
+
+\section{Background}
+
+Consider the following problem, which is related to an important problem in
+circuit design under manufacturing-process variability.
+
+Let it be given that two variables, let us call them $x_0$ and $x_1$, are i.i.d.\ normal with $\mu=0$ and $\sigma=1$, so
+\begin{equation}
+   \begin{array}{rl}
+    x_0 &~ N(0,1) \\
+    x_1 &~ N(0,1) \\
+           &= n_A   p_A - n_B   p_B + \mathcal{C}\quad .
+    \end{array}
+\end{equation}
+where we write $N(0,1)$ for the p.d.f.\ of the standard 0,1-normal
+distribution.
+
+If we now imagine that $x_0$ and $x_1$ represent some physical
+parameters of an electronic circuit that we are building in our fab,
+$x_0$ and $x_1$ will affect the performance of the circuit in some
+way.  Let us make this dependence fairly general and abstract, e.g.,
+let us write for the performance simply $q$ so that
+\begin{equation}
+q : {\bf R \cross R} \rightarrow {\bf R}   
+\end{equation}
+so we can write the performance as the scalar function $q(x_0,x_1)$.
+Without loss of generality, we require that lower values of $q$
+represent better (more desirable) performance characteristics.
+
+Let us make the following assumption on $q$: if we consider any
+circular region around the origin. the extrema of $q(x_0,x_1)$ over
+the region will be achieved on the boundary of the region.  This is
+likely to be the case in practice, in particular for the {\em
+  pessimum\/} (least desirable) value of $q$ over such a region.  Let us also
+assume that $q$ is at least continuous over the region.
+
+Beyond this we do not require much of $q$.  In particular, we do not
+require that $q$ be convergent (to a finite value) over the entire
+$x_0,x_1$ space, nor do we require that $q$ be differentiable.
+
+Our question is how to characterize the distribution of $q$ under the
+foregoing assumptions and distribution of $x_0$ and $x_1$.  Since
+$q(x_0.x-1)$ is not required to be convergent, it is likely that the
+mean of $q$ will also not converge.  However, metrics such as the
+mode, median, and $n$th percentile will likely converge and be useful
+for the practitioner.
+
+
+We will generally show how to compute the p.d.f.\ of $q$, $\phi_q(q)$
+or the corresponding c.d.f.\ $\Phi_q(q)$ where we have, as usual,
+\begin{equation}
+  \Phi_q(q_0) = \int_{-\infty}^{q_0} phi_q(x) \, dx \quad .
+\end{equation}
+
+\section{The Cumulative Distribution Function and the Maximum of Random Variables}
+
+The c.d.f.\ is of particular interest when $q$ represents a delay
+because in digital circuits a performance metric of much interest is the maximum
+over a number of delays, since clock speeds (or even asynchronous maximum
+operating speeds) are generally constrained by expressions of this form.
+
+We have that if $\Phi_{r_i}(x)$ is the c.d.f.\ of one random variable,
+and we have the c.d.f.s of a number of random variables $r_i$ where
+say $i \in { 0, 1, \ldots , M - 1}$ and the variable $s$ is the max
+over these $r_i$s so that
+\begin{equation}
+  s = \max ( r_0, r_1, \ldots r_{M-1} )
+\end{equation}
+then the c.d.f.\ of the maximum over these random variables is simply
+the product of the variables' individual c.d.f.s:
+\begin{equation}
+  \Phi_s(x) = \Pi_0^{M-1} \Phi_{r_i}(x) \quad .
+\end{equation}
+This justifies our concentrating our efforts on computing the
+c.d.f.\ of the distribution of $q$.
+
+\subsection{Example: median of equal distributions}
+
+Consider the restriction to $r_0, r_1, \ldots , r_{M-1} ~ \phi_r$, a single distribution with c.d.f.\ $\Phi_r$.  In this case,
+\begin{equation}
+
+  \max ( r_0, r_1, \ldots , r_{M-1}) ~ E
+\end{equation}
+where
+\begin{equation}
+  \Phi_E(x) = \Phi_r^M(x) \quad .
+\end{equation}
+Now consider the behavior of the median of $E$, $e^*$:
+\begin{equation}
+     \begin{array}{rl}
+       {1 \over 2} &= \Phi_E(e^*) \\
+       &= \Phi_r^M(e^*)
+     \end{array}
+\end{equation}
+and therefore we have
+\begin{equation}
+  \Phi_r(e^*) = {1 \over \sqrt^M{2}} \quad .
+\end{equation}
+
+For a concrete example, assume $\phi_r = N(0,1)$.  In this case we have
+\begin{equation}
+  e^* = \erf^{-1} \left( { 1 \over \sqrt^{M-2}{2} } - 1\right) \quad .
+  \end{equation}
+
+     
+
+\section{Approach and Formulation}
+
+We introduce the complement of the c.d.f.\, called the {\em survival function\} as
+  \begin{equation}
+   \begin{array}{rl}
+     S_q(x) &= 1 - \Phi_q(x) \\
+           &= 1 - P(q \le x) \\
+           &= P(q > x) \qquad .
+     \end{array}
+  \end{equation}
+  
+
+
+
+
+\begin{thebibliography}{99}
+
+\bibitem{newuoas}{Zaikun Zhang.  On derivative-free optimization methods (in Chinese).  Ph.D. thesis, Chinese Academy of Sciences. Beijing, China: 2012.}
+
+\bibitem{newuoas-http}{{\tt https://www.zhangzk.net/docs/talks/20160806-icnaao-newuoas.pdf}}
+
+\bibitem{newuoa}{M.~J.~D.~Powell.  The NEWUOA software for unconstrained optimization without derivatives.  In {\it Nonconvex Optimization and Its Applications\/} (book series), NOIA {\bf 83}.  Springer-Verlag, 2006.}
+
+\bibitem{brent}{R.~P.~Brent.  {\it Algorithms for Minimization Without Derivatives.} Prentice-Hall, 1972.}
+
+\end{thebibliography}
+
+
+\end{document}

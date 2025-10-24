@@ -1,0 +1,69 @@
+module demo;
+
+// cosimulate first.SYSTEM {csp,subcells}
+
+int WIDTH = 32;
+int N     = 2 * 1024;
+
+int XADD = 13;
+int XMUL = 16807;
+int XMOD = 2147483647;
+
+define func attributes {
+  csp {
+
+    function fz(int -x) : int =
+      (
+       y  = x + XADD;
+       fz = (y * XMUL) % XMOD;
+       );
+    
+  }
+}
+
+int MAXCNT=1000;
+
+define PROC(bool DOSTART)(bd(WIDTH) -L, +R) <+ func
+{
+
+  csp {
+   int(WIDTH) i;
+   int start;
+
+   [ DOSTART -> i=0; R!0; start = walltime() [] ~DOSTART -> skip ];
+   
+   *[ ~DOSTART || i < MAXCNT -> L?x ;
+
+      [ DOSTART -> print("i = " + i + " x = " + x); i++ [] ~DOSTART -> skip ];
+      
+      R!fz(x)
+      ];
+
+   #[ DOSTART ->
+        int stop = walltime();
+      print ("" + (stop - start)/1000/1000 + " milliseconds");
+      ]
+
+  }
+}
+
+
+define SYSTEM()()
+{
+  subcells {
+    bd(WIDTH) chan[0..N-1];
+  
+    <i:N: PROC(i == 0) p[i] (chan[i],chan[(i+1)%N]); >
+  } 
+}
+
+define SMALL()()
+{
+  int M = 3;
+  subcells {
+    bd(WIDTH) chan[0..M-1];
+  
+    <i:M: PROC(i == 0) p[i] (chan[i],chan[(i+1)%M]); >
+  } 
+}
+

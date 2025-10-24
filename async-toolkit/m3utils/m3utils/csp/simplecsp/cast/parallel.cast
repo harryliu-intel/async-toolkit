@@ -1,0 +1,48 @@
+module parallel;
+
+// cosimulate first.SYSTEM {csp,subcells}
+
+int WIDTH = 32;
+int N     = 4 * 1024;
+
+define PDRIVE()(bd(WIDTH) +R0, +R1, -L)
+{
+  csp {
+    int x;
+    *[ (R0!0, R1!1) ; L?x ; L?x ]
+  }
+}
+
+define PSELECT()(bd(WIDTH) -L0, -L1, +R)
+{
+
+   csp {
+     int i, x;
+     
+     *[[  #L0 -> L0?x
+        : #L1 -> L1?x
+       ];
+       #[ i % 10000 == 0 -> print ("i/10000 = " + i/10000 + " x = " + x) ];
+       i++;
+       R!x
+      ]
+   }
+}
+
+define SYSTEM()()
+{
+  subcells {
+    bd(WIDTH) c0, c1, cx;
+  
+    PDRIVE() pdrive(c0, c1, cx);
+    PSELECT() pselect(c0, c1, cx);
+  } 
+}
+
+define LOOPS()(bd(WIDTH) +R0, +R1)
+{
+  csp {
+    *[ R0!0 ] , *[ R1! 1 ]
+  }
+}
+  

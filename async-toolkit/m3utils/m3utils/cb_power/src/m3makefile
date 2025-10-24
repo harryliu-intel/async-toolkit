@@ -1,0 +1,9 @@
+
+import ("libm3")
+import ("cit_util")
+import ("parseparams")
+
+
+module ("CbSimple")
+implementation ("CbPower")
+program("cb_power")

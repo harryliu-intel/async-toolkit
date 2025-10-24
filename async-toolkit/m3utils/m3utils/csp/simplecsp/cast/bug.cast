@@ -1,0 +1,14 @@
+module bug;
+
+define SYSTEM()()
+{
+  csp {
+    *[ int u = -1;
+       int v = u;
+       
+       [ true -> print(u)
+       : true -> int u; print(u)
+       ]
+     ]
+  }
+}      

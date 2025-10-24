@@ -1,0 +1,86 @@
+import ("libm3")
+import ("cit_util")
+import ("parseparams")
+import ("spicelib")
+import ("m3readline")
+import ("spiceflat")
+
+Module ("SpiceAnalyze")
+implementation ("Main")
+Interface ("CktGraph")
+Module ("CktGraphDfs")
+
+Module ("CktElement")
+Module ("CktNode")
+List ("CktElement", "CktElement")
+List ("CktNode", "CktNode")
+Table ("TextNode", "Text", "CktNode")
+Table ("TextElement", "Text", "CktElement")
+
+Interface ("CktCell")
+Table ("TextCktCell", "Text", "CktCell")
+Sequence("CktNode", "CktNode")
+Sequence("CktElement", "CktElement")
+Sequence("CktElementSeq", "CktElementSeq")
+
+Table("CktNodeRef", "CktNode", "Refany")
+MkSet("CktNode", "CktNode")
+MkSetDef("CktNode", "CktNode")
+
+Table("CktElementRef", "CktElement", "Refany")
+MkSet("CktElement", "CktElement")
+MkSetDef("CktElement", "CktElement")
+
+Interface("NodeProperty")
+Module("NodePropertySet")
+
+Interface("ElementProperty")
+Module("ElementPropertySet")
+
+Generic_module("EnumSet")
+
+Module ("FetArray")
+
+/* Pic containers */
+Module ("Pic")
+Module ("PicArray")
+Module ("PicSegments")
+
+List("Pic", "Pic")
+Sequence ("Pic", "Pic")
+Sequence ("PicSeq", "PicSeq")
+
+/* Pic objects */
+Module ("PicPoint")
+Interface ("PicCoord")
+Module ("PicSegment")
+List ("PicSegment", "PicSegment")
+Module ("PicText")
+Module ("PicCircle")
+Module("PicOverlay")
+List("PicPoint", "PicPoint")
+List("PicCircle", "PicCircle")
+List("PicText", "PicText")
+
+/* SVG */
+Module ("SvgColor")
+
+/* Canvases */
+Interface ("Canvas")
+Module ("SvgCanvas")
+Module ("PicCanvas")
+Module ("XformCanvas")
+Interface ("CanvasXform")
+
+Interface ("SpiceGate")
+Sequence ("SpiceGate", "SpiceGate")
+
+Module ("SpiceDiagram")
+
+Module ("PicExtent")
+
+Module ("PicComponent")
+
+Module ("DrawElements")
+
+program ("spiceanalyze")

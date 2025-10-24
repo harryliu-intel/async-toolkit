@@ -1,0 +1,181 @@
+\documentclass[landscape]{slides}
+%\documentclass{slides}
+\usepackage{prs}
+\usepackage{epsf}
+\usepackage{amsmath}
+%\usepackage{graphicx}
+\advance\textheight by 1truein
+\setlength{\topmargin}{0in}
+\setlength{\headheight}{0in}
+\setlength{\headsep}{0in}
+\begin{document}
+\input slides
+\input prs
+%\input epsf
+%\input macros
+
+\begin{slide}
+\special{papersize=11in,8.5in}
+\thispagestyle{empty}
+\vspace{0\baselineskip}
+\large
+\centerline{Exhaustive RRC Schedule Configurator}
+\centerline{Mika Nystr\"om}
+\end{slide}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{slide}
+\slidetitle{RRC Schedule}
+
+\myitem{Order in which ingress ports and egress TXQs are polled}
+
+\myitem{A list of up to 512 explicit entries and one implied, naming ports}
+
+\myitem{Schedule run through at constant speed (one step per cycle)}
+
+{
+\epsfxsize=4truein
+$$\epsfbox{sched.eps}$$
+}
+\end{slide}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{slide}
+\slidetitle{Goals}
+
+\myitem{Must satisfy bandwidth requirement of ports}
+
+\myitem{Must satisfy various constraints emanating from design details}
+
+\myitem{Goal of this work: be able to generate schedule that satisfies any satisfiable constraints}
+
+\myitem{$\ldots$ at least in principle}
+
+\end{slide}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{slide}
+\slidetitle{Constraints}
+
+\myitem{Introduce {\tt ch}: ${\tt ch}\lbrack p,s \rbrack \leftrightarrow$ port {\tt p} serviced in schedule slot {$s$}}
+
+\myitem{Can now write constraints in this form, e.g., port {\tt p} not serviced more often than once every $K$ cycles:}
+
+\vskip-4ex
+\[ 
+\forall s: 0 \leq s \leq 511 :\big( \forall t: t < (s + K) \mod 513 : {\tt ch}[{\tt p},s] \Rightarrow \lnot {\tt ch}[{\tt p},t] \big)
+\]
+\vskip1ex
+\vskip2ex 
+
+\myitem{Represent {\tt ch} as array of BDDs and write constraints as BDD formulas (e.g., above formula turns into a doubly nested for loop on initialization)
+}
+
+\myitem{The constraints of the problem {\em plus\/} assertions that you get a complete solution}
+
+\myitem{Search space exhaustively: program goes in order of increasing schedule length $L$, then lexicographic order among all schedules of length $L$}
+
+\end{slide}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{slide}
+{
+\setlength{\baselineskip}{20pt}
+\vfil
+\begin{verbatim}
+PROCEDURE AssertNoSmallerGap(sp  : CARDINAL;
+                             gap : LONGREAL) =
+  BEGIN
+    FOR sl := 0 TO nslots-1 DO
+      FOR j := sl+1 TO sl + CEILING(gap)-1 DO
+        Assert(Implies(ch[sp,sl], Not(ch[sp,j MOD nslots])));
+      END
+    END
+  END AssertNoSmallerGap;
+\end{verbatim}
+\vfil
+}
+\end{slide}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{slide}
+\slidetitle{Optimizations}
+
+\myitem{Pre-calculate that a whole branch will not succeed: for instance, that no assignment of $N_p$ ports to $N_s$ slots can satisfy the given port speeds}
+
+\myitem{Database of assertions maintains links from BDD literals to assertion expressions (don't need to re-evaluate entire database for each update)}
+
+\myitem{Assertions are ``reduced'' so that there is at most one per dependency set}
+
+\myitem{Replace boolean representation with code that only searches those schedules that satisfies given constraint (more or less easy)}
+
+\end{slide}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{slide}
+\slidetitle{Example}
+
+\begin{verbatim}
+CLOCK        698.11e6 
+N            512     
+UNDERRUNMAX    2.0   
+MINPORTREP     4     
+DELTAGAPMAX    3     
+MINREPBITS   672.0   
+PORT 100.0e9
+PORT 100.0e9
+PORT 100.0e9
+PORT 100.0e9
+PORT  10.0e9
+\end{verbatim}
+
+\end{slide}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{slide}
+\slidetitle{Experiences}
+
+\myitem{Works well for simple examples$\ldots$}
+
+\myitem{Works well for some types of corner cases, very flexible}
+
+\myitem{Works less well for long schedules (slow ports)}
+
+\myitem{Still exponential and slow}
+
+\myitem{463 Gbps schedule took 3 days to generate}
+
+\myitem{BDDs are not ``industrial grade'' for this problem}
+
+\myitem{Lexicographically first schedule is not interesting}
+
+
+\myitem{Doesn't handle PhysPort, overconstrains jitter $>10G$}
+
+\end{slide}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{slide}
+\slidetitle{Recommendations/Conclusions}
+
+\myitem{Use when special flexibility req'd}
+
+\myitem{Use only for special cases, save schedule?}
+
+\myitem{If there is interest in having ``perfect'' configurator, possible program could be optimized (ditch BDDs)}
+
+
+\end{slide}
+
+
+
+\end{document}

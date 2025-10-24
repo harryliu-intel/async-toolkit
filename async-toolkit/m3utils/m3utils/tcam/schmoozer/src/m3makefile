@@ -1,0 +1,41 @@
+import ("libm3")
+import ("cit_util")
+import ("parseparams")
+import ("spicelib")
+import ("spicebuilderlib")
+import ("matrix")
+import ("minimize")
+import ("newuoa")
+
+table ("LRPairRef", "LongRealPair", "Refany")
+table ("LRListRef", "LRList", "Refany")
+
+module ("LRList")
+list ("LRList", "LRList")
+module ("LRSeq")
+list ("LRSeq", "LRSeq")
+table ("LRSeqRef", "LRSeq", "Refany")
+sequence("LRSeq", "LRSeq")
+
+interface ("XY")
+list("XY","XY")
+
+interface ("NbCommand")
+sequence ("NbCommand", "NbCommand")
+
+module ("Schmoozer")
+implementation ("SchmoozerSim")
+interface ("Schmooze")
+module ("DefParams")
+
+interface ("MeshNode")
+list ("MeshNode", "MeshNode")
+
+interface ("ThreadX")
+list ("Thread", "ThreadX")
+
+interface("SchmoozerResult")
+
+module ("ConstrainedSpace")
+
+program ("schmoozer")

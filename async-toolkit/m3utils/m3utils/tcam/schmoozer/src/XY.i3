@@ -1,0 +1,11 @@
+INTERFACE XY;
+IMPORT LongRealSeq AS P;
+
+TYPE
+  T = P.T;
+
+CONST Brand = "XY";
+
+CONST Equal : PROCEDURE(READONLY a, b : T) : BOOLEAN = NIL;
+
+END XY.

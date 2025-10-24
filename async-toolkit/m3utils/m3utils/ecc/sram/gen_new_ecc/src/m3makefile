@@ -1,0 +1,10 @@
+import ("libm3")
+import ("set")
+import ("cit_util")
+import ("parseparams")
+
+array_sort("Ref", "Refany")
+implementation ("Main")
+
+
+program("buildecc")

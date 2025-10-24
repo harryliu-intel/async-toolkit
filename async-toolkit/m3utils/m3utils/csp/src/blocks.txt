@@ -1,0 +1,215 @@
+Implementing blocks for the Fulcrum-CSP compiler
+================================================
+
+  mika.nystroem@intel.com
+  4/15/2025
+
+
+Classify statements as:
+
+Blocking statements Bi
+Non-blocking statements Ni
+
+Sequential compilation
+======================
+
+N0; B0; N1; B1...
+
+compile as
+
+N0; goto B0
+
+B0 ; N1; goto B1
+
+B1...
+
+
+Parallel compilation
+====================
+
+N0; N1, N2; N3; B...
+
+compile as
+
+N0; goto (N1, N2)
+
+N1; goto J0
+
+N2; goto J1
+
+join (J0,J1); N3; goto B
+
+B...
+
+
+Variable parallel composition
+=============================
+
+N0; <,i:M: N1> ; N2; B
+
+N0; goto (<i:M:N1(i)>)
+
+N1(i); goto Ji
+
+join (<i:M:Ji>); N2; goto B
+
+B...
+
+Note that the only variable that can be shared safely across
+concurrent blocks is the dummy.
+
+So, e.g., the CSP
+
+int x;
+
+<,i : M : x++ >
+
+doesn't really mean very much.
+
+But: we need to be a bit careful.  A nested loop variable parallel
+composition is legal, such as:
+
+<,i : M : <, j : i : f(i, j) > >
+
+the tricky part here is that j and j both need to be allocated during
+the construction of the parallel loops.
+
+
+Selection statement compilation
+===============================
+
+Imagine we have
+
+[ g0 -> S0 [] g1 -> S1 ]
+
+where the gis are boolean variables (not complex expressions), but
+there is a blocking statement B inside the sequence S0:
+
+[  g0 -> N00; B0; N01
+[] g1 -> N1
+];
+
+N2;
+
+B1
+
+When B0 returns, the following trace is N01; N2; B1 (which blocks again).
+
+We get three traces:
+
+[  g0 -> N00; goto B0
+[] g1 -> N1; N2; goto B1
+]
+
+B0; N01; N2; goto B1
+
+B1
+
+
+Detailed selection compilation
+==============================
+
+Elsewhere, we implement the selection as follows:
+
+
+    boolean done  
+    boolean g0..gN-1
+
+    done := false;
+
+    *[ ~done ->
+
+       lock(R);
+
+       <; i : N : gi := Gi > ;
+
+       done := < | : i : N : gi > ;
+
+       [ <[] : N : gi -> Si > ];
+
+       [ ~done -> waitfor(R) [] done -> unlock(R) ]
+
+     ]
+
+     { done & R is unlocked & exists i : Si has executed }
+
+We now give implementations of lock, waitfor, and unlock.
+
+lock(R)    = (wait_state := state(R))
+
+waitfor(R) = (while state(R) = wait_state do wait(R) end)
+
+unlock(R)  = (skip)
+
+where wait(R) waits for any change in R, and the evaluation of
+state(R) = wait_state is atomic.
+
+Loop compilation
+================
+
+Per our work on selection, the only loop that has to be implemented
+is *[ ~done -> S ].  We call this "while".
+
+Consider:
+
+*[ ~done -> N0; B0; N1 ] ; N2; B1
+
+The solution is
+
+[  ~done -> N0 ; goto B0
+[]  done -> N2 ; goto B1
+
+B0 ; N1; N2 ; goto B1
+
+B1
+
+
+
+
+How to extract the program fragments
+====================================
+
+At this point in the compilation, there are the following compound
+statements to consider:
+
+parallel
+
+sequential
+
+parallel-loop
+
+sequential-loop
+
+while
+
+local-if
+
+waiting-if
+
+Note that labels are always contained in a sequential.
+
+Labels are never contained in a parallel, but a parallel is always
+bracketed by labels.
+
+A parallel-loop has to be handled as a special construct.
+
+A sequential-loop not containing a blocking statement can be
+implemented directly.  But a sequential-loop that does contain a blocking
+statement needs to be desugared to a while-loop. [DONE]
+
+
+
+
+
+----------------------------------------------------------------------
+
+(define (fact n)
+   (if (= 0 n) 1 (* n (fact (- n 1)))))
+
+In CPS
+
+(define (fact n c)
+   (if (= 0 n) (c 1) (c (* n (fact (- n 1) )))))
+
+
+

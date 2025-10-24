@@ -1,0 +1,7 @@
+import ("libm3")
+import ("cit_util")
+import ("parseparams")
+import ("hammingnn")
+
+implementation ("Main")
+program ("test_hhn")

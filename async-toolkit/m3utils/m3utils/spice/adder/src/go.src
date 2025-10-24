@@ -1,0 +1,178 @@
+set style data linesp
+
+set xlabel "E/[fJ]"
+set ylabel "f/[Hz]"
+
+unset title
+unset label
+
+low=15
+lowf=400e6
+hif=4e9
+
+unset logscale y
+
+load "p1278_3_tt_ulvt_adder_dyn_hspice_i0s_85_5p3_0_default_eflabels.src"
+load "p1278_3_tt_ulvt_adder_dyn_hspice_i0m_85_5p3_0_default_eflabels.src"
+plot [low:80][lowf:hif] \
+"p1278_3_tt_ulvt_adder_dyn_hspice_i0s_85_5p3_0_default.dat" title "i0s", \
+"p1278_3_tt_ulvt_adder_dyn_hspice_i0m_85_5p3_0_default.dat" title "i0m"
+
+set term png size 900,600
+set output "sm_adder_ulvt_85.png"
+replot
+set term qt
+replot
+#quit
+
+######################################################################
+
+
+set xlabel "E/[fJ]"
+set ylabel "phi/[K * Hz/m^2]"
+
+unset title
+unset label
+
+
+load "p1278_3_tt_ulvt_adder_dyn_hspice_i0s_85_5p3_0_default_fd_eflabels.src"
+load "p1278_3_tt_ulvt_adder_dyn_hspice_i0m_85_5p3_0_default_fd_eflabels.src"
+plot [low:80][lowf:hif] \
+"p1278_3_tt_ulvt_adder_dyn_hspice_i0s_85_5p3_0_default_fd.dat" title "i0s", \
+"p1278_3_tt_ulvt_adder_dyn_hspice_i0m_85_5p3_0_default_fd.dat" title "i0m"
+
+set term png size 900,600
+set output "sm_adder_ulvt_fd_85.png"
+replot
+set term qt
+replot
+
+quit
+
+######################################################################
+######################################################################
+
+set xlabel "E/[fJ]"
+set ylabel "f/[Hz]"
+
+unset title
+unset label
+
+
+load "p1278_3_tt_lvt_adder_dyn_hspice_i0s_85_5p3_0_default_eflabels.src"
+load "p1278_3_tt_lvt_adder_dyn_hspice_i0m_85_5p3_0_default_eflabels.src"
+plot [low:80][lowf:hif] \
+"p1278_3_tt_lvt_adder_dyn_hspice_i0s_85_5p3_0_default.dat" title "i0s", \
+"p1278_3_tt_lvt_adder_dyn_hspice_i0m_85_5p3_0_default.dat" title "i0m"
+
+set term png size 900,600
+set output "sm_adder_lvt_85.png"
+replot
+set term qt
+replot
+######################################################################
+
+set xlabel "E/[fJ]"
+set ylabel "phi/[K * Hz/m^2]"
+
+unset title
+unset label
+
+
+load "p1278_3_tt_lvt_adder_dyn_hspice_i0s_85_5p3_0_default_fd_eflabels.src"
+load "p1278_3_tt_lvt_adder_dyn_hspice_i0m_85_5p3_0_default_fd_eflabels.src"
+plot [low:80][lowf:hif] \
+"p1278_3_tt_lvt_adder_dyn_hspice_i0s_85_5p3_0_default_fd.dat" title "i0s", \
+"p1278_3_tt_lvt_adder_dyn_hspice_i0m_85_5p3_0_default_fd.dat" title "i0m"
+
+set term png size 900,600
+set output "sm_adder_lvt_fd_85.png"
+replot
+set term qt
+replot
+
+######################################################################
+######################################################################
+######################################################################
+
+set style data linesp
+
+set xlabel "E/[fJ]"
+set ylabel "f/[Hz]"
+
+unset title
+unset label
+
+
+load "p1278_3_tt_ulvt_adder_dyn_hspice_i0s_50_5p3_0_default_eflabels.src"
+load "p1278_3_tt_ulvt_adder_dyn_hspice_i0m_50_5p3_0_default_eflabels.src"
+plot [low:80][lowf:hif] \
+"p1278_3_tt_ulvt_adder_dyn_hspice_i0s_50_5p3_0_default.dat" title "i0s", \
+"p1278_3_tt_ulvt_adder_dyn_hspice_i0m_50_5p3_0_default.dat" title "i0m"
+
+set term png size 900,600
+set output "sm_adder_ulvt_50.png"
+replot
+set term qt
+replot
+######################################################################
+
+set xlabel "E/[fJ]"
+set ylabel "phi/[K * Hz/m^2]"
+
+unset title
+unset label
+
+
+load "p1278_3_tt_ulvt_adder_dyn_hspice_i0s_50_5p3_0_default_fd_eflabels.src"
+load "p1278_3_tt_ulvt_adder_dyn_hspice_i0m_50_5p3_0_default_fd_eflabels.src"
+plot [low:80][lowf:hif] \
+"p1278_3_tt_ulvt_adder_dyn_hspice_i0s_50_5p3_0_default_fd.dat" title "i0s", \
+"p1278_3_tt_ulvt_adder_dyn_hspice_i0m_50_5p3_0_default_fd.dat" title "i0m"
+
+set term png size 900,600
+set output "sm_adder_ulvt_fd_50.png"
+replot
+set term qt
+replot
+######################################################################
+######################################################################
+
+set xlabel "E/[fJ]"
+set ylabel "f/[Hz]"
+
+unset title
+unset label
+
+
+load "p1278_3_tt_lvt_adder_dyn_hspice_i0s_50_5p3_0_default_eflabels.src"
+load "p1278_3_tt_lvt_adder_dyn_hspice_i0m_50_5p3_0_default_eflabels.src"
+plot [low:80][lowf:hif] \
+"p1278_3_tt_lvt_adder_dyn_hspice_i0s_50_5p3_0_default.dat" title "i0s", \
+"p1278_3_tt_lvt_adder_dyn_hspice_i0m_50_5p3_0_default.dat" title "i0m"
+
+set term png size 900,600
+set output "sm_adder_lvt_50.png"
+replot
+set term qt
+replot
+######################################################################
+
+set xlabel "E/[fJ]"
+set ylabel "phi/[K * Hz/m^2]"
+
+unset title
+unset label
+
+
+load "p1278_3_tt_lvt_adder_dyn_hspice_i0s_50_5p3_0_default_fd_eflabels.src"
+load "p1278_3_tt_lvt_adder_dyn_hspice_i0m_50_5p3_0_default_fd_eflabels.src"
+plot [low:80][lowf:hif] \
+"p1278_3_tt_lvt_adder_dyn_hspice_i0s_50_5p3_0_default_fd.dat" title "i0s", \
+"p1278_3_tt_lvt_adder_dyn_hspice_i0m_50_5p3_0_default_fd.dat" title "i0m"
+
+set term png size 900,600
+set output "sm_adder_lvt_fd_50.png"
+replot
+set term qt
+replot

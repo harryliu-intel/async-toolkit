@@ -1,0 +1,47 @@
+module wide;
+
+int WD = 128;
+
+define SEND(int W)(bd(W) +R)
+{
+  csp {
+    R!(0xc0edbabe ** 7)
+  }
+}
+
+define RECV(int W)(bd(W) -L)
+{
+  csp {
+    print(L?)
+  }
+}
+
+define S()()
+{
+  subcells {
+    bd(WD) c;
+    SEND(WD) send(c);
+    RECV(WD) recv(c);
+  }
+}
+
+define SELECT(int W)(bd(W) -L0, -L1)
+{
+  csp {
+    *[[ #L0 -> L0?x
+      : #L1 -> L1?x
+      ];
+      print (x)
+     ]
+   }
+}
+
+define T(int W)()
+{
+  subcells {
+  bd(W) c0, c1;
+    SEND(W) send0(c0);
+    SEND(W) send1(c1);
+    SELECT(W) select(c0, c1);
+  }
+} 

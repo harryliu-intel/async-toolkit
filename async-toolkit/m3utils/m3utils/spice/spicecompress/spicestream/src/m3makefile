@@ -1,0 +1,12 @@
+import ("libm3")
+import ("cit_util")
+import ("spicelib")
+import ("tracelib")
+import ("regression")
+import ("ctlib")
+import ("spicecompress")
+import ("arithcode")
+
+implementation ("Main")
+
+program ("spicestream")

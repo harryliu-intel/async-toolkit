@@ -1,0 +1,469 @@
+module arrays;
+
+int WIDTH=32;
+
+define common attributes {
+
+  csp {
+
+    function times2(int -x) : int =
+      (times2 = 2 * x
+       );
+    
+    function times4(int -x) : int =
+      (times4 = 4 * x
+       );
+    
+    structure struct0 =
+      (int(1) a;
+       int(2) b;
+       int(3) c;
+       );
+
+    structure struct1 =
+      (int(1) d;
+       struct0 s0
+       );
+
+    structure struct2 =
+      (bool b;
+       struct1 s1[0..7];
+       struct1 s2[0..0];
+       int(67) xxx=0xc0edbabe;
+       );
+
+    structure struct3 =
+      (int(2) x;
+       int(2) y[2..0]
+       );
+
+    structure struct4 =
+      (int x;
+       int y[0..5]
+       );
+      
+    structure struct5 =
+      (struct4 s[0..3];
+       struct4 t[3..0]
+       );
+
+    structure struct6 =
+      (int(8) x[0..3];
+       int(4) y[3..0]
+       );
+
+    structure struct7 =
+      (struct6 q[0..3];
+       struct6 r[3..0]
+       );
+  }
+}
+
+define SIMPLE()()
+{
+  csp {
+    int x[2];
+    x[0] = 12;
+    x[1] =  3;
+    print(x[1]);
+  }
+  
+}
+
+define P0()(bd(WIDTH) +R[0..1]) <+ common
+{
+
+  csp {
+    *[ R[0]!12 ; R[1]!13 ; R[0]!14 ; R[1]!0 ]
+  }
+}
+
+define SINK()(bd(WIDTH) -L)
+{
+  csp {
+    *[ L?x ; print(x) ]
+  }
+}
+
+define P0SINK()()
+{
+  subcells {
+    bd(WIDTH) c0, c1;
+
+    P0 p0({c0, c1});
+    SINK sink0(c0);
+    SINK sink1(c1);
+  }
+}
+
+define P1P()(bd(WIDTH) -L[0..1]) <+ common
+{
+  csp {
+    *[ L[0]?x; L[1]?x ]
+  }
+}
+
+define P0P1P()()
+{
+  subcells {
+    bd(WIDTH) c0, c1;
+
+    P0  p0({c0, c1});
+    P1P p1({c0, c1});
+  }
+}
+
+
+
+//////////////////////////////////////////////////////////////////////
+
+define Q0()(bd(WIDTH) +R[0..1,0..2]) <+ common
+{
+
+  csp {
+    <i:2:<j:3: R[i][j] ! (i * 25 + j) > >
+  }
+}
+
+define Q1()(bd(WIDTH) -L[0..1,0..2]) <+ common
+{
+  csp {
+    <i:2:<j:3: print(L[i][j]?) >>
+  }
+}
+
+define Q0Q1()()
+{
+  subcells {
+    bd(WIDTH) c[0..1,0..2];
+
+    Q0 q0(c);
+    Q1 q1(c);
+  }
+}
+
+//////////////////////////////////////////////////////////////////////
+
+define P1(int R) <: P1P(2 * R)
+{
+  csp {
+     function difficulty(int(32) -bits) : int(256) =
+      (int(24) mant=bits;
+       int(8) exp=bits>>24;
+       difficulty=mant*(1<<(8*(exp-3)))
+       );
+
+    function times3(int -x) : int =
+      (times3 = 3 * x
+       );
+
+    function timesn(int -x; int -n) : int =
+      (timesn = n * x
+       );
+    
+    structure struct_internal0 =
+      (int(1) a;
+       int(2) b;
+       int(3) c;
+       );
+
+    structure struct_internal1 =
+      (int(3) x;
+       int(2) y;
+       int(1) z;
+       );
+
+    structure struct7 = // same name as in the common cell
+      (int q
+       );
+
+    structure timesX =  // we can't call this times2 because it shadows function
+      (int does_this_work
+       );
+    
+    structure times3 = // but this is, oddly, OK...
+      (int does_this_work
+       );
+
+
+    function fact(int -n) : int =
+      ([  n == 0 -> fact = 1
+       [] else -> fact = n * (fact1 (n - 1))
+       ]
+       );
+
+    function fact1(int -n) : int =
+      ([  n == 0 -> fact1 = 1
+       [] else -> fact1 = n * (fact (n - 1))
+       ]
+       );
+
+    function alias(int +-x; int +-y) =
+      ( print ("alias x = " + x);
+        print ("alias y = " + y);
+        print ("alias assign x <- x + 1");
+        x = x + 1;
+        print ("alias x = " + x);
+        print ("alias y = " + y);
+        );
+        
+    function alias1(int +-x; int +-y) =
+      ( print ("alias x = " + x);
+        print ("alias y = " + y);
+        print ("alias assign y <- y + 1");
+        y = y + 1;
+        print ("alias x = " + x);
+        print ("alias y = " + y);
+        );
+        
+    int q;
+
+    q = 12;
+    *[int z;
+      int t = 1;
+      //      int u = -1;
+      int k, l = 2;
+      print ("HEY!");
+      [ #L[0] -> int x[0..2], w; L[0]?x[0]; y = x[0], w = x[1]
+        
+        : #L[1] -> struct2 x; int v=12;
+        L[1]?x; [ ~x::b -> y =  1; z = times2(v); w = v; q = -w; z = q * 2 [] else -> y = 0 ]
+        : false ->
+        bool a, b, c;
+        int u, v;
+
+        a = u < v;
+        b = u > v;
+        c = a && b;
+        b = a & c;
+        c = b ^ a;
+        c = u >= v;
+        b = c & (u == v);
+        c = ((u << v) & 1) != 0;
+        u = v ** v;
+      ];
+      print ("y = " + y + " z = " + z);
+      print ("69! = " + (69));
+
+ 
+      alias(k,k);
+      print ("after alias k = " + k);
+      alias1(k,k);
+      print ("after alias1 k = " + k);
+
+      k += 2;
+      k++;
+      
+      print (2 + 2);
+      print (times2(2 + 2));
+      print (times3(2 + 2));
+      print ("hello 2 + 2 " + 2 + 2);
+      print ("hello (2 + 2)" + (2 + 2));
+      //      print (("(hello 2) + 2" + 2) + 2);
+
+      print ("neg " + -2);
+
+      print("k before choose " + k);
+      choose(true, k, k) = k - 3;
+      print("k after choose " + k);
+      
+      print ("true + 3 = " + (choose(true, 0, 2)));
+      wait(1)
+     ]
+      }
+}
+
+define SYSTEM()()
+{
+  subcells {
+    bd(WIDTH) c[0..1];
+
+    P0() p0(c);
+    P1(18) p1(c);
+  }
+}
+
+define stuff(int W_P) attributes
+{
+  int GRAYPAT[0..3]={0,1,1,0};
+
+  int GRAYCODE[0..2**W_P-1];
+  <i:2**W_P: GRAYCODE[i] = <+j:W_P: (2**j)*GRAYPAT[i/(2**j)%4]>; >
+
+  int TWOD[0..1, 0..1] = {{1, 2}, {3, 4}};
+
+  int QQQ=12;
+
+  csp {
+      structure struct0 =
+    (int(32) a = 17;);
+
+  }
+}
+
+define qqq() <+ stuff(10)
+{
+  csp {
+    print(QQQ)
+  }
+}
+
+define ggg() <+ stuff(10)
+{
+  csp {
+    int x = 2;
+    x++;
+    print(GRAYCODE[x])
+  }
+}
+
+define const(int W_P)() <+ stuff(W_P)
+{
+  csp {
+    int x = GRAYCODE[3];
+    print("" + x);
+
+    int y = TWOD[IDLE_0,1];
+
+    print ("" + y);
+
+    struct0 S[0..7];
+    int z = S[3]::a;
+    print("" + z);
+
+    struct0 T;
+    int t = T::a;
+
+    print("" + t);
+  }
+}
+  
+define bits()()
+{
+  csp {
+    int x=3;
+    int y;
+
+    y{x} = 1;
+
+    print("" + y);
+  }
+}
+
+define xref()(bd(32) -L, +R) <+ stuff(10)
+{
+  csp {
+    L?x;
+
+    y = GRAYCODE[x];
+
+    R!y;
+
+    int q[3];
+
+    z = q[y];
+
+    R!z
+  }
+}
+
+define ci()(bd(32) -L[0..1])
+{
+  csp {
+    int x[2];
+    //    x[0] = 1;
+    int y= 0;
+    print (x[0]);
+    print (L[y]?);
+  }
+}
+
+define Z()()
+{
+  csp {
+    int x[20];
+
+    print (x[10]);
+  }
+}
+
+define ZZ()()
+{
+  csp {
+    int(32) x[20];
+
+    int y = x[10];
+    
+    print (y);
+  }
+}
+
+define COPY()()
+{
+  csp {
+    int x[10], y[10];
+
+    x[0]++;
+
+    y = x;
+    print(y[0]);
+
+    y[0]--;
+    
+    print(y[0]);
+    print(x[0]);
+  }
+}
+
+define SLICE()()
+{
+  csp {
+    int x[2][10], y[10];
+
+    x[1][0]++;
+
+    y = x[1];
+    x[1] = y;
+    print(y[0]);
+  }
+}
+
+define B()()
+{
+  csp {
+    bool a[2];
+    int  x;
+    x++;
+
+    <i:2: a[i] = x == i>;
+
+    <i:2:print(a[i])>
+  }
+}
+    
+define I()()
+{
+  csp {
+    int a[2];
+    int  x;
+    x++;
+
+    <i:2: a[i] = x + i - 1>;
+
+    <i:2:print(a[i])>
+  }
+}
+
+define S()()
+{
+  csp {
+    string a[2];
+    int  x;
+    x++;
+
+    <i:2: a[i] = "" + hex(x + i - 1)>;
+
+    <i:2:print(a[i])>
+  }
+}
+    

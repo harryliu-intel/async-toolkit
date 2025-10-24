@@ -1,0 +1,50 @@
+# schema for output of low temp optimization
+# temp,vdd,delp,deln,cscale,thresh,sweeps,stages,RESULT
+
+report  temp,
+report  vdd,
+report  delp,
+report  deln,
+ignore  cscale,
+collate thresh,
+sweep   k_cycle,
+ignore  sweeps,
+sweep   stages,
+report  cost,
+ignore  path,
+
+# the following are from schema.dat (maybe we should be able to include that..)
+
+ignore  vdd1,
+ignore  temp1,
+ignore  csc,
+ignore  rsc,
+ignore  delnvth,
+ignore  delpvth,
+ignore  stages1,
+ignore  modleaves,
+ignore  lib,
+ignore  tran,
+ignore,
+report  mean_cycle,
+report  sdev_cycle,
+report  mean_swE,
+report  sdev_swE,
+report  mean_leaP,
+report  sdev_leaP,
+report  mean_dynE,
+report  sdev_dynE,
+
+formula max_cycle    (+ mean_cycle (* k_cycle sdev_cycle)),
+formula min_freq     (/ 1 max_cycle),
+formula cop          (achievable-efficiency  temp *base-temp*),
+formula cooled_swE   (cooled-energy mean_swE temp *base-temp*),
+formula leak_ratio   (/ mean_leaP mean_dynE min_freq),
+formula energy_cost  (* *energy-cost-factor* cooled_swE),
+formula silicon_cost (* *silicon-cost-factor* max_cycle),
+formula total_cost   (+ energy_cost silicon_cost)
+
+
+
+
+

@@ -1,0 +1,15 @@
+import ("libm3")
+import ("tcp")
+import ("udp")
+import ("cit_util")
+
+module ("UdpDatagram")
+sequence ("UdpDatagram", "UdpDatagram")
+module ("UdpAdapter")
+module ("ReorderUdpAdapter")
+interface ("NestedUdpAdapter")
+module ("RtaUdpAdapter")
+
+implementation ("Main")
+
+program ("udptest")

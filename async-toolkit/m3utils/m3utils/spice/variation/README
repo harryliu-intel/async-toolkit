@@ -1,0 +1,9 @@
+doc      -- a paper about this work
+
+varosc   -- the representative ring oscillator and its parameters
+
+varspice -- program to build .sp files and run XA
+
+varopt   -- optimizer driver program wrapped around varspice and varosc
+
+Main dependences : techc (technology comparison library) and newuoa (NewUOAs optimizer algorithm)

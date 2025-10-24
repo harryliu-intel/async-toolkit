@@ -1,0 +1,55 @@
+import ("libm3")
+import ("cit_util")
+import ("parseparams")
+import ("mscheme")
+
+if defined("CM3_VERSION")
+        m3_optimize("T")
+end
+
+_exec(["../makekeywords/AMD64_LINUX/makekeywords","../src/key.words","NetKeywords"])
+
+derived_interface("NetKeywords",HIDDEN)
+
+Module ("BraceParse")
+implementation ("Main")
+
+module("OpenCharArray")
+
+module ("CellRec")
+interface ("CellRecClass")
+
+openarrayTable("CellRec", "OpenCharArray", "CellRec")
+openarrayTable("CharsAtom", "OpenCharArray", "Atom")
+
+
+%library ("braceparse")
+
+interface("Subcell")
+list ("Subcell", "Subcell")
+sequence ("Subcell", "Subcell")
+
+module ("LongNames")
+interface ("InstanceName")
+
+module ("MosInfo")
+
+table ("MosInfoCard", "MosInfo", "FinInfo")
+table ("AtomCell", "Atom", "CellRec")
+
+table ("AtomMosInfoCardTbl", "Atom", "MosInfoCardTbl")
+
+openarrayTable ("OpenCharArrayRef", "OpenCharArray", "Refany")
+
+table ("AtomCard", "Atom", "Cardinal")
+%table ("AtomCardPair", "Atom", "CardPair")
+table ("AtomFinInfo", "Atom", "FinInfo")
+
+module("FinInfo")
+
+module ("Gox")
+Module ("DrawnWidth")
+
+program ("netlist2goxrpt")
+
+

@@ -1,0 +1,11 @@
+/* $Id$ */
+
+%import ("regresslib")
+import ("htmltable")
+import ("cit_util")
+
+interface ("DbSettings")
+implementation("Main")
+module("Chipdev")
+
+program("chipdev")

@@ -1,0 +1,115 @@
+module arraytypes;
+
+int SIZE = 4;
+int FIDX = 0;
+
+define common attributes {
+  csp {
+    function printarr(int -n; int -x[0..0]) =
+      (string s; <;i:n: s += x[i] + " "> ; print(s));
+    
+    function decr(int -n; int -+x[0..0]) =
+      ( x[FIDX] += INCREMENT; printarr(n, x); R!0 );
+
+    function dec(int -n; int -+x[0..0]) =
+      ( x[FIDX] -= 1; printarr(n, x) );
+  }
+}
+
+define P(int INCREMENT)(bd(2) +R) <+ common
+{
+  csp {
+    
+    int(8) x[SIZE];
+
+    printarr(SIZE, x);
+    decr    (SIZE, x);
+    printarr(SIZE, x);
+
+int a[0..3,0..3],b[0..3,0..3];
+ <j:4:<i:4: a[i,j]=b[j,i] >> ;
+
+  }
+}
+  
+define Q()() <+ common
+{
+  csp {
+    int(8) x[SIZE];
+    dec(SIZE,x);
+  }
+}
+
+define R()() <+ common
+{
+  csp {
+    int(8) x[SIZE];
+    printarr(SIZE,x);
+  }
+}
+
+define S()() <+ common
+{
+  csp {
+    int(8) x[1, 2, 3];
+    printarr(3,x[0,0]);
+  }
+}
+
+define T()() <+ common
+{
+  csp {
+    int(8)  x[3];
+    int(8)  y[1, 2, 3];
+    int     z[3];
+    int     t[1, 2, 3];
+    sint(8) r[3];
+    sint(8) s[1, 2, 3];
+
+    int     u;
+    int(8)  v;
+    sint(8) w;
+    
+    x      = y[0,0];
+    y[0,0] = x;
+    z      = y[0,0];
+    y[0,0] = z;
+    r      = y[0,0];
+    y[0,0] = r;
+    
+
+    u = -1;
+    v = u;
+
+    print("u = " + u + " v = " + v);
+
+    u = v;
+    print("u = " + u + " v = " + v);
+  }
+}
+  
+define U()() <+ common
+{
+  csp {
+    int(8) x[1, 2, 3];
+    printarr(1 + 2,x[0,0]);
+  }
+}
+
+define V()() <+ common
+{
+  csp {
+    int(8) x[1, 2, 3];
+    int    q = 1 + 1 + 1;
+    printarr(q, x[0,0]);
+  }
+}
+
+define W()() <+ common
+{
+  csp {
+    int(8) x[1, 2, 3];
+    int    q = 1;
+    printarr(q + q, x[q,q + q]);
+  }
+}

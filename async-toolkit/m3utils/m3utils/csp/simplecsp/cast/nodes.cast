@@ -1,0 +1,77 @@
+module nodes;
+
+define P(int N)(bd(32) +R; node -+X)
+{
+  csp {
+    function resetNodes() = (X-);
+    
+    function do_wait() : int =
+      (print("do_wait = " + do_wait)
+       );
+    
+    function f() =
+      (
+       X = ~X       );
+
+    X = false;
+
+    *[ f() ;
+       R!0
+       ]
+    
+  }
+}
+
+define Q()(bd(32) +R; node -X)
+{
+  csp {
+    *[ R!X ]
+  }
+}
+
+define R()(bd(32) -L, -M)
+{
+  csp {
+    *[ L?x,M?y ; print(x) ]
+  }
+}
+
+define SYSTEM()()
+{
+  subcells {
+    node x;
+    bd(32) c, d;
+    
+    P(10) p(d, x);
+    Q     q(c, x);
+    R     r(c, d);
+  }
+}
+ 
+
+define S()(node -ri, +ro)
+{
+  csp {
+    function resetNodes() = (ro-);
+
+    *[ [ri]; ro+; [~ri]; ro- ]
+  }
+}
+
+define T()(node -li, +lo)
+{
+  csp {
+    function resetNodes() = (lo-);
+    *[ lo+; [li]; print(li); lo-; [~li]; print(li) ]
+  }
+}
+
+define FOURPHASE()()
+{
+  subcells {
+    node d, a;
+
+    S() s(a, d);
+    T() t(d, a);
+  }
+}

@@ -1,0 +1,11 @@
+import ("libm3")
+import ("cit_util")
+import ("parseparams")
+import ("spicelib")
+import ("parserlib")
+import ("varlib")
+
+implementation ("TestVar")
+program ("testvarlib")
+
+

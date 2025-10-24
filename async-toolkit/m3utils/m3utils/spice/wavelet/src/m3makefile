@@ -1,0 +1,13 @@
+import ("libm3")
+import ("cit_util")
+
+
+m3_optimize("T")
+
+Module ("Wavelet")
+Module ("SparseLR")
+Array_sort ("Sparse", "SparseLR")
+
+%Module ("Huffman")
+
+library ("wavelet")

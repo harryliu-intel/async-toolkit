@@ -1,0 +1,14 @@
+/* $Id: subarrays.tmpl,v 1.1 2006/03/19 00:10:06 mika Exp $ */
+readonly proc subarrays(nm, elem) is
+	local nam = nm & "Subarrays"
+
+	build_generic_intf(nam, "Subarrays", [elem], HIDDEN)
+	build_generic_impl(nam, "Subarrays", [elem])
+end
+
+readonly proc Subarrays(nm, elem) is
+	local nam = nm & "Subarrays"
+
+	build_generic_intf(nam, "Subarrays", [elem], VISIBLE)
+	build_generic_impl(nam, "Subarrays", [elem])
+end

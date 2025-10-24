@@ -1,0 +1,5 @@
+INTERFACE RMath;
+
+PROCEDURE sqrt(x : REAL) : REAL;
+
+END RMath.

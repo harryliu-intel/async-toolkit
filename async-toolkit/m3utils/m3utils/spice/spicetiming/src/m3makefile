@@ -1,0 +1,40 @@
+import ("libm3")
+import ("cit_util")
+import ("spicelib")
+import ("tracelib")
+import ("metalib")
+
+Module ("CheckDir")
+Interface ("CheckMode")
+Module ("MarginScenario")
+
+Module ("MarginMeasurement")
+Array_sort ("MarginMeasurement", "MarginMeasurement")
+Sequence ("MarginMeasurement", "MarginMeasurement")
+Module ("MarginDump")
+
+Table("CheckDirRef", "CheckDir", "Refany")
+MkSet("CheckDir", "CheckDir")
+MkSetDef("CheckDir", "CheckDir")
+
+Module ("TimingCheckers")
+Module ("SpiceTiming")
+Module ("SpiceValues")
+Module ("Latches")
+Interface ("LatchSpecs")
+
+Module ("FlatRule")
+Table ("FlatRuleRef", "FlatRule", "Refany")
+MkSet    ("FlatRule", "FlatRule")
+MkSetDef ("FlatRule", "FlatRule")
+
+Module ("PrsNode")
+
+Interface ("PrsImpl")
+
+%implementation ("Main")
+
+%program ("spicetiming")
+library ("spicetiming")
+
+

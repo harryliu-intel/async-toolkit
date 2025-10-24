@@ -1,0 +1,12 @@
+readonly proc _symtab(nm, key, value, tbl, vis) is
+	build_generic_intf(nm & "Symtab", "Symtab", [key, value, tbl], vis)
+	build_generic_impl(nm & "Symtab", "Symtab", [key, value])
+end
+
+readonly proc symtab(nm, key, value, tbl) is
+	_symtab(nm, key, value, tbl, HIDDEN)
+end
+
+readonly proc Symtab(nm, key, value, tbl) is
+	_symtab(nm, key, value, tbl, VISIBLE)
+end

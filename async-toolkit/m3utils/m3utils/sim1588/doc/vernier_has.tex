@@ -1,0 +1,412 @@
+\documentclass{article}
+\usepackage{graphicx}
+\usepackage{epsf}
+
+\usepackage{floatflt}
+\usepackage{fancyhdr}
+\usepackage{array}
+
+\usepackage{sectsty}
+%\allsectionsfont{\mdseries\sffamily}
+\allsectionsfont{\mdseries\sc}
+
+\usepackage{caption}
+\captionsetup{margin=2pc,font=small,labelfont=bf}
+
+%%%%%%%%%%%%%%Mika's figure macro%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\def\ins_epsfig#1#2#3{
+  \begin{figure}[!tbph!]
+  \bigskip
+  \begin{center}
+  \includegraphics[width=#1]{#2}
+  \end{center}
+  \caption{#3}\label{fig:#2}
+  \bigskip
+  \end{figure}
+}
+
+\def\rotins_epsfig#1#2#3#4{
+  \begin{figure}[!tbph!]
+  \bigskip
+  \begin{center}
+  \includegraphics[angle=#4,width=#1]{#2}
+  \end{center}
+  \caption{#3}\label{fig:#2}
+  \bigskip
+  \end{figure}
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\oddsidemargin=0.15in
+\evensidemargin=0.15in
+\topmargin=0.2in
+\textwidth=6.2truein
+
+
+\pagestyle{fancy}
+\lhead{\scriptsize\bfseries\sffamily Vernier Timestamping Unit HAS 0.49}
+\chead{}\rhead{\thepage}
+\lfoot{}\cfoot{}\rfoot{}
+\renewcommand{\headrulewidth}{0pt}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\title{Vernier Timestamping Unit \\ High-Level Architecture Specification (HAS) 0.49}
+
+%\date{January 22, 2018}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+
+\parindent=0pt
+\parskip=1.5ex
+
+\arraycolsep=0.4pt\def\arraystretch{1.4}
+
+\newpage
+
+\tableofcontents
+\listoffigures
+\listoftables
+
+\section{Revision History}
+
+Initial distributed revision 0.49.
+
+\section{Contacts}
+
+Contact Mika Nystr\"om, {\tt mika.nystroem@intel.com}, or 
+Jin Yan,  {\tt jin2.yan@intel.com}, for more information.
+
+\section{Overview}
+
+The Vernier Timestamping Unit (TSU) is a module that is used to
+forward time measurements relative to a clock edge in one clock domain
+$B$ to a time measurement relative to a clock edge in another clock
+domain $A$.  The accuracy and precision of the TSU can be much better
+than one clock cycle, given appropriate frequency (period) relationships
+between the clock speeds.
+
+The TSU is a soft macro and parameterizable.  It contains no memory or
+register-file hard macros.  It relies on having synchronizer elements
+available in the cell library, but otherwise is delivered as normal
+SystemVerilog to be compiled with Design Compiler or similar.
+
+\section{DFx Support}
+
+Since the TSU is entirely a soft macro (apart from a number of
+synchronizers), no support for DFx is provided.
+
+\section{Timing Constraints}
+
+Numerous clock-domain crossings are present in the TSU RTL.  Timing
+constraint files are not provided by the RTL team as of the writing of
+this document.  Numerous signals cross between clock domains in the
+TSU, so this is an important shortcoming.
+
+\section{Theory of Operation}
+
+See the report~\cite{too}.  The TSU is called ``delay-calculating
+synchronizing flip-flop'' in the report.
+
+\section{Basic Interface}
+
+\subsection{Symbology}
+Suggested symbology for the TSU is shown in figure~\ref{fig:meas_sync_ff}.
+
+\ins_epsfig{3in}{meas_sync_ff}{Proposed symbol for the TSU.}
+
+The functional interfaces are intentionally kept as simple as possible.
+
+\subsection{Clocks}
+The TSU has two clocks, an input-side clock called $B$ and an
+output-side clock called $A$.
+
+\subsection{Functional interfaces}
+The TSU receives {\em mark\/} signals in the $B$ domain with
+associated delay-deltas representing an ancestor event in the past.
+
+The TSU produces mark signals in the $A$ domain with associated
+delay-deltas appropriately updated for the delay in proceeding through
+the internal synchronization of the TSU.  The updating of the delay
+takes into account pipeline delay within the TSU as well as the phase
+relationship of $A$ and $B$.  The main function of the TSU is to
+calculate this latter delay, thus removing the timing uncertainty that
+would obtain when using a normal synchronizer for a clock-domain
+crossing.
+
+\subsection{Configuration interfaces}
+Configuration inputs of the TSU indicate the periods of the $A$ and $B$ clocks;
+resets and handshake control inputs sequence the internal operations
+of the TSU.
+
+All delay measurements (input mark delay, output mark delay, and clock periods)
+are given in some arbitrary but consistent time unit.  (This is a constraint
+on the usage of the TSU.)
+
+\subsection{Performance limitation}
+Finally, the TSU has limited bandwidth: it is able to produce a mark
+on the $A$ output at best once in two $A$ cycles.  For some
+combinations of clock speeds, the constraint can deteriorate to a
+maximum of one mark per four $A$ cycles.  
+
+\subsection{Control handshake}
+While the TSU is enabled to operate ({\tt i\_vernier\_en} is
+asserted), errors will be signalled on {\tt o\_vernier\_error} as a nonzero value.  
+
+\subsection{Error conditions}
+Error
+conditions are enumerated in table~\ref{tab:errs}.
+{
+  \begin{table}
+    \centering
+    \begin{tabular}{|>{\tt}l|>{\tt}c|>{\raggedright\arraybackslash}p{3in}|}
+      \hline
+      \bf Name & \bf Value & \bf Description \\
+      \hline
+ERR\_VERNIER\_OK & 3'h0 & no error \\
+      \hline
+ERR\_UNEXPECTED\_RESET & 3'h1 & assertion of $B$ clock reset during operation\\
+      \hline
+ERR\_MARK\_OVERFLOW & 3'h2 & overflow of mark buffer (attempts to send marks at a higher rate than one per divided $B$ cycle) \\
+      \hline
+ERR\_BAD\_DIVISOR & 3'h3 & attempt to command a bad $B$ clock divisor \\
+      \hline
+\bf ---reserved--- & 3'h4{\rm --}3'h7 & reserved \\
+      \hline
+    \end{tabular}
+    \caption{Possible TSU error conditions.}\label{tab:errs}
+    \end{table}
+}
+
+\section{Parameters}
+
+
+The parameters listed in table~\ref{tab:params} are specified in
+instantiating the TSU soft macro.
+
+{
+  \begin{table}
+    \centering
+    \begin{tabular}{|>{\tt}l|>{\tt}l|c|>{\raggedright\arraybackslash}p{3in}|}
+      \hline
+      \bf Name \rule{0pt}{2.6ex}& \bf type & \bf sugg. range & \bf Description \\
+      \hline
+          FCLK\_DIV\_BITS & int & 3--8 & $\log_2$ of maximum $B$-clock divisor \\
+      \hline
+          RAT\_PREC\_BITS & int & 16--64 & number of bits used to represent delays and timestamps \\
+      \hline
+          SAMPLE\_TIMES & int & 2--4 & depth of library synchronizer used in the $B$ to $A$ clock sampling path \\
+      \hline
+    \end{tabular}
+    \caption{Elaboration-time parameters for TSU RTL.}\label{tab:params}
+  \end{table}
+}
+
+\section{I/O Pins}
+The I/O pinout of the TSU macro is given in table~\ref{tab:pinout}.
+
+\subsection{Tolerance input}
+The parameter {\tt i\_denom\_tol} deserves special mention.  It is
+used to calculate the minimum allowable clock divider for the $B$
+clock internally to the TSU.  There is a constraint that the divided
+$B$ clock (not part of the interface) must be slower than half the
+speed of the $A$ clock on {\em every\/} cycle.  So that the TSU can
+calculate the required divider, the tolerance or allowable error in the $B$ clock
+from its specification must be given as an input.  It is important to
+note that this error must be the sum of all possible
+rising-edge--to--rising-edge errors of $B$ relative to $A$.  That is,
+if $A$ also has rising-edge--to--rising-edge error, this must be
+included.  For example, consider a case where $A$ and $B$ are both
+Ethernet clocks (100~p.p.m.\ error spec) with 0.2\% jitter budget.  In
+this case, the worst-case error is 0.42\% (0.2\% from jitter in $B$,
+0.2\% from jitter in $A$, and 100~p.p.m.~from each of $A$ and $B$) and
+must be given as the clock period of $B$ times 0.0042, rounded up to
+the nearest TU.  System performance depends only weakly on this parameter,
+so it is OK to set it to 1\% of $B$'s period, or even more.
+
+{
+  \begin{table}
+    \centering
+    \begin{tabular}{|>{\tt}l|>{\tt}l|c|>{\it}c|>{\raggedright\arraybackslash}p{2.4in}|}
+      \hline
+      \bf Name \rule{0pt}{2.6ex}& \bf Width & \bf Dir & \bf Dom & {\bf Description} \\
+      \hline
+      \multicolumn{5}{|l|}{\bf CLOCKS AND RESETS}\\
+      \hline
+      clk & logic & C & -- & $A$ clock \\
+      rst\_n & logic & I & A & $A$ domain power-on reset \\
+      i\_fclk & logic & C & -- & $B$ clock \\
+      i\_fclk\_rst\_n & logic & I & B & $B$ domain power-on reset \\
+      \hline
+      \multicolumn{5}{|l|}{\bf CONTROL HANDSHAKE} \\
+      \hline
+      i\_vernier\_en & logic & I & A & master enable signal \\
+      o\_vernier\_ready & logic & O & A & TSU is ready and outputs are accurate \\
+      o\_vernier\_error & 3-1:0 & O & A & If nonzero, TSU has detected an error and outputs are idle until the next initalization cycle \\
+      \hline
+      \multicolumn{5}{|l|}{\bf CONFIGURATION I/Os} \\
+      \hline
+      i\_num & RAT\_PREC\_BITS-1:0 & I & A & period of $A$ clock in TUs.  MRS while {\tt i\_vernier\_en} is asserted \\
+      i\_denom & RAT\_PREC\_BITS-1:0 & I & A & period of $B$ clock in TUs.  MRS while {\tt i\_vernier\_en} is asserted \\
+      i\_denom\_tol & RAT\_PREC\_BITS-1:0 & I & A & tolerance in period of $B$ clock (relative to $A$ clock) in TUs.  MRS while {\tt i\_vernier\_en} is asserted \\
+      i\_fclk\_div & FCLK\_DIV\_BITS-1:0 & I & A & $B$ clock divisor.  Set to 0 for automatic selection.  MRS while {\tt i\_vernier\_en} is asserted \\
+      o\_fclk\_div & FCLK\_DIV\_BITS-1:0 & O & A & $B$ clock divisor as computed.  WRS while {\tt o\_vernier\_ready} is asserted.\\
+      o\_prec & RAT\_PREC\_BITS-1:0 & O & A & Measurement precision in TUs. WRS while {\tt o\_vernier\_ready} is asserted.\\
+      \hline
+      \multicolumn{5}{|l|}{\bf FUNCTIONAL INTERFACES} \\
+      \hline
+      i\_fclk\_mark & logic & I & B & indicated input mark \\
+      i\_fclk\_mark\_phase & RAT\_PREC\_BITS-1:0 & I & B & indicated input event age in TUs \\
+      o\_mark & logic & O & A & indicated output mark \\
+      o\_mark\_phase & RAT\_PREC\_BITS-1:0 & O & A & indicated output event age in TUs \\
+      \hline
+    \end{tabular}
+    \caption[Pinout of TSU RTL.]{Pinout of TSU RTL. MRS/WRS means ``must/will remain stable''}\label{tab:pinout}
+  \end{table}
+}
+
+\section{Operational State Machine}
+
+\subsection{Power-on reset}
+At power-on, it is expected that the $A$ and $B$ clock domain resets are asserted as normal.
+
+\subsection{Start handshake}
+In order to start a vernier unit, configuration parameters ({\tt
+  i\_num}, {\tt i\_denom}, etc.) are presented on the interface, the
+environment must ensure that clocks (both $A$ and $B$) are stable and
+operating, and {\tt i\_vernier\_en} is then asserted by the
+environment.
+
+After a number of cycles (which can be large, in the thousands
+possibly), a normally functioning vernier unit responds by raising
+{\tt o\_vernier\_ready}.  At this time, the environment is invited to
+commence sending a stream of marks and mark delays in the $B$ clock
+domain, which the vernier unit will convert into a stream of marks and
+delays in the $A$ clock domain.  It is an error for the environment
+to send marks on $B$ until {\tt o\_vernier\_ready} has been asserted by TSU.
+
+\subsection{Error termination}
+In case of any error's being detected, the TSU will raise {\tt
+  o\_vernier\_error} and stop producing outputs.  If this happens, the
+environment must go through a handshake with {\tt i\_vernier\_en} by
+deasserting and reasserting that signal before performing more delay
+conversions.  {\it It is not guaranteed that the TSU will catch every attempt
+to provide it with erroneous input.}
+
+\subsection{Orderly reconfiguration}
+If the TSU is to be reconfigured by the environment, for example,
+because of a change in the speed of $B$, the procedure is to lower
+{\tt i\_vernier\_en}, which will cause {\tt o\_vernier\_ready} and
+{\tt o\_vernier\_error} to drop immediately.  The environment can then
+change the configuration inputs {\tt i\_num}, {\tt i\_denom}, etc., then
+re-raise {\tt i\_vernier\_en} and await {\tt o\_vernier\_ready} as usual.
+This procedure should also be followed if the environment needs to assert
+the $B$ domain reset---if not, the TSU will go into its error state and
+need to be re-initialized later (although it is important to note that
+even a $B$ domain reset out of sequence with controls should {\em not\/}
+require that the $A$ domain be reset for recovery).
+
+\section{Performance}
+
+All aspects of the performance of the TSU is related to the clock
+periods $p_A={\tt i\_num}$ and $p_B={\tt i\_denom}$ as well as the $B$-clock divisor $d={\tt o\_fclk\_div}.$
+
+\subsection{$B$-clock divisor}
+
+The $B$ clock is divided down
+such that it is slower than twice the period of the $A$ clock.  We call
+the divisor $d$.
+
+\subsubsection{Explicit specification of divisor}
+The divisor can either be specified by the user as {\tt i\_fclk\_div} or computed automatically.  Specifying a divisor that is too small or odd (other than 1) causes the TSU to stop in an error state.
+
+\subsubsection{Automatic algorithm for divisor}
+The automatic
+algorithm for computing the divisor is as follows:
+
+Choose $d$ as divisor such that out of the set
+
+\begin{equation}
+{\mathcal S} = \{ 1, 2, 4, \ldots , 2^{FCLK\_DIV\_BITS}-2\}
+\end{equation}
+it is the smallest member  $d \in {\mathcal S}$ that satisfies
+\begin{equation}\label{eq:divconstraint}
+  2 \, {\tt i\_num} < ( {\tt i\_denom} - {\tt i\_denom\_tol} ) d
+\end{equation}
+If there is no smallest member $d \in {\mathcal S}$ that satisfies
+equation~\ref{eq:divconstraint}, the TSU does not initialize and
+instead signals the condition on {\tt o\_vernier\_error}.
+
+\subsection{Initialization time}
+The initialization time is the time from {\tt i\_vernier\_en} asserted
+to {\tt o\_vernier\_ready} asserted.  
+
+The initialization time is specified to be
+\begin{equation}
+  t_{init} \le LCM(p_A,d\,p_B) + 2^{\tt FCLK\_DIV\_BITS}+10\, {\tt RAT\_PREC\_BITS} \, p_A + {\tt SAMPLE\_TIMES}\, (2d\,p_B + 2p_A)\quad .
+\end{equation}
+This expression for an upper bound on the initialization time arises
+from the following sources:
+\begin{itemize}
+\item Settling time of the vernier algorithm
+\item Search for $B$ clock divisor (note that this only takes as long
+  as required so if a smaller divisor is sufficient, this term shrinks
+  accordingly).  Also skipped if {\tt i\_fclk\_div}$\,\neq 0$.
+\item Computation of various constants (using a bit-at-a-time divider)
+\item Synchronization time for initialization handshake between $A$
+  and $B$ clock domains (estimated at two complete handshakes between
+  the clock domains)
+\end{itemize}
+
+\section{Precision}
+The measurement precision of the TSU is
+\begin{equation}
+  \delta = GCD(p_A,d\,p_B)
+\end{equation}
+in TUs.  This quantity is output by the TSU as {\tt o\_prec}.
+
+It is clear from the above that the precision $\delta$ may be
+dependent on the choice of $d$.  If $d$ and $p_A$ have factors in
+common, the precision will be degraded.  There are two general methods
+of avoiding this issue: if $A$ is fast enough (more than twice as fast as $B$), we will have $d=1$, and
+otherwise, in performance-critical applications, the user can specify
+a suitably prime $d$ on the input {\tt i\_fclk\_div}.
+
+\subsection{Accuracy}
+The measurement accuracy of the TSU is
+\begin{equation}
+  \epsilon = \delta + e_{drift,A}\xi + e_{drift,B}\xi + \iota_A + \iota_B
+\end{equation}
+where $\delta$ is the precision and $e_{drift}$ is the relative
+maximum drift error (e.g., 100~p.p.m.~for a standard Ethernet clock),
+and $\xi$ is the vernier settling component of the initialization time
+equal to $LCM(p_A,p_B)$ TUs, and $\iota$ is the clock jitter.  (When
+performing the summation, ensure all terms have the same units!)
+
+\subsection{Mark Throughput}\label{sec:divchoice}
+The throughput of marks is strictly limited.  
+
+Once the divided $B$ clock is transferred into the $A$ clock domain, at most
+one mark per divided $B$ clock can be accepted.
+
+For a high-enough $A$ clock speed, e.g., $A$ at 850~MHz and $B$ at
+390~5/8~MHz, the $B$ divisor is~1, and the TSU is capable of servicing $B$
+marks at one per $B$ cycle.
+
+\begin{thebibliography}{9}
+
+\bibitem{nbs}{B.~E.~Blair, ed.  {\it Time and Frequency: Theory and
+      Fundamentals.}  National Bureau of Standards Monograph 140.
+    Boulder, Colorado:\ United States Department of Commerce, National
+    Bureau of Standards, May 1974.}
+
+\bibitem{too}{M.~Nystr\"om and J.~Yan.  Precise time-interval
+  measurement using vernier clocks.  DCG DSD Mount Steller team, 2018.
+  Available from the authors.}
+  
+\end{thebibliography}
+
+\end{document}

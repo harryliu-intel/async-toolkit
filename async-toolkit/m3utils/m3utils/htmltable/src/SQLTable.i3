@@ -1,0 +1,7 @@
+INTERFACE SQLTable;
+
+TYPE
+  Vector = ARRAY OF TEXT;
+  T <: REFANY;
+
+END SQLTable.

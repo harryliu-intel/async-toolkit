@@ -1,0 +1,42 @@
+import ("libm3")
+import ("cit_util")
+
+
+_exec(["../generator/AMD64_LINUX/generator","../src/common.scm","../src/stdf.scm","exit"])
+
+include ("../AMD64_LINUX/derived.m3m")
+
+Module ("StdfI1")
+Module ("StdfI2")
+Module ("StdfI4")
+Module ("StdfU1")
+Module ("StdfU2")
+Module ("StdfU4")
+Module ("StdfR4")
+Module ("StdfN1")
+Module ("StdfB1")
+Module ("StdfBn")
+Module ("StdfC1")
+Module ("StdfCn")
+Module ("StdfDn")
+Module ("StdfVn")
+
+Module ("StdfRd")
+
+Interface ("StdfE")
+Module ("StdfParser")
+Interface ("StdfRecordObject")
+Interface ("StdfRecordObjectClass")
+Sequence ("StdfRecordObject", "StdfRecordObject")
+
+Table("StdfCardPairRec", "CardPair", "StdfRecordTypes")
+
+Module ("StdfParseTable")
+
+module ("StdfConstProc")
+
+module ("StdfWr")
+
+module ("StdfRand")
+
+library ("stdf")
