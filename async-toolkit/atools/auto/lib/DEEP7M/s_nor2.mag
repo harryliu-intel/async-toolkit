@@ -1,0 +1,55 @@
+magic
+tech scmos
+timestamp 962518978
+<< ndiffusion >>
+rect -58 298 -52 299
+rect -58 295 -52 296
+rect -58 291 -56 295
+rect -58 290 -52 291
+rect -58 287 -52 288
+<< pdiffusion >>
+rect -40 296 -36 297
+rect -40 290 -36 294
+rect -40 287 -36 288
+<< ntransistor >>
+rect -58 296 -52 298
+rect -58 288 -52 290
+<< ptransistor >>
+rect -40 294 -36 296
+rect -40 288 -36 290
+<< polysilicon >>
+rect -61 296 -58 298
+rect -52 296 -48 298
+rect -50 294 -40 296
+rect -36 294 -33 296
+rect -61 288 -58 290
+rect -52 288 -40 290
+rect -36 288 -33 290
+<< ndcontact >>
+rect -58 299 -52 303
+rect -56 291 -52 295
+rect -58 283 -52 287
+<< pdcontact >>
+rect -40 297 -36 301
+rect -40 283 -36 287
+<< metal1 >>
+rect -58 299 -52 303
+rect -40 297 -36 301
+rect -40 295 -37 297
+rect -56 292 -37 295
+rect -56 291 -52 292
+rect -58 283 -52 287
+rect -40 283 -36 287
+<< labels >>
+rlabel polysilicon -35 289 -35 289 3 a
+rlabel polysilicon -35 295 -35 295 3 b
+rlabel space -61 282 -55 304 7 ^n
+rlabel space -36 283 -33 301 3 ^p
+rlabel polysilicon -59 297 -59 297 3 b
+rlabel polysilicon -59 289 -59 289 3 a
+rlabel pdcontact -38 299 -38 299 5 x
+rlabel pdcontact -38 285 -38 285 1 Vdd!
+rlabel ndcontact -55 285 -55 285 1 GND!
+rlabel ndcontact -55 301 -55 301 1 GND!
+rlabel ndcontact -54 293 -54 293 1 x
+<< end >>

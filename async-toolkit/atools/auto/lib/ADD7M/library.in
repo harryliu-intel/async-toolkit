@@ -1,0 +1,22 @@
+/*** ADD7M cell library ***/
+echo Matching library components for ADD7M technology
+
+/*** operator matching and stack generation parameters ***/
+set nwidth 100         /* max allowed N side */
+set pwidth 150         /* max allowed P side */
+set width  250         /* max allowed when mixed N/P */
+set nstackwidth 150    /* folding threshold for N stacks */
+set pstackwidth 150    /* folding threshold for P stacks */
+set maxstackedgates 32 /* contact sharing threshold for stacks */
+
+/*** match library cells in proper order ***/
+read "ADD7M/completion.in"
+read "ADD7M/celements.in"
+read "ADD7M/combinational.in"
+read "ADD7M/pullup.in"
+read "ADD7M/inverters.in"
+matchcircuit "ADD7M/staticizer"
+
+/*** feedback information ***/
+echo Leftover Circuit Components:
+debugcircuit

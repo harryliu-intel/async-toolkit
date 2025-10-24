@@ -1,0 +1,183 @@
+******************************************
+* Start: Voltage Sources
+******************************************
+* voltage source for bzmnotchwrap/bzmnotch/bzmpll_inst0/pll_fast_clk_by2_reg/clk_SW/IN (victim)
+* victim driver net is bzmnotchwrap/bzmnotch/bzmpll_inst0/pll_fast_clk_by2
+* rise slew = 0.0006 (lib units); trip points = (0.2 - 0.8); derate = 1
+* The signal at bzmnotchwrap/bzmnotch/bzmpll_inst0/pll_fast_clk_by2_reg/clk_SW/IN is switching at 0.01 (delay trip point 0.5).
+* The clock PULSE is replaced by a PWL to support pre-driver.
+
+
+*vbzmnotchwrap/bzmnotch/bzmpll_inst0/pll_fast_clk_by2_reg/clk_SW/IN bzmnotchwrap/bzmnotch/bzmpll_inst0/pll_fast_clk_by2_reg/clk_SW/IN 0 pwl(0.0ns	'0*vtrue/0.55'
+*+	0.01ns	'0*vtrue/0.55'
+*+	0.010001ns	'0.0275*vtrue/0.55'
+*+	0.010002ns	'0.478847*vtrue/0.55'
+*+	0.010003ns	'0.515352*vtrue/0.55'
+*+	0.01001ns	'0.55*vtrue/0.55'
+*+	0.015ns	'0.55*vtrue/0.55'
+*+	0.015001ns	'0.5225*vtrue/0.55'
+*+	0.015002ns	'0.071153*vtrue/0.55'
+*+	0.015003ns	'0.034648*vtrue/0.55'
+*+	0.01501ns	'0*vtrue/0.55'
+*+	0.02ns	'0*vtrue/0.55'
+*+	0.020001ns	'0.0275*vtrue/0.55'
+*+	0.020002ns	'0.478847*vtrue/0.55'
+*+	0.020003ns	'0.515352*vtrue/0.55'
+*+	0.02001ns	'0.55*vtrue/0.55'
+*+	0.025ns	'0.55*vtrue/0.55'
+*+	0.025001ns	'0.5225*vtrue/0.55'
+*+	0.025002ns	'0.071153*vtrue/0.55'
+*+	0.025003ns	'0.034648*vtrue/0.55'
+*+	0.02501ns	'0*vtrue/0.55'
+*+	0.03ns	'0*vtrue/0.55'
+*+	0.030001ns	'0.0275*vtrue/0.55'
+*+	0.030002ns	'0.478847*vtrue/0.55'
+*+	0.030003ns	'0.515352*vtrue/0.55'
+*+	0.03001ns	'0.55*vtrue/0.55'
+*+	0.035ns	'0.55*vtrue/0.55'
+*+	0.035001ns	'0.5225*vtrue/0.55'
+*+	0.035002ns	'0.071153*vtrue/0.55'
+*+	0.035003ns	'0.034648*vtrue/0.55'
+*+	0.03501ns	'0*vtrue/0.55'
+*+	0.04ns	'0*vtrue/0.55'
+*+	0.040001ns	'0.0275*vtrue/0.55'
+*+	0.040002ns	'0.478847*vtrue/0.55'
+*+	0.040003ns	'0.515352*vtrue/0.55'
+*+	0.04001ns	'0.55*vtrue/0.55'
+*+	0.045ns	'0.55*vtrue/0.55'
+*+	0.045001ns	'0.5225*vtrue/0.55'
+*+	0.045002ns	'0.071153*vtrue/0.55'
+*+	0.045003ns	'0.034648*vtrue/0.55'
+*+	0.04501ns	'0*vtrue/0.55'
+*+	0.05ns	'0*vtrue/0.55'
+*+	0.050001ns	'0.0275*vtrue/0.55'
+*+	0.050002ns	'0.478847*vtrue/0.55'
+*+	0.050003ns	'0.515352*vtrue/0.55'
+*+	0.05001ns	'0.55*vtrue/0.55'
+*+	0.055ns	'0.55*vtrue/0.55'
+*+	0.055001ns	'0.5225*vtrue/0.55'
+*+	0.055002ns	'0.071153*vtrue/0.55'
+*+	0.055003ns	'0.034648*vtrue/0.55'
+*+	0.05501ns	'0*vtrue/0.55'
+*+)
+
+
+* fall slew = 0.0006 (lib units); trip points = (0.8 - 0.2); derate = 1
+* The signal at bzmnotchwrap/bzmnotch/bzmpll_inst0/pll_fast_clk_by2_reg/clk_SW/IN is switching at 0.01 (delay trip point 0.5).
+* The clock PULSE is replaced by a PWL to support pre-driver.
+*vbzmnotchwrap/bzmnotch/bzmpll_inst0/pll_fast_clk_by2_reg/clk_SW/IN bzmnotchwrap/bzmnotch/bzmpll_inst0/pll_fast_clk_by2_reg/clk_SW/IN 0 pwl(0.0ns	0.55
+*+	0.01ns	0.55
+*+	0.010001ns	0.5225
+*+	0.010002ns	0.071153
+*+	0.010003ns	0.034648
+*+	0.01001ns	0
+*+	0.015ns	0
+*+	0.015001ns	0.0275
+*+	0.015002ns	0.478847
+*+	0.015003ns	0.515352
+*+	0.01501ns	0.55
+*+	0.02ns	0.55
+*+	0.020001ns	0.5225
+*+	0.020002ns	0.071153
+*+	0.020003ns	0.034648
+*+	0.02001ns	0
+*+	0.025ns	0
+*+	0.025001ns	0.0275
+*+	0.025002ns	0.478847
+*+	0.025003ns	0.515352
+*+	0.02501ns	0.55
+*+	0.03ns	0.55
+*+	0.030001ns	0.5225
+*+	0.030002ns	0.071153
+*+	0.030003ns	0.034648
+*+	0.03001ns	0
+*+	0.035ns	0
+*+	0.035001ns	0.0275
+*+	0.035002ns	0.478847
+*+	0.035003ns	0.515352
+*+	0.03501ns	0.55
+*+	0.04ns	0.55
+*+	0.040001ns	0.5225
+*+	0.040002ns	0.071153
+*+	0.040003ns	0.034648
+*+	0.04001ns	0
+*+	0.045ns	0
+*+	0.045001ns	0.0275
+*+	0.045002ns	0.478847
+*+	0.045003ns	0.515352
+*+	0.04501ns	0.55
+*+	0.05ns	0.55
+*+	0.050001ns	0.5225
+*+	0.050002ns	0.071153
+*+	0.050003ns	0.034648
+*+	0.05001ns	0)
+* voltage source for bzmnotchwrap/bzmnotch/bzmpll_inst0/pll_fast_clk_by2_reg/d (victim)
+* victim driver net is bzmnotchwrap/bzmnotch/bzmpll_inst0/pll_fast_clk_by2
+* rise slew = 4.46062 (lib units); trip points = (0.2 - 0.8); derate = 1
+*vbzmnotchwrap/bzmnotch/bzmpll_inst0/pll_fast_clk_by2_reg/d bzmnotchwrap/bzmnotch/bzmpll_inst0/pll_fast_clk_by2_reg/d 0 pwl(0.0ns	0.55
+*+	0.01ns	0.55
+*+	0.039ns	0.55
+*+	0.041ns	0)
+* rise slew = 4.46062 (lib units); trip points = (0.2 - 0.8); derate = 1
+vbzmnotchwrap/bzmnotch/bzmpll_inst0/pll_fast_clk_by2_reg/d bzmnotchwrap/bzmnotch/bzmpll_inst0/pll_fast_clk_by2_reg/d 0 pwl(0.0ns	'0.55*vtrue/0.55'
++	0.01ns	'0.55*vtrue/0.55'
++	0.039ns	'0.55*vtrue/0.55'
++	0.041ns	'0*vtrue/0.55')
+* voltage source for bzmnotchwrap/bzmnotch/bzmpll_inst0/pll_fast_clk_by2_reg/rb (victim)
+* victim driver net is bzmnotchwrap/bzmnotch/bzmpll_inst0/pll_fast_clk_by2
+vbzmnotchwrap/bzmnotch/bzmpll_inst0/pll_fast_clk_by2_reg/rb	bzmnotchwrap/bzmnotch/bzmpll_inst0/pll_fast_clk_by2_reg/rb	0	0.55
+* voltage source for bzmnotchwrap/bzmnotch/bzmpll_inst0/pll_fast_clk_by2_reg/clk_SW/INIT_SEQ (aggressor)
+* rise slew = 0.001 (lib units); trip points = (0.2 - 0.8); derate = 1
+*vbzmnotchwrap/bzmnotch/bzmpll_inst0/pll_fast_clk_by2_reg/clk_SW/INIT_SEQ bzmnotchwrap/bzmnotch/bzmpll_inst0/pll_fast_clk_by2_reg/clk_SW/INIT_SEQ 0 pwl(0.0ns	0
+*+	0.01ns	0
+*+	0.019ns	0
+*+	0.021ns	0.55
+*+	0.029ns	0.55
+*+	0.031ns	0)
+* rise slew = 0.001 (lib units); trip points = (0.2 - 0.8); derate = 1
+vbzmnotchwrap/bzmnotch/bzmpll_inst0/pll_fast_clk_by2_reg/clk_SW/INIT_SEQ bzmnotchwrap/bzmnotch/bzmpll_inst0/pll_fast_clk_by2_reg/clk_SW/INIT_SEQ 0 pwl(0.0ns	'0*vtrue/0.55'
++	0.01ns	'0*vtrue/0.55'
++	0.019ns	'0*vtrue/0.55'
++	0.021ns	'0*vtrue/0.55'
++	0.029ns	'0*vtrue/0.55'
++	0.031ns	'0*vtrue/0.55')
+gbzmnotchwrap/bzmnotch/bzmpll_inst0/pll_fast_clk_by2_reg/clk_SW/IN	bzmnotchwrap/bzmnotch/bzmpll_inst0/pll_fast_clk_by2_reg/clk_SW/IN	bzmnotchwrap/bzmnotch/bzmpll_inst0/pll_fast_clk_by2_reg/clk	VCR PWL(1)	bzmnotchwrap/bzmnotch/bzmpll_inst0/pll_fast_clk_by2_reg/clk_SW/CTRL_SW_SEQ	vss
++	0v, 1e+07	'0.275*vtrue/0.55', 1e+07	'0.285*vtrue/0.55', 0.001
+gbzmnotchwrap/bzmnotch/bzmpll_inst0/pll_fast_clk_by2_reg/clk_SW/INIT_SEQ	bzmnotchwrap/bzmnotch/bzmpll_inst0/pll_fast_clk_by2_reg/clk_SW/INIT_SEQ	bzmnotchwrap/bzmnotch/bzmpll_inst0/pll_fast_clk_by2_reg/clk	VCR PWL(1)	bzmnotchwrap/bzmnotch/bzmpll_inst0/pll_fast_clk_by2_reg/clk_SW/CTRL_SW_SEQ	vss
++	0v, 0.001	'0.275*vtrue/0.55', 0.001	'0.285*vtrue/0.55', 1e+07
+vbzmnotchwrap/bzmnotch/bzmpll_inst0/pll_fast_clk_by2_reg/clk_SW/CTRL_SW_SEQ bzmnotchwrap/bzmnotch/bzmpll_inst0/pll_fast_clk_by2_reg/clk_SW/CTRL_SW_SEQ 0 pwl(0.0ns	'0*vtrue/0.55'
++	0.049ns	'0*vtrue/0.55'
++	0.049001ns	'0.55*vtrue/0.55'
++)
+******************************************
+* End: Voltage Sources
+******************************************
+* Start: Victim Measure Statements
+******************************************
+* .print voltage section:bzm
+
+
+
+.measure tran clkdelay1
++ trig v(bzmnotchwrap/fwr_notch2spine_ls_wrap/right_stack_engclk_ctech_dcc_lvlshift/clk) val = 'vminer * 0.5' td = 'start - 2 * halfrise' rise = 1
++ targ v(right_stack_inst/mgtile_inst3/mybuff4engclkpin__70/clk) val = 'vminer * 0.5' td = 'start - 2 * halfrise' rise = 1
+
+.measure tran clkdelay4
++ trig v(bzmnotchwrap/fwr_notch2spine_ls_wrap/right_stack_engclk_ctech_dcc_lvlshift/clk) val = 'vminer * 0.5' td = 'start - 2 * halfrise' rise = 4
++ targ v(right_stack_inst/mgtile_inst3/mybuff4engclkpin__70/clk) val = 'vminer * 0.5' td = 'start - 2 * halfrise' rise = 4
+
+.measure tran clkhi4
++ trig v(right_stack_inst/mgtile_inst3/mybuff4engclkpin__70/clk) val = 'vminer * 0.5' td = 'start - 2 * halfrise' rise = 4
++ targ v(right_stack_inst/mgtile_inst3/mybuff4engclkpin__70/clk) val = 'vminer * 0.5' td = 'start - 2 * halfrise' fall = 4
+
+.measure tran clklo3
++ trig v(right_stack_inst/mgtile_inst3/mybuff4engclkpin__70/clk) val = 'vminer * 0.5' td = 'start - 2 * halfrise' fall = 3
++ targ v(right_stack_inst/mgtile_inst3/mybuff4engclkpin__70/clk) val = 'vminer * 0.5' td = 'start - 2 * halfrise' rise = 4
+
+
+
+******************************************
+* End: Victim Measure Statements
+******************************************
+******************************************
+* transient analysis

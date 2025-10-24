@@ -1,0 +1,3 @@
+run_1ps_test -dut fc -ace_args -simv_args +hier_dump_top=fc_hdl_top.dut -simv_args +hier_dump_file=top.hier -ace_args-
+
+

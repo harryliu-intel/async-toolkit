@@ -1,0 +1,8 @@
+<!-- vim: ft=xml
+-->
+<LINTRA_CONFIGURATION>
+   
+    <!-- Set parameter value of 60000 as suggested by Irina Furman -->
+    <rule id="60000" active="no" />
+
+</LINTRA_CONFIGURATION>

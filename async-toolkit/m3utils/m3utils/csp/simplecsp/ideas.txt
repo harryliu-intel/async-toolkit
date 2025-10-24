@@ -1,0 +1,129 @@
+When a process is suspended
+===========================
+
+1. A process can suspend on the following.
+
+2. A send R!x
+
+3. A receive L?x
+
+4. A channel peek L#?x
+
+5. A selection/if statement, deterministic or not:
+
+[ A -> P [] B -> Q ]
+
+Where at least one of A and B must contain a probe or value probe.
+
+[ A ]
+
+Where A must contain a probe or value probe.
+
+[ A -> P :  B -> Q ]
+
+Where at least one of A and B must contain a probe or value probe.
+
+A selection statement cannot block on anything other than a probe
+or value probe.
+
+6. A builtin, wait() -- are there others?
+
+Loop/do cannot block.
+
+
+Design
+======
+
+A single CSP process has a number of concurrent loci of control.  We
+call the state of such an activity a thread.  A thread is represented
+by a closure.  A closure consists of two things: the (shared) state of
+a process's local variables and a currently active code block.  A
+process therefore has as many active code blocks as it has active
+threads.  On startup, a process has a single initial thread. If a
+process ever has zero threads, it is dead (which is a stable state).
+Process control can fork and rejoin through internal statements of
+parallelism, such as
+
+A?a, B?b
+
+or
+
+([#A -> C!0; A?x [] #B -> C!1; B?y]),(P!p; Q!q)
+
+The process control will proceed by forking into two concurrent threads
+sharing the same process state but different code blocks and then join
+at the end of the concurrent execution.
+
+Thread forking can be modeled with zero-slack communication actions like so:
+
+P; A?a, B?b; Q
+
+\equiv
+
+P; X0; X1; Y0; Y1; Q
+||
+[ X0 ; A?a ; Y0 ]
+||
+[ X1 ; B?b ; Y1 ]
+
+where the state is shared across the three subprocesses.
+
+
+More observations
+=================
+
+Channels are statically routed, so they connect the same two processes
+throughout their lifetime.  But not every instance of a given process
+has the same type of process at the other end of the channel
+connecting to that port.  This has implications for separate
+compilation of processes!
+
+It is illegal for both ends of a channel to be blocked on a selection.
+(Strictly speaking, it actually isn't, but can we please allow
+ourselves this restriction?)  Because of this, we only need to record
+a single waiter in each channel.  I think this is true even for slack
+zero.
+
+It is illegal for side effects to occur within the guards of a selection
+or loop---regardless of whether those side effects are local (change local
+variables) or not (touch external-going channels of the process).  This
+means that receive expressions (among many other things) are illegal
+in selection or loop guards.
+
+The above properties lead to two alternative, equally allowable,
+implementations of a selection.
+
+1. Each time the value of the probe going into a selection changes,
+we can re-evaluate all the guards.
+
+OR
+
+2. We can segregate the clauses of the selection so that each probe
+going into the selection only triggers a subset of the guards to be
+evaluated.
+
+
+Here's an approach
+==================
+
+An issue with slack 0 is that the pointers never update.  We can't tell
+from the buffer pointers the state of a slack-0 channel.  Instead, we
+could say the following:
+
+If we arrive at a communication action and there is no data and no one
+is waiting, we suspend and continue later.
+
+If we arrive at a communication action and someone is waiting, we
+execute both sides' communication actions and continue.
+
+If there is no fake wakeup, we can suspend with the continuation being
+the step AFTER the communication action.  But we still need to make
+space for the next communication action.  Actually this just means
+that the communication action has to be unsuspended by the receive,
+not the send!  This means that every send has to suspend if there is
+only one place to store data.
+
+That is, a slack-N send stores the N+1st data item and suspends.  It
+is then unsuspended by the next receive that occurs.
+
+

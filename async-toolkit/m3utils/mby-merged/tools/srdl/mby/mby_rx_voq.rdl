@@ -1,0 +1,156 @@
+
+<% if ($MBY_RX_VOQ) {
+   } else {
+   $MBY_RX_VOQ = 1;
+%>
+
+
+`include "mby_port_cfg.rdl"
+
+
+
+/////////////////////////////////////////////////////////////////////////////
+// RX_VOQ_PORT_CFG
+
+reg rx_voq_port_cfg_r {
+  shared;
+  HandCoded = true;
+  name = "Rx VOQ Port Configuration.";
+  desc = "
+      Port configuration for the Rx VOQ tag sequencer.
+      The tag sequencer derives set-aside buffer allocation and the port timewheel sequence from this configuration.
+      The port index is N*4 + M. The port configuration values are:
+
+      [list]
+      [*] 0 = Disable this port.
+      [*] 1 = This port is 100G, 50G, or 25G.
+      [*] 2 = This port is 200G. Only port N.0 or N.2 can be 200G, and the next port must be disabled.
+      [*] 3 = This port is 400G. Only port N.0 can be 400G, and the next 3 ports must be disabled.
+      [/list]
+     ";
+  regwidth = 64;
+  accesswidth = 64;
+
+
+
+  field {
+    AccessType = "RW";
+    desc = "Port configurations, the configuration for port i runs from bit 2*i to bit 2*i+1";
+    ValRandomize = true;
+  }  PORT[31:0];
+
+//<% for (my $i = 0; $i < 16; $i++) { %>
+//  field {
+//    encode = mby_port_cfg_enum;
+//    AccessType = "RW";
+//    desc = "Port <%=$i%> configuration";
+//    ValRandomize = true;
+//  } PORT_<%=$i%> [<%=$i*2+1%>:<%=$i*2%>] = 2'h0;
+//<% } %>
+
+};
+
+
+/////////////////////////////////////////////////////////////////////////////
+// SAF_INGRESS_SPEED
+
+reg saf_ingress_speed_r {
+  shared;
+  HandCoded = true;
+  name = "SAF Speeds for Local Ingress Ports.";
+  desc = "
+      Store-and-forward configuration.
+      Speed settings for normal local ingress ports (virtual ports are always SAF).
+      Must use the same encoding as SAF_EGRESS_SPEED.
+      The packet is forced SAF if SAF_INGRESS_SPEED[local_rx_port] is less than SAF_EGRESS_SPEED[tx_port].
+      Therefore only bits 2:0 of each value are implemented (bit 3 is padding, written and read as 0).
+     ";
+  regwidth = 64;
+  accesswidth = 64;
+
+  field {
+    AccessType = "RW";
+    desc = "Port speed, the speed for port i runs from bit 4*i to bit 4*i+3";
+    ValRandomize = true;
+  }  PORT[63:0];
+
+//<% for (my $i = 0; $i < 16; $i++) { %>
+//  field {
+//    AccessType = "RW";
+//    desc = "Port <%=$i%> speed";
+//    ValRandomize = true;
+//  } PORT_<%=$i%> [<%=$i*4+3%>:<%=$i*4%>] = 4'h0;
+//<% } %>
+};
+
+
+
+/////////////////////////////////////////////////////////////////////////////
+// SAF_EGRESS_SPEED
+
+reg saf_egress_speed_r {
+  shared;
+  HandCoded = true;
+  name = "SAF Speeds for All Egress Ports.";
+  desc = "
+      Store-and-forward configuration.
+      Speed settings for all normal egress ports (virtual ports are always SAF).
+      Must use the same encoding as SAF_INGRESS_SPEED.
+      The packet is forced SAF if SAF_INGRESS_SPEED[local_rx_port] is less than SAF_EGRESS_SPEED[tx_port].
+     ";
+  regwidth = 64;
+  accesswidth = 64;
+
+  field {
+    AccessType = "RW";
+    desc = "Port speed";
+    ValRandomize = true;
+  } SPEED[2:0] = 3'h0;
+};
+
+
+/////////////////////////////////////////////////////////////////////////////
+// SAF_TC
+
+reg saf_tc_r {
+  shared;
+  HandCoded = true;
+  name = "SAF TC Configuration.";
+  desc = "
+      Store-and-forward configuration.
+      Index is normal ingress port (virtual ports are always SAF).
+      The packet is forced store-and-forward if bit TxTC is set.
+      TBD: How many Tx TCs?
+     ";
+  regwidth = 64;
+  accesswidth = 64;
+
+  field {
+    AccessType = "RW";
+    desc = "SAF bit per TxTC";
+    ValRandomize = true;
+  } saf[63:0] = 64'h0;
+
+};
+
+
+/////////////////////////////////////////////////////////////////////////////
+// Rx VOQ addrmap
+
+addrmap mby_rx_voq_map {
+  name = "mby_rx_voq";
+  desc = "Rx VOQ Register Set";
+  Space = "MSG";
+  Opcode = "MEM-SB";
+  No_IOSF_Primary = true;
+  addressing = fullalign;
+
+  rx_voq_port_cfg_r   RX_VOQ_PORT_CFG;
+  saf_ingress_speed_r SAF_INGRESS_SPEED;
+  saf_egress_speed_r  SAF_EGRESS_SPEED[256];
+  saf_tc_r            SAF_TC[16];
+};
+
+<%
+   }
+%>

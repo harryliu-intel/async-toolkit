@@ -1,0 +1,6 @@
+# Do not to commit this file to the repo!!
+# This file is for temporary user overrides
+
+#NBJOB=
+#BASEVCSFLAGS += -debug_all +memcbk
+#BASERUNFLAGS += +vcs+dumparrays

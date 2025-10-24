@@ -1,0 +1,10 @@
+#!/usr/intel/bin/zsh -x
+lc_shell -f =(
+    echo "set_app_var lc_allow_same_pg_pin_as_related_power_and_ground true"
+    echo "set lc_enable_backplane_low_power_cell true"
+    for i in "$@"; do
+        lib=$(grep -m 1 '^library' $i | cut -f2 -d'(' | cut -f1 -d')')
+        echo "read_lib $i > ${i:h}/$lib.log; write_lib -format db -output ${i:h}/$lib.ldb $lib"
+    done
+    echo exit
+)

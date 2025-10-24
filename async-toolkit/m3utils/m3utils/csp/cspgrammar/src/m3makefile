@@ -1,0 +1,52 @@
+% Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+% SPDX-License-Identifier: Apache-2.0
+
+import ("libm3")
+import ("cit_util")
+import ("parseparams")
+import ("simpletoken")
+import ("mscheme")
+import ("modula3scheme")
+import ("sstubgen")
+import ("parseparams")
+
+%if defined("CM3_VERSION")
+%        m3_optimize("T")
+%end
+
+Module   ("CspExpression")
+Interface("CspExpressionPublic")
+Sequence ("CspExpression", "CspExpression")
+
+Module   ("CspStatement")
+Interface("CspStatementPublic")
+Sequence ("CspStatement", "CspStatement")
+
+Module   ("CspType")
+Interface("CspTypePublic")
+Interface("CspStructMember")
+Sequence ("CspStructMember", "CspStructMember")
+
+Module   ("CspAst")
+
+Interface("CspGuardedCommand")
+Sequence ("CspGuardedCommand", "CspGuardedCommand")
+
+Module   ("CspDeclaration")
+Interface("CspDeclarationPublic")
+Sequence ("CspDeclaration", "CspDeclaration")
+
+Interface("CspDirection")
+Module   ("CspRange")
+Interface("CspInterval")
+
+Module   ("CspDeclarator")
+Sequence ("CspDeclarator", "CspDeclarator")
+Module   ("CspStructDeclarator")
+Sequence ("CspStructDeclarator", "CspStructDeclarator")
+
+Module   ("CspSyntax")
+
+library ("cspgrammar")
+
+

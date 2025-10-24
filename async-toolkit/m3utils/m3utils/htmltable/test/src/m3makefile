@@ -1,0 +1,33 @@
+% Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+% SPDX-License-Identifier: Apache-2.0
+
+import ("libm3")
+import ("cit_util")
+import ("parseparams")
+import ("mscheme")
+import ("mysql")
+import ("modula3scheme")
+import ("sstubgen")
+import ("htmltable")
+
+SchemeStubs ("TextWr")
+SchemeStubs ("FileWr")
+SchemeStubs ("Wr")
+SchemeStubs ("FileRd")
+SchemeStubs ("Rd")
+SchemeStubs ("SchemeEnvironment")
+SchemeStubs ("Fmt")
+SchemeStubs ("Database")
+SchemeStubs ("UnixPermissions")
+SchemeStubs ("CheckUnixPermissions")
+SchemeStubs ("UnixGroupList")
+%SchemeStubs ("MySQL")  % pulls in UNTRACED stuff, won't work 
+
+ExportSchemeStubs("testhtml")
+importSchemeStubs()
+
+implementation ("Main")
+
+program ("testhtml")
+
+

@@ -1,0 +1,22 @@
+/*** ADD7M_FULLAUTO cell library ***/
+echo Matching library components for ADD7M_FULLAUTO technology
+
+/*** operator matching and stack generation parameters ***/
+set nwidth 100         /* max allowed N side */
+set pwidth 150         /* max allowed P side */
+set width  250         /* max allowed when mixed N/P */
+set nstackwidth 150    /* folding threshold for N stacks */
+set pstackwidth 150    /* folding threshold for P stacks */
+set maxstackedgates 32 /* contact sharing threshold for stacks */
+
+/*** match library cells in proper order ***/
+/* read "ADD7M_FULLAUTO/completion.in" */
+read "ADD7M_FULLAUTO/celements.in"
+read "ADD7M_FULLAUTO/combinational.in"
+read "ADD7M_FULLAUTO/pullup.in"
+read "ADD7M_FULLAUTO/inverters.in"
+matchcircuit "ADD7M_FULLAUTO/staticizer"
+
+/*** feedback information ***/
+echo Leftover Circuit Components:
+debugcircuit

@@ -1,0 +1,5 @@
+$hdl_spec = {
+# Assumed to be in the same directory as the .hdl file
+  -collage_assemble_file => [ "$ENV{MODEL_ROOT}/tools/collage/configs/config_soc/assemble/assembler.soc.tcl" ],
+  -collage_assemble_design =>  'soc' ,
+};

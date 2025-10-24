@@ -1,0 +1,653 @@
+Warning: Derate summary report is only shown for full_clock_expanded paths. (UITE-431)
+****************************************
+Report : timing
+	-path_type full
+	-delay_type min
+	-input_pins
+	-nets
+	-slack_lesser_than inf
+	-max_paths 1
+	-transition_time
+	-capacitance
+	-crosstalk_delta
+	-derate
+	-exceptions all
+	-sort_by slack
+	-physical
+	-include_hierarchical_pins
+Design : bzm
+Version: T-2022.03-SP5-2-VAL-20230830
+Date   : Wed Jan 10 21:41:55 2024
+****************************************
+
+
+  Startpoint: bzmnotchwrap/bzmnotch/bzmpll_inst0/bzm_clkmux1_ctech_clk_mux/clkout
+               (clock source 'ENG_CLK')
+  Endpoint: right_stack_inst/mgtile_inst3/my_flop/clk
+               (internal pin)
+  Path Group: (none)
+  Path Type: min
+  Sigma: 4.4
+
+  Point                      Fanout   Cap    DTrans      Trans        Derate   Delta       Incr          Path       Voltage  Supply-Net-Group Location
+  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+  clock source latency                                                                      0.0000        0.0000
+  bzmnotchwrap/bzmnotch/bzmpll_inst0/bzm_clkmux1_ctech_clk_mux/clkout (i0scmbn22aa1n02x5)
+                                                            6.6517                          0.0000        0.0000 r   0.6000  VDD_DIG n       (2075246.0000,145952.0000)
+  bzmnotchwrap/bzmnotch/bzmpll_inst0/fast_clk (net)
+                               1   0.5313 
+  bzmnotchwrap/bzmnotch/bzmpll_inst0/fast_clk (bzm_bzm_bzmpll_0)
+                                                            0.0000   0.9700                 0.0000 &      0.0000 r           unconnected     unplaced
+  bzmnotchwrap/bzmnotch/fast_clk (net) 
+  bzmnotchwrap/bzmnotch/clock_opt_cts_ctosc_drc_inst_140569/clk (i0scinv00aa1n04x5) <-
+                                               0.0000       6.6522   0.9700     0.0000      0.0385 &      0.0385 r   0.6000  VDD_DIG n       (2075333.0000,145632.0000)
+  bzmnotchwrap/bzmnotch/clock_opt_cts_ctosc_drc_inst_140569/clkout (i0scinv00aa1n04x5)
+                                                            8.7370   0.9880                 5.2901 &      5.3286 f   0.6000  VDD_DIG n       (2075450.0000,145696.0000)
+  bzmnotchwrap/bzmnotch/clock_opt_cts_ctosc_drc_6 (net)
+                               1   2.2878 
+  bzmnotchwrap/bzmnotch/clock_opt_cts_ctosc_drc_inst_140568/clk (i0scinv00aa1d24x5)
+                                               0.0000       9.0494   0.9700     0.0000      0.3917 &      5.7203 f   0.6000  VDD_DIG n       (2075700.0000,145867.0000)
+  bzmnotchwrap/bzmnotch/clock_opt_cts_ctosc_drc_inst_140568/clkout (i0scinv00aa1d24x5)
+                                                            9.5183   0.9880                 7.8729 &     13.5932 r   0.6000  VDD_DIG n       (2075650.0000,145824.0000)
+  bzmnotchwrap/bzmnotch/clock_opt_cts_ctosc_drc_5 (net)
+                               3   6.9798 
+  bzmnotchwrap/bzmnotch/clock_opt_cts_bzmpll_inst0_fast_clk_vip124089/clk (i0scinv00aa1d30x4)
+                                               0.0000      11.5194   0.9700     0.0000      0.8492 &     14.4425 r   0.6000  VDD_DIG n       (2075520.0000,146240.0000)
+  bzmnotchwrap/bzmnotch/clock_opt_cts_bzmpll_inst0_fast_clk_vip124089/clkout (i0scinv00aa1d30x4)
+                                                            4.3434   0.9998                 4.5369 &     18.9793 f   0.6000  VDD_DIG n       (2075500.0000,146144.0000)
+  bzmnotchwrap/bzmnotch/cts4 (net)
+                               1   2.1605 
+  bzmnotchwrap/bzmnotch/clock_opt_cts_bzmpll_inst0_fast_clk_vip124088/clk (i0scinv00aa1d30x4)
+                                               0.0000       4.6156   0.9700     0.0000      0.2700 &     19.2494 f   0.6000  VDD_DIG n       (2075130.0000,146240.0000)
+  bzmnotchwrap/bzmnotch/clock_opt_cts_bzmpll_inst0_fast_clk_vip124088/clkout (i0scinv00aa1d30x4)
+                                                            2.9538   0.9998                 4.0954 &     23.3448 r   0.6000  VDD_DIG n       (2074900.0000,146144.0000)
+  bzmnotchwrap/bzmnotch/cts3 (net)
+                               1   1.2821 
+  bzmnotchwrap/bzmnotch/dcc0_bypass_clkmux_ctech_clk_mux/clk2 (i0scmbn22aa1n02x5)
+                                               0.0000       3.0214   0.9700     0.0000      0.1493 &     23.4941 r   0.6000  VDD_DIG n       (2080200.0000,148224.0000)
+  bzmnotchwrap/bzmnotch/dcc0_bypass_clkmux_ctech_clk_mux/clkout (i0scmbn22aa1n02x5)
+                                                           21.5257   0.9998                18.4587 &     41.9528 r   0.6000  VDD_DIG n       (2080454.0000,148192.0000)
+  bzmnotchwrap/bzmnotch/fast_clk_dcc (net)
+                               1   2.0684 
+  bzmnotchwrap/bzmnotch/clock_opt_cts_ZCTSINV_1646_139212/clk (i0scinv00aa1n12x4)
+                                               0.0000      21.5769   0.9700     0.0000      0.7028 &     42.6556 r   0.6000  VDD_DIG n       (2087954.0000,149408.0000)
+  bzmnotchwrap/bzmnotch/clock_opt_cts_ZCTSINV_1646_139212/clkout (i0scinv00aa1n12x4)
+                                                            9.3025   0.9998                 8.4001 &     51.0557 f   0.6000  VDD_DIG n       (2088000.0000,149312.0000)
+  bzmnotchwrap/bzmnotch/clock_opt_cts_ZCTSNET_74 (net)
+                               2   3.2811 
+  bzmnotchwrap/bzmnotch/clock_opt_cts_ZCTSINV_1421_139210/clk (i0scinv00aa1d24x4)
+                                               0.0000       9.5630   0.9700     0.0000      0.6376 &     51.6933 f   0.6000  VDD_DIG n       (2088000.0000,150347.0000)
+  bzmnotchwrap/bzmnotch/clock_opt_cts_ZCTSINV_1421_139210/clkout (i0scinv00aa1d24x4)
+                                                           10.9618   0.9998                 7.5160 &     59.2093 r   0.6000  VDD_DIG n       (2087950.0000,150304.0000)
+  bzmnotchwrap/bzmnotch/clock_opt_cts_ZCTSNET_73 (net)
+                              27   9.3876 
+  bzmnotchwrap/bzmnotch/eng0_clk_gate_ctech_clk_gate_mani/clk (i0scilb05aa1n02x5)
+                                               0.0000      25.5139   0.9700     0.0000      8.8171 &     68.0264 r   0.6000  VDD_DIG n       (2096120.0000,154528.0000)
+  bzmnotchwrap/bzmnotch/eng0_clk_gate_ctech_clk_gate_mani/clkout (i0scilb05aa1n02x5)
+                                                           28.5238   0.9554                26.6876 &     94.7140 r   0.6000  VDD_DIG n       (2096900.0000,154496.0000)
+  bzmnotchwrap/bzmnotch/gated_fast_clk_dcc (net)
+                               1   3.2431 
+  bzmnotchwrap/bzmnotch/bzmnotchspine/fast_clk (bzm_bzmnotchspine)
+                                                            0.0000   0.9700                 0.0000 &     94.7140 r           unconnected     unplaced
+  bzmnotchwrap/bzmnotch/bzmnotchspine/fast_clk (net) 
+  bzmnotchwrap/bzmnotch/bzmnotchspine/bzmspineroot/fast_clk_down_i (bzm_bzmspineroot)
+                                                            0.0000   0.9700                 0.0000 &     94.7140 r           unconnected     unplaced
+  bzmnotchwrap/bzmnotch/bzmnotchspine/bzmspineroot/fast_clk_down_i (net) 
+  bzmnotchwrap/bzmnotch/bzmnotchspine/bzmspineroot/fast_clk_up_o (bzm_bzmspineroot)
+                                                            0.0000   0.9700                 0.0000 &     94.7140 r           unconnected     unplaced
+  bzmnotchwrap/bzmnotch/bzmnotchspine/sp0_fast_clk_o_prels (net) 
+  bzmnotchwrap/bzmnotch/bzmnotchspine/sp0_fast_clk_o_prels (bzm_bzmnotchspine)
+                                                            0.0000   0.9700                 0.0000 &     94.7140 r           unconnected     unplaced
+  bzmnotchwrap/bzmnotch/sp0_fast_clk_o_prels (net) 
+  bzmnotchwrap/bzmnotch/sp0_fast_clk_o_prels (bzm_bzmnotch)
+                                                            0.0000   0.9700                 0.0000 &     94.7140 r           unconnected     unplaced
+  bzmnotchwrap/fast_clk0_w (net) 
+  bzmnotchwrap/u_fwr_notch2rstack_ls_wrap/fast_clk1_i (bzm_fwr_notch2rstack_ls_wrap)
+                                                            0.0000   0.9700                 0.0000 &     94.7140 r           unconnected     unplaced
+  bzmnotchwrap/u_fwr_notch2rstack_ls_wrap/fast_clk1_i (net) 
+  bzmnotchwrap/u_fwr_notch2rstack_ls_wrap/clk_eng_rt_focal_buf/clk (i0scbf000aa1n12x5)
+                                               0.0000      28.6244   0.9700     0.0000      1.1842 &     95.8982 r   0.6000  VDD_DIG n       (2080900.0000,149536.0000)
+  bzmnotchwrap/u_fwr_notch2rstack_ls_wrap/clk_eng_rt_focal_buf/clkout (i0scbf000aa1n12x5)
+                                                            4.9823   0.9554                12.8182 &    108.7163 r   0.6000  VDD_DIG n       (2081050.0000,149504.0000)
+  bzmnotchwrap/u_fwr_notch2rstack_ls_wrap/clk_eng_rt_focal (net)
+                               1   1.5282 
+  bzmnotchwrap/u_fwr_notch2rstack_ls_wrap/clk_buf_60_RT_290/clk (i0scbf000aa1d36x5)
+                                               0.0000       5.0824   0.9700     0.0000      0.2620 &    108.9783 r   0.6000  VDD_DIG n       (2080850.0000,154336.0000)
+  bzmnotchwrap/u_fwr_notch2rstack_ls_wrap/clk_buf_60_RT_290/clkout (i0scbf000aa1d36x5)
+                                                            7.9254   0.9554                15.8589 &    124.8371 r   0.6000  VDD_DIG n       (2080950.0000,154176.0000)
+  bzmnotchwrap/u_fwr_notch2rstack_ls_wrap/clk_net_60_RT_290_clk_eng_rt_focal (net)
+                               1   7.9642 
+  bzmnotchwrap/u_fwr_notch2rstack_ls_wrap/clk_buf_60_RT_289/clk (i0scbf000aa1d36x5)
+                                               0.0000       8.1275   0.9700     0.0000      1.0165 &    125.8536 r   0.6000  VDD_DIG n       (2080833.0000,214496.0000)
+  bzmnotchwrap/u_fwr_notch2rstack_ls_wrap/clk_buf_60_RT_289/clkout (i0scbf000aa1d36x5)
+                                                            7.8191   0.9554                17.0399 &    142.8935 r   0.6000  VDD_DIG n       (2080950.0000,214336.0000)
+  bzmnotchwrap/u_fwr_notch2rstack_ls_wrap/clk_net_60_RT_289_clk_eng_rt_focal (net)
+                               1   7.7306 
+  bzmnotchwrap/u_fwr_notch2rstack_ls_wrap/clk_buf_60_RT_288/clk (i0scbf000aa1d36x5)
+                                               0.0000       8.0329   0.9700     0.0000      0.9858 &    143.8793 r   0.6000  VDD_DIG n       (2080833.0000,274336.0000)
+  bzmnotchwrap/u_fwr_notch2rstack_ls_wrap/clk_buf_60_RT_288/clkout (i0scbf000aa1d36x5)
+                                                            7.7995   0.9554                16.9852 &    160.8646 r   0.6000  VDD_DIG n       (2080950.0000,274176.0000)
+  bzmnotchwrap/u_fwr_notch2rstack_ls_wrap/clk_net_60_RT_288_clk_eng_rt_focal (net)
+                               1   7.7002 
+  bzmnotchwrap/u_fwr_notch2rstack_ls_wrap/clk_buf_60_RT_287/clk (i0scbf000aa1d36x5)
+                                               0.0000       8.0191   0.9700     0.0000      1.0024 &    161.8670 r   0.6000  VDD_DIG n       (2090800.0000,324576.0000)
+  bzmnotchwrap/u_fwr_notch2rstack_ls_wrap/clk_buf_60_RT_287/clkout (i0scbf000aa1d36x5)
+                                                            7.7799   0.9554                16.8610 &    178.7280 r   0.6000  VDD_DIG n       (2090900.0000,324416.0000)
+  bzmnotchwrap/u_fwr_notch2rstack_ls_wrap/clk_net_60_RT_287_clk_eng_rt_focal (net)
+                               1   7.6236 
+  bzmnotchwrap/u_fwr_notch2rstack_ls_wrap/clk_buf_60_RT_286/clk (i0scbf000aa1d36x5)
+                                               0.0000       8.0678   0.9700     0.0000      1.2521 &    179.9801 r   0.6000  VDD_DIG n       (2150800.0000,324576.0000)
+  bzmnotchwrap/u_fwr_notch2rstack_ls_wrap/clk_buf_60_RT_286/clkout (i0scbf000aa1d36x5)
+                                                            7.7228   0.9554                16.8822 &    196.8623 r   0.6000  VDD_DIG n       (2150900.0000,324416.0000)
+  bzmnotchwrap/u_fwr_notch2rstack_ls_wrap/clk_net_60_RT_286_clk_eng_rt_focal (net)
+                               1   7.5208 
+  bzmnotchwrap/u_fwr_notch2rstack_ls_wrap/clk_buf_60_RT_285/clk (i0scbf000aa1d36x5)
+                                               0.0000       8.0097   0.9700     0.0000      1.2418 &    198.1041 r   0.6000  VDD_DIG n       (2210800.0000,324576.0000)
+  bzmnotchwrap/u_fwr_notch2rstack_ls_wrap/clk_buf_60_RT_285/clkout (i0scbf000aa1d36x5)
+                                                            8.1870   0.9554                17.1401 &    215.2442 r   0.6000  VDD_DIG n       (2210900.0000,324416.0000)
+  bzmnotchwrap/u_fwr_notch2rstack_ls_wrap/clk_net_60_RT_285_clk_eng_rt_focal (net)
+                               2   8.2103 
+  bzmnotchwrap/u_fwr_notch2rstack_ls_wrap/clk_buf_60_RT_284/clk (i0scbf000aa1d36x5)
+                                               0.0000       8.5253   0.9700     0.0000      1.2375 &    216.4817 r   0.6000  VDD_DIG n       (2255750.0000,324576.0000)
+  bzmnotchwrap/u_fwr_notch2rstack_ls_wrap/clk_buf_60_RT_284/clkout (i0scbf000aa1d36x5)
+                                                            7.8859   0.9554                17.2296 &    233.7113 r   0.6000  VDD_DIG n       (2255850.0000,324416.0000)
+  bzmnotchwrap/u_fwr_notch2rstack_ls_wrap/clk_net_60_RT_284_clk_eng_rt_focal (net)
+                               1   7.7542 
+  bzmnotchwrap/u_fwr_notch2rstack_ls_wrap/clk_buf_60_RT_283/clk (i0scbf000aa1d36x5)
+                                               0.0000       8.1868   0.9700     0.0000      1.2891 &    235.0004 r   0.6000  VDD_DIG n       (2315750.0000,324576.0000)
+  bzmnotchwrap/u_fwr_notch2rstack_ls_wrap/clk_buf_60_RT_283/clkout (i0scbf000aa1d36x5)
+                                                            7.8643   0.9554                17.0317 &    252.0321 r   0.6000  VDD_DIG n       (2315850.0000,324416.0000)
+  bzmnotchwrap/u_fwr_notch2rstack_ls_wrap/clk_net_60_RT_283_clk_eng_rt_focal (net)
+                               1   7.7493 
+  bzmnotchwrap/u_fwr_notch2rstack_ls_wrap/clk_buf_60_RT_282/clk (i0scbf000aa1d36x5)
+                                               0.0000       8.1567   0.9700     0.0000      1.2704 &    253.3025 r   0.6000  VDD_DIG n       (2375750.0000,324576.0000)
+  bzmnotchwrap/u_fwr_notch2rstack_ls_wrap/clk_buf_60_RT_282/clkout (i0scbf000aa1d36x5)
+                                                            7.9370   0.9554                17.0631 &    270.3655 r   0.6000  VDD_DIG n       (2375850.0000,324416.0000)
+  bzmnotchwrap/u_fwr_notch2rstack_ls_wrap/clk_net_60_RT_282_clk_eng_rt_focal (net)
+                               1   7.8690 
+  bzmnotchwrap/u_fwr_notch2rstack_ls_wrap/clk_buf_60_RT_281/clk (i0scbf000aa1d36x5)
+                                               0.0000       8.2372   0.9700     0.0000      1.2993 &    271.6649 r   0.6000  VDD_DIG n       (2435750.0000,324576.0000)
+  bzmnotchwrap/u_fwr_notch2rstack_ls_wrap/clk_buf_60_RT_281/clkout (i0scbf000aa1d36x5)
+                                                            7.9014   0.9554                17.0716 &    288.7365 r   0.6000  VDD_DIG n       (2435850.0000,324416.0000)
+  bzmnotchwrap/u_fwr_notch2rstack_ls_wrap/clk_net_60_RT_281_clk_eng_rt_focal (net)
+                               1   7.8001 
+  bzmnotchwrap/u_fwr_notch2rstack_ls_wrap/clk_buf_60_RT_280/clk (i0scbf000aa1d36x5)
+                                               0.0000       8.2007   0.9700     0.0000      1.2987 &    290.0352 r   0.6000  VDD_DIG n       (2495750.0000,324576.0000)
+  bzmnotchwrap/u_fwr_notch2rstack_ls_wrap/clk_buf_60_RT_280/clkout (i0scbf000aa1d36x5)
+                                                            7.8974   0.9554                17.0622 &    307.0974 r   0.6000  VDD_DIG n       (2495850.0000,324416.0000)
+  bzmnotchwrap/u_fwr_notch2rstack_ls_wrap/clk_net_60_RT_280_clk_eng_rt_focal (net)
+                               1   7.7956 
+  bzmnotchwrap/u_fwr_notch2rstack_ls_wrap/clk_buf_60_RT_279/clk (i0scbf000aa1d36x5)
+                                               0.0000       8.1976   0.9700     0.0000      1.2937 &    308.3911 r   0.6000  VDD_DIG n       (2555750.0000,324576.0000)
+  bzmnotchwrap/u_fwr_notch2rstack_ls_wrap/clk_buf_60_RT_279/clkout (i0scbf000aa1d36x5)
+                                                            7.9164   0.9554                17.0650 &    325.4561 r   0.6000  VDD_DIG n       (2555850.0000,324416.0000)
+  bzmnotchwrap/u_fwr_notch2rstack_ls_wrap/clk_net_60_RT_279_clk_eng_rt_focal (net)
+                               1   7.8278 
+  bzmnotchwrap/u_fwr_notch2rstack_ls_wrap/clk_buf_60_RT_278/clk (i0scbf000aa1d36x5)
+                                               0.0000       8.2292   0.9700     0.0000      1.3298 &    326.7859 r   0.6000  VDD_DIG n       (2615750.0000,324576.0000)
+  bzmnotchwrap/u_fwr_notch2rstack_ls_wrap/clk_buf_60_RT_278/clkout (i0scbf000aa1d36x5)
+                                                            7.8711   0.9554                17.0749 &    343.8608 r   0.6000  VDD_DIG n       (2615850.0000,324416.0000)
+  bzmnotchwrap/u_fwr_notch2rstack_ls_wrap/clk_net_60_RT_278_clk_eng_rt_focal (net)
+                               1   7.7547 
+  bzmnotchwrap/u_fwr_notch2rstack_ls_wrap/clk_buf_60_RT_277/clk (i0scbf000aa1d36x5)
+                                               0.0000       8.1651   0.9700     0.0000      1.2776 &    345.1384 r   0.6000  VDD_DIG n       (2675750.0000,324576.0000)
+  bzmnotchwrap/u_fwr_notch2rstack_ls_wrap/clk_buf_60_RT_277/clkout (i0scbf000aa1d36x5)
+                                                            7.9758   0.9554                17.1004 &    362.2388 r   0.6000  VDD_DIG n       (2675850.0000,324416.0000)
+  bzmnotchwrap/u_fwr_notch2rstack_ls_wrap/clk_net_60_RT_277_clk_eng_rt_focal (net)
+                               1   7.9298 
+  bzmnotchwrap/u_fwr_notch2rstack_ls_wrap/clk_buf_60_RT_276/clk (i0scbf000aa1d36x5)
+                                               0.0000       8.2806   0.9700     0.0000      1.3167 &    363.5554 r   0.6000  VDD_DIG n       (2735750.0000,324576.0000)
+  bzmnotchwrap/u_fwr_notch2rstack_ls_wrap/clk_buf_60_RT_276/clkout (i0scbf000aa1d36x5)
+                                                            8.2242   0.9554                17.5147 &    381.0701 r   0.6000  VDD_DIG n       (2735850.0000,324416.0000)
+  bzmnotchwrap/u_fwr_notch2rstack_ls_wrap/clk_net_60_RT_276_clk_eng_rt_focal (net)
+                               2   8.3530 
+  bzmnotchwrap/u_fwr_notch2rstack_ls_wrap/clk_buf_60_RT_275/clk (i0scbf000aa1d36x5)
+                                               0.0000       8.4563   0.9700     0.0000      0.9088 &    381.9789 r   0.6000  VDD_DIG n       (2766600.0000,324576.0000)
+  bzmnotchwrap/u_fwr_notch2rstack_ls_wrap/clk_buf_60_RT_275/clkout (i0scbf000aa1d36x5)
+                                                            7.9147   0.9554                17.1606 &    399.1396 r   0.6000  VDD_DIG n       (2766700.0000,324416.0000)
+  bzmnotchwrap/u_fwr_notch2rstack_ls_wrap/clk_net_60_RT_275_clk_eng_rt_focal (net)
+                               1   7.7991 
+  bzmnotchwrap/u_fwr_notch2rstack_ls_wrap/clk_buf_60_RT_274/clk (i0scbf000aa1d36x5)
+                                               0.0000       8.2235   0.9700     0.0000      1.3167 &    400.4562 r   0.6000  VDD_DIG n       (2826600.0000,324576.0000)
+  bzmnotchwrap/u_fwr_notch2rstack_ls_wrap/clk_buf_60_RT_274/clkout (i0scbf000aa1d36x5)
+                                                            7.9024   0.9554                17.0907 &    417.5469 r   0.6000  VDD_DIG n       (2826700.0000,324416.0000)
+  bzmnotchwrap/u_fwr_notch2rstack_ls_wrap/clk_net_60_RT_274_clk_eng_rt_focal (net)
+                               1   7.8034 
+  bzmnotchwrap/u_fwr_notch2rstack_ls_wrap/clk_buf_60_RT_273/clk (i0scbf000aa1d36x5)
+                                               0.0000       8.2009   0.9700     0.0000      1.2939 &    418.8409 r   0.6000  VDD_DIG n       (2886600.0000,324576.0000)
+  bzmnotchwrap/u_fwr_notch2rstack_ls_wrap/clk_buf_60_RT_273/clkout (i0scbf000aa1d36x5)
+                                                            7.8739   0.9554                17.0522 &    435.8931 r   0.6000  VDD_DIG n       (2886700.0000,324416.0000)
+  bzmnotchwrap/u_fwr_notch2rstack_ls_wrap/clk_net_60_RT_273_clk_eng_rt_focal (net)
+                               1   7.7542 
+  bzmnotchwrap/u_fwr_notch2rstack_ls_wrap/clk_buf_60_RT_272/clk (i0scbf000aa1d36x5)
+                                               0.0000       8.1781   0.9700     0.0000      1.3013 &    437.1943 r   0.6000  VDD_DIG n       (2946600.0000,324576.0000)
+  bzmnotchwrap/u_fwr_notch2rstack_ls_wrap/clk_buf_60_RT_272/clkout (i0scbf000aa1d36x5)
+                                                            7.9170   0.9554                17.0901 &    454.2845 r   0.6000  VDD_DIG n       (2946700.0000,324416.0000)
+  bzmnotchwrap/u_fwr_notch2rstack_ls_wrap/clk_net_60_RT_272_clk_eng_rt_focal (net)
+                               1   7.8350 
+  bzmnotchwrap/u_fwr_notch2rstack_ls_wrap/clk_buf_60_RT_271/clk (i0scbf000aa1d36x5)
+                                               0.0000       8.2140   0.9700     0.0000      1.2908 &    455.5753 r   0.6000  VDD_DIG n       (3006600.0000,324576.0000)
+  bzmnotchwrap/u_fwr_notch2rstack_ls_wrap/clk_buf_60_RT_271/clkout (i0scbf000aa1d36x5)
+                                                            7.8266   0.9554                17.0233 &    472.5986 r   0.6000  VDD_DIG n       (3006700.0000,324416.0000)
+  bzmnotchwrap/u_fwr_notch2rstack_ls_wrap/clk_net_60_RT_271_clk_eng_rt_focal (net)
+                               1   7.6721 
+  bzmnotchwrap/u_fwr_notch2rstack_ls_wrap/clk_buf_60_RT_270/clk (i0scbf000aa1d36x5)
+                                               0.0000       8.1272   0.9700     0.0000      1.2853 &    473.8839 r   0.6000  VDD_DIG n       (3066600.0000,324576.0000)
+  bzmnotchwrap/u_fwr_notch2rstack_ls_wrap/clk_buf_60_RT_270/clkout (i0scbf000aa1d36x5)
+                                                            7.8897   0.9554                17.0435 &    490.9274 r   0.6000  VDD_DIG n       (3066700.0000,324416.0000)
+  bzmnotchwrap/u_fwr_notch2rstack_ls_wrap/clk_net_60_RT_270_clk_eng_rt_focal (net)
+                               1   7.7862 
+  bzmnotchwrap/u_fwr_notch2rstack_ls_wrap/clk_buf_60_RT_269/clk (i0scbf000aa1d36x5)
+                                               0.0000       8.1874   0.9700     0.0000      1.2859 &    492.2133 r   0.6000  VDD_DIG n       (3126600.0000,324576.0000)
+  bzmnotchwrap/u_fwr_notch2rstack_ls_wrap/clk_buf_60_RT_269/clkout (i0scbf000aa1d36x5)
+                                                            7.8020   0.9554                17.0136 &    509.2269 r   0.6000  VDD_DIG n       (3126700.0000,324416.0000)
+  bzmnotchwrap/u_fwr_notch2rstack_ls_wrap/clk_net_60_RT_269_clk_eng_rt_focal (net)
+                               1   7.6472 
+  bzmnotchwrap/u_fwr_notch2rstack_ls_wrap/clk_buf_60_RT_268/clk (i0scbf000aa1d36x5)
+                                               0.0000       8.0954   0.9700     0.0000      1.2678 &    510.4947 r   0.6000  VDD_DIG n       (3186600.0000,324576.0000)
+  bzmnotchwrap/u_fwr_notch2rstack_ls_wrap/clk_buf_60_RT_268/clkout (i0scbf000aa1d36x5)
+                                                            8.4539   0.9554                17.2795 &    527.7742 r   0.6000  VDD_DIG n       (3186700.0000,324416.0000)
+  bzmnotchwrap/u_fwr_notch2rstack_ls_wrap/clk_net_60_RT_268_clk_eng_rt_focal (net)
+                               2   8.6049 
+  bzmnotchwrap/u_fwr_notch2rstack_ls_wrap/clk_buf_60_RT_267/clk (i0scbf000aa1d36x5)
+                                               0.0000       8.9042   0.9700     0.0000      1.5084 &    529.2825 r   0.6000  VDD_DIG n       (3240450.0000,324576.0000)
+  bzmnotchwrap/u_fwr_notch2rstack_ls_wrap/clk_buf_60_RT_267/clkout (i0scbf000aa1d36x5)
+                                                            7.9085   0.9554                17.4471 &    546.7297 r   0.6000  VDD_DIG n       (3240550.0000,324416.0000)
+  bzmnotchwrap/u_fwr_notch2rstack_ls_wrap/clk_net_60_RT_267_clk_eng_rt_focal (net)
+                               1   7.7653 
+  bzmnotchwrap/u_fwr_notch2rstack_ls_wrap/clk_buf_60_RT_266/clk (i0scbf000aa1d36x5)
+                                               0.0000       8.2077   0.9700     0.0000      1.2855 &    548.0152 r   0.6000  VDD_DIG n       (3300433.0000,324576.0000)
+  bzmnotchwrap/u_fwr_notch2rstack_ls_wrap/clk_buf_60_RT_266/clkout (i0scbf000aa1d36x5)
+                                                            7.9261   0.9554                17.1011 &    565.1163 r   0.6000  VDD_DIG n       (3300550.0000,324416.0000)
+  bzmnotchwrap/u_fwr_notch2rstack_ls_wrap/clk_net_60_RT_266_clk_eng_rt_focal (net)
+                               1   7.8509 
+  bzmnotchwrap/u_fwr_notch2rstack_ls_wrap/clk_buf_60_RT_265/clk (i0scbf000aa1d36x5)
+                                               0.0000       8.2338   0.9700     0.0000      1.3234 &    566.4397 r   0.6000  VDD_DIG n       (3360450.0000,324576.0000)
+  bzmnotchwrap/u_fwr_notch2rstack_ls_wrap/clk_buf_60_RT_265/clkout (i0scbf000aa1d36x5)
+                                                            7.8905   0.9554                17.1226 &    583.5623 r   0.6000  VDD_DIG n       (3360550.0000,324416.0000)
+  bzmnotchwrap/u_fwr_notch2rstack_ls_wrap/clk_net_60_RT_265_clk_eng_rt_focal (net)
+                               1   7.8013 
+  bzmnotchwrap/u_fwr_notch2rstack_ls_wrap/clk_buf_60_RT_264/clk (i0scbf000aa1d36x5)
+                                               0.0000       8.1879   0.9700     0.0000      1.2865 &    584.8488 r   0.6000  VDD_DIG n       (3420433.0000,324576.0000)
+  bzmnotchwrap/u_fwr_notch2rstack_ls_wrap/clk_buf_60_RT_264/clkout (i0scbf000aa1d36x5)
+                                                            7.9041   0.9554                17.0835 &    601.9323 r   0.6000  VDD_DIG n       (3420550.0000,324416.0000)
+  bzmnotchwrap/u_fwr_notch2rstack_ls_wrap/clk_net_60_RT_264_clk_eng_rt_focal (net)
+                               1   7.8077 
+  bzmnotchwrap/u_fwr_notch2rstack_ls_wrap/clk_buf_60_RT_263/clk (i0scbf000aa1d36x5)
+                                               0.0000       8.2074   0.9700     0.0000      1.3033 &    603.2355 r   0.6000  VDD_DIG n       (3480433.0000,324576.0000)
+  bzmnotchwrap/u_fwr_notch2rstack_ls_wrap/clk_buf_60_RT_263/clkout (i0scbf000aa1d36x5)
+                                                            7.9387   0.9554                17.0944 &    620.3299 r   0.6000  VDD_DIG n       (3480550.0000,324416.0000)
+  bzmnotchwrap/u_fwr_notch2rstack_ls_wrap/clk_net_60_RT_263_clk_eng_rt_focal (net)
+                               1   7.8572 
+  bzmnotchwrap/u_fwr_notch2rstack_ls_wrap/clk_buf_60_RT_262/clk (i0scbf000aa1d36x5)
+                                               0.0000       8.2524   0.9700     0.0000      1.3327 &    621.6626 r   0.6000  VDD_DIG n       (3540433.0000,324576.0000)
+  bzmnotchwrap/u_fwr_notch2rstack_ls_wrap/clk_buf_60_RT_262/clkout (i0scbf000aa1d36x5)
+                                                            7.9052   0.9554                17.1064 &    638.7690 r   0.6000  VDD_DIG n       (3540550.0000,324416.0000)
+  bzmnotchwrap/u_fwr_notch2rstack_ls_wrap/clk_net_60_RT_262_clk_eng_rt_focal (net)
+                               1   7.8051 
+  bzmnotchwrap/u_fwr_notch2rstack_ls_wrap/clk_buf_60_RT_261/clk (i0scbf000aa1d36x5)
+                                               0.0000       8.2117   0.9700     0.0000      1.3164 &    640.0854 r   0.6000  VDD_DIG n       (3600450.0000,324576.0000)
+  bzmnotchwrap/u_fwr_notch2rstack_ls_wrap/clk_buf_60_RT_261/clkout (i0scbf000aa1d36x5)
+                                                            7.8582   0.9554                17.0816 &    657.1670 r   0.6000  VDD_DIG n       (3600550.0000,324416.0000)
+  bzmnotchwrap/u_fwr_notch2rstack_ls_wrap/clk_net_60_RT_261_clk_eng_rt_focal (net)
+                               1   7.7320 
+  bzmnotchwrap/u_fwr_notch2rstack_ls_wrap/clk_buf_60_RT_260/clk (i0scbf000aa1d36x5)
+                                               0.0000       8.1536   0.9700     0.0000      1.2767 &    658.4437 r   0.6000  VDD_DIG n       (3660450.0000,324576.0000)
+  bzmnotchwrap/u_fwr_notch2rstack_ls_wrap/clk_buf_60_RT_260/clkout (i0scbf000aa1d36x5)
+                                                            7.9506   0.9554                17.0911 &    675.5349 r   0.6000  VDD_DIG n       (3660550.0000,324416.0000)
+  bzmnotchwrap/u_fwr_notch2rstack_ls_wrap/clk_net_60_RT_260_clk_eng_rt_focal (net)
+                               1   7.8841 
+  bzmnotchwrap/u_fwr_notch2rstack_ls_wrap/clk_buf_60_RT_259/clk (i0scbf000aa1d36x5)
+                                               0.0000       8.2610   0.9700     0.0000      1.3318 &    676.8667 r   0.6000  VDD_DIG n       (3720450.0000,324576.0000)
+  bzmnotchwrap/u_fwr_notch2rstack_ls_wrap/clk_buf_60_RT_259/clkout (i0scbf000aa1d36x5)
+                                                            8.1073   0.9554                17.1306 &    693.9973 r   0.6000  VDD_DIG n       (3720550.0000,324416.0000)
+  bzmnotchwrap/u_fwr_notch2rstack_ls_wrap/clk_net_60_RT_259_clk_eng_rt_focal (net)
+                               1   7.8280 
+  bzmnotchwrap/u_fwr_notch2rstack_ls_wrap/notch2rstack_engclk_3_lvl_notch2rstack_engclk_ctech_lvlshift/clk (i0ssgstndaa1d30x5)
+                                               0.0000       9.3036   0.9700     0.0000      1.3208 &    695.3181 r   0.6000  VDD_DIG n       (3733200.0000,357323.0000)
+  bzmnotchwrap/u_fwr_notch2rstack_ls_wrap/notch2rstack_engclk_3_lvl_notch2rstack_engclk_ctech_lvlshift/clkout (i0ssgstndaa1d30x5)
+                                                           20.0300   0.9522                67.9497 &    763.2678 r   0.3000  VDD_INT_RT n    (3731400.0000,357440.0000)
+  bzmnotchwrap/u_fwr_notch2rstack_ls_wrap/fast_clk1_o[3] (net)
+                               1   2.1821 
+  bzmnotchwrap/u_fwr_notch2rstack_ls_wrap/fast_clk1_o[3] (bzm_fwr_notch2rstack_ls_wrap)
+                                                            0.0000   0.9700                 0.0000 &    763.2678 r           unconnected     unplaced
+  bzmnotchwrap/right_fast_clk_o[3] (net) 
+  bzmnotchwrap/right_fast_clk_o[3] (bzm_bzmnotchwrap)       0.0000   0.9700                 0.0000 &    763.2678 r           unconnected     unplaced
+  right_fast_clk_3 (net) 
+  right_stack_inst/sp_fast_clk_right_i[3] (bzm_fwr_right_stack)
+                                                            0.0000   0.9700                 0.0000 &    763.2678 r           unconnected     unplaced
+  right_stack_inst/sp_fast_clk_right_i[3] (net) 
+  right_stack_inst/mgtile_inst3/i_eng_clk (bzm_bzm_mega_engine_tile_0000fe7f_7)
+                                                            0.0000   0.9700                 0.0000 &    763.2678 r           unconnected     unplaced
+  right_stack_inst/mgtile_inst3/i_eng_clk (net) 
+  right_stack_inst/mgtile_inst3/clk_buf_60_RT_341/clk (i0scbf000aa1d36x5)
+                                               0.0000      20.0850   0.9700     0.0000      0.7286 &    763.9965 r   0.3000  VDD_INT_RT n    (3731200.0000,366816.0000)
+  right_stack_inst/mgtile_inst3/clk_buf_60_RT_341/clkout (i0scbf000aa1d36x5)
+                                                            3.5527   0.9505                16.4514 &    780.4478 r   0.3000  VDD_INT_RT n    (3731300.0000,366656.0000)
+  right_stack_inst/mgtile_inst3/clk_net_60_RT_341_sp_fast_clk_right_i_3 (net)
+                               2   8.8335 
+  right_stack_inst/mgtile_inst3/clk_buf_60_RT_340/clk (i0scbf000aa1d36x5)
+                                               0.0000       3.6681   0.9700     0.0000      1.2011 &    781.6489 r   0.3000  VDD_INT_RT n    (3731200.0000,429536.0000)
+  right_stack_inst/mgtile_inst3/clk_buf_60_RT_340/clkout (i0scbf000aa1d36x5)
+                                                            2.9901   0.9505                10.5215 &    792.1704 r   0.3000  VDD_INT_RT n    (3731300.0000,429376.0000)
+  right_stack_inst/mgtile_inst3/clk_net_60_RT_340_sp_fast_clk_right_i_3 (net)
+                               1   8.3510 
+  right_stack_inst/mgtile_inst3/clk_buf_60_RT_339/clk (i0scbf000aa1d36x5)
+                                               0.0000       3.0769   0.9700     0.0000      1.0541 &    793.2245 r   0.3000  VDD_INT_RT n    (3731200.0000,492576.0000)
+  right_stack_inst/mgtile_inst3/clk_buf_60_RT_339/clkout (i0scbf000aa1d36x5)
+                                                            2.9909   0.9505                10.2721 &    803.4966 r   0.3000  VDD_INT_RT n    (3731300.0000,492416.0000)
+  right_stack_inst/mgtile_inst3/clk_net_60_RT_339_sp_fast_clk_right_i_3 (net)
+                               1   8.3182 
+  right_stack_inst/mgtile_inst3/clk_buf_60_RT_338/clk (i0scbf000aa1d36x5)
+                                               0.0000       3.0813   0.9700     0.0000      1.0654 &    804.5620 r   0.3000  VDD_INT_RT n    (3731200.0000,555616.0000)
+  right_stack_inst/mgtile_inst3/clk_buf_60_RT_338/clkout (i0scbf000aa1d36x5)
+                                                            2.9909   0.9505                10.2741 &    814.8361 r   0.3000  VDD_INT_RT n    (3731300.0000,555456.0000)
+  right_stack_inst/mgtile_inst3/clk_net_60_RT_338_sp_fast_clk_right_i_3 (net)
+                               1   8.5628 
+  right_stack_inst/mgtile_inst3/clk_buf_60_RT_337/clk (i0scbf000aa1d36x5)
+                                               0.0000       3.0832   0.9700     0.0000      1.0881 &    815.9242 r   0.3000  VDD_INT_RT n    (3731200.0000,618656.0000)
+  right_stack_inst/mgtile_inst3/clk_buf_60_RT_337/clkout (i0scbf000aa1d36x5)
+                                                            2.9909   0.9505                10.2748 &    826.1990 r   0.3000  VDD_INT_RT n    (3731300.0000,618496.0000)
+  right_stack_inst/mgtile_inst3/clk_net_60_RT_337_sp_fast_clk_right_i_3 (net)
+                               2   9.3495 
+  right_stack_inst/mgtile_inst3/clk_buf_60_RT_336/clk (i0scbf000aa1d36x5)
+                                               0.0000       3.1055   0.9700     0.0000      1.1490 &    827.3481 r   0.3000  VDD_INT_RT n    (3731250.0000,681696.0000)
+  right_stack_inst/mgtile_inst3/clk_buf_60_RT_336/clkout (i0scbf000aa1d36x5)
+                                                            2.9908   0.9505                10.2845 &    837.6326 r   0.3000  VDD_INT_RT n    (3731300.0000,681536.0000)
+  right_stack_inst/mgtile_inst3/clk_net_60_RT_336_sp_fast_clk_right_i_3 (net)
+                               1   8.1526 
+  right_stack_inst/mgtile_inst3/clk_buf_60_RT_335/clk (i0scbf000aa1d36x5)
+                                               0.0000       3.0795   0.9700     0.0000      1.0369 &    838.6696 r   0.3000  VDD_INT_RT n    (3731250.0000,744736.0000)
+  right_stack_inst/mgtile_inst3/clk_buf_60_RT_335/clkout (i0scbf000aa1d36x5)
+                                                            2.9909   0.9505                10.2734 &    848.9429 r   0.3000  VDD_INT_RT n    (3731300.0000,744576.0000)
+  right_stack_inst/mgtile_inst3/clk_net_60_RT_335_sp_fast_clk_right_i_3 (net)
+                               1   8.3113 
+  right_stack_inst/mgtile_inst3/clk_buf_60_RT_334/clk (i0scbf000aa1d36x5)
+                                               0.0000       3.0759   0.9700     0.0000      1.0726 &    850.0155 r   0.3000  VDD_INT_RT n    (3731200.0000,807776.0000)
+  right_stack_inst/mgtile_inst3/clk_buf_60_RT_334/clkout (i0scbf000aa1d36x5)
+                                                            2.9909   0.9505                10.2717 &    860.2872 r   0.3000  VDD_INT_RT n    (3731300.0000,807616.0000)
+  right_stack_inst/mgtile_inst3/clk_net_60_RT_334_sp_fast_clk_right_i_3 (net)
+                               1   8.4183 
+  right_stack_inst/mgtile_inst3/clk_buf_60_RT_333/clk (i0scbf000aa1d36x5)
+                                               0.0000       3.0791   0.9700     0.0000      1.0609 &    861.3481 r   0.3000  VDD_INT_RT n    (3731250.0000,870816.0000)
+  right_stack_inst/mgtile_inst3/clk_buf_60_RT_333/clkout (i0scbf000aa1d36x5)
+                                                            2.9909   0.9505                10.2733 &    871.6215 r   0.3000  VDD_INT_RT n    (3731300.0000,870656.0000)
+  right_stack_inst/mgtile_inst3/clk_net_60_RT_333_sp_fast_clk_right_i_3 (net)
+                               1   8.4142 
+  right_stack_inst/mgtile_inst3/clk_buf_60_RT_332/clk (i0scbf000aa1d36x5)
+                                               0.0000       3.0858   0.9700     0.0000      1.0817 &    872.7032 r   0.3000  VDD_INT_RT n    (3731200.0000,933536.0000)
+  right_stack_inst/mgtile_inst3/clk_buf_60_RT_332/clkout (i0scbf000aa1d36x5)
+                                                            2.9909   0.9505                10.2761 &    882.9792 r   0.3000  VDD_INT_RT n    (3731300.0000,933376.0000)
+  right_stack_inst/mgtile_inst3/clk_net_60_RT_332_sp_fast_clk_right_i_3 (net)
+                               1   8.2090 
+  right_stack_inst/mgtile_inst3/clk_buf_60_RT_331/clk (i0scbf000aa1d36x5)
+                                               0.0000       3.0765   0.9700     0.0000      1.0411 &    884.0203 r   0.3000  VDD_INT_RT n    (3731200.0000,996576.0000)
+  right_stack_inst/mgtile_inst3/clk_buf_60_RT_331/clkout (i0scbf000aa1d36x5)
+                                                            2.9909   0.9505                10.2722 &    894.2925 r   0.3000  VDD_INT_RT n    (3731300.0000,996416.0000)
+  right_stack_inst/mgtile_inst3/clk_net_60_RT_331_sp_fast_clk_right_i_3 (net)
+                               1   8.6373 
+  right_stack_inst/mgtile_inst3/clk_buf_60_RT_330/clk (i0scbf000aa1d36x5)
+                                               0.0000       3.0872   0.9700     0.0000      1.0912 &    895.3837 r   0.3000  VDD_INT_RT n    (3731200.0000,1059616.0000)
+  right_stack_inst/mgtile_inst3/clk_buf_60_RT_330/clkout (i0scbf000aa1d36x5)
+                                                            2.9909   0.9505                10.2767 &    905.6604 r   0.3000  VDD_INT_RT n    (3731300.0000,1059456.0000)
+  right_stack_inst/mgtile_inst3/clk_net_60_RT_330_sp_fast_clk_right_i_3 (net)
+                               1   8.5280 
+  right_stack_inst/mgtile_inst3/clk_buf_60_RT_329/clk (i0scbf000aa1d36x5)
+                                               0.0000       3.0812   0.9700     0.0000      1.0677 &    906.7281 r   0.3000  VDD_INT_RT n    (3731250.0000,1122656.0000)
+  right_stack_inst/mgtile_inst3/clk_buf_60_RT_329/clkout (i0scbf000aa1d36x5)
+                                                            2.9909   0.9505                10.2742 &    917.0023 r   0.3000  VDD_INT_RT n    (3731300.0000,1122496.0000)
+  right_stack_inst/mgtile_inst3/clk_net_60_RT_329_sp_fast_clk_right_i_3 (net)
+                               2   9.3806 
+  right_stack_inst/mgtile_inst3/clk_buf_60_RT_328/clk (i0scbf000aa1d36x5)
+                                               0.0000       3.1008   0.9700     0.0000      1.1458 &    918.1480 r   0.3000  VDD_INT_RT n    (3731250.0000,1185696.0000)
+  right_stack_inst/mgtile_inst3/clk_buf_60_RT_328/clkout (i0scbf000aa1d36x5)
+                                                            2.9908   0.9505                10.2827 &    928.4307 r   0.3000  VDD_INT_RT n    (3731300.0000,1185536.0000)
+  right_stack_inst/mgtile_inst3/clk_net_60_RT_328_sp_fast_clk_right_i_3 (net)
+                               1   8.3045 
+  right_stack_inst/mgtile_inst3/clk_buf_60_RT_327/clk (i0scbf000aa1d36x5)
+                                               0.0000       3.0795   0.9700     0.0000      1.0464 &    929.4771 r   0.3000  VDD_INT_RT n    (3731250.0000,1248736.0000)
+  right_stack_inst/mgtile_inst3/clk_buf_60_RT_327/clkout (i0scbf000aa1d36x5)
+                                                            2.9909   0.9505                10.2734 &    939.7505 r   0.3000  VDD_INT_RT n    (3731300.0000,1248576.0000)
+  right_stack_inst/mgtile_inst3/clk_net_60_RT_327_sp_fast_clk_right_i_3 (net)
+                               1   8.3266 
+  right_stack_inst/mgtile_inst3/clk_buf_60_RT_326/clk (i0scbf000aa1d36x5)
+                                               0.0000       3.0793   0.9700     0.0000      1.0722 &    940.8227 r   0.3000  VDD_INT_RT n    (3731250.0000,1311776.0000)
+  right_stack_inst/mgtile_inst3/clk_buf_60_RT_326/clkout (i0scbf000aa1d36x5)
+                                                            2.9909   0.9505                10.2734 &    951.0961 r   0.3000  VDD_INT_RT n    (3731300.0000,1311616.0000)
+  right_stack_inst/mgtile_inst3/clk_net_60_RT_326_sp_fast_clk_right_i_3 (net)
+                               1   8.2717 
+  right_stack_inst/mgtile_inst3/clk_buf_60_RT_325/clk (i0scbf000aa1d36x5)
+                                               0.0000       3.0825   0.9700     0.0000      1.0704 &    952.1666 r   0.3000  VDD_INT_RT n    (3731200.0000,1374816.0000)
+  right_stack_inst/mgtile_inst3/clk_buf_60_RT_325/clkout (i0scbf000aa1d36x5)
+                                                            2.9909   0.9505                10.2747 &    962.4413 r   0.3000  VDD_INT_RT n    (3731300.0000,1374656.0000)
+  right_stack_inst/mgtile_inst3/clk_net_60_RT_325_sp_fast_clk_right_i_3 (net)
+                               1   8.2338 
+  right_stack_inst/mgtile_inst3/clk_buf_60_RT_324/clk (i0scbf000aa1d36x5)
+                                               0.0000       3.0788   0.9700     0.0000      1.0430 &    963.4843 r   0.3000  VDD_INT_RT n    (3731200.0000,1437536.0000)
+  right_stack_inst/mgtile_inst3/clk_buf_60_RT_324/clkout (i0scbf000aa1d36x5)
+                                                            2.9909   0.9505                10.2731 &    973.7574 r   0.3000  VDD_INT_RT n    (3731300.0000,1437376.0000)
+  right_stack_inst/mgtile_inst3/clk_net_60_RT_324_sp_fast_clk_right_i_3 (net)
+                               1   8.5378 
+  right_stack_inst/mgtile_inst3/clk_buf_60_RT_323/clk (i0scbf000aa1d36x5)
+                                               0.0000       3.0781   0.9700     0.0000      1.0618 &    974.8192 r   0.3000  VDD_INT_RT n    (3731200.0000,1500576.0000)
+  right_stack_inst/mgtile_inst3/clk_buf_60_RT_323/clkout (i0scbf000aa1d36x5)
+                                                            2.9909   0.9505                10.2730 &    985.0922 r   0.3000  VDD_INT_RT n    (3731300.0000,1500416.0000)
+  right_stack_inst/mgtile_inst3/clk_net_60_RT_323_sp_fast_clk_right_i_3 (net)
+                               1   8.4420 
+  right_stack_inst/mgtile_inst3/clk_buf_60_RT_322/clk (i0scbf000aa1d36x5)
+                                               0.0000       3.0789   0.9700     0.0000      1.0603 &    986.1525 r   0.3000  VDD_INT_RT n    (3731250.0000,1563616.0000)
+  right_stack_inst/mgtile_inst3/clk_buf_60_RT_322/clkout (i0scbf000aa1d36x5)
+                                                            2.9909   0.9505                10.2733 &    996.4257 r   0.3000  VDD_INT_RT n    (3731300.0000,1563456.0000)
+  right_stack_inst/mgtile_inst3/clk_net_60_RT_322_sp_fast_clk_right_i_3 (net)
+                               1   8.3421 
+  right_stack_inst/mgtile_inst3/clk_buf_60_RT_321/clk (i0scbf000aa1d36x5)
+                                               0.0000       3.0793   0.9700     0.0000      1.0507 &    997.4764 r   0.3000  VDD_INT_RT n    (3731200.0000,1626656.0000)
+  right_stack_inst/mgtile_inst3/clk_buf_60_RT_321/clkout (i0scbf000aa1d36x5)
+                                                            2.9909   0.9505                10.2734 &   1007.7498 r   0.3000  VDD_INT_RT n    (3731300.0000,1626496.0000)
+  right_stack_inst/mgtile_inst3/clk_net_60_RT_321_sp_fast_clk_right_i_3 (net)
+                               2   8.9182 
+  right_stack_inst/mgtile_inst3/clk_buf_60_RT_320/clk (i0scbf000aa1d36x5)
+                                               0.0000       3.0840   0.9700     0.0000      1.0841 &   1008.8339 r   0.3000  VDD_INT_RT n    (3731200.0000,1689696.0000)
+  right_stack_inst/mgtile_inst3/clk_buf_60_RT_320/clkout (i0scbf000aa1d36x5)
+                                                            2.9909   0.9505                10.2755 &   1019.1093 r   0.3000  VDD_INT_RT n    (3731300.0000,1689536.0000)
+  right_stack_inst/mgtile_inst3/clk_net_60_RT_320_sp_fast_clk_right_i_3 (net)
+                               1   8.4161 
+  right_stack_inst/mgtile_inst3/clk_buf_60_RT_319/clk (i0scbf000aa1d36x5)
+                                               0.0000       3.0798   0.9700     0.0000      1.0618 &   1020.1711 r   0.3000  VDD_INT_RT n    (3731200.0000,1752736.0000)
+  right_stack_inst/mgtile_inst3/clk_buf_60_RT_319/clkout (i0scbf000aa1d36x5)
+                                                            2.9909   0.9505                10.2736 &   1030.4447 r   0.3000  VDD_INT_RT n    (3731300.0000,1752576.0000)
+  right_stack_inst/mgtile_inst3/clk_net_60_RT_319_sp_fast_clk_right_i_3 (net)
+                               1   8.2021 
+  right_stack_inst/mgtile_inst3/clk_buf_60_RT_318/clk (i0scbf000aa1d36x5)
+                                               0.0000       3.0806   0.9700     0.0000      1.0533 &   1031.4980 r   0.3000  VDD_INT_RT n    (3731200.0000,1815776.0000)
+  right_stack_inst/mgtile_inst3/clk_buf_60_RT_318/clkout (i0scbf000aa1d36x5)
+                                                            2.9909   0.9505                10.2742 &   1041.7722 r   0.3000  VDD_INT_RT n    (3731300.0000,1815616.0000)
+  right_stack_inst/mgtile_inst3/clk_net_60_RT_318_sp_fast_clk_right_i_3 (net)
+                               1   8.1772 
+  right_stack_inst/mgtile_inst3/clk_buf_60_RT_317/clk (i0scbf000aa1d36x5)
+                                               0.0000       3.0790   0.9700     0.0000      1.0426 &   1042.8148 r   0.3000  VDD_INT_RT n    (3731200.0000,1878816.0000)
+  right_stack_inst/mgtile_inst3/clk_buf_60_RT_317/clkout (i0scbf000aa1d36x5)
+                                                            2.9909   0.9505                10.2734 &   1053.0883 r   0.3000  VDD_INT_RT n    (3731300.0000,1878656.0000)
+  right_stack_inst/mgtile_inst3/clk_net_60_RT_317_sp_fast_clk_right_i_3 (net)
+                               1   8.3121 
+  right_stack_inst/mgtile_inst3/clk_buf_60_RT_316/clk (i0scbf000aa1d36x5)
+                                               0.0000       3.0770   0.9700     0.0000      1.0385 &   1054.1267 r   0.3000  VDD_INT_RT n    (3731200.0000,1941856.0000)
+  right_stack_inst/mgtile_inst3/clk_buf_60_RT_316/clkout (i0scbf000aa1d36x5)
+                                                            2.9909   0.9505                10.2725 &   1064.3992 r   0.3000  VDD_INT_RT n    (3731300.0000,1941696.0000)
+  right_stack_inst/mgtile_inst3/clk_net_60_RT_316_sp_fast_clk_right_i_3 (net)
+                               1   8.0685 
+  right_stack_inst/mgtile_inst3/clk_buf_60_RT_315/clk (i0scbf000aa1d36x5)
+                                               0.0000       3.0737   0.9700     0.0000      1.0089 &   1065.4081 r   0.3000  VDD_INT_RT n    (3731200.0000,2004576.0000)
+  right_stack_inst/mgtile_inst3/clk_buf_60_RT_315/clkout (i0scbf000aa1d36x5)
+                                                            2.9909   0.9505                10.2711 &   1075.6792 r   0.3000  VDD_INT_RT n    (3731300.0000,2004416.0000)
+  right_stack_inst/mgtile_inst3/clk_net_60_RT_315_sp_fast_clk_right_i_3 (net)
+                               1   8.0073 
+  right_stack_inst/mgtile_inst3/clk_buf_60_RT_314/clk (i0scbf000aa1d36x5)
+                                               0.0000       3.0728   0.9700     0.0000      1.0045 &   1076.6837 r   0.3000  VDD_INT_RT n    (3731250.0000,2067616.0000)
+  right_stack_inst/mgtile_inst3/clk_buf_60_RT_314/clkout (i0scbf000aa1d36x5)
+                                                            2.9909   0.9505                10.2708 &   1086.9545 r   0.3000  VDD_INT_RT n    (3731300.0000,2067456.0000)
+  right_stack_inst/mgtile_inst3/clk_net_60_RT_314_sp_fast_clk_right_i_3 (net)
+                               2   8.8776 
+  right_stack_inst/mgtile_inst3/clk_buf_60_RT_313/clk (i0scbf000aa1d36x5)
+                                               0.0000       3.1022   0.9700     0.0000      1.1360 &   1088.0905 r   0.3000  VDD_INT_RT n    (3731200.0000,2130656.0000)
+  right_stack_inst/mgtile_inst3/clk_buf_60_RT_313/clkout (i0scbf000aa1d36x5)
+                                                            2.9908   0.9505                10.2834 &   1098.3739 r   0.3000  VDD_INT_RT n    (3731300.0000,2130496.0000)
+  right_stack_inst/mgtile_inst3/clk_net_60_RT_313_sp_fast_clk_right_i_3 (net)
+                               1   8.4951 
+  right_stack_inst/mgtile_inst3/clk_buf_60_RT_312/clk (i0scbf000aa1d36x5)
+                                               0.0000       3.0793   0.9700     0.0000      1.0591 &   1099.4330 r   0.3000  VDD_INT_RT n    (3731200.0000,2193696.0000)
+  right_stack_inst/mgtile_inst3/clk_buf_60_RT_312/clkout (i0scbf000aa1d36x5)
+                                                            2.9909   0.9505                10.2736 &   1109.7065 r   0.3000  VDD_INT_RT n    (3731300.0000,2193536.0000)
+  right_stack_inst/mgtile_inst3/clk_net_60_RT_312_sp_fast_clk_right_i_3 (net)
+                               1   8.1246 
+  right_stack_inst/mgtile_inst3/clk_buf_60_RT_311/clk (i0scbf000aa1d36x5)
+                                               0.0000       3.0779   0.9700     0.0000      1.0188 &   1110.7253 r   0.3000  VDD_INT_RT n    (3731200.0000,2256736.0000)
+  right_stack_inst/mgtile_inst3/clk_buf_60_RT_311/clkout (i0scbf000aa1d36x5)
+                                                            2.9909   0.9505                10.2728 &   1120.9982 r   0.3000  VDD_INT_RT n    (3731300.0000,2256576.0000)
+  right_stack_inst/mgtile_inst3/clk_net_60_RT_311_sp_fast_clk_right_i_3 (net)
+                               1   8.4004 
+  right_stack_inst/mgtile_inst3/clk_buf_60_RT_310/clk (i0scbf000aa1d36x5)
+                                               0.0000       3.0790   0.9700     0.0000      1.0563 &   1122.0544 r   0.3000  VDD_INT_RT n    (3731200.0000,2319776.0000)
+  right_stack_inst/mgtile_inst3/clk_buf_60_RT_310/clkout (i0scbf000aa1d36x5)
+                                                            2.9909   0.9505                10.2734 &   1132.3279 r   0.3000  VDD_INT_RT n    (3731300.0000,2319616.0000)
+  right_stack_inst/mgtile_inst3/clk_net_60_RT_310_sp_fast_clk_right_i_3 (net)
+                               1   8.3741 
+  right_stack_inst/mgtile_inst3/clk_buf_60_RT_309/clk (i0scbf000aa1d36x5)
+                                               0.0000       3.0775   0.9700     0.0000      1.0413 &   1133.3691 r   0.3000  VDD_INT_RT n    (3731250.0000,2382816.0000)
+  right_stack_inst/mgtile_inst3/clk_buf_60_RT_309/clkout (i0scbf000aa1d36x5)
+                                                            2.9909   0.9505                10.2729 &   1143.6421 r   0.3000  VDD_INT_RT n    (3731300.0000,2382656.0000)
+  right_stack_inst/mgtile_inst3/clk_net_60_RT_309_sp_fast_clk_right_i_3 (net)
+                               1   8.2905 
+  right_stack_inst/mgtile_inst3/clk_buf_60_RT_308/clk (i0scbf000aa1d36x5)
+                                               0.0000       3.0822   0.9700     0.0000      1.0518 &   1144.6938 r   0.3000  VDD_INT_RT n    (3731200.0000,2445856.0000)
+  right_stack_inst/mgtile_inst3/clk_buf_60_RT_308/clkout (i0scbf000aa1d36x5)
+                                                            2.9909   0.9505                10.2748 &   1154.9686 r   0.3000  VDD_INT_RT n    (3731300.0000,2445696.0000)
+  right_stack_inst/mgtile_inst3/clk_net_60_RT_308_sp_fast_clk_right_i_3 (net)
+                               1   8.0386 
+  right_stack_inst/mgtile_inst3/clk_buf_60_RT_307/clk (i0scbf000aa1d36x5)
+                                               0.0000       3.0764   0.9700     0.0000      1.0333 &   1156.0020 r   0.3000  VDD_INT_RT n    (3731200.0000,2508576.0000)
+  right_stack_inst/mgtile_inst3/clk_buf_60_RT_307/clkout (i0scbf000aa1d36x5)
+                                                            2.9909   0.9505                10.2723 &   1166.2743 r   0.3000  VDD_INT_RT n    (3731300.0000,2508416.0000)
+  right_stack_inst/mgtile_inst3/clk_net_60_RT_307_sp_fast_clk_right_i_3 (net)
+                               1   8.1675 
+  right_stack_inst/mgtile_inst3/clk_buf_60_RT_306/clk (i0scbf000aa1d36x5)
+                                               0.0000       3.0771   0.9700     0.0000      1.0298 &   1167.3041 r   0.3000  VDD_INT_RT n    (3731250.0000,2571616.0000)
+  right_stack_inst/mgtile_inst3/clk_buf_60_RT_306/clkout (i0scbf000aa1d36x5)
+                                                            2.9909   0.9505                10.2727 &   1177.5768 r   0.3000  VDD_INT_RT n    (3731300.0000,2571456.0000)
+  right_stack_inst/mgtile_inst3/clk_net_60_RT_306_sp_fast_clk_right_i_3 (net)
+                               2   8.7863 
+  right_stack_inst/mgtile_inst3/clk_buf_60_RT_305/clk (i0scbf000aa1d36x5)
+                                               0.0000       3.0976   0.9700     0.0000      1.1003 &   1178.6771 r   0.3000  VDD_INT_RT n    (3731250.0000,2634656.0000)
+  right_stack_inst/mgtile_inst3/clk_buf_60_RT_305/clkout (i0scbf000aa1d36x5)
+                                                            2.9908   0.9505                10.2816 &   1188.9587 r   0.3000  VDD_INT_RT n    (3731300.0000,2634496.0000)
+  right_stack_inst/mgtile_inst3/clk_net_60_RT_305_sp_fast_clk_right_i_3 (net)
+                               1   7.9691 
+  right_stack_inst/mgtile_inst3/clk_buf_60_RT_304/clk (i0scbf000aa1d36x5)
+                                               0.0000       3.0751   0.9700     0.0000      1.0137 &   1189.9724 r   0.3000  VDD_INT_RT n    (3731200.0000,2697696.0000)
+  right_stack_inst/mgtile_inst3/clk_buf_60_RT_304/clkout (i0scbf000aa1d36x5)
+                                                            2.9909   0.9505                10.2719 &   1200.2443 r   0.3000  VDD_INT_RT n    (3731300.0000,2697536.0000)
+  right_stack_inst/mgtile_inst3/clk_net_60_RT_304_sp_fast_clk_right_i_3 (net)
+                               1   7.8869 
+  right_stack_inst/mgtile_inst3/clk_buf_60_RT_303/clk (i0scbf000aa1d36x5)
+                                               0.0000       3.0757   0.9700     0.0000      0.9999 &   1201.2441 r   0.3000  VDD_INT_RT n    (3731200.0000,2760736.0000)
+  right_stack_inst/mgtile_inst3/clk_buf_60_RT_303/clkout (i0scbf000aa1d36x5)
+                                                            2.9909   0.9505                10.2722 &   1211.5164 r   0.3000  VDD_INT_RT n    (3731300.0000,2760576.0000)
+  right_stack_inst/mgtile_inst3/clk_net_60_RT_303_sp_fast_clk_right_i_3 (net)
+                               1   8.0263 
+  right_stack_inst/mgtile_inst3/clk_buf_60_RT_302/clk (i0scbf000aa1d36x5)
+                                               0.0000       3.0762   0.9700     0.0000      1.0153 &   1212.5316 r   0.3000  VDD_INT_RT n    (3731200.0000,2823776.0000)
+  right_stack_inst/mgtile_inst3/clk_buf_60_RT_302/clkout (i0scbf000aa1d36x5)
+                                                            2.9909   0.9505                10.2722 &   1222.8038 r   0.3000  VDD_INT_RT n    (3731300.0000,2823616.0000)
+  right_stack_inst/mgtile_inst3/clk_net_60_RT_302_sp_fast_clk_right_i_3 (net)
+                               1   8.0480 
+  right_stack_inst/mgtile_inst3/clk_buf_60_RT_301/clk (i0scbf000aa1d36x5)
+                                               0.0000       3.0751   0.9700     0.0000      1.0040 &   1223.8079 r   0.3000  VDD_INT_RT n    (3731200.0000,2886816.0000)
+  right_stack_inst/mgtile_inst3/clk_buf_60_RT_301/clkout (i0scbf000aa1d36x5)
+                                                            2.9909   0.9505                10.2719 &   1234.0797 r   0.3000  VDD_INT_RT n    (3731300.0000,2886656.0000)
+  right_stack_inst/mgtile_inst3/clk_net_60_RT_301_sp_fast_clk_right_i_3 (net)
+                               1   7.8663 
+  right_stack_inst/mgtile_inst3/clk_buf_60_RT_300/clk (i0scbf000aa1d36x5)
+                                               0.0000       3.0749   0.9700     0.0000      0.9847 &   1235.0645 r   0.3000  VDD_INT_RT n    (3731200.0000,2949856.0000)
+  right_stack_inst/mgtile_inst3/clk_buf_60_RT_300/clkout (i0scbf000aa1d36x5)
+                                                            2.9909   0.9505                10.2719 &   1245.3363 r   0.3000  VDD_INT_RT n    (3731300.0000,2949696.0000)
+  right_stack_inst/mgtile_inst3/clk_net_60_RT_300_sp_fast_clk_right_i_3 (net)
+                               1   7.8866 
+  right_stack_inst/mgtile_inst3/clk_buf_60_RT_299/clk (i0scbf000aa1d36x5)
+                                               0.0000       3.0763   0.9700     0.0000      0.9971 &   1246.3334 r   0.3000  VDD_INT_RT n    (3731200.0000,3012576.0000)
+  right_stack_inst/mgtile_inst3/clk_buf_60_RT_299/clkout (i0scbf000aa1d36x5)
+                                                            2.9909   0.9505                10.2725 &   1256.6058 r   0.3000  VDD_INT_RT n    (3731300.0000,3012416.0000)
+  right_stack_inst/mgtile_inst3/clk_net_60_RT_299_sp_fast_clk_right_i_3 (net)
+                               1   7.9779 
+  right_stack_inst/mgtile_inst3/clk_buf_60_RT_298/clk (i0scbf000aa1d36x5)
+                                               0.0000       3.0766   0.9700     0.0000      1.0212 &   1257.6271 r   0.3000  VDD_INT_RT n    (3731200.0000,3075616.0000)
+  right_stack_inst/mgtile_inst3/clk_buf_60_RT_298/clkout (i0scbf000aa1d36x5)
+                                                            2.9909   0.9505                10.2726 &   1267.8997 r   0.3000  VDD_INT_RT n    (3731300.0000,3075456.0000)
+  right_stack_inst/mgtile_inst3/clk_net_60_RT_298_sp_fast_clk_right_i_3 (net)
+                               2   8.5109 
+  right_stack_inst/mgtile_inst3/clk_buf_60_RT_297/clk (i0scbf000aa1d36x5)
+                                               0.0000       3.0846   0.9700     0.0000      1.0632 &   1268.9629 r   0.3000  VDD_INT_RT n    (3731250.0000,3138656.0000)
+  right_stack_inst/mgtile_inst3/clk_buf_60_RT_297/clkout (i0scbf000aa1d36x5)
+                                                            2.9909   0.9505                10.2761 &   1279.2390 r   0.3000  VDD_INT_RT n    (3731300.0000,3138496.0000)
+  right_stack_inst/mgtile_inst3/clk_net_60_RT_297_sp_fast_clk_right_i_3 (net)
+                               1   7.9567 
+  right_stack_inst/mgtile_inst3/clk_buf_60_RT_296/clk (i0scbf000aa1d36x5)
+                                               0.0000       3.0742   0.9700     0.0000      0.9974 &   1280.2365 r   0.3000  VDD_INT_RT n    (3731200.0000,3201696.0000)
+  right_stack_inst/mgtile_inst3/clk_buf_60_RT_296/clkout (i0scbf000aa1d36x5)
+                                                            2.9909   0.9505                10.2719 &   1290.5083 r   0.3000  VDD_INT_RT n    (3731300.0000,3201536.0000)
+  right_stack_inst/mgtile_inst3/clk_net_60_RT_296_sp_fast_clk_right_i_3 (net)
+                               1   7.7482 
+  right_stack_inst/mgtile_inst3/clk_buf_60_RT_295/clk (i0scbf000aa1d36x5)
+                                               0.0000       3.0728   0.9700     0.0000      0.9822 &   1291.4905 r   0.3000  VDD_INT_RT n    (3731250.0000,3264736.0000)
+  right_stack_inst/mgtile_inst3/clk_buf_60_RT_295/clkout (i0scbf000aa1d36x5)
+                                                            2.9909   0.9505                10.2710 &   1301.7615 r   0.3000  VDD_INT_RT n    (3731300.0000,3264576.0000)
+  right_stack_inst/mgtile_inst3/clk_net_60_RT_295_sp_fast_clk_right_i_3 (net)
+                               1   7.9784 
+  right_stack_inst/mgtile_inst3/clk_buf_60_RT_294/clk (i0scbf000aa1d36x5)
+                                               0.0000       3.0760   0.9700     0.0000      1.0096 &   1302.7711 r   0.3000  VDD_INT_RT n    (3731200.0000,3327776.0000)
+  right_stack_inst/mgtile_inst3/clk_buf_60_RT_294/clkout (i0scbf000aa1d36x5)
+                                                            2.9909   0.9505                10.2723 &   1313.0435 r   0.3000  VDD_INT_RT n    (3731300.0000,3327616.0000)
+  right_stack_inst/mgtile_inst3/clk_net_60_RT_294_sp_fast_clk_right_i_3 (net)
+                               1   8.1941 
+  right_stack_inst/mgtile_inst3/clk_buf_60_RT_293/clk (i0scbf000aa1d36x5)
+                                               0.0000       3.0774   0.9700     0.0000      1.0309 &   1314.0743 r   0.3000  VDD_INT_RT n    (3731200.0000,3390816.0000)
+  right_stack_inst/mgtile_inst3/clk_buf_60_RT_293/clkout (i0scbf000aa1d36x5)
+                                                            2.9909   0.9505                10.2728 &   1324.3472 r   0.3000  VDD_INT_RT n    (3731300.0000,3390656.0000)
+  right_stack_inst/mgtile_inst3/clk_net_60_RT_293_sp_fast_clk_right_i_3 (net)
+                               1   8.1282 
+  right_stack_inst/mgtile_inst3/clk_buf_60_RT_292/clk (i0scbf000aa1d36x5)
+                                               0.0000       3.0748   0.9700     0.0000      1.0154 &   1325.3625 r   0.3000  VDD_INT_RT n    (3731200.0000,3453536.0000)
+  right_stack_inst/mgtile_inst3/clk_buf_60_RT_292/clkout (i0scbf000aa1d36x5)
+                                                            2.9909   0.9505                10.2720 &   1335.6345 r   0.3000  VDD_INT_RT n    (3731300.0000,3453376.0000)
+  right_stack_inst/mgtile_inst3/clk_net_60_RT_292_sp_fast_clk_right_i_3 (net)
+                               1   8.2715 
+  right_stack_inst/mgtile_inst3/clk_buf_60_RT_291/clk (i0scbf000aa1d36x5)
+                                               0.0000       3.0782   0.9700     0.0000      1.0348 &   1336.6693 r   0.3000  VDD_INT_RT n    (3731200.0000,3516576.0000)
+  right_stack_inst/mgtile_inst3/clk_buf_60_RT_291/clkout (i0scbf000aa1d36x5)
+                                                            2.9909   0.9505                10.2736 &   1346.9429 r   0.3000  VDD_INT_RT n    (3731300.0000,3516416.0000)
+  right_stack_inst/mgtile_inst3/clk_net_60_RT_291_sp_fast_clk_right_i_3 (net)
+                               1   7.9815 
+  right_stack_inst/mgtile_inst3/clk_buf_3_rt_mgtile_6_9/clk (i0scbf000aa1d36x5)
+                                               0.0000       3.0764   0.9700     0.0000      1.0016 &   1347.9445 r   0.3000  VDD_INT_RT n    (3730833.0000,3578336.0000)
+  right_stack_inst/mgtile_inst3/clk_buf_3_rt_mgtile_6_9/clkout (i0scbf000aa1d36x5)
+                                                            3.5656   0.9505                11.0631     1359.0076 r   0.3000  VDD_INT_RT n    unplaced
+  right_stack_inst/mgtile_inst3/clk_net_3_rt_mgtile_6_9 (net)
+                               2   0.9015 
+  right_stack_inst/mgtile_inst3/my_flop/clk (i0sfvn003aa1d03x5) <-
+                                               0.0000       0.0000   0.9700     0.0000      0.0000     1359.0076 r   0.3000  VDD_INT_RT n    unplaced
+  data arrival time                                                                                    1359.0076
+  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+  (Path is unconstrained)
+
+
+The dominant exceptions are:
+	None
+
+The overridden exceptions are:
+	None
+
+The unconstrained reasons (except for false path) are:
+Reason              Startpoint           Endpoint
+--------------------------------------------------------------------------------
+dangling_end_point  -                    right_stack_inst/mgtile_inst3/my_flop/clk
+
+1

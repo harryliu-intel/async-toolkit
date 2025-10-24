@@ -1,0 +1,20 @@
+#-----------------------------------------------------------------------------
+# INTEL CONFIDENTIAL
+# Copyright(c) 2018, Intel Corporation. All Rights Reserved
+#-----------------------------------------------------------------------------
+#
+# Created By   :  Raghu P Gudla
+# Created On   :  09/22/2018
+# Description  :  Test Package HDL
+#-----------------------------------------------------------------------------
+ 
+$hdl_spec = {
+
+    -vlog_incdirs => [
+        'verif/tests/fc',
+    ],
+
+    -hdl_spec => [
+        'verif/tests/base/fc_test_pkg.hdl',
+    ],
+};

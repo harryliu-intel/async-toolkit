@@ -1,0 +1,24 @@
+10/11/2023
+
+Hi everyone,
+
+Krishnaraj/Amol set up a meeting with Suhas from the library characterization team.  I had a quick but productive meeting with him.
+
+He shared a few approaches they do on their team:
+
+1. They have a set of custom scripts that look at various ranges for obvious issues (delays over 1 ns, etc) but suggests looking into using "Siemens Solido Crossfire" as an available tool to do the work automatically.  He didn't mention any particular special testing they suggest, it sounded mostly like sanity checks.
+
+2. OCV for minimum pulse width is not yet enabled for the corporate libraries.  Not sure what the reason is but it is coming.  He was talking about needing to validate the output, not sure how they would do that other than setting up regular spice tests.
+
+3. The loads and slopes are calibrated using ring oscillators for the various PVTs but then finally decided on by humans.  The loading in particular is derived from the max slew times by measuring what loading on the output is required to match a max slew.  The max slew itself comes from a ring oscillator study.
+
+4. They also use the autoranging mode in SiliconSmart.  We don't really, yet.
+
+5. They do not prepare any special libs for any customers, it's "one size fits all".  So the loading and slew tables should be read with that in mind: they should fit every design style at a given PVT.
+
+6. The lib team is not interested in pushing to lower voltages but are aware that IFS is doing it to support other ultra-low-voltage customers.  I think it's probably the same folks we've been talking to about this.
+
+I got the impression that we could get answers to brief questions if we have any minor support requests.
+
+    Mika
+

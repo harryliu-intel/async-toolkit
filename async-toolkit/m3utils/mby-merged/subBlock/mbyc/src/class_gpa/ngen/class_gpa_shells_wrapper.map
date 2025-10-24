@@ -1,0 +1,571 @@
+foreach $i (0..7) {
+    >> EM_A_ALIGN_DELAY_FIFO_$i$_CFG_reg_sel
+    >> EM_A_ALIGN_DELAY_FIFO_$i$_STATUS_reg_sel
+    >> em_a_align_delay_fifo_$i$_mem_ls_enter
+    >> em_a_align_delay_fifo_$i$_rd_adr
+    >> em_a_align_delay_fifo_$i$_rd_en
+    >> em_a_align_delay_fifo_$i$_wr_adr
+    >> em_a_align_delay_fifo_$i$_wr_data
+    >> em_a_align_delay_fifo_$i$_wr_en
+    >> em_a_align_delay_fifo_$i$_ecc_uncor_err
+    >> em_a_align_delay_fifo_$i$_init_done
+    >> em_a_align_delay_fifo_$i$_rd_data
+    >> em_a_align_delay_fifo_$i$_rd_valid
+
+    >> EM_A_HASH_CAM_$i$_CFG_reg_sel
+    >> EM_A_HASH_CAM_$i$_STATUS_reg_sel
+    >> em_a_hash_cam_$i$_mem_ls_enter
+    >> em_a_hash_cam_$i$_rd_adr
+    >> em_a_hash_cam_$i$_rd_en
+    >> em_a_hash_cam_$i$_wr_adr
+    >> em_a_hash_cam_$i$_wr_data
+    >> em_a_hash_cam_$i$_wr_en
+    >> em_a_hash_cam_$i$_ecc_uncor_err
+    >> em_a_hash_cam_$i$_init_done
+    >> em_a_hash_cam_$i$_rd_data
+    >> em_a_hash_cam_$i$_rd_valid
+}
+
+foreach $i (0..1) {
+    >> EM_A_KEY_MASK_$i$_CFG_reg_sel
+    >> EM_A_KEY_MASK_$i$_STATUS_reg_sel
+    >> em_a_key_mask_$i$_mem_ls_enter
+    >> em_a_key_mask_$i$_rd_adr
+    >> em_a_key_mask_$i$_rd_en
+    >> em_a_key_mask_$i$_wr_adr
+    >> em_a_key_mask_$i$_wr_data
+    >> em_a_key_mask_$i$_wr_en
+    >> em_a_key_mask_$i$_ecc_uncor_err
+    >> em_a_key_mask_$i$_init_done
+    >> em_a_key_mask_$i$_rd_data
+    >> em_a_key_mask_$i$_rd_valid
+
+    >> EM_A_CAM_EN_$i$_CFG_reg_sel
+    >> EM_A_CAM_EN_$i$_STATUS_reg_sel
+    >> em_a_cam_en_$i$_mem_ls_enter
+    >> em_a_cam_en_$i$_rd_adr
+    >> em_a_cam_en_$i$_rd_en
+    >> em_a_cam_en_$i$_wr_adr
+    >> em_a_cam_en_$i$_wr_data
+    >> em_a_cam_en_$i$_wr_en
+    >> em_a_cam_en_$i$_ecc_uncor_err
+    >> em_a_cam_en_$i$_init_done
+    >> em_a_cam_en_$i$_rd_data
+    >> em_a_cam_en_$i$_rd_valid
+
+    >> EM_A_HASH_MISS_$i$_CFG_reg_sel
+    >> EM_A_HASH_MISS_$i$_STATUS_reg_sel
+    >> em_a_hash_miss_$i$_mem_ls_enter
+    >> em_a_hash_miss_$i$_rd_adr
+    >> em_a_hash_miss_$i$_rd_en
+    >> em_a_hash_miss_$i$_wr_adr
+    >> em_a_hash_miss_$i$_wr_data
+    >> em_a_hash_miss_$i$_wr_en
+    >> em_a_hash_miss_$i$_ecc_uncor_err
+    >> em_a_hash_miss_$i$_init_done
+    >> em_a_hash_miss_$i$_rd_data
+    >> em_a_hash_miss_$i$_rd_valid
+
+    >> EM_A_KEY_SEL0_$i$_CFG_reg_sel
+    >> EM_A_KEY_SEL0_$i$_STATUS_reg_sel
+    >> em_a_key_sel0_$i$_mem_ls_enter
+    >> em_a_key_sel0_$i$_rd_adr
+    >> em_a_key_sel0_$i$_rd_en
+    >> em_a_key_sel0_$i$_wr_adr
+    >> em_a_key_sel0_$i$_wr_data
+    >> em_a_key_sel0_$i$_wr_en
+    >> em_a_key_sel0_$i$_ecc_uncor_err
+    >> em_a_key_sel0_$i$_init_done
+    >> em_a_key_sel0_$i$_rd_data
+    >> em_a_key_sel0_$i$_rd_valid
+
+    >> EM_A_KEY_SEL1_$i$_CFG_reg_sel
+    >> EM_A_KEY_SEL1_$i$_STATUS_reg_sel
+    >> em_a_key_sel1_$i$_mem_ls_enter
+    >> em_a_key_sel1_$i$_rd_adr
+    >> em_a_key_sel1_$i$_rd_en
+    >> em_a_key_sel1_$i$_wr_adr
+    >> em_a_key_sel1_$i$_wr_data
+    >> em_a_key_sel1_$i$_wr_en
+    >> em_a_key_sel1_$i$_ecc_uncor_err
+    >> em_a_key_sel1_$i$_init_done
+    >> em_a_key_sel1_$i$_rd_data
+    >> em_a_key_sel1_$i$_rd_valid
+
+    >> EM_A_SM_CACHE_D_$i$_CFG_reg_sel
+    >> EM_A_SM_CACHE_D_$i$_STATUS_reg_sel
+    >> em_a_sm_cache_d_$i$_mem_ls_enter
+    >> em_a_sm_cache_d_$i$_rd_adr
+    >> em_a_sm_cache_d_$i$_rd_en
+    >> em_a_sm_cache_d_$i$_wr_adr
+    >> em_a_sm_cache_d_$i$_wr_data
+    >> em_a_sm_cache_d_$i$_wr_en
+    >> em_a_sm_cache_d_$i$_ecc_uncor_err
+    >> em_a_sm_cache_d_$i$_init_done
+    >> em_a_sm_cache_d_$i$_rd_data
+    >> em_a_sm_cache_d_$i$_rd_valid
+}
+
+    >> EM_A_HASH_CFG_CFG_reg_sel
+    >> EM_A_HASH_CFG_STATUS_reg_sel
+    >> em_a_hash_cfg_mem_ls_enter
+    >> em_a_hash_cfg_rd_adr
+    >> em_a_hash_cfg_rd_en
+    >> em_a_hash_cfg_wr_adr
+    >> em_a_hash_cfg_wr_data
+    >> em_a_hash_cfg_wr_en
+    >> em_a_hash_cfg_ecc_uncor_err
+    >> em_a_hash_cfg_init_done
+    >> em_a_hash_cfg_rd_data
+    >> em_a_hash_cfg_rd_valid
+
+    >> EM_A_MD_DELAY_FIFO_CFG_reg_sel
+    >> EM_A_MD_DELAY_FIFO_STATUS_reg_sel
+    >> em_a_md_delay_fifo_mem_ls_enter
+    >> em_a_md_delay_fifo_rd_adr
+    >> em_a_md_delay_fifo_rd_en
+    >> em_a_md_delay_fifo_wr_adr
+    >> em_a_md_delay_fifo_wr_data
+    >> em_a_md_delay_fifo_wr_en
+    >> em_a_md_delay_fifo_ecc_uncor_err
+    >> em_a_md_delay_fifo_init_done
+    >> em_a_md_delay_fifo_rd_data
+    >> em_a_md_delay_fifo_rd_valid
+
+    >> EM_A_TAIL_DELAY_FIFO_CFG_reg_sel
+    >> EM_A_TAIL_DELAY_FIFO_STATUS_reg_sel
+    >> em_a_tail_delay_fifo_mem_ls_enter
+    >> em_a_tail_delay_fifo_rd_adr
+    >> em_a_tail_delay_fifo_rd_en
+    >> em_a_tail_delay_fifo_wr_adr
+    >> em_a_tail_delay_fifo_wr_data
+    >> em_a_tail_delay_fifo_wr_en
+    >> em_a_tail_delay_fifo_ecc_uncor_err
+    >> em_a_tail_delay_fifo_init_done
+    >> em_a_tail_delay_fifo_rd_data
+    >> em_a_tail_delay_fifo_rd_valid
+
+    >> EM_A_HASH_LOOKUP0_CFG_reg_sel
+    >> EM_A_HASH_LOOKUP0_STATUS_reg_sel
+    >> em_a_hash_lookup0_adr
+    >> em_a_hash_lookup0_mem_ls_enter
+    >> em_a_hash_lookup0_rd_en
+    >> em_a_hash_lookup0_wr_data
+    >> em_a_hash_lookup0_wr_en
+    >> em_a_hash_lookup0_ecc_uncor_err
+    >> em_a_hash_lookup0_init_done
+    >> em_a_hash_lookup0_rd_data
+    >> em_a_hash_lookup0_rd_valid
+
+    >> EM_A_HASH_LOOKUP1_CFG_reg_sel
+    >> EM_A_HASH_LOOKUP1_STATUS_reg_sel
+    >> em_a_hash_lookup1_adr
+    >> em_a_hash_lookup1_mem_ls_enter
+    >> em_a_hash_lookup1_rd_en
+    >> em_a_hash_lookup1_wr_data
+    >> em_a_hash_lookup1_wr_en
+    >> em_a_hash_lookup1_ecc_uncor_err
+    >> em_a_hash_lookup1_init_done
+    >> em_a_hash_lookup1_rd_data
+    >> em_a_hash_lookup1_rd_valid
+
+    >> CLASS_GPA_ECC_COR_ERR_reg_sel
+    >> CLASS_GPA_ECC_UNCOR_ERR_reg_sel
+    >> unified_regs_rd
+    >> unified_regs_wr_data
+    >> class_gpa_ecc_int
+    >> class_gpa_init_done
+    >> unified_regs_ack
+    >> unified_regs_rd_data
+    >> CLASS_GPA_ECC_COR_ERR_reg_sel
+    >> CLASS_GPA_ECC_COR_ERR_reg_sel
+    >> CLASS_GPA_ECC_COR_ERR_reg_sel
+
+foreach $i (0..3) {
+    >> LPM_KEY_SEL$i$_CFG_reg_sel
+    >> LPM_KEY_SEL$i$_STATUS_reg_sel
+    >> lpm_key_sel$i$_mem_ls_enter
+    >> lpm_key_sel$i$_rd_adr
+    >> lpm_key_sel$i$_rd_en
+    >> lpm_key_sel$i$_wr_adr
+    >> lpm_key_sel$i$_wr_data
+    >> lpm_key_sel$i$_wr_en
+    >> lpm_key_sel$i$_ecc_uncor_err
+    >> lpm_key_sel$i$_init_done
+    >> lpm_key_sel$i$_rd_data
+    >> lpm_key_sel$i$_rd_valid
+}
+
+foreach $i (0..19) {
+    >> LPM_KEY_MASK_$i$_CFG_reg_sel
+    >> LPM_KEY_MASK_$i$_STATUS_reg_sel
+    >> lpm_key_mask_$i$_adr
+    >> lpm_key_mask_$i$_mem_ls_enter
+    >> lpm_key_mask_$i$_rd_en
+    >> lpm_key_mask_$i$_wr_data
+    >> lpm_key_mask_$i$_wr_en
+    >> lpm_key_mask_$i$_ecc_uncor_err
+    >> lpm_key_mask_$i$_init_done
+    >> lpm_key_mask_$i$_rd_data
+    >> lpm_key_mask_$i$_rd_valid
+}
+
+foreach $i (0..47) {
+    >> LPM_SUBTRIE_APTR_$i$_CFG_reg_sel
+    >> LPM_SUBTRIE_APTR_$i$_STATUS_reg_sel
+    >> lpm_subtrie_aptr_$i$_adr
+    >> lpm_subtrie_aptr_$i$_mem_ls_enter
+    >> lpm_subtrie_aptr_$i$_rd_en
+    >> lpm_subtrie_aptr_$i$_wr_data
+    >> lpm_subtrie_aptr_$i$_wr_en
+    >> lpm_subtrie_aptr_$i$_ecc_uncor_err
+    >> lpm_subtrie_aptr_$i$_init_done
+    >> lpm_subtrie_aptr_$i$_rd_data
+    >> lpm_subtrie_aptr_$i$_rd_valid
+
+    >> LPM_SUBTRIE_CPTR_$i$_CFG_reg_sel
+    >> LPM_SUBTRIE_CPTR_$i$_STATUS_reg_sel
+    >> lpm_subtrie_cptr_$i$_adr
+    >> lpm_subtrie_cptr_$i$_mem_ls_enter
+    >> lpm_subtrie_cptr_$i$_rd_en
+    >> lpm_subtrie_cptr_$i$_wr_data
+    >> lpm_subtrie_cptr_$i$_wr_en
+    >> lpm_subtrie_cptr_$i$_ecc_uncor_err
+    >> lpm_subtrie_cptr_$i$_init_done
+    >> lpm_subtrie_cptr_$i$_rd_data
+    >> lpm_subtrie_cptr_$i$_rd_valid
+
+    >> LPM_SUBTRIE_BITMAPS_$i$_CFG_reg_sel
+    >> LPM_SUBTRIE_BITMAPS_$i$_STATUS_reg_sel
+    >> lpm_subtrie_bitmaps_$i$_adr
+    >> lpm_subtrie_bitmaps_$i$_mem_ls_enter
+    >> lpm_subtrie_bitmaps_$i$_rd_en
+    >> lpm_subtrie_bitmaps_$i$_wr_data
+    >> lpm_subtrie_bitmaps_$i$_wr_en
+    >> lpm_subtrie_bitmaps_$i$_ecc_uncor_err
+    >> lpm_subtrie_bitmaps_$i$_init_done
+    >> lpm_subtrie_bitmaps_$i$_rd_data
+    >> lpm_subtrie_bitmaps_$i$_rd_valid
+}
+
+    >> LPM_MATCH_ACTION_CFG_reg_sel
+    >> LPM_MATCH_ACTION_STATUS_reg_sel
+    >> lpm_match_action_adr
+    >> lpm_match_action_mem_ls_enter
+    >> lpm_match_action_rd_en
+    >> lpm_match_action_wr_data
+    >> lpm_match_action_wr_en
+    >> lpm_match_action_ecc_uncor_err
+    >> lpm_match_action_init_done
+    >> lpm_match_action_rd_data
+    >> lpm_match_action_rd_valid
+
+    >> LPM_SM_CACHE_D_CFG_reg_sel
+    >> LPM_SM_CACHE_D_STATUS_reg_sel
+    >> lpm_sm_cache_d_mem_ls_enter
+    >> lpm_sm_cache_d_rd_adr
+    >> lpm_sm_cache_d_rd_en
+    >> lpm_sm_cache_d_wr_adr
+    >> lpm_sm_cache_d_wr_data
+    >> lpm_sm_cache_d_wr_en
+    >> lpm_sm_cache_d_ecc_uncor_err
+    >> lpm_sm_cache_d_init_done
+    >> lpm_sm_cache_d_rd_data
+    >> lpm_sm_cache_d_rd_valid
+
+    >> LPM_MATCH_TCAM_CFG_reg_sel
+    >> LPM_MATCH_TCAM_STATUS_reg_sel
+    >> lpm_match_tcam_adr
+    >> lpm_match_tcam_chk_en
+    >> lpm_match_tcam_chk_for_err_trig
+    >> lpm_match_tcam_chk_key
+    >> lpm_match_tcam_chk_mask
+    >> lpm_match_tcam_raw_hit_in
+    >> lpm_match_tcam_rd_en
+    >> lpm_match_tcam_slice_en
+    >> lpm_match_tcam_wr_data
+    >> lpm_match_tcam_wr_en
+    >> lpm_match_tcam_ecc_uncor_err
+    >> lpm_match_tcam_init_done
+    >> lpm_match_tcam_raw_hit_out
+    >> lpm_match_tcam_rd_data
+    >> lpm_match_tcam_rule_hit_num
+    >> lpm_match_tcam_rule_hit_num_vld
+    >> lpm_match_tcam_tcam_chk_rdy
+    >> lpm_match_tcam_tcam_chk_valid
+    >> lpm_match_tcam_tcam_rd_valid
+    >> lpm_match_tcam_tcam_rdwr_rdy
+
+foreach $i (0..5) {
+    >> MAP_PORT_DEFAULT_$i$_CFG_reg_sel
+    >> MAP_PORT_DEFAULT_$i$_STATUS_reg_sel
+    >> map_port_default_$i$_mem_ls_enter
+    >> map_port_default_$i$_rd_adr
+    >> map_port_default_$i$_rd_en
+    >> map_port_default_$i$_wr_adr
+    >> map_port_default_$i$_wr_data
+    >> map_port_default_$i$_wr_en
+    >> map_port_default_$i$_ecc_uncor_err
+    >> map_port_default_$i$_init_done
+    >> map_port_default_$i$_rd_data
+    >> map_port_default_$i$_rd_valid
+}
+
+    >> MAP_DOMAIN_ACTION0_CFG_reg_sel
+    >> MAP_DOMAIN_ACTION0_STATUS_reg_sel
+    >> map_domain_action0_adr
+    >> map_domain_action0_mem_ls_enter
+    >> map_domain_action0_rd_en
+    >> map_domain_action0_wr_data
+    >> map_domain_action0_wr_en
+    >> map_domain_action0_ecc_uncor_err
+    >> map_domain_action0_init_done
+    >> map_domain_action0_rd_data
+    >> map_domain_action0_rd_valid
+
+    >> MAP_DOMAIN_ACTION1_CFG_reg_sel
+    >> MAP_DOMAIN_ACTION1_STATUS_reg_sel
+    >> map_domain_action1_adr
+    >> map_domain_action1_mem_ls_enter
+    >> map_domain_action1_rd_en
+    >> map_domain_action1_wr_data
+    >> map_domain_action1_wr_en
+    >> map_domain_action1_ecc_uncor_err
+    >> map_domain_action1_init_done
+    >> map_domain_action1_rd_data
+    >> map_domain_action1_rd_valid
+
+    >> MAP_DOMAIN_PROFILE_CFG_reg_sel
+    >> MAP_DOMAIN_PROFILE_STATUS_reg_sel
+    >> map_domain_profile_mem_ls_enter
+    >> map_domain_profile_rd_adr
+    >> map_domain_profile_rd_en
+    >> map_domain_profile_wr_adr
+    >> map_domain_profile_wr_data
+    >> map_domain_profile_wr_en
+    >> map_domain_profile_ecc_uncor_err
+    >> map_domain_profile_init_done
+    >> map_domain_profile_rd_data
+    >> map_domain_profile_rd_valid
+
+    >> MAP_DOMAIN_TCAM_CFG_reg_sel
+    >> MAP_DOMAIN_TCAM_STATUS_reg_sel
+    >> map_domain_tcam_adr
+    >> map_domain_tcam_chk_en
+    >> map_domain_tcam_chk_for_err_trig
+    >> map_domain_tcam_chk_key
+    >> map_domain_tcam_chk_mask
+    >> map_domain_tcam_raw_hit_in
+    >> map_domain_tcam_rd_en
+    >> map_domain_tcam_slice_en
+    >> map_domain_tcam_wr_data
+    >> map_domain_tcam_wr_en
+    >> map_domain_tcam_ecc_uncor_err
+    >> map_domain_tcam_init_done
+    >> map_domain_tcam_raw_hit_out
+    >> map_domain_tcam_rd_data
+    >> map_domain_tcam_rule_hit_num
+    >> map_domain_tcam_rule_hit_num_vld
+    >> map_domain_tcam_tcam_chk_rdy
+    >> map_domain_tcam_tcam_chk_valid
+    >> map_domain_tcam_tcam_rd_valid
+    >> map_domain_tcam_tcam_rdwr_rdy
+
+    >> MAP_DSCP_TC_CFG_reg_sel
+    >> MAP_DSCP_TC_STATUS_reg_sel
+    >> map_dscp_tc_adr
+    >> map_dscp_tc_mem_ls_enter
+    >> map_dscp_tc_rd_en
+    >> map_dscp_tc_wr_data
+    >> map_dscp_tc_wr_en
+    >> map_dscp_tc_ecc_uncor_err
+    >> map_dscp_tc_init_done
+    >> map_dscp_tc_rd_data
+    >> map_dscp_tc_rd_valid
+
+    >> MAP_EXP_TC_CFG_reg_sel
+    >> MAP_EXP_TC_STATUS_reg_sel
+    >> map_exp_tc_mem_ls_enter
+    >> map_exp_tc_rd_adr
+    >> map_exp_tc_rd_en
+    >> map_exp_tc_wr_adr
+    >> map_exp_tc_wr_data
+    >> map_exp_tc_wr_en
+    >> map_exp_tc_ecc_uncor_err
+    >> map_exp_tc_init_done
+    >> map_exp_tc_rd_data
+    >> map_exp_tc_rd_valid
+
+    >> MAP_IP_CFG_CFG_reg_sel
+    >> MAP_IP_CFG_STATUS_reg_sel
+    >> map_ip_cfg_mem_ls_enter
+    >> map_ip_cfg_rd_adr
+    >> map_ip_cfg_rd_en
+    >> map_ip_cfg_wr_adr
+    >> map_ip_cfg_wr_data
+    >> map_ip_cfg_wr_en
+    >> map_ip_cfg_ecc_uncor_err
+    >> map_ip_cfg_init_done
+    >> map_ip_cfg_rd_data
+    >> map_ip_cfg_rd_valid
+
+    >> MAP_IP_HI_CFG_reg_sel
+    >> MAP_IP_HI_STATUS_reg_sel
+    >> map_ip_hi_mem_ls_enter
+    >> map_ip_hi_rd_adr
+    >> map_ip_hi_rd_en
+    >> map_ip_hi_wr_adr
+    >> map_ip_hi_wr_data
+    >> map_ip_hi_wr_en
+    >> map_ip_hi_ecc_uncor_err
+    >> map_ip_hi_init_done
+    >> map_ip_hi_rd_data
+    >> map_ip_hi_rd_valid
+
+    >> MAP_IP_LO_CFG_reg_sel
+    >> MAP_IP_LO_STATUS_reg_sel
+    >> map_ip_lo_mem_ls_enter
+    >> map_ip_lo_rd_adr
+    >> map_ip_lo_rd_en
+    >> map_ip_lo_wr_adr
+    >> map_ip_lo_wr_data
+    >> map_ip_lo_wr_en
+    >> map_ip_lo_ecc_uncor_err
+    >> map_ip_lo_init_done
+    >> map_ip_lo_rd_data
+    >> map_ip_lo_rd_valid
+
+    >> MAP_L4_DST_CFG_reg_sel
+    >> MAP_L4_DST_STATUS_reg_sel
+    >> map_l4_dst_mem_ls_enter
+    >> map_l4_dst_rd_adr
+    >> map_l4_dst_rd_en
+    >> map_l4_dst_wr_adr
+    >> map_l4_dst_wr_data
+    >> map_l4_dst_wr_en
+    >> map_l4_dst_ecc_uncor_err
+    >> map_l4_dst_init_done
+    >> map_l4_dst_rd_data
+    >> map_l4_dst_rd_valid
+
+    >> MAP_L4_SRC_CFG_reg_sel
+    >> MAP_L4_SRC_STATUS_reg_sel
+    >> map_l4_src_mem_ls_enter
+    >> map_l4_src_rd_adr
+    >> map_l4_src_rd_en
+    >> map_l4_src_wr_adr
+    >> map_l4_src_wr_data
+    >> map_l4_src_wr_en
+    >> map_l4_src_ecc_uncor_err
+    >> map_l4_src_init_done
+    >> map_l4_src_rd_data
+    >> map_l4_src_rd_valid
+
+    >> MAP_MAC_CFG_reg_sel
+    >> MAP_MAC_STATUS_reg_sel
+    >> map_mac_mem_ls_enter
+    >> map_mac_rd_adr
+    >> map_mac_rd_en
+    >> map_mac_wr_adr
+    >> map_mac_wr_data
+    >> map_mac_wr_en
+    >> map_mac_ecc_uncor_err
+    >> map_mac_init_done
+    >> map_mac_rd_data
+    >> map_mac_rd_valid
+
+    >> MAP_PORT_CFG_CFG_reg_sel
+    >> MAP_PORT_CFG_STATUS_reg_sel
+    >> map_port_cfg_mem_ls_enter
+    >> map_port_cfg_rd_adr
+    >> map_port_cfg_rd_en
+    >> map_port_cfg_wr_adr
+    >> map_port_cfg_wr_data
+    >> map_port_cfg_wr_en
+    >> map_port_cfg_ecc_uncor_err
+    >> map_port_cfg_init_done
+    >> map_port_cfg_rd_data
+    >> map_port_cfg_rd_valid
+
+    >> MAP_PORT_CFG_reg_sel
+    >> MAP_PORT_STATUS_reg_sel
+    >> map_port_mem_ls_enter
+    >> map_port_rd_adr
+    >> map_port_rd_en
+    >> map_port_wr_adr
+    >> map_port_wr_data
+    >> map_port_wr_en
+    >> map_port_ecc_uncor_err
+    >> map_port_init_done
+    >> map_port_rd_data
+    >> map_port_rd_valid
+
+    >> MAP_PROFILE_ACTION_CFG_reg_sel
+    >> MAP_PROFILE_ACTION_STATUS_reg_sel
+    >> map_profile_action_mem_ls_enter
+    >> map_profile_action_rd_adr
+    >> map_profile_action_rd_en
+    >> map_profile_action_wr_adr
+    >> map_profile_action_wr_data
+    >> map_profile_action_wr_en
+    >> map_profile_action_ecc_uncor_err
+    >> map_profile_action_init_done
+    >> map_profile_action_rd_data
+    >> map_profile_action_rd_valid
+
+    >> MAP_PROT_CFG_reg_sel
+    >> MAP_PROT_STATUS_reg_sel
+    >> map_prot_mem_ls_enter
+    >> map_prot_rd_adr
+    >> map_prot_rd_en
+    >> map_prot_wr_adr
+    >> map_prot_wr_data
+    >> map_prot_wr_en
+    >> map_prot_ecc_uncor_err
+    >> map_prot_init_done
+    >> map_prot_rd_data
+    >> map_prot_rd_valid
+
+foreach $i (0..15) {
+    >> MAP_REWRITE_$i$_CFG_reg_sel
+    >> MAP_REWRITE_$i$_STATUS_reg_sel
+    >> map_rewrite_$i$_mem_ls_enter
+    >> map_rewrite_$i$_rd_adr
+    >> map_rewrite_$i$_rd_en
+    >> map_rewrite_$i$_wr_adr
+    >> map_rewrite_$i$_wr_data
+    >> map_rewrite_$i$_wr_en
+    >> map_rewrite_$i$_ecc_uncor_err
+    >> map_rewrite_$i$_init_done
+    >> map_rewrite_$i$_rd_data
+    >> map_rewrite_$i$_rd_valid
+}
+
+    >> MAP_VPRI_CFG_reg_sel
+    >> MAP_VPRI_STATUS_reg_sel
+    >> map_vpri_mem_ls_enter
+    >> map_vpri_rd_adr
+    >> map_vpri_rd_en
+    >> map_vpri_wr_adr
+    >> map_vpri_wr_data
+    >> map_vpri_wr_en
+    >> map_vpri_ecc_uncor_err
+    >> map_vpri_init_done
+    >> map_vpri_rd_data
+    >> map_vpri_rd_valid
+
+    >> MAP_VPRI_TC_CFG_reg_sel
+    >> MAP_VPRI_TC_STATUS_reg_sel
+    >> map_vpri_tc_mem_ls_enter
+    >> map_vpri_tc_rd_adr
+    >> map_vpri_tc_rd_en
+    >> map_vpri_tc_wr_adr
+    >> map_vpri_tc_wr_data
+    >> map_vpri_tc_wr_en
+    >> map_vpri_tc_ecc_uncor_err
+    >> map_vpri_tc_init_done
+    >> map_vpri_tc_rd_data
+    >> map_vpri_tc_rd_valid
+
+cclk    >> clk
+reset_n >> reset_n

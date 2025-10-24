@@ -1,0 +1,56 @@
+
+##############################################################################
+### DLC section                                                             ##
+##############################################################################
+#
+### port states for all supply ports
+
+add_port_state "VCCIO" -state "v_1p00 1.00"
+add_port_state "VCCIO" -state "v_off off"
+add_port_state "VCCSA" -state "v_0p85 0.85"
+add_port_state "VCCSA" -state "v_off off"
+add_port_state "VCCIN" -state "v_1p80 1.80"
+add_port_state "VCCIN" -state "v_off off"
+add_port_state "VCCFUSE" -state "v_1p00 1.00"
+add_port_state "VCCFUSE" -state "v_off off"
+add_port_state "VCCFUSEHV" -state "v_1p00 1.00"
+add_port_state "VCCFUSEHV" -state "v_off off"
+add_port_state "VCCINFAON" -state "v_1p00 1.00"
+add_port_state "VCCINFAON" -state "v_off off"
+add_port_state "VCCFA_EHV" -state "v_1p80 1.80"
+add_port_state "VCCFA_EHV" -state "v_off off"
+add_port_state "VCCDLC" -state "v_0p75 0.75"
+add_port_state "VCCDLC" -state "v_off off"
+add_port_state "VCCSFR" -state "v_1p20 1.20"
+add_port_state "VCCSFR" -state "v_off off"
+add_port_state "vss" -state "v_0p0 0.0"
+
+
+#
+###### PST section #####
+#
+### PRIMARY rails pst
+create_pst "primary_rails_pst"                 -supplies  "VCCIO   VCCSA   VCCIN   VCCFUSE  VCCFUSEHV VCCINFAON  VCCFA_EHV"
+add_pst_state "PRIM_ON"  -pst "primary_rails_pst" -state  "v_1p00  v_0p85  v_1p80  v_1p00   v_1p00    v_1p00     v_1p80"
+add_pst_state "PRIM_OFF" -pst "primary_rails_pst" -state  "v_off   v_off   v_off   v_off    v_off     v_off      v_off"
+
+### PST table  = TBD 
+################################################
+###    ???	???	???	state
+################################################
+##			*       G3
+##	*       *       *       Sx
+##	*	*	*       S0-Idle
+##	*	*	*       S0
+################################################
+### * indicates that the domain is ON
+#
+### NOTE:
+### Difference between partition and fullchip PST tables is the following:
+### VCCDLC and VCCSFR are supply nets at this level, not a bumps.
+### These supply nets will not be part of PST table
+###
+### fullchip_rails_pst: models the rails that vary during different states. 
+### The rest of the rails turn ON and OFF at the same time as these rails.
+
+

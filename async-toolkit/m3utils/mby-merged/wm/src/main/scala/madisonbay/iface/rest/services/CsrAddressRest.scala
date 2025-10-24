@@ -1,0 +1,34 @@
+// Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+// SPDX-License-Identifier: Apache-2.0
+
+package madisonbay.iface.rest.services
+
+import madisonbay.iface.UriConstants.{UriParameter, UriSegment}
+import madisonbay.iface.model.CsrModel
+import madisonbay.iface.rest.Constants.Keys
+import madisonbay.iface.rest.RestResponse
+import madisonbay.wm.utils.json.JsonReader
+import spinoco.protocol.http.HttpStatusCode
+import RestProcessing.responseMessage
+
+object CsrAddressRest extends RestProcessing {
+
+  def processGetRequest(uri: List[String], parameters: List[UriParameter], csrModel: CsrModel): RestResponse = uri match {
+
+    case UriSegment.Address :: address :: Nil if JsonReader.isInteger(address) => csrModel.csr.getRegister(address.toLong) match {
+
+      case Some(value) => returnJson(Map(
+        CsrModel.KeyType -> CsrModel.TypeRegister,
+        Keys.KeyValue -> value.toLong,
+        Keys.KeyRawValue -> value.toRaw
+        ))
+
+      case None => RestResponse(uriSupported = true, error = false,
+        responseMessage(s"Value under address $address bytes not found"), HttpStatusCode.NotFound, None)
+    }
+
+    case _ => returnStdNotSupported(uriPath(uri))
+
+  }
+
+}

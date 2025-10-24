@@ -1,0 +1,504 @@
+% Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+% SPDX-License-Identifier: Apache-2.0
+
+\begin{longtable}[]{@{}l@{}}
+\toprule
+\endhead
+\begin{minipage}[t]{0.97\columnwidth}\raggedright
+Grammar CspParser\\
+\href{http://www.ANTLR.org}{ANTLR}-generated HTML file from Csp.g
+
+Terence Parr, \href{http://www.magelang.com}{MageLang Institute}\\
+ANTLR Version 2.7.5 (20050128); 1989-2005\strut
+\end{minipage}\tabularnewline
+\bottomrule
+\end{longtable}
+
+\begin{verbatim}
+Definition of parser CspParser, which is a subclass of LLkParser.
+
+
+program
+    :   (   function_decl 
+        |   structure_decl 
+        )* 
+        (   sequential_statement 
+        |   
+        ) 
+        (   DIRECTIVES LCURLY 
+        |   
+        ) 
+        EOF 
+    ;
+
+
+function_decl
+    :   FUNCTION IDENT LPAREN 
+        (   declaration_list 
+        |   
+        ) 
+        RPAREN 
+        (   COLON type 
+        |   
+        ) 
+        ASSIGN statement SEMI 
+    ;
+
+
+structure_decl
+    :   STRUCTURE IDENT ASSIGN LPAREN declaration_list RPAREN SEMI 
+    ;
+
+
+sequential_statement
+    :   sequential_part ( SEMI sequential_part )* 
+        (   SEMI 
+        |   
+        ) 
+    ;
+
+
+declaration_list
+    :   declaration ( SEMI declaration )* 
+        (   SEMI 
+        |   
+        ) 
+    ;
+
+
+type
+    :   (   CONST 
+        |   
+        ) 
+        (   INT 
+            (   LPAREN expression RPAREN 
+            |   
+            ) 
+            
+        |   SINT LPAREN expression RPAREN 
+        |   BOOLEAN 
+        |   BOOL 
+        |   STRING 
+        |   IDENT 
+        ) 
+    ;
+
+
+statement
+    :   LPAREN sequential_statement RPAREN 
+    |   selection_statement 
+    |   repetition_statement 
+    |   assignment_statement 
+    |   incdec_statement 
+    |   communication_statement 
+    |   bool_assignment_statement 
+    |   lvalue 
+    |   loop_statement 
+    |   ERROR 
+    |   SKIP 
+    ;
+
+
+var_statement
+    :   declaration 
+    ;
+
+
+declaration
+    :   type declarator_list 
+    ;
+
+
+loop_statement
+    :   (   LANGL 
+        |   SLOOP 
+        |   BLOOP 
+        |   CLOOP 
+        ) 
+        IDENT COLON range COLON sequential_statement RANGL 
+    ;
+
+
+range
+    :   expression 
+        (   DOTDOT expression 
+        |   
+        ) 
+    ;
+
+
+sequential_part
+    :   var_statement 
+    |   parallel_statement 
+    ;
+
+
+parallel_statement
+    :   statement ( COMMA statement )* 
+    ;
+
+
+selection_statement
+    :   LBRACK 
+        (   guard_commands 
+        |   expression 
+        ) 
+        RBRACK 
+    |   HASH LBRACK det_guard_noelse_commands RBRACK 
+    ;
+
+
+repetition_statement
+    :   LOOP 
+        (   guard_commands 
+        |   sequential_statement 
+        ) 
+        RBRACK 
+    ;
+
+
+lvalue
+    :   (   identifier 
+        |   STRING 
+        ) 
+        (   ( LBRACK expression ( COMMA expression )* RBRACK ) 
+        |   LCURLY expression 
+            (   COLON expression 
+            |   
+            ) 
+            RCURLY 
+        |   LPAREN 
+            (   expression ( COMMA expression )* 
+            |   
+            ) 
+            RPAREN 
+        |   DOT IDENT 
+        |   DOT INTEGER 
+        |   COLON2 IDENT 
+        )* 
+    ;
+
+
+assignment_statement
+    :   lvalue 
+        (   ASSIGN 
+        |   PASSIGN 
+        |   MASSIGN 
+        |   TASSIGN 
+        |   DASSIGN 
+        |   RASSIGN 
+        |   AASSIGN 
+        |   OASSIGN 
+        |   XASSIGN 
+        |   LSASSIGN 
+        |   ( RANGL GEQ ) 
+        ) 
+        expression 
+    ;
+
+
+incdec_statement
+    :   lvalue 
+        (   INC 
+        |   DEC 
+        ) 
+        
+    ;
+
+
+communication_statement
+    :   HASH lvalue QUEST lvalue 
+    |   lvalue 
+        (   QUEST 
+            (   lvalue 
+            |   
+            ) 
+            
+        |   BANG 
+            (   expression 
+            |   
+            ) 
+            
+        ) 
+    ;
+
+
+bool_assignment_statement
+    :   lvalue 
+        (   PLUS 
+        |   MINUS 
+        ) 
+        
+    ;
+
+
+expression
+    :   conditional_or_expression 
+    ;
+
+
+guard_commands
+    :   non_det_guard_commands 
+    |   det_guard_commands 
+    ;
+
+
+det_guard_noelse_commands
+    :   det_guard_command ( BOX det_guard_command )* 
+    ;
+
+
+non_det_guard_commands
+    :   non_det_guard_simple 
+    |   non_det_guard_linked 
+    ;
+
+
+det_guard_commands
+    :   det_guard_noelse_commands 
+        (   BOX guard_else_command 
+        |   
+        ) 
+    ;
+
+
+guard_else_command
+    :   ELSE ARROW sequential_statement 
+    ;
+
+
+det_guard_command
+    :   guard_command_simple 
+    |   BOXLOOP IDENT COLON range COLON 
+        (   LPAREN det_guard_command ( BOX det_guard_command )* RPAREN 
+        |   det_guard_command ( BOX det_guard_command )* 
+        ) 
+        RANGL 
+    ;
+
+
+non_det_guard_linked
+    :   linked_guard_command ( COLON linked_guard_command )* COLON linkage_specifier 
+    ;
+
+
+linked_guard_command
+    :   expression linkage_specifier ARROW sequential_statement 
+    |   CLLOOP IDENT COLON range COLON 
+        (   LPAREN linked_guard_command ( COLON linked_guard_command )* RPAREN 
+        |   linked_guard_command ( COLON linked_guard_command )* 
+        ) 
+        RANGL 
+    ;
+
+
+linkage_specifier
+    :   AT LPAREN linkage_terms RPAREN 
+    ;
+
+
+non_det_guard_simple
+    :   non_det_guard_command ( COLON non_det_guard_command )* 
+    ;
+
+
+non_det_guard_command
+    :   guard_command_simple 
+    |   CLLOOP IDENT COLON range COLON 
+        (   LPAREN non_det_guard_command ( COLON non_det_guard_command )* RPAREN 
+        |   non_det_guard_command ( COLON non_det_guard_command )* 
+        ) 
+        RANGL 
+    ;
+
+
+guard_command_simple
+    :   expression ARROW sequential_statement 
+    ;
+
+
+linkage_terms
+    :   linkage_term ( COMMA linkage_term )* 
+    ;
+
+
+linkage_term
+    :   (   TILDE 
+        |   
+        ) 
+        IDENT 
+        (   DOT IDENT 
+        |   DOT INTEGER 
+        |   LBRACK expression ( COMMA expression )* RBRACK 
+        )* 
+        
+    |   CLOOP IDENT COLON range COLON 
+        (   linkage_term 
+        |   LPAREN linkage_term RPAREN 
+        ) 
+        RANGL 
+    ;
+
+
+conditional_or_expression
+    :   conditional_and_expression ( PIPE2 conditional_and_expression )* 
+    ;
+
+
+loop_expression
+    :   (   PLOOP 
+        |   MLOOP 
+        |   ALOOP 
+        |   OLOOP 
+        |   XLOOP 
+        ) 
+        IDENT COLON range COLON expression RANGL 
+    ;
+
+
+conditional_and_expression
+    :   or_expression ( AMP2 or_expression )* 
+    ;
+
+
+or_expression
+    :   xor_expression ( PIPE xor_expression )* 
+    ;
+
+
+xor_expression
+    :   and_expression ( CARET and_expression )* 
+    ;
+
+
+and_expression
+    :   equal_expression ( AMP equal_expression )* 
+    ;
+
+
+equal_expression
+    :   rel_expression 
+        (   NEQ rel_expression 
+        |   EQUAL rel_expression 
+        )* 
+    ;
+
+
+rel_expression
+    :   shift_expression 
+        (   LEQ shift_expression 
+        |   GEQ shift_expression 
+        |   LANGL shift_expression 
+        |   RANGL shift_expression 
+        )* 
+    ;
+
+
+shift_expression
+    :   add_expression 
+        (   LSHIFT add_expression 
+        |   RANGL RANGL add_expression 
+        )* 
+    ;
+
+
+add_expression
+    :   mult_expression 
+        (   PLUS mult_expression 
+        |   MINUS mult_expression 
+        )* 
+    ;
+
+
+mult_expression
+    :   unary_expression 
+        (   STAR unary_expression 
+        |   SLASH unary_expression 
+        |   CENT unary_expression 
+        )* 
+    ;
+
+
+unary_expression
+    :   TILDE unary_expression 
+    |   MINUS unary_expression 
+    |   exponential_expression 
+    ;
+
+
+exponential_expression
+    :   primary_expression 
+        (   EXP unary_expression 
+        |   
+        ) 
+    ;
+
+
+primary_expression
+    :   INTEGER 
+    |   TRUE 
+    |   FALSE 
+    |   STRING_LITERAL 
+    |   LPAREN expression RPAREN 
+    |   communication_expression 
+    |   lvalue 
+    |   probe_expression 
+    |   loop_expression 
+    ;
+
+
+communication_expression
+    :   lvalue QUEST 
+    ;
+
+
+probe_expression
+    :   HASH lvalue 
+        (   QUEST 
+        |   
+        ) 
+    ;
+
+
+identifier
+    :   IDENT 
+    ;
+
+
+startLvalue
+    :   lvalue EOF 
+    ;
+
+
+declarator_list
+    :   declarator ( COMMA declarator )* 
+    ;
+
+
+declarator
+    :   (   (   PLUS 
+                (   MINUS 
+                |   
+                ) 
+            |   MINUS 
+                (   PLUS 
+                |   
+                ) 
+            ) 
+        |   
+        ) 
+        identifier 
+        (   ( LBRACK range RBRACK )* 
+        |   LBRACK range ( COMMA range )* RBRACK 
+        |   
+        ) 
+        (   ASSIGN expression 
+        |   
+        ) 
+    ;
+
+
+identifier_list
+    :   identifier ( COMMA identifier )* 
+    ;
+\end{verbatim}

@@ -1,0 +1,15 @@
+ASPICE RELEASE 0.1 -- Examples
+
+Some examples are included.  Generally if you find file.asp and
+file.in, you would execute "aspice -path aspice_path file < file.in".
+Once it has produced a file.trace and file.names, you can plot
+waveforms with "aplot file".  You should set the aspice_path argument
+(or ASPICE_PATH env variable) to point to the tech.asp and default.asp
+files in the asp subdirectory, as well as a BSIM4 model deck.  Some of
+these examples use the TSMC 0.13um LV BSIM3 deck, which you need to
+get from TSMC directly due to licensing issues.  Or edit tech.asp to
+point to a different BSIM4 deck.
+
+Andrew Lines
+Fulcrum Microsystems
+lines@fulcrummicro.com

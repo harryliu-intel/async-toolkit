@@ -1,0 +1,54 @@
+// Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+// SPDX-License-Identifier: Apache-2.0
+
+module constant;
+
+define P(int W)()
+{
+  csp {
+    int(W) x;
+    int y;
+
+    y = W;
+    x = y;
+
+    print(x);
+  }
+}
+
+define Q(int W)()
+{
+  csp {
+    int(W) x;
+    int y;
+
+    y = W;
+    x = W + 1;
+
+    print(x);
+  }
+}
+
+define R(int W)()
+{
+  csp {
+    int(W) x;
+    int y, z;
+
+    y = W;
+    x = W * 2;
+
+    z = (x + x + x) >> W;
+    
+
+    print(x);
+  }
+}
+
+
+define S(int W)()
+{
+  csp {
+    <i:W: print(i)>
+  }
+}

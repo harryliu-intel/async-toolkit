@@ -1,0 +1,13 @@
+/**************** LABEL ALL SUBSTRATE CONTACTS ****************/
+
+/*** load the mag file ***/
+load $2
+
+/*** label the contacts ***/
+label_layer psubstratepdiff "GND!"
+label_layer nsubstratendiff "Vdd!"
+label_layer psubstratepcontact "GND!"
+label_layer nsubstratencontact "Vdd!"
+
+/*** save the magfile ***/
+layout $2

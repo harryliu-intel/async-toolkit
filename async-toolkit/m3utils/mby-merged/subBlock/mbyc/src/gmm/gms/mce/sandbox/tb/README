@@ -1,0 +1,15 @@
+Sandbox TB usage:
+    make          # Build simulator and run test
+    make build    # Build simulator
+    make run      # Build simulator (only if necessary) and run test
+    make clean    # Remove generated build and run-related files in this directory
+
+To add build and run flags:
+    Method 1 - in Makefiles:
+        BASEVCSFLAGS += <FLAGS>
+        BASERUNFLAGS += <FLAGS>
+    Method 2 - on make command line:
+        VCSFLAGS="<FLAGS>" RUNFLAGS="<FLAGS>"
+
+Environment setup:
+    Handled by setup script in this directory, which is invoked automatically by the Makefile

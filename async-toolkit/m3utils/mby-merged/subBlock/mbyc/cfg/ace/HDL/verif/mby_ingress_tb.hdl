@@ -1,0 +1,40 @@
+#----------*-perl-*-------------------------
+#  This is a HDL spec file - it defines the unit and how to compile it.
+#
+#
+
+$hdl_spec = {
+    # List of specific VERILOG source files
+    -vlog_files => [
+         "src/shared/rtl/shared_pkg.sv",                   ## tmp for rx_ppe_bfm
+         "src/shared/rtl/mby_rx_metadata_pkg.sv",          ## tmp for rx_ppe_bfm
+         "src/shared/rtl/mby_egr_pkg.sv",                  ## tmp for rx_ppe_bfm
+         "src/igr/rtl/mby_igr_pkg.sv",                     ## tmp for rx_ppe_bfm
+         "src/igr/sandbox/pre_post/verilog/rx_ppe_bfm.sv", ## tmp for rx_ppe_bfm
+         "verif/ingress/tb/mby_igr_tb.sv",
+     ],
+
+    # List of verilog library source dirs ( corresponds with the VLOG '-y' parameter)
+    -vlog_lib_dirs => [
+     ],
+
+    # List of verilog library source files ( corresponds with the VLOG '-v' parameter)
+    -vlog_lib_files => [],
+
+    # List of include directories. Corresponds with the VLOG '+incdir+' parameter
+    -vlog_incdirs => [
+         "verif/ingress",
+         "verif/ingress/ti",
+         "verif/ingress/tb",
+         "verif/ingress/tests",
+         "src/igr/rtl",
+         "$ENV{UVM_HOME}/src",
+         "$ENV{ACE_HOME}/lib/Verilog",
+         "target/mby/mgm_run/igr/src", ## tmp for ppe_bfm
+         "target/mby/mgm_run/rtl",     ## tmp for ppe_bfm
+     ],
+
+    # Arbitrary VLOG options
+    # -vlog_opts => ['-sverilog +libext+.v+.sv -override_timescale=1ps/1ps',]
+
+};

@@ -1,0 +1,433 @@
+% Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+% SPDX-License-Identifier: Apache-2.0
+
+\begin{longtable}[]{@{}l@{}}
+\toprule
+\endhead
+\begin{minipage}[t]{0.97\columnwidth}\raggedright
+Grammar CspLexer\\
+\href{http://www.ANTLR.org}{ANTLR}-generated HTML file from Csp.g
+
+Terence Parr, \href{http://www.magelang.com}{MageLang Institute}\\
+ANTLR Version 2.7.5 (20050128); 1989-2005\strut
+\end{minipage}\tabularnewline
+\bottomrule
+\end{longtable}
+
+\begin{verbatim}
+Definition of lexer CspLexer, which is a subclass of CharScanner.
+
+mWS 
+|   mIDENT 
+|   mINTEGER 
+|   mLPAREN 
+|   mRPAREN 
+|   mLBRACK 
+|   mRBRACK 
+|   mLCURLY 
+|   mRCURLY 
+|   mBOX 
+|   mLOOP 
+|   mPLOOP 
+|   mMLOOP 
+|   mALOOP 
+|   mOLOOP 
+|   mSLOOP 
+|   mBLOOP 
+|   mCLOOP 
+|   mXLOOP 
+|   mBOXLOOP 
+|   mCLLOOP 
+|   mLANGL 
+|   mRANGL 
+|   mLSHIFT 
+|   mLEQ 
+|   mGEQ 
+|   mARROW 
+|   mEQUAL 
+|   mNEQ 
+|   mASSIGN 
+|   mPASSIGN 
+|   mMASSIGN 
+|   mTASSIGN 
+|   mDASSIGN 
+|   mRASSIGN 
+|   mAASSIGN 
+|   mOASSIGN 
+|   mLSASSIGN 
+|   mXASSIGN 
+|   mINC 
+|   mDEC 
+|   mTILDE 
+|   mSTAR 
+|   mSLASH 
+|   mCENT 
+|   mPLUS 
+|   mMINUS 
+|   mEXP 
+|   mDOT 
+|   mCOMMA 
+|   mSEMI 
+|   mCOLON 
+|   mCOLON2 
+|   mDOTDOT 
+|   mQUEST 
+|   mBANG 
+|   mPIPE 
+|   mPIPE2 
+|   mAMP 
+|   mAMP2 
+|   mCARET 
+|   mHASH 
+|   mAT 
+|   mCOMMENT_1 
+|   mCOMMENT_2 
+|   mSTRING_LITERAL 
+mWS
+    :   (   ' ' 
+        |   '\t' 
+        |   '\n' 
+        |   '\r' 
+        ) 
+        
+    ;
+
+protected mALPHA
+    :   (   (               'a'..'z' ) 
+        |   (               'A'..'Z' ) 
+        |   '_' 
+        ) 
+    ;
+
+protected mDIGIT
+    :   (           '0'..'9' ) 
+    ;
+
+protected mHEX_DIGIT
+    :   mDIGIT 
+    |           'a'..'f' 
+    |           'A'..'F' 
+    ;
+
+protected mBIN_DIGIT
+    :   '0' 
+    |   '1' 
+    ;
+
+mIDENT
+    :   mALPHA 
+        (   mALPHA 
+        |   mDIGIT 
+        )* 
+    ;
+
+mINTEGER
+    :   ( mDIGIT )+ 
+        (   '_' 
+            (   (                   'a'..'z' ) 
+            |   (                   'A'..'Z' ) 
+            |   mDIGIT 
+            )+ 
+        |   
+        ) 
+    |   "0x" 
+        (   '_' 
+        |   
+        ) 
+        ( mHEX_DIGIT )+ ( '_' ( mHEX_DIGIT )+ )* 
+    |   "0b" 
+        (   '_' 
+        |   
+        ) 
+        ( mBIN_DIGIT )+ ( '_' ( mBIN_DIGIT )+ )* 
+    ;
+
+mLPAREN
+    :   '(' 
+    ;
+
+mRPAREN
+    :   ')' 
+    ;
+
+mLBRACK
+    :   '[' 
+    ;
+
+mRBRACK
+    :   ']' 
+    ;
+
+mLCURLY
+    :   '{' 
+    ;
+
+mRCURLY
+    :   '}' 
+    ;
+
+mBOX
+    :   "[]" 
+    ;
+
+mLOOP
+    :   "*[" 
+    ;
+
+mPLOOP
+    :   "<+" 
+    ;
+
+mMLOOP
+    :   "<*" 
+    ;
+
+mALOOP
+    :   "<&" 
+    ;
+
+mOLOOP
+    :   "<|" 
+    ;
+
+mSLOOP
+    :   "<;" 
+    ;
+
+mBLOOP
+    :   "<||" 
+    ;
+
+mCLOOP
+    :   "<," 
+    ;
+
+mXLOOP
+    :   "<^" 
+    ;
+
+mBOXLOOP
+    :   "<[]" 
+    ;
+
+mCLLOOP
+    :   "<:" 
+    ;
+
+mLANGL
+    :   '<' 
+    ;
+
+mRANGL
+    :   '>' 
+    ;
+
+mLSHIFT
+    :   "<<" 
+    ;
+
+mLEQ
+    :   "<=" 
+    ;
+
+mGEQ
+    :   ">=" 
+    ;
+
+mARROW
+    :   "->" 
+    ;
+
+mEQUAL
+    :   "==" 
+    ;
+
+mNEQ
+    :   "!=" 
+    ;
+
+mASSIGN
+    :   '=' 
+    ;
+
+mPASSIGN
+    :   "+=" 
+    ;
+
+mMASSIGN
+    :   "-=" 
+    ;
+
+mTASSIGN
+    :   "*=" 
+    ;
+
+mDASSIGN
+    :   "/=" 
+    ;
+
+mRASSIGN
+    :   "%=" 
+    ;
+
+mAASSIGN
+    :   "&=" 
+    ;
+
+mOASSIGN
+    :   "|=" 
+    ;
+
+mLSASSIGN
+    :   "<<=" 
+    ;
+
+mXASSIGN
+    :   "^=" 
+    ;
+
+mINC
+    :   "++" 
+    ;
+
+mDEC
+    :   "--" 
+    ;
+
+mTILDE
+    :   '~' 
+    ;
+
+mSTAR
+    :   '*' 
+    ;
+
+mSLASH
+    :   '/' 
+    ;
+
+mCENT
+    :   '%' 
+    ;
+
+mPLUS
+    :   '+' 
+    ;
+
+mMINUS
+    :   '-' 
+    ;
+
+mEXP
+    :   "**" 
+    ;
+
+mDOT
+    :   '.' 
+    ;
+
+mCOMMA
+    :   ',' 
+    ;
+
+mSEMI
+    :   ';' 
+    ;
+
+mCOLON
+    :   ':' 
+    ;
+
+mCOLON2
+    :   "::" 
+    ;
+
+mDOTDOT
+    :   ".." 
+    ;
+
+mQUEST
+    :   '?' 
+    ;
+
+mBANG
+    :   '!' 
+    ;
+
+mPIPE
+    :   '|' 
+    ;
+
+mPIPE2
+    :   "||" 
+    ;
+
+mAMP
+    :   '&' 
+    ;
+
+mAMP2
+    :   "&&" 
+    ;
+
+mCARET
+    :   "^" 
+    ;
+
+mHASH
+    :   '#' 
+    ;
+
+mAT
+    :   '@' 
+    ;
+
+mCOMMENT_1
+    :   "/*" 
+        (   '*' 
+        |   '\n' 
+        |   (   '*' 
+            |   '\n' 
+            ) 
+        )* 
+        "*/" 
+    ;
+
+mCOMMENT_2
+    :   "//" ( ~'\n' )* '\n' 
+    ;
+
+mSTRING_LITERAL
+    :   '"' 
+        (   mESC 
+        |   '\n' 
+        |   (   '"' 
+            |   '\\' 
+            |   '\n' 
+            ) 
+        )* 
+        '"' 
+    ;
+
+protected mESC
+    :   '\\' 
+        (   'n' 
+        |   'r' 
+        |   't' 
+        |   'b' 
+        |   'f' 
+        |   '"' 
+        |   '\'' 
+        |   '\\' 
+        |   'x' mHEX_DIGIT mHEX_DIGIT 
+        |   (               '0'..'3' ) 
+            (   (                   '0'..'7' ) 
+                (                       '0'..'7' 
+                |   
+                ) 
+            |   
+            ) 
+            
+        ) 
+    ;
+\end{verbatim}

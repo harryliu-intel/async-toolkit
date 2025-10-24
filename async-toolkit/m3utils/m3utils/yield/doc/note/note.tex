@@ -1,0 +1,1728 @@
+% Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+% SPDX-License-Identifier: Apache-2.0
+
+\documentclass{article}
+\usepackage{graphicx}
+\usepackage{epsf}
+
+\usepackage{floatflt}
+\usepackage{fancyhdr}
+\usepackage{array}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{sectsty}
+\usepackage{breqn}
+%\allsectionsfont{\mdseries\sffamily}
+\allsectionsfont{\mdseries\sc}
+
+\usepackage{caption}
+\captionsetup{margin=2pc,font=small,labelfont=bf}
+
+\usepackage{tikz}
+\def\checkmark{\tikz\fill[scale=0.15](0,.35) -- (.25,0) -- (1,.7) -- (.25,.15) -- cycle;}
+\def\check#1{\overset{\checkmark}{#1}}
+
+%%%%%%%%%%%%%%Mika's figure macro%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\def\listcaption_ins_epsfig#1#2#3#4{
+  \begin{figure}[!tbph!]
+  \bigskip
+  \begin{center}
+  \includegraphics[width=#1]{#2}
+  \end{center}
+  \caption[#4]{#3}\label{fig:#2}
+  \bigskip
+  \end{figure}
+}
+
+\def\insepsfig#1#2#3{
+  \begin{figure}[!tbph!]
+  \bigskip
+  \begin{center}
+  \includegraphics[width=#1]{#2}
+  \end{center}
+  \caption{#3}\label{fig:#2}
+  \bigskip
+  \end{figure}
+}
+
+\def\rotins_epsfig_listcaption#1#2#3#4#5{
+  \begin{figure}[!tbph!]
+  \bigskip
+  \begin{center}
+  \includegraphics[angle=#4,width=#1]{#2}
+  \end{center}
+  \caption[#5]{#3}\label{fig:#2}
+  \bigskip
+  \end{figure}
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\oddsidemargin=0.15in
+\evensidemargin=0.15in
+\topmargin=0.2in
+\textwidth=6.2truein
+
+
+\pagestyle{fancy}
+\lhead{\scriptsize\bfseries\sffamily DRAFT---INTEL CONFIDENTIAL---DRAFT}
+\chead{}\rhead{\thepage}
+\lfoot{}\cfoot{}\rfoot{}
+\renewcommand{\headrulewidth}{0pt}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\input{build/hash}
+
+\title{A Note on Hardware Redundancy \\ Under \\ Non-Independent Yield Models}
+\author{Mika Nystr\"om \\ {\tt mika.nystroem@intel.com}}
+
+\date{February 4, 2021}
+
+\begin{document}
+
+\maketitle
+\parindent=0pt
+\parskip=1.5ex
+
+\arraycolsep=1.4pt\def\arraystretch{1.5}
+
+\begin{abstract}
+We define process yield, manufacturing yield, and system yield, and
+consider systems that incorporate redundancy in such a way as to raise
+system yield higher than raw process yield.  We derive an expression
+for how redundancy improves system yield under weak assumptions on the
+process yield, assuming only that process yield can be expressed as a
+formula in terms of area.  In particular, we do not assume that
+process yields are spatially independent.  We discuss the use of
+non-independent (i.e., non-Poisson) process yield expressions and
+their appearance in semiconductor fabrication lines.  Through a series
+of examples including a software implementation, we show how to
+compute the system yield for interesting redundant hardware systems
+and conclude with an example that shows that the na\"\i{}ve but common
+assumption of independent process yields can grossly overestimate the
+extent to which hardware redundancy improves system yields.
+\end{abstract}
+
+\tableofcontents
+\listoffigures
+%\listoftables
+
+\section{Background and motivation}
+
+Ever since the first integrated circuit (IC) was manufactured,
+manufacturing yield has been one of the main limiters to progress in
+technology.  One of the ways that the yield of manufactured parts (what
+we will call the system yield $Y_S$) can be improved is by adding hardware
+redundancy: if our design requires $N$ subsystems to be operational,
+we manufacture $N+1$ on our die and provide a scheme whereby a
+defective subsystem can be switched out.
+
+Practitioners in the field have generally modeled system yield using
+the binomial distribution, that is,
+\begin{equation}\label{eq:basic}
+  P(\text{at least $M$ out of $N$ subsystems OK}) = \sum_{k=M}^N {N \choose k}Y(1)^{k}(1-Y(1))^{N-k}
+\end{equation}
+where the yield of a single subsystem is given as $Y(1)$.
+
+We observe that (\ref{eq:basic}) is only correct under statistical independence of the individual yields $Y(1)$.
+
+At the same time as designers have been improving system design, yield
+modelers have been improving the modeling of manufacturing yield.  It
+was realized early on that the Poisson process was not adequate for
+describing the yield of ICs, and Murphy introduced a more
+sophisticated method in (\ref{eq:murphy}) already in 1964.  Stapper in
+particular refined Murphy's approach and applied P\'olya-Eggenberger
+statistics (\ref{eq:stapperyield}) to the yield problem starting in
+1973.  Whereas the Poisson formulation implies that there is an
+underlying constant rate of defects, the Stapper model allows for a
+highly variable defect rate, to account for clustering.  In modern
+processes, the variance of the defect density is modeled as being up to 50
+times its average value.  
+
+It is important to realize that any distribution that is not Poisson also
+implies that the yields of two subsystems on the same die are not independent.
+
+The resulting situation is something of a conundrum: redundancy
+modeling uses the binomial formula, which assumes that subsystem
+yields are independent; process yield modeling uses Stapper's model,
+or something similar, which assumes that yields are clustered.  As we
+shall see, large disagreements are possible in the computed yields of
+redundantly provisioned systems: Stapper himself observed this already in
+the 1970s and produced a model for redundancy under
+P\'olya-Eggenberger statistics in 1980\cite{stapper1980}, but it was
+quite cumbersome to use and does not appear to be used for digital
+logic yield calculations.
+
+We shall derive expressions for the system yield in terms of process
+yield that do not depend on the assumption of independence by three
+methods: first by direct computation, and then by showing how we can
+derive the same equations by a formal argument starting from the
+binomially computed yields, assuming independent subsystem yields, and finally by a numerical integration approach that lifts Murphy's model from die yield to system yield.  It
+will be shown that the yield expressions even for non-Poisson
+underlying distributions are quite simple in practice.  In an
+appendix, we provide a short Scheme program for computing the
+necessary formulas.
+
+The work we describe here was in most parts anticipated by Koren and
+Koren~25~years ago, but some of the derivations we present are
+different, and we present a working implementation that makes good on
+the promise in Koren and Koren that ``the extension to a larger number
+of module types is straightforward'' while demonstrating (we believe)
+that it is not quite as ``cumbersome'' as Koren and Koren
+may have believed.\cite{koren}  In any case, the Koren and Koren paper
+should be read as a companion to the current report.
+
+
+\section{Definitions}
+We define {\em process yield\/} $Y$ as the probability of a particular event,
+namely, the event that a manufactured circuit is found to contain no
+manufacturing defects that are fatal to its functioning according to
+its circuit specification.  Holding all else equal, process yield
+falls with increasing circuit size, that is, circuit area.  Process
+yield in modern semiconductor manufacturing processes is low enough
+that it is economical to take steps at the architecture and design
+stages to design circuits that are to a greater or lesser extent fault
+tolerant in the presence of the types of defects that are expected to
+arise during manufacturing.
+
+We define {\em manufacturing yield\/} as the probability that a manufactured
+circuit is found to contain no manufacturing defects that are fatal
+to its functioning according to its customer-visible specification.
+Manufacturing yield can be different from, and then always higher than,
+process yield, because only circuits that were inessential to the correct
+customer-visible functioning of the system are faulty.  We call such circuits
+{\em redundant.}
+
+This note will treat a particular method of introducing circuit
+redundancy in the hope of improving manufacturing yield.
+
+\section{Problem statement}
+
+Let it be given that process yield $Y$ is defined as a function of
+manufactured area.  That is, $Y$ maps from area $A$ in square
+length units to a probability $Y(A)$ so that
+
+\begin{equation} Y(A) \in [ 0 .. 1 ] \quad . \end{equation}
+
+$Y(A)$ is strictly decreasing in $A$.  We shall reserve $Y$ for the
+process yield in this form.  See appendix~\ref{app:yieldrestrictions} for
+implications of defining the yield thus.
+
+Let it be given that a system $S$ comprises $N$ subsystems
+$u_i$, each with area $A_{u_i}$, so that
+\begin{equation}
+  A_S = \sum A_{u_i} \quad .
+\end{equation}
+
+When we have occasion to speak of the subsystems as a set, we write
+\begin{equation}
+  \Sigma = \{ u_0, u_1, \ldots , u_{N-1} \} 
+\end{equation}
+for the set of all subsystems $u_i$ of $S$.
+
+Further assume that at least $M \leq N$ of
+the subsystems $u_i$ must be fabricated correctly in order for $S$ to
+have no customer-visible faults.  We call the
+probability that at least $M$ out of $N$ units are fabricated
+correctly the {\em system manufacturing yield,} or for short, the {\em system yield.}
+
+We shall write for the system yield of $S$,
+\begin{equation}
+  P_{S(N)}(x \geq M) \quad . \label{eq:sysyield}
+\end{equation}
+We drop the subscript $S(N)$ when the meaning is clear from context.  
+
+We shall derive expressions for the system yield of $S$ under the
+above assumptions.
+
+%It is obvious that the system yield will depend on the subsystem
+%yields of the subsystems $u_i$.  Let us therefore introduce symbology
+%for these yields.  Let's write $\check{u_i}$ for the event that subsystem
+%$u_i$ is fabricated correctly.  Since the subsystems themselves do not
+%have internal redundancy, the process yield, system yield, and
+%manufacturing yield of any one subsystem can be written as
+%\begin{equation}
+%  P(\check{u_i}) = Y(A_{u_i}) \quad .
+%\end{equation}
+
+It will turn out to be useful to consider the case that {\em exactly\/} $k$ out of $N$ subsystems are functional, and we will write this analogously to (\ref{eq:sysyield}) as $P_{S(N)}(x = k)$.
+
+\section{General formulation}\label{sec:general}
+
+Note first that
+\begin{equation}
+  P_{S(N)}(x \geq N) = P_{S(N)}(x = N) = Y\left(\sum_i A_{u_i}\right) = Y(A_S) \quad ,
+\end{equation}
+since this is the system yield of $S$ under the requirement that all
+$N$ subsystems are fully functional, which is simply the process yield
+of the area of the system $S$ or equivalently the $N$ subsystems $u_i$.
+
+Let's consider the state of affairs after fabricating $S$.  Some number of
+subsystems $u_i \in \Sigma$ will have been fabricated correctly, with the balance defective.  Let's define $C$ to be the set of correctly fabricated subsystems.  It is clear that
+\begin{equation}
+  C \subseteq \Sigma .
+\end{equation}
+
+If we now consider the power set of the set of subsystems, that is,
+\begin{equation}
+  2^\Sigma = \{ \emptyset, \{ u_0 \}, \{ u_1 \}, \ldots , \Sigma \}
+\end{equation}
+it is clear that each of the members  $\sigma \in 2^\Sigma$ corresponds to a certain physical area, namely
+\begin{equation}
+  A_\sigma = \sum_{u_i \in \sigma} A_{u_i} \quad ,
+\end{equation}
+and also that the result of fabrication will be that $C$ equals precisely one of the members of $2^\Sigma$.
+
+We introduce the shorthand
+\begin{equation}
+  \pi_\tau = P(C = \tau)
+\end{equation}
+where we may write the subscript of $\pi$ as a bit vector $v$ where
+bit $i$ in $v$ corresponds to whether $u_i \in \tau$.  By analogy with
+boolean algebra, we call the individual, mutually exclusive $\pi_i$ the
+{\em minterms\/} of the fabrication process.
+
+The probability that the circuitry in $\sigma$ is fabricated correctly is
+\begin{equation}
+  P(\sigma \subseteq C) = Y(A_\sigma) = Y \left( \sum_{u_i \in \sigma} A_{u_i} \right) \quad , \label{eq:system}
+\end{equation}
+irrespective of whether the remaining blocks $u_i \not\in \sigma$ are
+fabricated correctly or not. (We are considering the process yield of
+only the subsystems selected by the subset $\sigma \subseteq \Sigma$.)
+But this is exactly the same as the probability of the manufacturing
+process's producing any $C$ that includes $\sigma$.
+Therefore we may write
+\begin{equation}
+  \sum_{\tau \supseteq \sigma} P(C = \tau) = P(\sigma \subseteq C) \quad . \label{eq:master}
+\end{equation}
+Note that $P(C = \tau)$ is unknown (but mutually exclusive for
+different $\tau$), whereas $P(\sigma \subseteq C)$ is simply the
+process yield of the area of $\sigma$ (but not mutually exclusive for
+different $\sigma$).  Our approach will be to write an equation that
+expresses the known $P(\sigma \subseteq C)$ in terms of the unknown
+$P(C = \tau)$ and then use that to solve for the $P(C = \tau)$.
+
+We observe that (\ref{eq:master}) describes $2^N$ equations, and there are $2^N$ unknowns $\pi_\tau = P(C = \tau)$.
+
+Once
+we have the $\pi_\tau = P(C = \tau)$ we can decompose any desired event into the minterms that make
+up that event, and since the minterms are mutually exclusive, their
+probabilities can be added to yield the probability of the class of
+events we seek.
+In other words, we can compute the probability of arriving
+ at  $\sigma \subseteq \Sigma$, for example, for the subsets
+\begin{equation}
+  \sigma : \sigma \subseteq \Sigma : || \sigma || \geq M \label{eq:countsets}
+\end{equation}
+corresponding to the probability $P_{S(N)}(x \geq M)$, i.e., the
+desired value of the system yield from (\ref{eq:sysyield}).  The
+formulation extends trivially for any other desired constraint on the
+allowable subsets $\sigma$: since the $\pi_\tau$ correspond to
+mutually exclusive events, we may add their probabilities without
+further thought, so that the probability of any event $E$ that we care
+to describe in terms of a constraint on $\sigma$ becomes
+\begin{equation}
+  P(E) = P\left( \bigcup_{\sigma_i \in E} \sigma_i \right) =
+  P\left( \bigcup_{\sigma_i \in E} \left(\bigcup_{\tau_j: \sigma_i \subseteq \tau_j, \tau_j \in 2^\Sigma} \tau_j \right) \right) =
+  \sum_{\tau_j} P(C = \tau_i) \quad . \label{eq:generalconstraint}
+\end{equation}
+
+
+\subsection{Example}
+Consider the system $S$ comprising the subsystems $u_0$ and $u_1$ with areas
+$A_{u_0} = 1$ and $A_{u_1} = 2$.  There are four manufacturing minterms with associated probabilities:
+%\begin{equation}
+  \begin{equation}\begin{aligned}
+  \pi_{00} &=& P(C = \emptyset), \\
+  \pi_{01} &=& P(C = \{ u_0 \}), \\
+  \pi_{10} &=& P(C = \{ u_1 \}), \\
+  \pi_{11} &=& P(C = \{ u_0, u_1 \}).
+\end{aligned}\end{equation}
+%\end{equation}
+Now we consider the power sets of $\Sigma_S$ and their areas:
+\begin{equation}
+  \begin{aligned}
+  A_\emptyset &=& 0 \quad ,
+  A_{\{u_0\}} &=& 1 \quad ,
+  A_{\{u_1\}} &=& 2 \quad ,
+  A_{\{u_0,u_1\}} &=& 3 \quad .
+  \end{aligned}
+\end{equation}
+Accordingly we may write the equations for the minterm probabilities:
+%\begin{equation}
+  \begin{equation}\begin{aligned}
+    P_\emptyset    \hfil &= Y(0) =& \pi_{00} + \pi_{01} + \pi_{10} + \pi_{11} \hfil\\
+    P_{\{u_0\}}    \hfil &= Y(1) =& \pi_{10} + \pi_{11} \hfil\\
+    P_{\{u_1\}}    \hfil &= Y(2) =& \pi_{01} + \pi_{11} \hfil\\
+    P_{\{u_0,u_1\}} \hfil &= Y(3) =& \pi_{11} \hfil\\
+\end{aligned}\end{equation}
+  %\end{equation}
+  Solving for the $\pi_\tau$ we have
+  \begin{equation}\begin{aligned}
+      \pi_{11} &&=                                      \,& Y(3) \\
+      \pi_{01} &= Y(2) - \pi_{11} &=                     \,& Y(2) - Y(3) \\
+      \pi_{10} &= Y(1) - \pi_{11} &=                     \,& Y(1) - Y(3) \\
+      \pi_{00} & = Y(0) - \pi_{01} - \pi_{10} - \pi_{11} &=\,& Y(0) - Y(1) - Y(2) + Y(3) \quad ,\\
+\end{aligned}\end{equation}
+  where it is clear that the system of equations can be put in upper triangular form.  (Note also that $Y(0) = 1$ by definition.)
+
+  If we now suppose that in order for $S$ to be functional, both $u_0$ and $u_1$ must be functional, we can write
+  \begin{equation}
+    P_{S(2)}(x \geq 2) = \pi_{11} = Y(3)
+  \end{equation}
+  as expected, and if only one of the two subsystems need be functional, then we can write
+  \begin{equation}
+    P_{S(2)}(x \geq 1) = \pi_{11} + \pi_{01} + \pi_{10} = Y(1) + Y(2) - Y(3) \quad .
+  \end{equation}
+Note that this result is different from the result that obtains if we
+assume that the probabilities of manufacturing defects' hitting $u_0$
+and $u_1$ are independent.  In that case, the probability of $u_0$
+being functional is $Y(1)$, the probability of $u_1$ being functional
+is $Y(2)$, and the probability of either being functional is simply
+  \begin{equation}
+    P_{i} = Y(1) + Y(2) - Y(1) Y(2) \quad .
+  \end{equation}
+  If $Y$ is Poisson, then
+  \begin{equation}
+    Y(a+b) = Y(a)Y(b) \qquad \hbox{($Y \sim$ Poisson)}
+  \end{equation}
+  and the two formulations are equivalent.  {\em Otherwise not.}
+
+\section{Restriction to equal subsystems}\label{sec:restricted}
+The theory presented in section~\ref{sec:general} is comprehensive but
+cumbersome.  It involves inverting a (admittedly trivial upper
+diagonal) matrix in $2^N$ dimensions and pertains to a general class
+of problems not usually seen by practitioners.  Practitioners are far
+more likely to encounter the following problem: given that $S$
+consists of $N$ {\em equal\/} subsystems and requires at least
+$M \leq N$ of these to be functional in order for the system to be functional,
+what is the system yield given the process yield and the subsystem
+areas?
+
+With the restriction that the subsystems all be equal, the distinction
+between different subsystems in the subscripts of $\pi_\tau$ in
+(\ref{eq:master}) disappears, and we may simply count the number of ones
+in $\tau$.  In other words, we may write
+  \begin{equation}
+    \forall \tau : w(\tau) = n : \pi_\tau = \Pi_n \quad ,
+  \end{equation}
+  where $w(k)$ is the bit-sum function (i.e., the sum of the bits of
+  the binary expansion of $k$), and the salient difference to the
+  earlier formulation is that we have replaced a number of different
+  minterm probabilities $\pi_\tau$ with the uniform probability
+  $\Pi_n$, which pertains to any minterm with precisely $n$
+  non-defective components.
+
+  Under the preceding conditions, we can write, as before,
+  \begin{equation}
+    \Pi_N = \pi_{11\ldots1} = Y(NA_u) = Y(A_S)
+  \end{equation}
+  where now we write $A_u$ to signify that all the $A_{u_i}$ are the same, since all the $u_i$ are the same.
+  We continue with 
+  \begin{equation}
+    \Pi_{N-1} = \pi_{1\ldots10} = \pi_{1\ldots01} = \cdots = \pi_{01\ldots11} 
+  \end{equation}
+  whose value is given by (\ref{eq:master}) as
+\begin{equation}
+\pi_{1\ldots10} + \pi_{11\ldots1} = \pi_{1\ldots01} + \pi_{11\ldots1} = \cdots = \pi_{01\ldots11} + \pi_{11\ldots1} = Y(N-1) \quad ,
+\end{equation}
+but we can simply write that as
+\begin{equation}
+  \Pi_{N-1} + \Pi_{N} = Y(N-1)
+\end{equation}
+and drop the $\pi_\tau$ from further consideration.  Continuing the argument of section~\ref{sec:general} and making the appropriate considerations for substituting $\Pi_k$ for $\pi_\tau$, we find that we may reduce the triangular equation system of (\ref{eq:system}) to the following recurrence:
+\begin{equation}\begin{aligned}
+    \Pi_N     &=& Y(N A_u) \\
+    \Pi_{k-1}  &=& Y((k-1) A_u) - \left( \sum_{j=k}^{N} {N-k+1 \choose N-j} \Pi_j \right) \quad .
+    \label{eq:recurrence}
+\end{aligned}\end{equation}
+This can be summarized as
+\begin{equation}\label{eq:pi-summary}
+  \Pi_{N-k} = \sum_{j=0}^k {k \choose j} (-1)^j Y((N-j)A_u) \quad .
+\end{equation}
+Continuing along the lines of (\ref{eq:countsets}) and (\ref{eq:generalconstraint}) we can now compute our desideratum, namely
+\begin{equation}\begin{aligned}\label{eq:double-sum}
+    P_{S(N)}(x \geq M) &=& \sum_{i=M}^{i=N} {N \choose i} \Pi_{i} \hskip 2ex& \hfill \\
+                     &=& \sum_{i=0}^{N-M} {N \choose i}  \sum_{j=0}^{j=i}& {j \choose i} (-1)^j Y((N-j)A_u) \quad.
+\end{aligned}\end{equation}
+
+
+\subsection{Example}
+\label{sec:ex16of17}
+A system $S$ has been designed to operate with 16 identical subsystems
+$u_0 \ldots u_{15} = u$.  Designers have added one spare unit
+$u_{16}$, identical to all the others.  The area of each $u$ is 1.  It
+is desired to compute the system yield of $S$.
+
+By (\ref{eq:recurrence}) we have the recurrence
+\begin{equation}\begin{aligned}
+    \Pi_{17}              &=& Y(17)& \\
+    \Pi_{16}              &=& Y(16) - \Pi_{17} = Y(16)& - Y(17) \\
+\end{aligned}\end{equation}
+and, accordingly, the system yield
+\begin{equation}\begin{aligned}
+    P_{S(17)}(x \geq 16) &=& \Pi_{17} + {17 \choose 16} \Pi_{16} \\
+                       &=& Y(17) + 17 (Y(16) - Y(17)) \\
+                       &=& 17\, Y(16) - 16\, Y(17) \quad ,
+\end{aligned}\end{equation}
+which, as expected, equals the formulation under independence
+\begin{equation}
+  P_{i,16/17} = Y(1)^{17} + 17\, Y(1)^{16}(1 - Y(1))^1
+\end{equation}
+if and only if $Y \sim \hbox{Poisson}$ so that $Y(z) = Y(1)^z$.
+
+\subsection{Example}
+From section~\ref{sec:ex16of17} we can generalize as follows.  A system has $N$ identical subsystems of which one is spare.  (This is a very common arrangement in practice.)  The area of each subsystem is A.  Then the system yield is
+\begin{equation}
+P_{S(N)}(x \geq N-1) = N \, Y((N-1)A) - (N-1)\, Y(NA) \quad .
+\end{equation}
+
+\subsection{Example}\label{sec:ex16of18}
+As in section~\ref{sec:ex16of17} but assume we have two spare units so that
+there is a need for 16 out of 18 units to be operational.
+
+By (\ref{eq:recurrence}) we have the recurrence
+\begin{equation}\begin{aligned}
+    \Pi_{18}              &&                             &=& Y(18) \\
+    \Pi_{17}              &=& Y(17) - \Pi_{18}            &=& Y(17) - Y(18) \\
+    \Pi_{16}              &=& Y(16) - \Pi_{18} - 2\Pi_{17} &=&
+                             Y(16) - 2\,Y(17) + Y(18)\\
+\end{aligned}\end{equation}
+and
+\begin{equation}\label{eq:yield16of18}\begin{aligned}
+    P_{S(18)}(x \geq 16) &= \Pi_{18} + {18 \choose 17} \Pi_{17} + {18 \choose 16} \Pi_{16} \\
+    &= 136 \, Y(18) - 288 \, Y(17) + 153 \, Y(16) \quad .
+\end{aligned}\end{equation}
+
+\section{Properties of the System Yield}\label{sec:props}
+
+The following properties follow directly from the definition of the system yield as a function of $Y(A)$.
+
+\begin{enumerate}
+\item The system yield is a linear expression in the $Y()$ of the form
+  \begin{equation}
+    \sum_i C_i Y(k_i)
+  \end{equation}
+  where the $C_i$ are constants.
+
+\item If the functional system configurations cover a range of areas from $M$ to $N$, then the arguments $k_i$ in the formula will cover the same range.
+
+\item The sum of the coefficients before the $Y()$ will be equal to 1.  This follows from considering the happy case that our yield is precisely 1 for all sizes.  Redundancy will not change this, and the required answer is 1 regardless of configuration.
+  
+\end{enumerate}
+
+\section{Yield improvement}\label{sec:yield-improvement}
+We define {\em yield improvement\/} to be the relative increase in the yield
+from a certain design transformation.  For example, consider moving from a system of $N$ equal subsystems, all of which must work, to a system of $N+1$ equal subsystems, where still $N$ of which must work.  We can write the yield improvement
+\begin{equation}
+\begin{aligned}\label{eq:nplusoneimprovement}
+  \upsilon_{N/N+1} & =  {Y_{N/N+1} - Y_{N/N} \over Y_{N/N}} \\
+                 & = { (N+1) \, Y(N) - N\, Y(N+1) - Y(N) \over Y(N) } \\
+                 & =  N { Y(N) - Y(N+1) \over Y(N) } \quad .
+\end{aligned}
+\end{equation}
+
+\section{Implementation of the restricted formulation}\label{sec:impl}
+
+A simple implementation of the formulation in section~\ref{sec:restricted} above is given in the programming language Scheme\cite{scheme}.
+\begin{verbatim}
+(define (make-yield-calculator Y)
+  (lambda(A N M)
+    (define (Pi k)
+      (if (= k N)
+          (Y (* N A))
+          
+          (- (Y (* k A))
+             (sum (+ k 1) N (lambda(j)(* (choose (- N k) (- N j)) (Pi j)))))))
+    (sum M N (lambda(i) (* (choose N i) (Pi i)))))
+  )
+\end{verbatim}
+The procedure \verb!make-yield-calculator! takes a procedure \verb!Y!
+of a single argument (the area in square length units) and a single
+result (the process yield of an area of the given size) and returns a
+procedure of three arguments: \verb!A! the area of a subsystem,
+\verb!N! the number of subsystems, and \verb!M! the number of
+subsystems that need to be functional.  (\verb!sum! and \verb!choose! are not part of the standard Scheme language but have the obvious meanings here.)  The so-returned procedure
+produces the system yield of the system containing the stated
+subsystems.
+A full listing of the program is given in appendix~\ref{app:program}.
+
+It follows from the properties listed in section~\ref{sec:props} that we can evaluate the coefficients of the yield function by formally substituting a Kronecker delta  for the yield function.  For more details see appendix~\ref{app:program}.
+
+\section{Alternative derivation}\label{sec:poissonderiv}
+In sections~\ref{sec:general} and~\ref{sec:restricted} we used a
+direct calculation method to derive expressions for the system yield
+as a function of process yield.  We will now examine an alternative method
+of derivation.
+
+We have remarked that the expressions we derive for system yield are equivalent
+to the binomial formula assuming independent statistics for the subsystems if and only if the statistics are Poisson.  We can use this property to calculate
+the general system yield expression from the binomial form as follows: expand the binomial formula fully, and collect like terms in powers of $Y$.  Then we can make a {\rm formal\/} substitution of $Y(N)$ for $Y^N$, and the resulting formula will be valid for all types of yield statistics.
+
+For example, consider a system of 18 subsystems of area $A=1$, 16 of which need to be functional.  If we assume independent Poisson statistics, we can write:
+\begin{equation}
+  \begin{aligned}
+P_{S(18)}(x \geq 16) &=& P_{S(18)}(x = 18) + P_{S(18)}(x = 17) + P_{S(18)}(x = 16)\\
+&=& Y(1)^{18} + {18 \choose 17} Y(1)^{17}(1-Y(1)) + {18 \choose 16} Y(1)^{16}(1-Y(1))^2\\
+&=& Y(1)^{18} + 18 \, Y(1)^{17}(1-Y(1)) + 153 \, Y(1)^{16}(1-2\,Y(1)+Y(1)^2) \\
+&=& 136\,Y(1)^{18} - 288 \, Y(1)^{17} + 153 \, Y(1)^{16}
+  \end{aligned}
+\end{equation}
+and if we now formally identify $Y(1)^k$ as $Y(k)$, we arrive at
+\begin{equation}
+P_{S(18)}(x \geq 16) = 136\,Y(18) - 288 \, Y(17) + 153 \, Y(16) \quad .
+\end{equation}
+Compare (\ref{eq:yield16of18}).  The method is valid generally, and it
+may be of interest to practitioners who already have a methodology for
+building the binomial formulas.  It is not, however, any easier to
+implement directly than the method described in section~\ref{sec:restricted},
+as it involves expanding a doubly-nested combinatorial expression and
+collecting like terms, a substantial amount of bookkeeping if the
+formulas are large.
+
+The formal approach via Poisson statistics has one powerful
+application, which is to use it to build hierarchical yield
+computations.  Since the formal approach is generally valid, we can
+use a Poisson formalism to build yield expressions for arbitarily large
+and complicated systems, and easily evaluate the yield formulas, without
+making the unwarranted assumption of statistical independence.  See
+appendix~\ref{app:hierarchical}.
+    
+
+\section{Discussion}\label{sec:discussion}
+Originally, integrated-circuit defect density was modeled by
+practitioners as being constant, i.e., leading to Poisson defect
+statistics.  This was quickly realized to be an inadequate model,
+because defects are not engineered into circuits: they are on the
+contrary avoided to any extent possible.  Defects that remain are thus
+in some sense ``accidents'' and there is no reason one would assume
+accidents occur according to smooth underlying statistics.  The
+English idiom ``when it rains, it pours'' well describes the folk wisdom
+of accidents, and in fact, better describes accidents in semiconductor
+fabs than a simple Poisson defect distribution does.
+
+What we see when we look at fabrication data is that observed faults
+suggest that defects are highly clustered.  There are many reasons this
+would happen, e.g., a single accidental event during manufacturing causes
+more than one defect, a machine is misadjusted for a day, etc.  The result
+is remarkably stable.  In general, it is beneficial to the industry that
+accidents are distributed according to ``clustered'' statistics because
+this tends to localize the defects to fewer chips than would happen if
+they were more uniformly distributed.  Defect clustering thus raises the
+expected yield of large semiconductor ICs relative to what would be expected
+using Poisson statistics.
+
+In response to the concerns surrounding Poisson statistics, Murphy
+introduced the concept of variable defect density already in
+1964\cite{murphy}.  Stapper applied Murphy's idea using a Gamma
+distribution for the defect density in 1973\cite{stapper1973}.
+Stapper's model was initially validated on a data set provided by
+Moore\cite{moore1970} but has been shown to be rather generally
+applicable and is well known to practitioners today.
+
+The main idea of the work of Murphy and Stapper is as follows.  If we assume
+simple Poisson statistics, we can calculate chip yield as
+\begin{equation}
+  Y(A) = e^{-AD_0}
+\end{equation}
+where $A$ is the area of the chip, and $D_0$ is the defect density of the process.  Murphy introduces the idea that $D$ itself is a random variable subject to some probability distribution (p.d.f.) $f(D)$, and then we may write
+\begin{equation}\label{eq:murphy}
+  Y(A) = \int_0^\infty e^{-AD} \, f(D) \, dD \quad ,
+\end{equation}
+from which formulation we could return to a classical Poisson
+formulation with defect density $D_0$ simply by writing $f(D) =
+\delta( D- D_0)$ where $\delta$ represents Dirac's delta function.
+Note also that Murphy's formulation has $Y(A)$ as the Laplace transform of
+$f(D)$ where we may identify $D$ with the ``time domain'' and $A$ with
+the ``$s$ domain'' of the Laplace formalism: this suggests a way to
+move between the yield function $Y(A)$ and the density function $f(D)$.
+
+Various forms of the defect density distribution $f(D)$ have been
+tried over the years, with special mention due to Stapper's use of the
+Gamma distribution, where
+\begin{equation}
+  f(D) = { 1 \over \Gamma(\alpha) \beta^\alpha } D^{\alpha - 1} e^{-D/\beta} \quad,
+\end{equation}
+and $\Gamma$ is Euler's gamma function.\footnote{Note that Stapper
+  uses opposite terminology to many authors.  Some authors would say
+  that Stapper's Gamma distribution is parameterized over $(k,\theta)$
+  where $k=\alpha$ and $\theta=1/\beta$.  In this document, we shall
+  consistently use Stapper's version, as the literature on
+  semiconductor yield tends to follow his example.}  This definition
+of $f(D)$ implies that the average defect density $D_0$ may be
+computed
+\begin{equation}
+  D_0 = \int_0^\infty D f(D) \, dD = \alpha \beta
+\end{equation}
+as well as its variance
+\begin{equation}
+\sigma^2 = \int_0^\infty D^2 f(D) \, dD - {D_0}^2 = \alpha \beta^2
+\end{equation}
+implying that
+\begin{equation}
+  \sigma^2  = { \mu^2  \over \alpha } \quad .
+\end{equation}
+In other words, the variance of the defect density is $1/\alpha$ times the average defect density.
+
+The most widely seen forms of Stapper's equation have
+$\alpha \rightarrow \infty$,
+which implies a Poisson distribution, or
+$\alpha= 1$,
+which implies a Bose-Einstein distribution; the latter formulation seems to have been introduced by Price~\cite{price}.  However, other
+values of $\alpha$ are possible, and smaller values of $\alpha$ imply
+greater variability in the underlying defect density (more
+clustering).  Recent (2020) nanometer-scale fabrication processes in fact show $\alpha$ in the range
+roughly 0.02 to 0.05---i.e., the variance of the defect density is
+between 20 and 50 times its average value.  A quick glance at recent
+wafer data suggests that such values appear more reasonable (because of
+high levels of clustering), and Poisson and Bose-Einstein distributions
+are probably more used for calculational expediency than for accuracy.
+
+The general case of the defect distribution implied by Stapper's
+formula is known as a P\'olya-Eggenberger\cite{polya1923,stanford} distribution and
+implies a process yield of the form
+\begin{equation}\label{eq:stapperyield}
+  Y(A) = \left(1 + { AD_0 \over \alpha } \right)^{-n \alpha}
+\end{equation}
+where we use modern nomenclature $D_0$ for the per-layer defect
+density and $n$ for the number of effective process layers.  But note that
+we can rewrite (\ref{eq:stapperyield}) in terms of starred parameters
+\begin{equation}
+  Y(A) = \left(1 + { AD^*_0 \over \alpha^* } \right)^{\alpha^*}
+\end{equation}
+where we have
+\begin{equation}\label{eq:starred}
+  \begin{aligned}
+    \alpha^* &= n \alpha \\
+    D^*_0    &= n D_0 \\
+    \beta^*  & = {D^*_0 \over \alpha^*} = {D_0 \over \alpha } = \beta \quad ,
+  \end{aligned}
+\end{equation}
+so it is possible to relate this standard, modern formula directly to Murphy's formalism.
+
+The significance of our calculations above now becomes clear.  Modern
+semiconductor processes do not follow Poisson statistics: instead
+their behavior is more closely modeled by the
+Stapper-P\'olya-Eggenberger yield formula (\ref{eq:stapperyield}) with
+$\alpha \ll 1$ to model the clustering of defects that occurs in
+manufacturing.  (In fact it is not clear that Poisson statistics {\em
+  ever\/} modeled semiconductor fab line behavior very well.)  While
+the resultant defect statistics are a boon for large-die yields, they
+do have a deleterious effect, namely, that redundancy does not work as
+well as it does under a Poisson model.  This is to be expected, as the
+fact that accidents cluster, which improves overall yield, also
+implies that an accident that strikes a subsystem $u_0$ is also likely
+to strike subsystem $u_1$.  Our work models this effect.
+
+\section{Limitations}\label{sec:limitations}
+An obvious limitation to our work is that we assume that the process
+yield $Y(A)$ depends only on one scalar variable, namely, the chip
+area.  This is true of commonly used yield functions, but it must be
+noted that unlike other practitioners, we are assuming that the yield obeys
+the restriction regardless of the shape of the region.  The regions that
+are implied by (\ref{eq:master}) are non-convex and in fact not even contiguous.
+
+The restriction to the form of $Y(A)$ can be traced back all the way to Murphy's equation (\ref{eq:murphy}), that is: 
+\begin{equation}
+  Y(A) = \int_0^\infty e^{-AD} \, f(D) \, dD \quad .
+\end{equation}
+It is clear that the variability of the defect density which is here
+represented by $f(D)$ is not occuring over physical space but over an
+abstract parameter space.  How closely, or not, this models actual
+physical processes is not clear: we do know that Murphy's formulation
+leading to the Stapper-P\'olya-Eggenberger yield results can work
+extremely well in practice for predicting gross die yields, but is it
+really capable of supporting the kind of ``slicing and dicing'' we are
+doing in this work?  In defense of our method, it should be noted that
+defect clusters are often seen that are larger than individual dice, or possibly even larger than individual wafers (if for example a machine is out of tune on a particular day), and under such conditions our arguments are clearly sound, because the regions we are interested in in our work tend
+to be far smaller than even an individual die.
+
+\section{Example}
+For our final example, let's take a specific redundant hardware module
+in a representative 2020 fabrication process.  We assume $D_0 = 0.10$
+defects per square inch per layer, $\alpha=0.02$, $n=30$, and that we have a
+system consisting of 18 subsystems $u_i$, each 4~mm$^2$ in area, of
+which we need 16 to be functional.
+
+The system yield of 16 of 18 units was given in (\ref{eq:yield16of18}) and is
+\begin{equation}
+    P_{S(18)}(x \geq 16) = 136 \, Y(72) - 288 \, Y(68) + 153 Y(74) \quad ,
+\end{equation}
+irrespective of the statistics (we have multiplied the size of the units by 4 so all the arguments are multiplied by 4---in this section we assume for simplicity that $Y$'s argument is in units of square millimeters).
+
+Under Stapper-P\'olya-Eggenberger statistics, the system yield is
+\begin{equation}
+    P_{S(18)}(x \geq 16) = 0.98074\ldots \quad .
+\end{equation}
+Under binomial statistics on the other hand, we would work out
+\begin{equation}\begin{aligned}
+  P_{S(18)}(x \geq 16) &=& Y(4)^{18} + {18 \choose 17} Y(4)^{17}(1-Y(4))
+                                  + {18 \choose 16} Y(4)^{16}(1-Y(4))^2  \\
+                     &=& 0.9960\ldots \quad . \hfill
+\end{aligned}\end{equation}
+If we are interested in incorporating our system into a larger super-system,
+we are likely most interested in the yield loss $\xi$ $=$ ($1-$ yield) of our system.
+In this formulation, it is clear that the binomial formulation grossly underestimates the yield loss because
+\begin{equation}
+  \xi\textsubscript{binomial} \approx 0.0040 \ll \xi\textsubscript{clustered} \approx 0.0193 \quad,
+\end{equation}
+that is to say, the na\"\i{}ve assumption of statistically independent
+yield of the submodules is responsible for a five-fold underestimate of
+the yield loss of the redundant system.
+
+\section{Continuous approximation}
+
+It is clear that some of the formulas above get complicated and may lead to
+computational difficulty.  Although the problems we are investigating
+are discrete---the systems we study have continuous areas and yields but consist of a discrete
+number of subsystems---we can gain considerable insight by considering the continuous interpretation of equations like (\ref{eq:pi-summary}):
+\begin{equation}
+  \Pi_{N-k} = \sum_{j=0}^k {k \choose j} (-1)^j Y((N-j)A_u) \quad .
+\end{equation}
+
+First, we introduce the standard Euler differential operator $D_x$.\cite{differentials}  We write
+\begin{equation}
+  \begin{aligned}
+    D_x f(x)   &= {df \over dx} = f'(x) \\
+    D_x^2 f(x) &= {d^2f \over dx^2} = f''(x)  \\
+    \ldots     & \\
+    D_x^n f(x) &= {d^nf \over dx^n} = f^{(n)}(x) \quad , \\
+  \end{aligned}
+\end{equation}
+and if the argument of the function is specified, e.g., as a constant $a$, we mean to evaluate the derivative at the point specified:
+\begin{equation}
+  D_x f(a) = {df \over dx}(a) = f'(a) \quad ,
+\end{equation}
+etc.  In general our yield functions vary as a function of $A$ only, and therefore we may omit the subscript from $D_A$ and instead write simply $D$.
+
+By analogy to the Euler differential, we introduce the discrete finite difference operator $\Delta$, and
+\begin{equation}
+  \begin{aligned}
+    \Delta_x f(x)   &= {\delta f \over \delta x}  \\
+    \Delta_x^2 f(x) &= {\delta^2f \over \delta x^2}  \\
+    \ldots     & \\
+    \Delta_x^n f(x) &= {\delta^nf \over \delta x^n} \quad . \\
+  \end{aligned}
+\end{equation}
+We observe that the $k$th finite difference of $f$ evaluated at $a$ is simply written
+\begin{equation}
+  \Delta^k f(a) = \sum_{j=0}^k {k \choose j} (-1)^{k-j} f(a - j \delta x) \quad .
+\end{equation}
+   
+Now we can see that we can write (\ref{eq:pi-summary}) as a finite difference, simply interpreted as the $k$th finite difference of the yield function $Y$, with the appropriate sign adjustment:
+\begin{equation}\label{eq:finite-diff}
+  \Pi_{N-k} = (-1)^k \Delta^k Y(N A_u)
+\end{equation}
+where $\Delta^k Y$ is simply the $k$th discrete derivative of $Y$.  We
+can then also write
+\begin{equation}
+  \Pi_{N-k} \approx (-1)^k D^k Y(N A_u) \quad .
+\end{equation}
+
+The continuous approximation becomes especially attractive when
+evaluating the yield improvement defined in section~\ref{sec:yield-improvement}.  For example, we can approximate the yield improvement of adding one redundant unit to $N$ required units as
+\begin{equation}
+  \upsilon_{N/N+1} \approx -N {Y^\prime(NA_u) \over Y(NA_u) } \quad ;
+\end{equation}
+compare (\ref{eq:nplusoneimprovement}), where we further note that the expression $Y^\prime(x)/Y(x)$ is known as the {\em logarithmic derivative\/} of $Y$.
+
+\subsection{Derivatives of Stapper's yield function}
+
+If we consider Stapper's yield function from (\ref{eq:stapperyield})
+\begin{equation}
+  Y(A) = \left(1 + { AD_0 \over \alpha } \right)^{-n \alpha}
+\end{equation}
+we can introduce the function $Z_k(A)$ defined as
+\begin{equation}
+  Z_k(A) = { Y(A) \over (\alpha + A D_0)^k } \quad ;
+\end{equation}
+after some algebra, we find that the first derivative of $Z_k$ is
+\begin{equation}
+  Z_k^\prime (A) = - D_0 (n \alpha + k) Z_{k+1}(A)
+\end{equation}
+and from this we see that in general the $k$th derivative of $Z_0$ is
+\begin{equation}
+  Z_0^{(k)} (A) = (-1)^k D_0^k \left(\prod_{i=0}^{k-1} (n \alpha + i) \right)Z_k(A) 
+\end{equation}
+but since $Z_0(A) = Y(A)$, the $k$th derivative of $Y(A)$ is just
+\begin{equation}\label{eq:stapper-derivs}
+  \begin{aligned}
+    Y^{(k)}  (A) &=  (-1)^k D_0^k \left(\prod_{i=0}^{k-1} (n \alpha + i) \right) { Y(A) \over (\alpha + A D_0)^k } \\
+               &=   {\Gamma(n \alpha + k) \over \Gamma(n \alpha) }(-1)^k\left({ D_0 \over \alpha + A D_0 }\right)^k Y(A) \\
+  \end{aligned}
+\end{equation}
+in particular
+\begin{equation}
+  Y^\prime (A) =  - { D_0 n \alpha \over \alpha + A D_0 } Y(A) \quad .
+\end{equation}
+
+Our primary example, the yield improvement from adding one redundant unit to $N$ required units of area $A_u$ in this context becomes
+\begin{equation}
+  \upsilon_{N/N+1} \approx -N {Y^\prime(NA_u) \over Y(NA_u) } = N {n \alpha D_0 \over \alpha + N A_u D_0} \quad .
+\end{equation}
+
+\subsection{Continuous approximation example}
+Consider using Stapper's yield function with $D_0 = 0.1$ (per square inch per layer), $\alpha = 0.02$, $n = 30$ and now let's approximate (\ref{eq:yield16of18}) using (\ref{eq:finite-diff}):
+\begin{equation}\begin{aligned}
+    P_{S(18)}(x \geq 16) &= \Pi_{18} + {18 \choose 17} \Pi_{17} + {18 \choose 16} \Pi_{16} \\
+    &= Y(18) - {18 \choose 17} \Delta Y (18) + {18 \choose 16} \Delta^2 Y (18) \\
+    & \approx Y(18) - {18 \choose 17} D Y (17.5) + {18 \choose 16}D^2 Y (17)
+  \end{aligned}
+\end{equation}
+where we have used the midpoint rule to translate the discrete derivatives to continuous.
+
+Evaluating the above expressions using (\ref{eq:stapper-derivs}) we find that the exact answer and approximate answer are very close:
+\begin{equation}\begin{aligned}
+    Y(18) - {18 \choose 17} \Delta Y (18) + {18 \choose 16}\Delta^2 Y (18) &= 0.99932150\ldots = 1 - 0.00067929\ldots\\
+     Y(18) - {18 \choose 17} D Y (17.5) + {18 \choose 16}D^2 Y (17) &= 0.99932071\ldots = 1 - 0.00067850\ldots
+\end{aligned}\end{equation}
+Written in terms of yield loss, the approximation is about 0.1\% off from the correct answer.
+
+How do we apply this hierarchically?
+
+\section{Revisiting Murphy's formalism}\label{sec:murphy-again}
+
+Consider Murphy's formula (\ref{eq:murphy}):
+\begin{equation}
+  Y(A) = \int_0^\infty e^{-AD} \, f(D) \, dD \quad ,
+\end{equation}
+We can consider this an average process yield over a parameter
+distribution $f(D)$: we are here writing that the process yield is of
+the Poisson form $e^{-AD}$ but taken over an ensemble of yields
+according to the p.d.f.~$f(D)$.  We may think of this, for example, as modeling a production
+line that at any time produces defects according to the Poisson distribution $e^{-AD}$, but over time $D$ varies, drawn from the p.d.f.~$f(D)$.
+
+But now we can also observe that the system yields that we have
+computed in this paper are linear functions (or, technically, {\em functionals\/}) of the process yields and
+subject to precisely the same distribution $f(D)$ for the Poisson parameters.
+
+Up until now we have considered the system yield $Y_S$ a function of
+the process yield function $Y(A)$; we can take this one step further
+and restrict our process yields to being Poisson yields $e^{-AD}$,
+drawn from the ensemble $f(D)$.  The approach now is to compute the system
+yield under Poisson assumptions (binomial distribution) and compute the
+expected value of that system yield given the distribution of $D$.
+
+Considering that the different $D$ values are mutually exclusive, we can use
+similar notation as in section~\ref{sec:restricted} to denote mutually
+exclusive outcomes:
+We write the Poisson system yield $\Pi(D)$ and compute the expected
+system yield across the process ensemble,
+\begin{equation}\label{eq:ensemble-yield}
+  <Y_S> = \int_0^\infty \Pi(D) f(D) \, dD
+\end{equation}
+where each $\Pi(D)$ is straightforward to compute using the binomial formula.  We have implemented this
+approach and verified that it gives the same answers as the formalism in
+section~\ref{sec:impl}.
+
+\subsection{Discussion}
+Implementing the system yield through (\ref{eq:ensemble-yield}) appears attractive as it does not require the heavyweight generalized polynomial machinery described in section~\ref{app:hierarchical}; it is sufficient to perform the
+Poisson yield calculations ``as usual'' and then integrate them over the
+real line.  Note however that if we follow Stapper, we use the gamma distribution
+\begin{equation}
+  f(D) = { 1 \over \Gamma(\alpha^*) \beta^{\alpha^*} } D^{\alpha^* - 1} e^{-D/\beta}  \quad ;
+\end{equation}
+the parameters here include the starred $\alpha^*$ mentioned in
+section~\ref{sec:discussion}, equation (\ref{eq:starred}).  We see that when
+$\alpha^* < 1$, then this expression goes to infinity as $D$
+approaches $0^+$.  Since the yield as $D$ approaches 0 is one, this
+means that the integrand in (\ref{eq:ensemble-yield}) goes to infinity
+as well, i.e., in these cases (\ref{eq:ensemble-yield}) is an
+improper integral, which presents numerical difficulties.  Recall from (\ref{eq:starred}) that
+$\alpha^* = n \alpha$ so that for a modern process with $n \approx
+30$, the integral becomes improper for values of $\alpha \lesssim 1/30$,
+which is a domain of practical interest.
+
+We are able to evaluate the integral (\ref{eq:ensemble-yield}) using Romberg (interior point)
+integration\cite{numerical-recipes}, but it is cumbersome and
+inefficient to do so, and not very accurate.  It is more fruitful to rearrange the integral using integration by parts.  Consider
+\begin{equation}
+\int_0^\infty uv' \, dD =   uv \Big|_0^\infty - \int_0^\infty u'v \, dD
+\end{equation}
+where we identify
+\begin{equation}
+  \begin{aligned}
+    u(D)  &= \Pi(D) \\
+    v'(D) &= f(D) \\
+    v(d) &= F(D) \\
+    u'(D) &= \Pi'(D)
+  \end{aligned}
+\end{equation}
+where $F(D)$ is the c.d.f.~corresponding to the p.d.f.~$f(D)$.
+
+Noting that
+\begin{equation}
+  uv \Big|_0^\infty = \Pi(D) F(D) \Big|_{D=0}^{D=\infty} = (0)(1) - (1)(0) = 0 - 0 = 0
+\end{equation}
+we have that 
+\begin{equation}\label{eq:byparts}
+<Y_S> = - \int_0^\infty \Pi'(D) F(D) \, dD
+\end{equation}
+where we derive $\Pi'(D)$ from the binomially computed $\Pi(D)$ by symbolic differentiation and
+\begin{equation}
+  F(D) = { \gamma \left ( \alpha^*, { D \over \beta } \right) \over \Gamma(\alpha^*) }
+\end{equation}
+where $\gamma(a,x)$ represents the lower incomplete gamma function.  We have implemented this approach, and the integration is many times faster and more accurate than the direct integration approach of (\ref{eq:ensemble-yield}).
+
+\subsection{Efficient evaluation of the system yield as a function of density}
+The form (\ref{eq:byparts}) is easier to integrate than (\ref{eq:ensemble-yield}), but it still leaves something to be desired.  In particular, we appear to have
+traded an improper integral with a singularity at 0 for an improper integral to $+\infty$.  What have we really gained out of that? (Keep in mind that $\Pi'(D)$ is a function that describes the redundancy of our chip, so it may be {\em very\/} complicated and slow to evaluate---we wish to reduce the number of evaluations of this function to the absolute minimum possible given whatever accuracy requirements we may have.)
+
+Let us consider that we have two ways of writing the integral
+\begin{equation}
+  <Y_S> = \int_{\mathbb{R}^+} \Pi \, f \, = - \int_{\mathbb{R}^+} \Pi' \, F \, 
+\end{equation}
+and that we also know, because of the nature of the functions involved, that
+\begin{equation}
+  \begin{aligned}
+    \int_{\mathbb{R}^+} f     &= 1 \\
+    -\int_{\mathbb{R}^+} \Pi' &= 1 \quad .
+  \end{aligned}
+\end{equation}
+And furthermore, we have everywhere that $F \le 1$ and $\Pi \le 1$.
+Therefore, if we are willing to accept an error of, say, $2 \epsilon$,
+we can restrict our integration range as follows.
+Find $a(\epsilon)$, $b(\epsilon)$ such that
+\begin{equation}
+  \begin{aligned}
+    F(a)   &= \epsilon \\
+    \Pi(b) &= \epsilon \quad ;
+  \end{aligned}
+\end{equation}
+then we have that
+\begin{equation}
+  - \int_0^a \Pi'(D) \, F(D) \, dD \le -F(a) \int_0^a \Pi(D) \, dD  \le F(a) = \epsilon
+\end{equation}
+and 
+\begin{equation}
+  \int_b^\infty \Pi(D) \, f(D) \, dD \le \Pi(b) \int_b^\infty f(D) \, dD  \le \Pi(b) = \epsilon
+\end{equation}
+and therefore that, taking into account that the integral is positive over every interval,
+\begin{equation}
+  \left( -\int_0^\infty \Pi'(D) \, F(D) \, dD \right) - 2\epsilon \quad \le
+    - \int_a^b \Pi'(D) \, F(D) \, dD \le
+     -\int_0^\infty \Pi'(D) \, F(D) \, dD 
+\end{equation}
+whence we conclude that we need only perform the integral over the interval $[a(\epsilon),b(\epsilon)]$ to achieve (at least) the desired accuracy.
+
+One final note is that the integrand $\Pi(D)\,f(D)$ is ``lopsided'': it rises sharply near zero and has a long tail towards $+\infty$.  Integration is generally easier with a change of variables as follows.
+Let
+\begin{equation}
+  \begin{aligned}
+    D &= e^x \\
+    {dD \over dx} &= e^x = D \\
+    dD &= e^x \,dx
+  \end{aligned}
+\end{equation}
+then
+\begin{equation}
+- \int_0^{\infty} \Pi'(D) \, F(D) \, dD = - \int_{-\infty}^{+\infty} \Pi'(e^x) \, F(e^x) \, e^x \, dx
+\end{equation}
+and naturally
+\begin{equation}\label{eq:final}
+- \int_{D=a}^{D=b} \Pi'(D) \, F(D) \, dD = - \int_{x=\log a}^{x=\log b} \Pi'(e^x) \, F(e^x) \, e^x \, dx \quad ,
+\end{equation}
+which is the integral we evaluate numerically.  The resultant integral
+is still somewhat lopsided, and special integration methods may be
+useful for absolute maximum performance (e.g., if $\log a >0$ we can
+again perform the substitution $x = e^y$ for a more symmetric
+function, but this does not work in general since $\log a > 0$ is not
+guaranteed), but in practice we find that (\ref{eq:final}) works quite
+well and converges with the desired accuracy in less than about 100
+evaluations of $\Pi'(e^x)$.
+
+An alternative approach to evaluating the integral comes from considering
+that the symbolic differentiation that leads to $\Pi'(D)$ can be quite
+cumbersome.  We can go back to the previous improper integral from (\ref{eq:ensemble-yield}) and apply the exponential transformation to that integral
+instead to compute the estimate to $< Y_S >$, $< Y_S >^*$: 
+\begin{equation}\label{eq:final-final}
+< Y_S >^* = \int_{\log a}^{\log b} \Pi(e^x) f(e^x) e^x\, dx
+\end{equation}
+We clearly still need $F(D)$ to compute the limits.  The formulation in
+(\ref{eq:final-final}) appears to require more evaluations of the
+integrand than in (\ref{eq:final}) for a given precision, but since we do not need to compute $\Pi'(D)$ it can be a computational win.
+
+\subsection{Example}
+Let's again consider a redundancy example across a few technologies.
+We assume we have blocks each of 40~mm$^2$, and we need 16 for our
+system.  We will look at how the integration procedure in this section
+combines the process yield and design information to generate the
+estimated system yield.  We assume a deep-submicron process circa 2020
+with $n=30$, $D_0 = 0.10$ (defects per square inch per layer) and a
+few potential values of $\alpha$ from 0.02 to 10.
+
+\insepsfig{6truein}{procs.eps}{Process defect distribution $f(e^x)$ for a variety of values of $\alpha$.}
+
+In figure~\ref{fig:procs.eps} we see the expected distribution
+$f(e^x)$ as used in this section, for values of $\alpha$ of 0.02,
+0.05, 1, and 10.  Recall that $\alpha = 1$ corresponds to the popular
+Bose-Einstein model and as $\alpha$ gets larger than 1, the model
+approaches the simple Poisson process (in the extreme, the Poisson
+process would be modeled here by a Dirac delta function as discussed
+in section~\ref{sec:discussion}).  Note that $f(e^x)$ diverges for
+$\alpha = 0.02$; this is because $\alpha^* = n \alpha = (30)(0.02) =
+0.6 < 1$.
+
+\insepsfig{6truein}{designs.eps}{Three potential designs with (16/18 and 16/20) and without (16/16) redundancy.}
+Figure~\ref{fig:designs.eps} shows the forms of $\Pi(e^x)$ for three potential designs: 16 blocks of 40~mm$^2$ without redundancy, and the same design with 2 and 4 redundant blocks (i.e., 16/16 blocks need to work, 16/18 need to work, and 16/20 need to work).
+
+It is clear from the methodology that figure~\ref{fig:procs.eps} is
+independent of our designs, and figure~\ref{fig:designs.eps} is
+independent of the fabrication technology.
+
+To calculate the yield, we form the integrand $\Pi(e^x) f(e^x) e^x$ as
+seen for example in figure~\ref{fig:integrand_16_0p02.eps}.  The yield
+is given by the integral of the integrand, in this case 34.3\%.  (The
+yield for $D_0=0.1$, $\alpha=1$ would be only 5.9\%.)  Two more
+examples are given in figures~\ref{fig:integrand_18_1.eps}
+and~\ref{fig:integrand_18_0p02.eps}, in this case for 16/18 units with
+$\alpha=1$ (yield is 40.1\%) and $\alpha=0.02$ (yield is 61.3\%).
+\insepsfig{6truein}{integrand_16_0p02.eps}{Computing the yield of 16
+  modules without redundancy for $\alpha=0.02$.}
+
+\insepsfig{6truein}{integrand_18_0p02.eps}{Computing the yield of 16 modules with 2 redundant modules for $\alpha=0.02$.}
+
+\insepsfig{6truein}{integrand_18_1.eps}{Computing the yield of 16 modules with 2 redundant modules for $\alpha=1$ (Bose-Einstein).}
+
+\subsection{Yield improvement for a representative product design}
+Finally, let's look at how the yield improvement defined in
+section~\ref{sec:yield-improvement} depends on Stapper's $\alpha$ for
+a representative design.  First, we look at how the yield improvement
+depends on $\alpha$ for fixed $D_0$, see figure~\ref{fig:tfc-yield-over-alpha-fixed-D0.eps}.  Here we show the yield improvement of a given
+design that includes some amount of repair and redundancy, modeled
+using the methodology described in this paper.  We then vary $\alpha$
+from 0.01 (highly clustered) to 1 (Bose-Einstein) and beyond (towards
+Poisson, no clustering at all) and graph the results. 
+\insepsfig{6truein}{tfc-yield-over-alpha-fixed-D0.eps}{Product yield improvement
+  over $\alpha$, holding $D_0$ constant.}
+
+Also, we can hold the yield at the specific area of 500~mm$^2$
+constant, based on Bose-Einstein yield with $D_0=0.06$, solving for
+$D_0(\alpha)$ given $\alpha$ and $n$ for a representative 2020 technology.
+See figure~\ref{fig:tfc-yield-over-alpha.eps}.  For reference, at
+$\alpha=0.05$, we have $D_0(\alpha=0.05)\approx 0.09$ for this method.
+\insepsfig{6truein}{tfc-yield-over-alpha.eps}{Product yield improvement over
+  $\alpha$, holding yield at 500~mm$^2$ constant.}
+
+
+
+
+
+\section{Summary and conclusion}
+We have seen how to derive a general formula for the system yield of a
+redundant hardware system under weak assumptions on process yield.  We
+have furthermore shown how to more efficiently compute the system
+yield of a system consisting of identical subsystems, and we have
+discussed how practitioners over the years have found that
+semiconductor defects are more highly clustered than the yield models
+have allowed for.  We find it likely that existing yield models
+overestimate the efficiacy of adding hardware redundancy and thereby
+mislead designers into considering redundancy in situations where it
+may not be so effective.  Future work that remains to be done here is
+to shown how to integrate results derived with our model into the
+context of a larger system incorporating the system we are studing as
+itself a subsystem (our equations as they stand are only applicable if
+they can take the entire system of interest---probably a semiconductor
+die---into consideration ``at once''), and doing so with computational
+efficiency.
+
+\section{Acknowledgements}
+
+Many people have provided helpful suggestions for this work.  Karl
+Papadantonakis suggested the numerical approach to Murphy's method
+described in section~\ref{sec:murphy-again}; he also suggested the
+specific formulation used in section~\ref{sec:general}.  Helia Naeimi
+continually critiqued the difficulty of some of the methods involved
+and inspired many improvements.  Pat Bosshart provided Lisp models for
+the yield of the next-generation Intel Barefoot switching chips.
+Hayden Helm provided invaluable feedback on the statistical framework.
+Kishore Maddi provided yield data and feedback on recently fabricated
+Intel products.  CherSian Chua took the time and effort to describe
+the currently used yield models at Intel.  Israel Koren graciously
+worked through his results with the author and provided up-to-date errata.
+Whatever errors remain are
+due to the author and nobody else.
+
+\appendix
+\newpage
+\section{Program listing}\label{app:program}
+
+The following is a full listing of necessary code to generate the results of this paper in an interpreter implementing the {\it Revised$^4$ Report on the Algorithmic Language Scheme\/} (R4RS)\cite{scheme}.
+
+First, \verb!choose! and \verb!sum! are implemented in the obvious way:
+\begin{verbatim}
+(define (choose n k)
+  (let loop ((d 1)             ;; Denominator
+             (u (+ n (- k) 1)) ;; nUmerator
+             (p 1)             ;; Product
+             )
+    (if (> d k) p
+        (loop (+ d 1) (+ u 1) (* p (/ u d))))))
+
+(define (sum lo hi f)
+  (let loop ((s 0)
+             (i lo))
+    (if (= i hi)
+        (+ s (f i))
+        (loop (+ s (f i)) (+ i 1)))))
+\end{verbatim}
+
+Then we implement \verb!make-yield-calculator! as in section~\ref{sec:impl} but with a slight syntactic change from \verb!(define (Pi k)...! to \verb!(define Pi (lambda(k)...! which allows us to introduce memoization\cite{sicp}:
+\begin{verbatim}
+(define (make-yield-calculator Y)
+  (lambda(A N M)
+
+    (define Pi
+      (memoize
+       (lambda (k)
+         (if (= k N)
+             (Y (* N A))
+             
+             (- (Y (* k A))
+                (sum (+ k 1)
+                     N
+                     (lambda(j)(* (choose (- N k) (- N j)) (Pi j)))))))))
+
+    (sum M N (lambda(i) (* (choose N i) (Pi i)))))
+  )
+\end{verbatim}
+
+The procedure \verb!memoize! is here defined either for simplicity
+\begin{verbatim}
+(define (memoize f) f)
+\end{verbatim}
+or, for speed, by a memoization implementation such as the one from section~3.3.3 of Abelson and Sussman\cite{sicp}.  This is sufficient for calculating the yield according to the formulas developed in this paper.
+
+If we wish to derive the yield formulas that appear earlier in this paper (e.g., sections~\ref{sec:ex16of17} and~\ref{sec:ex16of18}) we can introduce the Kronecker delta function $\delta_{ij}$ as follows:
+\begin{verbatim}
+(define (kronecker i) (lambda (j) (if (= i j) 1 0)))
+\end{verbatim}
+At this point, we simply evaluate the yield using \verb!make-yield-calculator! but formally supply \verb!kronecker! as the yield function as follows:
+\begin{verbatim}
+(define (find-yield-expression N M)
+  (let loop ((i M)
+             (q '()))
+    (if (> i N)
+        (cons '+ q)
+        (loop (+ i 1)
+              (cons (list '*
+                          (round ((make-yield-calculator (kronecker i)) 1 N M))
+                          (list 'Y i))
+                    q)
+              )
+        )))
+\end{verbatim}
+Then, e.g., running
+\begin{verbatim}
+(find-yield-expression 18 16)
+\end{verbatim}
+results in the interpreter's printing
+\begin{verbatim}
+(+ (* 136 (Y 18)) (* -288 (Y 17)) (* 153 (Y 16)))
+\end{verbatim}
+as expected (see the example in section~\ref{sec:ex16of18}).
+
+
+\section{A hierarchical yield calculation system}\label{app:hierarchical}
+We shall use the idea of section~\ref{sec:poissonderiv} to build a calculator
+capable of evaluating the expected yield of a hierarchically defined system,
+with redundancy incorporated.  The basic idea is to use the equivalence
+of the formulation developed in this paper with binomial probability
+calculations under the assumption that only Poisson statistics are involved.
+Having developed the yield formula under Poisson statistics, we can then
+back out the calculation to derive the actual chip areas being considered,
+with appropriate weighting, and compute the yield under any given yield
+model, Poisson or not.
+
+Our approach will be based on {\em generalized polynomial arithmetic.}  The yield of a given
+system with subsystems incorporated in it, under the assumption of Poisson
+statistics, can be represented as an {\em generalized polynomial\/} in $x$, which we define as
+\begin{equation}
+  x = Y(1)
+\end{equation}
+and a generalized extended polynomial is an expression of the form
+\begin{equation}
+  \sum_i a_i x^{p_i}
+\end{equation}
+where $a_i$ and $p_i$ are real (in particular, $p_i$ is not limited to
+integers as in a regular polynomial---this is what makes our
+polynomials ``generalized'') and $x \ge 0$.  Since $x$ is a yield and we
+have therefore that $x \in [0 \ldots 1]$ the restriction on $x$
+presents no difficulty.  What makes a generalized polynomial different
+from a high-school polynomial is that in a generalized polynomial, the
+coefficients are not limited to being integers.  The restriction on
+$x$ is necessary in order to ensure that the result of evaluating a
+generalized polynomial is real.  In the following, we may refer to
+generalized polynomials simply as ``polynomials.''
+
+For example, if the system has no redundancy and is of area 100, then its
+yield can simply be written as
+\begin{equation}
+  P(\text{system of area 100 works}) = x^{100} \quad .
+\end{equation}
+Similarly if we let $y$ (which is some expression in $x$) be the probability that some subsystem $T$ works, then
+the probability that a system comprising 18 instances of $T$ of which at least~16 must be functional will be
+\begin{equation}
+  P(\text{system of 16/18 instances of {\sl T} works}) =
+  136\,y^{18} - 288 \, y^{17} + 153 \, y^{16} \quad ,
+\end{equation}
+again, under the assumption of Poisson statistics (see section~\ref{sec:poissonderiv}).  Since $y$ is known
+to be a polynomial in $x$, the probability can also be expanded as a
+polynomial in $x$.  Having expanded the Poisson polynomial in $x$, we
+may then {\em formally identify\/} the $x^n$ as $Y(n)$.  Based on the
+argument in section~\ref{sec:poissonderiv}, the resulting formula will
+be correct, regardless of whether the underlying statistics is Poisson
+or not.
+
+In order to complete this system, we define polynomials in terms of monomials.
+We write a monomial
+\begin{equation}
+  a \, x^k
+\end{equation}
+where $a$ and $k$ are real numbers (they need not be integers) and $x$ is $Y(1)$.  The abstraction in Scheme is very simple, a monomial is a short list starting with the symbol \verb!t!:
+\begin{verbatim}
+(define (term? x) (and (list x) (eq? (car x) 't)))
+
+(define (make-number-term n) (list 't n 0))
+
+(define (make-power-term k) (list 't 1 k))
+
+(define (term-factor t) (cadr t))
+
+(define (term-exponent t) (caddr t))
+\end{verbatim}
+
+We then introduce a few basic operations (see appendix~\ref{app:codecomplete} for full details):
+\begin{verbatim}
+(define (*-term a b) ...)
+
+(define (+-term a b) ...)
+
+(define (^-term a b) ...) 
+
+(define (sum-term lo hi f) ...) ,
+\end{verbatim}
+which perform the expected math on polynomials.  Finally, we introduce the
+formal conversion process from polynomial to yield formula, and a means
+of evaluating the complete formula:
+\begin{verbatim}
+(define (term-2-yield x)
+  (if (term? x)
+      (list '* (term-factor x) (list 'Y (term-exponent x)))
+      (cons '+ (map term-2-yield (cdr x)))))
+
+(define (eval-yield x Y) (eval (term-2-yield x)))
+\end{verbatim}
+This is now enough to develop our hierarchical yield computer:
+\begin{verbatim}
+(define (area-yield A) (make-power-term A))
+
+(define (modules-yield . x) (accumulate *-term (make-number-term 1) x))
+
+(define (redundant-yield x N M)
+  (sum-term M N (lambda(k)(*-term (make-number-term (choose N k))
+                                  (*-term (^-term x k)
+                                          (^-term 
+                                           (+-term 1-term (*-term -1-term x))
+                                           (- N k))))
+                       )))
+\end{verbatim}
+
+\subsection{Example interaction}
+Let's ask the computer what the yield of a module of area 100 is.
+\begin{verbatim}
+> (define poly-100 (area-yield 100))
+poly-100
+> poly-100
+(t 1 100)
+\end{verbatim}
+In other words (see above), the yield of a module of area 100 is, as expected,
+the monomial $1\,x^{100}$.  To evaluate this, we convert it to a formula in $Y$
+and substitute in our desired yield model:
+\begin{verbatim}
+> (term-2-yield poly-100)
+(* 1 (Y 100))
+\end{verbatim}
+that is to say $1\,Y(100)$
+\begin{verbatim}
+> (define (Y A) (YieldModel.Stapper A 0.10 30 0.02))
+Y
+> (eval-yield  poly-100 Y)
+0.7087299045569723
+\end{verbatim}
+which means that given the provided model, Stapper's formula with $D_0=0.10$, $n=30$, $\alpha=0.02$, the yield of the module is expected to be about 70.9\%.
+
+\subsection{Extended example}\label{sec:extended-example}
+
+ The HAL9000 multiprocessor consists of 10 individual HAL1000
+ processors, one of which is spare (i.e., 9 are needed for correct
+ operation).  The HAL9000 further has 100 square millimeters of
+ non-redundant hardware.
+
+ A HAL1000 single processor consists of 9 slices, each of which
+ contains 4 square millimeters.  1 of these is spare (i.e., 8 are
+ needed for correct operation).  A HAL1000 further contains 14
+ square millimeters of non-redundant hardware.
+
+\begin{verbatim}
+(define HAL1000-slice-yield (area-yield 4))
+
+(define HAL1000-yield
+  (modules-yield
+   (area-yield 14) ;; non-redundant
+   (redundant-yield HAL1000-slice-yield 9 8)))
+
+(define HAL9000-yield
+  (modules-yield
+   (area-yield 100) ;; non-redundant
+   (redundant-yield HAL1000-yield 10 9)))
+\end{verbatim}
+After these operations, we have the following expressions for
+\verb!HAL1000-yield!:
+\begin{verbatim}
+(+ (t -8 50) (t 9 46))
+\end{verbatim}
+or in infix terms,
+\begin{equation}
+  -8 \, x^{50} + 9 \, x^{46}\quad ,
+\end{equation}
+and for \verb!HAL9000-yield!:
+\begin{verbatim}
+(+ (t 4388393189376 580) (t 278942752080 564) (t 108716359680 596) 
+   (t 3874204890 514) (t -4114118615040 576) (t -1115771008320 568) 
+   (t -228562145280 526) (t 13589544960 546) (t -550376570880 592) 
+   (t 110199605760 522) (t 1651129712640 588) (t 304749527040 530) 
+   (t -30993639120 518) (t -270888468480 534) (t 2644790538240 572) 
+   (t -9663676416 600) (t -1342177280 550) (t -3250661621760 584) 
+   (t -31381059609 560) (t -61152952320 542) (t 160526499840 538)  )
+\end{verbatim}
+or in infix terms,
+\begin{dmath}\label{eq:huge-eq}
+-9663676416 \, x^{600} + 108716359680 \, x^{596} + -550376570880 \, x^{592} + 1651129712640 \, x^{588} + -3250661621760 \, x^{584} + 4388393189376 \, x^{580} + -4114118615040 \, x^{576} + 2644790538240 \, x^{572} + -1115771008320 \, x^{568} + 278942752080 \, x^{564} + -31381059609 \, x^{560} + -1342177280 \, x^{550} + 13589544960 \, x^{546} + -61152952320 \, x^{542} + 160526499840 \, x^{538} + -270888468480 \, x^{534} + 304749527040 \, x^{530} + -228562145280 \, x^{526} + 110199605760 \, x^{522} + -30993639120 \, x^{518} + 3874204890 \, x^{514}
+\end{dmath}
+
+And now define a representative high-end process as of 2020:
+\begin{verbatim}
+(define D0    0.10)
+(define n       30)
+(define alpha 0.02)
+(define (the-yield-model A) (YieldModel.Stapper A D0 n alpha))
+\end{verbatim}
+Finally, we can evaluate the expected yield of the HAL9000 multiprocessor chip:
+\begin{verbatim}
+> (eval-yield HAL9000-yield the-yield-model)
+0.641571044921875
+\end{verbatim}
+
+The full system also includes convenience functions for describing the
+yield of subsystems and showing how they contribute to the total yield.
+We do not cover the details in this report, but sample output is shown in figure~\ref{fig:Hal9000Screenshot.png}.  The output shows the effect of yield
+improvement from the redundancy in the design.  Finally, we also see
+the yield of the ``downbins'' HAL8000 and HAL7000, which allow 1 and 2
+of the HAL1000 subprocessors to be faulty, for less choosy customers.
+
+\insepsfig{6truein}{Hal9000Screenshot.png}{Output of yield calculator tool on HAL9000 example.}
+
+\subsection{Discussion of numerical issues}\label{sec:math-limitations}
+We will make some technical observations regarding the discussion in section~\ref{sec:extended-example} above:
+\begin{enumerate}
+\item The yield calculator, which properly incorporates the non-independence of the statistical distributions, is a conceptually simple program and can be used to solve yield-estimation problems of practical scale.
+
+\item The yield calculator operates in polynomials whose number of terms grows exponentially in the size of the input program.
+
+\item The coefficients of the polynomials also increase exponentially in the size of the input program, as well as a function of the parameters of the input program.
+  
+\end{enumerate}
+The fact that the polynomials grow exponentially is unfortunate.
+This means that a theory of yield that can be applied at every level
+of a design (e.g., applied to the individual elements of an SRAM
+block) appears to be out of reach for now, and the theory we have developed
+seems to be limited to the kind of high-level block-by-block inventory that
+we have been examining here.  In fairness, we did not set out to achieve
+a ``yield theory of everything'' so we may still consider our work to be
+successful.
+
+The final observation, about the coefficients of the polynomials, leads to a
+few technical consequences that implementors must stay aware of to use
+our theory effectively.
+
+\subsubsection{High precision arithmetic may be necessary}\label{sec:high-prec-necessary}
+Taking the coefficients of~(\ref{eq:huge-eq}) together with the
+properties described in section~\ref{sec:props}, it is clear that the
+computations of the resulting system yield must be performed to
+potentially extremely high precision.  Since the yield function $Y(A)$
+is itself a real-valued function, even potentially transcendental in
+character, this means we must implement high-precision floating-point
+artithmetic in order to get reliable answers.  Our production version
+of the system described here uses the GNU MPFR (Multiple Precision
+Floating-Point Reliable Library) developed at INRIA\cite{mpfr,mpfr-2}.  Our
+system uses the C version of the MPFR library and exports it to our
+Scheme environment through Modula-3 interfaces~\cite{spwm3}; the
+polynomial calculator is implemented in Modula-3 using the SRC generic
+table code provided with the Modula-3 system.
+
+We are currently applying the yield calculator described here to the
+next-generation products in the Intel Barefoot Division portfolio: these
+are full-reticle chips with large amounts of redundancy incorporated, and
+manufactured in cutting-edge fabrication technologies.
+
+\subsubsection{Finite differences}
+It seems that we ought to be able to use the finite difference
+restatement of the yield function from (\ref{eq:finite-diff}) to cure
+the issues raised above in sections~\ref{sec:math-limitations}
+and~\ref{sec:high-prec-necessary}.  Since the finite difference is
+formally equivalent to a derivative, we should be able to reduce the
+order of computation from exponential to polynomial by considering the
+expressions for the partial yields $\Pi_x$ as finite differences
+(discrete derivatives) rather than expanding them as polynomials.
+
+\subsubsection{Restriction in the form of the yield function $Y(A)$}
+The large coefficients in the polynomials used for the intermediate
+expression of the yield formulas necessitates that $Y(A)$ is somehow
+well-behaved as a function.  See appendix~\ref{app:yieldrestrictions}
+for some related observations.  A small error in $Y(A)$ taken together
+with the large coefficients in the polynomial can lead to completely
+nonsensical answers.  Currently, the only way we know to ensure that
+the answers are meaningful is to make sure that $Y(A)$ is a result of
+applying Murphy's integral in (\ref{eq:murphy}).  Many forms of $Y$
+fit this bill: Poisson, Bose-Einstein, and Stapper formulas all
+qualify.  What however does {\em not\/} qualify is some ``hack''
+version of these formulas with further functional dependences (e.g.,
+an arbitrary dependence of $D$ on $A$) unless such forms can be shown
+to derive from an application of (\ref{eq:murphy}).  Our
+recommendation in such cases (e.g., when a foundry publishes their
+yield function in a non-Murphy form) is to fit Stapper's formula to
+whatever form the foundry publishes and use the fitted Stapper formula
+from then on out.
+
+\section{Complete listing of hierarchical yield computer}\label{app:codecomplete}
+Here we give the detailed implementation that was elided in appendix~\ref{app:hierarchical}.  This is an experimental version of the yield calculator in Scheme, which does not take into account the observations of section~\ref{sec:math-limitations}.  It is given here as a reference for practitioners interested in
+implementing their own version of the given system.
+
+We begin by defining a few useful constants
+\begin{verbatim}
+(define 1-term (make-number-term 1))
+(define -1-term (make-number-term -1))
+(define 0-term (make-number-term 0))
+
+(define (term-0? a)
+  (and (term? a) (= 0 (term-factor a))))
+
+(define (term-1? a)
+  (and (term? a) (= 0 (term-exponent a)) (= 1 (term-factor a))))
+\end{verbatim}
+and then proceed with defining the basic operations of addition, multiplication, and exponentiation
+\begin{verbatim}
+(define (op? op)
+  (lambda (a)
+    (cond ((not (pair? a)) #f)
+          ((eq? op (car a)) #t)
+          (else #f)))
+  )
+
+(define +? (op? '+))
+
+(define (*-term a b)
+  (cond ((term-0? a) 0-term)
+        ((term-0? b) 0-term)
+        ((and (term? a) (term? b))
+         (list 't
+               (* (term-factor a) (term-factor b))
+               (+ (term-exponent a) (term-exponent b))))
+        ((+? b) (*-+-term a b))
+        (else (*-+-term b a))))
+
+(define (*-+-term x y)
+  ;; y is a + expression
+  (accumulate +-term
+              (make-number-term 0)
+              (map (lambda (yi) (*-term x yi)) (cdr y))))
+
+(define (+-term a b)
+  (cond ((term-0? a) b)
+        ((term-0? b) a)
+        ((and (term? a) (term? b)) (+-term a (list '+ b)))
+        ((term? b) (+-term b a))
+        (else (+-term-term a b))))
+
+(define (+-term-term a b)
+  (if (term? a)
+      (let loop ((p (cdr b))
+                 (res '()))
+        (cond ((null? p) ;; end of list, no match
+               (cons '+ (cons a res)))
+               ((= (term-exponent a) (term-exponent (car p))) ;; match
+                (cons '+ (cons (list 't (+ (term-factor a) (term-factor (car p)))
+                                     (term-exponent a))
+                               (append (cdr p) res))))
+               (else (loop (cdr p) (cons (car p) res)))))
+      (accumulate +-term a (cdr b)))
+  )
+\end{verbatim}
+Exponentiation is performed by repeated squaring:
+\begin{verbatim}
+(define (^-term a k) ;; exponentiation by squaring
+  (let loop ((n    k)
+             (p    a)
+             (r    (make-number-term 1)))
+    (cond ((= 0 n) r)
+          ((= 0 (modulo n 2))
+           (loop (div n 2) (*-term p p) r))
+          ((= 1 (modulo n 2))
+           (loop (div n 2) (*-term p p) (*-term r p)))
+          )))
+\end{verbatim}
+We end by developing a summation operator within the framework.
+\begin{verbatim}
+(define (sum-term lo hi f)
+  (let loop ((s (make-number-term 0))
+             (i lo))
+    (if (= i hi)
+        (+-term (f i) s)
+        (loop (+-term (f i) s) (+ i 1)))))
+\end{verbatim}
+With these definitions, the framework is complete.
+
+For completeness, the following is the (obvious) implementation of
+\verb+YieldModel.Stapper+, in the Modula-3 programming language.\cite{spwm3}
+\begin{verbatim}
+PROCEDURE Stapper(A, D0, n, alpha : LONGREAL) : LONGREAL =
+  CONST 
+    SqMmPerSqInch = 25.4d0 * 25.4d0;
+  VAR
+    Ai := A / SqMmPerSqInch;
+  BEGIN
+    RETURN Math.pow(1.0d0 + Ai * D0 / alpha, -n * alpha)
+  END Stapper;
+\end{verbatim}
+
+\section{Restrictions on the yield function $Y(A)$}\label{app:yieldrestrictions}
+
+The statement that the yield $Y(A)$ is a function of a single real
+parameter $A$ and is non-increasing, together with the way that this function
+is used in section~\ref{sec:general} leads to some important restrictions
+on $Y$.
+
+Let's perform a small thought experiment.  Three identical submodules $A$, $B$,
+$C$, each of area 1, are manufactured somewhere on a wafer and
+observed by the four Greek observers $\beta$, $\gamma$, $\delta$,
+$\epsilon$.  The four observers are, however, confused as to what
+exactly is being built.  $\beta$ believes that the system that is
+being built is $AB$, $\gamma$ believes it is $BC$, $\delta$ believes
+it is $CA$, and finally, observer $\epsilon$ believes that the system
+being built is $ABC$.  Many copies of the wafer are produced.
+
+We will make similar assumptions as in section~\ref{sec:general}.  For
+one thing, the yield function is only a function of area (see
+section~\ref{sec:limitations} for discussion).  For another, we assume
+symmetry, as in section~\ref{sec:restricted}.  Then we know that
+\begin{equation}
+  Y_\beta = Y_\gamma = Y_\delta = Y(2) \quad .
+\end{equation}
+And by definition of course we have
+\begin{equation}
+  Y_\epsilon = Y(3) \quad .
+\end{equation}
+We now ask, what constraints do the values of $Y(2)$ and $Y(3)$ impose upon each other?
+
+On the one side, it is easy to write down that
+\begin{equation}
+  Y(3) \le Y(2) \quad .
+\end{equation}
+It will turn out to be easier to work in the yield loss domain than the yield
+domain for this exercise.  Thus, the equations above can be read as equations
+in $1-Y = \xi$.  That is,
+\begin{equation}\begin{aligned}
+  \xi_\beta = \xi_\gamma = \xi_\delta &=& \xi(2) \\
+  \xi_\epsilon &=& \xi(3) \\
+  \xi(3) &\ge& \xi(2) 
+  \end{aligned}
+\end{equation}
+Now consider the maximum difference between $\xi(3)$ and
+$\xi(2)$.  We can find this by maximizing $\xi(3)$ and minimizing
+$\xi(2)$.  One scenario is as follows: we consider a manufacturing
+process $X$ for which the yield $Y(3)$ is zero and the $Y(2)$ is maximum.
+Such a process is one that, for example, every time we make three
+modules, exactly two are operational.  For this process, we have
+\begin{equation}\begin{aligned}
+  \xi_X(3) &=& 1 \\
+  \xi_X(2) &=& {2 \over 3}
+\end{aligned}\end{equation}
+because for each time we fabricate $ABC$, some combination of two of
+the three submodules will yield, and exactly one of the Greeks will
+count it as successful.  So over a long manufacturing run, we find the
+following:
+\begin{equation}\begin{aligned}
+ Y_{X,\beta} &=& {1 \over 3}\\
+ Y_{X,\gamma} &=& {1 \over 3}\\
+ Y_{X,\delta} &=& {1 \over 3}\\
+ Y_{X,\epsilon} &=& 0 
+\end{aligned}\end{equation}
+In other words in this particular case we have
+\begin{equation}
+  {2 \over 3} \le \xi(3) \le 1 \quad .
+\end{equation}
+The same argument generalizes and it seems that if we repeat the above argument
+with $m$ out of $n$ blocks
+\begin{equation}
+  m < n \rightarrow {{n \choose m} - 1 \over {n \choose m } } \le \xi(n) \le 1 \quad .
+\end{equation}
+We're actively trying to generalize these formulas.  (Work in progress.)
+
+
+
+\begin{thebibliography}{99}
+
+\bibitem{scheme} W.~Clinger and J.~Rees, eds. {Revised$^4$ Report on the Algorithmic Language Scheme.}  In {\it ACM Lisp Pointers IV}, July--September 1991.
+
+\bibitem{sicp} H.~Abelson and G.~J.~Sussman with J.~Sussman.  {\it Structure and Interpretation of Computer Programs,} second edition.  Cambridge, Mass.:~MIT Press, 1996.  Available online from the MIT Press (free of charge),\par
+  {\tt https://mitpress.mit.edu/sites/default/files/sicp/full-text/book/book.html}\ .
+
+\bibitem{polya1923}F.~Eggenberger and G.~P\'olya. \"Uber die Statistik verketteter Vorg\"ange. {\it Z. Angew. Math. Mech.}, ({\bf 3}), pp.~279--289, 1923.
+
+\bibitem{stanford}A.~W.~Marshall and I.~Olkin.  {\it Bivariate Distributions Generated from P\'olya-Eggenberger Urn Models.}  Technical report no.~262, Department of Statistics, Stanford University.  Stanford:\ October 1989.
+
+\bibitem{mpfr}L.~Fousse, G.~Hanrot, V.~Lef\`evre, P.~P\'elissier,
+  and P.~Zimmermann. MPFR: A multiple-precision binary floating-point
+  library with correct rounding. {\it ACM Transactions on Mathematical
+    Software.} 33~({\bf 2}), June 2007, pp.~1--15.
+
+\bibitem{mpfr-2} P.~Zimmermann.  MPFR:~vers un calcul flottant correct?  {\it Interstices}, August 2005.
+
+\bibitem{spwm3}{G.~Nelson, ed.  {\it Systems Programming with Modula-3.} Englewood Cliffs, N.J.:\ Prentice Hall, 1991.}
+
+\bibitem{murphy} B.~T.~Murphy. Cost-size optima of monolithic integrated circuits. {\it Proc.~IEEE}, 12({\bf 52}), pp.~1537--1545, Dec.~1964.
+
+\bibitem{stapper1973}C.~H.~Stapper. Defect density distribution for LSI yield calculations. {\it IEEE Trans.~Electron Devices}, 7({\bf 20}), pp.~655--657, July 1973.
+
+  \bibitem{stapper1980}C.~H.~Stapper. Yield Model for Productivity Optimization of VLSI Memory Chips with Redundancy and Partially Good Product.  {\it IBM J.~Res.~Develop.\/} 3({\bf 24}), May 1980.
+
+\bibitem{moore1970}G.~E.~Moore. What level of LSI is best for you? {\it Electronics} ({\bf 43}), pp.~126--130, Feb.~1970.
+
+\bibitem{numerical-recipes}{W.~H.~Press, B.~P.~Flannery, S.~A~Teukolsky, and W.~T.~Vetterling.  {\it Numerical Recipes in Fortran 77: The Art of Scientific Computing.}  Second edition.  Cambridge:\ Cambridge University Press, 1992.}
+
+\bibitem{price}{J.~E.~Price. A new look at yield of integrated circuits, {\it Proc.~IEEE}, 8({\bf 58}), pp.~1290--1291, August 1970.}
+
+\bibitem{poisson}{S.~D.~Poisson.  Recherches sur la probabilit\'e des jugements en mati\`ere criminelle et en mati\`ere civile; pr\'ec\'ed\'ees des R\`egles g\'en\'erales du calcul des probabilit\'es.  Paris:\ Bachelier, 1837.}
+
+\bibitem{small}{L.~v.~Bortkiewicz.  {\it Das Gesetz der kleinen Zahlen.}  Leipzig:\ Teubner, 1898.}
+
+\bibitem{koren}{I.~Koren and Z.~Koren.  Defect tolerance in VLSI circuits: techniques and yield analysis.  {\it Proc.\ IEEE.} 9({\bf 86}), 1998.}
+
+\bibitem{differentials}{L.~Euler.  {\it Institutiones Calculi Differentialis.} St.~Petersburg: Academiae Imperialis Scientiarum Petropolitanae, 1755.}
+  
+\end{thebibliography}
+
+
+\section{Version}
+The Git hash of the head was {\tt \hash}.
+
+  
+  
+    
+
+
+\end{document}
+
+
+
+

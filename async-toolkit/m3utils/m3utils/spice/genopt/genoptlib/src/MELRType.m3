@@ -1,0 +1,21 @@
+(* Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information. *)
+(* SPDX-License-Identifier: Apache-2.0 *)
+
+MODULE MELRType;
+FROM Fmt IMPORT LongReal;
+
+PROCEDURE Format(READONLY a : T) : TEXT =
+  BEGIN RETURN LongReal(a) END Format;
+
+PROCEDURE Plus(READONLY a, b : T) : T = BEGIN RETURN a + b END Plus;
+
+PROCEDURE Minus(READONLY a, b : T) : T = BEGIN RETURN a - b END Minus;
+
+PROCEDURE ScalarMul(READONLY a, b : T) : T = BEGIN RETURN a * b END ScalarMul;
+
+PROCEDURE Abs(READONLY a : T) : T = BEGIN RETURN ABS(a) END Abs;
+
+PROCEDURE ZeroLT(lim : LONGREAL; READONLY a : T) : T =
+  BEGIN IF a < lim THEN RETURN 0.0d0 ELSE RETURN a END END ZeroLT;
+
+BEGIN END MELRType.

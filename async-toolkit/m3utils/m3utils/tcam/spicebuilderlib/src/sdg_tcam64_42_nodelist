@@ -1,0 +1,15 @@
+addr[0] addr[1] addr[2] addr[3] addr[4] addr[5] addr[6]
+cfg[0] cfg[10] cfg[11] cfg[1] cfg[2] cfg[3] cfg[4] cfg[5] cfg[6] cfg[7] cfg[8] cfg[9]
+clk
+data[0] data[10] data[11] data[12] data[13] data[14] data[15] data[16] data[17] data[18] data[19] data[1] data[20] data[21] data[22] data[23] data[24] data[25] data[26] data[27] data[28] data[29] data[2] data[30] data[31] data[32] data[33] data[34] data[35] data[36] data[37] data[38] data[39] data[3] data[40] data[41] data[4] data[5] data[6] data[7] data[8] data[9] fscan_shiften fscan_sin fscan_sout ipwreninb ken
+lhit[0] lhit[10] lhit[11] lhit[12] lhit[13] lhit[14] lhit[15] lhit[16] lhit[17] lhit[18] lhit[19] lhit[1] lhit[20] lhit[21] lhit[22] lhit[23] lhit[24] lhit[25] lhit[26] lhit[27] lhit[28] lhit[29] lhit[2] lhit[30] lhit[31] lhit[32] lhit[33] lhit[34] lhit[35] lhit[36] lhit[37] lhit[38] lhit[39] lhit[3] lhit[40] lhit[41] lhit[42] lhit[43] lhit[44] lhit[45] lhit[46] lhit[47] lhit[48] lhit[49] lhit[4] lhit[50] lhit[51] lhit[52] lhit[53] lhit[54] lhit[55] lhit[56] lhit[57] lhit[58] lhit[59] lhit[5] lhit[60] lhit[61] lhit[62] lhit[63] lhit[6] lhit[7] lhit[8] lhit[9]
+mask[0] mask[10] mask[11] mask[12] mask[13] mask[14] mask[15] mask[16] mask[17] mask[18] mask[19] mask[1] mask[20] mask[21] mask[22] mask[23] mask[24] mask[25] mask[26] mask[27] mask[28] mask[29] mask[2] mask[30] mask[31] mask[32] mask[33] mask[34] mask[35] mask[36] mask[37] mask[38] mask[39] mask[3] mask[40] mask[41] mask[4] mask[5] mask[6] mask[7] mask[8] mask[9]
+opwrenoutb
+read_data[0] read_data[10] read_data[11] read_data[12] read_data[13] read_data[14] read_data[15] read_data[16] read_data[17] read_data[18] read_data[19] read_data[1] read_data[20] read_data[21] read_data[22] read_data[23] read_data[24] read_data[25] read_data[26] read_data[27] read_data[28] read_data[29] read_data[2] read_data[30] read_data[31] read_data[32] read_data[33] read_data[34] read_data[35] read_data[36] read_data[37] read_data[38] read_data[39] read_data[3] read_data[40] read_data[41] read_data[4] read_data[5] read_data[6] read_data[7] read_data[8] read_data[9]
+ren
+reset_n
+rhit[0] rhit[10] rhit[11] rhit[12] rhit[13] rhit[14] rhit[15] rhit[16] rhit[17] rhit[18] rhit[19] rhit[1] rhit[20] rhit[21] rhit[22] rhit[23] rhit[24] rhit[25] rhit[26] rhit[27] rhit[28] rhit[29] rhit[2] rhit[30] rhit[31] rhit[32] rhit[33] rhit[34] rhit[35] rhit[36] rhit[37] rhit[38] rhit[39] rhit[3] rhit[40] rhit[41] rhit[42] rhit[43] rhit[44] rhit[45] rhit[46] rhit[47] rhit[48] rhit[49] rhit[4] rhit[50] rhit[51] rhit[52] rhit[53] rhit[54] rhit[55] rhit[56] rhit[57] rhit[58] rhit[59] rhit[5] rhit[60] rhit[61] rhit[62] rhit[63] rhit[6] rhit[7] rhit[8] rhit[9]
+slice_en
+vcc
+vccu
+wen 

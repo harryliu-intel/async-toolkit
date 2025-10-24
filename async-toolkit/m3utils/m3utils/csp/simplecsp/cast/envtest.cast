@@ -1,0 +1,39 @@
+// Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+// SPDX-License-Identifier: Apache-2.0
+
+module envtest;
+
+int WIDTH=32;
+
+define common attributes {
+  csp {
+    structure s =
+      (int x = 12
+       );
+    
+    function f(int -x) : int =
+      (f = -x
+       );
+  }
+}
+
+define T()(bd(WIDTH) +R)
+{
+  csp { R!0 ; R!1 }
+}
+
+define P()(bd(WIDTH) -L) <+ common
+{
+  csp {
+    *[ L?x ; print(x) ]
+  }
+
+  env {
+    simple {
+      csp {
+        L!f(0); L!f(1)
+      }
+
+    }
+  }
+}

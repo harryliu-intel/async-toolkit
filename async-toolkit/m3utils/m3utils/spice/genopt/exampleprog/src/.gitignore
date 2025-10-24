@@ -1,0 +1,12 @@
+example.out
+chopstix.out*
+*.aopt
+*.cols
+*.acols
+*.opt
+*.rho
+progress.*
+genopt.result
+*.save
+run*.out
+

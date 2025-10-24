@@ -1,0 +1,44 @@
+% Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+% SPDX-License-Identifier: Apache-2.0
+
+
+import ("libm3")
+import ("cit_util")
+import ("parseparams")
+import ("normaldev")
+import ("minimize")
+
+Module ("Histogram")
+%implementation ("Main")
+
+Module("Cloudbreak")
+Module("JBay")
+
+Module("SvsTypes")
+Interface ("N7Tech")
+Interface ("N7PMRO")
+Interface ("PMRO")
+Interface ("Corner")
+
+Module ("Interpolate")
+Module ("Power")
+implementation ("PowerUtils")
+
+Interface ("ProgramSetter")
+Interface ("Svl")
+Module ("Scale")
+
+Module ("PowerScaling")
+Module ("Power3")
+Module ("TvpMeasurement")
+
+Module ("Die")
+
+Array_sort("Die", "Die")
+Sequence ("Die", "Die")
+
+Module ("Sortable")
+
+Array_sort("Sortable", "Sortable")
+
+library("svspredict")

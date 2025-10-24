@@ -1,0 +1,15 @@
+// Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+// SPDX-License-Identifier: Apache-2.0
+
+package madisonbay.wm.switchwm.epl
+
+object IPVersion  {
+
+  val IPv4Int = 0x4
+  val IPv6Int = 0x6
+
+  sealed trait IPVersion
+  case object IPv4    extends IPVersion
+  case object IPv6    extends IPVersion
+
+}

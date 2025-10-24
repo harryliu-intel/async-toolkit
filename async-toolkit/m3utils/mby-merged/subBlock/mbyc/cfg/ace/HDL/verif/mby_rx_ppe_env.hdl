@@ -1,0 +1,53 @@
+#----------*-perl-*-------------------------
+#  This is a HDL spec file - it defines the unit and how to compile it.
+#
+#
+
+$hdl_spec = {
+
+    # List of specific VERILOG source files
+    -vlog_files => [
+       "verif/rx_ppe/ral/mby_rx_ppe_reg_pkg.sv",
+       "verif/rx_ppe/env/mby_rx_ppe_env_pkg.sv",
+       "verif/rx_ppe/seq/mby_rx_ppe_seq_lib.sv",
+    ],
+
+# List of verilog library source dirs ( corresponds with the VLOG '-y' parameter)
+    -vlog_lib_dirs => [],
+
+# List of verilog library source files ( corresponds with the VLOG '-v' parameter)
+    -vlog_lib_files => [],
+
+   # List of include directories. Corresponds with the VLOG '+incdir+' parameter
+    -vlog_incdirs => [
+        "$ENV{UVM_HOME}/src",       
+        "$ENV{OVM_HOME}/src",
+        "$ENV{SAOLA_HOME}/verilog",
+        "$ENV{SAOLA_HOME}/verilog_uvm",
+        "verif/rx_ppe/",
+        "verif/rx_ppe/tb",
+        "verif/rx_ppe/seq",
+        "verif/rx_ppe/ral",
+        "verif/rx_ppe/ti",
+        "verif/rx_ppe/env",
+	"verif/rx_ppe/env/dut_cfgs/parser_cfg",
+	"verif/rx_ppe/env/dut_cfgs/mapper_cfg",
+	"verif/rx_ppe/env/dut_cfgs/lpm_cfg",
+	"verif/rx_ppe/env/dut_cfgs/ema_cfg",	
+	"verif/rx_ppe/env/dut_cfgs/wcm_cfg",
+	"verif/rx_ppe/env/dut_cfgs/emb_cfg",
+	"verif/rx_ppe/env/dut_cfgs/hash_cfg",
+	"verif/rx_ppe/env/dut_cfgs/nexthop_cfg",
+	"verif/rx_ppe/env/dut_cfgs/policer_cfg",
+	"verif/rx_ppe/env/dut_cfgs/maskgen_cfg",
+	"verif/rx_ppe/env/dut_cfgs/triggers_cfg",
+	
+    ],
+
+# Arbitrary VLOG options
+    -vlog_opts => [
+#       '-sverilog +libext+.v+.sv -override_timescale=1ps/1ps',
+        "+define+ETH_BFM_USES_PKTLIB",
+    ],
+
+};

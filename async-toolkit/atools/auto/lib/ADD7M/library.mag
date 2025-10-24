@@ -1,0 +1,28 @@
+magic
+tech scmos
+timestamp 977203183
+use inverters inverters_0
+timestamp 965153727
+transform 1 0 -569 0 1 1335
+box -42 14 671 102
+use staticizer staticizer_0
+timestamp 962792487
+transform 1 0 201 0 1 983
+box -86 368 0 397
+use combinational combinational_0
+timestamp 977203183
+transform 1 0 -589 0 1 1236
+box -24 -1070 417 46
+use celements celements_0
+timestamp 965421252
+transform 1 0 69 0 1 865
+box -189 -704 502 360
+use pullup pullup_0
+timestamp 965421252
+transform 1 0 801 0 1 1084
+box -190 -335 110 305
+use completion completion_0
+timestamp 962801301
+transform 1 0 520 0 1 471
+box 90 -307 459 245
+<< end >>

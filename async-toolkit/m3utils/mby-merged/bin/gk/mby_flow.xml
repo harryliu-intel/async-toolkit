@@ -1,0 +1,291 @@
+<data>
+   <row>
+      <DUT>mby</DUT>
+      <Stage>genrtl</Stage>
+      <Stage_Exec>bman</Stage_Exec>
+      <!-- mesh, rx_ppe have generated RTL that is required -->
+      <AdditionalArgs>-mc mesh,rx_ppe -s all +s genrtl -nodelete_flow_data</AdditionalArgs>
+      <IsGating>1</IsGating>
+      <Turnin>1</Turnin>
+      <Release>1</Release>
+      <PostRelease>0</PostRelease>
+      <Active>1</Active>
+      <Singleton>0</Singleton>
+      <Type>build</Type>
+   </row>
+   <row>
+      <!-- Note * genrtl_mby is only run during Release * Does NOT run during Turnin -->
+      <DUT>mby</DUT>
+      <Stage>genrtl_mby</Stage>
+      <Stage_Exec>bman</Stage_Exec>
+      <AdditionalArgs>-mc mby -s all +s genrtl -nodelete_flow_data</AdditionalArgs>
+      <XdutStageDep>[mby].[genrtl]</XdutStageDep>
+      <IsGating>1</IsGating>
+      <Turnin>0</Turnin>
+      <Release>1</Release>
+      <PostRelease>0</PostRelease>
+      <Active>1</Active>
+      <Singleton>0</Singleton>
+      <Type>build</Type>
+   </row>
+   <row>
+      <DUT>mby</DUT>
+      <Stage>vcs</Stage>
+      <Stage_Exec>bman</Stage_Exec>
+      <AdditionalArgs>-s all +s collage +s vcs -mc fc,rx_ppe,mesh,igr,egr +s sim_init +s vclp +s dvt -nodelete_flow_data  -vlog_opts +define+INSTANTIATE_HIERDUMP</AdditionalArgs>
+      <XdutStageDep>[mby].[genrtl] [mby].[genrtl_mby]</XdutStageDep>
+      <IsGating>1</IsGating>
+      <Turnin>1</Turnin>
+      <Release>1</Release>
+      <PostRelease>0</PostRelease>
+      <Conditional></Conditional>
+      <Active>1</Active>
+      <Singleton>0</Singleton>
+      <Type>build</Type>
+  </row>
+  <row>
+      <DUT>mby</DUT>
+      <Stage>flg_2stages_check</Stage>
+      <Stage_Exec>febe</Stage_Exec>
+      <AdditionalArgs>-s all +s tophiergen,v2k_prep,soc.flg_v2k</AdditionalArgs>                                                                                    
+      <XdutStageDep>[mby].[vcs]</XdutStageDep>
+      <IsGating>1</IsGating>
+      <Turnin>1</Turnin>
+      <Release>1</Release>
+      <PostRelease>0</PostRelease>
+      <Active>1</Active>
+      <Singleton>0</Singleton>
+      <Type>build</Type>
+  </row>
+  <row>
+      <DUT>fc_8_no_phy</DUT>
+      <Stage>vcs</Stage>
+      <Stage_Exec>bman</Stage_Exec>
+      <AdditionalArgs>-s all +s collage +s vcs +s sim_init -mc fc_8_no_phy -variant=fc_8_no_phy -1c -ace_model_name fc_8_no_phy  -1c- -nodelete_flow_data</AdditionalArgs>
+      <XdutStageDep>[mby].[genrtl] [mby].[genrtl_mby]</XdutStageDep>
+      <IsGating>1</IsGating>
+      <Turnin>1</Turnin>
+      <Release>1</Release>
+      <PostRelease>0</PostRelease>
+      <Conditional></Conditional>
+      <Active>1</Active>
+      <Singleton>0</Singleton>
+      <Type>build</Type>
+   </row>
+  <row>
+      <DUT>mby</DUT>
+      <Stage>mesh_turnin_test</Stage>
+      <Stage_Exec>subBlock/mbyc/verif/mesh/reglist/turnin.list</Stage_Exec>
+      <AdditionalArgs>-disable_work_area_subdir -model mesh </AdditionalArgs>
+      <XdutStageDep>[mby].[vcs] [mby].[flg_2stages_check]</XdutStageDep>
+      <PassRate>100</PassRate>
+      <IsGating>1</IsGating>
+      <Turnin>1</Turnin>
+      <Release>1</Release>
+      <PostRelease>0</PostRelease>
+      <Conditional></Conditional>
+      <Active>1</Active>
+      <Singleton>0</Singleton>
+      <Type>regress</Type>
+   </row>
+   <row>
+      <DUT>mby</DUT>
+      <Stage>rx_ppe_turnin_test</Stage>
+      <Stage_Exec>subBlock/mbyc/verif/rx_ppe/reglist/turnin.list</Stage_Exec>
+      <AdditionalArgs>-disable_work_area_subdir -model rx_ppe </AdditionalArgs>
+      <XdutStageDep>[mby].[vcs] [mby].[flg_2stages_check]</XdutStageDep>
+      <PassRate>100</PassRate>
+      <IsGating>1</IsGating>
+      <Turnin>1</Turnin>
+      <Release>1</Release>
+      <PostRelease>0</PostRelease>
+      <Conditional></Conditional>
+      <Active>1</Active>
+      <Singleton>0</Singleton>
+      <Type>regress</Type>
+   </row>
+   <row>
+      <DUT>mby</DUT>
+      <Stage>ingress_turnin_test</Stage>
+      <Stage_Exec>subBlock/mbyc/verif/ingress/reglist/level0.list</Stage_Exec>
+      <AdditionalArgs>-disable_work_area_subdir -model igr </AdditionalArgs>
+      <XdutStageDep>[mby].[vcs] [mby].[flg_2stages_check]</XdutStageDep>
+      <PassRate>100</PassRate>
+      <IsGating>1</IsGating>
+      <Turnin>1</Turnin>
+      <Release>1</Release>
+      <PostRelease>0</PostRelease>
+      <Conditional></Conditional>
+      <Active>1</Active>
+      <Singleton>0</Singleton>
+      <Type>regress</Type>
+   </row>
+   <row>
+      <DUT>mby</DUT>
+      <Stage>egress_turnin_test</Stage>
+      <Stage_Exec>subBlock/mbyc/verif/egress/reglist/level0.list</Stage_Exec>
+      <AdditionalArgs>-disable_work_area_subdir -model egr </AdditionalArgs>
+      <XdutStageDep>[mby].[vcs] [mby].[flg_2stages_check]</XdutStageDep>
+      <PassRate>100</PassRate>
+      <IsGating>1</IsGating>
+      <Turnin>1</Turnin>
+      <Release>1</Release>
+      <PostRelease>0</PostRelease>
+      <Conditional></Conditional>
+      <Active>1</Active>
+      <Singleton>0</Singleton>
+      <Type>regress</Type>
+   </row>
+   <row>
+      <DUT>mby</DUT>
+      <Stage>fc_boot_basic</Stage>
+      <Stage_Exec>verif/tests/lists/fc.turnin.list</Stage_Exec>
+      <AdditionalArgs>-disable_work_area_subdir -model fc</AdditionalArgs>
+      <XdutStageDep>[mby].[vcs] [mby].[flg_2stages_check]</XdutStageDep>
+      <PassRate>100</PassRate>
+      <IsGating>1</IsGating>
+      <Turnin>1</Turnin>
+      <Release>1</Release>
+      <PostRelease>0</PostRelease>
+      <Conditional></Conditional>
+      <Active>1</Active>
+      <Singleton>0</Singleton>
+      <Type>regress</Type>
+   </row>
+   <row>
+      <DUT>fc_8_no_phy</DUT>
+      <Stage>fc_boot_basic</Stage>
+      <Stage_Exec>verif/tests/lists/fc.turnin.list</Stage_Exec>
+      <AdditionalArgs>-disable_work_area_subdir -model fc_8_no_phy</AdditionalArgs>
+      <XdutStageDep>[fc_8_no_phy].[vcs]</XdutStageDep>
+      <PassRate>100</PassRate>
+      <IsGating>1</IsGating>
+      <Turnin>1</Turnin>
+      <Release>1</Release>
+      <PostRelease>0</PostRelease>
+      <Conditional></Conditional>
+      <Active>1</Active>
+      <Singleton>0</Singleton>
+      <Type>regress</Type>
+   </row>
+       <!-- Make file sandbox testing -->
+    <row>
+        <DUT>mby</DUT>
+        <Stage>sandbox_mby_egr</Stage>
+        <Stage_Exec>subBlock/mbyc/src/egr/sandbox/gk_run_egr_sandbox.csh</Stage_Exec>
+        <AdditionalArgs></AdditionalArgs>
+        <XdutStageDep></XdutStageDep>
+        <PassRate></PassRate>
+        <IsGating>1</IsGating>
+        <Turnin>1</Turnin>
+        <Release>1</Release>
+        <PostRelease>0</PostRelease>
+        <Conditional></Conditional>
+        <Active>1</Active>
+        <Singleton>0</Singleton>
+        <Type>other</Type>
+    </row>
+
+<row>
+                <Cluster>mby</Cluster>
+                <DUT>mby</DUT>
+                <Stage>jasper</Stage>
+                <Stage_Exec>bman</Stage_Exec>
+                <AdditionalArgs>-mc mby -s all +s jg -s jg_test_mby -nodelete_flow_data</AdditionalArgs>
+                <XdutStageDep>[mby].[genrtl]</XdutStageDep>
+                <PassRate></PassRate>
+                <IsGating>0</IsGating>
+                <Turnin>1</Turnin>
+                <Release>1</Release>
+                <PostRelease>0</PostRelease>
+                <Conditional></Conditional>
+                <Rel_AdditionalArgs></Rel_AdditionalArgs>
+                <Active>1</Active>
+                <Singleton>0</Singleton>
+                <Type>build</Type>
+                <gkMNM_checked>1</gkMNM_checked>
+        </row>
+    <row>
+                <Cluster>mby</Cluster>
+                <DUT>mby</DUT>
+                <Stage>jasper_tests</Stage>
+                <Stage_Exec>verif/mby/tests/lists/mby_jg.list</Stage_Exec>
+                <AdditionalArgs></AdditionalArgs>
+                <XdutStageDep>[mby].[jasper]</XdutStageDep>
+                <PassRate></PassRate>
+                <IsGating>0</IsGating>
+                <Turnin>1</Turnin>
+                <Release>1</Release>
+                <PostRelease>0</PostRelease>
+                <Conditional></Conditional>
+                <Rel_AdditionalArgs></Rel_AdditionalArgs>
+                <Active>1</Active>
+                <Singleton>0</Singleton>
+                <Type>regress</Type>
+                <gkMNM_checked>1</gkMNM_checked>
+        </row>
+
+
+
+<row>
+                <Cluster>mby</Cluster>
+                <DUT>mby</DUT>
+                <Stage>jasper_lint</Stage>
+                <Stage_Exec>bman</Stage_Exec>
+                <AdditionalArgs>-mc mby -s all +s jg_lint -s jg_test_mby -nodelete_flow_data</AdditionalArgs>
+                <XdutStageDep>[mby].[jasper]</XdutStageDep>
+                <PassRate></PassRate>
+                <IsGating>0</IsGating>
+                <Turnin>0</Turnin>
+                <Release>0</Release>
+                <PostRelease>0</PostRelease>
+                <Conditional></Conditional>
+                <Rel_AdditionalArgs></Rel_AdditionalArgs>
+                <Active>1</Active>
+                <Singleton>0</Singleton>
+                <Type>regress</Type>
+                <gkMNM_checked>1</gkMNM_checked>
+        </row>
+
+        <row>
+               <DUT>mby</DUT>
+               <Cluster>mby</Cluster>
+               <Stage>sgcdc</Stage>
+               <Stage_Exec>bman</Stage_Exec>
+               <AdditionalArgs> -s all +s sgcdc -mc mby -nodelete_flow_data</AdditionalArgs>
+               <XdutStageDep></XdutStageDep>
+               <PassRate></PassRate>
+               <IsGating>1</IsGating>
+               <Turnin>1</Turnin>
+               <Release>1</Release>
+               <PostRelease>0</PostRelease>
+               <Conditional></Conditional>
+               <Rel_AdditionalArgs></Rel_AdditionalArgs>
+               <Active>1</Active>
+               <Singleton>0</Singleton>
+               <Type>build</Type>
+               <gkMNM_checked>1</gkMNM_checked>
+       </row>
+       <row>
+               <Cluster>mby</Cluster>
+               <DUT>mby</DUT>
+               <Stage>sgcdc_test</Stage>
+               <Stage_Exec>verif/tests/lists/mby_sgcdc.list</Stage_Exec>
+               <AdditionalArgs></AdditionalArgs>
+               <XdutStageDep>[mby].[sgcdc]</XdutStageDep>
+               <PassRate>100</PassRate>
+               <IsGating>1</IsGating>
+               <Turnin>1</Turnin>
+               <Release>1</Release>
+               <PostRelease>0</PostRelease>
+               <Conditional></Conditional>
+               <Rel_AdditionalArgs></Rel_AdditionalArgs>
+               <Active>0</Active>
+               <Singleton>0</Singleton>
+               <Type>regress</Type>
+        </row>
+
+</data>
+
+
+

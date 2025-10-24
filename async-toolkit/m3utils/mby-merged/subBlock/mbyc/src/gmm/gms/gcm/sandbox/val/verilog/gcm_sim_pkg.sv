@@ -1,0 +1,62 @@
+// Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+// SPDX-License-Identifier: Apache-2.0
+
+///
+///  INTEL CONFIDENTIAL
+///
+///  Copyright 2017 Intel Corporation All Rights Reserved.
+///
+///  The source code contained or described herein and all documents related
+///  to the source code ("Material") are owned by Intel Corporation or its
+///  suppliers or licensors. Title to the Material remains with Intel
+///  Corporation or its suppliers and licensors. The Material contains trade
+///  secrets and proprietary and confidential information of Intel or its
+///  suppliers and licensors. The Material is protected by worldwide copyright
+///  and trade secret laws and treaty provisions. No part of the Material may
+///  be used, copied, reproduced, modified, published, uploaded, posted,
+///  transmitted, distributed, or disclosed in any way without Intel's prior
+///  express written permission.
+///
+///  No license under any patent, copyright, trade secret or other intellectual
+///  property right is granted to or conferred upon you by disclosure or
+///  delivery of the Materials, either expressly, by implication, inducement,
+///  estoppel or otherwise. Any license under such intellectual property rights
+///  must be express and approved by Intel in writing.
+///
+// ---------------------------------------------------------------------------------------------------------------------
+// -- Author : Jim McCormick <jim.mccormick@intel.com>
+// -- Project Name : ??? 
+// -- Description  : A package file containing definitions that are useful across the testbench. 
+// ---------------------------------------------------------------------------------------------------------------------
+`ifndef GCM_SIM_PKG_SV
+`define GCM_SIM_PKG_SV
+
+package gcm_sim_pkg;
+
+localparam N_TRACK_EQ      = 2; // Number of dequeue tracks
+localparam N_TRACK_EQ_MSB  = mby_gcm_pkg::N_TRACK_EQ - 1;  // Number of dequeue tracks
+//-----------------------------------------------------------------------------
+// simple typedefs
+//-----------------------------------------------------------------------------
+typedef logic [mby_gmm_pkg::MBY_MGP_ID_MSB:0] mby_mgp_id_t;
+typedef logic [N_TRACK_EQ_MSB:0]              mby_trk_id_t;
+
+
+//typedef int     knob_t;
+//typedef knob_t  inp_knob_t [tmpl_pkg::NUM_INPUTS-1:0];
+
+//-----------------------------------------------------------------------------
+// struct typedefs
+//-----------------------------------------------------------------------------
+
+//-----------------------------------------------------------------------------
+// functions
+//-----------------------------------------------------------------------------
+
+//-----------------------------------------------------------------------------
+// object classes 
+//-----------------------------------------------------------------------------
+
+endpackage : gcm_sim_pkg
+
+`endif // GCM_SIM_PKG_SV

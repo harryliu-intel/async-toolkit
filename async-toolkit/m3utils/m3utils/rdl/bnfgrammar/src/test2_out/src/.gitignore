@@ -1,0 +1,6 @@
+*.log
+*.log.*
+derived.m3m
+expression.l
+expression.t
+expression.y

@@ -1,0 +1,11 @@
+#!/bin/sh
+
+cells=cell_list.i0sfvn003aa1d02x5
+workdir=siliconsmart.i0sfvn003aa1d02x5
+env=env.zsh.0p9eu1_big
+pvts=pvts.zsh.300_85_cmax
+
+# /p/hdk/bin/cth_psetup -p ipde/2023.46.04 -cfg 78p3_opt12_r08hp2.cth -nowash -tool ipde_all -x '$SETUP_IPDE'
+
+. ./do_setup.sh
+

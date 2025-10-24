@@ -1,0 +1,19 @@
+% Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+% SPDX-License-Identifier: Apache-2.0
+
+import ("libm3")
+import ("cit_util")
+import ("trie")
+
+Interface ("ParseProc")
+Interface ("ParseProcRec")
+Interface ("ParseError")
+
+Module ("RecursiveParser")
+Interface ("RecursiveParserRep")
+Interface ("RecursiveLexer")
+
+Trie("CharCard", "Char", "Cardinal")
+Trie("Parse", "Char", "ParseProcRec")
+
+library ("recursiveparse")

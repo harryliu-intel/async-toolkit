@@ -1,0 +1,6 @@
+<wp> ~a & ~b -> _x+
+~_PReset! -> _x+
+@staticize(_x)
+
+@require(wp>=60)
+@stretch(p,(wp-8)/2)

@@ -1,0 +1,258 @@
+/* Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information. */
+/* SPDX-License-Identifier: Apache-2.0 */
+
+#include <stdint.h>
+#include <stdio.h>
+#include <string.h>
+
+#include <mby_errors.h>
+#include <mby_init.h>
+#include <mby_pipeline.h>
+#include "tst_model_c_write.h"
+
+
+#include "mby_basic_flood_init.h"
+
+#define COLOR_RED     "\x1b[31m"
+#define COLOR_GREEN   "\x1b[32m"
+#define COLOR_RESET   "\x1b[0m"
+
+// TODO make this const once model allows... or add memcpy if it won't
+/*const*/unsigned char sent_packet[1024] =  {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0xcc, 0xaa, 0xbb, 0xcc, 0xdd, 0xee,
+                0x08, 0x00, 0x45, 0x00, 0x00, 0x3e, 0x0c, 0x65, 0x40, 0x00, 0x40, 0x06,
+                0x17, 0x50, 0x0a, 0x01, 0x01, 0x01, 0x0a, 0x02, 0x02, 0x02, 0xe4, 0x52,
+                0x30, 0x39, 0xd3, 0x4d, 0xb1, 0x36, 0xfe, 0xa2, 0xa9, 0xfb, 0x80, 0x18,
+                0x00, 0xe5, 0x17, 0x36, 0x00, 0x00, 0x01, 0x01, 0x08, 0x0a, 0x00, 0x67,
+                0xc1, 0x0e, 0x00, 0x67, 0xbd, 0x56, 0x68, 0x65, 0x6c, 0x6c, 0x6f, 0x20,
+                0x4d, 0x42, 0x59, 0x0a};
+
+const int send_sw = 0;
+const int send_port = 0;
+
+static mby_top_map       top_map;
+static mby_top_map__addr top_map_addr;
+
+static mbyRxStatsToRxOut rxs2rxo;
+static varchar_t rx_data;
+
+inline static int checkOk (const char * test, const fm_status status)
+{
+    int rv = (status == FM_OK) ? 0 : -1;
+
+    if (rv == 0)
+        printf(COLOR_GREEN "[pass]");
+    else
+        printf(COLOR_RED   "[fail]");
+
+    printf(COLOR_RESET " %s\n", test);
+
+    return rv;
+}
+
+fm_status init()
+{
+    mby_top_map__init(&top_map, &top_map_addr, mby_field_init_cb);
+    // TODO verify if that's all that we need
+    mby_init_common_regs(&(top_map.mpp[0].mgp[0].rx_ppe), &(top_map.mpp[0].mgp[0].tx_ppe));
+    basic_flood_init(&(top_map.mpp[0].mgp[0].rx_ppe));
+
+    return FM_OK;
+}
+
+
+fm_status check
+(
+    fm_uint32 sw,
+    fm_uint32 rx_port,
+    fm_uint32 tx_port,
+    fm_uint32 exp_port,
+    fm_uint32 recv_packet_len,
+    fm_uint32 exp_packet_len
+)
+{
+    fm_uint32 bank  = 2;
+    fm_uint16 index = (rx_port * 16) + STAT_FloodForwarded;
+    fm_uint64 val;
+
+    if ((tx_port != exp_port) || (recv_packet_len != exp_packet_len)) {
+        printf("TX packet is invalid\n");
+        return FM_FAIL;
+    }
+
+    // Check RX counters
+    rx_stats_bank_frame_r * const bank_frame = &(top_map.mpp[0].mgp[0].rx_ppe.stats.RX_STATS_BANK_FRAME[bank][index]);
+
+    if (bank_frame->FRAME_COUNTER != 1) {
+        printf("Frame counter is invalid\n");
+        return FM_FAIL;
+    }
+
+    rx_stats_bank_byte_r * const bank_byte = &(top_map.mpp[0].mgp[0].rx_ppe.stats.RX_STATS_BANK_BYTE[bank][index]);
+
+    if (bank_byte->BYTE_COUNTER != exp_packet_len) {
+        printf("Byte counter is invalid\n");
+        return FM_FAIL;
+    }
+
+    return FM_OK;
+}
+
+static fm_status sendPacket
+(
+    const fm_uint32         sw,
+    const fm_uint32         port,
+    const fm_byte   * const packet,
+    const fm_uint32         length
+)
+{
+    fm_status sts = FM_OK;
+
+    if (sw != 0)
+        sts = FM_ERR_UNSUPPORTED;
+    else
+    {
+        // Top CSR map for tile 0 receive pipeline:
+        // TODO use the pipeline associated to the specific ingress port
+
+        mby_ppe_rx_top_map       const * const rx_top_map   = &(top_map.mpp[0].mgp[0].rx_ppe);
+        mby_ppe_rx_top_map__addr const * const rx_top_map_w = &(top_map_addr.mpp[0].mgp[0].rx_ppe);
+        mby_shm_map              const * const shm_map      = &(top_map.mpp[0].shm);
+
+        // Input struct:
+        mbyRxMacToParser mac2par;
+
+        // Populate input:
+        mac2par.RX_LENGTH = (fm_uint32) length;
+        mac2par.RX_PORT   = (fm_uint32) port;
+        memcpy(mac2par.SEG_DATA, packet, MIN(length, sizeof(mac2par.SEG_DATA)));
+
+        // Set variables for TxPipeline
+        rx_data.data   = packet;
+        rx_data.length = length;
+
+        // Call RX pipeline:
+        RxPipeline(rx_top_map, rx_top_map_w, shm_map, &mac2par, &rxs2rxo);
+    }
+    return sts;
+}
+
+static fm_status receivePacket
+(
+    const fm_uint32         sw,
+    fm_uint32       * const port,
+    fm_byte         * const packet,
+    fm_uint32       * const length,
+    const fm_uint32         max_pkt_size
+)
+{
+    fm_status sts = FM_OK;
+
+    if (sw != 0)
+        sts = FM_ERR_UNSUPPORTED;
+    else
+    {
+        mby_ppe_tx_top_map       const * const tx_top_map   = &(top_map.mpp[0].mgp[0].tx_ppe);
+        mby_ppe_tx_top_map__addr const * const tx_top_map_w = &(top_map_addr.mpp[0].mgp[0].tx_ppe);
+        mby_shm_map              const * const shm_map      = &(top_map.mpp[0].shm);
+
+        // Input struct:
+        mbyTxInToModifier txi2mod;
+        txi2mod.CONTENT_ADDR  = rxs2rxo.CONTENT_ADDR;
+        txi2mod.DROP_TTL      = rxs2rxo.DROP_TTL;
+        txi2mod.ECN           = rxs2rxo.ECN;
+        txi2mod.EDGLORT       = rxs2rxo.EDGLORT;
+        txi2mod.FNMASK        = rxs2rxo.FNMASK;
+        txi2mod.IS_TIMEOUT    = rxs2rxo.IS_TIMEOUT;
+        txi2mod.L2_DMAC       = rxs2rxo.L2_DMAC;
+        txi2mod.L2_EVID1      = rxs2rxo.L2_EVID1;
+        txi2mod.ROUTED        = rxs2rxo.ROUTED;
+        txi2mod.MIRTYP        = rxs2rxo.MIRTYP;
+        txi2mod.MOD_IDX       = rxs2rxo.MOD_IDX;
+        txi2mod.MOD_PROF_IDX  = rxs2rxo.MOD_PROF_IDX;
+        txi2mod.NO_MODIFY     = rxs2rxo.NO_MODIFY;
+        txi2mod.OOM           = rxs2rxo.OOM;
+        txi2mod.PARSER_INFO   = rxs2rxo.PARSER_INFO;
+        txi2mod.PA_HDR_PTRS   = rxs2rxo.PA_HDR_PTRS;
+        txi2mod.PM_ERR        = rxs2rxo.PM_ERR;
+        txi2mod.PM_ERR_NONSOP = rxs2rxo.PM_ERR_NONSOP;
+        txi2mod.QOS_L3_DSCP   = rxs2rxo.QOS_L3_DSCP;
+        txi2mod.SAF_ERROR     = rxs2rxo.SAF_ERROR;
+        txi2mod.TAIL_CSUM_LEN = rxs2rxo.TAIL_CSUM_LEN;
+        txi2mod.TX_DROP       = rxs2rxo.TX_DROP;
+        txi2mod.TX_TAG        = rxs2rxo.TX_TAG;
+        txi2mod.XCAST         = rxs2rxo.XCAST;
+
+        // Output struct:
+        mbyTxStatsToTxMac txs2mac;
+        // TODO why is this commented out in the struct? REVISIT
+        //txs2mac.TX_DATA = packet; //points at provided buffer
+
+        // Call RX pipeline:
+        // TODO what do we do here with rx_data and tx_data?
+        varchar_builder_t txd_builder;
+        varchar_t tx_data;
+
+        varchar_builder_init(&txd_builder, &tx_data, malloc, free);
+
+        TxPipeline(tx_top_map, tx_top_map_w, shm_map, &rx_data,
+                   &txi2mod, &txs2mac, &txd_builder);
+
+        // Populate output:
+        *port   = txs2mac.TX_PORT;
+        *length = tx_data.length;
+    }
+    return sts;
+}
+
+int main()
+{
+    int sw = 0;
+
+    const uint32_t recv_pkt_buf_len = 1024;
+    unsigned char recv_packet_buf[recv_pkt_buf_len];
+    fm_uint32 exp_port = 1;
+    fm_uint32 recv_port;
+    fm_uint32 exp_packet_len = 1024;
+    fm_uint32 recv_packet_len;
+    fm_status status = FM_OK;
+
+    printf("--------------------------------------------------------------------------------\n");
+
+    int rv = 0;
+
+    for (fm_uint i = 0; i < 1; i++) {
+
+        status = init();
+        rv = checkOk("init", status);
+        if (rv != 0)
+            break;
+
+        status = sendPacket(send_sw, send_port, sent_packet, sizeof(sent_packet));
+        rv = checkOk("sendPacket", status);
+        if (rv != 0)
+            break;
+
+        status = receivePacket(send_sw, &recv_port, recv_packet_buf, &recv_packet_len, recv_pkt_buf_len);
+        rv = checkOk("receivePacket", status);
+        if (rv != 0)
+            break;
+
+        status = check(send_sw, send_port, recv_port, exp_port, recv_packet_len, exp_packet_len);
+        rv = checkOk("check", status);
+        if (rv != 0)
+            break;
+    }
+
+    printf("--------------------------------------------------------------------------------\n");
+
+    if (rv == 0)
+        printf(COLOR_GREEN "[pass]");
+    else
+        printf(COLOR_RED   "[fail]");
+
+    printf(" Basic flood tests\n"  COLOR_RESET);
+
+    printf("--------------------------------------------------------------------------------\n");
+
+    return rv;
+}

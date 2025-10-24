@@ -1,0 +1,37 @@
+% Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+% SPDX-License-Identifier: Apache-2.0
+
+/* $Id: m3makefile,v 1.30 2010/12/03 09:26:28 mika Exp $ */
+import ("libm3")
+import ("cit_util")
+import ("matrix")
+import ("mscheme")
+import ("modula3scheme")
+import ("schemereadline")
+
+
+Generic_module("Regression")
+
+readonly proc _regression(nm, elem, lu2, m2m3, vis) is
+	build_generic_intf(nm, "Regression", [elem], vis)
+	build_generic_impl(nm, "Regression", [elem, lu2, m2m3])
+end
+
+readonly proc Regression(nm, elem, lu2, m2m3) is 
+	_regression(nm, elem, lu2, m2m3, VISIBLE)
+end
+
+readonly proc regression(nm, elem, lu2, m2m3) is 
+	_regression(nm, elem, lu2, m2m3, HIDDEN)
+end
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+Regression("LRRegression","LRMatrix2","LRLU2","LRM2M3")
+Regression("RRegression", "RMatrix2","RLU2","RM2M3")
+
+c_source("drdist")
+Interface("drdist")
+
+
+library ("regression")

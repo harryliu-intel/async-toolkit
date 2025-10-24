@@ -1,0 +1,4 @@
+read "cmos.in"
+set handlayout 1.0
+load $1
+outputskill $2

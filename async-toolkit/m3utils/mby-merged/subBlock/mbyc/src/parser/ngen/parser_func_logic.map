@@ -1,0 +1,36 @@
+input_fifo_rd_en        >> o_q_input_fifo_rd_en
+input_fifo_wr_en        >> o_q_input_fifo_wr_en
+input_fifo_rd_adr       >> o_q_input_fifo_rd_adr
+input_fifo_wr_adr       >> o_q_input_fifo_wr_adr
+input_data_fifo_wr_data >> o_q_input_data_fifo_wr_data
+input_data_fifo_rd_data >> i_input_data_fifo_rd_data
+input_md_fifo_wr_data   >> o_q_input_md_fifo_wr_data
+input_md_fifo_rd_data   >> i_input_md_fifo_rd_data
+
+md_dly_fifo_rd_en   >> o_q_md_dly_fifo_rd_en
+md_dly_fifo_wr_en   >> o_q_md_dly_fifo_wr_en
+md_dly_fifo_rd_adr  >> o_q_md_dly_fifo_rd_adr
+md_dly_fifo_wr_adr  >> o_q_md_dly_fifo_wr_adr
+md_dly_fifo_wr_data >> o_q_md_dly_fifo_wr_data
+md_dly_fifo_rd_data >> i_md_dly_fifo_rd_data
+
+tail_dly_fifo_rd_en     >> o_q_tail_dly_fifo_rd_en
+tail_dly_fifo_wr_en     >> o_q_tail_dly_fifo_wr_en
+tail_dly_fifo_rd_adr    >> o_q_tail_dly_fifo_rd_adr
+tail_dly_fifo_wr_adr    >> o_q_tail_dly_fifo_wr_adr
+tail_dly_fifo_wr_data   >> o_q_tail_dly_fifo_wr_data
+tail_dly_fifo_rd_data   >> i_tail_dly_fifo_rd_data
+
+ptype_ram_rd_en     >> o_ptype_ram_rd_en
+ptype_ram_wr_en     >> o_q_ptype_ram_wr_en
+ptype_ram_rd_adr    >> o_ptype_ram_rd_adr
+ptype_ram_wr_adr    >> o_q_ptype_ram_wr_adr
+ptype_ram_wr_data   >> o_q_ptype_ram_wr_data
+ptype_ram_rd_data   >> i_ptype_ram_rd_data
+
+extract_cfg_rd_en   >> o_extract_cfg_rd_en
+extract_cfg_wr_en   >> o_q_extract_cfg_wr_en
+extract_cfg_rd_adr  >> o_extract_cfg_rd_adr
+extract_cfg_wr_adr  >> o_q_extract_cfg_wr_adr
+extract_cfg_wr_data >> o_q_extract_cfg_wr_data
+extract_cfg_rd_data >> i_extract_cfg_rd_data

@@ -1,0 +1,23 @@
+% Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+% SPDX-License-Identifier: Apache-2.0
+
+import ("libm3")
+import ("cit_util")
+import ("matrix")
+import ("minimize")
+
+%c_source ("calcfc")
+c_source ("cobyla")
+c_source ("cobylb")
+%c_source ("main")
+c_source ("trstlp")
+c_source ("dummy") % not needed if you have the real f2c installed
+
+interface ("COBYLA")
+
+Module ("COBYLA_M3")
+
+%implementation("Main")
+%program ("testcobyla")
+
+library ("cobyla")

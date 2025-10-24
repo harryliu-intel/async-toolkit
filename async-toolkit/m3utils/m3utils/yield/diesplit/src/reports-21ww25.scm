@@ -1,0 +1,537 @@
+; Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+; SPDX-License-Identifier: Apache-2.0
+
+(load "example.scm")
+(load "struct-yield.scm")
+
+(define *spare-mac* #t)
+
+(define (tfc-model)
+  
+  "yield improvements:
+   Spare mac per quadrant
+   Mark one cdm memory block bad in s/w (out of 192)
+   Use spare bit in cdm for logic/wiring redundancy
+   Mark cdm block bad if address logic/wiring bad to that block
+   Use spare bit in stm for memory and logic defect tolerance
+   Use spare wire in mac channels
+   25T options:
+   Even/odd pipes, still requires both tm_cores, all cdm functional
+   Left/right pipes, requires only one tm_core, half cdm functional.
+  "
+    (let*(
+          ;;sram module areas
+          (stm-unit-sram-area (* .0373830  .1264480))
+          (ppu-unit-tcam-area (* .1292850  .0382200))
+
+          ;;ppu params
+          (npipes                16)
+          (ppu-nstages           13)
+          (ppu-num-stm-rows      12) ;;ingress + egress
+          (ppu-num-ram-cols/stg   8)
+          (num-tcams/stage       16)
+          (stm-row-y           (/ 1.059424 8))
+          (parde-x              .98)  ;;leftover x in 4.7mm after 13ppu stages.
+          ;;just an estimate
+          (ppu-x            .339456);;per stage
+          (ppu-core-y       .3234)
+          (tcam-array-y     .40656)
+          
+          ;;cdm params
+          (cdm-unit-sram-x  .0233070)
+          (cdm-unit-sram-y  .1222480)
+          (cdm-unit-sram-area (* cdm-unit-sram-x cdm-unit-sram-y))
+          (num-cdm-ram-cols 128)
+          (num-cdm-ram-rows/subwd 6)
+          (num-cdm-ram-subwords 34)
+          (num-cdm-ram-rows (* num-cdm-ram-rows/subwd num-cdm-ram-subwords))
+          (num-cdm-unit-rams  (* num-cdm-ram-rows num-cdm-ram-cols))
+          (cdm-x-overhead   (/ (* 50 .204) (* 2 23.652)))
+          ;; 0.21562658 50 gates per rampair
+          (cdm-y-overhead   (/ (+  (* 5 52)(* 1 148))
+                               (* 6 588) 1.0))
+          ;; 5x52G + 1x148G per 6 ram rows = 0.11564626 y overhead
+          (cdm-area-mlpr    (* (1+ cdm-x-overhead)(1+ cdm-y-overhead)))
+          (cdm-x      (* cdm-unit-sram-x num-cdm-ram-cols (1+ cdm-x-overhead)))
+          (cdm-y      (* cdm-unit-sram-y num-cdm-ram-rows (1+ cdm-y-overhead)))
+          (cdm-sram-area    (* cdm-unit-sram-area num-cdm-unit-rams))
+          (cdm-area   (* cdm-sram-area cdm-area-mlpr))
+          (cdm-logic-area   (- cdm-area cdm-sram-area))
+
+          ;;tm core
+          (tm-core-area   (* 6.3 6.9))
+          (tm-core-ramfraction  .33)  ;;just a guess
+
+          ;;mac
+          ;;
+          (anurag-21ww25-512-bloat 10)
+          (mac-area   (+ (* 2 0.7 (/ 1.2) (/ anurag-21ww25-512-bloat (* 4 17))) (* 1.5 .675)))
+
+          ;;mac channels
+          (mac-channel-lr-width .6) ;;est 30mm tall
+          (mac-channel-tb-width .5) ;;est 20mm wide
+
+          ;;serdes
+          (serdes-area    (+ (* 32 3.7 1.5)(* 8 5 1.5)))
+
+          ;;misc blocks
+          (misc-areas   (+ 2.72         ;;host+sbc
+                           3.4          ;;risc
+                           (* 1.5 .675) ;;eth800G
+                           .45          ;;ethcpu
+                           .45))        ;;tcu
+          
+          (gpio-area    (+ 1.96 5.69))
+
+          ;;mac channel
+          (mac-channel-area (* 2 (+ (* mac-channel-lr-width 30)
+                                    (* mac-channel-tb-width 20))))
+          ;;ppu, parde
+          (ppu-ysize
+           (+ (* ppu-num-stm-rows stm-row-y)(* 2 ppu-core-y) tcam-array-y))
+          (parde-area   (* parde-x ppu-ysize npipes))
+          (parde-ramfraction  .33)
+
+          (ppu-core-area    (* ppu-nstages 2 npipes ppu-x ppu-core-y))
+          
+          ;;tcam
+          (tcam-area    (* tcam-array-y ppu-x ppu-nstages npipes))
+          (tcam-memory-area
+           (* ppu-unit-tcam-area num-tcams/stage ppu-nstages npipes))
+
+          ;;stm
+          (stm-area   (* ppu-nstages ppu-num-stm-rows npipes ppu-x stm-row-y))
+          (stm-ram-area
+           (* stm-unit-sram-area ppu-num-stm-rows ppu-num-ram-cols/stg
+              ppu-nstages npipes))
+          (stm-ram-array-efficiency (/ stm-ram-area stm-area))
+
+          ;;mac channel spare wire
+          (mac-channel-repairable .95)
+          (mac-channel-repair-cost .01)
+
+          ;;cdm memory
+          (cdm-numblocks    (* num-cdm-ram-rows/subwd num-cdm-ram-cols 1/4 1.0))
+
+
+          (cdm-logic-repairable .95)
+          (cdm-logic-repair-cost .01)
+
+          ;;stm memory
+          (stm-ram-repairable .9)  ;;assume spare bit
+          (stm-ram-repair-cost .01)
+          
+          (stm-logic-repairable .87) ;;20b address not repairable out of 137b data + 20b address
+          (stm-logic-repair-cost .01)
+
+          )
+
+      ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+      ;;                                     ;;
+      ;;      Definition of TFc follows      ;;
+      ;;                                     ;;
+      ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+      `(tfc
+        (misc ,misc-areas
+              ram-area     ,(* misc-areas .25)
+              channel-area ,(* misc-areas .25))
+        
+        (tm-core
+         (* #f 2 2
+            (tm-core-core ,tm-core-area
+                          ram-area ,(* tm-core-area tm-core-ramfraction))))
+
+        (gpio ,gpio-area
+              channel-area ,gpio-area)
+
+
+        (serdes ,serdes-area
+                serdes-area ,serdes-area)
+
+        (evenodd
+         
+        (extra-bloat ,(* anurag-21ww25-512-bloat 0.3))
+
+         (mac (* #f 4 4 (* mac-spare ,(if *spare-mac* 17 16) 16 (onemac ,mac-area))))
+         
+         (mac-channel ,mac-channel-area
+                      channel-area ,mac-channel-area
+                      repair ,mac-channel-repairable
+                      repair-cost ,mac-channel-repair-cost)
+         
+         (ppu-pipe
+          
+          (parde ,parde-area
+                 ram-area ,(* parde-area parde-ramfraction))
+          
+          (ppu-core ,ppu-core-area)
+          
+          (tcam-array ,tcam-area ram-area ,tcam-memory-area)
+          
+          (stm
+           (stm-ram ,stm-ram-area
+                    ram-area ,stm-ram-area
+                    repair ,stm-ram-repairable
+                    repair-cost ,stm-ram-repair-cost)
+           (stm-logic ,(- stm-area stm-ram-area)
+                      repair ,stm-logic-repairable
+                      repair-cost ,stm-logic-repair-cost))
+          );;ppu-pipe
+         
+         (cdm
+          (cdm-logic ,cdm-logic-area
+                     repair ,cdm-logic-repairable
+                     repair-cost ,cdm-logic-repair-cost)
+          
+          (cdm-sram (* cdm-spare ,(+ 1 cdm-numblocks) ,cdm-numblocks 
+                       (cdm-block ,(/ cdm-sram-area cdm-numblocks)
+                                  ram-area ,(/ cdm-sram-area cdm-numblocks))))
+          );; cdm
+         );;evenodd
+        );;quote
+      );;let*
+    );;define
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (lrhalf-25t-model)
+  (make-downbin tfc-model
+                `(lrhalf-25t
+                  (* lr-spare 2 1
+                     (lr-half (scale ,1/2 (to-lrhalf serdes evenodd tm-core))))
+                  misc
+                  gpio)
+                )
+  )
+
+(define (eohalf-25t-model)
+  (make-downbin tfc-model
+                `(eohalf-25t
+                  (* eo-spare 2 1
+                     (eo-half (scale ,1/2 (to-eohalf serdes evenodd))))
+                  tm-core
+                  misc
+                  gpio)
+                )
+  )
+
+(compute-yield (tfc-model) build-yield)
+
+(if #f
+    (begin
+(mergesort
+ (map (lambda(m)(Mpfr.GetLR m 'N))
+      (map (lambda(x)(eval-yield x the-yield-model))
+           (map cadr (compute-yield (tfc-model) build-yield)))) <)
+
+(mergesort
+ (map (lambda(m)(Mpfr.GetLR m 'N))
+      (map (lambda(x)(eval-yield x the-yield-model))
+           (map cadr (compute-yield (lrhalf-25t-model) build-yield)))) <)
+
+(mergesort
+ (map (lambda(m)(Mpfr.GetLR m 'N))
+      (map (lambda(x)(eval-yield x the-yield-model))
+           (map cadr (compute-yield (eohalf-25t-model) build-yield)))) <)
+))
+
+(define tfc-tags (accumulate union '() (map car (compute-yield (tfc-model) build-yield))))
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (sqmm-per-good-die r)
+  ;; how many sq mm do we have to fab to get a single good die out
+  (/ (car r) (cadr r)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (tfc-results)
+  (map (lambda(alt) (decorate-yield alt (tfc-model) the-yield-model))
+       (compute-yield (tfc-model) build-yield)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (eohalf-results)
+  (map (lambda(alt) (decorate-yield alt (eohalf-25t-model) the-yield-model))
+       (compute-yield (eohalf-25t-model) build-yield)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (lrhalf-results)
+  (map (lambda(alt) (decorate-yield alt (lrhalf-25t-model) the-yield-model))
+       (compute-yield (lrhalf-25t-model) build-yield)))
+
+
+(if #f 
+(map sqmm-per-good-die
+     (mergesort
+      tfc-results
+      (lambda(a b) (< (cadr a) (cadr b)))))
+)
+
+(if #f 
+(map sqmm-per-good-die
+     (mergesort
+      eohalf-results
+      (lambda(a b) (< (cadr a) (cadr b)))))
+)
+
+(if #f
+(map sqmm-per-good-die
+     (mergesort
+      lrhalf-results
+
+      (lambda(a b) (< (cadr a) (cadr b)))))
+)
+
+(if #f
+(mergesort tfc-results (lambda(a b) (< (cadr a) (cadr b))))
+)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;;     TWO-DIE TFc spec
+;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (tfc-twodie-model)
+  (let ((split-overhead-per-die 35))
+    (make-downbin tfc-model
+                  `(tfc-twodie (half-onedie (scale ,1/2 tfc))
+                               (d2d ,split-overhead-per-die
+                                    serdes-area ,split-overhead-per-die)
+                               )
+                  )
+    )
+  )
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (lrhalf-25t-model)
+  (make-downbin tfc-model
+                `(lrhalf-25t
+                  (* lr-spare 2 1
+                     (lr-half (scale ,1/2 (to-lrhalf serdes evenodd tm-core))))
+                  misc
+                  gpio)
+                )
+  )
+
+(define (lhalf-25t-model)
+  (make-downbin tfc-model
+                `(lhalf-25t
+                  (* lr-spare 1 1
+                     (lr-half (scale ,9/16 (to-lrhalf serdes evenodd tm-core))))
+                  misc
+                  gpio)
+                )
+  )
+
+(define (lhalf-8/16-25t-model) ;; pipe 0 not needed
+  (make-downbin tfc-model
+                `(lhalf-8/16-25t
+                  (* lr-spare 1 1
+                     (lr-half (scale ,1/2 (to-lrhalf  serdes evenodd tm-core))))
+                  misc
+                  gpio)
+                )
+  )
+
+(define (lrhalf-16t-model)
+  (make-downbin tfc-model
+                `(lrhalf-16t
+                  (* lr-spare 2 1
+                     (lr-half (scale ,6/16 (to-lrhalf serdes evenodd tm-core))))
+                  misc
+                  gpio)
+                )
+  )
+
+(define (lhalf-16t-model)
+  (make-downbin tfc-model
+                `(lhalf-16t
+                  (* lr-spare 1 1
+                     (lr-half (scale ,6/16 (to-lrhalf serdes evenodd tm-core))))
+                  misc
+                  gpio)
+                )
+  )
+
+(define (15/16-pipe-model)
+  (make-downbin tfc-model
+                `(15/16-pipe
+                  (* lr-spare 1 1
+                     (lr-half (scale ,15/16 (to-lrhalf serdes evenodd tm-core))))
+                  misc
+                  gpio)
+                )
+  )
+
+(define (tfc-twodie-model)
+  (let ((split-overhead-per-die 46))
+    (make-downbin tfc-model
+                  `(tfc-twodie (eo-half (scale ,1/2 evenodd))
+                               (sd-half (scale ,1/2 serdes))
+                               (tc-half (scale ,1/2 tm-core))
+                               (misc-half (scale ,1/2 misc))
+                               (gpio-half (scale ,1/2 gpio))
+                               (d2d ,split-overhead-per-die
+                                    serdes-area ,split-overhead-per-die)
+                               )
+                  )
+    )
+  )
+
+(define (twodie-halfpipe-model)
+  (make-downbin tfc-twodie-model
+                `(twodie-halfpipe
+                  (half-half (scale ,1/2 (to-eohh eo-half sd-half tc-half)))
+                  misc-half
+                  gpio-half
+                  d2d)))
+
+(define (twodie-halfpipe-spare-model)
+  (make-downbin tfc-twodie-model
+                `(twodie-halfpipe-spare
+                  (half-half (* lr-spare 2 1 (scale ,1/2 (to-eohh sd-half eo-half tc-half))))
+                  misc-half
+                  gpio-half
+                  d2d)))
+
+(define (twodie-halfpipe-spare-serdesmux-model)
+  (make-downbin tfc-twodie-model
+                `(twodie-halfpipe-spare-serdesmux
+                  (half-serdes (* lr-spare 2 1 (scale ,1/2 sd-half)))
+                  (half-half (* lr-spare 2 1 (scale ,1/2 (to-eohh eo-half tc-half))))
+                  misc-half
+                  gpio-half
+                  d2d)))
+
+
+
+(define (twodie-6/8-model)
+  (make-downbin tfc-twodie-model
+                `(twodie-6/8
+                  (half-half (scale ,6/8 (to-eohh eo-half sd-half tc-half)))
+                  misc-half
+                  gpio-half
+                  d2d)))
+
+
+(define (twodie-1.15-model)
+  (make-downbin tfc-twodie-model
+                '(tfc-twodie-bloated (big (scale 1.15 tfc-twodie)))
+                )
+  )
+
+(define (report-onedie)
+  (report-yields-for-params
+   (tfc-model)
+   
+   params
+   
+   `(   ;; downbins
+     ;;,(lrhalf-25t-model)
+     ,(15/16-pipe-model)
+     ,(lhalf-25t-model)
+     ,(lhalf-8/16-25t-model)
+     ,(lhalf-16t-model)
+     ,(lrhalf-25t-model)
+     ,(lrhalf-16t-model)
+     )
+   )
+  )
+
+(define (report-twodie) 
+  (report-yields-for-params
+   (tfc-twodie-model)
+   
+   params
+   
+   `(,(twodie-halfpipe-model)
+     ,(twodie-halfpipe-spare-model)
+     ,(twodie-halfpipe-spare-serdesmux-model)
+     ,(twodie-6/8-model)
+     ,(twodie-1.15-model))
+   )
+  )
+
+;;(dis "*spare-mac* " (stringify *spare-mac* )dnl)
+
+;;(report-twodie)
+
+;;(set! *spare-mac* (not *spare-mac*))
+
+;;(dis "*spare-mac* " (stringify *spare-mac* )dnl)
+
+;;(report-twodie)
+
+;;(set! *spare-mac* (not *spare-mac*))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;;(define factor (/ 495 444.16))
+(define factor (/ 580 444.16))
+
+(define (tfc-twodie-model-ww25)
+  (make-downbin tfc-twodie-model
+                `(tfc-twodie-ww25 (big (scale ,factor tfc-twodie)))
+                )
+  )
+
+(define (twodie-halfpipe-model-ww25)
+  (make-downbin twodie-halfpipe-model
+                `(twodie-halfpipe (big (scale ,factor twodie-halfpipe)))
+                )
+  )
+
+(define (twodie-halfpipe-spare-model-ww25)
+  (make-downbin twodie-halfpipe-spare-model
+                `(twodie-halfpipe-spare (big (scale ,factor twodie-halfpipe-spare)))
+                )
+  )
+
+(define (twodie-halfpipe-spare-serdesmux-model-ww25)
+  (make-downbin twodie-halfpipe-spare-serdesmux-model
+                `(twodie-halfpipe-spare-serdesmux (big (scale ,factor twodie-halfpipe-spare-serdesmux)))
+                )
+  )
+
+(define (twodie-6/8-model-ww25)
+  (make-downbin twodie-6/8-model
+                `(twodie-6/8 (big (scale ,factor twodie-6/8)))
+                )
+  )
+
+(define (twodie-1.15-model-ww25)
+  (make-downbin twodie-1.15-model
+                `(twodie-bloated (big (scale ,factor tfc-twodie-bloated)))
+                )
+  )
+
+
+
+(define (report-twodie) 
+  (report-yields-for-params
+   (tfc-twodie-model-ww25)
+   
+   params
+   
+   `(,(twodie-halfpipe-model-ww25)
+     ,(twodie-halfpipe-spare-model-ww25)
+     ,(twodie-halfpipe-spare-serdesmux-model-ww25)
+     ,(twodie-6/8-model-ww25)
+     ,(twodie-1.15-model-ww25))
+   )
+  )
+
+(define (run-reports-21ww25)
+  (report-onedie)
+  (report-twodie)
+  )

@@ -1,0 +1,55 @@
+// Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+// SPDX-License-Identifier: Apache-2.0
+
+module simple;
+
+int WIDTH=32;
+
+define P0()(bd(WIDTH) +R)
+{
+
+  csp {
+    int x;
+    *[ R!x; x++ ]
+  }
+}
+
+define P1()(bd(WIDTH) -L)
+{
+  csp {
+    *[ L?x ; print(x) ]
+  }
+}
+
+define P0P1()()
+{
+  subcells {
+    bd(WIDTH) c;
+    P0 p0(c);
+    P1 p1(c);
+  }
+}
+
+define SYSTEM()()
+{
+  subcells {
+    bd(WIDTH) c;
+    P0() p0(c);
+    P1() p1(c);
+  }
+}
+
+define SKIP()()
+{
+  csp {
+    skip
+  }
+}
+
+define HELLOWORLD()()
+{
+  csp {
+    print("hello, world!")
+  }
+}
+  

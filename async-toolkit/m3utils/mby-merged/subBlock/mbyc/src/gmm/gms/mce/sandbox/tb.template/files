@@ -1,0 +1,3 @@
+-y $MBY_SRC/<PATH TO DUT>/rtl
+-y .
+top.sv

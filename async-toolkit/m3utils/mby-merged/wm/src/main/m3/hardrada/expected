@@ -1,0 +1,13 @@
+MODULE Main ;
+PROCEDURE sgn ( x : REF INTEGER ) : INTEGER =
+VAR
+	y : INTEGER := 0 ;
+BEGIN
+	x^ := 3 ;
+	y := 4 ;
+	RETURN y ;
+END sgn ;
+
+BEGIN
+EVAL sgn ( 8 ) ;
+END Main .

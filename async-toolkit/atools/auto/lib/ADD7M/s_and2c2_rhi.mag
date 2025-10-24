@@ -1,0 +1,166 @@
+magic
+tech scmos
+timestamp 965421252
+<< ndiffusion >>
+rect -159 605 -151 606
+rect -159 597 -151 602
+rect -144 597 -136 598
+rect -159 589 -151 594
+rect -144 589 -136 594
+rect -159 581 -151 586
+rect -144 581 -136 586
+rect -86 585 -82 588
+rect -159 577 -151 578
+rect -144 573 -136 578
+rect -86 577 -82 582
+rect -56 573 -48 574
+rect -144 569 -136 570
+rect -86 569 -82 572
+rect -56 569 -48 570
+<< pdiffusion >>
+rect -120 602 -104 603
+rect -120 598 -104 599
+rect -112 590 -104 598
+rect -120 589 -104 590
+rect -120 585 -104 586
+rect -18 585 -14 588
+rect -120 576 -104 577
+rect -120 572 -104 573
+rect -32 573 -24 574
+rect -32 569 -24 570
+rect -18 569 -14 581
+rect 13 574 17 579
+rect 5 573 17 574
+rect 5 569 17 570
+<< ntransistor >>
+rect -159 602 -151 605
+rect -159 594 -151 597
+rect -144 594 -136 597
+rect -159 586 -151 589
+rect -144 586 -136 589
+rect -159 578 -151 581
+rect -144 578 -136 581
+rect -86 582 -82 585
+rect -144 570 -136 573
+rect -86 572 -82 577
+rect -56 570 -48 573
+<< ptransistor >>
+rect -120 599 -104 602
+rect -120 586 -104 589
+rect -120 573 -104 576
+rect -18 581 -14 585
+rect -32 570 -24 573
+rect 5 570 17 573
+<< polysilicon >>
+rect -163 602 -159 605
+rect -151 602 -147 605
+rect -125 599 -120 602
+rect -104 599 -100 602
+rect -125 597 -122 599
+rect -163 594 -159 597
+rect -151 594 -144 597
+rect -136 594 -122 597
+rect -163 586 -159 589
+rect -151 586 -144 589
+rect -136 586 -120 589
+rect -104 586 -100 589
+rect -163 578 -159 581
+rect -151 578 -144 581
+rect -136 578 -122 581
+rect -125 576 -122 578
+rect -90 582 -86 585
+rect -82 582 -70 585
+rect -125 573 -120 576
+rect -104 573 -100 576
+rect -148 570 -144 573
+rect -136 570 -132 573
+rect -90 572 -86 577
+rect -82 572 -78 577
+rect -42 573 -38 584
+rect -22 581 -18 585
+rect -14 584 -10 585
+rect -14 581 -12 584
+rect -60 570 -56 573
+rect -48 570 -32 573
+rect -24 570 -20 573
+rect 1 570 5 573
+rect 17 570 21 573
+<< ndcontact >>
+rect -159 606 -151 614
+rect -144 598 -136 606
+rect -86 588 -78 596
+rect -159 569 -151 577
+rect -56 574 -48 582
+rect -144 561 -136 569
+rect -86 561 -78 569
+rect -56 561 -48 569
+<< pdcontact >>
+rect -120 603 -104 611
+rect -120 590 -112 598
+rect -120 577 -104 585
+rect -18 588 -10 596
+rect -32 574 -24 582
+rect -120 564 -104 572
+rect -32 561 -24 569
+rect 5 574 13 582
+rect -18 561 -10 569
+rect 5 561 17 569
+<< polycontact >>
+rect -44 584 -36 592
+rect -73 574 -65 582
+rect -12 576 -4 584
+<< metal1 >>
+rect -159 606 -151 614
+rect -144 598 -136 606
+rect -120 603 -104 611
+rect -157 590 -112 598
+rect -157 577 -151 590
+rect -108 585 -104 603
+rect -86 592 -78 596
+rect -18 592 -10 596
+rect -86 588 10 592
+rect -120 577 -104 585
+rect -44 584 -36 588
+rect -73 580 -65 582
+rect -56 580 -48 582
+rect -32 580 -24 582
+rect -12 580 -4 584
+rect -159 569 -151 577
+rect -73 576 -4 580
+rect 5 582 10 588
+rect -73 574 -65 576
+rect -56 574 -48 576
+rect -32 574 -24 576
+rect 5 574 13 582
+rect -144 561 -136 569
+rect -120 564 -104 572
+rect -86 561 -48 569
+rect -32 561 17 569
+<< labels >>
+rlabel metal1 -116 594 -116 594 1 x
+rlabel metal1 -116 568 -116 568 1 Vdd!
+rlabel polysilicon -103 574 -103 574 1 a
+rlabel metal1 -140 602 -140 602 5 x
+rlabel metal1 -140 565 -140 565 1 GND!
+rlabel polysilicon -145 571 -145 571 1 _SReset!
+rlabel polysilicon -160 579 -160 579 3 a
+rlabel metal1 -155 573 -155 573 1 x
+rlabel metal1 -155 610 -155 610 5 GND!
+rlabel polysilicon -160 603 -160 603 1 _SReset!
+rlabel polysilicon -160 587 -160 587 3 _b0
+rlabel polysilicon -160 595 -160 595 3 _b1
+rlabel polysilicon -103 587 -103 587 7 _b0
+rlabel polysilicon -103 600 -103 600 7 _b1
+rlabel space -164 569 -159 614 7 ^n
+rlabel space -165 560 -143 615 7 ^n
+rlabel space -113 563 -99 612 3 ^p
+rlabel ndcontact -52 565 -52 565 1 GND!
+rlabel pdcontact -28 565 -28 565 1 Vdd!
+rlabel polysilicon -87 573 -87 573 1 _SReset!
+rlabel metal1 -82 592 -82 592 1 x
+rlabel metal1 -14 565 -14 565 1 Vdd!
+rlabel metal1 -14 592 -14 592 1 x
+rlabel metal1 9 565 9 565 8 Vdd!
+rlabel polysilicon 18 571 18 571 7 _PReset!
+rlabel metal1 -82 565 -82 565 1 GND!
+<< end >>

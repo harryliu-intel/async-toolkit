@@ -1,0 +1,22 @@
+(* Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information. *)
+(* SPDX-License-Identifier: Apache-2.0 *)
+
+INTERFACE ModelStageResultClass;
+IMPORT ModelStageResult;
+IMPORT ServerPacket AS Pkt;
+IMPORT Metadata;
+IMPORT Coroutine;
+
+REVEAL
+  ModelStageResult.T <: Private;
+
+TYPE
+  Private = ModelStageResult.Public OBJECT
+    opkt  : Pkt.T;
+    om    : Metadata.T;
+    co    : Coroutine.T;
+  METHODS
+    init(co : Coroutine.T) : ModelStageResult.T;
+  END;
+
+END ModelStageResultClass.

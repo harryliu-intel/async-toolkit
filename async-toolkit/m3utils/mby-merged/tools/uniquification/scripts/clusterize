@@ -1,0 +1,64 @@
+#!/bin/tcsh
+# This script renames the puni config/template files in uniquifiation/inputs to match your cluster.
+# Before running this command, set the $MODEL_ROOT by running setnhdk.csh -w `pwd` from the model root.
+# Run this script the first time you copy the uniquification scripts into your repo.
+
+# swapping ip_templates in filenames for clusters
+echo "Swapping input filenames, ip_template => $CLUSTER..."
+foreach x (`ls $MODEL_ROOT/tools/uniquification/inputs/ip_template.*`)
+    mv $x `echo $x | sed "s/inputs\/ip_template/inputs\/$CLUSTER/"`
+end
+# swapping ip_templates in puni_switches for clusters
+echo "Updating Puni Switches, ip_template => $CLUSTER..."
+sed "s/inputs\/ip_template/inputs\/$CLUSTER/" -i $MODEL_ROOT/tools/uniquification/inputs/$CLUSTER.puni_switches.txt
+
+#grep -r '^\`include' $MODEL_ROOT/src/ -h | sort | uniq | sed -r 's/\`include\s+"(\S+)".*/\1/'
+echo "Reading includes to populate list of included files in src..."
+#grep -r '^\s*`include' $MODEL_ROOT/src/ -h | sort | uniq | sed -r 's/`include\s+"(\S+)".*/\1/' | sed -r 's/.*\///' > /tmp/prx_src_includes.txt
+#grep -r '^\s*`include' $MODEL_ROOT/verif/ -h | sort | uniq | sed -r 's/`include\s+"(\S+)".*/\1/' | sed -r 's/.*\///' > /tmp/prx_verif_includes.txt
+grep -r --exclude-dir='subIP/common' '^\s*`include' $MODEL_ROOT/subIP/ -h | sort | uniq | sed -r 's/`include\s+"(\S+)".*/\1/' | sed -r 's/.*\///' > /tmp/prx_subIP_includes.txt
+
+rm /tmp/prx_include_dirs.txt
+rm /tmp/prx_dont_include_dirs.txt
+echo "Finding includes in $MODEL_ROOT, parsing out directory..."
+
+foreach x (`less /tmp/prx_src_includes.txt`)
+    echo "Looking for $x in src..."
+    set findit = `find $MODEL_ROOT/src -name $x -print -quit`
+    echo $findit | grep -q $x || echo $x >> /tmp/prx_dont_include_dirs.txt
+    echo $findit | sed -r 's/(src\S*)\/[^\/]+$/\1/' | sed -r 's/.*(src\/.*)+/\1/' >> /tmp/prx_include_dirs.txt
+end
+foreach x (`less /tmp/prx_verif_includes.txt`)
+    echo "Looking for $x in verif..."
+    set findit = `find $MODEL_ROOT/verif -name $x -print -quit`
+    echo $findit | grep -q $x || echo $x >> /tmp/prx_dont_include_dirs.txt
+    echo $findit | sed -r 's/(verif\S*)\/[^\/]+$/\1/' | sed -r 's/.*(verif\/.*)+/\1/' >> /tmp/prx_include_dirs.txt
+end
+
+sed -ir 's/\*cluster\*//' /tmp/prx_subIP_includes.txt
+foreach x (`less /tmp/prx_subIP_includes.txt`)
+    echo "Looking for $x in subIP..."
+    set findit = `find $MODEL_ROOT/subIP -name $x -print -quit -and -not -path 'subIP/common'`
+    echo $findit
+    echo $findit | grep -q $x || echo $x >> /tmp/prx_dont_include_dirs.txt
+    echo $findit | sed -r 's/(subIP\S*)\/[^\/]+$/\1/' | sed -r 's/.*(subIP\/.*)+/\1/' >> /tmp/prx_include_dirs.txt
+end
+
+sed -ir '/^\s*$/d' /tmp/prx_include_dirs.txt
+sed -ir '/^\s*$/d' /tmp/prx_dont_include_dirs.txt
+less /tmp/prx_dont_include_dirs.txt | sort | uniq | sed -r 's/(\S+)/#IGNORE_INCLUDE_FILE:=\"\1\"/' > /tmp/prx_ignore_includes.txt
+
+echo "Formatting includes and inserting into PUNI config..."
+less /tmp/prx_include_dirs.txt | sort | uniq | sed -r 's/(.*)/#INCLUDE:="\1"/' > /tmp/prx_keep_includes.txt
+
+echo "Appending global macros to PUNI config..."
+cat /tmp/prx_keep_includes.txt /tmp/prx_ignore_includes.txt $MODEL_ROOT/tools/uniquification/inputs/global_macros.txt > $MODEL_ROOT/tools/uniquification/inputs/$CLUSTER.config.txt
+
+# Pre-populate ace, rdl, and lintra filelists in the event the automated functions do not work.
+echo "Pre-populating ace filelist..."
+find $MODEL_ROOT -type f -name '*.udf' -or -name '*.hdl' -not -name '*fuse*' > $MODEL_ROOT/tools/uniquification/inputs/$CLUSTER.ace.filelist.txt
+echo "Pre-populating rdl filelist..."
+find $MODEL_ROOT/tools/srdl -type f -name '*.rdl' -not -path '*/fuse/*' > $MODEL_ROOT/tools/uniquification/inputs/$CLUSTER.rdl.filelist.txt
+echo "Pre-populating lintra filelist..."
+find $MODEL_ROOT/tools/lint -type f -name '*._w.xml' > $MODEL_ROOT/tools/uniquification/inputs/$CLUSTER.lintra.filelist.txt
+echo "Done!"

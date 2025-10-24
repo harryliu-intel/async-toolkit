@@ -1,0 +1,5 @@
+// Action block
+
+action_func_logic [
+  action_triggers of action_triggers with action_triggers.map
+]

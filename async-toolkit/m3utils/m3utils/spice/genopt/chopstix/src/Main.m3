@@ -1,0 +1,1191 @@
+(* Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information. *)
+(* SPDX-License-Identifier: Apache-2.0 *)
+
+MODULE Main EXPORTS Main, QuadOpt;
+
+(* 
+   Generic optimizer
+*)
+
+IMPORT ParseParams;
+IMPORT Debug;
+IMPORT Pathname;
+IMPORT Stdio;
+FROM Fmt IMPORT F, LongReal, Int, Pad, Bool;
+IMPORT Params;
+IMPORT TextSeq;
+IMPORT Thread;
+IMPORT OSError;
+IMPORT Scheme, SchemeM3;
+IMPORT FS;
+FROM SchemaGraph IMPORT ReadSchema, ReadData, EvalFormulas;
+IMPORT SchemaGraph;
+IMPORT Wr;
+IMPORT SchemeStubs;
+IMPORT ReadLine, SchemeReadLine;
+IMPORT NewUOAs;
+IMPORT LRVector;
+IMPORT ProcUtils;
+IMPORT Rd;
+IMPORT FileWr;
+IMPORT SchemeSymbol;
+IMPORT Process;
+IMPORT AL;
+IMPORT SchemeObject;
+IMPORT SchemeUtils;
+IMPORT SchemeLongReal;
+IMPORT SchemeEnvironment;
+IMPORT SchemeString;
+IMPORT QuadRobust;
+IMPORT LRVectorLRPair;
+IMPORT LRVectorLRPairTextTbl;
+IMPORT FileRd;
+IMPORT Scan;
+IMPORT FloatMode, Lex;
+IMPORT SchemePair;
+IMPORT MultiEvalLRVector;
+IMPORT IP, NetObj, ReadLineError; (* for exceptions *)
+FROM GenOptUtils IMPORT FmtP;
+FROM GenOpt IMPORT ResultWriter, GetRho, scmCb, doNetbatch,
+                   schemaDataFn, schemaPath, outOfDomainResult;
+FROM GenOpt IMPORT rhoEnd, rhoBeg, vseq, paramBindings;
+IMPORT GenOpt;
+FROM GenOptEnv IMPORT   NbPool, NbQslot, M3Utils, NbOpts;
+FROM GenOptUtils IMPORT MustOpenWr, LRVectorSeq1, FmtLRVectorSeq;
+IMPORT LRVectorSeq;
+IMPORT LRVectorField;
+IMPORT LRVectorFieldPll;
+FROM QuadRobust IMPORT schemeMu;
+IMPORT VectorSeq;
+IMPORT MapError;
+IMPORT Atom;
+
+<*FATAL Thread.Alerted*>
+
+VAR
+  doDebug := Debug.DebugThis("chopstix");
+  
+CONST
+  LR = LongReal;
+  MyM3UtilsSrcPath = "spice/genopt/chopstix/src";
+
+(* variable nomenclature:
+
+   paramvars : are (once-settable) constants for a given optimization
+   optvars   : the domain that we optimize over
+   modelvars : the various responses that occur over the domain of optvars
+               (broken up as nominal, mean, and sigma)
+
+   toEval    : a Scheme expression defined over the preceding three sets
+               of variables, which computes a scalar, which is what we
+               are interested in optimizing
+
+   chopstix works through varying the optvars to seek an optimum point in
+   this space.  To accomplish this, it models modelvars with analytic
+   surfaces of a configurable order (0-, 1-, or 2- degree polynominal
+   surfaces at present), and seeks to optimize over these surfaces in order
+   to approach the minimum in the underlying space of modelvars.
+
+   The modeling of nominal, mean, and sigma of the modelvars allows the
+   optimization function to be expressed in terms of extremal statistics
+   over the modelvars (as needed).
+*)
+
+  
+VAR
+  pMu  := NEW(MUTEX);
+
+TYPE
+  Evaluator = QuadRobust.ResultRecorder OBJECT
+  METHODS
+    init() : LRVectorField.T := InitPll;
+
+    multiEval(at : LRVector.T; samples : CARDINAL; VAR schemaScm : Scheme.T) : MultiEvalLRVector.Result RAISES { GenOpt.OutOfDomain } :=
+        BaseMultiEval;
+
+    nominalEval(at : LRVector.T; VAR schemaScm : Scheme.T) : LRVector.T RAISES { GenOpt.OutOfDomain } :=
+        BaseNominalEval;
+
+  OVERRIDES
+    eval     := BaseEval;
+    evalHint := BaseEvalHint;
+  END;
+
+PROCEDURE InitPll(pll                : Evaluator) : LRVectorField.T =
+  BEGIN
+    pll.results   := NEW(LRVectorLRPairTextTbl.Default).init();
+    pll.resultsMu := NEW(MUTEX);
+    RETURN LRVectorFieldPll.T.init(pll, pll)
+  END InitPll;
+
+VAR toEval : SchemeObject.T := NIL;
+  
+PROCEDURE DefEval(obj : SchemeObject.T) =
+  BEGIN
+    toEval := obj
+  END DefEval;
+
+PROCEDURE OptInit() =
+  BEGIN
+  END OptInit;
+  
+PROCEDURE BaseEvalHint(base : Evaluator; p : LRVector.T) =
+  BEGIN
+    TRY
+      EVAL base.eval(p)
+    EXCEPT
+      MapError.E => (* skip *)
+    END
+  END BaseEvalHint;
+
+PROCEDURE BaseEval(<*UNUSED*>base : Evaluator; p : LRVector.T) : LRVector.T
+  RAISES { MapError.E } =
+  BEGIN
+    TRY
+      WITH res = AttemptEval(p, 0, FALSE) DO
+        TYPECASE res OF
+          LRVectorResult(lrv) => RETURN lrv.res
+        ELSE
+          <*ASSERT FALSE*>
+        END
+      END
+    EXCEPT
+      GenOpt.OutOfDomain =>
+      RAISE MapError.E(Atom.FromText("GenOpt.OutOfDomain"))
+    |
+      ProcUtils.ErrorExit =>
+      Debug.Error("BaseEval : Too many attempts p=" & FmtP(p));
+      <*ASSERT FALSE*>
+    END
+  END BaseEval;
+
+PROCEDURE BaseMultiEval(<*UNUSED*>base : Evaluator;
+                        p              : LRVector.T;
+                        samples        : CARDINAL;
+                        VAR schemaScm  : Scheme.T) : MultiEvalLRVector.Result
+  RAISES { GenOpt.OutOfDomain } =
+
+  BEGIN
+    IF doDebug THEN
+      Debug.Out("BaseMultiEval : samples " & Int(samples), 100)
+    END;
+    
+    TRY
+      WITH res = AttemptEval(p, samples, FALSE) DO
+        TYPECASE res OF
+          QuadResult(quad) =>
+          <*ASSERT quad.res.sum # NIL*>
+          <*ASSERT quad.res.sumsq # NIL*>
+          schemaScm := res.schemaScm;
+          RETURN quad.res
+        ELSE
+          <*ASSERT FALSE*>
+        END
+      END
+    EXCEPT
+    ProcUtils.ErrorExit =>
+      Debug.Error("BaseMultiEval : Too many attempts p=" & FmtP(p));
+      <*ASSERT FALSE*>
+    END
+  END BaseMultiEval;
+
+PROCEDURE BaseNominalEval(<*UNUSED*>base    : Evaluator;
+                          p                 : LRVector.T;
+                          VAR schemaScm     : Scheme.T) : LRVector.T
+  RAISES { GenOpt.OutOfDomain } = 
+  BEGIN
+    IF doDebug THEN
+      Debug.Out("BaseNominalEval : " & FmtP(p))
+    END;
+    
+    TRY
+      WITH res = AttemptEval(p, 1, nominal := TRUE) DO
+        TYPECASE res OF
+          LRVectorResult(lrv) =>
+          schemaScm := res.schemaScm;
+          RETURN lrv.res
+        ELSE
+          <*ASSERT FALSE*>
+        END
+      END
+    EXCEPT
+    ProcUtils.ErrorExit =>
+      Debug.Error("BaseMultiEval : Too many attempts p=" & FmtP(p));
+      <*ASSERT FALSE*>
+    END
+  END BaseNominalEval;
+
+TYPE
+  EvalResult     = BRANDED OBJECT
+    schemaScm  : Scheme.T;
+  END;
+
+  LRVectorResult = EvalResult OBJECT res : LRVector.T END;
+
+  QuadResult     = EvalResult OBJECT res : MultiEvalLRVector.Result END;
+  
+PROCEDURE AttemptEval(q                    : LRVector.T;
+                      samples              : CARDINAL;
+                      nominal              : BOOLEAN) : EvalResult
+  RAISES { ProcUtils.ErrorExit,
+           GenOpt.OutOfDomain } =
+
+  PROCEDURE SetNbOpts() =
+    BEGIN
+      IF NbOpts # NIL THEN
+        nbopts := NbOpts
+      ELSE
+        nbopts := F("--target %s --class 4C --class SLES12", NbPool);
+      END
+    END SetNbOpts;
+
+  PROCEDURE CopyVectorToScheme() =
+    BEGIN
+      IF doDebug THEN
+        Debug.Out(F("CopyVectorToScheme : p=%s samples=%s nominal=%s",
+                    FmtP(q),
+                    Int(samples),
+                    Bool(nominal)))
+      END;
+      
+      LOCK pMu DO
+
+        (* 
+           only one copy can be in this section at any given time, since
+           pMu is global 
+        *)
+        
+        FOR i := FIRST(q^) TO LAST(q^) DO
+          GenOpt.SetCoord(i, q[i])
+        END;
+        IF nominal THEN 
+          cmd            := scmCb.command(-1)
+        ELSE
+          cmd            := scmCb.command(samples)
+        END
+      END
+    END CopyVectorToScheme;
+
+  PROCEDURE NbTimeout() : TEXT =
+    BEGIN
+      WITH timeo = GenOpt.GetCommandTimeout() DO
+        IF timeo = 0.0d0 THEN
+          RETURN ""
+        ELSE
+          RETURN F("--exec-limits %s:%s ",  LR(timeo), LR(timeo))
+        END
+      END
+    END NbTimeout;
+    
+  PROCEDURE SetupDirectory() : TEXT =
+    BEGIN
+      TRY
+        TRY
+          Debug.Out("AttemptEval.SetupDirectory : creating dir " & subdirPath);
+          
+          FS.CreateDirectory(subdirPath);
+        EXCEPT
+          OSError.E(x) =>
+          IF doDirectoryWarning THEN
+            Debug.Warning(F("creating directory \"%s\" : OSError.E : %s",
+                            subdirPath,
+                            AL.Format(x)))
+          END
+        END;
+        WITH wr   = MustOpenWr(subdirPath & "/opt.values") DO
+          FOR i := FIRST(q^) TO LAST(q^) DO
+            Wr.PutText(wr, LongReal(q[i]));
+            VAR c : CHAR; BEGIN
+              IF i = LAST(q^) THEN c := '\n' ELSE c := ',' END;
+              Wr.PutChar(wr, c);
+            END
+          END;
+          Wr.Close(wr);
+        END;
+        
+        WITH cmdDbgWr    = MustOpenWr(subdirPath & "/opt.cmd"),
+             runCmdDbgWr = MustOpenWr(subdirPath & "/opt.runcmd"),
+             nbtimeout   = NbTimeout(),
+             nbCmd       = F("nbjob run %s --mode interactive %s %s",
+                             nbopts,
+                             nbtimeout,
+                             cmd) DO
+          VAR
+            runCmd : TEXT;
+          BEGIN
+            IF doNetbatch THEN
+              runCmd := nbCmd
+            ELSE
+              runCmd := cmd
+            END;
+            
+            Wr.PutText(cmdDbgWr, cmd);
+            Wr.PutChar(cmdDbgWr, '\n');
+            Wr.PutText(runCmdDbgWr, runCmd);
+            Wr.PutChar(runCmdDbgWr, '\n');
+            Wr.Close(cmdDbgWr); Wr.Close(runCmdDbgWr);
+
+            Ewr := MustOpenWr(subdirPath & "/opt.stderr");
+            Owr := MustOpenWr(subdirPath & "/opt.stdout");
+            
+            RETURN runCmd
+          END
+        END
+      EXCEPT
+        Wr.Failure(x) =>
+        Debug.Error(F("I/O error : Wr.Failure : while setting up %s : %s:",
+                      subdirPath, AL.Format(x)));
+        <*ASSERT FALSE*>
+      END
+    END SetupDirectory;
+
+  PROCEDURE LaunchCmd(runCmd : TEXT) =
+    BEGIN
+      <*NOWARN*>stdout     := ProcUtils.WriteHere(Owr);
+      <*NOWARN*>stderr     := ProcUtils.WriteHere(Ewr);
+
+      cm             := ProcUtils.RunText(runCmd,
+                                          stdout := stdout,
+                                          stderr := stderr,
+                                          stdin  := NIL,
+                                          wd0    := subdirPath)
+      
+    END LaunchCmd;
+
+  PROCEDURE ProcessCommand(VAR(*OUT*) schemaScm : Scheme.T) : LRVectorSeq.T =
+    (* schemaScm is newly allocated *)
+    BEGIN
+      IF doDebug THEN
+        Debug.Out("BaseEval : ran command")
+      END;
+      
+      (* read the schema *)
+      LOCK schemeMu DO
+        WITH dataPath  = subdirPath & "/" & schemaDataFn,
+             schemaRes = SchemaReadResult(schemaPath,
+                                          dataPath,
+                                          MakeModelVarList(),
+                                          schemaScm) DO
+          IF doDebug THEN
+            Debug.Out(F("AttemptEval.ProcessCommand (nominal = %s) : schema-processed result : %s", Bool(nominal), FmtLRVectorSeq(schemaRes)))
+          END;
+          RETURN schemaRes
+        END
+      END
+    END ProcessCommand;
+
+  PROCEDURE Await(runCmd : TEXT) RAISES { ProcUtils.ErrorExit } =
+    CONST
+      Attempts = 5;
+    BEGIN
+      IF doDebug THEN
+        Debug.Out(F("BaseEval : q = %s\nrunning : %s", FmtP(q), cmd));
+        Debug.Out("subdirPath = " & subdirPath)
+      END;
+
+      FOR i := 0 TO Attempts - 1 DO
+        TRY
+          WITH timeo = GenOpt.GetCommandTimeout() DO
+            IF timeo = 0.0d0 THEN
+              cm.wait()
+            ELSE
+              cm.waitTimeout(timeo)
+            END
+          END;
+          TRY
+            Wr.Close(Owr);
+            Wr.Close(Ewr);
+          EXCEPT
+            Wr.Failure(x) =>
+            Debug.Error(F("I/O error : Wr.Failure : while writing command output in %s : %s:",
+                          subdirPath, AL.Format(x)));
+          <*ASSERT FALSE*>
+          END;
+          RETURN
+        EXCEPT
+          ProcUtils.Timeout =>
+          Debug.Warning(F("Main.Await in %s : command %s timed out, re-running",
+                          subdirPath, runCmd));
+          Ewr := MustOpenWr(subdirPath & "/opt.stderr." & Int(i));
+          Owr := MustOpenWr(subdirPath & "/opt.stdout." & Int(i));
+          LaunchCmd(runCmd)
+        END
+      END;
+      WITH theError = NEW(ProcUtils.Error,
+                          error := "too many timed-out attempts") DO
+        
+        RAISE ProcUtils.ErrorExit(theError)
+      END
+    END Await;
+
+  VAR
+    nbopts     : TEXT;
+    cmd        : TEXT;
+    cm         : ProcUtils.Completion;
+    subdirPath : Pathname.T;
+    stdout, stderr : ProcUtils.Writer;
+    Owr, Ewr   : Wr.T;
+    
+  PROCEDURE RunIt() : EvalResult RAISES { ProcUtils.ErrorExit } =
+    VAR
+      schemaScm  : Scheme.T;
+      sdIdx                := NextIdx();
+      theResult  : LRVectorSeq.T;
+    BEGIN
+
+      subdirPath           := F("%s/%s",
+                                rundirPath,
+                                Pad(Int(sdIdx), 6, padChar := '0'));
+      
+      IF nominal THEN <*ASSERT samples=1*> END;
+      
+      SetNbOpts();
+      CopyVectorToScheme();
+
+      TRY
+        TRY
+          TRY
+            
+            WITH runCmd = SetupDirectory() DO
+              LaunchCmd(runCmd);
+              Await(runCmd)
+            END;
+      
+            theResult := ProcessCommand(schemaScm);
+            WITH wr = MustOpenWr(subdirPath & "/opt.ok") DO
+              Wr.Close(wr)
+            END
+          EXCEPT
+            ProcUtils.ErrorExit(err) =>
+            WITH msg = F("command \"%s\" in %s\nraised ErrorExit : %s",
+                         cmd,
+                         subdirPath,
+                         
+                         ProcUtils.FormatError(err)) DO
+              
+              WITH wr = MustOpenWr(subdirPath & "/opt.error") DO
+                Wr.PutText(wr, ProcUtils.FormatError(err));
+                Wr.PutChar(wr, '\n');
+                Wr.Close(wr)
+              END;
+              
+              Debug.Warning(msg);
+
+              <*FATAL GenOpt.OutOfDomain*>
+              BEGIN
+                schemaScm := NewScheme(q, FALSE)
+                (* normally created in running command, but not on a failure *)
+              END;
+              
+              IF outOfDomainResult = FIRST(LONGREAL) THEN
+                RAISE ProcUtils.ErrorExit(err)
+              ELSE
+                Debug.Out("Returning outOfDomainResult : " & LongReal(outOfDomainResult));
+                theResult := LRVectorSeq1(outOfDomainResult,
+                                          QuadRobust.GetModelVars().size())
+              END
+            END
+          END
+        EXCEPT
+          Wr.Failure(x) =>
+          Debug.Error(F("I/O error : Wr.Failure : while running in %s : %s:",
+                        subdirPath, AL.Format(x)));
+          <*ASSERT FALSE*>
+        END
+      FINALLY
+        TRY
+          WITH resWr = MustOpenWr(subdirPath & "/opt.result") DO
+            Wr.PutText(resWr, FmtLRVectorSeq(theResult) & "\n");
+            Wr.Close(resWr)
+          END;
+          IF samples = 0 OR nominal THEN
+            <*ASSERT theResult.size() = 1 *>
+            RETURN NEW(LRVectorResult,
+                       res        := theResult.get(0),
+                       schemaScm  := schemaScm)
+          ELSE
+            RETURN NEW(QuadResult,
+                       res        := VectorSeq.ToMulti(theResult, subdirPath),
+                       schemaScm  := schemaScm)
+          END
+        EXCEPT
+          Wr.Failure(x) =>
+          Debug.Error(F("I/O error : Wr.Failure : while writing output in %s : %s:",
+                        subdirPath, AL.Format(x)));
+          <*ASSERT FALSE*>
+          
+        END
+      END
+    END RunIt;
+
+  PROCEDURE CheckCoords() RAISES { GenOpt.OutOfDomain } =
+    BEGIN
+      FOR i := 0 TO vseq.size() - 1 DO
+        WITH v  = vseq.get(i),
+             nm = v.nm,
+             pi = q[i],
+             vv = pi * v.defstep DO
+          IF (vv < v.min OR vv > v.max) THEN
+            Debug.Out(F("CheckCoords param %s [%s] out of domain vv=%s [ v.min=%s v.max=%s ]",
+                        Int(i), nm, LR(vv), LR(v.min), LR(v.max)));
+            
+            RAISE GenOpt.OutOfDomain
+          END
+        END
+     END
+    END CheckCoords;
+    
+  BEGIN
+    CheckCoords();
+    RETURN RunIt()
+  END AttemptEval;
+
+TYPE
+  MyMultiEval = MultiEvalLRVector.T OBJECT
+    base : Evaluator;
+  OVERRIDES
+    inDomain    := DoInDomain;
+    multiEval   := DoMultiEval;
+    nominalEval := DoNominalEval;
+  END;
+
+PROCEDURE DoInDomain(<*UNUSED*>mme : MyMultiEval; p : LRVector.T) : BOOLEAN =
+  BEGIN
+    FOR i := 0 TO vseq.size() - 1 DO
+      WITH v  = vseq.get(i),
+           nm = v.nm,
+           pi = p[i],
+           vv = pi * v.defstep DO
+        IF (vv < v.min OR vv > v.max) THEN
+          Debug.Out(F("DoInDomain param %s [%s] out of domain vv=%s [ v.min=%s v.max=%s ]",
+                      Int(i), nm, LR(vv), LR(v.min), LR(v.max)));
+          
+          RETURN FALSE
+        END
+      END
+    END;
+    RETURN TRUE
+  END DoInDomain;
+
+PROCEDURE DoMultiEval(mme     : MyMultiEval;
+                      at      : LRVector.T;
+                      samples : CARDINAL) : MultiEvalLRVector.Result
+  RAISES { GenOpt.OutOfDomain }=
+  VAR
+    scm : Scheme.T;
+    res := mme.base.multiEval(at, samples, scm);
+  BEGIN
+    <*ASSERT scm # NIL*>
+    res.extra := scm;
+    <*ASSERT res.extra # NIL*>
+    RETURN res
+  END DoMultiEval;
+
+PROCEDURE DoNominalEval(mme : MyMultiEval;
+                        at  : LRVector.T) : LRVector.T
+  RAISES { GenOpt.OutOfDomain } =
+  VAR
+    scm : Scheme.T;
+    res := mme.base.nominalEval(at, scm);
+  BEGIN
+    RETURN res
+  END DoNominalEval;
+  
+PROCEDURE MakeModelVarList() : SchemeObject.T =
+  (* return (list <nm0> .. <nmN-1>)
+     where <nm0> etc. is the name of the nth optimization variabile *)
+  VAR 
+    res : SchemeObject.T := NIL;
+  BEGIN
+    WITH modelvars = QuadRobust.GetModelVars() DO
+      FOR i := modelvars.size() - 1 TO 0 BY -1 DO
+        WITH v = modelvars.get(i) DO
+          res := SchemeUtils.Cons(v.nm, res)
+        END
+      END
+    END;
+    RETURN SchemeUtils.Cons(SchemeSymbol.FromText("list"), res)
+   END MakeModelVarList;
+
+VAR optVars, paramVars : SchemeObject.T;
+    
+PROCEDURE DoIt(checkRd : Rd.T; doAnalyze : BOOLEAN) =
+  VAR
+    N               := vseq.size();
+    pr : LRVector.T := NEW(LRVector.T, N);
+    evaluator       : Evaluator
+                        := NEW(Evaluator).init();
+    output : NewUOAs.Output;
+  BEGIN
+    IF rhoEnd = LAST(LONGREAL) THEN
+      rhoEnd := rhoBeg / 1.0d-6
+    END;
+
+    FOR i := FIRST(pr^) TO LAST(pr^) DO
+      WITH v = vseq.get(i) DO
+        pr[i] := v.defval / v.defstep
+      END
+    END;
+
+    (**************************************************)
+
+    Debug.Out(F("DoIt : Ready to call Minimize : pr=%s rhoBeg=%s rhoEnd=%s",
+                FmtP(pr), LongReal(rhoBeg), LongReal(rhoEnd)));
+
+    output := QuadRobust.Minimize(pr,
+                                  NEW(MyMultiEval, base := evaluator).init(evaluator),
+                                  toEval,
+                                  rhoBeg,
+                                  rhoEnd,
+                                  NewScheme,
+                                  evaluator,
+                                  checkRd,
+                                  doAnalyze,
+                                  NEW(MyResultWriter,
+                                      evaluator := evaluator,
+                                      root      := "progress"));
+
+    IF doAnalyze THEN
+      RETURN (* nothing useful comes here *)
+    END;
+    
+    TRY
+      Debug.Out(F("Minimize : %s iters, %s funcc; f = %s; %s",
+                  Int(output.iterations),
+                  Int(output.funcCount),
+                  LongReal(output.f),
+                  output.message));
+      Wr.PutText(Stdio.stdout, FmtP(output.x));
+      Wr.PutChar(Stdio.stdout, '\n');
+      Wr.Flush(Stdio.stdout);
+      
+      WITH writer = NEW(MyResultWriter,
+                        root        := "genopt",
+                        evaluator   := evaluator) DO
+        writer.write(output)
+      END
+    EXCEPT
+      Wr.Failure(x) =>
+        Debug.Error(F("I/O error : Wr.Failure : while writing optimization result : %s:",
+                      AL.Format(x)))
+    |
+      OSError.E(x) =>
+        Debug.Error(F("I/O error : OSError.E : while writing optimization result : %s:",
+                      AL.Format(x)))
+
+    END
+  END DoIt;
+
+TYPE
+  MyResultWriter = ResultWriter OBJECT
+    root        : Pathname.T;
+    evaluator   : Evaluator;
+  OVERRIDES
+    write := MRWWrite;
+  END;
+  
+PROCEDURE MRWWrite(mrw : MyResultWriter; output : NewUOAs.Output)
+  RAISES { OSError.E, Wr.Failure } =
+  BEGIN
+    WITH wr   = FileWr.Open(mrw.root & ".opt"),
+         cwr  = FileWr.Open(mrw.root & ".cols"),
+         
+         awr  = FileWr.Open(mrw.root & ".aopt"),
+         acwr = FileWr.Open(mrw.root & ".acols"),
+         
+         rwr  = FileWr.Open(mrw.root & ".result"),
+         rhwr = FileWr.Open(mrw.root & ".rho") DO
+      FOR i := vseq.size() - 1 TO 0 BY -1 DO
+        WITH v  = vseq.get(i),
+             xi = output.x[i],
+             pi = xi * v.defstep DO
+          Wr.PutText(wr, LongReal(pi));
+          Wr.PutText(cwr, v.nm);
+          Wr.PutText(awr, LongReal(pi));
+          Wr.PutText(acwr, v.nm);
+          VAR c : CHAR; BEGIN
+            IF i = 0 THEN c := '\n' ELSE
+              Wr.PutChar(awr, ',');
+              Wr.PutChar(acwr, ',');
+              c := ','
+            END;
+            Wr.PutChar(wr, c);
+            Wr.PutChar(cwr, c)
+          END
+        END
+      END;
+
+      VAR
+        pIter := paramBindings.iterate();
+        p, v : TEXT;
+      BEGIN
+        WHILE pIter.next(p, v) DO
+          Wr.PutChar(awr, ',');
+          Wr.PutChar(acwr, ',');
+          Wr.PutText(awr, v);
+          Wr.PutText(acwr, p)
+        END
+      END;
+
+      Wr.PutText(rwr, LongReal(output.f) & "\n");
+      Wr.PutText(awr, "," & LongReal(output.f));
+      Wr.PutText(acwr, ",RESULT\n");
+
+      Wr.PutText(rhwr, LongReal(output.stoprho) & "\n");
+
+      VAR
+        key := LRVectorLRPair.T { output.x, output.f };
+        subdir : TEXT;
+        haveIt : BOOLEAN;
+      BEGIN
+        LOCK mrw.evaluator.resultsMu DO
+          haveIt := mrw.evaluator.results.get(key, subdir)
+        END;
+        IF haveIt THEN
+          TRY
+            WITH rd   = FileRd.Open(subdir & "/" & schemaDataFn),
+                 line = Rd.GetLine(rd) DO
+              Wr.PutChar(awr, ',');
+              Wr.PutText(awr, subdir);
+              Wr.PutChar(awr, ',');
+              Wr.PutText(awr, line);
+              Wr.PutChar(awr, '\n');
+              Rd.Close(rd)
+            END
+          EXCEPT
+            OSError.E, Rd.Failure, Rd.EndOfFile =>
+            Debug.Warning("System error trying to read base result from " & subdir);
+            Wr.PutChar(awr, '\n')
+          END
+        ELSE
+          Debug.Warning("No base result for key.");
+          Wr.PutChar(awr, '\n')
+        END
+      END;
+      
+      Wr.Close(wr); Wr.Close(cwr); Wr.Close(rwr); Wr.Close(rhwr);
+      Wr.Close(awr); Wr.Close(acwr)
+    END
+  END MRWWrite;
+
+VAR
+  sdcnt        := 0;
+  mu           := NEW(MUTEX);
+
+PROCEDURE NextIdx() : CARDINAL =
+  BEGIN
+    LOCK mu DO
+      TRY
+        RETURN sdcnt
+      FINALLY
+        INC(sdcnt)
+      END
+    END
+  END NextIdx;
+
+VAR
+  optVarsNm   := T2S("*opt-vars*");
+  paramVarsNm := T2S("*param-vars*");
+     
+PROCEDURE BindParams(schemaScm          : Scheme.T;
+                     optVars, paramVars : SchemeObject.T;
+                     force              : BOOLEAN)
+  RAISES { GenOpt.OutOfDomain } =
+  (* 
+     this routine binds the values of 
+
+     -- each of the optvars, properly named and scaled (using vseq)
+
+     -- each of the params
+
+     -- *opt-rho*
+
+     -- the lists of param var names and opt var names
+  *)
+  
+  BEGIN
+    TRY
+      (* bind parameters *)
+      FOR i := 0 TO vseq.size() - 1 DO
+        WITH v  = vseq.get(i),
+             nm = v.nm,
+             ss = T2S(nm),
+             pi = GenOpt.GetCoords().get(i),
+             vv = pi * v.defstep,
+             sx = L2S(vv) DO
+          IF NOT force AND (vv < v.min OR vv > v.max) THEN
+            Debug.Out(F("BindParams param %s out of domain vv=%s [ v.min=%s v.max=%s ]",
+                        Int(i), LR(vv), LR(v.min), LR(v.max)));
+            
+            RAISE GenOpt.OutOfDomain
+          END;
+         
+          schemaScm.bind(ss, sx)
+        END;
+
+        VAR
+          p : SchemePair.T := paramVars;
+        BEGIN
+          WHILE p # NIL DO
+            WITH q = NARROW(p.first, SchemePair.T),
+                 r = NARROW(q.rest , SchemePair.T) DO
+              schemaScm.bind(q.first, r.first)
+            END;
+            p := p.rest
+          END
+        END;
+
+        VAR
+          iter := paramBindings.iterate();
+          k, v : TEXT;
+        BEGIN
+          WHILE iter.next(k, v) DO
+            WITH ss = T2S(k) DO
+              TRY
+                WITH lr = Scan.LongReal(v),
+                     sx = L2S(lr) DO
+                  schemaScm.bind(ss, sx)
+                END
+              EXCEPT
+                Lex.Error, FloatMode.Trap =>
+                schemaScm.bind(ss, SchemeString.FromText(v))
+              END
+            END
+          END
+        END;
+        
+        schemaScm.bind(T2S("*opt-rho*"), L2S(GetRho()))
+      END;
+      
+      schemaScm.setInGlobalEnv(optVarsNm, optVars);
+      schemaScm.setInGlobalEnv(paramVarsNm, paramVars)
+    EXCEPT
+      Scheme.E(x) =>
+      Debug.Error(F("EXCEPTION! Scheme.E \"%s\" when initializing interpreter variables", x))
+    END;
+  END BindParams;
+
+PROCEDURE NewScheme(p     : LRVector.T (* OK to be NIL *);
+                    force : BOOLEAN    (* can we set it out of domain? *) )
+                             : Scheme.T
+  RAISES { GenOpt.OutOfDomain } =
+  (* 
+     p controls the value of *p-override* in the Scheme interpreter.
+
+     If p is NIL, then *p-override* is left to its default value, which is
+     set in genoptdefs.scm (usually NIL, and this causes the interpreter to
+     use the global p for calculations).
+
+     If p is non-NIL, then this is used to initialize *p-override* in this
+     specific interpreter, allowing this interpreter to have a private copy
+     of p, for exploratory purposes...
+
+     Maybe we can get rid of the global p...???
+  *)
+     
+  VAR
+    scm : Scheme.T;
+  BEGIN
+    WITH scmarr = NEW(REF ARRAY OF Pathname.T, scmFiles.size()) DO
+      FOR i := FIRST(scmarr^) TO LAST(scmarr^) DO
+        scmarr[i] := scmFiles.get(i);
+        IF doDebug THEN
+          Debug.Out("SchemaReadResult: loading scheme file " & scmarr[i])
+        END;
+      END;
+      TRY
+        scm := NEW(SchemeM3.T).init(scmarr^)
+      EXCEPT
+        Scheme.E(x) =>
+        Debug.Error(F("EXCEPTION! Scheme.E \"%s\" when initializing interpreter", x))
+      END
+    END;
+
+    TRY
+      IF p # NIL THEN
+        WITH pOverrideNm = T2S("*p-override*"),
+             pOverride   = GenOpt.NewCoords() DO
+          GenOpt.SetCoords(p, pOverride);
+          scm.setInGlobalEnv(pOverrideNm, pOverride)
+        END
+      END
+    EXCEPT
+      Scheme.E(msg) =>
+      Debug.Error("NewScheme : Scheme.E when overriding p : " & msg)
+    END;
+    
+    BindParams(scm, optVars, paramVars, force);
+
+    RETURN scm
+  END NewScheme;
+  
+PROCEDURE SchemaReadResult(schemaPath ,
+                           dataPath              : Pathname.T;
+                           schemaEval            : SchemeObject.T;
+                           VAR (*OUT*) schemaScm : Scheme.T) : LRVectorSeq.T =
+
+  (* schemaScm is newly allocated and in a state where the various
+     parameter and optimization variables have been set to the correct values *)
+
+  VAR
+    dataFiles := NEW(TextSeq.T).init();
+  BEGIN
+    IF doDebug THEN
+      TRY
+        Debug.Out(F("SchemaReadResult : schemaPath %s , dataPath %s , eval %s",
+                    schemaPath, dataPath, SchemeUtils.Stringify(schemaEval)))
+      EXCEPT
+        Scheme.E => (* skip --- ??? *)
+      END
+    END;
+    
+    dataFiles.addhi(dataPath);
+
+    <*FATAL GenOpt.OutOfDomain*>
+    BEGIN
+      schemaScm := NewScheme(NIL, TRUE)
+    END;
+    
+    IF doDebug THEN
+      Debug.Out("SchemaReadResult : set up interpreter")
+    END;
+    
+    TRY
+      WITH schema = ReadSchema(schemaPath),
+           data   = ReadData(schema, dataFiles),
+           cb     = NEW(SGCallback,
+                        schemaScm := schemaScm,
+                        results   := NEW(LRVectorSeq.T).init()) DO
+        IF doDebug THEN
+          Debug.Out("SchemaReadResult : schema and data loaded")
+        END;
+
+        (* there is where the schema formulas are evaluated
+           and we haven't yet loaded the parameters! *)
+        EvalFormulas(schemaScm, schema, data, cb);
+
+        IF doDebug THEN
+          Debug.Out("SchemaReadResult : formulas evaluated data.size()=" &
+            Int(data.size()))
+        END;
+
+        RETURN cb.results
+      END
+    EXCEPT
+      OSError.E, Rd.Failure, Rd.EndOfFile  =>
+      Debug.Warning(F("Caught system error reading schema/data from %s.  Returning failure.", dataPath));
+      RETURN LRVectorSeq1(outOfDomainResult,
+                                        QuadRobust.GetModelVars().size())
+    |
+      Scheme.E(x) =>
+      Debug.Warning("?error in Scheme interpreter : " & x);
+      RETURN LRVectorSeq1(outOfDomainResult,
+                          QuadRobust.GetModelVars().size())
+      (* is this right? *)
+    END
+  END SchemaReadResult;
+
+TYPE
+  SGCallback = SchemaGraph.Callback OBJECT
+    schemaScm : Scheme.T;
+    results   : LRVectorSeq.T;
+  OVERRIDES
+    next := SGCNext;
+  END;
+
+PROCEDURE SGCNext(cb : SGCallback) =
+  BEGIN
+    TRY
+      WITH e = NARROW(cb.schemaScm.getGlobalEnvironment(),
+                      SchemeEnvironment.T) DO
+        <*ASSERT e # NIL*>
+        <*ASSERT e.lookup(T2S("eval-in-env")) # NIL *>
+      END;
+      WITH scmCode = SchemeUtils.List3(
+                         T2S("eval-in-env"),
+                         L2S(0.0d0),
+                         SchemeUtils.List2(T2S("quote"), MakeModelVarList())),
+           (* do we need to copy() the Scheme here? -- seems we don't 
+              actually modify it? *)
+           scm = cb.schemaScm,
+           ee  = NARROW(scm.getGlobalEnvironment(), SchemeEnvironment.T) DO
+
+        <*ASSERT ee # NIL*>
+        <*ASSERT ee.lookup(T2S("eval-in-env")) # NIL *>
+       
+        WITH schemaRes = scm.evalInGlobalEnv(scmCode) DO
+          IF doDebug THEN
+            Debug.Out("schema eval returned " & SchemeUtils.Stringify(schemaRes))
+          END;
+          cb.results.addhi( LRVectorFromO(schemaRes) )
+        END
+      END
+    EXCEPT
+      Scheme.E(err) =>
+      Debug.Error("SGCNext : caught Scheme.E : " & err)
+    END
+  END SGCNext;
+
+PROCEDURE LRVectorFromO(o : SchemePair.T) : LRVector.T =
+  VAR
+    n := SchemeUtils.Length(o);
+    v := NEW(LRVector.T, n);
+    p : SchemePair.T := o;
+    i := 0;
+  BEGIN
+    WHILE p # NIL DO
+      TRY
+        v[i] := SchemeLongReal.FromO(p.first)
+      EXCEPT
+        Scheme.E(err) =>
+        <*FATAL Scheme.E*>
+        BEGIN
+          Debug.Error(F("LRVectorFromO : caught Scheme.E converting \"%s\" to LONGREAL : %s", SchemeUtils.Stringify(o),  err))
+        END
+      END;
+      INC(i);
+      p := p.rest
+    END;
+    RETURN v
+  END LRVectorFromO;
+  
+CONST T2S = SchemeSymbol.FromText;
+      L2S = SchemeLongReal.FromLR;
+             
+VAR
+  pp                        := NEW(ParseParams.T).init(Stdio.stderr);
+  scm                : Scheme.T;
+  rundirPath         : Pathname.T;
+  myFullSrcPath      : Pathname.T;
+  scmFiles                  := NEW(TextSeq.T).init();
+  interactive        : BOOLEAN;
+  cfgFile            : Pathname.T;
+  genOptScm          : Pathname.T;
+  doDirectoryWarning : BOOLEAN;
+  checkRd            : Rd.T := NIL;
+  doAnalyze                 := FALSE;
+
+BEGIN
+
+  <*FATAL OSError.E*>
+  BEGIN
+    rundirPath := Process.GetWorkingDirectory()
+  END;
+  
+  GenOpt.DoIt := DoIt;
+
+  IF FALSE THEN
+    (*TestQf.DoIt();*)
+    
+    Process.Exit(0)
+  END;
+  
+  Debug.EnableOptions(SET OF Debug.Options { Debug.Options.PrintThreadID } );
+  scmFiles.addhi("require");
+  scmFiles.addhi("m3");
+
+  TRY
+    doAnalyze := pp.keywordPresent("-analyze");
+    
+    interactive := pp.keywordPresent("-i") OR pp.keywordPresent("-interactive");
+
+    doDirectoryWarning := pp.keywordPresent("-warndirexists");
+    
+    IF NbPool = NIL THEN
+      Debug.Error("Must set NBPOOL env var.")
+    END;
+    IF NbQslot = NIL THEN
+      Debug.Error("Must set NBQSLOT env var.")
+    END;
+    IF pp.keywordPresent("-m3utils") THEN
+      M3Utils                   := pp.getNext()
+    END;
+
+    IF M3Utils = NIL THEN
+      Debug.Error("? must specify M3UTILS---either on command line or in environment.")
+    END;
+
+    IF pp.keywordPresent("-checkpoint") THEN
+      WITH cfn = pp.getNext() DO
+        TRY
+          checkRd := FileRd.Open(cfn)
+        EXCEPT
+          OSError.E(x) =>
+          Debug.Error(F("reading checkpoint file \"%s\" : OSError.E : %s",
+                        cfn,
+                        AL.Format(x)))
+        END
+      END
+    END;
+
+    myFullSrcPath := M3Utils & "/" & MyM3UtilsSrcPath;
+    WITH commonScm = myFullSrcPath & "/common.scm",
+         genOptDefsScm = myFullSrcPath & "/genoptdefs.scm" DO
+      scmFiles.addhi(commonScm);
+      scmFiles.addhi(genOptDefsScm)
+    END;
+
+    (* schemes up till here are added to both versions of the scheme
+       enviornment.  genOptScm is only added to the scheme environment
+       used to interpret the configuration file (and not to the schema
+       evaluator.) *)
+    
+    genOptScm := myFullSrcPath & "/genopt.scm";
+    
+    WHILE pp.keywordPresent("-scminit") OR pp.keywordPresent("-S") OR pp.keywordPresent("-scm") DO
+      scmFiles.addhi(pp.getNext())
+    END;
+
+    WHILE pp.keywordPresent("-setparam") DO
+      WITH pnm  = pp.getNext(),
+           pval = pp.getNext() DO
+        Debug.Out(F("Overriding param %s <- %s", pnm, pval));
+        EVAL paramBindings.put(pnm, pval)
+      END
+    END;
+
+    pp.skipParsed();
+
+    cfgFile := pp.getNext();
+
+    pp.finish()
+  EXCEPT
+    ParseParams.Error => Debug.Error("Can't parse command-line parameters\nUsage: " & Params.Get(0) & "\n" )
+  END;
+
+  WITH scmarr = NEW(REF ARRAY OF Pathname.T, scmFiles.size() + 2) DO
+    FOR i := FIRST(scmarr^) TO LAST(scmarr^) - 2 DO
+      scmarr[i] := scmFiles.get(i)
+    END;
+    scmarr[LAST(scmarr^) - 1] := genOptScm;
+    scmarr[LAST(scmarr^)] := cfgFile;
+    SchemeStubs.RegisterStubs();
+    TRY
+      scm := NEW(SchemeM3.T).init(scmarr^)
+    EXCEPT
+      Scheme.E(x) =>
+      Debug.Error(F("EXCEPTION! Scheme.E \"%s\" when initializing interpreter", x))
+    END
+  END;
+
+  IF interactive THEN
+    <*FATAL IP.Error, NetObj.Error, ReadLineError.E*>
+    BEGIN
+      SchemeReadLine.MainLoop(NEW(ReadLine.Default).init(), scm)
+    END
+  ELSE
+    TRY
+      WITH senv      = NARROW(scm.getGlobalEnvironment(), SchemeEnvironment.T),
+           T2S       = SchemeSymbol.FromText DO
+        
+        optVars   := senv.lookup(T2S("*opt-vars*"));
+        paramVars := senv.lookup(T2S("*param-vars*"));
+        
+        DoIt(checkRd, doAnalyze)
+      END
+    EXCEPT
+      Scheme.E(x) =>
+      Debug.Error(F("EXCEPTION! Scheme.E \"%s\" when setting up non-interactive run", x))
+    END
+  END
+END Main.

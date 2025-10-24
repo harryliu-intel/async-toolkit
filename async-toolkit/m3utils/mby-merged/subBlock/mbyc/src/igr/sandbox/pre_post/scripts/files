@@ -1,0 +1,6 @@
+
+-file $LOGICROOT/igr/sandbox/pre_post/scripts/files.common
+-file $LOGICROOT/igr/sandbox/pre_post/scripts/files.igr
+-file $LOGICROOT/igr/sandbox/pre_post/scripts/files.igr_tb
+
+$LOGICROOT/igr/sandbox/pre_post/verilog/top.sv

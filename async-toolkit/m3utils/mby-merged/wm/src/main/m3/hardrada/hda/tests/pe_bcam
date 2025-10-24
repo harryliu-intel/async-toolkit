@@ -1,0 +1,4 @@
+( define ( bcamlookup2 x0  ) ( let ( )
+(define (bcamlookup-0 table_0) (define (loop-0-1 searchkey_0 index_1 currenttable_2) (if (= searchkey_0 (car currenttable_2)) index_1 (loop-0-1 searchkey_0 (+ index_1 1) (cdr currenttable_2)))) (loop-0-1 0 0 table_0))
+( bcamlookup-0 x0  )
+) )

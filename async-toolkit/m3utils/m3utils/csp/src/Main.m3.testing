@@ -1,0 +1,41 @@
+MODULE Main;
+IMPORT UInt32Chan;
+IMPORT m3__demo_46_PROC_40_false_41_;
+IMPORT m3__demo_46_PROC_40_true_41_;
+FROM Fmt IMPORT Int, F;
+IMPORT CspCompiledScheduler AS Scheduler;
+
+CONST
+  N = 4 * 1024;
+  
+VAR
+  chan         := NEW(REF ARRAY OF REF UInt32Chan.T, N);
+BEGIN
+  (* init *)
+  FOR i := 0 TO N - 1 DO
+    chan[i] := UInt32Chan.New("chan[" & Int(i) & "]", slack := 1)
+  END;
+
+  FOR i := 0 TO N - 1 DO
+    WITH nam = F("x.p[%s]", Int(i)) DO
+      IF i = 0 THEN
+        m3__demo_46_PROC_40_true_41_.Build (nam,
+                                             chan[i], chan[(i + 1) MOD N],
+                                             NIL, NIL,
+                                             NIL, NIL,
+                                             NIL, NIL,
+                                             NIL, NIL)
+      ELSE
+        m3__demo_46_PROC_40_false_41_.Build(nam,
+                                             chan[i], chan[(i + 1) MOD N],
+                                             NIL, NIL,
+                                             NIL, NIL,
+                                             NIL, NIL,
+                                             NIL, NIL)
+      END
+    END
+  END;
+
+  Scheduler.SchedulingLoop()
+
+END Main.

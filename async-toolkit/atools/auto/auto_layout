@@ -1,0 +1,4 @@
+#!/bin/csh
+foreach i ( $*)
+  auto 1 $i.auto $i.mag < $CAST_HOME/lib/auto/layout.in
+end

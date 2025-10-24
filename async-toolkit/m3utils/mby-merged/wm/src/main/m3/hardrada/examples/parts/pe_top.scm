@@ -1,0 +1,23 @@
+; Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+; SPDX-License-Identifier: Apache-2.0
+
+( define ( alu x0 x1 x2  ) ( let ( )
+(define (alu-0 x_0 y_1 op_2) (cond ((= op_2 2) (* x_0 y_1)) ((= op_2 3) (quotient x_0 y_1)) ((= op_2 0) (+ x_0 y_1)) ((= op_2 1) (- x_0 y_1)) (else #f)))
+( alu-0 x0 x1 x2  )
+) )
+( define ( add_alu x0 x1  ) ( let ( )
+(define (alu-0 x_0 y_1) (+ x_0 y_1))
+( alu-0 x0 x1  )
+) )
+( define ( sub_alu x0 x1  ) ( let ( )
+(define (alu-0 x_0 y_1) (- x_0 y_1))
+( alu-0 x0 x1  )
+) )
+( define ( mult_alu x0 x1  ) ( let ( )
+(define (alu-0 x_0 y_1) (* x_0 y_1))
+( alu-0 x0 x1  )
+) )
+( define ( div_alu x0 x1  ) ( let ( )
+(define (alu-0 x_0 y_1) (quotient x_0 y_1))
+( alu-0 x0 x1  )
+) )

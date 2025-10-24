@@ -1,0 +1,3309 @@
+StartFont 1.4
+Comment copyright "Copyright (c) 1985,1987 Adobe Systems, Inc., Portions Copyright 1988 Digital Equipment Corp."
+Font Courier-BoldOblique
+Size 0 72 72
+Comment matrix 1.2857e-39 0 0 1.2857e-39 0 0
+FontBoundingBox 12 16 -1 -4
+Comment encoding Latin
+Chars 228
+StartProperties
+Font_Ascent 11
+Font_Descent 4
+Default_Char 32
+EndProperties
+StartChar space
+Encoding 32
+DWidth 9 0
+BBX 1 1 0 0
+BitMap
+00
+EndChar
+StartChar exclam
+Encoding 33
+DWidth 9 0
+BBX 4 10 3 0
+BitMap
+30
+30
+30
+30
+60
+60
+40
+00
+C0
+C0
+EndChar
+StartChar quotedbl
+Encoding 34
+DWidth 9 0
+BBX 6 4 3 5
+BitMap
+6C
+6C
+D8
+90
+EndChar
+StartChar numbersign
+Encoding 35
+DWidth 9 0
+BBX 7 9 2 0
+BitMap
+14
+14
+7E
+28
+28
+FC
+50
+50
+50
+EndChar
+StartChar dollar
+Encoding 36
+DWidth 9 0
+BBX 8 12 1 -2
+BitMap
+0C
+0D
+1F
+33
+31
+18
+0C
+C6
+C6
+BC
+30
+30
+EndChar
+StartChar percent
+Encoding 37
+DWidth 9 0
+BBX 7 10 2 0
+BitMap
+60
+90
+90
+66
+18
+20
+CC
+12
+12
+0C
+EndChar
+StartChar ampersand
+Encoding 38
+DWidth 9 0
+BBX 8 9 1 0
+BitMap
+1E
+32
+30
+30
+78
+DB
+CC
+CC
+73
+EndChar
+StartChar quoteright
+Encoding 39
+DWidth 9 0
+BBX 3 4 5 5
+BitMap
+60
+60
+C0
+80
+EndChar
+StartChar parenleft
+Encoding 40
+DWidth 9 0
+BBX 6 12 4 -2
+BitMap
+0C
+18
+30
+60
+60
+C0
+C0
+C0
+C0
+C0
+C0
+60
+EndChar
+StartChar parenright
+Encoding 41
+DWidth 9 0
+BBX 6 12 1 -2
+BitMap
+18
+0C
+0C
+0C
+0C
+0C
+0C
+18
+18
+30
+60
+C0
+EndChar
+StartChar asterisk
+Encoding 42
+DWidth 9 0
+BBX 6 5 3 4
+BitMap
+10
+54
+7C
+30
+D8
+EndChar
+StartChar plus
+Encoding 43
+DWidth 9 0
+BBX 7 7 2 1
+BitMap
+08
+08
+10
+FE
+10
+20
+20
+EndChar
+StartChar comma
+Encoding 44
+DWidth 9 0
+BBX 3 4 2 -2
+BitMap
+60
+60
+C0
+80
+EndChar
+StartChar hyphen
+Encoding 45
+DWidth 9 0
+BBX 6 1 2 4
+BitMap
+FC
+EndChar
+StartChar period
+Encoding 46
+DWidth 9 0
+BBX 2 2 3 0
+BitMap
+C0
+C0
+EndChar
+StartChar slash
+Encoding 47
+DWidth 9 0
+BBX 11 12 -1 -2
+BitMap
+0060
+00C0
+0180
+0300
+0300
+0600
+0C00
+1800
+1800
+3000
+6000
+C000
+EndChar
+StartChar zero
+Encoding 48
+DWidth 9 0
+BBX 7 10 2 0
+BitMap
+1C
+3E
+66
+46
+C6
+C6
+CC
+CC
+F8
+70
+EndChar
+StartChar one
+Encoding 49
+DWidth 9 0
+BBX 6 10 2 0
+BitMap
+0C
+3C
+0C
+18
+18
+18
+18
+30
+30
+FC
+EndChar
+StartChar two
+Encoding 50
+DWidth 9 0
+BBX 8 10 1 0
+BitMap
+1E
+33
+33
+07
+0E
+3C
+70
+E0
+C0
+FC
+EndChar
+StartChar three
+Encoding 51
+DWidth 9 0
+BBX 8 10 1 0
+BitMap
+1E
+33
+03
+06
+3C
+0E
+06
+06
+CC
+78
+EndChar
+StartChar four
+Encoding 52
+DWidth 9 0
+BBX 8 10 1 0
+BitMap
+03
+07
+0F
+1A
+36
+66
+FF
+0C
+0C
+1E
+EndChar
+StartChar five
+Encoding 53
+DWidth 9 0
+BBX 8 10 2 0
+BitMap
+1F
+18
+30
+3C
+66
+06
+06
+06
+CC
+78
+EndChar
+StartChar six
+Encoding 54
+DWidth 9 0
+BBX 8 10 2 0
+BitMap
+0F
+18
+30
+6C
+76
+C6
+C6
+C6
+CC
+78
+EndChar
+StartChar seven
+Encoding 55
+DWidth 9 0
+BBX 6 10 3 0
+BitMap
+FC
+FC
+8C
+18
+30
+30
+60
+60
+C0
+C0
+EndChar
+StartChar eight
+Encoding 56
+DWidth 9 0
+BBX 8 10 2 0
+BitMap
+1E
+33
+63
+66
+3C
+66
+C6
+C6
+CC
+78
+EndChar
+StartChar nine
+Encoding 57
+DWidth 9 0
+BBX 8 10 1 0
+BitMap
+1E
+33
+63
+63
+67
+3E
+0C
+0C
+38
+E0
+EndChar
+StartChar colon
+Encoding 58
+DWidth 9 0
+BBX 3 7 3 0
+BitMap
+60
+60
+00
+00
+00
+C0
+C0
+EndChar
+StartChar semicolon
+Encoding 59
+DWidth 9 0
+BBX 4 9 2 -2
+BitMap
+30
+30
+00
+00
+00
+60
+60
+C0
+80
+EndChar
+StartChar less
+Encoding 60
+DWidth 9 0
+BBX 8 7 1 1
+BitMap
+07
+1C
+70
+C0
+70
+1C
+06
+EndChar
+StartChar equal
+Encoding 61
+DWidth 9 0
+BBX 8 4 1 2
+BitMap
+7F
+00
+00
+FE
+EndChar
+StartChar greater
+Encoding 62
+DWidth 9 0
+BBX 8 7 1 1
+BitMap
+60
+38
+0E
+03
+0E
+38
+E0
+EndChar
+StartChar question
+Encoding 63
+DWidth 9 0
+BBX 6 9 3 0
+BitMap
+78
+CC
+8C
+18
+30
+60
+00
+C0
+C0
+EndChar
+StartChar at
+Encoding 64
+DWidth 9 0
+BBX 8 9 2 0
+BitMap
+0E
+31
+27
+4A
+52
+94
+9E
+C0
+78
+EndChar
+StartChar A
+Encoding 65
+DWidth 9 0
+BBX 9 9 0 0
+BitMap
+0F00
+0700
+0F00
+1B00
+1B00
+3300
+7F00
+6300
+F780
+EndChar
+StartChar B
+Encoding 66
+DWidth 9 0
+BBX 10 9 0 0
+BitMap
+3F80
+18C0
+18C0
+3180
+3F00
+3180
+6180
+6300
+FE00
+EndChar
+StartChar C
+Encoding 67
+DWidth 9 0
+BBX 8 9 1 0
+BitMap
+1D
+37
+63
+60
+C0
+C0
+C0
+CC
+78
+EndChar
+StartChar D
+Encoding 68
+DWidth 9 0
+BBX 10 9 0 0
+BitMap
+3F80
+18C0
+18C0
+30C0
+30C0
+3180
+6180
+6700
+FE00
+EndChar
+StartChar E
+Encoding 69
+DWidth 9 0
+BBX 10 9 0 0
+BitMap
+3FC0
+18C0
+18C0
+3400
+3C00
+3400
+6300
+6300
+FF00
+EndChar
+StartChar F
+Encoding 70
+DWidth 9 0
+BBX 10 9 0 0
+BitMap
+3FC0
+18C0
+18C0
+3400
+3C00
+3400
+6000
+6000
+F800
+EndChar
+StartChar G
+Encoding 71
+DWidth 9 0
+BBX 9 9 1 0
+BitMap
+1E80
+3380
+6180
+6000
+C000
+CF80
+C600
+CE00
+7C00
+EndChar
+StartChar H
+Encoding 72
+DWidth 9 0
+BBX 11 9 0 0
+BitMap
+3DE0
+18C0
+18C0
+3180
+3F80
+3180
+6300
+6300
+F780
+EndChar
+StartChar I
+Encoding 73
+DWidth 9 0
+BBX 8 9 1 0
+BitMap
+3F
+0C
+0C
+18
+18
+18
+30
+30
+FC
+EndChar
+StartChar J
+Encoding 74
+DWidth 9 0
+BBX 10 9 0 0
+BitMap
+03C0
+0180
+0180
+0300
+0300
+6300
+C600
+C600
+7C00
+EndChar
+StartChar K
+Encoding 75
+DWidth 9 0
+BBX 10 9 0 0
+BitMap
+3DC0
+1980
+1B00
+3600
+3C00
+3600
+6600
+6300
+F380
+EndChar
+StartChar L
+Encoding 76
+DWidth 9 0
+BBX 9 9 0 0
+BitMap
+3E00
+1800
+1800
+3000
+3000
+3180
+6180
+6300
+FF00
+EndChar
+StartChar M
+Encoding 77
+DWidth 9 0
+BBX 11 9 0 0
+BitMap
+38E0
+18C0
+19C0
+3B80
+3580
+3580
+6300
+6300
+F780
+EndChar
+StartChar N
+Encoding 78
+DWidth 9 0
+BBX 11 9 0 0
+BitMap
+39E0
+18C0
+18C0
+3580
+3580
+3580
+6300
+6300
+F300
+EndChar
+StartChar O
+Encoding 79
+DWidth 9 0
+BBX 9 9 1 0
+BitMap
+1F00
+3180
+6180
+6180
+C180
+C300
+C300
+C600
+7C00
+EndChar
+StartChar P
+Encoding 80
+DWidth 9 0
+BBX 10 9 0 0
+BitMap
+3F80
+18C0
+18C0
+30C0
+3180
+3F00
+6000
+6000
+F800
+EndChar
+StartChar Q
+Encoding 81
+DWidth 9 0
+BBX 10 11 0 -2
+BitMap
+0F80
+18C0
+30C0
+30C0
+60C0
+6180
+6180
+6300
+3E00
+7900
+DE00
+EndChar
+StartChar R
+Encoding 82
+DWidth 9 0
+BBX 10 9 0 0
+BitMap
+3F80
+18C0
+18C0
+30C0
+3180
+3F00
+6600
+6300
+F380
+EndChar
+StartChar S
+Encoding 83
+DWidth 9 0
+BBX 9 9 1 0
+BitMap
+1E80
+3380
+3180
+3800
+1E00
+0700
+C300
+E600
+BC00
+EndChar
+StartChar T
+Encoding 84
+DWidth 9 0
+BBX 8 9 2 0
+BitMap
+FF
+DB
+DB
+30
+30
+30
+60
+60
+F0
+EndChar
+StartChar U
+Encoding 85
+DWidth 9 0
+BBX 10 9 1 0
+BitMap
+7BC0
+3180
+3180
+6300
+6300
+6300
+C600
+C600
+7C00
+EndChar
+StartChar V
+Encoding 86
+DWidth 9 0
+BBX 9 9 2 0
+BitMap
+F780
+6300
+6600
+6600
+6C00
+6C00
+6800
+7800
+7000
+EndChar
+StartChar W
+Encoding 87
+DWidth 9 0
+BBX 10 9 1 0
+BitMap
+7BC0
+3180
+3580
+6B00
+6B00
+7700
+E600
+C600
+C600
+EndChar
+StartChar X
+Encoding 88
+DWidth 9 0
+BBX 10 9 0 0
+BitMap
+39C0
+1980
+1B00
+0E00
+0C00
+1C00
+3600
+6600
+E700
+EndChar
+StartChar Y
+Encoding 89
+DWidth 9 0
+BBX 10 9 1 0
+BitMap
+F3C0
+6180
+6300
+3600
+3C00
+1800
+3000
+3000
+FC00
+EndChar
+StartChar Z
+Encoding 90
+DWidth 9 0
+BBX 9 9 0 0
+BitMap
+3F80
+3180
+3300
+0600
+0C00
+1800
+3300
+6300
+FF00
+EndChar
+StartChar bracketleft
+Encoding 91
+DWidth 9 0
+BBX 7 12 2 -2
+BitMap
+1E
+18
+18
+30
+30
+30
+30
+60
+60
+60
+C0
+F0
+EndChar
+StartChar backslash
+Encoding 92
+DWidth 9 0
+BBX 5 12 4 -2
+BitMap
+C0
+C0
+40
+60
+60
+20
+30
+30
+10
+10
+18
+18
+EndChar
+StartChar bracketright
+Encoding 93
+DWidth 9 0
+BBX 7 12 1 -2
+BitMap
+1E
+06
+06
+0C
+0C
+0C
+0C
+18
+18
+18
+30
+F0
+EndChar
+StartChar asciicircum
+Encoding 94
+DWidth 9 0
+BBX 5 4 3 5
+BitMap
+18
+38
+68
+C8
+EndChar
+StartChar underscore
+Encoding 95
+DWidth 9 0
+BBX 9 1 0 -3
+BitMap
+FF80
+EndChar
+StartChar quoteleft
+Encoding 96
+DWidth 9 0
+BBX 3 4 5 5
+BitMap
+C0
+C0
+60
+20
+EndChar
+StartChar a
+Encoding 97
+DWidth 9 0
+BBX 8 7 0 0
+BitMap
+3E
+03
+03
+7F
+C6
+CE
+77
+EndChar
+StartChar b
+Encoding 98
+DWidth 9 0
+BBX 9 10 0 0
+BitMap
+1C00
+0C00
+1800
+1F00
+3980
+3180
+3180
+6300
+7300
+EE00
+EndChar
+StartChar c
+Encoding 99
+DWidth 9 0
+BBX 9 7 1 0
+BitMap
+1E80
+7300
+6300
+C000
+C000
+C600
+7C00
+EndChar
+StartChar d
+Encoding 100
+DWidth 9 0
+BBX 10 10 1 0
+BitMap
+01C0
+00C0
+0180
+1D80
+7700
+6300
+C300
+C600
+CE00
+7700
+EndChar
+StartChar e
+Encoding 101
+DWidth 9 0
+BBX 8 7 1 0
+BitMap
+1E
+73
+63
+FF
+C0
+C6
+7C
+EndChar
+StartChar f
+Encoding 102
+DWidth 9 0
+BBX 8 10 2 0
+BitMap
+0F
+18
+18
+7E
+30
+30
+30
+60
+60
+F8
+EndChar
+StartChar g
+Encoding 103
+DWidth 9 0
+BBX 10 10 1 -3
+BitMap
+1DC0
+7700
+6300
+C300
+C600
+CE00
+7600
+0C00
+0C00
+7800
+EndChar
+StartChar h
+Encoding 104
+DWidth 9 0
+BBX 9 10 0 0
+BitMap
+1C00
+0C00
+1800
+1F00
+3980
+3180
+3180
+6300
+6300
+F780
+EndChar
+StartChar i
+Encoding 105
+DWidth 9 0
+BBX 6 10 1 0
+BitMap
+0C
+0C
+00
+3C
+18
+18
+18
+30
+30
+FC
+EndChar
+StartChar j
+Encoding 106
+DWidth 9 0
+BBX 8 13 -1 -3
+BitMap
+03
+03
+00
+1F
+06
+06
+06
+0C
+0C
+0C
+18
+18
+F0
+EndChar
+StartChar k
+Encoding 107
+DWidth 9 0
+BBX 9 10 0 0
+BitMap
+3800
+1800
+1800
+3380
+3600
+3C00
+3800
+6C00
+6600
+E700
+EndChar
+StartChar l
+Encoding 108
+DWidth 9 0
+BBX 7 10 1 0
+BitMap
+1E
+06
+0C
+0C
+18
+18
+18
+30
+30
+FC
+EndChar
+StartChar m
+Encoding 109
+DWidth 9 0
+BBX 10 7 -1 0
+BitMap
+76C0
+3B40
+36C0
+24C0
+6480
+6D80
+EDC0
+EndChar
+StartChar n
+Encoding 110
+DWidth 9 0
+BBX 9 7 0 0
+BitMap
+7700
+3980
+3180
+3180
+6300
+6300
+F780
+EndChar
+StartChar o
+Encoding 111
+DWidth 9 0
+BBX 8 7 1 0
+BitMap
+1E
+63
+63
+C3
+C6
+C6
+78
+EndChar
+StartChar p
+Encoding 112
+DWidth 9 0
+BBX 10 10 -1 -3
+BitMap
+3B80
+1CC0
+18C0
+18C0
+3180
+3980
+3700
+6000
+6000
+F000
+EndChar
+StartChar q
+Encoding 113
+DWidth 9 0
+BBX 10 10 1 -3
+BitMap
+1DC0
+7700
+6300
+C300
+C600
+CE00
+7600
+0C00
+0C00
+1E00
+EndChar
+StartChar r
+Encoding 114
+DWidth 9 0
+BBX 8 7 1 0
+BitMap
+77
+3B
+30
+30
+60
+60
+F8
+EndChar
+StartChar s
+Encoding 115
+DWidth 9 0
+BBX 8 7 1 0
+BitMap
+3F
+63
+70
+1C
+C6
+C6
+BC
+EndChar
+StartChar t
+Encoding 116
+DWidth 9 0
+BBX 7 10 2 0
+BitMap
+30
+30
+30
+FE
+60
+60
+60
+C0
+CC
+78
+EndChar
+StartChar u
+Encoding 117
+DWidth 9 0
+BBX 9 7 1 0
+BitMap
+7380
+6300
+6300
+6300
+C600
+CE00
+7700
+EndChar
+StartChar v
+Encoding 118
+DWidth 9 0
+BBX 10 7 0 0
+BitMap
+F3C0
+6180
+6300
+3600
+3400
+1C00
+1800
+EndChar
+StartChar w
+Encoding 119
+DWidth 9 0
+BBX 11 7 0 0
+BitMap
+F1E0
+6CC0
+6D80
+6D80
+7700
+6600
+6600
+EndChar
+StartChar x
+Encoding 120
+DWidth 9 0
+BBX 10 7 0 0
+BitMap
+79C0
+3300
+1E00
+1C00
+3400
+6600
+E700
+EndChar
+StartChar y
+Encoding 121
+DWidth 9 0
+BBX 10 10 0 -3
+BitMap
+79C0
+3180
+3300
+3600
+1C00
+1800
+1800
+3000
+3000
+F800
+EndChar
+StartChar z
+Encoding 122
+DWidth 9 0
+BBX 8 7 1 0
+BitMap
+3F
+46
+0C
+18
+30
+64
+FC
+EndChar
+StartChar braceleft
+Encoding 123
+DWidth 9 0
+BBX 6 12 4 -2
+BitMap
+0C
+18
+30
+30
+60
+C0
+60
+60
+C0
+C0
+C0
+60
+EndChar
+StartChar bar
+Encoding 124
+DWidth 9 0
+BBX 6 12 2 -2
+BitMap
+0C
+0C
+18
+18
+18
+30
+30
+60
+60
+60
+C0
+C0
+EndChar
+StartChar braceright
+Encoding 125
+DWidth 9 0
+BBX 6 12 1 -2
+BitMap
+18
+0C
+0C
+0C
+18
+18
+0C
+18
+30
+30
+60
+C0
+EndChar
+StartChar asciitilde
+Encoding 126
+DWidth 9 0
+BBX 6 3 2 3
+BitMap
+64
+FC
+98
+EndChar
+StartChar exclamdown
+Encoding 161
+DWidth 9 0
+BBX 4 10 2 -3
+BitMap
+30
+30
+00
+20
+60
+60
+60
+C0
+C0
+C0
+EndChar
+StartChar cent
+Encoding 162
+DWidth 9 0
+BBX 8 10 2 -1
+BitMap
+18
+18
+3D
+66
+C6
+C0
+CC
+78
+30
+30
+EndChar
+StartChar sterling
+Encoding 163
+DWidth 9 0
+BBX 9 9 1 0
+BitMap
+0F00
+1980
+1800
+1800
+7C00
+3000
+3000
+6600
+FC00
+EndChar
+StartChar fraction
+Encoding 164
+DWidth 9 0
+BBX 9 4 0 2
+BitMap
+0380
+0E00
+3800
+E000
+EndChar
+StartChar yen
+Encoding 165
+DWidth 9 0
+BBX 10 9 1 0
+BitMap
+F3C0
+6180
+3300
+3600
+7F00
+1800
+FC00
+3000
+FC00
+EndChar
+StartChar florin
+Encoding 166
+DWidth 9 0
+BBX 10 11 -1 -2
+BitMap
+03C0
+0600
+0600
+1F00
+0C00
+0C00
+1800
+1800
+1800
+3000
+E000
+EndChar
+StartChar section
+Encoding 167
+DWidth 9 0
+BBX 10 11 0 -1
+BitMap
+0FC0
+1880
+1800
+3C00
+2600
+3300
+1900
+0D00
+0700
+4600
+FC00
+EndChar
+StartChar currency
+Encoding 168
+DWidth 9 0
+BBX 9 6 1 1
+BitMap
+3180
+3F00
+6300
+6300
+7E00
+C600
+EndChar
+StartChar quotesingle
+Encoding 169
+DWidth 9 0
+BBX 3 4 4 5
+BitMap
+60
+60
+C0
+C0
+EndChar
+StartChar quotedblleft
+Encoding 170
+DWidth 9 0
+BBX 6 4 3 5
+BitMap
+D8
+D8
+6C
+24
+EndChar
+StartChar guillemotleft
+Encoding 171
+DWidth 9 0
+BBX 7 5 2 1
+BitMap
+36
+6C
+D8
+D8
+6C
+EndChar
+StartChar guilsinglleft
+Encoding 172
+DWidth 9 0
+BBX 4 5 3 1
+BitMap
+30
+60
+C0
+C0
+60
+EndChar
+StartChar guilsinglright
+Encoding 173
+DWidth 9 0
+BBX 5 5 2 1
+BitMap
+60
+30
+18
+60
+C0
+EndChar
+StartChar fi
+Encoding 174
+DWidth 9 0
+BBX 10 9 0 0
+BitMap
+0EC0
+1800
+7F80
+3180
+3180
+3300
+6300
+6300
+F780
+EndChar
+StartChar fl
+Encoding 175
+DWidth 9 0
+BBX 10 9 0 0
+BitMap
+0FC0
+18C0
+7CC0
+3180
+3180
+3180
+6300
+6300
+F780
+EndChar
+StartChar endash
+Encoding 177
+DWidth 9 0
+BBX 6 1 1 4
+BitMap
+FC
+EndChar
+StartChar dagger
+Encoding 178
+DWidth 9 0
+BBX 7 11 2 -1
+BitMap
+18
+18
+18
+7E
+30
+30
+60
+60
+60
+C0
+C0
+EndChar
+StartChar daggerdbl
+Encoding 179
+DWidth 9 0
+BBX 8 11 1 -1
+BitMap
+0C
+0C
+0C
+3F
+18
+18
+30
+FC
+30
+60
+60
+EndChar
+StartChar periodcentered
+Encoding 180
+DWidth 9 0
+BBX 2 2 4 3
+BitMap
+C0
+C0
+EndChar
+StartChar paragraph
+Encoding 182
+DWidth 9 0
+BBX 9 11 2 -1
+BitMap
+3F80
+6A00
+CA00
+CA00
+D400
+7400
+1400
+2800
+2800
+2800
+FC00
+EndChar
+StartChar bullet
+Encoding 183
+DWidth 9 0
+BBX 5 4 3 2
+BitMap
+78
+F8
+F8
+F0
+EndChar
+StartChar quotesinglbase
+Encoding 184
+DWidth 9 0
+BBX 3 4 2 -2
+BitMap
+60
+60
+C0
+80
+EndChar
+StartChar quotedblbase
+Encoding 185
+DWidth 9 0
+BBX 6 4 2 -2
+BitMap
+6C
+6C
+D8
+90
+EndChar
+StartChar quotedblright
+Encoding 186
+DWidth 9 0
+BBX 6 4 3 5
+BitMap
+6C
+6C
+D8
+90
+EndChar
+StartChar guillemotright
+Encoding 187
+DWidth 9 0
+BBX 8 5 1 1
+BitMap
+6C
+36
+1B
+6C
+D8
+EndChar
+StartChar ellipsis
+Encoding 188
+DWidth 9 0
+BBX 7 2 1 0
+BitMap
+92
+92
+EndChar
+StartChar perthousand
+Encoding 189
+DWidth 9 0
+BBX 9 9 0 0
+BitMap
+3000
+5000
+6180
+0E00
+3800
+C000
+3300
+5500
+6600
+EndChar
+StartChar questiondown
+Encoding 191
+DWidth 9 0
+BBX 7 9 1 -2
+BitMap
+06
+06
+00
+0C
+38
+60
+C6
+CC
+78
+EndChar
+StartChar grave
+Encoding 193
+DWidth 9 0
+BBX 3 2 4 7
+BitMap
+C0
+60
+EndChar
+StartChar acute
+Encoding 194
+DWidth 9 0
+BBX 3 2 5 7
+BitMap
+60
+C0
+EndChar
+StartChar circumflex
+Encoding 195
+DWidth 9 0
+BBX 5 3 3 7
+BitMap
+30
+68
+C8
+EndChar
+StartChar tilde
+Encoding 196
+DWidth 9 0
+BBX 5 2 4 7
+BitMap
+68
+B0
+EndChar
+StartChar macron
+Encoding 197
+DWidth 9 0
+BBX 4 1 4 8
+BitMap
+F0
+EndChar
+StartChar breve
+Encoding 198
+DWidth 9 0
+BBX 6 2 3 7
+BitMap
+CC
+78
+EndChar
+StartChar dotaccent
+Encoding 199
+DWidth 9 0
+BBX 2 2 5 7
+BitMap
+C0
+C0
+EndChar
+StartChar dieresis
+Encoding 200
+DWidth 9 0
+BBX 5 1 4 8
+BitMap
+D8
+EndChar
+StartChar ring
+Encoding 202
+DWidth 9 0
+BBX 4 3 4 6
+BitMap
+60
+90
+60
+EndChar
+StartChar cedilla
+Encoding 203
+DWidth 9 0
+BBX 3 4 1 -3
+BitMap
+20
+60
+20
+E0
+EndChar
+StartChar hungarumlaut
+Encoding 205
+DWidth 9 0
+BBX 6 2 3 7
+BitMap
+6C
+D8
+EndChar
+StartChar ogonek
+Encoding 206
+DWidth 9 0
+BBX 3 3 1 -3
+BitMap
+60
+80
+E0
+EndChar
+StartChar caron
+Encoding 207
+DWidth 9 0
+BBX 5 2 3 7
+BitMap
+D8
+70
+EndChar
+StartChar emdash
+Encoding 208
+DWidth 9 0
+BBX 9 1 0 4
+BitMap
+FF80
+EndChar
+StartChar AE
+Encoding 225
+DWidth 9 0
+BBX 12 9 -1 0
+BitMap
+0FF0
+07B0
+0F80
+0B40
+1BC0
+3340
+3E00
+66C0
+EFC0
+EndChar
+StartChar ordfeminine
+Encoding 227
+DWidth 9 0
+BBX 7 7 2 2
+BitMap
+1C
+06
+1E
+6C
+74
+00
+F8
+EndChar
+StartChar Lslash
+Encoding 232
+DWidth 9 0
+BBX 9 9 0 0
+BitMap
+3E00
+1800
+1800
+3600
+3C00
+7180
+E180
+6300
+FF00
+EndChar
+StartChar Oslash
+Encoding 233
+DWidth 9 0
+BBX 11 9 0 0
+BitMap
+0FA0
+18C0
+31C0
+32C0
+64C0
+6980
+7180
+6300
+BE00
+EndChar
+StartChar OE
+Encoding 234
+DWidth 9 0
+BBX 11 9 0 0
+BitMap
+0FE0
+3360
+6300
+6680
+C780
+C680
+CC00
+CD80
+7F80
+EndChar
+StartChar ordmasculine
+Encoding 235
+DWidth 9 0
+BBX 7 7 2 2
+BitMap
+1C
+26
+66
+64
+38
+00
+F8
+EndChar
+StartChar ae
+Encoding 241
+DWidth 9 0
+BBX 9 7 0 0
+BitMap
+7B00
+0D80
+0D80
+7F80
+D800
+DB00
+EE00
+EndChar
+StartChar dotlessi
+Encoding 245
+DWidth 9 0
+BBX 6 7 1 0
+BitMap
+3C
+18
+18
+18
+30
+30
+FC
+EndChar
+StartChar lslash
+Encoding 248
+DWidth 9 0
+BBX 8 9 1 0
+BitMap
+3C
+0C
+0F
+1C
+78
+18
+30
+30
+FC
+EndChar
+StartChar oslash
+Encoding 249
+DWidth 9 0
+BBX 9 8 0 0
+BitMap
+0080
+0F00
+3380
+3580
+6980
+7300
+6300
+BC00
+EndChar
+StartChar oe
+Encoding 250
+DWidth 9 0
+BBX 9 7 0 0
+BitMap
+3B00
+6D80
+6D80
+CF80
+D800
+DB00
+6E00
+EndChar
+StartChar germandbls
+Encoding 251
+DWidth 9 0
+BBX 9 10 0 0
+BitMap
+0F00
+1980
+1980
+3180
+3700
+3300
+3180
+6180
+6B00
+EE00
+EndChar
+StartChar Aacute
+Encoding 256
+DWidth 9 0
+BBX 9 12 0 0
+BitMap
+0180
+0300
+0000
+1F00
+0700
+0F00
+1B00
+1B00
+3300
+7F00
+6300
+F780
+EndChar
+StartChar Acircumflex
+Encoding 257
+DWidth 9 0
+BBX 9 12 0 0
+BitMap
+0300
+0680
+0000
+1F00
+0700
+0F00
+1B00
+1B00
+3300
+7F00
+6300
+F780
+EndChar
+StartChar Adieresis
+Encoding 258
+DWidth 9 0
+BBX 10 11 0 0
+BitMap
+0CC0
+0000
+1F00
+0700
+0F00
+1B00
+1B00
+3300
+7F00
+6300
+F780
+EndChar
+StartChar Agrave
+Encoding 259
+DWidth 9 0
+BBX 9 12 0 0
+BitMap
+0600
+0300
+0000
+1F00
+0700
+0F00
+1B00
+1B00
+3300
+7F00
+6300
+F780
+EndChar
+StartChar Aring
+Encoding 260
+DWidth 9 0
+BBX 9 12 0 0
+BitMap
+0300
+0500
+0200
+0F00
+0700
+0F00
+1B00
+1B00
+3300
+7F00
+6300
+F780
+EndChar
+StartChar Atilde
+Encoding 261
+DWidth 9 0
+BBX 10 12 0 0
+BitMap
+0340
+0580
+0000
+1F00
+0700
+0F00
+1B00
+1B00
+3300
+7F00
+6300
+F780
+EndChar
+StartChar Ccedilla
+Encoding 262
+DWidth 9 0
+BBX 8 13 2 -4
+BitMap
+1D
+37
+63
+60
+C0
+C0
+C0
+CC
+78
+40
+60
+20
+E0
+EndChar
+StartChar Eacute
+Encoding 263
+DWidth 9 0
+BBX 10 12 0 0
+BitMap
+0300
+0600
+0000
+3FC0
+18C0
+18C0
+3400
+3C00
+3400
+6300
+6300
+FF00
+EndChar
+StartChar Ecircumflex
+Encoding 264
+DWidth 9 0
+BBX 10 12 0 0
+BitMap
+0300
+0680
+0000
+3FC0
+18C0
+18C0
+3400
+3C00
+3400
+6300
+6300
+FF00
+EndChar
+StartChar Edieresis
+Encoding 265
+DWidth 9 0
+BBX 10 11 0 0
+BitMap
+0D80
+0000
+3FC0
+18C0
+18C0
+3400
+3C00
+3400
+6300
+6300
+FF00
+EndChar
+StartChar Egrave
+Encoding 266
+DWidth 9 0
+BBX 10 12 0 0
+BitMap
+0600
+0300
+0000
+3FC0
+18C0
+18C0
+3400
+3C00
+3400
+6300
+6300
+FF00
+EndChar
+StartChar Eth
+Encoding 267
+DWidth 9 0
+BBX 10 9 0 0
+BitMap
+3F80
+18C0
+18C0
+30C0
+7CC0
+3180
+6180
+6700
+FE00
+EndChar
+StartChar Iacute
+Encoding 268
+DWidth 9 0
+BBX 8 12 1 0
+BitMap
+03
+06
+00
+3F
+0C
+0C
+18
+18
+18
+30
+30
+FC
+EndChar
+StartChar Icircumflex
+Encoding 269
+DWidth 9 0
+BBX 8 12 1 0
+BitMap
+06
+0D
+00
+3F
+0C
+0C
+18
+18
+18
+30
+30
+FC
+EndChar
+StartChar Idieresis
+Encoding 270
+DWidth 9 0
+BBX 9 11 1 0
+BitMap
+1980
+0000
+3F00
+0C00
+0C00
+1800
+1800
+1800
+3000
+3000
+FC00
+EndChar
+StartChar Igrave
+Encoding 271
+DWidth 9 0
+BBX 8 12 1 0
+BitMap
+0C
+06
+00
+3F
+0C
+0C
+18
+18
+18
+30
+30
+FC
+EndChar
+StartChar Ntilde
+Encoding 272
+DWidth 9 0
+BBX 11 12 0 0
+BitMap
+0340
+0580
+0000
+39E0
+18C0
+18C0
+3580
+3580
+3580
+6300
+6300
+F300
+EndChar
+StartChar Oacute
+Encoding 273
+DWidth 9 0
+BBX 9 12 1 0
+BitMap
+0300
+0600
+0000
+1F00
+3180
+6180
+6180
+C180
+C300
+C300
+C600
+7C00
+EndChar
+StartChar Ocircumflex
+Encoding 274
+DWidth 9 0
+BBX 9 12 1 0
+BitMap
+0600
+0D00
+0000
+1F00
+3180
+6180
+6180
+C180
+C300
+C300
+C600
+7C00
+EndChar
+StartChar Odieresis
+Encoding 275
+DWidth 9 0
+BBX 9 11 1 0
+BitMap
+1980
+0000
+1F00
+3180
+6180
+6180
+C180
+C300
+C300
+C600
+7C00
+EndChar
+StartChar Ograve
+Encoding 276
+DWidth 9 0
+BBX 9 12 1 0
+BitMap
+0600
+0300
+0000
+1F00
+3180
+6180
+6180
+C180
+C300
+C300
+C600
+7C00
+EndChar
+StartChar Otilde
+Encoding 277
+DWidth 9 0
+BBX 9 12 1 0
+BitMap
+0680
+0B00
+0000
+1F00
+3180
+6180
+6180
+C180
+C300
+C300
+C600
+7C00
+EndChar
+StartChar Scaron
+Encoding 278
+DWidth 9 0
+BBX 9 11 1 0
+BitMap
+0D80
+0700
+0000
+1E80
+3380
+6180
+7800
+1E00
+C600
+E600
+BC00
+EndChar
+StartChar Thorn
+Encoding 279
+DWidth 9 0
+BBX 10 9 0 0
+BitMap
+3C00
+1800
+1F80
+30C0
+30C0
+3180
+7F00
+6000
+F000
+EndChar
+StartChar Uacute
+Encoding 280
+DWidth 9 0
+BBX 10 12 1 0
+BitMap
+0300
+0600
+0000
+7BC0
+3180
+3180
+6300
+6300
+6300
+C600
+C600
+7C00
+EndChar
+StartChar Ucircumflex
+Encoding 281
+DWidth 9 0
+BBX 10 12 1 0
+BitMap
+0600
+0D00
+0000
+7BC0
+3180
+3180
+6300
+6300
+6300
+C600
+C600
+7C00
+EndChar
+StartChar Udieresis
+Encoding 282
+DWidth 9 0
+BBX 10 11 1 0
+BitMap
+1980
+0000
+7BC0
+3180
+3180
+6300
+6300
+6300
+C600
+C600
+7C00
+EndChar
+StartChar Ugrave
+Encoding 283
+DWidth 9 0
+BBX 10 12 1 0
+BitMap
+0C00
+0600
+0000
+7BC0
+3180
+3180
+6300
+6300
+6300
+C600
+C600
+7C00
+EndChar
+StartChar Yacute
+Encoding 284
+DWidth 9 0
+BBX 10 12 1 0
+BitMap
+0600
+0C00
+0000
+F3C0
+6180
+6300
+3600
+3C00
+1800
+3000
+3000
+FC00
+EndChar
+StartChar Ydieresis
+Encoding 285
+DWidth 9 0
+BBX 10 10 1 0
+BitMap
+0900
+0000
+F3C0
+6300
+6600
+3C00
+1800
+3000
+3000
+FC00
+EndChar
+StartChar Zcaron
+Encoding 286
+DWidth 9 0
+BBX 9 11 0 0
+BitMap
+0D80
+0700
+0000
+3F80
+3300
+3600
+0C00
+1800
+3300
+6300
+FF00
+EndChar
+StartChar aacute
+Encoding 287
+DWidth 9 0
+BBX 8 10 1 0
+BitMap
+03
+06
+00
+3E
+03
+03
+7F
+C6
+CE
+77
+EndChar
+StartChar acircumflex
+Encoding 288
+DWidth 9 0
+BBX 8 11 1 0
+BitMap
+06
+0D
+19
+00
+3E
+03
+03
+7F
+C6
+CE
+77
+EndChar
+StartChar adieresis
+Encoding 289
+DWidth 9 0
+BBX 8 9 1 0
+BitMap
+1B
+00
+3E
+03
+03
+7F
+C6
+CE
+77
+EndChar
+StartChar agrave
+Encoding 290
+DWidth 9 0
+BBX 8 10 1 0
+BitMap
+0C
+06
+00
+3E
+03
+03
+7F
+C6
+CE
+77
+EndChar
+StartChar aring
+Encoding 291
+DWidth 9 0
+BBX 8 11 1 0
+BitMap
+06
+0A
+04
+00
+3E
+03
+03
+7F
+C6
+CE
+77
+EndChar
+StartChar atilde
+Encoding 292
+DWidth 9 0
+BBX 8 10 1 0
+BitMap
+0D
+16
+00
+3E
+03
+03
+7F
+C6
+CE
+77
+EndChar
+StartChar brokenbar
+Encoding 293
+DWidth 9 0
+BBX 6 12 2 -2
+BitMap
+0C
+0C
+18
+18
+18
+00
+00
+60
+60
+60
+C0
+C0
+EndChar
+StartChar ccedilla
+Encoding 294
+DWidth 9 0
+BBX 9 11 1 -4
+BitMap
+1E80
+7300
+6300
+C000
+C000
+C600
+7C00
+4000
+6000
+2000
+E000
+EndChar
+StartChar copyright
+Encoding 295
+DWidth 9 0
+BBX 10 9 0 0
+BitMap
+0F00
+3180
+6EC0
+72C0
+D0C0
+D380
+DD80
+6300
+3C00
+EndChar
+StartChar degree
+Encoding 296
+DWidth 9 0
+BBX 4 4 3 5
+BitMap
+70
+90
+90
+E0
+EndChar
+StartChar divide
+Encoding 297
+DWidth 9 0
+BBX 7 7 2 1
+BitMap
+18
+18
+00
+FE
+00
+30
+30
+EndChar
+StartChar eacute
+Encoding 298
+DWidth 9 0
+BBX 8 10 1 0
+BitMap
+03
+06
+00
+1E
+73
+63
+FF
+C0
+C6
+7C
+EndChar
+StartChar ecircumflex
+Encoding 299
+DWidth 9 0
+BBX 8 11 1 0
+BitMap
+06
+0D
+19
+00
+1E
+73
+63
+FF
+C0
+C6
+7C
+EndChar
+StartChar edieresis
+Encoding 300
+DWidth 9 0
+BBX 8 9 1 0
+BitMap
+1B
+00
+1E
+73
+63
+FF
+C0
+C6
+7C
+EndChar
+StartChar egrave
+Encoding 301
+DWidth 9 0
+BBX 8 10 1 0
+BitMap
+0C
+06
+00
+1E
+73
+63
+FF
+C0
+C6
+7C
+EndChar
+StartChar eth
+Encoding 302
+DWidth 9 0
+BBX 8 10 1 0
+BitMap
+76
+1C
+66
+1F
+63
+63
+C3
+C6
+C6
+78
+EndChar
+StartChar iacute
+Encoding 303
+DWidth 9 0
+BBX 7 10 2 0
+BitMap
+06
+0C
+00
+3C
+18
+18
+18
+30
+30
+FC
+EndChar
+StartChar icircumflex
+Encoding 304
+DWidth 9 0
+BBX 7 11 2 0
+BitMap
+0C
+1A
+32
+00
+3C
+18
+18
+18
+30
+30
+FC
+EndChar
+StartChar idieresis
+Encoding 305
+DWidth 9 0
+BBX 7 9 2 0
+BitMap
+36
+00
+3C
+18
+18
+18
+30
+30
+FC
+EndChar
+StartChar igrave
+Encoding 306
+DWidth 9 0
+BBX 6 10 2 0
+BitMap
+18
+0C
+00
+3C
+18
+18
+18
+30
+30
+FC
+EndChar
+StartChar logicalnot
+Encoding 307
+DWidth 9 0
+BBX 7 3 1 3
+BitMap
+FE
+02
+02
+EndChar
+StartChar minus
+Encoding 308
+DWidth 9 0
+BBX 7 1 2 4
+BitMap
+FE
+EndChar
+StartChar mu
+Encoding 309
+DWidth 9 0
+BBX 10 10 0 -3
+BitMap
+39C0
+3180
+3180
+3180
+6300
+6700
+7B80
+C000
+C000
+C000
+EndChar
+StartChar multiply
+Encoding 310
+DWidth 9 0
+BBX 7 7 2 1
+BitMap
+42
+66
+3C
+10
+78
+CC
+84
+EndChar
+StartChar ntilde
+Encoding 311
+DWidth 9 0
+BBX 9 10 0 0
+BitMap
+0680
+0B00
+0000
+7700
+3980
+3180
+3180
+6300
+6300
+F780
+EndChar
+StartChar oacute
+Encoding 312
+DWidth 9 0
+BBX 8 10 1 0
+BitMap
+06
+0C
+00
+1E
+63
+63
+C3
+C6
+C6
+78
+EndChar
+StartChar ocircumflex
+Encoding 313
+DWidth 9 0
+BBX 8 11 1 0
+BitMap
+06
+0D
+19
+00
+1E
+63
+63
+C3
+C6
+C6
+78
+EndChar
+StartChar odieresis
+Encoding 314
+DWidth 9 0
+BBX 8 9 1 0
+BitMap
+1B
+00
+1E
+63
+63
+C3
+C6
+C6
+78
+EndChar
+StartChar ograve
+Encoding 315
+DWidth 9 0
+BBX 8 10 1 0
+BitMap
+0C
+06
+00
+1E
+63
+63
+C3
+C6
+C6
+78
+EndChar
+StartChar onehalf
+Encoding 316
+DWidth 9 0
+BBX 10 11 0 -1
+BitMap
+3000
+F040
+2080
+6100
+6200
+F580
+0AC0
+10C0
+2380
+4600
+0F80
+EndChar
+StartChar onequarter
+Encoding 317
+DWidth 9 0
+BBX 10 11 0 -1
+BitMap
+3000
+F040
+2080
+6100
+6200
+F480
+0980
+1380
+2500
+4F80
+0300
+EndChar
+StartChar onesuperior
+Encoding 318
+DWidth 9 0
+BBX 4 6 3 3
+BitMap
+30
+F0
+20
+60
+60
+F0
+EndChar
+StartChar otilde
+Encoding 319
+DWidth 9 0
+BBX 8 10 1 0
+BitMap
+0D
+16
+00
+1E
+63
+63
+C3
+C6
+C6
+78
+EndChar
+StartChar plusminus
+Encoding 320
+DWidth 9 0
+BBX 7 7 1 1
+BitMap
+08
+08
+7E
+10
+10
+00
+FC
+EndChar
+StartChar registered
+Encoding 321
+DWidth 9 0
+BBX 10 9 0 0
+BitMap
+0F00
+3180
+6EC0
+6AC0
+DCC0
+D580
+D580
+6300
+3C00
+EndChar
+StartChar scaron
+Encoding 322
+DWidth 9 0
+BBX 9 10 0 0
+BitMap
+1B00
+0E00
+0000
+3E80
+6300
+6300
+3800
+0E00
+C600
+FC00
+EndChar
+StartChar thorn
+Encoding 323
+DWidth 9 0
+BBX 10 12 -1 -3
+BitMap
+1C00
+0C00
+0F80
+1CC0
+18C0
+18C0
+3180
+3980
+3700
+6000
+6000
+F000
+EndChar
+StartChar threequarters
+Encoding 324
+DWidth 9 0
+BBX 10 11 0 -1
+BitMap
+3800
+4C40
+3080
+1900
+DA00
+7480
+0980
+1380
+2500
+4F80
+0300
+EndChar
+StartChar threesuperior
+Encoding 325
+DWidth 9 0
+BBX 6 6 2 3
+BitMap
+38
+4C
+30
+18
+D8
+70
+EndChar
+StartChar trademark
+Encoding 326
+DWidth 9 0
+BBX 9 4 2 5
+BitMap
+F980
+6F80
+DF00
+DB00
+EndChar
+StartChar twosuperior
+Encoding 327
+DWidth 9 0
+BBX 6 6 2 3
+BitMap
+38
+6C
+0C
+38
+60
+F8
+EndChar
+StartChar uacute
+Encoding 328
+DWidth 9 0
+BBX 9 10 1 0
+BitMap
+0600
+0C00
+0000
+7380
+6300
+6300
+6300
+C600
+CE00
+7700
+EndChar
+StartChar ucircumflex
+Encoding 329
+DWidth 9 0
+BBX 9 11 1 0
+BitMap
+0600
+0D00
+1900
+0000
+7380
+6300
+6300
+6300
+C600
+CE00
+7700
+EndChar
+StartChar udieresis
+Encoding 330
+DWidth 9 0
+BBX 9 9 1 0
+BitMap
+1B00
+0000
+7380
+6300
+6300
+6300
+C600
+CE00
+7700
+EndChar
+StartChar ugrave
+Encoding 331
+DWidth 9 0
+BBX 9 10 1 0
+BitMap
+1800
+0C00
+0000
+7380
+6300
+6300
+6300
+C600
+CE00
+7700
+EndChar
+StartChar yacute
+Encoding 332
+DWidth 9 0
+BBX 10 13 1 -3
+BitMap
+0300
+0600
+0000
+79C0
+3180
+3300
+3600
+1C00
+1800
+1800
+3000
+3000
+F800
+EndChar
+StartChar ydieresis
+Encoding 333
+DWidth 9 0
+BBX 10 12 1 -3
+BitMap
+1980
+0000
+79C0
+3180
+3300
+3600
+1C00
+1800
+1800
+3000
+3000
+F800
+EndChar
+StartChar zcaron
+Encoding 334
+DWidth 9 0
+BBX 8 10 1 0
+BitMap
+1B
+0E
+00
+3F
+46
+0C
+18
+30
+64
+FC
+EndChar
+EndFont

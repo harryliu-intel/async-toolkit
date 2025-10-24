@@ -1,0 +1,53 @@
+// -- Author       : Edward C. Ross <edward.c.ross@intel.com>
+// -- Project Name : MBY
+// -- Description  : IGR memory wrapper netlist.
+// -------------------------------------------------------------------
+ngen_mod_name
+
+input i_reset,
+
+mby_igr_pb_d_if.mem igr_pb0_d0_if,
+mby_igr_pb_d_if.mem igr_pb0_d1_if,
+mby_igr_pb_d_if.mem igr_pb0_d2_if,
+mby_igr_pb_d_if.mem igr_pb0_d3_if,
+mby_igr_pb_d_if.mem igr_pb1_d0_if,
+mby_igr_pb_d_if.mem igr_pb1_d1_if,
+mby_igr_pb_d_if.mem igr_pb1_d2_if,
+mby_igr_pb_d_if.mem igr_pb1_d3_if,
+mby_igr_pb_d_if.mem igr_pb2_d0_if,
+mby_igr_pb_d_if.mem igr_pb2_d1_if,
+mby_igr_pb_d_if.mem igr_pb2_d2_if,
+mby_igr_pb_d_if.mem igr_pb2_d3_if,
+mby_igr_pb_d_if.mem igr_pb3_d0_if,
+mby_igr_pb_d_if.mem igr_pb3_d1_if,
+mby_igr_pb_d_if.mem igr_pb3_d2_if,
+mby_igr_pb_d_if.mem igr_pb3_d3_if,
+mby_igr_pb_md_if.mem igr_pb0_md0_if,
+mby_igr_pb_md_if.mem igr_pb0_md1_if,
+mby_igr_pb_md_if.mem igr_pb0_md2_if,
+mby_igr_pb_md_if.mem igr_pb0_md3_if,
+mby_igr_pb_md_if.mem igr_pb1_md0_if,
+mby_igr_pb_md_if.mem igr_pb1_md1_if,
+mby_igr_pb_md_if.mem igr_pb1_md2_if,
+mby_igr_pb_md_if.mem igr_pb1_md3_if,
+mby_igr_pb_md_if.mem igr_pb2_md0_if,
+mby_igr_pb_md_if.mem igr_pb2_md1_if,
+mby_igr_pb_md_if.mem igr_pb2_md2_if,
+mby_igr_pb_md_if.mem igr_pb2_md3_if,
+mby_igr_pb_md_if.mem igr_pb3_md0_if,
+mby_igr_pb_md_if.mem igr_pb3_md1_if,
+mby_igr_pb_md_if.mem igr_pb3_md2_if,
+mby_mem_1rw_if.mem #(.W_DATA(72), .W_DEEP(1024), W_INST(01)) igr_pb3_md3_if(),
+
+
+ngen_IO_list
+ngen_IO_end
+
+ngen_wires
+
+logic reset_n;
+print "assign reset_n = ~i_reset;\n";
+
+ngen_submodules
+
+ngen_endmodule

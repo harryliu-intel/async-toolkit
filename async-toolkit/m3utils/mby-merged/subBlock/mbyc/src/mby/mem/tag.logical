@@ -1,0 +1,13 @@
+Ram Type                  <REGULAR, ROM, HS-PIPELINE>       =  Regular
+Ram Ports                 <1rw, 1r1w, 2rw>                  =  1r1w
+Ram Lines Number          <integer number>                  =  64
+Ram Data Width            <integer number>                  =  272
+Ram Protection Type       <ECC, Parity, None>               =  ECC
+RAM Protection Resolution <Divisor of Ram Write Resolution> =  68
+Memory clock name A       <Write Clock/Clock A Name>        =  car_core_upper_clk
+Memory clock name B       <Read Clock/Clock B Name>         =  car_core_upper_clk
+Ram Clear-On-Reset        <Yes, Number, No, LL>             =  Yes
+Ram Fast Clock Frequency  <Real Number>                     =  446.667
+Pre Chk ECC Sample        <Yes, CLKG, No>                   =  Yes
+Debug Read                                                  =  Yes
+Unique Shell Module Name <Yes, No>                   =  Yes

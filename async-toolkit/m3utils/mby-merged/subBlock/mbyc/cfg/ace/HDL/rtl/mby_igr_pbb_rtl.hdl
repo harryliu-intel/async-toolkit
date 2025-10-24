@@ -1,0 +1,86 @@
+#----------*-perl-*-------------------------
+#  This is a HDL spec file - it defines the unit and how to compile it.
+#
+#
+use ToolConfig;
+
+my $SHRTL          = &ToolConfig::get_tool_path('ipconfig/shrtl');
+my $DW_SIM         = &ToolConfig::get_tool_path('designcompiler');
+my $VCS_HOME       = $ENV{VCS_HOME};
+
+$hdl_spec = {
+    # List of specific VERILOG src files
+    -vlog_files => [
+    ## need to remove the following
+       "src/shared/rtl/shared_pkg.sv",
+       "src/shared/rtl/mby_rx_metadata_pkg.sv",
+#       "src/shared/rtl/mby_egr_pkg.sv",
+       "src/shared/rtl/mby_gmm_pkg.sv",
+       "src/shared/interfaces/mby_1rw_if.sv",
+       "src/shared/interfaces/mby_1r1w_if.sv",
+    ## previous files need to be removed from here once there's a shared lib and gmm lib
+
+       "src/igr/rtl/mby_igr_pkg.sv",
+       "src/igr_pbb/rtl/mby_igr_align_ctrl.sv",
+       "src/igr_pbb/rtl/mby_igr_align_wrd.sv",
+       "src/igr_pbb/rtl/mby_igr_align_wrds.sv",
+       "src/igr_pbb/rtl/mby_igr_align.sv",
+       "src/igr_pbb/rtl/mby_igr_dpcp.sv",
+       "src/igr_pbb/rtl/mby_igr_dpc.sv",
+       "src/igr_pbb/rtl/mby_igr_pb_ctrlp.sv",
+       "src/igr_pbb/rtl/mby_igr_pb_ctrl.sv",
+       "src/igr_pbb/rtl/mby_igr_pb.sv",
+       "src/igr_pbb/rtl/mby_igr_pb_wrap.sv",
+       "src/igr_pbb/rtl/mby_igr_dpc_wrap.sv",
+       "src/igr_pbb/rtl/mby_igr_align_wrap.sv",
+       "src/igr_pbb/rtl/mby_igr_pbb.sv",
+       ],
+    
+    # List of verilog library src dirs ( corresponds with the VLOG '-y' parameter)
+    -vlog_lib_dirs => [
+     "src/igr_pbb/rtl",
+#     "target/mby/mgm_run/igr_pbb/src",
+#     "target/mby/mgm_run/igr_pbb/src/mem_wrap",
+#     "target/mby/mgm_run/rtl",
+     "$VCS_HOME/packages/sva_cg",
+     "$SHRTL/src/ecc/rtl",
+     ],
+    
+    # List of verilog library src files ( corresponds with the VLOG '-v' parameter)
+    -vlog_lib_files => [],
+    
+    # List of include directories. Corresponds with the VLOG '+incdir+' parameter
+    -vlog_incdirs => [
+     "src/igr/rtl",
+     "src/igr_pbb/rtl",
+     "$DW_SIM/dw/sim_ver",
+     "target/mby/mgm_run/igr/src",
+     "target/mby/mgm_run/igr/src/mem_wrap",
+     "target/mby/mgm_run/rtl",
+     "$SHRTL/src/common/rtl",   
+     "$SHRTL/src/ecc/rtl",
+     "$SHRTL/src/fifo/rtl",   
+   
+     "$VCS_HOME/packages/sva_cg"
+     ],
+    
+    # Arbitrary VLOG options
+    -vlog_opts => [
+      "+libext+.v+.sv+.vh+.svh+.vs+.vm+.sva",
+		  "-full64",
+		  "+v2k",
+		  "-notice",
+		  "-sverilog",
+		  "+vcs+lic+wait",
+		  "+warn=noUII-L",
+		  "-timescale=10ps/10ps",
+		  "-debug_pp",
+		  "+define+VCSSIM",
+		  "+define+INTEL_SVA_OFF",
+		  "+define+MBY_IGR_PBB_BEHAVE_MEMS",
+		  "-assert svaext",
+		],
+    
+    
+    };
+

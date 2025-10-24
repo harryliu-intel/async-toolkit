@@ -1,0 +1,3252 @@
+12 ports
+port 0 speed 1e11
+port 1 speed 1e11
+port 2 speed 1e11
+port 3 speed 1e11
+port 4 speed 1e10
+port 5 speed 1e10
+port 6 speed 1e10
+port 7 speed 1e10
+port 8 speed 1e10
+port 9 speed 1e10
+port 10 speed 1e9
+port 11 speed 1e9
+
+======================================================================
+Trying 1 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 0.2131605675459796 ccnt 1
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 0.2131605675459796 ccnt 1
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 0.2131605675459796 ccnt 1
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 0.2131605675459796 ccnt 1
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 0.021316056754597957 ccnt 1
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 0.021316056754597957 ccnt 1
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 0.021316056754597957 ccnt 1
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 0.021316056754597957 ccnt 1
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 0.021316056754597957 ccnt 1
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 0.021316056754597957 ccnt 1
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.002131605675459796 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.002131605675459796 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 2 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 0.4263211350919592 ccnt 1
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 0.4263211350919592 ccnt 1
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 0.4263211350919592 ccnt 1
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 0.4263211350919592 ccnt 1
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 0.042632113509195914 ccnt 1
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 0.042632113509195914 ccnt 1
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 0.042632113509195914 ccnt 1
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 0.042632113509195914 ccnt 1
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 0.042632113509195914 ccnt 1
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 0.042632113509195914 ccnt 1
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.004263211350919592 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.004263211350919592 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 3 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 0.6394817026379388 ccnt 1
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 0.6394817026379388 ccnt 1
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 0.6394817026379388 ccnt 1
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 0.6394817026379388 ccnt 1
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 0.06394817026379387 ccnt 1
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 0.06394817026379387 ccnt 1
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 0.06394817026379387 ccnt 1
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 0.06394817026379387 ccnt 1
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 0.06394817026379387 ccnt 1
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 0.06394817026379387 ccnt 1
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.006394817026379388 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.006394817026379388 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 4 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 0.8526422701839184 ccnt 1
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 0.8526422701839184 ccnt 1
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 0.8526422701839184 ccnt 1
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 0.8526422701839184 ccnt 1
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 0.08526422701839183 ccnt 1
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 0.08526422701839183 ccnt 1
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 0.08526422701839183 ccnt 1
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 0.08526422701839183 ccnt 1
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 0.08526422701839183 ccnt 1
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 0.08526422701839183 ccnt 1
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.008526422701839185 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.008526422701839185 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 5 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 1.0658028377298978 ccnt 2
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 1.0658028377298978 ccnt 2
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 1.0658028377298978 ccnt 2
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 1.0658028377298978 ccnt 2
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 0.10658028377298978 ccnt 1
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 0.10658028377298978 ccnt 1
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 0.10658028377298978 ccnt 1
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 0.10658028377298978 ccnt 1
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 0.10658028377298978 ccnt 1
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 0.10658028377298978 ccnt 1
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.010658028377298978 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.010658028377298978 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 6 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 1.2789634052758776 ccnt 2
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 1.2789634052758776 ccnt 2
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 1.2789634052758776 ccnt 2
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 1.2789634052758776 ccnt 2
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 0.12789634052758775 ccnt 1
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 0.12789634052758775 ccnt 1
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 0.12789634052758775 ccnt 1
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 0.12789634052758775 ccnt 1
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 0.12789634052758775 ccnt 1
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 0.12789634052758775 ccnt 1
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.012789634052758776 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.012789634052758776 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 7 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 1.4921239728218572 ccnt 2
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 1.4921239728218572 ccnt 2
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 1.4921239728218572 ccnt 2
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 1.4921239728218572 ccnt 2
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 0.1492123972821857 ccnt 1
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 0.1492123972821857 ccnt 1
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 0.1492123972821857 ccnt 1
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 0.1492123972821857 ccnt 1
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 0.1492123972821857 ccnt 1
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 0.1492123972821857 ccnt 1
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.014921239728218572 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.014921239728218572 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 8 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 1.7052845403678367 ccnt 2
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 1.7052845403678367 ccnt 2
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 1.7052845403678367 ccnt 2
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 1.7052845403678367 ccnt 2
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 0.17052845403678366 ccnt 1
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 0.17052845403678366 ccnt 1
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 0.17052845403678366 ccnt 1
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 0.17052845403678366 ccnt 1
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 0.17052845403678366 ccnt 1
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 0.17052845403678366 ccnt 1
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.01705284540367837 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.01705284540367837 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 9 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 1.9184451079138163 ccnt 2
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 1.9184451079138163 ccnt 2
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 1.9184451079138163 ccnt 2
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 1.9184451079138163 ccnt 2
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 0.1918445107913816 ccnt 1
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 0.1918445107913816 ccnt 1
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 0.1918445107913816 ccnt 1
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 0.1918445107913816 ccnt 1
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 0.1918445107913816 ccnt 1
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 0.1918445107913816 ccnt 1
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.019184451079138163 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.019184451079138163 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 10 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 2.1316056754597956 ccnt 3
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 2.1316056754597956 ccnt 3
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 2.1316056754597956 ccnt 3
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 2.1316056754597956 ccnt 3
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 0.21316056754597956 ccnt 1
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 0.21316056754597956 ccnt 1
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 0.21316056754597956 ccnt 1
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 0.21316056754597956 ccnt 1
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 0.21316056754597956 ccnt 1
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 0.21316056754597956 ccnt 1
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.021316056754597957 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.021316056754597957 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 11 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 2.3447662430057754 ccnt 3
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 2.3447662430057754 ccnt 3
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 2.3447662430057754 ccnt 3
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 2.3447662430057754 ccnt 3
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 0.23447662430057753 ccnt 1
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 0.23447662430057753 ccnt 1
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 0.23447662430057753 ccnt 1
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 0.23447662430057753 ccnt 1
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 0.23447662430057753 ccnt 1
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 0.23447662430057753 ccnt 1
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.023447662430057758 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.023447662430057758 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 12 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 2.557926810551755 ccnt 3
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 2.557926810551755 ccnt 3
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 2.557926810551755 ccnt 3
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 2.557926810551755 ccnt 3
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 0.2557926810551755 ccnt 1
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 0.2557926810551755 ccnt 1
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 0.2557926810551755 ccnt 1
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 0.2557926810551755 ccnt 1
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 0.2557926810551755 ccnt 1
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 0.2557926810551755 ccnt 1
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.025579268105517552 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.025579268105517552 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 13 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 2.7710873780977345 ccnt 3
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 2.7710873780977345 ccnt 3
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 2.7710873780977345 ccnt 3
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 2.7710873780977345 ccnt 3
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 0.27710873780977346 ccnt 1
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 0.27710873780977346 ccnt 1
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 0.27710873780977346 ccnt 1
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 0.27710873780977346 ccnt 1
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 0.27710873780977346 ccnt 1
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 0.27710873780977346 ccnt 1
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.02771087378097735 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.02771087378097735 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 14 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 2.9842479456437143 ccnt 3
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 2.9842479456437143 ccnt 3
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 2.9842479456437143 ccnt 3
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 2.9842479456437143 ccnt 3
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 0.2984247945643714 ccnt 1
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 0.2984247945643714 ccnt 1
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 0.2984247945643714 ccnt 1
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 0.2984247945643714 ccnt 1
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 0.2984247945643714 ccnt 1
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 0.2984247945643714 ccnt 1
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.029842479456437143 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.029842479456437143 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 15 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 3.1974085131896937 ccnt 4
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 3.1974085131896937 ccnt 4
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 3.1974085131896937 ccnt 4
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 3.1974085131896937 ccnt 4
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 0.31974085131896934 ccnt 1
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 0.31974085131896934 ccnt 1
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 0.31974085131896934 ccnt 1
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 0.31974085131896934 ccnt 1
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 0.31974085131896934 ccnt 1
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 0.31974085131896934 ccnt 1
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.03197408513189694 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.03197408513189694 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 16 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 3.4105690807356734 ccnt 4
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 3.4105690807356734 ccnt 4
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 3.4105690807356734 ccnt 4
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 3.4105690807356734 ccnt 4
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 0.3410569080735673 ccnt 1
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 0.3410569080735673 ccnt 1
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 0.3410569080735673 ccnt 1
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 0.3410569080735673 ccnt 1
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 0.3410569080735673 ccnt 1
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 0.3410569080735673 ccnt 1
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.03410569080735674 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.03410569080735674 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 17 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 3.623729648281653 ccnt 4
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 3.623729648281653 ccnt 4
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 3.623729648281653 ccnt 4
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 3.623729648281653 ccnt 4
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 0.3623729648281653 ccnt 1
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 0.3623729648281653 ccnt 1
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 0.3623729648281653 ccnt 1
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 0.3623729648281653 ccnt 1
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 0.3623729648281653 ccnt 1
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 0.3623729648281653 ccnt 1
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.03623729648281653 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.03623729648281653 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 18 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 3.8368902158276326 ccnt 4
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 3.8368902158276326 ccnt 4
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 3.8368902158276326 ccnt 4
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 3.8368902158276326 ccnt 4
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 0.3836890215827632 ccnt 1
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 0.3836890215827632 ccnt 1
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 0.3836890215827632 ccnt 1
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 0.3836890215827632 ccnt 1
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 0.3836890215827632 ccnt 1
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 0.3836890215827632 ccnt 1
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.038368902158276326 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.038368902158276326 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 19 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 4.050050783373612 ccnt 5
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 4.050050783373612 ccnt 5
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 4.050050783373612 ccnt 5
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 4.050050783373612 ccnt 5
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 0.40500507833736116 ccnt 1
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 0.40500507833736116 ccnt 1
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 0.40500507833736116 ccnt 1
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 0.40500507833736116 ccnt 1
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 0.40500507833736116 ccnt 1
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 0.40500507833736116 ccnt 1
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.04050050783373612 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.04050050783373612 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 20 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 4.263211350919591 ccnt 5
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 4.263211350919591 ccnt 5
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 4.263211350919591 ccnt 5
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 4.263211350919591 ccnt 5
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 0.4263211350919591 ccnt 1
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 0.4263211350919591 ccnt 1
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 0.4263211350919591 ccnt 1
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 0.4263211350919591 ccnt 1
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 0.4263211350919591 ccnt 1
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 0.4263211350919591 ccnt 1
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.042632113509195914 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.042632113509195914 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 21 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 4.4763719184655715 ccnt 5
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 4.4763719184655715 ccnt 5
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 4.4763719184655715 ccnt 5
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 4.4763719184655715 ccnt 5
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 0.44763719184655715 ccnt 1
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 0.44763719184655715 ccnt 1
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 0.44763719184655715 ccnt 1
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 0.44763719184655715 ccnt 1
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 0.44763719184655715 ccnt 1
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 0.44763719184655715 ccnt 1
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.044763719184655715 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.044763719184655715 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 22 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 4.689532486011551 ccnt 5
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 4.689532486011551 ccnt 5
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 4.689532486011551 ccnt 5
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 4.689532486011551 ccnt 5
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 0.46895324860115506 ccnt 1
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 0.46895324860115506 ccnt 1
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 0.46895324860115506 ccnt 1
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 0.46895324860115506 ccnt 1
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 0.46895324860115506 ccnt 1
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 0.46895324860115506 ccnt 1
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.046895324860115516 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.046895324860115516 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 23 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 4.902693053557531 ccnt 5
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 4.902693053557531 ccnt 5
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 4.902693053557531 ccnt 5
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 4.902693053557531 ccnt 5
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 0.490269305355753 ccnt 1
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 0.490269305355753 ccnt 1
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 0.490269305355753 ccnt 1
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 0.490269305355753 ccnt 1
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 0.490269305355753 ccnt 1
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 0.490269305355753 ccnt 1
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.04902693053557531 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.04902693053557531 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 24 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 5.11585362110351 ccnt 6
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 5.11585362110351 ccnt 6
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 5.11585362110351 ccnt 6
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 5.11585362110351 ccnt 6
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 0.511585362110351 ccnt 1
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 0.511585362110351 ccnt 1
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 0.511585362110351 ccnt 1
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 0.511585362110351 ccnt 1
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 0.511585362110351 ccnt 1
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 0.511585362110351 ccnt 1
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.051158536211035104 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.051158536211035104 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 25 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 5.32901418864949 ccnt 6
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 5.32901418864949 ccnt 6
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 5.32901418864949 ccnt 6
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 5.32901418864949 ccnt 6
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 0.5329014188649489 ccnt 1
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 0.5329014188649489 ccnt 1
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 0.5329014188649489 ccnt 1
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 0.5329014188649489 ccnt 1
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 0.5329014188649489 ccnt 1
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 0.5329014188649489 ccnt 1
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.0532901418864949 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.0532901418864949 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 26 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 5.542174756195469 ccnt 6
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 5.542174756195469 ccnt 6
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 5.542174756195469 ccnt 6
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 5.542174756195469 ccnt 6
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 0.5542174756195469 ccnt 1
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 0.5542174756195469 ccnt 1
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 0.5542174756195469 ccnt 1
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 0.5542174756195469 ccnt 1
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 0.5542174756195469 ccnt 1
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 0.5542174756195469 ccnt 1
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.0554217475619547 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.0554217475619547 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 27 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 5.755335323741449 ccnt 6
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 5.755335323741449 ccnt 6
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 5.755335323741449 ccnt 6
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 5.755335323741449 ccnt 6
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 0.5755335323741448 ccnt 1
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 0.5755335323741448 ccnt 1
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 0.5755335323741448 ccnt 1
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 0.5755335323741448 ccnt 1
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 0.5755335323741448 ccnt 1
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 0.5755335323741448 ccnt 1
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.05755335323741449 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.05755335323741449 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 28 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 5.968495891287429 ccnt 6
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 5.968495891287429 ccnt 6
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 5.968495891287429 ccnt 6
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 5.968495891287429 ccnt 6
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 0.5968495891287428 ccnt 1
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 0.5968495891287428 ccnt 1
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 0.5968495891287428 ccnt 1
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 0.5968495891287428 ccnt 1
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 0.5968495891287428 ccnt 1
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 0.5968495891287428 ccnt 1
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.059684958912874286 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.059684958912874286 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 29 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 6.181656458833408 ccnt 7
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 6.181656458833408 ccnt 7
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 6.181656458833408 ccnt 7
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 6.181656458833408 ccnt 7
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 0.6181656458833408 ccnt 1
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 0.6181656458833408 ccnt 1
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 0.6181656458833408 ccnt 1
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 0.6181656458833408 ccnt 1
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 0.6181656458833408 ccnt 1
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 0.6181656458833408 ccnt 1
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.06181656458833408 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.06181656458833408 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 30 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 6.394817026379387 ccnt 7
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 6.394817026379387 ccnt 7
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 6.394817026379387 ccnt 7
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 6.394817026379387 ccnt 7
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 0.6394817026379387 ccnt 1
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 0.6394817026379387 ccnt 1
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 0.6394817026379387 ccnt 1
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 0.6394817026379387 ccnt 1
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 0.6394817026379387 ccnt 1
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 0.6394817026379387 ccnt 1
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.06394817026379387 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.06394817026379387 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 31 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 6.6079775939253675 ccnt 7
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 6.6079775939253675 ccnt 7
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 6.6079775939253675 ccnt 7
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 6.6079775939253675 ccnt 7
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 0.6607977593925367 ccnt 1
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 0.6607977593925367 ccnt 1
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 0.6607977593925367 ccnt 1
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 0.6607977593925367 ccnt 1
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 0.6607977593925367 ccnt 1
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 0.6607977593925367 ccnt 1
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.06607977593925367 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.06607977593925367 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 32 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 6.821138161471347 ccnt 7
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 6.821138161471347 ccnt 7
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 6.821138161471347 ccnt 7
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 6.821138161471347 ccnt 7
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 0.6821138161471346 ccnt 1
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 0.6821138161471346 ccnt 1
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 0.6821138161471346 ccnt 1
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 0.6821138161471346 ccnt 1
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 0.6821138161471346 ccnt 1
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 0.6821138161471346 ccnt 1
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.06821138161471348 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.06821138161471348 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 33 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 7.034298729017326 ccnt 8
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 7.034298729017326 ccnt 8
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 7.034298729017326 ccnt 8
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 7.034298729017326 ccnt 8
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 0.7034298729017325 ccnt 1
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 0.7034298729017325 ccnt 1
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 0.7034298729017325 ccnt 1
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 0.7034298729017325 ccnt 1
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 0.7034298729017325 ccnt 1
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 0.7034298729017325 ccnt 1
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.07034298729017327 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.07034298729017327 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 34 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 7.247459296563306 ccnt 8
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 7.247459296563306 ccnt 8
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 7.247459296563306 ccnt 8
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 7.247459296563306 ccnt 8
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 0.7247459296563306 ccnt 1
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 0.7247459296563306 ccnt 1
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 0.7247459296563306 ccnt 1
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 0.7247459296563306 ccnt 1
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 0.7247459296563306 ccnt 1
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 0.7247459296563306 ccnt 1
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.07247459296563306 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.07247459296563306 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 35 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 7.460619864109286 ccnt 8
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 7.460619864109286 ccnt 8
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 7.460619864109286 ccnt 8
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 7.460619864109286 ccnt 8
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 0.7460619864109285 ccnt 1
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 0.7460619864109285 ccnt 1
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 0.7460619864109285 ccnt 1
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 0.7460619864109285 ccnt 1
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 0.7460619864109285 ccnt 1
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 0.7460619864109285 ccnt 1
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.07460619864109286 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.07460619864109286 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 36 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 7.673780431655265 ccnt 8
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 7.673780431655265 ccnt 8
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 7.673780431655265 ccnt 8
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 7.673780431655265 ccnt 8
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 0.7673780431655264 ccnt 1
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 0.7673780431655264 ccnt 1
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 0.7673780431655264 ccnt 1
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 0.7673780431655264 ccnt 1
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 0.7673780431655264 ccnt 1
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 0.7673780431655264 ccnt 1
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.07673780431655265 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.07673780431655265 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 37 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 7.8869409992012445 ccnt 8
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 7.8869409992012445 ccnt 8
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 7.8869409992012445 ccnt 8
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 7.8869409992012445 ccnt 8
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 0.7886940999201244 ccnt 1
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 0.7886940999201244 ccnt 1
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 0.7886940999201244 ccnt 1
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 0.7886940999201244 ccnt 1
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 0.7886940999201244 ccnt 1
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 0.7886940999201244 ccnt 1
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.07886940999201245 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.07886940999201245 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 38 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 8.100101566747224 ccnt 9
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 8.100101566747224 ccnt 9
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 8.100101566747224 ccnt 9
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 8.100101566747224 ccnt 9
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 0.8100101566747223 ccnt 1
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 0.8100101566747223 ccnt 1
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 0.8100101566747223 ccnt 1
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 0.8100101566747223 ccnt 1
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 0.8100101566747223 ccnt 1
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 0.8100101566747223 ccnt 1
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.08100101566747224 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.08100101566747224 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 39 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 8.313262134293204 ccnt 9
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 8.313262134293204 ccnt 9
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 8.313262134293204 ccnt 9
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 8.313262134293204 ccnt 9
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 0.8313262134293203 ccnt 1
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 0.8313262134293203 ccnt 1
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 0.8313262134293203 ccnt 1
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 0.8313262134293203 ccnt 1
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 0.8313262134293203 ccnt 1
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 0.8313262134293203 ccnt 1
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.08313262134293203 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.08313262134293203 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 40 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 8.526422701839182 ccnt 9
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 8.526422701839182 ccnt 9
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 8.526422701839182 ccnt 9
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 8.526422701839182 ccnt 9
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 0.8526422701839182 ccnt 1
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 0.8526422701839182 ccnt 1
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 0.8526422701839182 ccnt 1
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 0.8526422701839182 ccnt 1
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 0.8526422701839182 ccnt 1
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 0.8526422701839182 ccnt 1
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.08526422701839183 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.08526422701839183 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 41 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 8.739583269385163 ccnt 9
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 8.739583269385163 ccnt 9
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 8.739583269385163 ccnt 9
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 8.739583269385163 ccnt 9
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 0.8739583269385162 ccnt 1
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 0.8739583269385162 ccnt 1
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 0.8739583269385162 ccnt 1
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 0.8739583269385162 ccnt 1
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 0.8739583269385162 ccnt 1
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 0.8739583269385162 ccnt 1
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.08739583269385164 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.08739583269385164 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 42 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 8.952743836931143 ccnt 9
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 8.952743836931143 ccnt 9
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 8.952743836931143 ccnt 9
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 8.952743836931143 ccnt 9
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 0.8952743836931143 ccnt 1
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 0.8952743836931143 ccnt 1
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 0.8952743836931143 ccnt 1
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 0.8952743836931143 ccnt 1
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 0.8952743836931143 ccnt 1
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 0.8952743836931143 ccnt 1
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.08952743836931143 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.08952743836931143 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 43 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 9.165904404477123 ccnt 10
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 9.165904404477123 ccnt 10
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 9.165904404477123 ccnt 10
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 9.165904404477123 ccnt 10
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 0.9165904404477122 ccnt 1
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 0.9165904404477122 ccnt 1
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 0.9165904404477122 ccnt 1
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 0.9165904404477122 ccnt 1
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 0.9165904404477122 ccnt 1
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 0.9165904404477122 ccnt 1
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.09165904404477124 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.09165904404477124 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 44 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 9.379064972023102 ccnt 10
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 9.379064972023102 ccnt 10
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 9.379064972023102 ccnt 10
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 9.379064972023102 ccnt 10
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 0.9379064972023101 ccnt 1
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 0.9379064972023101 ccnt 1
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 0.9379064972023101 ccnt 1
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 0.9379064972023101 ccnt 1
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 0.9379064972023101 ccnt 1
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 0.9379064972023101 ccnt 1
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.09379064972023103 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.09379064972023103 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 45 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 9.592225539569082 ccnt 10
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 9.592225539569082 ccnt 10
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 9.592225539569082 ccnt 10
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 9.592225539569082 ccnt 10
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 0.9592225539569081 ccnt 1
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 0.9592225539569081 ccnt 1
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 0.9592225539569081 ccnt 1
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 0.9592225539569081 ccnt 1
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 0.9592225539569081 ccnt 1
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 0.9592225539569081 ccnt 1
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.09592225539569083 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.09592225539569083 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 46 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 9.805386107115062 ccnt 10
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 9.805386107115062 ccnt 10
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 9.805386107115062 ccnt 10
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 9.805386107115062 ccnt 10
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 0.980538610711506 ccnt 1
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 0.980538610711506 ccnt 1
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 0.980538610711506 ccnt 1
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 0.980538610711506 ccnt 1
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 0.980538610711506 ccnt 1
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 0.980538610711506 ccnt 1
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.09805386107115062 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.09805386107115062 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 47 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 10.01854667466104 ccnt 11
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 10.01854667466104 ccnt 11
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 10.01854667466104 ccnt 11
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 10.01854667466104 ccnt 11
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 1.001854667466104 ccnt 2
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 1.001854667466104 ccnt 2
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 1.001854667466104 ccnt 2
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 1.001854667466104 ccnt 2
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 1.001854667466104 ccnt 2
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 1.001854667466104 ccnt 2
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.10018546674661041 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.10018546674661041 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 48 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 10.23170724220702 ccnt 11
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 10.23170724220702 ccnt 11
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 10.23170724220702 ccnt 11
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 10.23170724220702 ccnt 11
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 1.023170724220702 ccnt 2
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 1.023170724220702 ccnt 2
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 1.023170724220702 ccnt 2
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 1.023170724220702 ccnt 2
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 1.023170724220702 ccnt 2
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 1.023170724220702 ccnt 2
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.10231707242207021 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.10231707242207021 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 49 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 10.444867809753001 ccnt 11
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 10.444867809753001 ccnt 11
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 10.444867809753001 ccnt 11
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 10.444867809753001 ccnt 11
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 1.0444867809753 ccnt 2
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 1.0444867809753 ccnt 2
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 1.0444867809753 ccnt 2
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 1.0444867809753 ccnt 2
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 1.0444867809753 ccnt 2
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 1.0444867809753 ccnt 2
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.10444867809753 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.10444867809753 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 50 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 10.65802837729898 ccnt 11
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 10.65802837729898 ccnt 11
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 10.65802837729898 ccnt 11
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 10.65802837729898 ccnt 11
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 1.0658028377298978 ccnt 2
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 1.0658028377298978 ccnt 2
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 1.0658028377298978 ccnt 2
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 1.0658028377298978 ccnt 2
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 1.0658028377298978 ccnt 2
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 1.0658028377298978 ccnt 2
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.1065802837729898 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.1065802837729898 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 51 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 10.87118894484496 ccnt 11
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 10.87118894484496 ccnt 11
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 10.87118894484496 ccnt 11
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 10.87118894484496 ccnt 11
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 1.0871188944844958 ccnt 2
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 1.0871188944844958 ccnt 2
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 1.0871188944844958 ccnt 2
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 1.0871188944844958 ccnt 2
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 1.0871188944844958 ccnt 2
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 1.0871188944844958 ccnt 2
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.10871188944844959 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.10871188944844959 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 52 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 11.084349512390938 ccnt 12
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 11.084349512390938 ccnt 12
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 11.084349512390938 ccnt 12
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 11.084349512390938 ccnt 12
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 1.1084349512390939 ccnt 2
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 1.1084349512390939 ccnt 2
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 1.1084349512390939 ccnt 2
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 1.1084349512390939 ccnt 2
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 1.1084349512390939 ccnt 2
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 1.1084349512390939 ccnt 2
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.1108434951239094 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.1108434951239094 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 53 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 11.297510079936918 ccnt 12
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 11.297510079936918 ccnt 12
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 11.297510079936918 ccnt 12
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 11.297510079936918 ccnt 12
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 1.1297510079936917 ccnt 2
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 1.1297510079936917 ccnt 2
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 1.1297510079936917 ccnt 2
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 1.1297510079936917 ccnt 2
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 1.1297510079936917 ccnt 2
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 1.1297510079936917 ccnt 2
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.11297510079936919 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.11297510079936919 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 54 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 11.510670647482899 ccnt 12
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 11.510670647482899 ccnt 12
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 11.510670647482899 ccnt 12
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 11.510670647482899 ccnt 12
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 1.1510670647482897 ccnt 2
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 1.1510670647482897 ccnt 2
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 1.1510670647482897 ccnt 2
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 1.1510670647482897 ccnt 2
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 1.1510670647482897 ccnt 2
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 1.1510670647482897 ccnt 2
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.11510670647482898 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.11510670647482898 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 55 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 11.723831215028877 ccnt 12
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 11.723831215028877 ccnt 12
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 11.723831215028877 ccnt 12
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 11.723831215028877 ccnt 12
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 1.1723831215028877 ccnt 2
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 1.1723831215028877 ccnt 2
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 1.1723831215028877 ccnt 2
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 1.1723831215028877 ccnt 2
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 1.1723831215028877 ccnt 2
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 1.1723831215028877 ccnt 2
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.11723831215028878 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.11723831215028878 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 56 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 11.936991782574857 ccnt 12
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 11.936991782574857 ccnt 12
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 11.936991782574857 ccnt 12
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 11.936991782574857 ccnt 12
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 1.1936991782574855 ccnt 2
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 1.1936991782574855 ccnt 2
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 1.1936991782574855 ccnt 2
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 1.1936991782574855 ccnt 2
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 1.1936991782574855 ccnt 2
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 1.1936991782574855 ccnt 2
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.11936991782574857 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.11936991782574857 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 57 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 12.150152350120837 ccnt 13
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 12.150152350120837 ccnt 13
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 12.150152350120837 ccnt 13
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 12.150152350120837 ccnt 13
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 1.2150152350120835 ccnt 2
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 1.2150152350120835 ccnt 2
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 1.2150152350120835 ccnt 2
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 1.2150152350120835 ccnt 2
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 1.2150152350120835 ccnt 2
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 1.2150152350120835 ccnt 2
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.12150152350120837 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.12150152350120837 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 58 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 12.363312917666816 ccnt 13
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 12.363312917666816 ccnt 13
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 12.363312917666816 ccnt 13
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 12.363312917666816 ccnt 13
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 1.2363312917666816 ccnt 2
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 1.2363312917666816 ccnt 2
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 1.2363312917666816 ccnt 2
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 1.2363312917666816 ccnt 2
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 1.2363312917666816 ccnt 2
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 1.2363312917666816 ccnt 2
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.12363312917666816 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.12363312917666816 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 59 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 12.576473485212796 ccnt 13
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 12.576473485212796 ccnt 13
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 12.576473485212796 ccnt 13
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 12.576473485212796 ccnt 13
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 1.2576473485212794 ccnt 2
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 1.2576473485212794 ccnt 2
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 1.2576473485212794 ccnt 2
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 1.2576473485212794 ccnt 2
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 1.2576473485212794 ccnt 2
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 1.2576473485212794 ccnt 2
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.12576473485212797 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.12576473485212797 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 60 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 12.789634052758775 ccnt 13
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 12.789634052758775 ccnt 13
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 12.789634052758775 ccnt 13
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 12.789634052758775 ccnt 13
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 1.2789634052758774 ccnt 2
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 1.2789634052758774 ccnt 2
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 1.2789634052758774 ccnt 2
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 1.2789634052758774 ccnt 2
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 1.2789634052758774 ccnt 2
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 1.2789634052758774 ccnt 2
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.12789634052758775 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.12789634052758775 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 61 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 13.002794620304755 ccnt 14
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 13.002794620304755 ccnt 14
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 13.002794620304755 ccnt 14
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 13.002794620304755 ccnt 14
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 1.3002794620304754 ccnt 2
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 1.3002794620304754 ccnt 2
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 1.3002794620304754 ccnt 2
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 1.3002794620304754 ccnt 2
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 1.3002794620304754 ccnt 2
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 1.3002794620304754 ccnt 2
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.13002794620304756 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.13002794620304756 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 62 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 13.215955187850735 ccnt 14
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 13.215955187850735 ccnt 14
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 13.215955187850735 ccnt 14
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 13.215955187850735 ccnt 14
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 1.3215955187850734 ccnt 2
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 1.3215955187850734 ccnt 2
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 1.3215955187850734 ccnt 2
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 1.3215955187850734 ccnt 2
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 1.3215955187850734 ccnt 2
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 1.3215955187850734 ccnt 2
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.13215955187850734 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.13215955187850734 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 63 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 13.429115755396714 ccnt 14
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 13.429115755396714 ccnt 14
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 13.429115755396714 ccnt 14
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 13.429115755396714 ccnt 14
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 1.3429115755396712 ccnt 2
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 1.3429115755396712 ccnt 2
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 1.3429115755396712 ccnt 2
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 1.3429115755396712 ccnt 2
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 1.3429115755396712 ccnt 2
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 1.3429115755396712 ccnt 2
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.13429115755396714 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.13429115755396714 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 64 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 13.642276322942694 ccnt 14
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 13.642276322942694 ccnt 14
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 13.642276322942694 ccnt 14
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 13.642276322942694 ccnt 14
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 1.3642276322942692 ccnt 2
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 1.3642276322942692 ccnt 2
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 1.3642276322942692 ccnt 2
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 1.3642276322942692 ccnt 2
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 1.3642276322942692 ccnt 2
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 1.3642276322942692 ccnt 2
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.13642276322942695 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.13642276322942695 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 65 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 13.855436890488674 ccnt 14
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 13.855436890488674 ccnt 14
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 13.855436890488674 ccnt 14
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 13.855436890488674 ccnt 14
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 1.3855436890488673 ccnt 2
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 1.3855436890488673 ccnt 2
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 1.3855436890488673 ccnt 2
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 1.3855436890488673 ccnt 2
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 1.3855436890488673 ccnt 2
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 1.3855436890488673 ccnt 2
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.13855436890488673 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.13855436890488673 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 66 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 14.068597458034652 ccnt 15
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 14.068597458034652 ccnt 15
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 14.068597458034652 ccnt 15
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 14.068597458034652 ccnt 15
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 1.406859745803465 ccnt 2
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 1.406859745803465 ccnt 2
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 1.406859745803465 ccnt 2
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 1.406859745803465 ccnt 2
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 1.406859745803465 ccnt 2
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 1.406859745803465 ccnt 2
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.14068597458034654 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.14068597458034654 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 67 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 14.281758025580633 ccnt 15
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 14.281758025580633 ccnt 15
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 14.281758025580633 ccnt 15
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 14.281758025580633 ccnt 15
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 1.428175802558063 ccnt 2
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 1.428175802558063 ccnt 2
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 1.428175802558063 ccnt 2
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 1.428175802558063 ccnt 2
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 1.428175802558063 ccnt 2
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 1.428175802558063 ccnt 2
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.14281758025580632 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.14281758025580632 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 68 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 14.494918593126611 ccnt 15
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 14.494918593126611 ccnt 15
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 14.494918593126611 ccnt 15
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 14.494918593126611 ccnt 15
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 1.4494918593126611 ccnt 2
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 1.4494918593126611 ccnt 2
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 1.4494918593126611 ccnt 2
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 1.4494918593126611 ccnt 2
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 1.4494918593126611 ccnt 2
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 1.4494918593126611 ccnt 2
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.14494918593126613 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.14494918593126613 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 69 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 14.708079160672591 ccnt 15
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 14.708079160672591 ccnt 15
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 14.708079160672591 ccnt 15
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 14.708079160672591 ccnt 15
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 1.470807916067259 ccnt 2
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 1.470807916067259 ccnt 2
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 1.470807916067259 ccnt 2
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 1.470807916067259 ccnt 2
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 1.470807916067259 ccnt 2
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 1.470807916067259 ccnt 2
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.1470807916067259 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.1470807916067259 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 70 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 14.921239728218572 ccnt 15
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 14.921239728218572 ccnt 15
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 14.921239728218572 ccnt 15
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 14.921239728218572 ccnt 15
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 1.492123972821857 ccnt 2
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 1.492123972821857 ccnt 2
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 1.492123972821857 ccnt 2
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 1.492123972821857 ccnt 2
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 1.492123972821857 ccnt 2
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 1.492123972821857 ccnt 2
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.14921239728218572 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.14921239728218572 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 71 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 15.13440029576455 ccnt 16
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 15.13440029576455 ccnt 16
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 15.13440029576455 ccnt 16
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 15.13440029576455 ccnt 16
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 1.513440029576455 ccnt 2
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 1.513440029576455 ccnt 2
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 1.513440029576455 ccnt 2
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 1.513440029576455 ccnt 2
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 1.513440029576455 ccnt 2
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 1.513440029576455 ccnt 2
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.1513440029576455 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.1513440029576455 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 72 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 15.34756086331053 ccnt 16
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 15.34756086331053 ccnt 16
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 15.34756086331053 ccnt 16
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 15.34756086331053 ccnt 16
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 1.5347560863310528 ccnt 2
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 1.5347560863310528 ccnt 2
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 1.5347560863310528 ccnt 2
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 1.5347560863310528 ccnt 2
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 1.5347560863310528 ccnt 2
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 1.5347560863310528 ccnt 2
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.1534756086331053 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.1534756086331053 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 73 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 15.560721430856509 ccnt 16
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 15.560721430856509 ccnt 16
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 15.560721430856509 ccnt 16
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 15.560721430856509 ccnt 16
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 1.5560721430856508 ccnt 2
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 1.5560721430856508 ccnt 2
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 1.5560721430856508 ccnt 2
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 1.5560721430856508 ccnt 2
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 1.5560721430856508 ccnt 2
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 1.5560721430856508 ccnt 2
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.1556072143085651 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.1556072143085651 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 74 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 15.773881998402489 ccnt 16
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 15.773881998402489 ccnt 16
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 15.773881998402489 ccnt 16
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 15.773881998402489 ccnt 16
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 1.5773881998402488 ccnt 2
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 1.5773881998402488 ccnt 2
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 1.5773881998402488 ccnt 2
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 1.5773881998402488 ccnt 2
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 1.5773881998402488 ccnt 2
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 1.5773881998402488 ccnt 2
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.1577388199840249 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.1577388199840249 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 75 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 15.98704256594847 ccnt 16
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 15.98704256594847 ccnt 16
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 15.98704256594847 ccnt 16
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 15.98704256594847 ccnt 16
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 1.5987042565948466 ccnt 2
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 1.5987042565948466 ccnt 2
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 1.5987042565948466 ccnt 2
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 1.5987042565948466 ccnt 2
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 1.5987042565948466 ccnt 2
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 1.5987042565948466 ccnt 2
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.1598704256594847 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.1598704256594847 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 76 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 16.200203133494448 ccnt 17
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 16.200203133494448 ccnt 17
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 16.200203133494448 ccnt 17
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 16.200203133494448 ccnt 17
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 1.6200203133494446 ccnt 2
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 1.6200203133494446 ccnt 2
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 1.6200203133494446 ccnt 2
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 1.6200203133494446 ccnt 2
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 1.6200203133494446 ccnt 2
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 1.6200203133494446 ccnt 2
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.16200203133494448 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.16200203133494448 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 77 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 16.413363701040428 ccnt 17
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 16.413363701040428 ccnt 17
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 16.413363701040428 ccnt 17
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 16.413363701040428 ccnt 17
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 1.6413363701040427 ccnt 2
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 1.6413363701040427 ccnt 2
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 1.6413363701040427 ccnt 2
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 1.6413363701040427 ccnt 2
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 1.6413363701040427 ccnt 2
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 1.6413363701040427 ccnt 2
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.1641336370104043 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.1641336370104043 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 78 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 16.626524268586408 ccnt 17
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 16.626524268586408 ccnt 17
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 16.626524268586408 ccnt 17
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 16.626524268586408 ccnt 17
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 1.6626524268586407 ccnt 2
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 1.6626524268586407 ccnt 2
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 1.6626524268586407 ccnt 2
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 1.6626524268586407 ccnt 2
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 1.6626524268586407 ccnt 2
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 1.6626524268586407 ccnt 2
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.16626524268586407 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.16626524268586407 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 79 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 16.83968483613239 ccnt 17
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 16.83968483613239 ccnt 17
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 16.83968483613239 ccnt 17
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 16.83968483613239 ccnt 17
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 1.6839684836132385 ccnt 2
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 1.6839684836132385 ccnt 2
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 1.6839684836132385 ccnt 2
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 1.6839684836132385 ccnt 2
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 1.6839684836132385 ccnt 2
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 1.6839684836132385 ccnt 2
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.16839684836132388 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.16839684836132388 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 80 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 17.052845403678365 ccnt 18
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 17.052845403678365 ccnt 18
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 17.052845403678365 ccnt 18
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 17.052845403678365 ccnt 18
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 1.7052845403678365 ccnt 2
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 1.7052845403678365 ccnt 2
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 1.7052845403678365 ccnt 2
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 1.7052845403678365 ccnt 2
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 1.7052845403678365 ccnt 2
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 1.7052845403678365 ccnt 2
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.17052845403678366 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.17052845403678366 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 81 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 17.266005971224345 ccnt 18
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 17.266005971224345 ccnt 18
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 17.266005971224345 ccnt 18
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 17.266005971224345 ccnt 18
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 1.7266005971224345 ccnt 2
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 1.7266005971224345 ccnt 2
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 1.7266005971224345 ccnt 2
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 1.7266005971224345 ccnt 2
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 1.7266005971224345 ccnt 2
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 1.7266005971224345 ccnt 2
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.17266005971224346 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.17266005971224346 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 82 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 17.479166538770325 ccnt 18
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 17.479166538770325 ccnt 18
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 17.479166538770325 ccnt 18
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 17.479166538770325 ccnt 18
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 1.7479166538770323 ccnt 2
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 1.7479166538770323 ccnt 2
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 1.7479166538770323 ccnt 2
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 1.7479166538770323 ccnt 2
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 1.7479166538770323 ccnt 2
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 1.7479166538770323 ccnt 2
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.17479166538770327 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.17479166538770327 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 83 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 17.692327106316306 ccnt 18
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 17.692327106316306 ccnt 18
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 17.692327106316306 ccnt 18
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 17.692327106316306 ccnt 18
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 1.7692327106316303 ccnt 2
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 1.7692327106316303 ccnt 2
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 1.7692327106316303 ccnt 2
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 1.7692327106316303 ccnt 2
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 1.7692327106316303 ccnt 2
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 1.7692327106316303 ccnt 2
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.17692327106316305 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.17692327106316305 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 84 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 17.905487673862286 ccnt 18
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 17.905487673862286 ccnt 18
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 17.905487673862286 ccnt 18
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 17.905487673862286 ccnt 18
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 1.7905487673862286 ccnt 2
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 1.7905487673862286 ccnt 2
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 1.7905487673862286 ccnt 2
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 1.7905487673862286 ccnt 2
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 1.7905487673862286 ccnt 2
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 1.7905487673862286 ccnt 2
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.17905487673862286 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.17905487673862286 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 85 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 18.118648241408266 ccnt 19
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 18.118648241408266 ccnt 19
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 18.118648241408266 ccnt 19
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 18.118648241408266 ccnt 19
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 1.8118648241408264 ccnt 2
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 1.8118648241408264 ccnt 2
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 1.8118648241408264 ccnt 2
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 1.8118648241408264 ccnt 2
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 1.8118648241408264 ccnt 2
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 1.8118648241408264 ccnt 2
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.18118648241408267 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.18118648241408267 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 86 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 18.331808808954246 ccnt 19
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 18.331808808954246 ccnt 19
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 18.331808808954246 ccnt 19
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 18.331808808954246 ccnt 19
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 1.8331808808954244 ccnt 2
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 1.8331808808954244 ccnt 2
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 1.8331808808954244 ccnt 2
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 1.8331808808954244 ccnt 2
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 1.8331808808954244 ccnt 2
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 1.8331808808954244 ccnt 2
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.18331808808954247 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.18331808808954247 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 87 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 18.544969376500227 ccnt 19
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 18.544969376500227 ccnt 19
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 18.544969376500227 ccnt 19
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 18.544969376500227 ccnt 19
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 1.8544969376500224 ccnt 2
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 1.8544969376500224 ccnt 2
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 1.8544969376500224 ccnt 2
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 1.8544969376500224 ccnt 2
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 1.8544969376500224 ccnt 2
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 1.8544969376500224 ccnt 2
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.18544969376500225 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.18544969376500225 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 88 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 18.758129944046203 ccnt 19
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 18.758129944046203 ccnt 19
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 18.758129944046203 ccnt 19
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 18.758129944046203 ccnt 19
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 1.8758129944046202 ccnt 2
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 1.8758129944046202 ccnt 2
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 1.8758129944046202 ccnt 2
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 1.8758129944046202 ccnt 2
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 1.8758129944046202 ccnt 2
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 1.8758129944046202 ccnt 2
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.18758129944046206 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.18758129944046206 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 89 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 18.971290511592183 ccnt 19
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 18.971290511592183 ccnt 19
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 18.971290511592183 ccnt 19
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 18.971290511592183 ccnt 19
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 1.8971290511592183 ccnt 2
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 1.8971290511592183 ccnt 2
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 1.8971290511592183 ccnt 2
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 1.8971290511592183 ccnt 2
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 1.8971290511592183 ccnt 2
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 1.8971290511592183 ccnt 2
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.18971290511592184 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.18971290511592184 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 90 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 19.184451079138164 ccnt 20
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 19.184451079138164 ccnt 20
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 19.184451079138164 ccnt 20
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 19.184451079138164 ccnt 20
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 1.9184451079138163 ccnt 2
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 1.9184451079138163 ccnt 2
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 1.9184451079138163 ccnt 2
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 1.9184451079138163 ccnt 2
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 1.9184451079138163 ccnt 2
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 1.9184451079138163 ccnt 2
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.19184451079138165 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.19184451079138165 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 91 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 19.397611646684144 ccnt 20
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 19.397611646684144 ccnt 20
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 19.397611646684144 ccnt 20
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 19.397611646684144 ccnt 20
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 1.939761164668414 ccnt 2
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 1.939761164668414 ccnt 2
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 1.939761164668414 ccnt 2
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 1.939761164668414 ccnt 2
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 1.939761164668414 ccnt 2
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 1.939761164668414 ccnt 2
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.19397611646684143 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.19397611646684143 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 92 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 19.610772214230124 ccnt 20
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 19.610772214230124 ccnt 20
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 19.610772214230124 ccnt 20
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 19.610772214230124 ccnt 20
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 1.961077221423012 ccnt 2
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 1.961077221423012 ccnt 2
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 1.961077221423012 ccnt 2
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 1.961077221423012 ccnt 2
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 1.961077221423012 ccnt 2
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 1.961077221423012 ccnt 2
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.19610772214230124 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.19610772214230124 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 93 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 19.823932781776104 ccnt 20
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 19.823932781776104 ccnt 20
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 19.823932781776104 ccnt 20
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 19.823932781776104 ccnt 20
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 1.9823932781776101 ccnt 2
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 1.9823932781776101 ccnt 2
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 1.9823932781776101 ccnt 2
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 1.9823932781776101 ccnt 2
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 1.9823932781776101 ccnt 2
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 1.9823932781776101 ccnt 2
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.19823932781776102 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.19823932781776102 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 94 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 20.03709334932208 ccnt 21
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 20.03709334932208 ccnt 21
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 20.03709334932208 ccnt 21
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 20.03709334932208 ccnt 21
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 2.003709334932208 ccnt 3
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 2.003709334932208 ccnt 3
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 2.003709334932208 ccnt 3
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 2.003709334932208 ccnt 3
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 2.003709334932208 ccnt 3
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 2.003709334932208 ccnt 3
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.20037093349322083 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.20037093349322083 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 95 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 20.25025391686806 ccnt 21
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 20.25025391686806 ccnt 21
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 20.25025391686806 ccnt 21
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 20.25025391686806 ccnt 21
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 2.025025391686806 ccnt 3
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 2.025025391686806 ccnt 3
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 2.025025391686806 ccnt 3
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 2.025025391686806 ccnt 3
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 2.025025391686806 ccnt 3
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 2.025025391686806 ccnt 3
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.20250253916868063 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.20250253916868063 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 96 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 20.46341448441404 ccnt 21
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 20.46341448441404 ccnt 21
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 20.46341448441404 ccnt 21
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 20.46341448441404 ccnt 21
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 2.046341448441404 ccnt 3
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 2.046341448441404 ccnt 3
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 2.046341448441404 ccnt 3
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 2.046341448441404 ccnt 3
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 2.046341448441404 ccnt 3
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 2.046341448441404 ccnt 3
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.20463414484414041 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.20463414484414041 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 97 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 20.67657505196002 ccnt 21
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 20.67657505196002 ccnt 21
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 20.67657505196002 ccnt 21
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 20.67657505196002 ccnt 21
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 2.067657505196002 ccnt 3
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 2.067657505196002 ccnt 3
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 2.067657505196002 ccnt 3
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 2.067657505196002 ccnt 3
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 2.067657505196002 ccnt 3
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 2.067657505196002 ccnt 3
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.20676575051960022 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.20676575051960022 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 98 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 20.889735619506002 ccnt 21
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 20.889735619506002 ccnt 21
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 20.889735619506002 ccnt 21
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 20.889735619506002 ccnt 21
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 2.0889735619506 ccnt 3
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 2.0889735619506 ccnt 3
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 2.0889735619506 ccnt 3
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 2.0889735619506 ccnt 3
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 2.0889735619506 ccnt 3
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 2.0889735619506 ccnt 3
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.20889735619506 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.20889735619506 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 99 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 21.10289618705198 ccnt 22
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 21.10289618705198 ccnt 22
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 21.10289618705198 ccnt 22
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 21.10289618705198 ccnt 22
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 2.1102896187051976 ccnt 3
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 2.1102896187051976 ccnt 3
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 2.1102896187051976 ccnt 3
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 2.1102896187051976 ccnt 3
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 2.1102896187051976 ccnt 3
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 2.1102896187051976 ccnt 3
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.2110289618705198 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.2110289618705198 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 100 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 21.31605675459796 ccnt 22
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 21.31605675459796 ccnt 22
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 21.31605675459796 ccnt 22
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 21.31605675459796 ccnt 22
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 2.1316056754597956 ccnt 3
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 2.1316056754597956 ccnt 3
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 2.1316056754597956 ccnt 3
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 2.1316056754597956 ccnt 3
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 2.1316056754597956 ccnt 3
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 2.1316056754597956 ccnt 3
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.2131605675459796 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.2131605675459796 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 101 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 21.52921732214394 ccnt 22
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 21.52921732214394 ccnt 22
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 21.52921732214394 ccnt 22
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 21.52921732214394 ccnt 22
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 2.1529217322143936 ccnt 3
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 2.1529217322143936 ccnt 3
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 2.1529217322143936 ccnt 3
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 2.1529217322143936 ccnt 3
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 2.1529217322143936 ccnt 3
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 2.1529217322143936 ccnt 3
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.2152921732214394 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.2152921732214394 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 102 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 21.74237788968992 ccnt 22
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 21.74237788968992 ccnt 22
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 21.74237788968992 ccnt 22
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 21.74237788968992 ccnt 22
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 2.1742377889689917 ccnt 3
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 2.1742377889689917 ccnt 3
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 2.1742377889689917 ccnt 3
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 2.1742377889689917 ccnt 3
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 2.1742377889689917 ccnt 3
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 2.1742377889689917 ccnt 3
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.21742377889689918 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.21742377889689918 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 103 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 21.9555384572359 ccnt 22
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 21.9555384572359 ccnt 22
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 21.9555384572359 ccnt 22
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 21.9555384572359 ccnt 22
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 2.1955538457235897 ccnt 3
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 2.1955538457235897 ccnt 3
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 2.1955538457235897 ccnt 3
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 2.1955538457235897 ccnt 3
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 2.1955538457235897 ccnt 3
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 2.1955538457235897 ccnt 3
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.21955538457235899 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.21955538457235899 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 104 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 22.168699024781876 ccnt 23
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 22.168699024781876 ccnt 23
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 22.168699024781876 ccnt 23
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 22.168699024781876 ccnt 23
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 2.2168699024781877 ccnt 3
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 2.2168699024781877 ccnt 3
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 2.2168699024781877 ccnt 3
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 2.2168699024781877 ccnt 3
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 2.2168699024781877 ccnt 3
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 2.2168699024781877 ccnt 3
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.2216869902478188 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.2216869902478188 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 105 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 22.381859592327856 ccnt 23
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 22.381859592327856 ccnt 23
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 22.381859592327856 ccnt 23
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 22.381859592327856 ccnt 23
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 2.2381859592327853 ccnt 3
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 2.2381859592327853 ccnt 3
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 2.2381859592327853 ccnt 3
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 2.2381859592327853 ccnt 3
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 2.2381859592327853 ccnt 3
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 2.2381859592327853 ccnt 3
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.22381859592327857 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.22381859592327857 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 106 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 22.595020159873837 ccnt 23
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 22.595020159873837 ccnt 23
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 22.595020159873837 ccnt 23
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 22.595020159873837 ccnt 23
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 2.2595020159873833 ccnt 3
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 2.2595020159873833 ccnt 3
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 2.2595020159873833 ccnt 3
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 2.2595020159873833 ccnt 3
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 2.2595020159873833 ccnt 3
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 2.2595020159873833 ccnt 3
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.22595020159873838 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.22595020159873838 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 107 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 22.808180727419817 ccnt 23
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 22.808180727419817 ccnt 23
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 22.808180727419817 ccnt 23
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 22.808180727419817 ccnt 23
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 2.2808180727419813 ccnt 3
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 2.2808180727419813 ccnt 3
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 2.2808180727419813 ccnt 3
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 2.2808180727419813 ccnt 3
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 2.2808180727419813 ccnt 3
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 2.2808180727419813 ccnt 3
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.22808180727419816 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.22808180727419816 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 108 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 23.021341294965797 ccnt 24
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 23.021341294965797 ccnt 24
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 23.021341294965797 ccnt 24
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 23.021341294965797 ccnt 24
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 2.3021341294965794 ccnt 3
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 2.3021341294965794 ccnt 3
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 2.3021341294965794 ccnt 3
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 2.3021341294965794 ccnt 3
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 2.3021341294965794 ccnt 3
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 2.3021341294965794 ccnt 3
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.23021341294965797 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.23021341294965797 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 109 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 23.234501862511774 ccnt 24
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 23.234501862511774 ccnt 24
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 23.234501862511774 ccnt 24
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 23.234501862511774 ccnt 24
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 2.3234501862511774 ccnt 3
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 2.3234501862511774 ccnt 3
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 2.3234501862511774 ccnt 3
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 2.3234501862511774 ccnt 3
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 2.3234501862511774 ccnt 3
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 2.3234501862511774 ccnt 3
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.23234501862511775 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.23234501862511775 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 110 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 23.447662430057754 ccnt 24
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 23.447662430057754 ccnt 24
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 23.447662430057754 ccnt 24
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 23.447662430057754 ccnt 24
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 2.3447662430057754 ccnt 3
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 2.3447662430057754 ccnt 3
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 2.3447662430057754 ccnt 3
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 2.3447662430057754 ccnt 3
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 2.3447662430057754 ccnt 3
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 2.3447662430057754 ccnt 3
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.23447662430057756 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.23447662430057756 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 111 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 23.660822997603734 ccnt 24
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 23.660822997603734 ccnt 24
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 23.660822997603734 ccnt 24
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 23.660822997603734 ccnt 24
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 2.3660822997603734 ccnt 3
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 2.3660822997603734 ccnt 3
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 2.3660822997603734 ccnt 3
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 2.3660822997603734 ccnt 3
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 2.3660822997603734 ccnt 3
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 2.3660822997603734 ccnt 3
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.23660822997603737 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.23660822997603737 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 112 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 23.873983565149715 ccnt 24
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 23.873983565149715 ccnt 24
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 23.873983565149715 ccnt 24
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 23.873983565149715 ccnt 24
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 2.387398356514971 ccnt 3
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 2.387398356514971 ccnt 3
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 2.387398356514971 ccnt 3
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 2.387398356514971 ccnt 3
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 2.387398356514971 ccnt 3
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 2.387398356514971 ccnt 3
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.23873983565149715 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.23873983565149715 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 113 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 24.087144132695695 ccnt 25
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 24.087144132695695 ccnt 25
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 24.087144132695695 ccnt 25
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 24.087144132695695 ccnt 25
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 2.408714413269569 ccnt 3
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 2.408714413269569 ccnt 3
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 2.408714413269569 ccnt 3
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 2.408714413269569 ccnt 3
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 2.408714413269569 ccnt 3
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 2.408714413269569 ccnt 3
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.24087144132695695 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.24087144132695695 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 114 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 24.300304700241675 ccnt 25
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 24.300304700241675 ccnt 25
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 24.300304700241675 ccnt 25
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 24.300304700241675 ccnt 25
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 2.430030470024167 ccnt 3
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 2.430030470024167 ccnt 3
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 2.430030470024167 ccnt 3
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 2.430030470024167 ccnt 3
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 2.430030470024167 ccnt 3
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 2.430030470024167 ccnt 3
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.24300304700241673 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.24300304700241673 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 115 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 24.51346526778765 ccnt 25
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 24.51346526778765 ccnt 25
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 24.51346526778765 ccnt 25
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 24.51346526778765 ccnt 25
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 2.451346526778765 ccnt 3
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 2.451346526778765 ccnt 3
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 2.451346526778765 ccnt 3
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 2.451346526778765 ccnt 3
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 2.451346526778765 ccnt 3
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 2.451346526778765 ccnt 3
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.24513465267787654 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.24513465267787654 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 116 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 24.726625835333632 ccnt 25
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 24.726625835333632 ccnt 25
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 24.726625835333632 ccnt 25
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 24.726625835333632 ccnt 25
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 2.472662583533363 ccnt 3
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 2.472662583533363 ccnt 3
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 2.472662583533363 ccnt 3
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 2.472662583533363 ccnt 3
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 2.472662583533363 ccnt 3
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 2.472662583533363 ccnt 3
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.24726625835333632 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.24726625835333632 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 117 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 24.939786402879612 ccnt 25
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 24.939786402879612 ccnt 25
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 24.939786402879612 ccnt 25
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 24.939786402879612 ccnt 25
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 2.493978640287961 ccnt 3
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 2.493978640287961 ccnt 3
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 2.493978640287961 ccnt 3
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 2.493978640287961 ccnt 3
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 2.493978640287961 ccnt 3
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 2.493978640287961 ccnt 3
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.24939786402879613 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.24939786402879613 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 118 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 25.152946970425592 ccnt 26
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 25.152946970425592 ccnt 26
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 25.152946970425592 ccnt 26
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 25.152946970425592 ccnt 26
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 2.5152946970425587 ccnt 3
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 2.5152946970425587 ccnt 3
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 2.5152946970425587 ccnt 3
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 2.5152946970425587 ccnt 3
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 2.5152946970425587 ccnt 3
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 2.5152946970425587 ccnt 3
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.25152946970425594 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.25152946970425594 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 119 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 25.366107537971573 ccnt 26
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 25.366107537971573 ccnt 26
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 25.366107537971573 ccnt 26
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 25.366107537971573 ccnt 26
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 2.5366107537971567 ccnt 3
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 2.5366107537971567 ccnt 3
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 2.5366107537971567 ccnt 3
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 2.5366107537971567 ccnt 3
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 2.5366107537971567 ccnt 3
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 2.5366107537971567 ccnt 3
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.2536610753797157 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.2536610753797157 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 120 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 25.57926810551755 ccnt 26
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 25.57926810551755 ccnt 26
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 25.57926810551755 ccnt 26
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 25.57926810551755 ccnt 26
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 2.5579268105517547 ccnt 3
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 2.5579268105517547 ccnt 3
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 2.5579268105517547 ccnt 3
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 2.5579268105517547 ccnt 3
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 2.5579268105517547 ccnt 3
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 2.5579268105517547 ccnt 3
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.2557926810551755 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.2557926810551755 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 121 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 25.79242867306353 ccnt 26
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 25.79242867306353 ccnt 26
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 25.79242867306353 ccnt 26
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 25.79242867306353 ccnt 26
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 2.5792428673063528 ccnt 3
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 2.5792428673063528 ccnt 3
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 2.5792428673063528 ccnt 3
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 2.5792428673063528 ccnt 3
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 2.5792428673063528 ccnt 3
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 2.5792428673063528 ccnt 3
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.25792428673063533 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.25792428673063533 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 122 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 26.00558924060951 ccnt 27
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 26.00558924060951 ccnt 27
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 26.00558924060951 ccnt 27
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 26.00558924060951 ccnt 27
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 2.600558924060951 ccnt 3
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 2.600558924060951 ccnt 3
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 2.600558924060951 ccnt 3
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 2.600558924060951 ccnt 3
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 2.600558924060951 ccnt 3
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 2.600558924060951 ccnt 3
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.2600558924060951 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.2600558924060951 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 123 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 26.21874980815549 ccnt 27
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 26.21874980815549 ccnt 27
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 26.21874980815549 ccnt 27
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 26.21874980815549 ccnt 27
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 2.621874980815549 ccnt 3
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 2.621874980815549 ccnt 3
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 2.621874980815549 ccnt 3
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 2.621874980815549 ccnt 3
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 2.621874980815549 ccnt 3
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 2.621874980815549 ccnt 3
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.2621874980815549 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.2621874980815549 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 124 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 26.43191037570147 ccnt 27
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 26.43191037570147 ccnt 27
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 26.43191037570147 ccnt 27
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 26.43191037570147 ccnt 27
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 2.643191037570147 ccnt 3
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 2.643191037570147 ccnt 3
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 2.643191037570147 ccnt 3
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 2.643191037570147 ccnt 3
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 2.643191037570147 ccnt 3
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 2.643191037570147 ccnt 3
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.2643191037570147 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.2643191037570147 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 125 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 26.645070943247447 ccnt 27
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 26.645070943247447 ccnt 27
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 26.645070943247447 ccnt 27
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 26.645070943247447 ccnt 27
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 2.6645070943247444 ccnt 3
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 2.6645070943247444 ccnt 3
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 2.6645070943247444 ccnt 3
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 2.6645070943247444 ccnt 3
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 2.6645070943247444 ccnt 3
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 2.6645070943247444 ccnt 3
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.2664507094324745 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.2664507094324745 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 126 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 26.858231510793427 ccnt 27
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 26.858231510793427 ccnt 27
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 26.858231510793427 ccnt 27
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 26.858231510793427 ccnt 27
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 2.6858231510793424 ccnt 3
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 2.6858231510793424 ccnt 3
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 2.6858231510793424 ccnt 3
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 2.6858231510793424 ccnt 3
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 2.6858231510793424 ccnt 3
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 2.6858231510793424 ccnt 3
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.2685823151079343 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.2685823151079343 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 127 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 27.071392078339407 ccnt 28
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 27.071392078339407 ccnt 28
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 27.071392078339407 ccnt 28
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 27.071392078339407 ccnt 28
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 2.7071392078339405 ccnt 3
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 2.7071392078339405 ccnt 3
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 2.7071392078339405 ccnt 3
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 2.7071392078339405 ccnt 3
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 2.7071392078339405 ccnt 3
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 2.7071392078339405 ccnt 3
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.27071392078339407 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.27071392078339407 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 128 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 27.284552645885388 ccnt 28
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 27.284552645885388 ccnt 28
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 27.284552645885388 ccnt 28
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 27.284552645885388 ccnt 28
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 2.7284552645885385 ccnt 3
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 2.7284552645885385 ccnt 3
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 2.7284552645885385 ccnt 3
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 2.7284552645885385 ccnt 3
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 2.7284552645885385 ccnt 3
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 2.7284552645885385 ccnt 3
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.2728455264588539 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.2728455264588539 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 129 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 27.497713213431368 ccnt 28
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 27.497713213431368 ccnt 28
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 27.497713213431368 ccnt 28
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 27.497713213431368 ccnt 28
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 2.7497713213431365 ccnt 3
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 2.7497713213431365 ccnt 3
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 2.7497713213431365 ccnt 3
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 2.7497713213431365 ccnt 3
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 2.7497713213431365 ccnt 3
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 2.7497713213431365 ccnt 3
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.2749771321343137 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.2749771321343137 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 130 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 27.710873780977348 ccnt 28
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 27.710873780977348 ccnt 28
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 27.710873780977348 ccnt 28
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 27.710873780977348 ccnt 28
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 2.7710873780977345 ccnt 3
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 2.7710873780977345 ccnt 3
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 2.7710873780977345 ccnt 3
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 2.7710873780977345 ccnt 3
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 2.7710873780977345 ccnt 3
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 2.7710873780977345 ccnt 3
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.27710873780977346 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.27710873780977346 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 131 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 27.924034348523325 ccnt 28
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 27.924034348523325 ccnt 28
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 27.924034348523325 ccnt 28
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 27.924034348523325 ccnt 28
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 2.792403434852332 ccnt 3
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 2.792403434852332 ccnt 3
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 2.792403434852332 ccnt 3
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 2.792403434852332 ccnt 3
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 2.792403434852332 ccnt 3
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 2.792403434852332 ccnt 3
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.27924034348523324 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.27924034348523324 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 132 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 28.137194916069305 ccnt 29
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 28.137194916069305 ccnt 29
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 28.137194916069305 ccnt 29
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 28.137194916069305 ccnt 29
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 2.81371949160693 ccnt 3
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 2.81371949160693 ccnt 3
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 2.81371949160693 ccnt 3
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 2.81371949160693 ccnt 3
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 2.81371949160693 ccnt 3
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 2.81371949160693 ccnt 3
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.2813719491606931 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.2813719491606931 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 133 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 28.350355483615285 ccnt 29
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 28.350355483615285 ccnt 29
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 28.350355483615285 ccnt 29
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 28.350355483615285 ccnt 29
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 2.835035548361528 ccnt 3
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 2.835035548361528 ccnt 3
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 2.835035548361528 ccnt 3
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 2.835035548361528 ccnt 3
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 2.835035548361528 ccnt 3
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 2.835035548361528 ccnt 3
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.28350355483615286 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.28350355483615286 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 134 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 28.563516051161265 ccnt 29
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 28.563516051161265 ccnt 29
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 28.563516051161265 ccnt 29
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 28.563516051161265 ccnt 29
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 2.856351605116126 ccnt 3
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 2.856351605116126 ccnt 3
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 2.856351605116126 ccnt 3
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 2.856351605116126 ccnt 3
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 2.856351605116126 ccnt 3
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 2.856351605116126 ccnt 3
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.28563516051161264 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.28563516051161264 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 135 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 28.776676618707246 ccnt 29
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 28.776676618707246 ccnt 29
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 28.776676618707246 ccnt 29
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 28.776676618707246 ccnt 29
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 2.877667661870724 ccnt 3
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 2.877667661870724 ccnt 3
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 2.877667661870724 ccnt 3
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 2.877667661870724 ccnt 3
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 2.877667661870724 ccnt 3
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 2.877667661870724 ccnt 3
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.2877667661870724 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.2877667661870724 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 136 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 28.989837186253222 ccnt 29
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 28.989837186253222 ccnt 29
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 28.989837186253222 ccnt 29
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 28.989837186253222 ccnt 29
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 2.8989837186253222 ccnt 3
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 2.8989837186253222 ccnt 3
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 2.8989837186253222 ccnt 3
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 2.8989837186253222 ccnt 3
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 2.8989837186253222 ccnt 3
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 2.8989837186253222 ccnt 3
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.28989837186253226 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.28989837186253226 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 137 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 29.202997753799202 ccnt 30
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 29.202997753799202 ccnt 30
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 29.202997753799202 ccnt 30
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 29.202997753799202 ccnt 30
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 2.92029977537992 ccnt 3
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 2.92029977537992 ccnt 3
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 2.92029977537992 ccnt 3
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 2.92029977537992 ccnt 3
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 2.92029977537992 ccnt 3
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 2.92029977537992 ccnt 3
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.29202997753799204 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.29202997753799204 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 138 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 29.416158321345183 ccnt 30
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 29.416158321345183 ccnt 30
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 29.416158321345183 ccnt 30
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 29.416158321345183 ccnt 30
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 2.941615832134518 ccnt 3
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 2.941615832134518 ccnt 3
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 2.941615832134518 ccnt 3
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 2.941615832134518 ccnt 3
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 2.941615832134518 ccnt 3
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 2.941615832134518 ccnt 3
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.2941615832134518 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.2941615832134518 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 139 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 29.629318888891163 ccnt 30
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 29.629318888891163 ccnt 30
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 29.629318888891163 ccnt 30
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 29.629318888891163 ccnt 30
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 2.962931888889116 ccnt 3
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 2.962931888889116 ccnt 3
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 2.962931888889116 ccnt 3
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 2.962931888889116 ccnt 3
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 2.962931888889116 ccnt 3
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 2.962931888889116 ccnt 3
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.29629318888891165 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.29629318888891165 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 140 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 29.842479456437143 ccnt 30
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 29.842479456437143 ccnt 30
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 29.842479456437143 ccnt 30
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 29.842479456437143 ccnt 30
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 2.984247945643714 ccnt 3
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 2.984247945643714 ccnt 3
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 2.984247945643714 ccnt 3
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 2.984247945643714 ccnt 3
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 2.984247945643714 ccnt 3
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 2.984247945643714 ccnt 3
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.29842479456437143 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.29842479456437143 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 141 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 30.05564002398312 ccnt 31
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 30.05564002398312 ccnt 31
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 30.05564002398312 ccnt 31
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 30.05564002398312 ccnt 31
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 3.005564002398312 ccnt 4
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 3.005564002398312 ccnt 4
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 3.005564002398312 ccnt 4
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 3.005564002398312 ccnt 4
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 3.005564002398312 ccnt 4
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 3.005564002398312 ccnt 4
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.3005564002398312 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.3005564002398312 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 142 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 30.2688005915291 ccnt 31
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 30.2688005915291 ccnt 31
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 30.2688005915291 ccnt 31
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 30.2688005915291 ccnt 31
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 3.02688005915291 ccnt 4
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 3.02688005915291 ccnt 4
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 3.02688005915291 ccnt 4
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 3.02688005915291 ccnt 4
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 3.02688005915291 ccnt 4
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 3.02688005915291 ccnt 4
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.302688005915291 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.302688005915291 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 143 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 30.48196115907508 ccnt 31
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 30.48196115907508 ccnt 31
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 30.48196115907508 ccnt 31
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 30.48196115907508 ccnt 31
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 3.048196115907508 ccnt 4
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 3.048196115907508 ccnt 4
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 3.048196115907508 ccnt 4
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 3.048196115907508 ccnt 4
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 3.048196115907508 ccnt 4
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 3.048196115907508 ccnt 4
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.3048196115907508 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.3048196115907508 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 144 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 30.69512172662106 ccnt 31
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 30.69512172662106 ccnt 31
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 30.69512172662106 ccnt 31
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 30.69512172662106 ccnt 31
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 3.0695121726621055 ccnt 4
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 3.0695121726621055 ccnt 4
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 3.0695121726621055 ccnt 4
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 3.0695121726621055 ccnt 4
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 3.0695121726621055 ccnt 4
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 3.0695121726621055 ccnt 4
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.3069512172662106 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.3069512172662106 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 145 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 30.90828229416704 ccnt 31
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 30.90828229416704 ccnt 31
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 30.90828229416704 ccnt 31
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 30.90828229416704 ccnt 31
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 3.0908282294167035 ccnt 4
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 3.0908282294167035 ccnt 4
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 3.0908282294167035 ccnt 4
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 3.0908282294167035 ccnt 4
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 3.0908282294167035 ccnt 4
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 3.0908282294167035 ccnt 4
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.3090828229416704 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.3090828229416704 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 146 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 31.121442861713017 ccnt 32
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 31.121442861713017 ccnt 32
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 31.121442861713017 ccnt 32
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 31.121442861713017 ccnt 32
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 3.1121442861713016 ccnt 4
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 3.1121442861713016 ccnt 4
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 3.1121442861713016 ccnt 4
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 3.1121442861713016 ccnt 4
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 3.1121442861713016 ccnt 4
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 3.1121442861713016 ccnt 4
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.3112144286171302 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.3112144286171302 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 147 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 31.334603429258998 ccnt 32
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 31.334603429258998 ccnt 32
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 31.334603429258998 ccnt 32
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 31.334603429258998 ccnt 32
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 3.1334603429258996 ccnt 4
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 3.1334603429258996 ccnt 4
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 3.1334603429258996 ccnt 4
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 3.1334603429258996 ccnt 4
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 3.1334603429258996 ccnt 4
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 3.1334603429258996 ccnt 4
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.31334603429259 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.31334603429259 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 148 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 31.547763996804978 ccnt 32
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 31.547763996804978 ccnt 32
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 31.547763996804978 ccnt 32
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 31.547763996804978 ccnt 32
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 3.1547763996804976 ccnt 4
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 3.1547763996804976 ccnt 4
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 3.1547763996804976 ccnt 4
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 3.1547763996804976 ccnt 4
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 3.1547763996804976 ccnt 4
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 3.1547763996804976 ccnt 4
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.3154776399680498 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.3154776399680498 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 149 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 31.760924564350958 ccnt 32
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 31.760924564350958 ccnt 32
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 31.760924564350958 ccnt 32
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 31.760924564350958 ccnt 32
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 3.1760924564350956 ccnt 4
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 3.1760924564350956 ccnt 4
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 3.1760924564350956 ccnt 4
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 3.1760924564350956 ccnt 4
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 3.1760924564350956 ccnt 4
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 3.1760924564350956 ccnt 4
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.31760924564350956 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.31760924564350956 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 150 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 31.97408513189694 ccnt 32
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 31.97408513189694 ccnt 32
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 31.97408513189694 ccnt 32
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 31.97408513189694 ccnt 32
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 3.197408513189693 ccnt 4
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 3.197408513189693 ccnt 4
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 3.197408513189693 ccnt 4
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 3.197408513189693 ccnt 4
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 3.197408513189693 ccnt 4
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 3.197408513189693 ccnt 4
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.3197408513189694 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.3197408513189694 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 151 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 32.18724569944292 ccnt 33
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 32.18724569944292 ccnt 33
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 32.18724569944292 ccnt 33
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 32.18724569944292 ccnt 33
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 3.2187245699442912 ccnt 4
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 3.2187245699442912 ccnt 4
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 3.2187245699442912 ccnt 4
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 3.2187245699442912 ccnt 4
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 3.2187245699442912 ccnt 4
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 3.2187245699442912 ccnt 4
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.3218724569944292 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.3218724569944292 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 152 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 32.400406266988895 ccnt 33
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 32.400406266988895 ccnt 33
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 32.400406266988895 ccnt 33
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 32.400406266988895 ccnt 33
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 3.2400406266988893 ccnt 4
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 3.2400406266988893 ccnt 4
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 3.2400406266988893 ccnt 4
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 3.2400406266988893 ccnt 4
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 3.2400406266988893 ccnt 4
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 3.2400406266988893 ccnt 4
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.32400406266988896 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.32400406266988896 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 153 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 32.61356683453488 ccnt 33
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 32.61356683453488 ccnt 33
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 32.61356683453488 ccnt 33
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 32.61356683453488 ccnt 33
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 3.2613566834534873 ccnt 4
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 3.2613566834534873 ccnt 4
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 3.2613566834534873 ccnt 4
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 3.2613566834534873 ccnt 4
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 3.2613566834534873 ccnt 4
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 3.2613566834534873 ccnt 4
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.32613566834534874 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.32613566834534874 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 154 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 32.826727402080856 ccnt 33
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 32.826727402080856 ccnt 33
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 32.826727402080856 ccnt 33
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 32.826727402080856 ccnt 33
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 3.2826727402080853 ccnt 4
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 3.2826727402080853 ccnt 4
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 3.2826727402080853 ccnt 4
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 3.2826727402080853 ccnt 4
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 3.2826727402080853 ccnt 4
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 3.2826727402080853 ccnt 4
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.3282672740208086 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.3282672740208086 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 155 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 33.03988796962683 ccnt 34
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 33.03988796962683 ccnt 34
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 33.03988796962683 ccnt 34
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 33.03988796962683 ccnt 34
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 3.3039887969626833 ccnt 4
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 3.3039887969626833 ccnt 4
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 3.3039887969626833 ccnt 4
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 3.3039887969626833 ccnt 4
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 3.3039887969626833 ccnt 4
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 3.3039887969626833 ccnt 4
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.33039887969626835 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.33039887969626835 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 156 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 33.253048537172816 ccnt 34
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 33.253048537172816 ccnt 34
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 33.253048537172816 ccnt 34
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 33.253048537172816 ccnt 34
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 3.3253048537172814 ccnt 4
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 3.3253048537172814 ccnt 4
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 3.3253048537172814 ccnt 4
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 3.3253048537172814 ccnt 4
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 3.3253048537172814 ccnt 4
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 3.3253048537172814 ccnt 4
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.33253048537172814 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.33253048537172814 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 157 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 33.46620910471879 ccnt 34
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 33.46620910471879 ccnt 34
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 33.46620910471879 ccnt 34
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 33.46620910471879 ccnt 34
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 3.346620910471879 ccnt 4
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 3.346620910471879 ccnt 4
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 3.346620910471879 ccnt 4
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 3.346620910471879 ccnt 4
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 3.346620910471879 ccnt 4
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 3.346620910471879 ccnt 4
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.33466209104718797 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.33466209104718797 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 158 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 33.67936967226478 ccnt 34
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 33.67936967226478 ccnt 34
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 33.67936967226478 ccnt 34
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 33.67936967226478 ccnt 34
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 3.367936967226477 ccnt 4
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 3.367936967226477 ccnt 4
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 3.367936967226477 ccnt 4
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 3.367936967226477 ccnt 4
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 3.367936967226477 ccnt 4
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 3.367936967226477 ccnt 4
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.33679369672264775 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.33679369672264775 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 159 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 33.89253023981075 ccnt 34
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 33.89253023981075 ccnt 34
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 33.89253023981075 ccnt 34
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 33.89253023981075 ccnt 34
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 3.389253023981075 ccnt 4
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 3.389253023981075 ccnt 4
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 3.389253023981075 ccnt 4
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 3.389253023981075 ccnt 4
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 3.389253023981075 ccnt 4
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 3.389253023981075 ccnt 4
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.33892530239810753 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.33892530239810753 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 160 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 34.10569080735673 ccnt 35
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 34.10569080735673 ccnt 35
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 34.10569080735673 ccnt 35
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 34.10569080735673 ccnt 35
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 3.410569080735673 ccnt 4
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 3.410569080735673 ccnt 4
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 3.410569080735673 ccnt 4
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 3.410569080735673 ccnt 4
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 3.410569080735673 ccnt 4
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 3.410569080735673 ccnt 4
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.3410569080735673 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.3410569080735673 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 161 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 34.318851374902714 ccnt 35
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 34.318851374902714 ccnt 35
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 34.318851374902714 ccnt 35
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 34.318851374902714 ccnt 35
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 3.431885137490271 ccnt 4
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 3.431885137490271 ccnt 4
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 3.431885137490271 ccnt 4
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 3.431885137490271 ccnt 4
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 3.431885137490271 ccnt 4
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 3.431885137490271 ccnt 4
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.34318851374902715 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.34318851374902715 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 162 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 34.53201194244869 ccnt 35
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 34.53201194244869 ccnt 35
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 34.53201194244869 ccnt 35
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 34.53201194244869 ccnt 35
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 3.453201194244869 ccnt 4
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 3.453201194244869 ccnt 4
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 3.453201194244869 ccnt 4
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 3.453201194244869 ccnt 4
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 3.453201194244869 ccnt 4
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 3.453201194244869 ccnt 4
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.3453201194244869 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.3453201194244869 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 163 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 34.745172509994674 ccnt 35
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 34.745172509994674 ccnt 35
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 34.745172509994674 ccnt 35
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 34.745172509994674 ccnt 35
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 3.4745172509994666 ccnt 4
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 3.4745172509994666 ccnt 4
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 3.4745172509994666 ccnt 4
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 3.4745172509994666 ccnt 4
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 3.4745172509994666 ccnt 4
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 3.4745172509994666 ccnt 4
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.3474517250999467 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.3474517250999467 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 164 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 34.95833307754065 ccnt 35
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 34.95833307754065 ccnt 35
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 34.95833307754065 ccnt 35
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 34.95833307754065 ccnt 35
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 3.4958333077540646 ccnt 4
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 3.4958333077540646 ccnt 4
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 3.4958333077540646 ccnt 4
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 3.4958333077540646 ccnt 4
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 3.4958333077540646 ccnt 4
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 3.4958333077540646 ccnt 4
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.34958333077540654 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.34958333077540654 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 165 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 35.17149364508663 ccnt 36
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 35.17149364508663 ccnt 36
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 35.17149364508663 ccnt 36
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 35.17149364508663 ccnt 36
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 3.5171493645086627 ccnt 4
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 3.5171493645086627 ccnt 4
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 3.5171493645086627 ccnt 4
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 3.5171493645086627 ccnt 4
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 3.5171493645086627 ccnt 4
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 3.5171493645086627 ccnt 4
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.3517149364508663 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.3517149364508663 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 166 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 35.38465421263261 ccnt 36
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 35.38465421263261 ccnt 36
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 35.38465421263261 ccnt 36
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 35.38465421263261 ccnt 36
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 3.5384654212632607 ccnt 4
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 3.5384654212632607 ccnt 4
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 3.5384654212632607 ccnt 4
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 3.5384654212632607 ccnt 4
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 3.5384654212632607 ccnt 4
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 3.5384654212632607 ccnt 4
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.3538465421263261 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.3538465421263261 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 167 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 35.59781478017859 ccnt 36
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 35.59781478017859 ccnt 36
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 35.59781478017859 ccnt 36
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 35.59781478017859 ccnt 36
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 3.5597814780178587 ccnt 4
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 3.5597814780178587 ccnt 4
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 3.5597814780178587 ccnt 4
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 3.5597814780178587 ccnt 4
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 3.5597814780178587 ccnt 4
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 3.5597814780178587 ccnt 4
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.3559781478017859 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.3559781478017859 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 168 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 35.81097534772457 ccnt 36
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 35.81097534772457 ccnt 36
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 35.81097534772457 ccnt 36
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 35.81097534772457 ccnt 36
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 3.581097534772457 ccnt 4
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 3.581097534772457 ccnt 4
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 3.581097534772457 ccnt 4
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 3.581097534772457 ccnt 4
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 3.581097534772457 ccnt 4
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 3.581097534772457 ccnt 4
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.3581097534772457 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.3581097534772457 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 169 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 36.02413591527055 ccnt 37
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 36.02413591527055 ccnt 37
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 36.02413591527055 ccnt 37
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 36.02413591527055 ccnt 37
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 3.6024135915270548 ccnt 4
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 3.6024135915270548 ccnt 4
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 3.6024135915270548 ccnt 4
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 3.6024135915270548 ccnt 4
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 3.6024135915270548 ccnt 4
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 3.6024135915270548 ccnt 4
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.3602413591527055 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.3602413591527055 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 170 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 36.23729648281653 ccnt 37
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 36.23729648281653 ccnt 37
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 36.23729648281653 ccnt 37
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 36.23729648281653 ccnt 37
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 3.623729648281653 ccnt 4
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 3.623729648281653 ccnt 4
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 3.623729648281653 ccnt 4
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 3.623729648281653 ccnt 4
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 3.623729648281653 ccnt 4
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 3.623729648281653 ccnt 4
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.36237296482816533 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.36237296482816533 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 171 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 36.45045705036251 ccnt 37
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 36.45045705036251 ccnt 37
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 36.45045705036251 ccnt 37
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 36.45045705036251 ccnt 37
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 3.6450457050362504 ccnt 4
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 3.6450457050362504 ccnt 4
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 3.6450457050362504 ccnt 4
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 3.6450457050362504 ccnt 4
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 3.6450457050362504 ccnt 4
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 3.6450457050362504 ccnt 4
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.3645045705036251 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.3645045705036251 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 172 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 36.66361761790849 ccnt 37
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 36.66361761790849 ccnt 37
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 36.66361761790849 ccnt 37
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 36.66361761790849 ccnt 37
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 3.666361761790849 ccnt 4
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 3.666361761790849 ccnt 4
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 3.666361761790849 ccnt 4
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 3.666361761790849 ccnt 4
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 3.666361761790849 ccnt 4
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 3.666361761790849 ccnt 4
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.36663617617908495 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.36663617617908495 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 173 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 36.87677818545447 ccnt 37
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 36.87677818545447 ccnt 37
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 36.87677818545447 ccnt 37
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 36.87677818545447 ccnt 37
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 3.6876778185454464 ccnt 4
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 3.6876778185454464 ccnt 4
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 3.6876778185454464 ccnt 4
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 3.6876778185454464 ccnt 4
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 3.6876778185454464 ccnt 4
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 3.6876778185454464 ccnt 4
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.3687677818545447 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.3687677818545447 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 174 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 37.08993875300045 ccnt 38
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 37.08993875300045 ccnt 38
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 37.08993875300045 ccnt 38
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 37.08993875300045 ccnt 38
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 3.708993875300045 ccnt 4
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 3.708993875300045 ccnt 4
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 3.708993875300045 ccnt 4
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 3.708993875300045 ccnt 4
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 3.708993875300045 ccnt 4
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 3.708993875300045 ccnt 4
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.3708993875300045 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.3708993875300045 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 175 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 37.30309932054642 ccnt 38
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 37.30309932054642 ccnt 38
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 37.30309932054642 ccnt 38
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 37.30309932054642 ccnt 38
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 3.7303099320546425 ccnt 4
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 3.7303099320546425 ccnt 4
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 3.7303099320546425 ccnt 4
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 3.7303099320546425 ccnt 4
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 3.7303099320546425 ccnt 4
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 3.7303099320546425 ccnt 4
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.3730309932054643 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.3730309932054643 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 176 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 37.51625988809241 ccnt 38
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 37.51625988809241 ccnt 38
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 37.51625988809241 ccnt 38
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 37.51625988809241 ccnt 38
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 3.7516259888092405 ccnt 4
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 3.7516259888092405 ccnt 4
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 3.7516259888092405 ccnt 4
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 3.7516259888092405 ccnt 4
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 3.7516259888092405 ccnt 4
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 3.7516259888092405 ccnt 4
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.3751625988809241 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.3751625988809241 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 177 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 37.72942045563838 ccnt 38
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 37.72942045563838 ccnt 38
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 37.72942045563838 ccnt 38
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 37.72942045563838 ccnt 38
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 3.772942045563838 ccnt 4
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 3.772942045563838 ccnt 4
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 3.772942045563838 ccnt 4
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 3.772942045563838 ccnt 4
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 3.772942045563838 ccnt 4
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 3.772942045563838 ccnt 4
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.37729420455638385 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.37729420455638385 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 178 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 37.94258102318437 ccnt 38
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 37.94258102318437 ccnt 38
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 37.94258102318437 ccnt 38
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 37.94258102318437 ccnt 38
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 3.7942581023184365 ccnt 4
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 3.7942581023184365 ccnt 4
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 3.7942581023184365 ccnt 4
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 3.7942581023184365 ccnt 4
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 3.7942581023184365 ccnt 4
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 3.7942581023184365 ccnt 4
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.3794258102318437 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.3794258102318437 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 179 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 38.155741590730344 ccnt 39
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 38.155741590730344 ccnt 39
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 38.155741590730344 ccnt 39
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 38.155741590730344 ccnt 39
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 3.815574159073034 ccnt 4
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 3.815574159073034 ccnt 4
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 3.815574159073034 ccnt 4
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 3.815574159073034 ccnt 4
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 3.815574159073034 ccnt 4
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 3.815574159073034 ccnt 4
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.38155741590730347 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.38155741590730347 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 180 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 38.36890215827633 ccnt 39
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 38.36890215827633 ccnt 39
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 38.36890215827633 ccnt 39
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 38.36890215827633 ccnt 39
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 3.8368902158276326 ccnt 4
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 3.8368902158276326 ccnt 4
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 3.8368902158276326 ccnt 4
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 3.8368902158276326 ccnt 4
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 3.8368902158276326 ccnt 4
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 3.8368902158276326 ccnt 4
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.3836890215827633 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.3836890215827633 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 181 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 38.582062725822304 ccnt 39
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 38.582062725822304 ccnt 39
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 38.582062725822304 ccnt 39
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 38.582062725822304 ccnt 39
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 3.85820627258223 ccnt 4
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 3.85820627258223 ccnt 4
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 3.85820627258223 ccnt 4
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 3.85820627258223 ccnt 4
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 3.85820627258223 ccnt 4
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 3.85820627258223 ccnt 4
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.385820627258223 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.385820627258223 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 182 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 38.79522329336829 ccnt 39
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 38.79522329336829 ccnt 39
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 38.79522329336829 ccnt 39
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 38.79522329336829 ccnt 39
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 3.879522329336828 ccnt 4
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 3.879522329336828 ccnt 4
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 3.879522329336828 ccnt 4
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 3.879522329336828 ccnt 4
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 3.879522329336828 ccnt 4
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 3.879522329336828 ccnt 4
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.38795223293368286 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.38795223293368286 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 183 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 39.008383860914265 ccnt 40
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 39.008383860914265 ccnt 40
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 39.008383860914265 ccnt 40
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 39.008383860914265 ccnt 40
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 3.9008383860914257 ccnt 4
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 3.9008383860914257 ccnt 4
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 3.9008383860914257 ccnt 4
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 3.9008383860914257 ccnt 4
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 3.9008383860914257 ccnt 4
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 3.9008383860914257 ccnt 4
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.39008383860914264 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.39008383860914264 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 184 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 39.22154442846025 ccnt 40
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 39.22154442846025 ccnt 40
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 39.22154442846025 ccnt 40
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 39.22154442846025 ccnt 40
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 3.922154442846024 ccnt 4
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 3.922154442846024 ccnt 4
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 3.922154442846024 ccnt 4
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 3.922154442846024 ccnt 4
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 3.922154442846024 ccnt 4
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 3.922154442846024 ccnt 4
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.3922154442846025 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.3922154442846025 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 185 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 39.434704996006225 ccnt 40
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 39.434704996006225 ccnt 40
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 39.434704996006225 ccnt 40
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 39.434704996006225 ccnt 40
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 3.943470499600622 ccnt 4
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 3.943470499600622 ccnt 4
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 3.943470499600622 ccnt 4
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 3.943470499600622 ccnt 4
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 3.943470499600622 ccnt 4
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 3.943470499600622 ccnt 4
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.3943470499600622 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.3943470499600622 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 186 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 39.64786556355221 ccnt 40
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 39.64786556355221 ccnt 40
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 39.64786556355221 ccnt 40
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 39.64786556355221 ccnt 40
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 3.9647865563552203 ccnt 4
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 3.9647865563552203 ccnt 4
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 3.9647865563552203 ccnt 4
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 3.9647865563552203 ccnt 4
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 3.9647865563552203 ccnt 4
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 3.9647865563552203 ccnt 4
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.39647865563552204 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.39647865563552204 ccnt 1
+Failed: not enough slots
+
+======================================================================
+Trying 187 slots
+Speed idx 0 spd 1e11 rt 6.72e-9 cnt 39.86102613109818 ccnt 40
+Speed idx 1 spd 1e11 rt 6.72e-9 cnt 39.86102613109818 ccnt 40
+Speed idx 2 spd 1e11 rt 6.72e-9 cnt 39.86102613109818 ccnt 40
+Speed idx 3 spd 1e11 rt 6.72e-9 cnt 39.86102613109818 ccnt 40
+Speed idx 4 spd 1e10 rt 6.72e-8 cnt 3.986102613109818 ccnt 4
+Speed idx 5 spd 1e10 rt 6.72e-8 cnt 3.986102613109818 ccnt 4
+Speed idx 6 spd 1e10 rt 6.72e-8 cnt 3.986102613109818 ccnt 4
+Speed idx 7 spd 1e10 rt 6.72e-8 cnt 3.986102613109818 ccnt 4
+Speed idx 8 spd 1e10 rt 6.72e-8 cnt 3.986102613109818 ccnt 4
+Speed idx 9 spd 1e10 rt 6.72e-8 cnt 3.986102613109818 ccnt 4
+Speed idx 10 spd 1e9 rt 6.72e-7 cnt 0.3986102613109818 ccnt 1
+Speed idx 11 spd 1e9 rt 6.72e-7 cnt 0.3986102613109818 ccnt 1
+Apportioning slot slack of 0
+slack is apportioned  0 0 0 0 0 0 0 0 0 0 0 0
+i=0 ni[i]=40 minct[i]=40
+AssertNoSmallerGap(sp=0 gap=4)
+AssertAlwaysExistsSuccessor(sp=0 minGap=4 maxGap=7.675)
+i=1 ni[i]=40 minct[i]=40
+AssertNoSmallerGap(sp=1 gap=4)
+AssertAlwaysExistsSuccessor(sp=1 minGap=4 maxGap=7.675)
+i=2 ni[i]=40 minct[i]=40
+AssertNoSmallerGap(sp=2 gap=4)
+AssertAlwaysExistsSuccessor(sp=2 minGap=4 maxGap=7.675)
+i=3 ni[i]=40 minct[i]=40
+AssertNoSmallerGap(sp=3 gap=4)
+AssertAlwaysExistsSuccessor(sp=3 minGap=4 maxGap=7.675)
+i=4 ni[i]=4 minct[i]=4
+AssertNoSmallerGap(sp=4 gap=43.75)
+AssertAlwaysExistsSuccessor(sp=4 minGap=43.75 maxGap=49.75)
+i=5 ni[i]=4 minct[i]=4
+AssertNoSmallerGap(sp=5 gap=43.75)
+AssertAlwaysExistsSuccessor(sp=5 minGap=43.75 maxGap=49.75)
+i=6 ni[i]=4 minct[i]=4
+AssertNoSmallerGap(sp=6 gap=43.75)
+AssertAlwaysExistsSuccessor(sp=6 minGap=43.75 maxGap=49.75)
+i=7 ni[i]=4 minct[i]=4
+AssertNoSmallerGap(sp=7 gap=43.75)
+AssertAlwaysExistsSuccessor(sp=7 minGap=43.75 maxGap=49.75)
+i=8 ni[i]=4 minct[i]=4
+AssertNoSmallerGap(sp=8 gap=43.75)
+AssertAlwaysExistsSuccessor(sp=8 minGap=43.75 maxGap=49.75)
+i=9 ni[i]=4 minct[i]=4
+AssertNoSmallerGap(sp=9 gap=43.75)
+AssertAlwaysExistsSuccessor(sp=9 minGap=43.75 maxGap=49.75)
+i=10 ni[i]=1 minct[i]=1
+AssertNoSmallerGap(sp=10 gap=184)
+AssertAlwaysExistsSuccessor(sp=10 minGap=184 maxGap=190)
+i=11 ni[i]=1 minct[i]=1
+AssertNoSmallerGap(sp=11 gap=184)
+AssertAlwaysExistsSuccessor(sp=11 minGap=184 maxGap=190)
+Max free slots allowed: 1
+Doing speed assertions for speed 1e11
+Setting leader of 0 to 0
+Setting leader of 1 to 0
+Setting leader of 2 to 0
+Setting leader of 3 to 0
+Doing speed assertions for speed 1e10
+Setting leader of 4 to 4
+Setting leader of 5 to 4
+Setting leader of 6 to 4
+Setting leader of 7 to 4
+Setting leader of 8 to 4
+Setting leader of 9 to 4
+Doing speed assertions for speed 1e9
+Setting leader of 10 to 10
+Setting leader of 11 to 10
+There are 130362 unreduced equations
+Calculating dependencies...
+89223 reduced equations
+-1 slots total: 1
+1 : -1 [slot 0] OK
+Success!
+slot 0 port -1
+slot 1 port 0
+slot 2 port 1
+slot 3 port 2
+slot 4 port 3
+slot 5 port 4
+slot 6 port 5
+slot 7 port 6
+slot 8 port 0
+slot 9 port 1
+slot 10 port 2
+slot 11 port 3
+slot 12 port 7
+slot 13 port 8
+slot 14 port 9
+slot 15 port 0
+slot 16 port 1
+slot 17 port 2
+slot 18 port 3
+slot 19 port 10
+slot 20 port 11
+slot 21 port 0
+slot 22 port 1
+slot 23 port 2
+slot 24 port 3
+slot 25 port 0
+slot 26 port 1
+slot 27 port 2
+slot 28 port 3
+slot 29 port 0
+slot 30 port 1
+slot 31 port 2
+slot 32 port 3
+slot 33 port 0
+slot 34 port 1
+slot 35 port 2
+slot 36 port 3
+slot 37 port 0
+slot 38 port 1
+slot 39 port 2
+slot 40 port 3
+slot 41 port 0
+slot 42 port 1
+slot 43 port 2
+slot 44 port 3
+slot 45 port 0
+slot 46 port 1
+slot 47 port 2
+slot 48 port 3
+slot 49 port 0
+slot 50 port 1
+slot 51 port 2
+slot 52 port 3
+slot 53 port 4
+slot 54 port 5
+slot 55 port 6
+slot 56 port 0
+slot 57 port 1
+slot 58 port 2
+slot 59 port 3
+slot 60 port 7
+slot 61 port 8
+slot 62 port 9
+slot 63 port 0
+slot 64 port 1
+slot 65 port 2
+slot 66 port 3
+slot 67 port 0
+slot 68 port 1
+slot 69 port 2
+slot 70 port 3
+slot 71 port 0
+slot 72 port 1
+slot 73 port 2
+slot 74 port 3
+slot 75 port 0
+slot 76 port 1
+slot 77 port 2
+slot 78 port 3
+slot 79 port 0
+slot 80 port 1
+slot 81 port 2
+slot 82 port 3
+slot 83 port 0
+slot 84 port 1
+slot 85 port 2
+slot 86 port 3
+slot 87 port 0
+slot 88 port 1
+slot 89 port 2
+slot 90 port 3
+slot 91 port 0
+slot 92 port 1
+slot 93 port 2
+slot 94 port 3
+slot 95 port 0
+slot 96 port 1
+slot 97 port 2
+slot 98 port 3
+slot 99 port 4
+slot 100 port 5
+slot 101 port 6
+slot 102 port 0
+slot 103 port 1
+slot 104 port 2
+slot 105 port 3
+slot 106 port 7
+slot 107 port 8
+slot 108 port 9
+slot 109 port 0
+slot 110 port 1
+slot 111 port 2
+slot 112 port 3
+slot 113 port 0
+slot 114 port 1
+slot 115 port 2
+slot 116 port 3
+slot 117 port 0
+slot 118 port 1
+slot 119 port 2
+slot 120 port 3
+slot 121 port 0
+slot 122 port 1
+slot 123 port 2
+slot 124 port 3
+slot 125 port 0
+slot 126 port 1
+slot 127 port 2
+slot 128 port 3
+slot 129 port 0
+slot 130 port 1
+slot 131 port 2
+slot 132 port 3
+slot 133 port 0
+slot 134 port 1
+slot 135 port 2
+slot 136 port 3
+slot 137 port 0
+slot 138 port 1
+slot 139 port 2
+slot 140 port 3
+slot 141 port 0
+slot 142 port 1
+slot 143 port 2
+slot 144 port 3
+slot 145 port 4
+slot 146 port 5
+slot 147 port 6
+slot 148 port 0
+slot 149 port 1
+slot 150 port 2
+slot 151 port 3
+slot 152 port 7
+slot 153 port 8
+slot 154 port 9
+slot 155 port 0
+slot 156 port 1
+slot 157 port 2
+slot 158 port 3
+slot 159 port 0
+slot 160 port 1
+slot 161 port 2
+slot 162 port 3
+slot 163 port 0
+slot 164 port 1
+slot 165 port 2
+slot 166 port 3
+slot 167 port 0
+slot 168 port 1
+slot 169 port 2
+slot 170 port 3
+slot 171 port 0
+slot 172 port 1
+slot 173 port 2
+slot 174 port 3
+slot 175 port 0
+slot 176 port 1
+slot 177 port 2
+slot 178 port 3
+slot 179 port 0
+slot 180 port 1
+slot 181 port 2
+slot 182 port 3
+slot 183 port 0
+slot 184 port 1
+slot 185 port 2
+slot 186 port 3
+Success!

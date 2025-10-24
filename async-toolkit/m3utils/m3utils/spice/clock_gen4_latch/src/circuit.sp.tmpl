@@ -1,0 +1,105 @@
+% Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+% SPDX-License-Identifier: Apache-2.0
+
+* clock_gen4_latch
+
+.TEMP @TEMP@
+.PARAM vtrue=@VDD@
+
+.OPTION CMIFLAG=1 CMIUSRFLAG=3 PDMI=1
+.option cmipath='/p/hdk/cad/pdk/pdk783_r0.9_23ww26.5_alpha/cmi/hspice/cmi/lnx86/64bit'
+.option cmi02opt=1
+.OPTION POST=fsdb PROBE=1
+.OPTION XA_CMD="set_sim_level -level 6"
+.OPTION XA_CMD="set_wildcard_rule -match* one"
+.OPTION XA_CMD="set_message_option -limit 100"
+.OPTION XA_CMD="enable_print_statement 1"
+.OPTION XA_CMD="set_sim_case -case sensitive"
+.option redefsub
+
+.option AUTOSTOP
+
+
+* Monte Carlo stuff
+
+.OPTION XA_CMD="set_monte_carlo_option -enable 1"     
+.OPTION XA_CMD="set_monte_carlo_option -sample_output all"
+.OPTION XA_CMD="set_monte_carlo_option -mc0_file 1"
+.OPTION XA_CMD="set_monte_carlo_option -parameter_file 1"
+.OPTION XA_CMD="set_monte_carlo_option -mc0_header 1"
+.OPTION XA_CMD="set_monte_carlo_option -dump_waveform 1"
+
+.option search='/nfs/site/disks/zsc9_fwr_sd_001/mnystroe/p1278_3x0p9eu1/2023ww43d5/models_core_hspice/m14_2x_1xa_1xb_6ya_2yb_2yc__bm5_1ye_1yf_2ga_mim3x_1gb__bumpp'
+.lib 'p1278_3.hsp' @PROCESS@
+
+.option PDMI=1
+.option PDMI_LIB='/p/hdk/cad/pdk/pdk783_r0.9HP2_24ww08.5/cmi/hspice/pdmi/lnx86/64bit/pdmi.so'
+
+.include '@HSPICE_FILE@'
+
+Vvcc    vcc   0 DC=vtrue
+Vvssx   vssx  0 DC=0
+
+Xu_clkgen @IF_SPEC@
++core_D_crypto_D_bitcoin_D_clock_D_TEST_U_CLOCK_U_GEN4_U_LATCH_D_1000
+
+
+*Vpwdly0 PW_DLY0 0 DC=0
+*Vpwdly1 PW_DLY1 0 DC=0
+*Vpwdly2 PW_DLY2 0 DC=0
+*Vpwdly3 PW_DLY3 0 DC=0
+
+@SPEED@
+
+.PARAM resettime=1n
+.PARAM runtime=1
+
+.PARAM cycle=@CYCLE@
+.PARAM rise=@RISE@
+.PARAM halfcycle='cycle * 0.5'
+.PARAM halfrise='rise * 0.5'
+
+Vres RSTB 0 DC=0 PWL
++0 0
++'resettime-halfrise' 0
++'resettime+halfrise' vtrue
+
+
+Vrefclk REFCLK  0 DC=0 PWL 0 0
++ 'resettime+ 2*halfcycle-halfrise' 0     'resettime+ 2*halfcycle+halfrise' vtrue
++ 'resettime+ 3*halfcycle-halfrise' vtrue 'resettime+ 3*halfcycle+halfrise' 0
++ 'resettime+ 4*halfcycle-halfrise' 0     'resettime+ 4*halfcycle+halfrise' vtrue
++ 'resettime+ 5*halfcycle-halfrise' vtrue 'resettime+ 5*halfcycle+halfrise' 0
++ 'resettime+ 6*halfcycle-halfrise' 0     'resettime+ 6*halfcycle+halfrise' vtrue
++ 'resettime+ 7*halfcycle-halfrise' vtrue 'resettime+ 7*halfcycle+halfrise' 0
++ 'resettime+ 8*halfcycle-halfrise' 0     'resettime+ 8*halfcycle+halfrise' vtrue
++ 'resettime+ 9*halfcycle-halfrise' vtrue 'resettime+ 9*halfcycle+halfrise' 0
++ 'resettime+10*halfcycle-halfrise' 0     'resettime+10*halfcycle+halfrise' vtrue
++ 'resettime+11*halfcycle-halfrise' vtrue 'resettime+11*halfcycle+halfrise' 0
++ 'resettime+12*halfcycle-halfrise' 0     'resettime+12*halfcycle+halfrise' vtrue
++ 'resettime+13*halfcycle-halfrise' vtrue 'resettime+13*halfcycle+halfrise' 0
++ 'resettime+14*halfcycle-halfrise' 0     'resettime+14*halfcycle+halfrise' vtrue
++ 'resettime+15*halfcycle-halfrise' vtrue 'resettime+15*halfcycle+halfrise' 0
++ 'resettime+16*halfcycle-halfrise' 0     'resettime+16*halfcycle+halfrise' vtrue
++ 'resettime+17*halfcycle-halfrise' vtrue 'resettime+17*halfcycle+halfrise' 0
++ 'resettime+18*halfcycle-halfrise' 0     'resettime+18*halfcycle+halfrise' vtrue
++ 'resettime+19*halfcycle-halfrise' vtrue 'resettime+19*halfcycle+halfrise' 0
++ 'resettime+20*halfcycle-halfrise' 0     'resettime+20*halfcycle+halfrise' vtrue
++ 'resettime+21*halfcycle-halfrise' vtrue 'resettime+21*halfcycle+halfrise' 0
+
+
+
+.probe tran v(CLKOUT*)
+.probe tran v(REFCLK)
+.probe tran v(RSTB)
+.probe tran v(PW_DLY*)
+
+.TRAN 1p 'resettime + runtime' sweep monte=@SWEEPS@
+
+* the purpose of the following .measure is to trigger AUTOSTOP during calibration
+.measure tran Cycle  
++ trig V(CLKOUT[0]) val='vtrue*0.5' td='resettime' rise=2
++ targ V(CLKOUT[0]) val='vtrue*0.5' td='resettime' rise=3
+
+.END
+

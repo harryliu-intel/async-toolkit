@@ -1,0 +1,13 @@
+// Temporary file which is fixing 'include guard' defect in lib_udp.rdl
+
+<%
+  if ($MBY_LIB_UDP) {
+  } else {
+    $MBY_LIB_UDP = 1;
+%>
+
+`include "lib_udp.rdl"
+
+<%
+  };
+%>

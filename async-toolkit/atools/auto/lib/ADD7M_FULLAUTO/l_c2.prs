@@ -1,0 +1,9 @@
+<wn>  a &  b -> x-
+<wp> ~a & ~b -> x+
+@staticize(x)
+
+@stretch(n,(wn-64)/4)
+@stretch(p,(wp-64)/4)
+@require(wn/4 + 52 <= nwidth)
+@require(wp/4 + 57 <= pwidth)
+

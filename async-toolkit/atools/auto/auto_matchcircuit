@@ -1,0 +1,2 @@
+#!/bin/csh
+auto 1 $1.auto $2 $3.mag < $CAST_HOME/lib/auto/matchcircuit.in

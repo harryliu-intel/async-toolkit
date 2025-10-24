@@ -1,0 +1,29 @@
+/*** nand gates ***/
+matchcircuit "DEEP7M/l_nand2"
+matchcircuit "DEEP7M/m_nand2"
+matchcircuit "DEEP7M/s_nand2"
+matchcircuit "DEEP7M/m_nand3"
+matchcircuit "DEEP7M/s_nand3"
+matchcircuit "DEEP7M/m_nand4"
+matchcircuit "DEEP7M/s_nand4"
+matchcircuit "DEEP7M/m_nand5"
+matchcircuit "DEEP7M/s_nand5"
+matchcircuit "DEEP7M/m_nand6"
+matchcircuit "DEEP7M/s_nand6"
+
+/*** nand gates which reset high ***/
+matchcircuit "DEEP7M/m_nand2_rhi"
+matchcircuit "DEEP7M/s_nand2_rhi"
+matchcircuit "DEEP7M/m_nand3_rhi"
+matchcircuit "DEEP7M/s_nand3_rhi"
+matchcircuit "DEEP7M/m_nand4_rhi"
+matchcircuit "DEEP7M/s_nand4_rhi"
+matchcircuit "DEEP7M/m_nand5_rhi"
+matchcircuit "DEEP7M/s_nand5_rhi"
+
+/*** nor gates ***/
+matchcircuit "DEEP7M/l_nor2"
+matchcircuit "DEEP7M/m_nor2"
+matchcircuit "DEEP7M/s_nor2"
+matchcircuit "DEEP7M/m_nor3"
+matchcircuit "DEEP7M/s_nor3"

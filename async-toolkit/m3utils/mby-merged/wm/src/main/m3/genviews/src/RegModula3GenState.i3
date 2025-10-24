@@ -1,0 +1,31 @@
+(* Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information. *)
+(* SPDX-License-Identifier: Apache-2.0 *)
+
+INTERFACE RegModula3GenState;
+IMPORT RegGenState;
+IMPORT Wx, TextSet;
+FROM RegModula3 IMPORT RW, TypeHier;
+
+TYPE
+  Section = { IImport, IComponents, IMaintype, ITrailer,
+              MImport, MDecl, MCode, MTrailer };
+
+  Wxs = ARRAY Section OF Wx.T;
+
+TYPE
+  T = RegGenState.T OBJECT
+    wx       : Wxs;
+    rw       : RW;          (* which pass/file are we working on *)
+    th       : TypeHier;    (* which type hierarchy are we working on *)
+
+    i3imports : TextSet.T;
+    m3imports : TextSet.T;
+  METHODS
+    put(sec : Section; txt : TEXT);
+  END;
+
+CONST Brand = "RegModula3GenState";
+
+END RegModula3GenState.
+ 
+

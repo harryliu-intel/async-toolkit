@@ -1,0 +1,44 @@
+% Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+% SPDX-License-Identifier: Apache-2.0
+
+import ("libm3")
+import ("cit_common")
+import ("cit_util")
+import ("ctlib")
+
+m3_optimize("T")
+
+Module ("Trace")
+Interface ("TraceRep")
+implementation("TraceMeanValue")
+
+module ("TraceUnsafe")
+
+interface ("TraceHeader")
+table ("CardTextSeq", "Cardinal", "TextSeq")
+
+Module ("Transition")
+Sequence ("SimpleTransition", "Transition")
+Module ("TransitionFinder")
+
+Interface("TransitionSeq")
+
+Array_sort("Transition", "Transition")
+
+Table("TextTransitionSeq", "Text", "TransitionSeq")
+Table("CardTransitionSeq", "Cardinal", "TransitionSeq")
+
+Module ("TraceRewriter")
+Module ("DistZTrace")
+
+Module ("TraceOp")
+Interface ("TraceOpClass")
+Module ("TraceInterpolator")
+
+Module ("TransitionPickler")
+Module ("TransitionLeaderBoard")
+
+Interface ("V01X")
+Table     ("CardV01X", "Cardinal", "V01X")
+
+library ("tracelib")

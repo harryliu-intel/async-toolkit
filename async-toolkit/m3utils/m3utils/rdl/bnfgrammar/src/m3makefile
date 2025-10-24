@@ -1,0 +1,50 @@
+% Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+% SPDX-License-Identifier: Apache-2.0
+
+import ("libm3")
+import ("cit_util")
+import ("parseparams")
+import ("simpletoken")
+import ("fileupdatewr")
+
+%if defined("CM3_VERSION")
+%        m3_optimize("T")
+%end
+
+implementation ("Main")
+
+interface ("BnfDefs")
+module ("BnfTokenizer")
+interface ("BnfTokenizer")
+
+module ("Bnf")
+interface ("BnfClass")
+module ("BnfType")
+
+table ("TextBnfRule", "Text", "BnfRule")
+sequence ("Bnf", "BnfType")
+table ("TextBnf", "Text", "Bnf")
+
+table ("CharText", "Char", "Text")
+module ("CharNames")
+
+interface("BnfRule")
+sequence("BnfRule","BnfRule")
+
+list("Bnf","BnfType")
+mkSet("Bnf", "BnfType")
+mkSetList("Bnf", "BnfType")
+
+table("TextTextSet", "Text", "TextSet")
+
+module ("BnfVisit")
+module ("BnfEdit")
+
+module ("SyntaxType")
+interface ("SyntaxTypeSystem")
+array_sort ("SyntaxType", "SyntaxType")
+table ("SyntaxTypeSyntaxType", "SyntaxType", "SyntaxType")
+
+program ("bnfgrammar")
+
+

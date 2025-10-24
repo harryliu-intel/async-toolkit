@@ -1,0 +1,8 @@
+# choose the target as the machine and port of the NB feeder
+# have a task already
+# then ...
+setenv NBRUNOPTIONS " --target sccc05123707.zsc9.intel.com:33445 --task 18 --class 4C --class SLES12 "
+
+# to find feeder do eg
+# grep -i port /tmp/netbatch/mnystroe/mnystroe_sccc05123707_feeder/logs/nbfeeder.sccc05123707.out.95351720897780
+

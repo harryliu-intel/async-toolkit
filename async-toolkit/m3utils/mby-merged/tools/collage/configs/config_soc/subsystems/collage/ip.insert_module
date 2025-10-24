@@ -1,0 +1,3 @@
+
+#register_sig_module SOC_BUF spch_abut_buf $::env(MODEL_ROOT)/src/rtl/spch_abut_buf/ip_kits { {buffer_in buffer_out} }
+#insert_sig_module SOC_BUF sbr_pm0 {sbr_clk} {buf0} -design_params {NUM_BUFFERS 1}

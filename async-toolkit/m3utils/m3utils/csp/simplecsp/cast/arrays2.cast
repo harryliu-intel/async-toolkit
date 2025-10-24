@@ -1,0 +1,55 @@
+// Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+// SPDX-License-Identifier: Apache-2.0
+
+module arrays2;
+
+define common attributes {
+  csp {
+    function fmt1d(int -n; string -a[0..0]) : string =
+      (string s = "";
+       <;i:n: s = s + "a[" + i + "] = " + a[i] + " ">;
+       fmt1d = s;
+       );
+  }
+}
+
+int X=5;
+int Y=5;
+
+define P()() <+ common
+{
+
+  csp {
+
+    function g(string -+a[0..0,0..0]) =
+      (
+       a[1,1] = "g was here"
+       );
+    
+    function f(string -+a[0..0]) =
+      (a[0] = "f was here";
+       );
+    
+    string x[X,Y];
+    
+    <;i:X: <;j:Y: x[i,j] = " cell[" + i + "," + j + "]">>;
+
+
+    <;i : X:
+    print(fmt1d(Y, x[i]));
+    >;
+
+    print ("======");
+    f(x[2]);
+
+    //    g(x[0..0,1..1]);
+
+    print(2**2**3);
+    
+    <;i : X:
+    print(fmt1d(Y, x[i]));
+    >;
+
+  }
+}
+  
