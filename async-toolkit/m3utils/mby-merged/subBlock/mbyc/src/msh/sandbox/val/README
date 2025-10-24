@@ -1,0 +1,41 @@
+-----------------------
+Directory Tree Contents
+-----------------------
+  * a fast Makefile based build/sim/debug flow    (dir: ., scripts) 
+  * a reference testbench design                  (dir: ./verilog) 
+    that validates the reference logic design     (dir: ../../verilog)
+  * an example testcase                           (dir: tests)
+   
+-------
+Purpose
+-------
+  * Model and teach good design and coding practices via illustration and comments
+  * Provide a working playground to try out various flows
+  * Provide a starting point or capabilities that can be leveraged in any design
+
+-------------------
+Directory Structure
+-------------------
+Makefile                - top level makefile 
+Makefile.overrides      - some makefile parameters 
+README                  - this file 
+bin                     - directory created by makefile to hold build results
+run                     - directory creaed by makefile to hold run results
+scripts                 - some scripts used by makefile 
+tests                   - testcases that can be run on testbench  
+verilog                 - the testbench code 
+
+
+
+------------------------------
+Building and Running Testbench
+------------------------------
+<Greg Hubbard??? to fill in stuff here>
+
+---------
+Debugging 
+---------
+<Greg Hubbard??? to fill in stuff here>
+
+
+

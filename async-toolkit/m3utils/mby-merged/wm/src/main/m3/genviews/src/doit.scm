@@ -1,0 +1,3 @@
+(load "fields.scm")
+(doit)
+

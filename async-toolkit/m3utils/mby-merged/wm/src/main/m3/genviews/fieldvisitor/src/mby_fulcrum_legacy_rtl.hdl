@@ -1,0 +1,15 @@
+$hdl_spec = {
+   # List of specific VERILOG src files
+   -vlog_files => [
+       "target/gen_mby_wm_m3/mby_ppe_rx_top_map_consts_pkg.vh",
+       "target/gen_mby_wm_m3/mby_ppe_tx_top_map_consts_pkg.vh",
+   ],
+   # List of include directories. Corresponds with the VLOG '+incdir+' parameter
+   -vlog_incdirs => [
+   ],
+
+   # Arbitrary VLOG options
+   -vlog_opts => [],
+
+};
+

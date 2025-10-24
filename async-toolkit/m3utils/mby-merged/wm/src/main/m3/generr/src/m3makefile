@@ -1,0 +1,9 @@
+import ("libm3")
+import ("csv")
+
+interface ("FmError")
+sequence ("FmError","FmError")
+
+implementation ("GenErr")
+
+program ("generr")

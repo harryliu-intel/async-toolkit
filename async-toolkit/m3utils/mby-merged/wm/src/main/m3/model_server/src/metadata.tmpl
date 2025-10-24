@@ -1,0 +1,9 @@
+
+readonly proc _metadata(nm, elem, vis) is
+       build_generic_intf(nm & "Meta", "Metadata", [elem], vis)
+end
+
+readonly proc metadata(nm, elem) is _metadata(nm, elem, HIDDEN) end
+
+readonly proc Metadata(nm, elem) is _metadata(nm, elem, VISIBLE) end
+    

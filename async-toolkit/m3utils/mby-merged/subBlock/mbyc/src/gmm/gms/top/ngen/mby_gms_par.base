@@ -1,0 +1,15 @@
+// -- Author       : Mike Jarvis <michael.a.jarvis@intel.com>
+// -- Project Name : MBY
+// -- Description  : Global Management South Partition Netlist
+// -------------------------------------------------------------------
+ngen_mod_name
+
+ngen_IO_list
+
+ngen_IO_end
+
+ngen_wires
+
+ngen_submodules
+
+ngen_endmodule

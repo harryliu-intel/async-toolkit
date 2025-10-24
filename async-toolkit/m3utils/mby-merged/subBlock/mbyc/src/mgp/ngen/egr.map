@@ -1,0 +1,30 @@
+// Placeholder
+
+cclk                  >> clk
+
+egr_dirtypod_if    >> igr_dirtypod_if
+egr_cleanpod_if    >> igr_cleanpod_if
+egr_pod            >> pod_if
+egr_mc_mirror_pod  >> mc_mirror_pod_if
+egr_ahb            >> ahb_if
+
+egr_cmring         >> cmring_if
+egr_txppe0         >> tx_ppe_if0
+egr_txppe1         >> tx_ppe_if1
+egr_ppestm         >> ppe_stm_if
+egr_epl0           >> epl_if0
+egr_epl1           >> epl_if1
+egr_epl2           >> epl_if2
+egr_epl3           >> epl_if3
+egr_mc_table0      >> mc_table_if0
+egr_mc_table1      >> mc_table_if1
+
+egr_tagring        >> tagring_if
+egr_mctagring      >> mce_tagring_if
+
+mim0_rd0           >> mim_rd_if0_0
+mim0_rd1           >> mim_rd_if0_1
+mim0_rd2           >> mim_rd_if0_2
+mim1_rd0           >> mim_rd_if1_0
+mim1_rd1           >> mim_rd_if1_1
+mim1_rd2           >> mim_rd_if1_2

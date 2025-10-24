@@ -1,0 +1,107 @@
+//-----------------------------------------------------------------------------
+// Title         : Madison Bay SMM Bus Functional Model Types
+// Project       : Madison Bay
+//-----------------------------------------------------------------------------
+// File          : mby_smm_bfm_defines.sv
+// Author        : Roman Bernal <r.bernal@intel.com>
+// Created       : 01.11.2018
+//-----------------------------------------------------------------------------
+// Description :
+// These are the SMM_BFM definitions
+//-----------------------------------------------------------------------------
+// Copyright (c) 2018 by Intel Corporation This model is the confidential and
+// proprietary property of Intel Corporation and the possession or use of this
+// file requires a written license from Intel Corporation.
+//
+// The source code contained or described herein and all documents related to
+// the source code ("Material") are owned by Intel Corporation or its suppliers
+// or licensors. Title to the Material remains with Intel Corporation or its
+// suppliers and licensors. The Material contains trade secrets and proprietary
+// and confidential information of Intel or its suppliers and licensors. The
+// Material is protected by worldwide copyright and trade secret laws and
+// treaty provisions. No part of the Material may be used, copied, reproduced,
+// modified, published, uploaded, posted, transmitted, distributed, or
+// disclosed in any way without Intel's prior express written permission.
+//
+// No license under any patent, copyright, trade secret or other intellectual
+// property right is granted to or conferred upon you by disclosure or delivery
+// of the Materials, either expressly, by implication, inducement, estoppel or
+// otherwise. Any license under such intellectual property rights must be
+// express and approved by Intel in writing.
+//
+//------------------------------------------------------------------------------
+`ifndef __MBY_SMM_BFM_PKG__
+`error "Attempt to include file outside of mby_smm_bfm_pkg."
+`endif
+`ifndef __MBY_SMM_BFM_TYPES__
+`define __MBY_SMM_BFM_TYPES__
+
+// -------------------------------------------------------------------------
+// Main class & VIF type definitions for SMM BFM
+// -------------------------------------------------------------------------
+// Creating a virtual interface types for wr_req & rd_req/rd_rsp
+typedef virtual mby_smm_bfm_mwr_req_if mby_smm_bfm_row_wr_req_vif;
+typedef virtual mby_smm_bfm_mrd_req_if mby_smm_bfm_row_rd_req_vif;
+
+// Forward declaration of the transaction classes (in the smm_bfm_pkg
+// these file are compiled before the transaction item.
+typedef class mby_smm_bfm_mwr_req_xaction;
+typedef class mby_smm_bfm_mrd_req_xaction;
+
+// Defining the I/O policies for the smm bfm
+typedef shdv_base_io_policy_param#(
+   .T_req(mby_smm_bfm_mwr_req_xaction),
+   .T_vif(mby_smm_bfm_row_wr_req_vif)) smm_bfm_row_wr_io;
+typedef shdv_base_io_policy_param#(
+   .T_req(mby_smm_bfm_mrd_req_xaction),
+   .T_vif(mby_smm_bfm_row_rd_req_vif)) smm_bfm_row_rd_io;
+
+// Defining the flow control policy for the smm bfm
+typedef shdv_base_empty_fc_policy smm_bfm_row_wr_fc;
+typedef shdv_base_empty_fc_policy smm_bfm_row_rd_fc;
+
+// Defining the wr_req & rd_req/rd_rsp agents as a parameterized base agent.
+typedef shdv_base_pkg::shdv_agent#(
+   .T_req(mby_smm_bfm_mwr_req_xaction),
+   .T_fcp(smm_bfm_row_wr_fc),
+   .T_iop(smm_bfm_row_wr_io)) smm_bfm_wr_req_agent;
+typedef shdv_base_pkg::shdv_agent#(
+   .T_req(mby_smm_bfm_mrd_req_xaction),
+   .T_vif(smm_bfm_row_rd_fc),
+   .T_iop(smm_bfm_row_rd_io)) smm_bfm_rd_req_agent;
+
+typedef class mby_smm_bfm_mwr_req;
+typedef class mby_smm_bfm_mrd_req;
+typedef class mby_smm_bfm_mem_node;
+typedef class mby_smm_bfm_mrd_seq;
+typedef mby_smm_bfm_mrd_seq#(.T_req(mby_smm_bfm_mrd_req_xaction)) smm_bfm_mrd_seq;
+typedef mby_smm_bfm_mwr_req#(.T_req(mby_smm_bfm_mwr_req_xaction)) smm_bfm_mwr_req;
+typedef mby_smm_bfm_mrd_req#(.T_req(mby_smm_bfm_mrd_req_xaction)) smm_bfm_mrd_req;
+typedef mby_smm_bfm_mem_node#(.ADDR_WIDTH(SMM_BFM_ADDR_WIDTH),.DATA_WIDTH(SMM_BFM_DATA_WIDTH)) smm_bfm_mem_node;
+
+// Enumerations to control/select delay profiles for SMM BFM
+typedef enum bit [1:0] {
+   NO_CONGESTION     = 2'h0,
+   MEDIUM_CONGESTION = 2'h1,
+   HIGH_CONGESTION   = 2'h2
+} mesh_status_e;
+
+typedef enum bit [1:0] {
+   IDEAL_DELAY    = 2'h0,
+   MEDIUM_DELAY   = 2'h1,
+   HIGH_DELAY     = 2'h2
+} delay_type_e;
+
+// Enumerations to adjust the mode of operation for SMM BFM subscribers
+typedef enum bit {
+   WITHOUT_DELAY_SIMULATION   = 1'b0,
+   WITH_DELAY_SIMULATION      = 1'b1
+} delay_simulation_e;
+
+typedef enum bit [1:0] {
+   INGRESS_MODE   = 2'h0,
+   EGRESS_MODE    = 2'h1,
+   GPM_MODE       = 2'h2
+} operation_mode_e;
+
+`endif

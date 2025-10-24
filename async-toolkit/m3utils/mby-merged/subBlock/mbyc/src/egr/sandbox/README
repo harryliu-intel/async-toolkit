@@ -1,0 +1,48 @@
+# Required for sandbox to run properly:
+source /p/hdk/rtl/proj_tools/proj_binx/nhdk/latest/setnhdk.csh -w $cwd
+osetup vcsmx
+
+# Running this will prevent the Makefile from running ToolConfig every time.
+# This is not necessary if you are not noticing the Makefile running slowly.
+setenv SHRTL `ToolConfig.pl get_tool_path ipconfig/shrtl`
+setenv DESIGNCOMPILER `ToolConfig.pl get_tool_path designcompiler`
+
+# EGR Sandbox usage:
+
+# Build the sandbox model and run the GK gate test case.
+# Removes all temporary files, leaving only build and run logs.
+make gate           # Build sandbox for EGR Top
+make gate dut=<dut> # Build sandbox for <dut> e.g. dut=prc, dut=tqu, etc.
+
+# Build the sandbox model and run the GK gate test case.
+# Generates a trace and leaves all temp files.
+make debug           # Build sandbox for EGR Top
+make debug dut=<dut> # Build sandbox for <dut> e.g. dut=prc, dut=tqu, etc.
+# Note: "make <command> dut=<dut>" assumes testbench is on egr/<dut>/sandbox/rtl/<dut>_tb.sv
+
+# Optional: the gui can be started before running the test using:
+make debug use_gui=1
+
+# Build and run alternate tests (with traces)
+# Single 64B packet, TC0, port 0
+make first_packet_ms1p0
+# add different TC, different port
+make first_packet_ms2p0
+# add a second packet after some delay
+make first_packet_ms2p1
+# add larger packets
+make first_packet_ms2p5
+
+# Increase verbosity. Levels are 0 to 5. Works for all tests except 'make gate'
+make debug VERBOSITY=5
+
+# Build the model without running a test
+make simv           # Build model for EGR Top
+make simv dut=<dut> # Build model for <dut> e.g. dut=prc, dut=tqu, etc.
+
+# Clean up all generated files, including logs and traces
+make clean
+
+# Open DVE to view a trace
+make dve
+

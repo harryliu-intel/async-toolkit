@@ -1,0 +1,33 @@
+#----------*-perl-*-------------------------
+#  This is a HDL spec file - it defines the unit and how to compile it.
+#
+#
+
+my $SVA_LIB = &ToolConfig::get_tool_path('ipconfig/sva_lib_ip');
+
+$hdl_spec = {
+    # List of specific VERILOG src files
+    -vlog_files => [
+         "src/sva/mby_intel_checkers.vm",
+         "src/sva/mby_checker.sv",
+         "src/sva/mby_bind.sv",
+     ],
+
+        # List of verilog library src dirs ( corresponds with the VLOG '-y' parameter)
+        -vlog_lib_dirs => [
+     ],
+
+        # List of verilog library src files ( corresponds with the VLOG '-v' parameter)
+        -vlog_lib_files => [],
+
+        # List of include directories. Corresponds with the VLOG '+incdir+' parameter
+        -vlog_incdirs => [
+	 $SVA_LIB,
+         "src/sva",
+     ],
+
+        # Arbitrary VLOG options
+        -vlog_opts => [],
+    };
+
+

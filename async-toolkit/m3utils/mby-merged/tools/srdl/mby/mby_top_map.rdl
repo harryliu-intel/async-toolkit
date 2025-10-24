@@ -1,0 +1,34 @@
+<% if ($MBY_TOP_MAP) {
+   } else {
+   $MBY_TOP_MAP = 1;
+%>
+
+
+`include "mby_lib_udp.rdl"
+`include "mby_ip.rdl"
+
+`include "mby_globals_map.rdl"
+`include "mby_mpp_map.rdl"
+`include "mby_modify.rdl"
+`include "mby_shm.rdl"
+`include "mby_mesh_row_map.rdl"
+`include "mby_rx_voq.rdl"
+`include "mby_tx_voq.rdl"
+`include "mby_rx_pb.rdl"
+`include "mby_tx_pb.rdl"
+`include "mby_freepointer_fifo_map.rdl"
+`include "mby_mce.rdl"
+
+
+// top = MPP + globals.
+// Eventually this will be 8 MPPs.
+// (Today let's not make Nebulon take 3 hours to run).
+addrmap mby_top_map {
+  mby_globals_map globals;
+  mby_mpp_map     mpp[1]    @0x20000 += 0x100000;
+};
+
+
+<%
+   }
+%>

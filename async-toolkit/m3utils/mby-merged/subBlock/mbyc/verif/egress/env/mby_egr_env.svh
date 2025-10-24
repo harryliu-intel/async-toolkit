@@ -1,0 +1,378 @@
+//-----------------------------------------------------------------------------
+// Title         : Egress main environment class
+// Project       : Madison Bay
+//-----------------------------------------------------------------------------
+// File          : mby_egr_env.svh
+// Author        : jose.j.godinez.carrillo  <jjgodine@ichips.intel.com>
+// Created       : 21.08.2018
+// Last modified : 21.08.2018
+//-----------------------------------------------------------------------------
+// Description :
+// This class builds and connects the different agents/BFMs/VCs needed by this
+// cluster test environment
+//-----------------------------------------------------------------------------
+// Copyright (c) 2018 by Intel Corporation This model is the confidential and
+// proprietary property of Intel Corporation and the possession or use of this
+// file requires a written license from Intel Corporation.
+//-----------------------------------------------------------------------------
+// Modification history :
+// 21.08.2018 : created
+//-----------------------------------------------------------------------------
+
+//-----------------------------------------------------------------------------
+// Class: mby_egr_env
+//-----------------------------------------------------------------------------
+class mby_egr_env extends mby_egr_base_env;
+
+   mby_egr_ti_cfg ti_config;
+   //protected string egress_ti_low_path   = "XYZ_tb.u_egress_ti";
+
+   // Variable: _mby_egr_env
+   // static pointer to the env
+   static mby_egr_env _mby_egr_env;
+
+   // Variable: egress_if
+   // Egress env interface
+   egr_env_if_t egress_if;
+
+   // Variable: egress_epool
+   // Egress event pool
+   uvm_event_pool egress_epool;
+
+   // ---------------------------------------------------------------
+   // IP Agents and VC's declaration
+   // ---------------------------------------------------------------
+
+   // Variable:  eth_bfms
+   // MAC Client BFM agent
+   egr_eth_bfm_t eth_bfms[`NUM_EPLS_PER_EGR];
+
+   // Variable:  eth_bfm_tx_io
+   // MAC Client BFM io policy
+   egr_eth_bfm_tx_io_t eth_bfm_tx_io[`NUM_EPLS_PER_EGR];
+
+   // Variable:  eth_bfm_rx_io
+   // MAC Client BFM io policy
+   egr_eth_bfm_rx_io_t eth_bfm_rx_io[`NUM_EPLS_PER_EGR];
+
+   // Variable:  eth_bfm_tx_vintf
+   // MAC Client BFM virtual interface
+   egr_eth_bfm_tx_intf_t eth_bfm_tx_vintf[`NUM_EPLS_PER_EGR];
+
+   // Variable:  eth_bfm_rx_vintf
+   // MAC Client BFM virtual interface
+   egr_eth_bfm_rx_intf_t eth_bfm_rx_vintf[`NUM_EPLS_PER_EGR];
+
+   // Variable: tag_bfm
+   // TAG BFM instances
+   mby_tag_bfm tag_bfm[`NUM_TAG_PORTS];
+
+   // Variable: smm_bfm
+   // Shared Memory Mesh (SMM) Instance
+   mby_smm_bfm_t smm_bfm;
+
+   // Variable: egr_pbr_bfm
+   // PBR BFM Instance
+   mby_pbr_bfm_pkg::mby_pbr_bfm   egr_pbr_bfm;
+
+   // Variable:  tb_ral
+   // Handle to egr RAL.
+   mby_egr_reg_pkg::mby_egr_reg_blk tb_ral;
+
+   // Variable: env_monitor
+   // egress env event monitor
+   mby_egr_env_monitor env_monitor;
+
+   mby_reset_agent rst_agent;
+
+   `uvm_component_utils_begin(mby_egr_env)
+   `uvm_component_utils_end
+
+   //--------------------------------------------------------------------------
+   // Function: mby_egr_env new
+   //--------------------------------------------------------------------------
+   function new (string name="mby_egr_env", uvm_component parent = null);
+      super.new(name, parent);
+      // Setting the env static pointer
+      _mby_egr_env = this;
+   endfunction : new
+
+   //--------------------------------------------------------------------------
+   // Function: mby_egr_env build
+   // build phase of mby_egr_env
+   // All VC's and Agent should be build in this pahse.
+   // For each new VC's/Agnet it is recommand to add it an a specific function
+   //--------------------------------------------------------------------------
+   virtual function void build_phase(uvm_phase phase);
+      uvm_object tmp_ti_cfg_obj;
+
+      super.build_phase(phase);
+
+      // "get" the testbench configuration object set from the egress base test
+      uvm_config_db#(mby_egr_tb_cfg)::get(this, "", "egr_tb_cfg", tb_cfg);
+      if(tb_cfg == null) begin
+         //PJP: TODO `uvm_fatal(get_name(), $sformatf("PJP: mby_egr_env:: tb_cfg is null!"));
+         `uvm_warning(get_name(), $sformatf("PJP: mby_egr_env:: tb_cfg is null!"));
+      end
+
+      if(uvm_config_object::get(this, "", "egress_ti_config",tmp_ti_cfg_obj)) begin
+         assert($cast(ti_config,tmp_ti_cfg_obj));
+      end
+
+      //build_eth_bfms();
+      build_tag_bfm();
+      build_smm_bfm();
+      build_pbr_bfm();
+      build_ral();
+
+      // Env monitor
+      assert($cast(env_monitor, create_component("mby_egr_env_monitor","env_monitor")));
+      //PJP env_monitor.set_monitor_enable(cfg.get_monitors_enabled());
+
+      // get global event pool
+      egress_epool = egress_epool.get_global_pool();
+
+      //RESET AGENT
+      assert($cast(rst_agent, create_component("mby_reset_agent","rst_agent")));
+
+   endfunction : build_phase
+
+   //--------------------------------------------------------------------------
+   // Function: mby_egr_env connect
+   // connect phase of mby_egr_env
+   //--------------------------------------------------------------------------
+   function void connect_phase(uvm_phase phase);
+      uvm_object temp;
+      super.connect_phase(phase);
+      //connect_eth_bfms();
+      connect_tag_bfms();
+      connect_smm_bfm();
+      connect_pbr_bfm();
+
+      uvm_config_db#(egr_env_if_t)::get(this, "", "egress_if", egress_if);
+      if(egress_if == null) begin
+         `uvm_fatal(get_name(), $sformatf("Couldn't find egress_if"));
+      end
+
+      if (env_monitor != null) begin
+         env_monitor.egress_if = egress_if;
+      end
+      
+      if(rst_agent != null)begin
+         `uvm_info(get_name(), "jesusalo: RESET_AGENT.driver/monitor were assigned to the reset if.", UVM_LOW)
+         rst_agent.assign_vintf(egress_if);
+         rst_agent.assign_vintf(egress_if);
+      end 
+   endfunction : connect_phase
+
+   //--------------------------------------------------------------------------
+   // Function: mby_egr_env end_of_elaboration
+   // end_of_elaboration  phase of mby_egr_env
+   // In this phase we randomize the fuse env
+   //--------------------------------------------------------------------------
+   virtual function void end_of_elaboration_phase (uvm_phase phase);
+      super.end_of_elaboration_phase(phase);
+   endfunction : end_of_elaboration_phase
+
+   //--------------------------------------------------------------------------
+   // Function: mby_egr_env start_of_simulation
+   // start_of_simulation  phase of mby_egr_env
+   //--------------------------------------------------------------------------
+   virtual function void start_of_simulation_phase (uvm_phase phase);
+      super.start_of_simulation_phase(phase);
+   endfunction : start_of_simulation_phase
+
+   //--------------------------------------------------------------------------
+   // Function: mby_egr_env  run
+   // run  phase of mby_egr_env
+   //--------------------------------------------------------------------------
+   virtual task run_phase (uvm_phase phase);
+      super.run_phase(phase);
+   endtask : run_phase
+
+   //--------------------------------------------------------------------------
+   // Function: build_eth_bfms
+   // Gets the eth interfaces from the configuration database and creates
+   // the ethernet Bus Functional Model instances
+   //--------------------------------------------------------------------------
+   function void build_eth_bfms();
+      foreach(eth_bfms[i]) begin
+         // Get the io policies
+          if(!uvm_config_db#(egr_eth_bfm_tx_io_t)::get(this, "", $sformatf("igr_eth_bfm_tx_io%0d", i), eth_bfm_tx_io[i])) begin
+              `uvm_fatal(get_name(),"Config_DB.get() for ENV's igr_eth_bfm_tx_io_t was not successful!")
+          end
+          if(!uvm_config_db#(egr_eth_bfm_rx_io_t)::get(this, "", $sformatf("igr_eth_bfm_rx_io%0d", i), eth_bfm_rx_io[i])) begin
+              `uvm_fatal(get_name(),"Config_DB.get() for ENV's igr_eth_bfm_rx_io_t was not successful!")
+          end
+         // Get the eth_bfm_vif ptrs
+         if(!uvm_config_db#(egr_eth_bfm_tx_intf_t)::get(this, "",
+            $sformatf("egr_eth_bfm_tx_vintf%0d", i),eth_bfm_tx_vintf[i])) begin
+            `uvm_fatal(get_name(),
+               "Config_DB.get() for ENV's egr_eth_bfm_tx_intf_t was not successful!")
+         end
+         if(!uvm_config_db#(egr_eth_bfm_rx_intf_t)::get(this, "",
+            $sformatf("egr_eth_bfm_rx_vintf%0d", i), eth_bfm_rx_vintf[i])) begin
+            `uvm_fatal(get_name(),
+               "Config_DB.get() for ENV's egr_eth_bfm_rx_intf_t was not successful!")
+         end
+
+         // Create the bfm instances
+         eth_bfms[i]                = egr_eth_bfm_t::type_id::create($sformatf("egr_eth_bfm%0d", i), this);
+         eth_bfms[i].cfg.mode       = eth_bfm_pkg::MODE_SLAVE;   // Configure as SLAVE
+         foreach(eth_bfms[0].cfg.port_speed[j])begin
+            tb_cfg.randomize();
+            eth_bfms[i].cfg.port_speed[j]  = tb_cfg.speed_cfg[j];
+         end
+         //eth_bfms[i].cfg.port_lanes    = {4,0,0,0};   // Configure num_ports.
+         eth_bfms[i].cfg.group_size    = 8;
+         eth_bfms[i].cfg.sop_alignment = 8;
+      end
+   endfunction : build_eth_bfms
+
+
+   function void build_tag_bfm();
+      foreach(tag_bfm[i]) begin
+         tag_bfm[i] = mby_tag_bfm::type_id::create($sformatf("tag_bfm_%0d",i), this);
+         tag_bfm[i].cfg_obj.bfm_mode       = TAG_BFM_EGR_MODE;
+         tag_bfm[i].cfg_obj.driver_active  = UVM_ACTIVE;
+         tag_bfm[i].cfg_obj.monitor_active = UVM_ACTIVE;
+         tag_bfm[i].cfg_obj.traffic_mode   = TAG_BFM_UC_MODE;
+      //tag_bfm[i].cfg_obj.frame_gen_active = UVM_PASSIVE;
+      end
+   endfunction : build_tag_bfm
+
+   //--------------------------------------------------------------------------
+   // Function: build_smm_bfm
+   // Builds the instance of the SMM BFM
+   //--------------------------------------------------------------------------
+   function void build_smm_bfm();
+      smm_bfm           = mby_smm_bfm_t::type_id::create("smm_bfm", this);
+      smm_bfm.cfg_obj   = mby_smm_bfm_cfg::type_id::create("smm_bfm_cfg_obj", this);
+   endfunction : build_smm_bfm
+
+   //--------------------------------------------------------------------------
+   // Function: build_pbr_bfm
+   // Builds the instance of the pbr BFM
+   //--------------------------------------------------------------------------
+   function void build_pbr_bfm();
+      egr_pbr_bfm = mby_pbr_bfm_pkg::mby_pbr_bfm::type_id::create("egr_pbr_bfm_name", this);
+      if(!egr_pbr_bfm.cfg_obj.randomize() with {
+               bfm_mode == PBR_BFM_EGR_MODE;
+            })begin
+         `uvm_error(get_name(), "Unable to randomize egr_pbr_bfm.cfg_obj PBR_BFM_EGR_MODE");
+      end
+      `uvm_info(get_name(), ("DBG_ALF: Done building egr pbr bfm in the ENV..."), UVM_DEBUG)
+   endfunction : build_pbr_bfm
+
+   //---------------------------------------------------------------------------
+   //  Function: build_ral
+   //  Builds egr register model.
+   //
+   //---------------------------------------------------------------------------
+   virtual function void build_ral();
+      // Check if ral is already set by FC
+      if (tb_ral == null) begin
+         tb_ral = mby_egr_reg_pkg::mby_egr_reg_blk::type_id::create("tb_ral");
+         tb_ral.build();
+         //TODO: Update the base addr.
+         tb_ral.default_map.set_base_addr(`UVM_REG_ADDR_WIDTH'h20000);
+         tb_ral.lock_model();
+
+         tb_ral.set_hdl_path_root("mby_egr_tb.egr_top_i");
+
+         //Build the Adapter's based on agt's active
+      end
+   endfunction: build_ral
+
+   //---------------------------------------------------------------------------
+   // Function: get_tb_ral()
+   // Returns object handle to egr ral (mby_egr_reg_blk)
+   //---------------------------------------------------------------------------
+   function mby_egr_reg_pkg::mby_egr_reg_blk get_tb_ral();
+      return tb_ral;
+   endfunction : get_tb_ral
+
+   //---------------------------------------------------------------------------
+   // Function: set_tb_ral()
+   // Sets handle to egr ral (mby_egr_reg_blk). Used to pass handle to RAL from fullchip env.
+   //---------------------------------------------------------------------------
+   function set_tb_ral(mby_egr_reg_pkg::mby_egr_reg_blk ral);
+      tb_ral = ral;
+   endfunction : set_tb_ral
+
+   //--------------------------------------------------------------------------
+   // Function: connect_eth_bfms
+   // Sets VIF to the IO policies, adds IO policy class to the BFM and adds sequencer
+   // pointer to SLA vsqr
+   //--------------------------------------------------------------------------
+   function void connect_eth_bfms();
+      foreach(eth_bfms[i]) begin
+         eth_bfms[i].set_io(eth_bfm_tx_io[i], eth_bfm_rx_io[i]);
+         add_sequencer($sformatf("eth_bfm_%0d", i), $sformatf("eth_bfm_%0d_rx0", i), eth_bfms[i].rx.frame_sequencer[0]);
+         add_sequencer($sformatf("eth_bfm_%0d", i), $sformatf("eth_bfm_%0d_rx1", i), eth_bfms[i].rx.frame_sequencer[1]);
+         add_sequencer($sformatf("eth_bfm_%0d", i), $sformatf("eth_bfm_%0d_rx2", i), eth_bfms[i].rx.frame_sequencer[2]);
+         add_sequencer($sformatf("eth_bfm_%0d", i), $sformatf("eth_bfm_%0d_rx3", i), eth_bfms[i].rx.frame_sequencer[3]);
+      end
+   endfunction : connect_eth_bfms
+
+   //////////////////////////////////////////////////////////////////////////////
+   // Egress ENV functions / tasks
+   //////////////////////////////////////////////////////////////////////////////
+
+   //--------------------------------------------------------------------------
+   // Function: connect_tag_bfm
+   // Adds sequencers from each of the Tag BFMs
+   //--------------------------------------------------------------------------
+   function void connect_tag_bfms();
+      foreach(tag_bfm[i])begin
+         add_sequencer($sformatf("tag_bfm_%0d", i),
+            $sformatf("tag_bfm_uc_%0d", i),
+            tag_bfm[i].tag_uc_agent.sequencer);
+      end
+   endfunction: connect_tag_bfms
+
+   //--------------------------------------------------------------------------
+   // Function: connect_tag_bfm
+   // adds sequencer
+   //--------------------------------------------------------------------------
+   function void connect_smm_bfm();
+      add_sequencer("smm_bfm", "smm_bfm_wr_req", smm_bfm.igr_wr_req_agent.sequencer);
+   endfunction: connect_smm_bfm
+
+   //--------------------------------------------------------------------------
+   // Function: connect_pbr_bfm
+   // adds sequencer
+   //--------------------------------------------------------------------------
+   function void connect_pbr_bfm();
+      add_sequencer("egr_pbr_bfm_name", "egr_pbr_bfm_csp_sequencer", egr_pbr_bfm.csp_agent.sequencer);
+      add_sequencer("egr_pbr_bfm_name", "egr_pbr_bfm_dpm_sequencer", egr_pbr_bfm.dpm_agent.sequencer);
+      `uvm_info(get_name(), ("DBG_ALF: Done connecting egr pbr bfm..."), UVM_DEBUG)
+   endfunction: connect_pbr_bfm
+
+   //---------------------------------------------------------------------------
+   // Function: get_egr_env
+   // Returns pointer to self
+   //---------------------------------------------------------------------------
+   static function mby_egr_env get_egr_env();
+      return _mby_egr_env;
+   endfunction : get_egr_env
+
+   //////////////////////////////////////////////////////////////////////////////
+   // Egress ENV Specific functions / tasks
+   //////////////////////////////////////////////////////////////////////////////
+
+   //---------------------------------------------------------------------------
+   // Task: ingress_im_monitor
+   // Wait for interrupt event and trigger IM
+   // ISR (Interrupt Service Routine) only in IP level
+   //---------------------------------------------------------------------------
+   task egress_im_monitor();
+      uvm_event egress_int_detect_e;
+      egress_int_detect_e = egress_epool.get("EGRESS_INT_ASSERT");
+
+      forever begin
+         egress_int_detect_e.wait_trigger();
+      end
+   endtask : egress_im_monitor
+
+endclass : mby_egr_env

@@ -1,0 +1,12 @@
+#---*-perl-*---
+
+%audf = (
+   Includes => [
+      "cfg/ace/fc_local_hdl.udf",
+      "cfg/ace/mbyc_integ.udf",
+      "cfg/ace/fc_integ.udf",
+      "cfg/ace/fc_local_ivars.udf",
+      "cfg/ace/fc_tag_overrides.udf",
+      "cfg/ace/fc_genrtl.udf",
+   ],
+);

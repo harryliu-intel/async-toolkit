@@ -1,0 +1,100 @@
+#----------*-perl-*-------------------------
+#  This is a HDL spec file - it defines the unit and how to compile it.
+#
+#
+my $SVA_LIB = &ToolConfig::get_tool_path('ipconfig/sva_lib_ip');
+my $SHRTL = &ToolConfig::get_tool_path('ipconfig/shrtl');
+
+$hdl_spec = {
+
+	# List of specific VERILOG src files
+	-vlog_files => [
+        "src/shared/rtl/shared_pkg.sv",
+        "src/shared/rtl/axi2ibus_pkg.sv",
+        "src/shared/rtl/mby_rx_metadata_pkg.sv",
+        "src/shared/rtl/hlp/common/hlp_register_constants_pkg.vh",
+        "src/shared/rtl/hlp/common/hlp_register_struct.vh",
+		"src/shared/rtl/hlp/lib/pkt/hlp_pkt_pkg.vh",
+		"src/shared/rtl/hlp/common/hlp_pkt_meta_pkg.vh",
+		"src/shared/rtl/hlp/common/hlp_pkg.vh",
+        "src/shared/rtl/hlp/common/hlp_ipp_pkg.vh",
+        "src/shared/rtl/hlp/hlp_fwd_pkg.vh",
+        "src/shared/rtl/hlp/lib/csum/hlp_csum_pkg.vh",
+        "src/shared/rtl/hlp/lib/crc/hlp_crc_pkg.vh",
+		"src/parser/rtl/parser_pkg.sv",
+		"src/parser/rtl/hlp/hlp_pa_pkg.vh",
+		"src/class_gpa/rtl/class_gpa_pkg.sv",
+		"src/class_gpb/rtl/class_gpb_pkg.sv",
+		"src/action/rtl/action_pkg.sv",
+		"src/shared/interfaces/ahb_rx_ppe_if.sv",
+		"src/shared/interfaces/glb_rx_ppe_if.sv",
+		"src/shared/interfaces/igr_rx_ppe_if.sv",
+		"src/shared/interfaces/rx_ppe_igr_if.sv",
+		"src/shared/interfaces/rx_ppe_ppe_stm0_if.sv",
+		"src/shared/interfaces/rx_ppe_ppe_stm1_if.sv",
+		"src/shared/interfaces/par_class_if.sv",
+		"src/shared/interfaces/class_group_if.sv",
+
+		"src/rx_ppe/rtl/rx_ppe.sv",
+	],
+
+  # List of verilog library src dirs ( corresponds with the VLOG '-y' parameter)
+	-vlog_lib_dirs => [
+		"src/parser/rtl",
+		"src/parser/rtl/hlp",
+		"src/class_gpa/rtl",
+		"src/class_gpb/rtl",
+		"src/action/rtl",
+        "src/action/rtl/trigger",
+        "src/action/rtl/trigger/hlp",
+        "src/shared/rtl/hlp/lib/fifo",
+        "src/shared/rtl/hlp/lib/crc",
+        "src/shared/rtl/hlp/lib/csum",
+        "$SHRTL/src/ecc/rtl",
+        "$SHRTL/src/common/rtl",
+        "target/mby/mgm_run/parser/src",
+		"target/mby/mgm_run/parser/src/mem_wrap",
+		"target/mby/mgm_run/class_gpa/src",
+		"target/mby/mgm_run/class_gpa/src/mem_wrap",
+		"target/mby/mgm_run/class_gpb/src",
+		"target/mby/mgm_run/class_gpb/src/mem_wrap",
+		"target/mby/mgm_run/action/src",
+		"target/mby/mgm_run/action/src/mem_wrap",
+		"target/mby/mgm_run/rtl",
+    ],
+
+ # List of verilog library src files ( corresponds with the VLOG '-v' parameter)
+	-vlog_lib_files => [],
+
+   # List of include directories. Corresponds with the VLOG '+incdir+' parameter
+	-vlog_incdirs => [
+		"src/rx_ppe/rtl",
+		"src/parser/rtl",
+		"src/parser/rtl/hlp",
+		"src/class_gpa/rtl",
+		"src/class_gpb/rtl",
+		"src/action/rtl",
+		"src/shared/rtl",
+		"src/shared/interfaces",
+        "src/shared/sva/hlp",
+        "src/action/sva/trigger/hlp",
+        "src/parser/sva/hlp",
+		"$SVA_LIB",
+		"target/mby/mgm_run/parser/src",
+		"target/mby/mgm_run/parser/src/mem_wrap",
+		"target/mby/mgm_run/class_gpa/src",
+		"target/mby/mgm_run/class_gpa/src/mem_wrap",
+		"target/mby/mgm_run/class_gpb/src",
+		"target/mby/mgm_run/class_gpb/src/mem_wrap",
+		"target/mby/mgm_run/action/src",
+		"target/mby/mgm_run/action/src/mem_wrap",
+		"target/mby/mgm_run/rtl",
+        "$SHRTL/src/common/rtl",
+	],
+
+	# Arbitrary VLOG options
+	-vlog_opts => [
+        "+define+INTEL_SVA_OFF",
+    ],
+
+};

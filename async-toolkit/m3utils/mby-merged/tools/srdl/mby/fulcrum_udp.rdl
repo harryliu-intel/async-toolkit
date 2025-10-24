@@ -1,0 +1,17 @@
+
+<% if ($FULCRUM_UDP) {
+   } else {
+        $FULCRUM_UDP = 1;
+%>
+
+// UDP for FULCRUM name mapping
+
+property FulcrumName {
+    component = addrmap | regfile | reg | field;
+    type      = string;
+    default   = "";
+};
+
+<%
+   }
+%>

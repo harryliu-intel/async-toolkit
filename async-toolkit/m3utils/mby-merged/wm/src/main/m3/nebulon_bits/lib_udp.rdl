@@ -1,0 +1,1185 @@
+<% if ($LIB_UDP) { 
+   } else {
+	$LIB_UDP = 1;
+   }
+%>
+
+//------------------------------------------------------------------------------
+// User Defined Properties (UDP) Library
+//
+// This contains all of the UDPs that are used globally throughout all register
+// descriptions.  UDP should not be declared anywhere else.
+//------------------------------------------------------------------------------
+
+//------------------------------------------------------------------------------
+// Required Address Map UDPs
+//------------------------------------------------------------------------------
+property Contact {
+    component = addrmap;
+    type      = string;
+    default   = "";
+};
+
+property Space {
+    component = addrmap;
+    type      = string;
+    default   = "MEM";
+};
+
+property BaseAddress {
+    component = addrmap;
+    type      = string;
+    default   = "";
+};
+
+// HSD 894724
+property SB_Fid {
+    component = addrmap;
+    type      = string;
+    default   = "";
+};
+
+// HSD 894724
+property SB_Bar {
+    component = addrmap;
+    type      = string;
+    default   = "";
+};
+
+// HSD 894724
+property SB_Fid_Signal {
+    component = addrmap;
+    type      = string;
+//    default   = "";
+};
+
+// HSD 894724
+property SB_Bar_Signal {
+    component = addrmap;
+    type      = string;
+//    default   = "";
+};
+
+// Each mode can have its own register. 
+// Diffrent mode can have registers with overlap addresses. 
+// Name similarity between modes is not supported.
+property OperationMode {
+    component = addrmap | reg;
+    type      = number;
+    // MRE produce 0 value as default if default is not specified
+    // Also MRE not allow negative number such as -1
+    default   = 10000;
+}; 
+
+property OperationModeSignal {
+    component = addrmap | reg;
+    type      = string;
+    // Default OperationModeSignal is operation_mode
+    // however in order to reduce redundant content at CRIF and Exporter, the default set to empty string
+    // default   = "operation_mode";
+    default   = "";
+}; 
+
+property OperationModeDescription {
+    component = addrmap | reg;
+    type      = string;
+    default   = "";
+}; 
+
+// HSD 5669726
+property Fabric {
+    component = addrmap;
+    type      = string;
+    default   = "GPSB";
+};
+
+//For HSD 5305167
+property ModulePaths {
+    component = addrmap;
+    type      = string;
+    default   = "";
+};
+
+property ValConfigName {
+    component = addrmap | reg | field;
+    type      = string;
+    default   = "";
+};
+
+//For HSD 871497
+property USER_SPECIFIED_UDP {
+    component = addrmap;
+    type      = string;
+    default   = "";
+};
+
+//For HSD 912981 dmeka
+property RTLPriority {
+    component = reg | field;
+    type      = string;
+    default   = "";
+};
+
+//------------------------------------------------------------------------------
+// Required Register UDPs
+//------------------------------------------------------------------------------
+property AliasAddress {
+    component = reg | addrmap;
+    type      = string;
+    default   = "";
+};
+
+property CoverageMode {
+    component = reg | field;
+    type      = string;
+    default   = "COVERAGE_ON";
+};
+
+property SampleMode {
+    component = reg;
+    type      = string;
+    default   = "FD_RW_SAMPLE";
+};
+
+property InitialProgramming {
+    component = reg;
+    type      = string;
+    default   = "";
+};
+
+property CpuPSMISave {
+    component = reg;
+    type      = boolean;
+    default   = false;
+};
+
+property CpuPSMIRestore {
+    component = reg;
+    type      = boolean;
+    default   = false;
+};
+
+property CpuC6Save {
+    component = reg;
+    type      = string;
+    default   = "no";
+};
+
+property CpuC6Restore {
+    component = reg;
+    type      = string;
+    default   = "no";
+};
+
+property CpuCRABAccessType {
+    component = reg;
+    type      = string;
+    default   = "";
+};
+
+property CpuLTLockable {
+    component = reg;
+    type      = boolean;
+    default   = false;
+};
+
+// valid Scope values(case-insensitive):  thread, core, module, package
+property CpuScope {
+    component = reg;
+    type      = string;
+    default   = "Package";
+};
+
+property CpuMacroAddr {
+    component = reg;
+    type      = number;
+    default   = 0;
+};
+
+property CpuProbeModeAccessType {
+    component = reg;
+    type      = string;
+    default   = "";
+};
+
+property IntelRsvd {
+    component = addrmap | reg | field;
+    type      = boolean;
+};
+
+// simplify for S0i1Save, S0i1Restore, S0i23Save, and S0i23Restore
+property S0iXSaveRestore {
+    component = reg;
+    type      = string;
+    default   = "";
+};
+
+// HSD 913494
+property S0iXSaveRestorePrerequisites {
+    component = reg;
+    type      = string;
+    default   = "";
+};
+
+// Active Power Management save and restore
+property APMSaveRestore {
+    component = reg;
+    type      = string;
+    default   = "";
+};
+
+property S0i23SaveAddrOffset {
+    component = reg;
+    type      = string;
+    default   = "NA";
+};
+
+property SSAPortID {
+    component = reg;
+    type      = string;
+    default   = "NA";
+};
+
+property SVAgentAccess {
+    component = reg;
+    type      = string;
+    default   = "NA";
+};
+
+property SVUnlockReg {
+    component = reg;
+    type      = string;
+    default   = "NA";
+};
+
+property ValNeedForDDRAccess {
+    component = reg;
+    type      = boolean;
+    default   = false;
+};
+
+// defines the security group.  Then is changed through a register
+property Security_PolicyGroup {
+    component = reg | field;
+    type      = string;
+    default   = "";
+};
+
+property Security_CriticalAsset {
+    component = reg;
+    type      = string;
+    default   = "";
+};
+
+property Security_GivesAccessToCriticalAsset {
+    component = reg;
+    type      = string;
+    default   = "";
+};
+
+// individual registers will be intantiated in OVM only, by default to include in OVM output
+property ValInstanceReg {
+    component = reg;
+    type      = boolean;
+    default   = true;
+};
+
+// Impacts_PwrPerf(true/false) shows whether the ValueFor* are to be checked.
+//    ValueForPower/ValueForPwrPerf/ValueForPwrPerf_Range
+property Impacts_PwrPerf {
+    component = reg | field;
+    type      = boolean; 
+    default   = false;
+};
+
+// this UDP defines the power well for both reg & field level:
+property PowerWell {
+    component = reg | field;
+    type      = string;
+    default   = "";
+};
+
+//Added per HSD 5079183 BXT
+property SOixSave {
+    component = reg | addrmap; 
+    type = string;
+    default = "";
+};    
+
+property SpecialSaveRestore {
+    component = reg;
+    type = string;
+    default = "";
+};  
+    
+property RestoreOrder {
+    component = reg;
+    type = string;
+    default = "";
+};  
+    
+property RestoreGroup {
+    component = reg | addrmap;
+    type = string;
+    default = "";
+};    
+    
+property SaveDestinationArea {
+    component = reg | addrmap;
+    type = string;
+    default = "";
+};
+
+
+//------------------------------------------------------------------------------
+// Required Field UDPs
+//------------------------------------------------------------------------------
+property AccessType {
+    component = field; 
+    type      = string;
+    default   = "";
+};
+
+property ArchAccessType {
+    component = field; 
+    type      = string;
+    default   = "";
+};
+
+property HandCoded {
+    component = reg | field;
+    type      = boolean;
+    default   = false;
+};
+
+property FLISAccessType {
+    component = field; 
+    type      = string;
+    default   = "";
+};
+
+property PSHAccessType {
+    component = field; 
+    type      = string;
+    default   = "";
+};
+
+property SCUAccessType {
+    component = field; 
+    type      = string;
+    default   = "";
+};
+
+property TapAccessType {
+    component = field; 
+    type      = string;
+    default   = "";
+};
+
+property CpuMSRMask {
+    component = field;
+    type      = string;
+    default   = "";
+};
+
+property CpuHWBitType {
+    component = field;
+    type      = string;
+    default   = "";
+}; 
+
+property CpuUcodeBitType {
+    component = field;
+    type      = string;
+    default   = "";
+};
+
+// FieldDefaultValue is used to define Field Default Value override
+//   - FieldDefaultValue="X";
+property FieldDefaultValue {
+    component = field;
+    type      = string;
+    default   = "";
+};
+
+property FieldDefaultSignal {
+    component = field;
+    type      = string;
+//    default   = "";
+};
+
+property ValLegalValues {
+    component = field;
+    type      = string;
+    default   = "";
+};
+
+property ValRandomize {
+    component = field | reg;
+    type      = boolean;
+    default   = false;
+};
+
+// GLS RTL Signal path
+property ValGLSSignal {
+    component = field | addrmap;
+    type      = string;
+    default   = "";
+};
+
+property ValRTLSignal {
+    component = field | addrmap;
+    type      = string;
+    default   = "";
+};
+
+property ValConnectivitySignal {
+    component = field | addrmap;
+    type      = string;
+    default   = "";
+};
+
+property CovLegalValues {
+    component = field;
+    type      = string;
+    default   = "";
+};
+
+// Value for Performance
+property ValueForPerf {
+    component = field;
+    type      = number; 
+    default   = 0;
+};
+
+// Value for Power
+property ValueForPower {
+    component = field;
+    type      = number; 
+    default   = 0;
+};
+
+// Value for PowerPerformance
+property ValueForPwrPerf {
+    component = field;
+    type      = number; 
+    default   = 0;
+};
+
+// Value for PowerPerformance Tunable/Range
+property ValueForPwrPerf_Range {
+    component = field;
+    type      = string; 
+    default   = "";
+};
+
+// specify one bit register field that serve as the locking Key for the corresponding lockable field. The key field can be in the same register or different register
+property LockKeyField {
+    component = field;
+    type      = string; 
+    default   = "";
+};
+
+// specify whether a key value of 0 or 1 will cause the corresponding field to lock and behaves as RO. Default value is 1 if not specified.
+property LockKeyValue {
+    component = field;
+    type      = number; 
+    default   = 1;       //Changed to 1 (from true) per HSD 5212157
+};
+
+// specify external lock signal path
+property ValRTLLockPath {
+    component = field;
+    type      = string; 
+    default   = "";
+};
+
+// this UDP defines the shadow register values
+property ShadowFields {
+    component = field;
+    type      = string;
+    default   = "";
+};
+
+// this UDP defines the reset:
+//  rst(default)
+//  nflrst(function level)
+//  prst(power good reset)
+//  srst(soft reset)
+property RST_PWR {
+    component = field;
+    type      = string;
+    default   = "";
+};
+
+
+// Added per HSD 895179
+
+ //(Must be specified with Security_PolicyGroup)
+ //Legal vaules: CP, RAC, WAC, or AC
+ //May also be RAC_LO, RAC_HI, WAC_LO, WAC_HI  per HSD 5214062
+property Security_PolicyRole { 
+component = reg;
+type = string;
+default = "";
+};
+
+//Added per HSD 5214062
+property Security_Read_CP_Secured {
+  component = reg;
+  type = boolean;
+  default = false;
+};
+
+ //Only valid if Security_PolicyGroup is a list and register does not have a Security_PolicyRole specified
+ //May only be "AND"  "OR"  "MUX, <register.field>"
+property Security_Multiple_PolicyGroup_Select {
+  component = reg;
+  type = string;
+  default = "";
+};
+
+/* indicates which groups the WAC/AC/RAC/CP is acting as a CP for
+  This is for special legay IPs only and should not be used without consulting with Chassis Security architects!!
+  May be a comma-separated list
+*/
+property Security_CPPolicyGroup {
+ component = reg;
+  type = string;
+  default = "";
+};
+
+//For documentation only
+property Security_ReadAccess_Str { 
+    component = reg | field;
+    type = string;
+    default = ""; 
+};
+//For documentation only
+property Security_WriteAccess_Str { 
+    component = reg | field;
+    type = string;
+    default = ""; 
+};
+
+property Security_PolicyAccess { 
+    component = reg;
+    type = string;   
+    default = ""; 
+};
+
+//numerical one-hot vector of the read-access for the register 
+property Security_ReadAccess { 
+    component = reg | field;
+    type = number;
+    //default = 0;   //Removed per HSD 913860
+};
+
+//numerical one-hot vector of the write-access for the register 
+property Security_WriteAccess { 
+    component = reg | field;
+    type = number;
+    //default = 0;  //Removed per HSD 913860
+};
+
+//Added per HSD 5597315
+property Security_LockEnable {
+    component = reg;
+    type = number;
+    //default = 0;
+};    
+
+//Added per HSD 896535  for power retention awareness
+property StateRetention {
+  component = field;
+  type = boolean;
+  default = false;
+};
+  //Must specify PGD with StateRetention
+property PGD {
+  component = field;
+  type = string;
+  default = "";
+};
+
+// ExtendedID is an array - added per HSD 896629/911524
+property ExtendedID {
+    component = reg;
+    type      = string;
+    default   = "";
+};
+
+// Added per HSD 5560132. It is used for vary rare case.
+// ExtendedIDSignal overrides request fid comparison. 
+// It is used only when shared with regular ExtendedID. 
+property ExtendedIDSignal {
+    component = reg;
+    type      = string;
+    default   = "";
+};
+
+//Added per HSD 913197
+// asynchronous resets
+// At addrmap|reg level user should defined two resets: regular (warm) and power (cold)
+// At field level only single reset is alowed
+// NONE - can be used to disable addrmap value at reg level, or addrmap/reg
+// value at field level  
+property ResetSignal {
+    component = addrmap | reg | field;
+    type      = string;
+    default   = "";
+};
+
+// Synchronous Reset
+// At addrmap|reg level user should defined two resets: regular (warm) and power (cold)
+// At field level only single reset is alowed
+// NONE - can be used to disable addrmap value at reg level, or addrmap/reg
+// value at field level  
+property SyncResetSignal {
+    component = addrmap | reg | field;
+    type      = string;
+    default   = "";
+};
+
+// BIOSValue UDP - added per HSD 913594
+property BIOSValue {
+    component = field;
+    type      = string;
+    default   = "";
+};
+
+// BIOSValueFullRegister UDP - added per HSD 913594
+property BIOSValueFullRegister {
+    component = reg;
+    type      = string;
+    default   = "";
+};
+
+//For HSD 913175 tysung
+property BusWidth {
+    component = addrmap;
+    type      = number; 
+    default   = 0;
+};
+
+//Added per HSD 959773
+property Opcode {
+  component = addrmap;
+  type = string;    //may only be CFG-SB, IO-SB, MEM-SB, CR-SB  
+  default = "";
+};
+
+property No_IOSF_Primary {
+  component = addrmap;
+  type = boolean;
+  default = false;
+};
+
+//Added per HSD 5079148
+
+ property IsIndirect {
+   component = reg;
+   type = boolean;
+   default = false;
+ };
+
+
+ property IsIndexed {
+   component = reg;
+   type = boolean;
+   default = false;
+ };
+
+
+ property IndirectReg {
+   component = addrmap;
+   type = string;
+   default = "";
+ };
+
+
+
+
+
+
+
+
+// new UDPs meant for the efforts to add multi-dimensional registers.
+// valid Scope values(case-insensitive):  thread, core, module, package
+
+
+//property Scope {
+//    component = reg;
+//    type      = string;
+//    default   = "Package";
+//};
+
+
+//property ExtendedFooID {
+//    component = reg;
+//    type      = string;
+//    default   = "";
+//};
+
+
+// new UDPs meant for the efforts to add parameterizable resets.
+property ParamRST {
+      component = field;
+      type      = string;
+      default   = "";
+
+};
+
+
+// new UDPs meant for determining bus width.
+property MEMAddrLen {
+    component = addrmap;
+    type      = number; 
+    default   = 1;
+};
+
+
+property RTLGenAccessType {
+    component = field;
+    type      = string;
+    default   = "";
+};
+
+
+//Added per HSD 5212889
+ property IsIndirectIndex {
+  component = reg;
+  type = boolean;
+  default = false;
+ };
+
+ property IndirectIndexReg {
+   component = addrmap;
+   type = string;
+   default = "";
+ };
+
+//Added per HSD 5212887
+property OffsetWidth {
+  component = addrmap;
+  type = string;
+  default = "";
+};
+
+
+property Permissions {
+  component = addrmap;
+  type = string;  
+  default = "";
+};
+
+//Added per HSD 5229384  -- REMOVED per 5255309 as this is the same functionality as FieldDefaultValue
+//DO NOT USE FOR 2.07p2 or newer!
+/*
+ property FieldResetValue  {
+    component = field;
+    type = string;
+    default = "";
+ };
+*/
+
+//added per HSD 5229385
+property FuseResetName {
+  component = field;
+  type = string;
+  default = "";
+};
+
+property StrapResetName {
+  component = field;
+  type = string;
+  default = "";
+};
+
+//Added per HSD 5229387
+property MulticastList {
+  component = addrmap | reg;
+  type = string;
+  default = "";
+};
+
+property McastReadInst {
+  component = addrmap | reg;
+  type = string;
+  default = "";
+};
+
+
+// Mask the req.fid value and the SB_Fid UPD value in the address decode function.
+// Fid must be translated from B/D/F (which is not acceptable) to a verilog 8-bit value, ie:  8'b111
+// 0 means OFF, do not apply the mask AND assume F is the lower 3 bits of the req.fid.
+property SB_Fid_Mask {
+    component = addrmap;
+    type      = string;
+    default   = "";
+};
+
+// Mask the req.bar value and the SB_Bar UPD value in the address decode function.
+// Bar must be translated from it original format into a verilog 3-bit value, ie:  3'b111
+// 0 means OFF, do not apply the mask AND assume the bar is the lower 3 bits of the req.bar.
+property SB_Bar_Mask {
+    component = addrmap;
+    type      = string;
+    default   = "";
+};
+
+property DefaultValRTLSignal {
+    component = addrmap | reg;
+    type      = string;
+    default   = "";
+};
+
+//For HSD 889327
+property ModuleName {
+    component = addrmap | reg | field;
+    type      = string;
+    default   = "";
+};
+
+// possible values:
+//    "" - one load signal bit for all HW data bits
+//    "PER_BIT" - load signal per HW data bit
+property RTLLoadType {
+    component = addrmap | reg | field;
+    type      = string;
+    default   = "";
+};
+
+// new UDPs meant for the external read/write indicator.
+property RTLWatch {
+    component = addrmap | reg;
+    type      = boolean;
+//    default   = false;
+};
+
+
+//Property Added to indicate register is of type FIFO and FIFO  queue size = FifoRegSize as per HSD 5271125 
+property FifoRegSize {
+    component = reg;
+    type      = number;
+    default   = 0;
+}; 
+   
+//Added per HSD 5213370 
+property AliasRegs {
+   component = reg;
+   type = string;
+   default = "";
+ };
+
+property SharedRegs {
+   component = reg;
+   type = string;
+//   default = "";
+};
+
+
+// new UDPs meant for the efforts to conditionally write out RTL.
+property RTLUseStar {
+    component = reg | field;
+    type      = string;
+    default   = "";
+};
+
+// Related only to RTLGen
+// Possible values are FF, LATCH
+property RTLSeqType {
+    component = addrmap | reg | field;
+    type      = string;
+// Default is FLOP. However reg should not has default value by default so it
+// can override addrmap value if needed. 
+//    default   = "FF";
+};
+
+property RTLClockSignal {
+    component = addrmap | reg | field;
+    type      = string;
+};
+
+// Direct RTL generation to ignore MSB of request address. 
+// Use for multiple instantiation, when MSB are using to distiguish between
+// diffrent instances.
+// TBD 
+property RTLDecodeAddressWidth {
+    component = addrmap;
+    type      = number; 
+    default   = 0;
+}; 
+
+// Use external macros for flops and lataches.
+// If defined at addrmap level, local macros won't be generated.
+// TBD 
+property RTLExternalMacroPrefix {
+    component = addrmap | reg | field;
+    type      = string;
+    default   = "";
+};
+
+// Use to add parity bit logic. 
+//  "YES": Add parity bit logic for this element and below 
+//  "NO":  Disable automatic parity bit logic set from above element 
+property RTLParityBit {
+    component = addrmap | reg | field;
+    type      = string;
+};
+
+// list of parameters and their default values. Define at the level where RTL is generated.
+// These parameters are used to evaluate ParametersCondition, ParametersArraySize, ParametersFieldLSB, ParametersFieldMSB
+// Syntax: <ParameterName1>=<DefaultVale1>;<ParameterName2>=<DefaultVale2>
+// For example: ParametersDefinition = "p1=2;p2=5";  
+property ParametersDefinition {
+    component = addrmap;
+    type      = string;
+    default   = "";
+};
+
+// Override ParametersDefinition using dynamic assignment. It is possible
+// to override part of the parameters. 
+// ParametersDefinition dynamic assignment is prohibited since it overrides all parameters.
+// Syntax: <ParameterName1>=<DefaultVale1>;<ParameterName2>=<DefaultVale2>
+property ParametersOverride {
+    component = addrmap; 
+    type      = string;
+    default   = "";
+};
+
+// Parameterized condition to hide/expose component
+// For example: ParametersCondition = "p1 > 2 || p2 < 4";
+property ParametersCondition {
+    component = addrmap | reg | field;
+    type      = string;
+    default   = "";
+};
+
+// Parameterized expression for array size
+// example1: ParametersArraySize = "num_ports";
+// example2: ParametersArraySize = "num_rows * num_columns";
+property ParametersArraySize {
+    component = addrmap | reg;
+    type      = string;
+    default   = "";
+};
+
+// Parameterized expression for field Range 
+// Syntax: <MSB parameterized expression:LSB parameterized expression>
+// Example1: ParametersFieldRange = "%LSB%+FieldSizePrm-1:%LSB%"; 
+// Example2: ParametersFieldRange = "%MSB%:%MSB%-FieldSizePrm+1"; 
+property ParametersFieldSize {
+    component = field;
+    type      = string;
+    default   = "";
+};
+
+// if set true, align address to the end of previous register. It is needed to prevent address range holes due to:
+// omited parameterized elements and changing parameterized array size.
+property ParametersAddAlign {
+    component = reg;
+    type      = boolean;
+    default   = false;
+};
+
+// Added for msgd system verilog generator
+property MsgDOpcodeHi {
+    component = reg;
+    type      = string;
+    default   = "";
+};
+
+property MsgDOpcodeLo {
+    component = reg;
+    type      = string;
+    default   = "";
+};
+
+property MsgDPyloadHi {
+    component = reg;
+    type      = string;
+    default   = "";
+};
+
+property MsgDPyloadLo {
+    component = reg;
+    type      = string;
+    default   = "";
+};
+
+property IpShadow {
+    component = reg;
+    type      = boolean;
+    default   = false;
+};
+
+property IpMaster {
+    component = reg;
+    type      = boolean;
+    default   = false;
+};
+
+//HSD 5578689
+property Rootspace {
+    component = addrmap;
+    type      = string;
+    default   = "";
+};
+
+//HSD 5558204 
+//each sub-hierarchy (e.g. test, a) can have RDL property "infix".
+//User can configue
+// test->NameInfix = "TEST_CR_";
+// a->NameInfix = ""; // nothing
+//  Then register's full name should be TEST_CR_REGA
+
+property Infix {
+    component = addrmap;
+    type      = string;
+    default   = "";
+};
+
+// Used for RDL2OneSource conversion. 
+// TODO: update documnation
+ 
+property OneSourceSharedContent {
+    component = addrmap;
+    type      = string;
+    default   = "";
+};
+
+property Visibility {
+    component = reg;
+    type      = string;
+    default   = "";
+};
+ 
+property ReadVisibility {
+    component = reg;
+    type      = string;
+    default   = "";
+};
+ 
+property WriteMsrAndMask {
+    component = reg;
+    type      = string;
+    default   = "none";
+};
+ 
+property GpMsrMask {
+    component = reg;
+    type      = string;
+    default   = "unknown";
+};
+ 
+property MsrReadGpCondition {
+    component = reg;
+    type      = string;
+};
+ 
+property MsrWriteGpCondition {
+    component = reg;
+    type      = string;
+};
+ 
+property MsrReadManipulation {
+    component = reg;
+    type      = string;
+};
+ 
+property MsrWriteManipulation {
+    component = reg;
+    type      = string;
+};
+ 
+property MsrAdditionalSelfCheck {
+    component = reg;
+    type      = string;
+};
+ 
+property MsrAdditionalReadSelfCheck {
+    component = reg;
+    type      = string;
+};
+ 
+property MsrAssumption {
+    component = reg;
+    type      = string;
+};
+ 
+property X86Architectural {
+    component = reg;
+    type      = boolean;
+};
+ 
+property ExposeExternal {
+    component = reg;
+    type      = string;
+};
+ 
+property ThreadSync {
+    component = reg;
+    type      = boolean;
+};
+ 
+property FlushTLB {
+    component = reg;
+    type      = boolean;
+};
+ 
+property MsrAddress {
+    component = reg;
+    type      = string;
+    default   = "";
+};
+ 
+property VCRAddress {
+    component = reg;
+    type      = string;
+    default   = "";
+};
+
+property Consumer {
+    component = reg;
+    type      = string;
+    default   = "";
+};
+
+//HSD 1406239056
+//Lichen Weng presented this at CR WG in January 2017 and the request was approved.
+property LogicalPortID {
+    component = addrmap;
+    type      = string;
+    default   = "";
+};
+
+property SubnetPortID {
+    component = addrmap;
+    type      = string;
+    default   = "";
+};
+
+// HSD-ES 1305571597
+// Can be one of the following (most visible to least visible):
+// •public – example: PCI spec’d, XHCI spec’d, public datasheet, etc – direct correlation to Public (Green)
+// •eds – example: needed by BIOS – indirect (not exact) correlation to Intel Confidential (White)
+// •eds-addendum – example: needed for customer-specific workaround – indirect (not exact) correlation to Intel Restricted Secret (Orange)
+// •cspec – example: all registers are in the Cspec today – a mixture of ITS / IRS / IC
+property CollateralVisibility {
+  component = reg | field;
+  type = string;    //may only be public, eds, eds-addendum and cspec 
+  default = "";
+};
+
+// HSD-ES 1407512451
+// Request for UDP matching OneSource AddressUnit, ratified in CRWG 18ww31:
+// * Meaning: Indicates addressability of the AddressMap (number of bits between two consecutive addresses)
+// * Default: 8 (byte addressable)
+// * IPs with word/dword addressable spaces must specify AddressUnit = 16/32 (respectively)
+property AddressUnit {
+  component = addrmap;
+  type = number;
+  default = 8;
+};
+

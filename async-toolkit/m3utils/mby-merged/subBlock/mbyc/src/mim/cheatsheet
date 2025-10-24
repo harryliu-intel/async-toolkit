@@ -1,0 +1,209 @@
+
+egr_smm_writearb_if    
+modport egr(
+    output   [W_SEG_PTR-1:0]       seg_ptr;
+             [W_SEMA-1:0]          sema;
+             [W_WD_SEL-1:0]        wd_sel;
+             [W_REQ_ID-1:0]        req_id;
+    output                         wreq_valid
+    output   [W_BYTE-1:0][W_WORD-1:0]  data;
+       
+    input    [W_XACT_CREDITS-1:0]  wreq_credits
+    
+    
+
+
+
+egr_smm_readarb_if ();
+    
+    [15:0]    
+               
+    output   [W_SEG_PTR-1:0]       seg_ptr;
+             [W_SEMA-1:0]          sema;
+             [W_WD_SEL-1:0]        wd_sel;
+             [W_REQ_ID-1:0]        req_id;   
+    output                         rreq_valid;
+    
+    input    [W_XACT_CREDITS-1:0]    rreq_credits
+    
+    input   [W_RRSP_DEST_BLOCK-1:0]  rrsp_dest_block;    
+    input   [W_REQ_ID-1:0]           req_id;        
+    input   [W_BYTE-1:0][W_WORD-1:0] data;       //64 x 8
+
+    input                            rrsp_valid;
+    );
+    
+    
+    
+
+    
+    
+msh_row_wr_req_t    i_wr_req                [NUM_MSH_PLANES-1:0];
+msh_row_wr_req_t    o_wr_req                [NUM_MSH_PLANES-1:0];
+msh_dbus_t          i_wr_dbus               [NUM_MSH_PLANES-1:0];
+msh_dbus_t          o_wr_dbus               [NUM_MSH_PLANES-1:0];
+msh_row_crdts_t     i_crdt_rtns_for_wr_reqs [NUM_MSH_PLANES-1:0];
+msh_row_crdts_t     o_crdt_rtns_for_wr_reqs [NUM_MSH_PLANES-1:0];
+
+
+    
+msh_row_rd_req_t    i_rd_req                 [NUM_MSH_PLANES-1:0];
+msh_row_rd_req_t    o_rd_req                 [NUM_MSH_PLANES-1:0];
+msh_row_crdts_t     i_crdt_rtns_for_rd_reqs  [NUM_MSH_PLANES-1:0];
+msh_row_crdts_t     o_crdt_rtns_for_rd_reqs  [NUM_MSH_PLANES-1:0];
+
+msh_row_rd_rsp_t    i_rd_rsp                 [NUM_MSH_PLANES-1:0];
+msh_row_rd_rsp_t    o_rd_rsp                 [NUM_MSH_PLANES-1:0];
+msh_dbus_t          i_rd_dbus                [NUM_MSH_PLANES-1:0];
+msh_dbus_t          o_rd_dbus                [NUM_MSH_PLANES-1:0];
+logic               i_crdt_rtn_for_rd_rsp    [NUM_MSH_PLANES-1:0];
+logic               o_crdt_rtn_for_rd_rsp    [NUM_MSH_PLANES-1:0];
+ 
+
+
+    
+    
+mby_msh_row_wr_if.responder    
+modport responder (
+    
+    //i_wr_req,  [NUM_MSH_PLANES-1:0];
+    input                          vld;       
+    input [LOG_NUM_MSH_COLS-1:0]   node_col;    
+    input [LOG_NUM_MSH_ROWS-1:0]   node_row;    
+    
+    //i_wr_dbus  [NUM_MSH_PLANES-1:0];
+    input [MSH_NODE_ADDR_WIDTH-1:0]    addr_flat;
+    input [LOG_NUM_MSH_NODE_MEM_BANKS-1:0] bank_num;  //addr_struct
+    input [MSH_NODE_BANK_IDX_WIDTH-1:0]    bank_idx;  //"
+    
+    input [MSH_DATA_WIDTH-1:0]             data;      //64*8
+    input [MSH_ECC_WIDTH-1:0]              ecc;
+,
+    //[NUM_MSH_PLANES-1:0];
+    output [NUM_MSH_COLS-1:0]              o_crdt_rtns_for_wr_reqs    
+    
+
+    
+mby_msh_row_rd_if.responder     
+modport responder (
+
+    //i_rd_req,  [NUM_MSH_PLANES-1:0];    
+    input                           vld;            // this message is valid
+    input  [MSH_ID_WIDTH-1:0]       id;             // read identifier
+    input  [LOG_NUM_MSH_COLS-1:0]   mpg_col;        // source megaport column
+    input  [LOG_NUM_MSH_COLS-1:0]   node_col;       // destination node column
+    input  [LOG_NUM_MSH_ROWS-1:0]   node_row;       // destination node row
+    input  [MSH_NODE_ADDR_WIDTH-1:0]   addr_flat;
+    input  [LOG_NUM_MSH_NODE_MEM_BANKS-1:0] bank_num;  //addr_struct
+    input  [MSH_NODE_BANK_IDX_WIDTH-1:0]    bank_idx;  // "
+    input                           sema_vld;       // if valid, read should wait for write semaphore
+    input                           sema_val;       // the value of the write semaphore to wait for
+    
+    //[NUM_MSH_PLANES-1:0];  
+    input  i_crdt_rtn_for_rd_rsp,
+
+    //o_rd_rsp
+    output                          vld;                // this message is valid
+    output [MSH_ID_WIDTH-1:0]       id;                 // read identifier
+,
+    //o_rd_dbus, [NUM_MSH_PLANES-1:0];
+    output [MSH_DATA_WIDTH-1:0]     data;
+    output [MSH_ECC_WIDTH-1:0]      ecc;
+
+    
+    //o_crdt_rtns_for_rd_reqs
+    output [NUM_MSH_COLS-1:0]  o_crdt_rtns_for_rd_reqs
+
+
+
+    
+    
+    
+   
+    
+================================================================================    
+
+
+interface egr_smm_writearb_if ();
+
+modport egr(
+    output wreq,
+    output wreq_valid,
+    input wreq_credits
+    );
+
+    
+egr_smm_writearb_if    
+modport egr(
+    output   [W_SEG_PTR-1:0]       seg_ptr;  //[19:0]
+             [W_SEMA-1:0]          sema;     //[ 3:0]
+             [W_WD_SEL-1:0]        wd_sel;   //[ 2:0]
+             [W_REQ_ID-1:0]        req_id;   //[12:0]
+             [W_BYTE-1:0][W_WORD-1:0]  data; //[ 7:0][63:0]
+       
+    output                         wreq_valid,
+    input    [W_XACT_CREDITS-1:0]  wreq_credits
+    
+    
+    
+    
+
+    wreq_t                 wreq;
+    
+typedef struct packed { // Write Request struct
+    xact_req_t   req;
+    data_word_t data;
+} wreq_t;
+    
+
+typedef struct packed { // Transaction Request (Read/Write) struct
+    seg_handle_t seg_handle;
+    wd_sel_t         wd_sel;
+    req_id_t         req_id;
+} xact_req_t;
+
+localparam int unsigned W_BYTE            =  8; // Byte Size
+localparam int unsigned W_WORD            = 64; // Bytes per Word
+    
+logic [W_BYTE-1:0][W_WORD-1:0] data_word_t    
+
+typedef struct packed { // Segment Pointer Handle struct
+    seg_ptr_t   seg_ptr;
+    sema_t         sema;
+} seg_handle_t; 
+
+logic [W_SEG_PTR-1:0]            seg_ptr_t
+logic [W_SEMA-1:0]               sema_t;
+
+logic [W_WD_SEL-1:0]             wd_sel_t;
+logic [W_REQ_ID-1:0]             req_id_t;
+
+
+    wreq_valid_t     wreq_valid;
+
+typedef xact_valid_t                       wreq_valid_t;
+
+logic                              xact_valid_t;
+
+
+    wreq_credits_t wreq_credits;
+    
+    typedef xact_credits_t                   wreq_credits_t; 
+
+    logic [W_XACT_CREDITS-1:0]       xact_credits_t;
+    
+    
+    
+=============================================================================
+
+typedef struct packed { // Read Request struct
+    xact_req_t   req;
+} rreq_t;
+    
+    
+    
+    
+    
+    
+    
+    

@@ -1,0 +1,165 @@
+foreach $i (0..7) {
+    if($i < 4) {
+        input_fifo_rd_en[0] >> parser_input_data_fifo_$i$_rd_en
+        input_fifo_wr_en[0] >> parser_input_data_fifo_$i$_wr_en
+
+        input_fifo_rd_adr[0] >> parser_input_data_fifo_$i$_rd_adr
+        input_fifo_wr_adr[0] >> parser_input_data_fifo_$i$_wr_adr
+
+        input_data_fifo_wr_data[0][(($i*274)+273):($i*274)] >> parser_input_data_fifo_$i$_wr_data
+        input_data_fifo_rd_data[0][(($i*274)+273):($i*274)] >> parser_input_data_fifo_$i$_rd_data
+    }
+    else {
+        input_fifo_rd_en[1] >> parser_input_data_fifo_$i$_rd_en
+        input_fifo_wr_en[1] >> parser_input_data_fifo_$i$_wr_en
+
+        input_fifo_rd_adr[1] >> parser_input_data_fifo_$i$_rd_adr
+        input_fifo_wr_adr[1] >> parser_input_data_fifo_$i$_wr_adr
+
+        input_data_fifo_wr_data[1][((($i-4)*274)+273):(($i-4)*274)] >> parser_input_data_fifo_$i$_wr_data
+        input_data_fifo_rd_data[1][((($i-4)*274)+273):(($i-4)*274)] >> parser_input_data_fifo_$i$_rd_data
+    }
+
+    >> PARSER_INPUT_DATA_FIFO_$i$_CFG_reg_sel
+    >> PARSER_INPUT_DATA_FIFO_$i$_STATUS_reg_sel
+    >> parser_input_data_fifo_$i$_mem_ls_enter
+    >> parser_input_data_fifo_$i$_ecc_uncor_err
+    >> parser_input_data_fifo_$i$_init_done
+    >> parser_input_data_fifo_$i$_rd_valid
+}
+
+foreach $i (0..1) {
+    if($i < 1) {
+        input_fifo_rd_en[0] >> parser_input_md_fifo_$i$_rd_en
+        input_fifo_wr_en[0] >> parser_input_md_fifo_$i$_wr_en
+
+        input_fifo_rd_adr[0] >> parser_input_md_fifo_$i$_rd_adr
+        input_fifo_wr_adr[0] >> parser_input_md_fifo_$i$_wr_adr
+
+        input_md_fifo_wr_data[0] >> parser_input_md_fifo_$i$_wr_data
+        input_md_fifo_rd_data[0] >> parser_input_md_fifo_$i$_rd_data
+
+        md_dly_fifo_rd_en[0] >> parser_md_dly_fifo_$i$_rd_en
+        md_dly_fifo_wr_en[0] >> parser_md_dly_fifo_$i$_wr_en
+
+        md_dly_fifo_rd_adr[0] >> parser_md_dly_fifo_$i$_rd_adr
+        md_dly_fifo_wr_adr[0] >> parser_md_dly_fifo_$i$_wr_adr
+
+        md_dly_fifo_wr_data[0] >> parser_md_dly_fifo_$i$_wr_data
+        md_dly_fifo_rd_data[0] >> parser_md_dly_fifo_$i$_rd_data
+
+        tail_dly_fifo_rd_en[0] >> parser_tail_dly_fifo_$i$_rd_en
+        tail_dly_fifo_wr_en[0] >> parser_tail_dly_fifo_$i$_wr_en
+
+        tail_dly_fifo_rd_adr[0] >> parser_tail_dly_fifo_$i$_rd_adr
+        tail_dly_fifo_wr_adr[0] >> parser_tail_dly_fifo_$i$_wr_adr
+
+        tail_dly_fifo_wr_data[0] >> parser_tail_dly_fifo_$i$_wr_data
+        tail_dly_fifo_rd_data[0] >> parser_tail_dly_fifo_$i$_rd_data
+    }
+    else {
+        input_fifo_rd_en[1] >> parser_input_md_fifo_$i$_rd_en
+        input_fifo_wr_en[1] >> parser_input_md_fifo_$i$_wr_en
+
+        input_fifo_rd_adr[1] >> parser_input_md_fifo_$i$_rd_adr
+        input_fifo_wr_adr[1] >> parser_input_md_fifo_$i$_wr_adr
+
+        input_md_fifo_wr_data[1] >> parser_input_md_fifo_$i$_wr_data
+        input_md_fifo_rd_data[1] >> parser_input_md_fifo_$i$_rd_data
+
+        md_dly_fifo_rd_en[1] >> parser_md_dly_fifo_$i$_rd_en
+        md_dly_fifo_wr_en[1] >> parser_md_dly_fifo_$i$_wr_en
+
+        md_dly_fifo_rd_adr[1] >> parser_md_dly_fifo_$i$_rd_adr
+        md_dly_fifo_wr_adr[1] >> parser_md_dly_fifo_$i$_wr_adr
+
+        md_dly_fifo_wr_data[1] >> parser_md_dly_fifo_$i$_wr_data
+        md_dly_fifo_rd_data[1] >> parser_md_dly_fifo_$i$_rd_data
+
+        tail_dly_fifo_rd_en[1] >> parser_tail_dly_fifo_$i$_rd_en
+        tail_dly_fifo_wr_en[1] >> parser_tail_dly_fifo_$i$_wr_en
+
+        tail_dly_fifo_rd_adr[1] >> parser_tail_dly_fifo_$i$_rd_adr
+        tail_dly_fifo_wr_adr[1] >> parser_tail_dly_fifo_$i$_wr_adr
+
+        tail_dly_fifo_wr_data[1] >> parser_tail_dly_fifo_$i$_wr_data
+        tail_dly_fifo_rd_data[1] >> parser_tail_dly_fifo_$i$_rd_data
+    }
+    >> PARSER_INPUT_MD_FIFO_$i$_CFG_reg_sel
+    >> PARSER_INPUT_MD_FIFO_$i$_STATUS_reg_sel
+    >> parser_input_md_fifo_$i$_mem_ls_enter
+    >> parser_input_md_fifo_$i$_ecc_uncor_err
+    >> parser_input_md_fifo_$i$_init_done
+    >> parser_input_md_fifo_$i$_rd_valid
+
+    >> PARSER_MD_DLY_FIFO_$i$_CFG_reg_sel
+    >> PARSER_MD_DLY_FIFO_$i$_STATUS_reg_sel
+    >> parser_md_dly_fifo_$i$_mem_ls_enter
+    >> parser_md_dly_fifo_$i$_ecc_uncor_err
+    >> parser_md_dly_fifo_$i$_init_done
+    >> parser_md_dly_fifo_$i$_rd_valid
+
+    >> PARSER_TAIL_DLY_FIFO_$i$_CFG_reg_sel
+    >> PARSER_TAIL_DLY_FIFO_$i$_STATUS_reg_sel
+    >> parser_tail_dly_fifo_$i$_mem_ls_enter
+    >> parser_tail_dly_fifo_$i$_ecc_uncor_err
+    >> parser_tail_dly_fifo_$i$_init_done
+    >> parser_tail_dly_fifo_$i$_rd_valid
+}
+
+ptype_ram_rd_en     >> parser_ptype_ram_rd_en
+ptype_ram_wr_en     >> parser_ptype_ram_wr_en
+ptype_ram_rd_adr    >> parser_ptype_ram_rd_adr
+ptype_ram_wr_adr    >> parser_ptype_ram_wr_adr
+ptype_ram_wr_data   >> parser_ptype_ram_wr_data
+ptype_ram_rd_data   >> parser_ptype_ram_rd_data
+
+    >> PARSER_PTYPE_RAM_CFG_reg_sel
+    >> PARSER_PTYPE_RAM_STATUS_reg_sel
+    >> parser_ptype_ram_mem_ls_enter
+    >> parser_ptype_ram_ecc_uncor_err
+    >> parser_ptype_ram_init_done
+    >> parser_ptype_ram_rd_valid
+
+foreach $i (0..79) {
+    extract_cfg_rd_en[$i]   >> parser_extract_cfg_$i$_rd_en
+    extract_cfg_wr_en[$i]   >> parser_extract_cfg_$i$_wr_en
+    extract_cfg_rd_adr[$i]  >> parser_extract_cfg_$i$_rd_adr
+    extract_cfg_wr_adr[$i]  >> parser_extract_cfg_$i$_wr_adr
+    extract_cfg_wr_data[$i] >> parser_extract_cfg_$i$_wr_data
+    extract_cfg_rd_data[$i] >> parser_extract_cfg_$i$_rd_data
+
+    >> PARSER_EXTRACT_CFG_$i$_CFG_reg_sel
+    >> PARSER_EXTRACT_CFG_$i$_STATUS_reg_sel
+    >> parser_extract_cfg_$i$_mem_ls_enter
+    >> parser_extract_cfg_$i$_ecc_uncor_err
+    >> parser_extract_cfg_$i$_init_done
+    >> parser_extract_cfg_$i$_rd_valid
+}
+
+foreach $i (0..1) {
+    >> PARSER_CSUM_CFG_$i$_CFG_reg_sel
+    >> PARSER_CSUM_CFG_$i$_STATUS_reg_sel
+    >> parser_csum_cfg_$i$_mem_ls_enter
+    >> parser_csum_cfg_$i$_rd_adr
+    >> parser_csum_cfg_$i$_rd_en
+    >> parser_csum_cfg_$i$_wr_adr
+    >> parser_csum_cfg_$i$_wr_data
+    >> parser_csum_cfg_$i$_wr_en
+    >> parser_csum_cfg_$i$_ecc_uncor_err
+    >> parser_csum_cfg_$i$_init_done
+    >> parser_csum_cfg_$i$_rd_data
+    >> parser_csum_cfg_$i$_rd_valid
+}
+
+    >> PARSER_ECC_COR_ERR_reg_sel
+    >> PARSER_ECC_UNCOR_ERR_reg_sel
+    >> unified_regs_rd
+    >> unified_regs_wr_data
+    >> parser_ecc_int
+    >> parser_init_done
+    >> unified_regs_ack
+    >> unified_regs_rd_data
+
+cclk    >> clk
+reset_n >> reset_n

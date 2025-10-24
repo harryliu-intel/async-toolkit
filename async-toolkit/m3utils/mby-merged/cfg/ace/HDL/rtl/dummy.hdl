@@ -1,0 +1,3 @@
+$hdl_spec = {
+    -vlog_files => [ "src/rtl/dummy.sv"],
+};

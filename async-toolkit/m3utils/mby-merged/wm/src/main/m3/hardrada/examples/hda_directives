@@ -1,0 +1,36 @@
+; ( pe "bcam.sim"
+; 	( list
+; 		; Copy over lookup function
+; 		( fn2pe "lookup" "lookup" 2 "lookup" ( list ) )
+; 
+; 		; Copy over cascade lookup function
+; 		( fn2pe "cascade_lookup" "cascade_lookup" 2 "cascade_lookup" ( list ) )
+; 
+; 	)
+; )
+
+( pe "alu.sim"
+	( list
+
+		; Original ALU
+		( fn2pe "alu" "alu" 3 "alu"
+		( list ) )
+
+		; ALU with only addition
+		( fn2pe "alu" "add_alu" 3 "add_alu"
+		( list ( static_arg 2 "0" ) ) )
+
+		; ALU with only subtraction
+		( fn2pe "alu" "sub_alu" 3 "sub_alu"
+		( list ( static_arg 2 "1" ) ) )
+
+		; ALU with only multiplication
+		( fn2pe "alu" "mult_alu" 3 "mult_alu"
+		( list ( static_arg 2 "2" ) ) )
+
+		; ALU with only division
+		( fn2pe "alu" "div_alu" 3 "div_alu"
+		( list ( static_arg 2 "3" ) ) )
+
+	)
+)

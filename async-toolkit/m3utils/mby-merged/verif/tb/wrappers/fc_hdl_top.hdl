@@ -1,0 +1,33 @@
+# -----------------------------------------------------------------------------
+# INTEL CONFIDENTIAL
+# Copyright(c) 2018, Intel Corporation. All Rights Reserved
+#-----------------------------------------------------------------------------
+#
+# Created By   :  Raghu P Gudla
+# Created On   :  09/22/2018
+# Description  :  
+#-----------------------------------------------------------------------------
+
+$hdl_spec = {
+    # List of VERILOG source files that belong in this library
+    -vlog_files => [
+    # Generated        "verif/gen/FcDutIf.sv",
+        "verif/tb/wrappers/fc_hdl_top.svh",
+        "verif/tb/wrappers/fc_config.sv",
+    ],
+
+    # List of include directories (corresponds with the VLOG(AN) '+incdir+' parameter)
+    -vlog_incdirs => [
+        "verif/tb/wrappers",
+        "verif/tb/wrappers/include",
+        "verif/gen",
+        "verif/tb/wrappers/macros",
+        "verif/tb/wrappers/ti_conns",
+        "cfg/ace", 
+#        &ToolConfig::ToolConfig_get_tool_path("ipconfig/vipsvt")."/include/sverilog", 
+         &ToolConfig::get_tool_env_var('vipsvt', 'DESIGNWARE_HOME')."/include/sverilog",
+    ],
+
+    # Arbitrary Verilog compilation options
+    -vlog_opts => '',
+};

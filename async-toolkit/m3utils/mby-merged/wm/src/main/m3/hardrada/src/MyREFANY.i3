@@ -1,0 +1,5 @@
+INTERFACE MyREFANY ;
+CONST Brand = "REFANY" ;
+TYPE T = REFANY ;
+PROCEDURE Equal( ref1 , ref2 : T ) : BOOLEAN ;
+END MyREFANY .

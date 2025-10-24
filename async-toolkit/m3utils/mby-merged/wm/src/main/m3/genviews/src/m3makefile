@@ -1,0 +1,135 @@
+import ("libm3")
+import ("rdlparse")
+import ("wm_support")
+import ("mscheme")
+import ("modula3scheme")
+import ("netobj")
+import ("sstubgen")
+
+module    ("RegField")
+interface ("RegReg")
+interface ("RegRegfile")
+interface ("RegAddrmap")
+module    ("RegContainer")
+
+sequence("RegField", "RegField")
+sequence("RegReg", "RegReg")
+sequence("RegRegfile", "RegRegfile")
+
+interface ("ParseError")
+
+generic_module("Lookup")
+
+module ("RegFieldAccess")
+interface ("IntelAccessType")
+module ("IntelAccessTypeLookup")
+
+table("TextReg", "Text", "RegReg")
+
+generic_interface("RegGenerators")
+generic_interface("RegNaming")
+module    ("RegCompiler")
+module    ("RegGenState")
+
+interface ("RegChild")
+module ("RegComponent")
+
+sequence ("RegChild", "RegChild")
+
+module ("RegProperty")
+
+array_sort("RegField", "RegField")
+
+sequence("BigInt", "BigInt")
+
+interface ("GenViews")
+generic_module("GenViews")
+
+module ("DecoratedComponentDef")
+
+table("RegComponentRef", "RegComponent", "Refany")
+
+interface ("RegModula3Utils")
+
+%%%%%%%%%%%%%%%%%%%%  Modula-3 output  %%%%%%%%%%%%%%%%%%%
+
+module   ("GenViewsM3")
+module   ("RegModula3Constants")
+module   ("RegModula3")
+module   ("RegModula3Naming")
+interface("RegModula3Generators")
+interface("RegModula3GenState")
+module   ("RegModula3IntfNaming")
+
+%%%%%%%%%%%%%%%%%%%%%  Scala output  %%%%%%%%%%%%%%%%%%%%%
+
+module   ("GenViewsScala")
+module   ("RegScalaConstants")
+module   ("RegScala")
+module   ("RegScalaNaming")
+interface("RegScalaGenerators")
+interface("RegScalaGenState")
+
+%%%%%%%%%%%%%%%%%%%%%%  C & C/SCM output  %%%%%%%%%%%%%%%%%%%%%%%%
+
+module   ("GenCUtils")
+module   ("GenScmUtils")
+
+%%%%%%%%%%%%%%%%%%%%%%  C-FM output  %%%%%%%%%%%%%%%%%%%%%%%%
+
+module   ("GenViewsC")
+module   ("RegC")
+module   ("RegCConstants")
+module   ("RegCNaming")
+interface("RegCGenerators")
+module   ("RegCGenState")
+
+
+%%%%%%%%%%%%%%%%%%%%%%  C-API output  %%%%%%%%%%%%%%%%%%%%%%%%
+
+module   ("GenViewsCApi")
+module   ("RegCApi")
+interface("RegCApiGenerators") 
+
+%%%%%%%%%%%%%%%%%%%%%  Second-pass output  %%%%%%%%%%%%%%%%%%%%%
+
+interface("GenViewsPass2")
+
+%%%%%%%%%%%%%%%%%%%%%  Scheme output  %%%%%%%%%%%%%%%%%%%%%
+
+module   ("GenViewsScheme")
+
+%%%%%%%%%%%%%  FULCRUM-style SystemVerilog output  %%%%%%%%%%%%%
+
+module   ("GenViewsSvFulcrum")
+module   ("TreeType")
+interface("TreeTypeClass")
+sequence ("TreeType", "TreeType")
+table    ("RegComponentType", "RegComponent", "TreeType")
+interface("TreeTypeArray")
+sequence ("TreeTypeArray", "TreeTypeArray")
+module   ("IndexBits")
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%generic_module("TopoSort")
+%module("TextTopoSort")
+
+implementation ("Main")
+
+SchemeStubs ("FieldData")
+SchemeStubs ("Text")
+SchemeStubs ("TextUtils")
+SchemeStubs ("Wr")
+SchemeStubs ("Rd")
+SchemeStubs ("TextWr")
+SchemeStubs ("TextRd")
+SchemeStubs ("FileWr")
+SchemeStubs ("FileRd")
+SchemeStubs ("Pickle2")
+SchemeStubs ("AtomRefTbl")
+
+ExportSchemeStubs("genviews")
+importSchemeStubs()              % import ALL scheme stubs
+
+program ("genviews")

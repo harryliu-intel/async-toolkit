@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+package switch_wm;
+
+message ConfigurationOperation {
+  fixed32 address = 1;
+  fixed64 datum = 2;
+}
+message ConfigurationResult {
+  bool success = 1;
+  fixed64 datum = 2;
+}
+message Packet {
+  uint64 port = 1;
+  bytes packet = 2;
+}
+
+service WhiteModelServer {
+  rpc SetRegister (ConfigurationOperation) returns (ConfigurationResult) {}
+  rpc ReadRegister (ConfigurationOperation) returns (ConfigurationResult) {}
+  rpc DeliverPacket(Packet) returns (ConfigurationResult) {}
+
+}

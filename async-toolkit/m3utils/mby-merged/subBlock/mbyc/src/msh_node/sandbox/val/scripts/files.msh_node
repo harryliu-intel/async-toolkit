@@ -1,0 +1,19 @@
+// mesh RTL  (mby_msh_node_pkg.sv listed here explicitly so it doesn't have to be included everywhere)
++incdir+$LOGICROOT/msh_node/rtl
+$LOGICROOT/msh_node/rtl/mby_msh_node_pkg.sv
+-y $LOGICROOT/msh_node/rtl
+
+//
+// MGM memory can be generated locally
+//
++incdir+$LOGICROOT/mems/rtl
++incdir+$LOGICROOT/mems/msh_node/src
++incdir+$LOGICROOT/mems/src/mem_wrap
++incdir+$LOGICROOT/csrs/mby/output/chdr
++incdir+$LOGICROOT/csrs/mby/output/sverilog
+-y $LOGICROOT/mems/rtl
+-y $LOGICROOT/mems/msh_node/src
+-y $LOGICROOT/mems/msh_node/src/mem_wrap
+-y $LOGICROOT/csrs/mby/output/chdr
+-y $LOGICROOT/csrs/mby/output/sverilog
+

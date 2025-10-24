@@ -1,0 +1,3 @@
+import ("mby")
+implementation("StructAssign")
+program ("structassign")

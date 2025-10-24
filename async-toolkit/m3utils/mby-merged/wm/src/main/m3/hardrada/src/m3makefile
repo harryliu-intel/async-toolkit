@@ -1,0 +1,19 @@
+% Import
+import( "libm3" )
+import( "paneman" )
+import( "patternmatching" )
+
+% Modules
+module( "RDP" )
+module( "Node" )
+module( "ParseQueue" )
+
+% Wrapper types
+module( "MyCARDINAL" )
+
+% Lists
+module( "CARDINALList" )
+
+% Main
+implementation( "Main" )
+program( "Main" )

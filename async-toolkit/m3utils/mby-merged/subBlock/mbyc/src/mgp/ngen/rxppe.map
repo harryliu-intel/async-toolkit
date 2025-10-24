@@ -1,0 +1,20 @@
+// Placeholder
+
+sreset                   >> reset
+rxppe_ppestm0            >> rx_ppe_ppe_stm0_if
+rxppe_ppestm1            >> rx_ppe_ppe_stm1_if
+rxppe_igr                >> rx_ppe_igr_if
+igr_rxppe                >> igr_rx_ppe_if
+    >> i_ibus_ctrl
+    >> o_ibus_resp
+
+//rx_ppe    rxppe(
+///* Interface rx_ppe_ppe_stm0_if.ppe */ .rx_ppe_ppe_stm0_if        (rxppe_ppestm0),
+///* Interface rx_ppe_ppe_stm1_if.ppe */ .rx_ppe_ppe_stm1_if        (rxppe_ppestm1),
+///* Interface rx_ppe_igr_if.ppe      */ .rx_ppe_igr_if             (rx_ppe_igr_if),
+///* input  logic                     */ .cclk                      (cclk),
+///* input  logic                     */ .reset                     (sreset),
+///* input  logic [98:0]              */ .i_ibus_ctrl               (rxppe_ibus_ctrl),
+///* output logic [66:0]              */ .o_ibus_resp               (rxppe_ibus_resp),
+///* Interface igr_rx_ppe_if.ppe      */ .igr_rx_ppe_if             (igr_rx_ppe_if));
+

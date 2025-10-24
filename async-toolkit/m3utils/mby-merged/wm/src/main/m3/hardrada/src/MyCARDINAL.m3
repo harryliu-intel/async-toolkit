@@ -1,0 +1,8 @@
+MODULE MyCARDINAL ;
+
+PROCEDURE Equal( int1 , int2 : T ) : BOOLEAN =
+BEGIN
+	RETURN int1 = int2 ;
+END Equal ;
+
+BEGIN END MyCARDINAL .

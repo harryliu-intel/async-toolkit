@@ -1,0 +1,16 @@
+( define ( general_alu x y op list_of_fns )
+	( cond ( ( or ( < op 0 ) ( null? list_of_fns ) ) #f )
+	( ( = op 0 ) ( ( car list_of_fns ) x y ) )
+	( else ( alu x y ( - op 1 ) ( cdr list_of_fns ) ) )
+	)
+)
+
+; ( define ( myeval match_proc y )
+; 	( ( eval match_proc ( interaction-environment ) ) y )
+; )
+
+; ( define ( main x )
+; 	( display "I expect 2: " )
+; 	( display ( myeval '( lambda ( x ) ( * x x ) ) 2 ) )
+; 	( newline )
+; )

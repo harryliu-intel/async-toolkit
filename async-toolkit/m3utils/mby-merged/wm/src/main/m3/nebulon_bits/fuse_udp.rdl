@@ -1,0 +1,641 @@
+<% if ($LIB_UDP) {
+   } else {
+   $LIB_UDP = 1;
+%>
+
+//------------------------------------------------------------------------------
+// User Defined Properties (UDP) Library
+//
+// This contains all of the UDPs that are used globally throughout all register
+// descriptions.  UDP should not be declared anywhere else.
+//------------------------------------------------------------------------------
+
+//------------------------------------------------------------------------------
+// Required Address Map UDPs
+//------------------------------------------------------------------------------
+property USE_FUSE_FLOW {
+    component = addrmap;
+    type      = boolean;
+    default   = false ;
+};
+
+property FuseNumBankCtrlRows {
+    component = addrmap;
+    type      = number;
+    default   = 1;
+};
+
+property FuseNumBankDataRows {
+    component = addrmap;
+    type      = number;
+    default   = 1;
+};
+
+property FuseNumBankCols {
+    component = addrmap;
+    type      = number;
+    default   = 1;
+};
+
+property FuseAccessGranularity {
+    component = addrmap;
+    type      = number;
+    default   = 1;
+};
+
+property FuseOvrInHIP {
+    component = addrmap | reg | field;
+    type      = boolean;
+    default   = false;
+};
+
+property FuseOvrInDest {
+    component = addrmap | reg | field;
+    type      = boolean;
+    default   = false;
+};
+
+property FuseDestOvrAddr {
+    component = addrmap | reg | field;
+    type      = boolean;
+    default   = false;
+};
+
+property FuseRdInHIP {
+    component = addrmap | reg | field;
+    type      = boolean;
+    default   = false;
+};
+
+property FuseRdInDest {
+    component = addrmap | reg | field;
+    type      = boolean;
+    default   = false;
+};
+
+property FuseDestRdAddr {
+    component = addrmap | reg | field;
+    type      = number;
+    default   = 0;
+};
+
+property FuseSenseTime {
+    component = addrmap | reg | field;
+    type      = string;
+    default   = "";
+};
+
+property FuseDistTime {
+    component = addrmap | reg | field;
+    type      = string;
+    default   = "";
+};
+
+property FusePwrDomain {
+    component = addrmap | reg | field;
+    type      = string;
+    default   = "";
+};
+
+property FuseReqOpCode {
+    component = addrmap;
+    type      = number;
+    default   = 0;
+};
+
+property FuseReqSrcId {
+    component = addrmap;
+    type      = number;
+    default   = 0;
+};
+
+property FuseEH {
+    component = addrmap;
+    type      = number;
+    default   = 1;
+};
+
+property FuseSAI {
+    component = addrmap;
+    type      = number;
+    default   = 0;
+};
+
+// use for padding fore fuse bank alignment
+property FuseSpare {
+    component = addrmap;
+    type      = boolean;
+    default   = false;
+};
+
+property FusePrgStage {
+    component = addrmap | reg | field;
+    type      = string;
+    default   = "";
+};
+
+property FuseLockStage {
+    component = addrmap | reg | field;
+    type      = string;
+    default   = "";
+};
+
+// HSD #833111
+// indicate Fuse type: Functional, SKU, Manufacturing Specific or Key Fuse
+property FuseType {
+    component = addrmap | reg | field;
+    type      = string;
+    default   = "";
+};
+
+// HSD #871497
+property USER_SPECIFIED_UDP {
+    component = addrmap;
+    type      = string;
+    default   = "";
+};
+
+//------------------------------------------------------------------------------
+// Required Register UDPs
+//------------------------------------------------------------------------------
+
+
+//------------------------------------------------------------------------------
+// Required Field UDPs
+//------------------------------------------------------------------------------
+property ValLegalValues {
+    component = field;
+    type      = string;
+    default   = "";
+};
+
+// used to randomize values before jamming in Fuse Array
+property ValRandomize {
+    component = field;
+    type      = boolean;
+    default   = false;
+};
+
+// GLS RTL Signal path
+property ValGLSSignal {
+    component = addrmap | field;
+    type      = string;
+    default   = "";
+};
+
+// Fuse represent the Fuse Array Name with right Bank, Column, Row#'s
+property ValRTLSignal {
+    component = addrmap | field;    //No code generated for ValRTLSignal at field level from fuse.pm. Instead ValDestRTLSignal should be used. Keeping for legacy reasons to support in Properties.pm.
+    type      = string;
+    default   = "";
+};
+
+//Added per HSD 5442086
+property ValDestRTLSignalPrefix {
+    component = addrmap;             //Same function as ValRTLSignal at addrmap level. Name changed to make it more intuitive.Keeping ValRTLSignal for legacy reasons.
+    type      = string;
+    default   = "";
+};
+
+// Fuse represent the Fuse EndPoint Signal name at destination IP
+property ValDestRTLSignal {
+    component = field;
+    type      = string;
+    default   = "";
+};
+
+// individual fuse width
+property FUSE_WIDTH {
+    component = field;
+    type      = number;
+    default   = 0;
+};
+
+property FuseDefaultValue {
+    component = field;
+    type      = number;
+    default   = 0;
+};
+
+property FusePostMfgDefault {
+    component = field;
+    type      = number;
+    default   = 0;
+};
+
+// Parallel : Always Row35 for ASDG & UMG
+property FuseParallelWires {
+    component = field;
+    type      = boolean;
+    default   = false;
+};
+
+// Value for Performance
+property ValueForPerf {
+    component = field;
+    type      = number;
+    default   = 0;
+};
+
+// Value for Power
+property ValueForPower {
+    component = field;
+    type      = number;
+    default   = 0;
+};
+
+// Value for PowerPerformance
+property ValueForPwrPerf {
+    component = field;
+    type      = number;
+    default   = 0;
+};
+
+// Value for PowerPerformance Tunable/Range
+property ValueForPwrPerf_Range {
+    component = field;
+    type      = string;
+    default   = "";
+};
+
+// Fuse ConfigValues - per HSD 873765
+property ConfigValues {
+    component = field;
+    type      = string;
+    default   = "";
+};
+
+//Fuse addrmap properties - per HSD 895238
+property   CmplFmt     {
+  component = addrmap;
+ type = number;
+ default = 0;
+};
+
+property   RequestType   {
+  component = field;
+  type = string;
+ default =  "";
+ };
+
+//Added per HSD 5614758
+property   RequestGroupNumber   {
+  component = field;
+  type = number;
+  default =  0;
+ };
+
+property   RcvrAddr   {
+  component = field;
+  type = number;
+ default =  0;
+ };
+
+
+//Fuse field properties - per HSD 895743
+property JTagRD  {
+  component = field;
+  type = boolean;
+ default = false;
+ };
+
+property JTagWR  {
+  component = field;
+  type = boolean;
+ default = false;
+ };
+
+property CSRRD    {
+  component = field;
+  type = boolean;
+ default = false;
+ };
+
+property CSRWR    {
+  component = field;
+  type = boolean;
+ default = false;
+ };
+
+property Group      {
+  component = field;
+  type = string;
+ default = "";
+ };
+    //only valid settings are "DF" or "VF"
+
+
+
+//added per HSD 895836
+property RAMAddress  {
+  component = field;
+  type = number;
+ default = 0;
+ };
+
+property StartBit  {
+  component = field;
+  type = number;
+ default = 0;
+ };
+
+
+//added per HSD 896005
+property PullOnce    {
+  component = field;
+  type = boolean;
+ default = false;
+ };
+
+property BlkOnDbg    {
+  component = field;
+  type = boolean;
+ default = false;
+ };
+
+
+//SoC Chasis Fuse UDPs added per HSD 896473
+
+ //The following property should not be set if legacy FuseReqSrcId/FuseReqOpCode properties are specified in RDL
+property IOSFSBPortID {
+  component = addrmap;
+  type = number;
+  default = 0;
+};
+
+//Added as part of global port id PCR
+property IOSFSBHierarchicalPortID {
+   component = addrmap;
+   type = number;
+   default = 0;
+};
+
+//Added per HSD 5614758
+property IOSFSBEP {
+  component = addrmap;
+  type = number;
+  //default = 0;        //Removed default as per HSD 5629332
+};
+
+//The following are not used for validation
+
+property PrivatePort	    {
+  component = addrmap;
+ type = boolean;
+ default = false;
+};
+
+  //If PrivatePort = true, PrivatePortIndex must be > 0
+property PrivatePortIndex   {
+  component = addrmap;
+ type = number;
+ default = 0;
+};
+
+
+property TableType	    {
+  component = addrmap;
+ type = string;
+ default = "";
+};
+
+property Category	    {
+  component = field;
+  type = string;
+ default = "";
+};
+
+property ArrayType	    {
+  component = field;
+  type = string;
+ default = "";
+};
+
+//Changed to "Shared" as boolean per HSD 896739
+property Shared	    {
+  component = field;
+  type = boolean;
+ default = false;
+};
+
+//Added per HSD 896739
+property LLDD	    {
+  component = field;
+  type = boolean;
+ default = false;
+};
+
+property RD4Err	    	    {
+  component = field;
+  type = boolean;
+ default = false;
+};
+
+property LockoutValidIDTag  {
+  component = field;
+  type = string;
+ default = "";
+};
+
+property Owner		    {
+  component = field;
+  type = string;
+ default = "";
+};
+
+property PerformanceFuse    {
+  component = field;
+  type = boolean;
+ default = false;
+};
+
+property PowerFuse	    {
+  component = field;
+  type = boolean;
+ default = false;
+};
+
+
+property EncodingLabels	    {
+component = field;
+type = string;
+default = "";
+};
+
+//Added per HSD 5193239
+property misc {
+component = field;
+type = string;
+default = "";
+};
+
+//Added per HSD 911893
+property LegacyConverted {
+ component = addrmap;
+ type = boolean;
+ default = false;
+};
+
+//Added per HSD 911893
+property SharedTag {
+  component = field;
+  type = string;
+  default = "";
+};
+
+//Added per HSD 5172904
+property VFOvrdDisable {
+  component = field;
+  type = boolean;
+  default = false;
+};
+
+//Added for Kaizen flow
+property IPResetType{
+  component = field;
+  type = string;
+  default = "";
+};
+
+property VFOverrideDisable{
+  component = field;
+  type = boolean;
+  default = false;
+};
+
+property GroupNumber {
+  component = field;
+  type = number;
+  default = 0;
+};
+
+property EncodingValueType {
+  component = field;
+  type = string;
+  default = "";
+};
+
+property EncodingValues {
+  component = field;
+  type = string;
+  default = "";
+};
+
+property RTLSignalPath {
+  component = field;
+  type = string;
+  default = "";
+};
+
+property RTLSignalPathPrefix {
+  component = addrmap;
+  type = string;
+  default = "";
+};
+
+property SubClass {
+  component = field;
+  type = string;
+  default = "";
+};
+
+property Class {
+  component = field;
+  type = string;
+  default = "";
+};
+
+property Consumer {
+  component = field;
+  type = string;
+  default = "";
+};
+
+property IPOwner{
+    component = field;
+    type = string;
+    default = "";
+};
+
+property PullTrigger {
+  component = addrmap;
+  type = string;
+  default = "";
+};
+
+property NEBULON_RDL_VER{
+  component = addrmap;
+  type = string;
+  default = "";
+};
+
+property FUSE_GEN{
+  component = addrmap;
+  type = string;
+  default = "";
+};
+
+/////////Added for feature level rdl
+property ObjectType{
+    component = reg;
+    type = string;
+    default = "";
+};
+
+property ResetValue{
+    component = reg;
+    type = string;
+    default = "";
+};
+
+property Expression{
+    component = reg;
+    type = string;
+    default = "";
+};
+
+property Values{
+    component = field;
+    type = string;
+    default = "";
+};
+
+property ValueDescription {
+    component = field;
+    type = string;
+    default = "";
+};
+
+//IsMarketingVisible replaced by IsMarketingValue at feature value level
+//IsMarketingVisible replaced by IsMarketingFeature at feature level
+
+/*
+property IsMarketingVisible {
+  component = field | reg ;
+  type = boolean;
+  default = false;
+};
+*/
+
+property IsMarketingFeature {
+  component = reg ;
+  type = boolean;
+  default = false;
+};
+
+property IsMarketingValue {
+  component = field ;
+  type = boolean;
+  default = false;
+};
+
+property FeatureDescription {
+  component = reg ;
+  type = string;
+  default = "";
+};
+
+
+<% }; %>
+
+
