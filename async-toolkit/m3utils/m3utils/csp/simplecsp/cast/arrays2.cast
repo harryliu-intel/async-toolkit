@@ -53,3 +53,35 @@ define P()() <+ common
   }
 }
   
+define Q()() 
+{
+
+  csp {
+
+    function f(int -n; string -a[0..-1 ]) : string =
+      (string s = "";
+       <;i:n: s = s + "a[" + i + "] = " + a[i] + " ">;
+       f = s;
+       );
+
+    function g(int -m,-n; string -a[0..0,0..0]) : string =
+      (string s = "";
+       <;i:m:<;j:n: s = s + "a[" + i + "," + j + "] = " + a[i,j] + " " >; s = s + "\n" >;
+       g = s;
+       );
+
+    string x[X,Y];
+
+    <;i:X: <;j:Y: x[i,j] = " cell[" + i + "," + j + "]">>;
+
+    <;i : X:
+    print(f(Y, x[i]));
+    >;
+
+    print(g(X, Y, x));
+
+    #[false -> x[999,999] = ""];
+
+  }
+}
+    
