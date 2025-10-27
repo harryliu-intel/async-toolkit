@@ -81,8 +81,8 @@ jobs:
       if: matrix.build-mode == 'manual'
       shell: bash
       run: |
-        apt update
-        apt install libreadline-dev
+        sudo apt-get update
+        sudo apt-get install -y libreadline-dev
           
     # If the analyze step fails for one of the languages you are analyzing with
     # "We were unable to automatically build your code", modify the matrix above
