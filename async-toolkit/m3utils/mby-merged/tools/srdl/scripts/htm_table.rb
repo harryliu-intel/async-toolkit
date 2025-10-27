@@ -12,7 +12,7 @@ class HtmTable < RDL::ViewGen
 
   class SecurityInfo
     def initialize(security_pm)
-      sec_hash = IO.read(security_pm).scan(/%security.*^\t\);/m).shift.
+      sec_hash = File.read(security_pm).scan(/%security.*^\t\);/m).shift.
                  sub(/^%/,"").
                  sub(/\(/,"{").
                  sub(/\)/,"}")
