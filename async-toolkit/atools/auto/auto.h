@@ -443,7 +443,7 @@ extern int ERROR;
 extern int detail_level,GRADIENT,distance_measure;
 extern LIST *Paints,*GlobalNames;
 extern char *GND,*VDD;
-char *SEARCH_PATH;
+extern char *SEARCH_PATH;
 extern int unique_num;
 
 /*** estimate_wirecap.c and transform.c ***/
