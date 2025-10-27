@@ -1,0 +1,5 @@
+m3utils                                    -- build this first, Modula-3 tools libraries and utilities
+cm3-doc                                    -- documentation for how to build m3utils (not maintained, but useful for reference)
+applications.design-automation.memory.lamb -- Latch Array Memory Block compiler, uses m3utils
+mby-merged                                 -- Madison Bay register model for simulation, design verification, uses m3utils
+rechar_flow_tmpl                           -- cell characterization flow using Synopsys tools, uses m3utils
