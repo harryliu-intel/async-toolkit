@@ -176,8 +176,8 @@ typedef struct _list
 
 /*** SIMD data types ***/
 #ifdef SIMD
-typedef float v4sf __attribute__ ((mode(V4SF)));
-// typedef float v4sf __attribute__ ((vector_size(4*sizeof(float))));
+// typedef float v4sf __attribute__ ((mode(V4SF)));
+typedef float v4sf __attribute__ ((vector_size(4*sizeof(float))));
 typedef union {
   v4sf v;
   float f[4];
