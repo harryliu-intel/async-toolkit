@@ -65,7 +65,7 @@
   Mika Nystr\"om \\
   Neuromorphic Computing Laboratory \\
 Intel Corporation}
-\date{Version 0.0\\
+\date{DRAFT Version 0.1\\
 \today}
 
 \begin{document}
@@ -585,6 +585,14 @@ also gratefully acknowledge that text and inspiration has been
 borrowed from the Asynchronous Circuit Toolkit (ACT) of Rajit
 Manohar's group at Yale.
 
+Thanks are due to Andrew Lines, and Rajit Manohar for reviewing the
+early versions of the manuscript, and to Paul Katz, who suggested a
+multitude of changes to make the report more accessible to those with
+less prior exposure to CSP.  Harry Liu helped at every turn by
+answering every possible and some impossible questions about the
+language.
+
+
 \chapter{Language Definition}
 % ========================================
 % DEFINITIONS
@@ -758,7 +766,8 @@ its length followed by the shape of any of
 its elements; the shape of a non-array is the empty sequence.
 The {\em layout\/} of a multi-dimensional array is the sequence of
 its lengths and starting indexes in each dimension; the layout of a non-array
-is the empty sequence.
+is the empty sequence.  The {\em rank\/} of a multi-dimensional array
+is the number of indexes of the array.
 
 All arrays are {\em fixed\/} in CSP, meaning that the layout of every array is
 determined before program startup.
@@ -927,8 +936,11 @@ where
 
 \item \verb!Name! is an identifier that names the parameter.
 
-\item \verb!Layout! specifies the array layout for an array parameter; if it is
-  omitted, the parameter is scalar.
+\item \verb!Layout! specifies the array layout for an array parameter;
+  if it is omitted, the parameter is scalar.  If the layout is
+  specified, only the rank is significant.  That is, the starting and
+  ending indexes of each dimension are ignored, and the actual layout of
+  the array is copied from the caller.
 
 \item\verb!Initial! specifies the initial value of a scalar parameter whose mode is \verb!+!.  \verb!= Initial! can be omitted.  
 \end{itemize}
@@ -1163,7 +1175,7 @@ To execute the call, the function's parameters are evaluated
 left-to-right,
 \begin{itemize}
 
-\item the formal parameters are assigned (the prolog)
+\item the formal parameters are declared (at which time the layout of any array parameter is copied from the caller) and assigned (the prolog)
 
 \item the body of the procedure is executed
 
@@ -1629,12 +1641,17 @@ be accessed using the syntax
 \begin{Verbatim}[samepage=true]
    e { Range }
 \end{Verbatim}
-where \verb!Range! is a range \verb!Hi : Lo! where \verb!Hi! and \verb!Lo!
-are of type \verb!int!, or a single number \verb!k!, which is interpreted as
-\verb!k : k!.  If the range is empty (that is, if $\verb!Hi! < \verb!Lo!$) then, the value of the expression is zero.
-The bit-access expression is a designator if \verb!e! is a designator; it is
-a writable designator if \verb!e! is a writable designator.  The type of
-\verb!e { Range }! is \verb!uint(Hi - Lo + 1)!.
+where \verb!Range! is a range \verb!Hi : Lo! where \verb!Hi! and
+\verb!Lo!  are of type \verb!int!, or a single number \verb!k!, which
+is interpreted as \verb!k : k!.  If the range is empty (that is, if
+$\verb!Hi! < \verb!Lo!$) then, the value of the expression is zero.
+The bit-access expression is a designator if \verb!e! is a designator;
+it is a writable designator if \verb!e! is a writable designator.  The
+type of \verb!e { Range }! is \verb!uint(Hi - Lo + 1)!.  The value of
+\verb!e {Range }!  is the referenced bits of the two's-complement
+representation of \verb!e!.  In particular, the high-order bits of a
+positive \verb!e! will be zero, whereas the high-order bits of a
+negative \verb!e! will be one.
 
 
 \subsubsection{Array access}
@@ -1665,6 +1682,9 @@ cannot be used as array accessors even though they can be used to
 declare arrays: this implies that ``partial array slices'' are not
 available in CSP.
 
+It is a checked runtime error to activate the access of an array outside of
+the declared bounds of the array, but it is not a static error to do so.  
+
 \subsubsection{Struct field access}\label{sec:struct-field-access}
 If \verb!e! is a struct, the expression
 \begin{Verbatim}[samepage=true]
@@ -1673,7 +1693,7 @@ If \verb!e! is a struct, the expression
 where \verb!Field! names a field of the structure type of \verb!e!, denotes
 the value of the corresponding field.  The struct-access expression is a designator if \verb!e! is a designator; it is
 a writable designator if \verb!e! is a writable designator.  The type of
-\verb! e :: Field! is the declared type of the field.
+\verb! e :: Field! is the declared type of the field.  
 
 
 \subsection{Arithmetic and string operators}
