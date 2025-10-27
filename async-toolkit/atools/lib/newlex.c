@@ -238,7 +238,7 @@ void lex_message(LEX *lex, char *err_tp, char *msg)
     }
   lex_restore_position(lex);
   lex_error_pos(lex,err_tp);
-  fprintf(stderr,msg);
+  fputs(msg,stderr);
   }
 
 /*** Print error position then "expecting ..." then exit ***/

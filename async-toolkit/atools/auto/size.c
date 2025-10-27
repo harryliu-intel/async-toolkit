@@ -3,8 +3,8 @@
 
 #include "auto.h"
 SIZE Size;
-FUNC *func_add, *func_sub, *func_mul, *func_div, *func_max, *func_min,
-     *func_sqr, *func_exp;
+extern FUNC *func_add, *func_sub, *func_mul, *func_div, *func_max, *func_min,
+            *func_sqr, *func_exp;
 
 #if 0
 #define debug_var(var) print_var(stderr,var)

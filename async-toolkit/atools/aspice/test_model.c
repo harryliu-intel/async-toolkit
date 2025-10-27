@@ -19,8 +19,8 @@ void test_transistor(double Type, double W, double L,
   {
   MODEL *m;
   FILE *IS,*ID,*IG,*IB,*QS,*QD,*QG,*QB;
-  double Vg,Vs,Vd,Vb,Vds;
-  double TQ[6],TI[6],TdQ[36],TdI[36];
+  double Vg=0,Vs=0,Vd=0,Vb=0,Vds=0;
+  double TQ[6]={0},TI[6]={0},TdQ[36]={0},TdI[36]={0};
   IS=fopen("IS.out","wt");
   ID=fopen("ID.out","wt");
   IG=fopen("IG.out","wt");
@@ -40,9 +40,9 @@ void test_transistor(double Type, double W, double L,
       {
       if (m->bsim==4)
         {
+        /* need to update
         BSIM4model *m4;
         m4 = (BSIM4model *) m;
-        /* need to update
         BSIM4_Transistor(m4,1,Type*Vs,Type*Vd,Type*Vg,Type*Vb,Type*Vs,Type*Vd,
                          W,L,AS,PS,0,AD,PD,0,
                          SA,SB,SC,SD,NF,SCA,SCB,SCC,

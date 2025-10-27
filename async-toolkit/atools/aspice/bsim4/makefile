@@ -2,6 +2,7 @@
 TOP = ../..
 LIB_TARGETS = bsim4.a
 include $(TOP)/Makefile.rules
+OPT += -Wno-unused-but-set-variable -Wno-misleading-indentation
 
 bsim4.a: bsim4.o b4.o b4mpar.o b4mask.o b4set.o b4temp.o b4geo.o b4check.o b4ld.o 
 
