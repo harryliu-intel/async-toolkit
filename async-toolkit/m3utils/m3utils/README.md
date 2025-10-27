@@ -1,5 +1,1 @@
-At Intel you can use the Cheetah2-provided CM3 compiler:
-
-```
-setenv RTA_CM3_HOME /p/cth/rtl/cad/x86-64_linux44/opensource/cm3/d5.11.0-20210425/
-```
+Build using the head of Critical Mass Modula-3 (cm3) from github.  Builds with latest CM3 as of August, 2025.  You must use the native (gcc-based) CM3 back-end to get all things here working.
