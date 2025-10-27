@@ -214,7 +214,7 @@ module RDL
       registers = Array.new
       regfiles  = Array.new
       addrmaps  = Array.new
-      rdl = rdl_file.class == String && rdl_file || IO.read(rdl_file)
+      rdl = rdl_file.class == String && rdl_file || File.read(rdl_file)
       rdl.gsub!(/\/\/.*/,"")
       rdl.gsub!(/^\s*lsm_IMN_map\s+\w+.*/,"") # FIXME
       rdl.scan(/^enum\s+(\w+)\s*(\{.*?^\};)/m    ) do |tn,bdy|
@@ -264,7 +264,7 @@ module RDL
     def read_include_all(rdl_file, readit)
       return [] if rdl_file =~ /lsm_cfg.rdl/ # FIXME
       return [] if !File.exist?(rdl_file)
-      IO.readlines(rdl_file).map do |ln|
+      File.readlines(rdl_file).map do |ln|
         if ln =~ /^\s*`include\s+\"(.*?)\"/
           readit[$1] ? [] : read_include_all($1, readit[$1] = true && readit)
         else
@@ -291,7 +291,7 @@ module RDL
     # Read output_file into @view_code Array
     def source(output_file, template="")
       if File.exist? output_file
-        @view_code = IO.readlines(output_file)
+        @view_code = File.readlines(output_file)
       else
         if File.exist?("#{File.dirname(__FILE__)}/#{template}.template")
           create(output_file, template)

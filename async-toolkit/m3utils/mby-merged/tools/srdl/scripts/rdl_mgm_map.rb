@@ -22,7 +22,7 @@ class RdlMgmMap < RDL::ViewGen
   class Logical < Hash
     require "yaml"
     def initialize(logical_file)
-      logical_str = IO.read(logical_file).split(/\n/).map do |ln|
+      logical_str = File.read(logical_file).split(/\n/).map do |ln|
         ln.strip.empty? ? nil : ln.sub(/=/,":").split
       end.compact
       logical_str.map!{|ln|ln[0..-3].join('-')+' '+ln[-2..-1].join(' ')}
