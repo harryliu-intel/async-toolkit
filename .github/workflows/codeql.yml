@@ -94,6 +94,8 @@ jobs:
       if: matrix.build-mode == 'manual'
       working-directory: async-toolkit/atools
       shell: bash
+      env:
+        LFLAGS: "$(LIB_DIR)/castlib.a -lm -lreadline"
       run: |
         make all
 
