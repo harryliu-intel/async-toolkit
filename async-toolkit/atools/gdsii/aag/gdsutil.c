@@ -4726,7 +4726,7 @@ static void gds_flat_size (GDS_TRANS trans, char *name, LONGINT* minx, LONGINT* 
    static int level = 0;
    int layer = 0;
    int dt = 0;
-   char key[10];
+   char key[12]; /* 10 is probably OK but doesnt pass static checks */
    LONGINT nx,ny,mx,my;
 
    nx = *minx;
