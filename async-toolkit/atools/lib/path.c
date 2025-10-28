@@ -67,7 +67,8 @@ char *find_filename(char *filename, char *extension, char *path)
         }
       else if (lex_eatif_sym(lex,".")) pc=".";
       else pc=lex_eat_until(lex,".:~$ ");
-      if (pc!=NULL) strncat(new,pc,STRMAX);
+      if (pc!=NULL) strncat(new,pc,STRMAX-strlen(new)-1);
+      /* must leave space for terminating null */
       }
     lex_free(lex);
     strcpy(old,new);
