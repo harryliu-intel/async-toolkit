@@ -664,6 +664,5 @@ void vsc_add_extension(char *file_name, char *extension)
       strcpy(file_name, temp_name);
     }
 
-  strcat(file_name, extension);
-
+  strncat(file_name, extension, 1024);  /* dirty hack */
 }   /* vsc_add_extension */
