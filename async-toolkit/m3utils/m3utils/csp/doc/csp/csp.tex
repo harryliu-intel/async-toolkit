@@ -136,27 +136,43 @@ His task is consolidation, not innovation.}
 \end{center}
 \section{History}
 Starting in the 1980s, Alain Martin at Caltech started to use a
-variant of Hoare's Communicating Sequential Processes to describe
-asynchronous circuit designs, and while the basic syntax and semantics of the
-language was well established by Martin and his students, the usage
-model and many implementation details were left informal.  A detailed
-implementation effort followed at Fulcrum Microsystems in the early
-2000s, and the resulting language was used to describe the high-level
-design of numerous Fulcrum products throughout the 2000s and 2010s,
-and later at Intel, in the Neuromorphic Computing Lab of Intel Labs.
-The initial implementation was structured as a circuit simulator, but
-over time, a direct-to-silicon compiler was also developed at Fulcrum,
-Intel, and Timeless Design Automation.  At the time of writing, CSP
-has seen over two decades of successful use as a hardware description
-and validation language.
+variant of Hoare's Communicating Sequential Processes (CSP) to describe
+asynchronous circuit designs, and while the basic syntax and semantics
+of the language were well established by Martin and his students, the
+usage model and many implementation details were left informal.  A
+detailed implementation effort followed at Fulcrum Microsystems in the
+early 2000s, and the resulting language was used to describe the
+high-level design of numerous Fulcrum products throughout the 2000s
+and 2010s, and later at Intel, in the Neuromorphic Computing Lab of
+Intel Labs.  The initial implementation was structured as a circuit
+simulator, but over time, a direct-to-silicon compiler was also
+developed at Fulcrum, Intel, and Timeless Design Automation.  At the
+time of writing, Fulcrum CSP has seen over two decades of successful
+use as a hardware description and validation language; it has been
+used as an architectural modeling language, a design-verification
+language, and a design language for dozens of microchips, from simple
+ones to very complex chips at the forefront of Ethernet switching
+technology at the time they were built.
 
-CSP, like its 1970s namesake, is a programming language based on a
-static graph of many small independent processes, which do not share
-internal state but use the rendezvous for communication.  CSP supports
-many features that are helpful in hardware design, such as
-arbitrary-precision arithmetic by default, bit extraction, packing and
-unpacking of structured data, and of course, extremely high levels of
-multithreading.
+Fulcrum CSP, like its 1970s namesake, is a programming language based
+on a static graph of many small independent processes, which do not
+share internal state but use the rendezvous for communication.
+Fulcrum CSP supports many features that are helpful in hardware
+design, such as arbitrary-precision arithmetic by default, bit
+extraction, packing and unpacking of structured data, and of course,
+extremely high levels of multithreading.
+
+\subsection{The name ``CSP''}
+This report describes the syntax and semantics of {\em Fulcrum CSP,} a
+programming language developed at Fulcrum Microsystems in the early
+2000s, before that company was acquired by Intel in 2011.  The
+language takes its name from Hoare's 1978 {\em Communicating
+  Sequential Processes,} what the wider programming community knows as
+``CSP'', but has seen significant changes from that language, in
+particular following the {\em Communicating Hardware Processes\/} (CHP)
+described (but not yet named) by Martin in 1986.  In any case, the
+name ``CSP'' will be used to mean Fulcrum CSP throughout this report unless
+qualified otherwise.
 
 \section{Design Outline}
 One design goal of CSP has been to as much as possible banish
@@ -171,7 +187,8 @@ from software simulation of the design could not be relied on to
 validate the design since the hardware implementation might be
 different.  Accordingly, CSP variables have well-defined initial
 values, and expression-evaluation orders as well as function-parameter
-evaluation orders are strictly specified.
+evaluation orders are strictly specified.  A few unspecified areas remain,
+and they will be mentioned in the report.
 
 \subsection{CAST : Caltech Asynchronous Tools}
 \label{sec:cast}
@@ -195,18 +212,6 @@ as a vehicle for performing process decomposition (``Martin synthesis'')
 and it is the CAST framework that establishes the relationship between
 different CSP descriptions of the same computational process.
 
-\subsection{The name ``CSP''}
-This report describes the syntax and semantics of {\em Fulcrum CSP,} a
-programming language developed at Fulcrum Microsystems in the early
-2000s, before that company was acquired by Intel in 2011.  The
-language takes its name from Hoare's 1978 {\em Communicating
-  Sequential Processes,} what the wider programming community knows as
-``CSP'', but has seen significant changes from that language, in
-particular following the {\em Communicating Hardware Processes\/} (CHP)
-described (but not yet named) by Martin in 1986.  In any case, the
-name ``CSP'' will be used to mean Fulcrum CSP throughout this report unless
-qualified otherwise.
-
 
 \section{Overview}
 
@@ -216,7 +221,7 @@ the authors of the language.  The next chapter gives a more formal reference man
 for the language.  The final chapter covers a few practical example
 programs, showing some of the CSP features in action.  Finally, the
 appendix gives the syntax equations for the language, extracted from
-the ANTLR grammar used at Fulcrum to construct the CSP parser.
+the ANTLR grammar used at Fulcrum and Intel to construct the CSP parser.
 
 \subsection{Note on syntax}
 
@@ -769,8 +774,9 @@ its lengths and starting indexes in each dimension; the layout of a non-array
 is the empty sequence.  The {\em rank\/} of a multi-dimensional array
 is the number of indexes of the array.
 
-All arrays are {\em fixed\/} in CSP, meaning that the layout of every array is
-determined before program startup.
+Except for arrays declared as function parameters, arrays are {\em
+  fixed\/} in CSP, meaning that the layout of every array is
+determined before program startup.  See~\ref{sec:funccall}.
 
 An array declaration has the form:
 \begin{Verbatim}[samepage=true]
@@ -940,7 +946,7 @@ where
   if it is omitted, the parameter is scalar.  If the layout is
   specified, only the rank is significant.  That is, the starting and
   ending indexes of each dimension are ignored, and the actual layout of
-  the array is copied from the caller.
+  the array will be copied from the caller.
 
 \item\verb!Initial! specifies the initial value of a scalar parameter whose mode is \verb!+!.  \verb!= Initial! can be omitted.  
 \end{itemize}
@@ -1042,8 +1048,10 @@ the target locations.
 
 \subsubsection{Array assignment}
 
-Arrays are assignable if they have the same shape and their element types
-are assignable.
+In function prologs (see section~\ref{sec:funccall}), arrays are
+assignable if they have the same rank and their element types are
+assignable.  Elsewhere, arrays are assignable if they have the same
+shape and their element types are assignable.
 
 \subsubsection{Integer to string assignment}
 
