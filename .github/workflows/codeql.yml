@@ -47,9 +47,11 @@ jobs:
         - language: c-cpp
           build-mode: manual
           work_dir: async-toolkit/atools
+          make_cmd: make all
         - language: c-cpp
           build-mode: manual
           work_dir: async-toolkit/m3utils/mby-merged/wm/src/main/c
+          make_cmd: make -k
 
     steps:
     - name: Checkout repository
@@ -81,7 +83,7 @@ jobs:
       working-directory: ${{ matrix.workdir }}
       shell: bash
       run: |
-        make all
+        ${{ matrix.make_cmd }}
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v4
