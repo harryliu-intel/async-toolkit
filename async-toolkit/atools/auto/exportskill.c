@@ -97,7 +97,7 @@ static void DoTranslatedLayerPaint( PAINT Paint,
 				    void* pClientData, 
 				    const void* pTableClientData ) {
   Pesklecd pData = ( Pesklecd ) pClientData ;	
-  char CodeBuffer[ 1024 ] ;
+  char CodeBuffer[ STRMAX ] ;
   safe_sprintf( CodeBuffer, "( dbCreateRect TheCellView \"%s\" ( list ( list %d %d ) ( list %d %d ) ) ) ; %d",
 	   CadenceLayerName,
 	   round( RectToPaint.x0 ),
@@ -335,7 +335,7 @@ static void DoViaPaint( PAINT Paint,
   double top;
   double centerx;
   double centery;
-  char CodeBuffer[ 1024 ];
+  char CodeBuffer[ STRMAX ];
 
   
   CrackRect( RectToPaint, &left, &bottom, &width, &height );
@@ -579,7 +579,7 @@ typedef const char* PCChar;
 
 static void export_skill_layout_begin_func( void* pClientData ){
 
-  char CodeBuff[ 1024 ];
+  char CodeBuff[ STRMAX ];
   Pesklecd pData = ( Pesklecd ) pClientData ;
 
   safe_sprintf( CodeBuff, "( defun Block_%lu_Func ( BlockLibHandle ) ; %d ",
