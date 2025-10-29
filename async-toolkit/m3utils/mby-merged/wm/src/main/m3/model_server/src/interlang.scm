@@ -28,13 +28,14 @@
 
     (constant n-parser-keys  ,parser-extract-cfg-rf-parser-extract-cfg-n)
     (constant n-parser-ptrs    8)
+    (constant n-parser-ptrs-plus-1    9)
     (constant n-parser-flags  48)
 
     (typedef parser-hdr-ptrs
              (struct
               ((offset       (array n-parser-ptrs 8))
                (offset-valid (array n-parser-ptrs boolean))
-               (prot-id      (array n-parser-ptrs 8)))))
+               (prot-id      (array n-parser-ptrs-plus-1 8)))))
     
     (typedef parser-to-mapper
              (struct
