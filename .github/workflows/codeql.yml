@@ -80,7 +80,7 @@ jobs:
     # 📚 See https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#jobsjob_idstepsrun
     - name: Run manual build steps
       if: matrix.build-mode == 'manual'
-      working-directory: ${{ matrix.workdir }}
+      working-directory: ${{ matrix.work_dir }}
       shell: bash
       run: |
         ${{ matrix.make_cmd }}
