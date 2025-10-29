@@ -8,7 +8,7 @@
 typedef struct {
   uint8                    OFFSET                  [MBY_N_PARSER_PTRS];
   fm_bool                  OFFSET_VALID            [MBY_N_PARSER_PTRS];
-  uint8                    PROT_ID                 [MBY_N_PARSER_PTRS];
+  uint8                    PROT_ID                 [MBY_N_PARSER_PTRS + 1]; /* manually edited, sorry */
 } mby_parserHdrPtrs;
 
 void mby_parserHdrPtrs_serialize(uint64 *s, const mby_parserHdrPtrs *t);
