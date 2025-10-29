@@ -22,7 +22,7 @@ typedef struct mbyParserHdrPtrsStruct
 {
     fm_byte          OFFSET      [MBY_N_PARSER_PTRS]; // offsets to data of interest within packet
     fm_bool          OFFSET_VALID[MBY_N_PARSER_PTRS]; // parser offset valid flags
-    fm_byte          PROT_ID     [MBY_N_PARSER_PTRS]; // parser protocol IDs
+    fm_byte          PROT_ID     [MBY_N_PARSER_PTRS + 1]; // parser protocol IDs -- leave room for null termination
 
 } mbyParserHdrPtrs;
 #endif
