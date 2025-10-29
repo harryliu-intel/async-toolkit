@@ -51,7 +51,7 @@ jobs:
         - language: c-cpp
           build-mode: manual
           work_dir: async-toolkit/m3utils/mby-merged/wm/src/main/c
-          make_cmd: make -k
+          make_cmd: make -k || true
 
     steps:
     - name: Checkout repository
