@@ -48,8 +48,9 @@ void parse_label(LEX *lex, LIST *aliases, LIST *labels,
   name=parse_nodename(lex);
   last=name[strlen(name)-1];
   if ((last=='#')||(last=='!')) return;
-  strcpy(fullname,prefix);
-  strcat(fullname,name);
+  strncpy(fullname,prefix,STRMAX);
+  fullname[STRMAX-1] = '\000';
+  strncat(fullname,name,STRMAX-strlen(fullname)-1);
   name=convert_magic_name(fullname);
   lab.alias=find_alias(aliases,name);
   leak_free(name);
