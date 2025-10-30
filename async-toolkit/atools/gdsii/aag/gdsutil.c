@@ -693,10 +693,14 @@ int gds_func_structure (GDS_TRANS trans, char *name, FUNCT func)
             org_head = org;
          org_tail = org;
          org -> trans = orgtrans;
-         if ((org -> structure = malloc ((unsigned) strlen (name) + 1)))
-            strcpy (org -> structure, name);
-         else
-            out_of_memory (__LINE__);
+         size_t len = strlen(name);
+         org->structure = malloc(len + 1);
+         if (org->structure) {
+            strncpy(org->structure, name, len + 1);
+            org->structure[len] = '\0';  // not strictly necessary but makes analyzers happy
+         } else {
+            out_of_memory(__LINE__);
+         }
       }
       else
          out_of_memory (__LINE__);
@@ -907,10 +911,14 @@ int gds_read_structure (GDS_TRANS trans, char *name)
             org_head = org;
          org_tail = org;
          org -> trans = orgtrans;
-         if ((org -> structure = malloc ((unsigned) strlen (name) + 1)))
-            strcpy (org -> structure, name);
-         else
-            out_of_memory (__LINE__);
+         size_t len = strlen(name);
+         org->structure = malloc(len + 1);
+         if (org->structure) {
+            strncpy(org->structure, name, len + 1);
+            org->structure[len] = '\0';  // not strictly necessary but makes analyzers happy
+         } else {
+            out_of_memory(__LINE__);
+         }
       }
       else
          out_of_memory (__LINE__);
@@ -1912,7 +1920,8 @@ int gds_load (char *fn)
       fprintf (stderr, "Error: Too many files, recompile to exceed %d files\n", MAX_FILES);
       return (1);
    }
-   strcpy (gds_fn, fn);
+   strncpy(gds_fn, fn, sizeof(gds_fn) - 1);
+   gds_fn[sizeof(gds_fn) - 1] = '\0';
    gds = -1;
    gds_files[gds_next_file].map=NULL;
    gds_files[gds_next_file].ptr=NULL;
