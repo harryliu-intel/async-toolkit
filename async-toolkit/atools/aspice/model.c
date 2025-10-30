@@ -201,7 +201,7 @@ void MODEL_ParseModelsRecursive(int bsim, LIST *assignments, LIST *unknown,
         {
         if (lex_eatif_sym(lex,"+")) continue; /* line continuation */
         pc = lex_eat_id(lex);
-        strcpy(s,pc,STRMAX);
+        strncpy(s,pc,STRMAX);
         s[STRMAX-1]='\000';
         lex_eat_sym(lex,"=");
         if (bsim==4)
