@@ -629,7 +629,8 @@ void vsc_add_extension(char *file_name, char *extension)
   BOOL finished;
   int  i;
 
-  strcpy(temp_name, file_name);
+  strncpy(temp_name, file_name, MAXSTR);
+  temp_name[MAXSTR - 1] = 0;
   strcpy(file_name, "");
 
   finished = FALSE;
@@ -664,5 +665,5 @@ void vsc_add_extension(char *file_name, char *extension)
       strcpy(file_name, temp_name);
     }
 
-  strncat(file_name, extension, 1024-strlen(file_name)-1);  /* dirty hack */
+    strncat(file_name, extension, 1024-strlen(file_name)-1);
 }   /* vsc_add_extension */

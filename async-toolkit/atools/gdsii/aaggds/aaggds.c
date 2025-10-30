@@ -172,11 +172,14 @@ int main (int argc, char *argv[])
          switch (argv[0][1])
          {
          case 't':
-            if (argv[0][2])
-               strcpy (topcell, argv[0] + 2);
+            if (argv[0][2]) {
+              strncpy (topcell, argv[0] + 2, MAXSTR);
+              topcell[MAXSTR - 1] = 0;
+            }
             else if (argc > 1)
             {
-               strcpy (topcell, argv[1]);
+               strncpy (topcell, argv[1], MAXSTR);
+               topcell[MAXSTR - 1] = 0;
                ++argv;
                --argc;
             }
@@ -258,7 +261,7 @@ int main (int argc, char *argv[])
          *arg = 0;
          if (! (line = mygets ()))
             break;
-         sscanf (line, "%s %s", cmd, arg);
+         sscanf (line, "%1023s %1023s", cmd, arg);
          switch (*cmd)
          {
          case 0:
