@@ -113,17 +113,18 @@ int main(int argc, char *argv[]) {
   if (!basename || !fsdb) usage();
 
   // open output names and trace files
-  strcpy(filename, basename);
-  strcat(filename, ".names");
-  if (!((fn = fopen(filename, "w")))) {
-    fprintf(stderr, "Cannot write names file %s\n", filename);
-    usage();
+  snprintf(filename, sizeof(filename), "%s.names", basename);
+  fn = fopen(filename, "w");
+  if (!fn) {
+      fprintf(stderr, "Cannot write names file %s\n", filename);
+      usage();
   }
-  strcpy(filename, basename);
-  strcat(filename, ".trace");
-  if (!((ft = fopen(filename, "w")))) {
-    fprintf(stderr, "Cannot write trace file %s\n", filename);
-    usage();
+
+  snprintf(filename, sizeof(filename), "%s.trace", basename);
+  ft = fopen(filename, "w");
+  if (!ft) {
+      fprintf(stderr, "Cannot write trace file %s\n", filename);
+      usage();
   }
 
   // setup
