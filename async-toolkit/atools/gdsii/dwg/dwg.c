@@ -363,7 +363,8 @@ static int parse(void)
 		  *s++ = c;
 	    }
 	    *s = 0;
-	    strcpy (textptr, string);
+	    strncpy (textptr, string, 1024);
+            textptr[1024 - 1] = '\000';
 	 }
 	 if (c != '\n')
 	 {
@@ -528,7 +529,8 @@ int main (int argc, char *argv[])
 	       *pltfile = 0;
 	       if (strcmp (argv[i+1], "-"))
 	       {
-		  strcpy (pltfile, argv[i+1]);
+                  strncpy (pltfile, argv[i+1], sizeof(pltfile));
+                  pltfile[sizeof(pltfile)-1] = 0;
 		  if((plt=fopen(pltfile,"w"))==NULL)
 		  {
 		     fprintf(stderr,"cannot open %s\n", pltfile);
@@ -565,7 +567,8 @@ int main (int argc, char *argv[])
          {
             if (argc > i + 1)
             {
-               strcpy (title, argv[i+1]);
+               strncpy (title, argv[i+1], 1024);
+               title[1024 - 1] = 0;
                i++;
             }
             else
@@ -623,7 +626,8 @@ int main (int argc, char *argv[])
 #ifdef MAC
          if (!plt)
          {
-            strcpy (pltfile, argv[i]);
+            strncpy (pltfile, argv[i], sizeof(pltfile));
+            pltfile[sizeof(pltfile) - 1] = 0;
             if (strrchr (pltfile, '.') > strrchr (pltfile, '/'))
                strcpy (strrchr (pltfile, '.'), ".post");
             else
@@ -661,11 +665,12 @@ int main (int argc, char *argv[])
       strcpy (cmd, "lpr ");
       if (strlen (printer))
       {
-	 strcat (cmd, "-P");
-	 strcat (cmd, printer);
-	 strcat (cmd, " ");
+         strncat (cmd, "-P", sizeof(cmd) - strlen(cmd));
+	 strncat (cmd, printer, sizeof(cmd) - strlen(cmd));
+	 strncat (cmd, " ", sizeof(cmd) - strlen(cmd));
       }
-      strcat (cmd, pltfile);
+      strncat (cmd, pltfile, sizeof(cmd) - strlen(cmd));
+      cmd[sizeof(cmd) - 1] = 0;
       system(cmd);
    }
    if (!keep && *pltfile)

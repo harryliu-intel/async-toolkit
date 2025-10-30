@@ -1694,7 +1694,8 @@ void dwg_docolor (int arg)
 
 void dwg_filename (char *name)
 {
-   strcpy (filename, name);
+  strncpy (filename, name, 1024);
+  filename[1024-1] = '\000';
 }
 
 void setpen (int i)
