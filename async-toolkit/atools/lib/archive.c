@@ -53,11 +53,12 @@ void archive_cleanup()
     }
   }
 
-char *archive_member(char *path, char *archive)
+static char *archive_member(char *path, char *archive)
   {
   struct stat get_stat;
   char *member;
-  strcpy(archive,path);
+  strncpy(archive,path,STRMAX);
+  archive[STRMAX-1]='\000';
   while ((stat(archive,&get_stat)!=0)||(!S_ISREG(get_stat.st_mode)))
     {
     char *slash=strrchr(archive,'/');
