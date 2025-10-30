@@ -13,7 +13,7 @@ NODE *add_node(char *name, LIST *nodes)
   /*** handle globals ***/
   if (name[strlen(name)-1]=='!')
     {
-    strcpy(name2,name);
+    strncpy(name2,name,STRMAX);
     name2[strlen(name2)-1]=0;
     node.name=get_name(name2);
     node.global=1;
