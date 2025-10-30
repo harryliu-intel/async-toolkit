@@ -187,7 +187,8 @@ void MODEL_ParseModelsRecursive(int bsim, LIST *assignments, LIST *unknown,
     else if (lex_eatif_sym(lex,".MODEL")||lex_eatif_sym(lex,".model"))
       {
       pc=lex_eat_until_whitespace(lex); /* model device name */
-      strcpy(dn,pc);
+      strncpy(dn,pc,STRMAX);
+      dn[STRMAX-1]='\000';
       if      (lex_eatif_keyword(lex,"NMOS")||lex_eatif_keyword(lex,"nmos"))
         m=MODEL_CreateModel(bsim,NMOS,Temp);
       else if (lex_eatif_keyword(lex,"PMOS")||lex_eatif_keyword(lex,"pmos"))
@@ -200,7 +201,8 @@ void MODEL_ParseModelsRecursive(int bsim, LIST *assignments, LIST *unknown,
         {
         if (lex_eatif_sym(lex,"+")) continue; /* line continuation */
         pc = lex_eat_id(lex);
-        strcpy(s,pc);
+        strcpy(s,pc,STRMAX);
+        s[STRMAX-1]='\000';
         lex_eat_sym(lex,"=");
         if (bsim==4)
           {
