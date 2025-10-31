@@ -120,13 +120,13 @@ void add_recent(char *archive, char *member, char *output)
   entry->uses=1;
 
   entry->archive=leak_realloc(entry->archive,strlen(archive)+1);
-  strncpy(entry->archive,archive,strlen(archive)+1);
+  strcpy(entry->archive,archive);
 
   entry->member=leak_realloc(entry->member,strlen(member)+1);
-  strncpy(entry->member,member,strlen(member)+1);
+  strcpy(entry->member,member);
 
   entry->output=leak_realloc(entry->output,strlen(output)+1);
-  strncpy(entry->output,output,strlen(output)+1);
+  strcpy(entry->output,output);
   }
 
 int archive_extract(char *archive, char *member, char *output)
