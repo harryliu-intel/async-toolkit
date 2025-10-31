@@ -1,7 +1,6 @@
 #!/usr/intel/bin/perl
 
 # ---------------------------------*-perl-*-------------------------------------
-# Intel Top Secret, Copyright 2018 Intel Corporation, All Rights Reserved
 #
 # Purpose:          This file creates a list of associative arrayss for storing IP specific libraries &
 #                   vlog opts that in turn will be used in HDL UDF file for model/library definition.

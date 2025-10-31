@@ -1,6 +1,4 @@
 ################################################################################
-# Intel Top Secret
-################################################################################
 # Copyright (C) 2010, Intel Corporation.  All rights reserved.
 #
 # This is the property of Intel Corporation and may only be utilized

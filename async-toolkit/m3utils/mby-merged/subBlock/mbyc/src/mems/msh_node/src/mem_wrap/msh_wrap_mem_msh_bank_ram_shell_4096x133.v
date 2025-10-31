@@ -2,9 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 //------------------------------------------------------------------------------
-///  INTEL TOP SECRET
-
-///
 
 ///  Copyright 2018 Intel Corporation All Rights Reserved.
 
