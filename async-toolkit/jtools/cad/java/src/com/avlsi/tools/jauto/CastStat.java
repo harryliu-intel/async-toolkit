@@ -42,6 +42,7 @@ import com.avlsi.util.container.MappingIterator;
 import com.avlsi.util.container.Pair;
 import com.avlsi.util.debug.Debug;
 import com.avlsi.util.functions.UnaryFunction;
+import com.avlsi.util.functions.UnaryPredicate;
 
 /**
  * A class that brings together miscellanous statistics tasks
@@ -64,10 +65,14 @@ public class CastStat {
         System.exit(1);
     }
 
-    public static void getDynamicNodes(final CellInterface cell,
-                                       final CastFileParser cfp,
-                                       final Cadencize cad,
-                                       final Set result) {
+    public static void getDynamicNodes(
+            final CellInterface cell,
+            final CastFileParser cfp,
+            final Cadencize cad,
+            final Set result,
+            final UnaryPredicate<CellInterface> include) {
+        if (!include.evaluate(cell)) return;
+
         final CadenceInfo cinfo = cad.convert(cell);
         final ExclusiveNodeSets exclusives = new ExclusiveNodeSets();
         exclusives.merge(cinfo.getPortExclusiveNodeSets());
@@ -92,40 +97,46 @@ public class CastStat {
         }
     }
     
-    private static void getDynamicNodes(final CellInterface cell,
-                                        final CastFileParser cfp,
-                                        final Cadencize cad,
-                                        final Map result) {
+    private static void getDynamicNodes(
+            final CellInterface cell,
+            final CastFileParser cfp,
+            final Cadencize cad,
+            final Map result,
+            final UnaryPredicate<CellInterface> include) {
         final String type = cell.getFullyQualifiedType();
         final Set s = new TreeSet();
-        if (CellUtils.isLeaf(cell)) {
-            getDynamicNodes(cell, cfp, cad, s);
-        } else {
-            for (Iterator i = cell.getLocalSubcellPairs(); i.hasNext(); ) {
-                final Pair p = (Pair) i.next();
-                final HierName name = (HierName) p.getFirst();
-                final CellInterface subcell = (CellInterface) p.getSecond();
-                if (CellUtils.isWiring(subcell)) continue;
-                final String subtype = subcell.getFullyQualifiedType();
-                if (!result.containsKey(subtype)) {
-                    getDynamicNodes(subcell, cfp, cad, result);
-                }
-                final Set ss = (Set) result.get(subtype);
-                Debug.assertTrue(ss != null);
-                for (Iterator j = ss.iterator(); j.hasNext(); ) {
-                    final HierName h = (HierName) j.next();
-                    s.add(HierName.prefixName(name, h));
+        if (include.evaluate(cell)) {
+            if (CellUtils.isLeaf(cell)) {
+                getDynamicNodes(cell, cfp, cad, s, include);
+            } else {
+                for (Iterator i = cell.getLocalSubcellPairs(); i.hasNext(); ) {
+                    final Pair p = (Pair) i.next();
+                    final HierName name = (HierName) p.getFirst();
+                    final CellInterface subcell = (CellInterface) p.getSecond();
+                    if (CellUtils.isWiring(subcell)) continue;
+                    final String subtype = subcell.getFullyQualifiedType();
+                    if (!result.containsKey(subtype)) {
+                        getDynamicNodes(subcell, cfp, cad, result, include);
+                    }
+                    final Set ss = (Set) result.get(subtype);
+                    Debug.assertTrue(ss != null);
+                    for (Iterator j = ss.iterator(); j.hasNext(); ) {
+                        final HierName h = (HierName) j.next();
+                        s.add(HierName.prefixName(name, h));
+                    }
                 }
             }
         }
         result.put(type, s);
     }
 
-    public static Set getDynamicNodes(final CellInterface cell,
-                                      final CastFileParser cfp,
-                                      final Cadencize cad) {
+    public static Set getDynamicNodes(
+            final CellInterface cell,
+            final CastFileParser cfp,
+            final Cadencize cad,
+            final UnaryPredicate<CellInterface> include) {
         final Map result = new HashMap();
-        getDynamicNodes(cell, cfp, cad, result);
+        getDynamicNodes(cell, cfp, cad, result, include);
         return (Set) result.get(cell.getFullyQualifiedType());
     }
 
@@ -139,7 +150,8 @@ public class CastStat {
                                            final CastFileParser cfp) {
         final Map cache = new TreeMap();
         final Cadencize cad = new Cadencize(true);
-        getDynamicNodes(cell, cfp, cad, cache);
+        getDynamicNodes(cell, cfp, cad, cache,
+                new UnaryPredicate.Constant<CellInterface>(true));
         final Set names = (Set) cache.get(cell.getFullyQualifiedType());
 
         final CellInterface flat = cell.flatten();
@@ -216,6 +228,20 @@ public class CastStat {
                                           final Map mDynamicPortNodesMap,
                                           final Map mDynamicNodesMap)
         throws InvalidHierNameException {
+        return getDynamicPortNodes(cell, mCadencizer, mCastParser,
+                mDynamicPortNodesMap, mDynamicNodesMap,
+                new UnaryPredicate.Constant<CellInterface>(true));
+
+    }
+
+    public static Set getDynamicPortNodes(
+            final CellInterface cell,
+            final Cadencize mCadencizer,
+            final CastFileParser mCastParser,
+            final Map mDynamicPortNodesMap,
+            final Map mDynamicNodesMap,
+            final UnaryPredicate<CellInterface> include)
+        throws InvalidHierNameException {
 
         final Set existingResult = 
             ( Set ) mDynamicPortNodesMap.get( cell.getFullyQualifiedType() );
@@ -228,7 +254,7 @@ public class CastStat {
 
             final Set dynamicNodesInCell =
                 getDynamicNodes( cell, mCadencizer, mCastParser,
-                                 mDynamicPortNodesMap, mDynamicNodesMap );
+                                 mDynamicPortNodesMap, mDynamicNodesMap, include );
 
             final Iterator nodeIter = dynamicNodesInCell.iterator();
 
@@ -255,6 +281,19 @@ public class CastStat {
                                       final Map mDynamicPortNodesMap,
                                       final Map mDynamicNodesMap)
         throws InvalidHierNameException {
+        return getDynamicNodes(cell, mCadencizer, mCastParser,
+                mDynamicPortNodesMap, mDynamicNodesMap,
+                new UnaryPredicate.Constant<CellInterface>(true));
+    }
+
+    public static Set getDynamicNodes(
+            final CellInterface cell,
+            final Cadencize mCadencizer,
+            final CastFileParser mCastParser,
+            final Map mDynamicPortNodesMap,
+            final Map mDynamicNodesMap,
+            final UnaryPredicate<CellInterface> include)
+        throws InvalidHierNameException {
 
         final Set existingResult = 
             ( Set ) mDynamicNodesMap.get( cell.getFullyQualifiedType() );
@@ -263,51 +302,54 @@ public class CastStat {
         
             final Set result = new HashSet();
         
-            if (CellUtils.isLeaf(cell)) {
-                final Set hierNameSet = new HashSet();
-                CastStat.getDynamicNodes( cell,
-                                          mCastParser,
-                                          mCadencizer,
-                                          hierNameSet );
-                final Iterator currHierName = hierNameSet.iterator();
-                while ( currHierName.hasNext() ) {
-                    final HierName curr = ( HierName )currHierName.next();
-                    result.add( curr.toString() );
-                }
-            }
-            else {
-                final CadenceInfo cadenceInfo = mCadencizer.convert( cell );
-
-                final Iterator subcellPairIter = cadenceInfo.getSubcellPairIterator();
-
-                while ( subcellPairIter.hasNext() ) {
-                    final Pair subcellPair = ( Pair ) subcellPairIter.next();
-                    
-                    final HierName instanceName = ( HierName ) subcellPair.getFirst();
-                    final CellInterface subcellMaster = cell.getSubcell( instanceName );
-
-                    final Set subcellDynamicPortNodes =
-                        getDynamicPortNodes( subcellMaster, mCadencizer,
-                                             mCastParser, mDynamicPortNodesMap,
-                                             mDynamicNodesMap );
-
-
-                    final Iterator dynNodeIter = subcellDynamicPortNodes.iterator();
-
-                    while ( dynNodeIter.hasNext() ) {
-                        final String dynNodeName = ( String ) dynNodeIter.next();
-
-                        final HierName dynNodeHierName =
-                            HierName.append( instanceName, 
-                                             HierName.makeHierName( dynNodeName, '.' ) );
-
-                        final HierName canonicalDynNodeName =
-                            ( HierName ) cadenceInfo.getLocalNodes().getCanonicalKey( dynNodeHierName );
-
-                        result.add( canonicalDynNodeName.toString() );
+            if (include.evaluate(cell)) {
+                if (CellUtils.isLeaf(cell)) {
+                    final Set hierNameSet = new HashSet();
+                    CastStat.getDynamicNodes( cell,
+                                              mCastParser,
+                                              mCadencizer,
+                                              hierNameSet,
+                                              include );
+                    final Iterator currHierName = hierNameSet.iterator();
+                    while ( currHierName.hasNext() ) {
+                        final HierName curr = ( HierName )currHierName.next();
+                        result.add( curr.toString() );
                     }
                 }
-                
+                else {
+                    final CadenceInfo cadenceInfo = mCadencizer.convert( cell );
+
+                    final Iterator subcellPairIter = cadenceInfo.getSubcellPairIterator();
+
+                    while ( subcellPairIter.hasNext() ) {
+                        final Pair subcellPair = ( Pair ) subcellPairIter.next();
+                        
+                        final HierName instanceName = ( HierName ) subcellPair.getFirst();
+                        final CellInterface subcellMaster = cell.getSubcell( instanceName );
+
+                        final Set subcellDynamicPortNodes =
+                            getDynamicPortNodes( subcellMaster, mCadencizer,
+                                                 mCastParser, mDynamicPortNodesMap,
+                                                 mDynamicNodesMap );
+
+
+                        final Iterator dynNodeIter = subcellDynamicPortNodes.iterator();
+
+                        while ( dynNodeIter.hasNext() ) {
+                            final String dynNodeName = ( String ) dynNodeIter.next();
+
+                            final HierName dynNodeHierName =
+                                HierName.append( instanceName, 
+                                                 HierName.makeHierName( dynNodeName, '.' ) );
+
+                            final HierName canonicalDynNodeName =
+                                ( HierName ) cadenceInfo.getLocalNodes().getCanonicalKey( dynNodeHierName );
+
+                            result.add( canonicalDynNodeName.toString() );
+                        }
+                    }
+                    
+                }
             }
             mDynamicNodesMap.put( cell.getFullyQualifiedType(), result );
             return result;

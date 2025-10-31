@@ -73,10 +73,12 @@ import com.avlsi.cell.CellUtils;
 import com.avlsi.cell.ChildrenFirstCellInterfaceIterator;
 import com.avlsi.cell.NoSuchEnvironmentException;
 import com.avlsi.fast.BlockInterface;
+import com.avlsi.fast.BlockIterator;
 import com.avlsi.fast.DirectiveBlock;
 import com.avlsi.fast.EnvBlock;
 import com.avlsi.fast.NetlistAdapter;
 import com.avlsi.fast.NetlistBlock;
+import com.avlsi.fast.VerilogBlock;
 import com.avlsi.fast.ports.PortDefinition;
 import com.avlsi.fast.ports.NodeType;
 import com.avlsi.fast.ports.ChannelType;
@@ -304,6 +306,18 @@ public final class CastQuery {
      **/
     public static String printDouble(final double val) {
         return NumberFormatter.format(val, 4);
+    }
+
+    /**
+     * Predicate returns true if the cell has a verilog.lvs block.
+     **/
+    private static class HasVerilogLVS implements UnaryPredicate<CellInterface> {
+        public boolean evaluate(final CellInterface cell) {
+            final BlockIterator bi =
+                cell.getBlockInterface().iterator(BlockInterface.VERILOG);
+            return bi.hasNext() &&
+                   ((VerilogBlock) bi.next()).getNamedBlock("lvs") != null;
+        }
     }
 
     /**
@@ -1298,12 +1312,13 @@ public final class CastQuery {
             try {
                 final Map portNodesCache = new HashMap();
                 final Map nodesCache = new HashMap();
+                final HasVerilogLVS vlvs = new HasVerilogLVS();
                 dynamicNodes.addAll(
                     CastStat.getDynamicNodes(cell, cad, cfp, portNodesCache,
-                                             nodesCache));
+                                             nodesCache, vlvs));
                 dynamicNodes.addAll(
                     CastStat.getDynamicPortNodes(cell, cad, cfp, portNodesCache,
-                                                 nodesCache));
+                                                 nodesCache, vlvs));
             } catch (InvalidHierNameException e) {
                 throw new RuntimeException("Cannot find dynamic nodes", e);
             }
@@ -1601,7 +1616,7 @@ public final class CastQuery {
                 final AliasedSet locals = cad.convert(cell).getLocalNodes();
                 if (nodes == null) {
                     nodes = new TreeSet();
-                    CastStat.getDynamicNodes(cell, cfp, cad, nodes);
+                    CastStat.getDynamicNodes(cell, cfp, cad, nodes, new HasVerilogLVS());
                     final AliasedMap ports = cad.convert(cell).getPortNodes();
                     // remove dynamic nodes that are in the port list
                     for (Iterator i = nodes.iterator(); i.hasNext(); ) {
