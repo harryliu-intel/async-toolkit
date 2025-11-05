@@ -1,0 +1,3 @@
+x core.neuro.syn.mac_ternary.MAC_GRID core_46_neuro_46_syn_46_mac__ternary_46_MAC__GRID A=_env.A.C.q W=_env.W.C.q LS=_env.LS.C.q LD=_env.LD.C.q RS=_env.RS.C.q RD=_env.RD.C.q
+x._cosim.csa core.neuro.syn.mac_ternary.MAC_CSA core_46_neuro_46_syn_46_mac__ternary_46_MAC__CSA X=x._cosim.x.C.q LSB=x._cosim.lsb.C.q LS=x._cosim.LS.C.q LD=x._cosim.LD.C.q RS=x._cosim.RS.C.q RD=x._cosim.RD.C.q
+x._cosim.mul core.neuro.syn.mac_ternary.MAC_MUL core_46_neuro_46_syn_46_mac__ternary_46_MAC__MUL A=x._cosim.A.C.q W=x._cosim.W.C.q X=x._cosim.x.C.q LSB=x._cosim.lsb.C.q

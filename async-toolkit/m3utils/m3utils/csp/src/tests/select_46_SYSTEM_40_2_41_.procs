@@ -1,0 +1,3 @@
+x.bitgen select.BITGEN select_46_BITGEN R=x.m.C.q
+x.drive select.DRIVE select_46_DRIVE L=x.cx.C.q R0=x.c[0].C.q R1=x.c[1].C.q
+x.select select.Q0 select_46_Q0 L[0]=x.c[0].C.q L[1]=x.c[1].C.q M=x.m.C.q R=x.cx.C.q

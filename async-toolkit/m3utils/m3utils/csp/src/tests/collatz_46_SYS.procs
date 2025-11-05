@@ -1,0 +1,2 @@
+x.recv collatz.RECV collatz_46_RECV L=x.c.C.q
+x.send collatz.SEND collatz_46_SEND R=x.c.C.q

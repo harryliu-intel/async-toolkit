@@ -1,0 +1,5 @@
+x.g[0] loops.G(0) loops_46_G_40_0_41_ R=x.c[0].C.q
+x.g[1] loops.G(1) loops_46_G_40_1_41_ R=x.c[1].C.q
+x.g[2] loops.G(2) loops_46_G_40_2_41_ R=x.c[2].C.q
+x.g[3] loops.G(3) loops_46_G_40_3_41_ R=x.c[3].C.q
+x.p loops.P(4) loops_46_P_40_4_41_ L[0]=x.c[0].C.q L[1]=x.c[1].C.q L[2]=x.c[2].C.q L[3]=x.c[3].C.q

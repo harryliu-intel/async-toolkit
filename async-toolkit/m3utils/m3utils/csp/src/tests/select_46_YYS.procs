@@ -1,0 +1,3 @@
+x.g0 select.GEN(0) select_46_GEN_40_0_41_ R=x.c[0].C.q
+x.g1 select.GEN(1) select_46_GEN_40_1_41_ R=x.c[1].C.q
+x.yy select.YY select_46_YY L[0]=x.c[0].C.q L[1]=x.c[1].C.q

@@ -1,0 +1,5 @@
+x.mgr collatz.MANAGER(2) collatz_46_MANAGER_40_2_41_ STATUS=x.STATUS.C.q STRT=x.S.C.q
+x.start_tree.s collatz.STARTSPLIT(0) collatz_46_STARTSPLIT_40_0_41_ L=x.S.C.q R[0]=x.STRT[0].C.q R[1]=x.STRT[1].C.q
+x.status_tree.m collatz.SMERGE collatz_46_SMERGE L[0]=x.WSTATUS[0].C.q L[1]=x.WSTATUS[1].C.q R=x.STATUS.C.q
+x.wrkr[0] collatz.WORKER(2,1000000) collatz_46_WORKER_40_2_44_1000000_41_ STRT=x.STRT[0].C.q STATUS=x.WSTATUS[0].C.q
+x.wrkr[1] collatz.WORKER(2,1000000) collatz_46_WORKER_40_2_44_1000000_41_ STRT=x.STRT[1].C.q STATUS=x.WSTATUS[1].C.q

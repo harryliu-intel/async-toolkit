@@ -1,0 +1,2 @@
+x.recv wide.RECV(128) wide_46_RECV_40_128_41_ L=x.c.C.q
+x.send wide.SEND(128) wide_46_SEND_40_128_41_ R=x.c.C.q

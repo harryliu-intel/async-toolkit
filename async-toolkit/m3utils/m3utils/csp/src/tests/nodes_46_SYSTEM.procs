@@ -1,0 +1,3 @@
+x.p nodes.P(10) nodes_46_P_40_10_41_ R=x.d.C.q
+x.q nodes.Q nodes_46_Q R=x.c.C.q
+x.r nodes.R nodes_46_R L=x.c.C.q M=x.d.C.q

@@ -1,0 +1,3 @@
+x.p[0] demo.PROC(true) demo_46_PROC_40_true_41_ L=x.chan[0].C.q R=x.chan[1].C.q
+x.p[1] demo.PROC(false) demo_46_PROC_40_false_41_ L=x.chan[1].C.q R=x.chan[2].C.q
+x.p[2] demo.PROC(false) demo_46_PROC_40_false_41_ L=x.chan[2].C.q R=x.chan[0].C.q

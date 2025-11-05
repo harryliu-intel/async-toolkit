@@ -1,0 +1,29 @@
+x.mgr collatz2.MANAGER(10) collatz2_46_MANAGER_40_10_41_ STATUS=x.STATUS.C.q STRT=x.S.C.q
+x.start_tree.s[0] collatz2.STARTSPLIT(0) collatz2_46_STARTSPLIT_40_0_41_ L=x.start_tree.X[0].C.q R[0]=x.STRT[0].C.q R[1]=x.STRT[1].C.q
+x.start_tree.s[1] collatz2.STARTSPLIT(0) collatz2_46_STARTSPLIT_40_0_41_ L=x.start_tree.X[1].C.q R[0]=x.STRT[2].C.q R[1]=x.STRT[3].C.q
+x.start_tree.s[2] collatz2.STARTSPLIT(0) collatz2_46_STARTSPLIT_40_0_41_ L=x.start_tree.X[2].C.q R[0]=x.STRT[4].C.q R[1]=x.STRT[5].C.q
+x.start_tree.s[3] collatz2.STARTSPLIT(0) collatz2_46_STARTSPLIT_40_0_41_ L=x.start_tree.X[3].C.q R[0]=x.STRT[6].C.q R[1]=x.STRT[7].C.q
+x.start_tree.s[4] collatz2.STARTSPLIT(0) collatz2_46_STARTSPLIT_40_0_41_ L=x.start_tree.X[4].C.q R[0]=x.STRT[8].C.q R[1]=x.STRT[9].C.q
+x.start_tree.tree.s[0] collatz2.STARTSPLIT(1) collatz2_46_STARTSPLIT_40_1_41_ L=x.start_tree.tree.X[0].C.q R[0]=x.start_tree.X[0].C.q R[1]=x.start_tree.X[1].C.q
+x.start_tree.tree.s[1] collatz2.STARTSPLIT(1) collatz2_46_STARTSPLIT_40_1_41_ L=x.start_tree.tree.X[1].C.q R[0]=x.start_tree.X[2].C.q R[1]=x.start_tree.X[3].C.q
+x.start_tree.tree.tree.s[0] collatz2.STARTSPLIT(2) collatz2_46_STARTSPLIT_40_2_41_ L=x.start_tree.tree.tree.X[0].C.q R[0]=x.start_tree.tree.X[0].C.q R[1]=x.start_tree.tree.X[1].C.q
+x.start_tree.tree.tree.tree.s collatz2.STARTSPLIT(3) collatz2_46_STARTSPLIT_40_3_41_ L=x.S.C.q R[0]=x.start_tree.tree.tree.X[0].C.q R[1]=x.start_tree.X[4].C.q
+x.status_tree.m[0] collatz2.SMERGE collatz2_46_SMERGE L[0]=x.WSTATUS[0].C.q L[1]=x.WSTATUS[1].C.q R=x.status_tree.X[0].C.q
+x.status_tree.m[1] collatz2.SMERGE collatz2_46_SMERGE L[0]=x.WSTATUS[2].C.q L[1]=x.WSTATUS[3].C.q R=x.status_tree.X[1].C.q
+x.status_tree.m[2] collatz2.SMERGE collatz2_46_SMERGE L[0]=x.WSTATUS[4].C.q L[1]=x.WSTATUS[5].C.q R=x.status_tree.X[2].C.q
+x.status_tree.m[3] collatz2.SMERGE collatz2_46_SMERGE L[0]=x.WSTATUS[6].C.q L[1]=x.WSTATUS[7].C.q R=x.status_tree.X[3].C.q
+x.status_tree.m[4] collatz2.SMERGE collatz2_46_SMERGE L[0]=x.WSTATUS[8].C.q L[1]=x.WSTATUS[9].C.q R=x.status_tree.X[4].C.q
+x.status_tree.tree.m[0] collatz2.SMERGE collatz2_46_SMERGE L[0]=x.status_tree.X[0].C.q L[1]=x.status_tree.X[1].C.q R=x.status_tree.tree.X[0].C.q
+x.status_tree.tree.m[1] collatz2.SMERGE collatz2_46_SMERGE L[0]=x.status_tree.X[2].C.q L[1]=x.status_tree.X[3].C.q R=x.status_tree.tree.X[1].C.q
+x.status_tree.tree.tree.m[0] collatz2.SMERGE collatz2_46_SMERGE L[0]=x.status_tree.tree.X[0].C.q L[1]=x.status_tree.tree.X[1].C.q R=x.status_tree.tree.tree.X[0].C.q
+x.status_tree.tree.tree.tree.m collatz2.SMERGE collatz2_46_SMERGE L[0]=x.status_tree.tree.tree.X[0].C.q L[1]=x.status_tree.X[4].C.q R=x.STATUS.C.q
+x.wrkr[0] collatz2.WORKER(10,100) collatz2_46_WORKER_40_10_44_100_41_ STRT=x.STRT[0].C.q STATUS=x.WSTATUS[0].C.q
+x.wrkr[1] collatz2.WORKER(10,100) collatz2_46_WORKER_40_10_44_100_41_ STRT=x.STRT[1].C.q STATUS=x.WSTATUS[1].C.q
+x.wrkr[2] collatz2.WORKER(10,100) collatz2_46_WORKER_40_10_44_100_41_ STRT=x.STRT[2].C.q STATUS=x.WSTATUS[2].C.q
+x.wrkr[3] collatz2.WORKER(10,100) collatz2_46_WORKER_40_10_44_100_41_ STRT=x.STRT[3].C.q STATUS=x.WSTATUS[3].C.q
+x.wrkr[4] collatz2.WORKER(10,100) collatz2_46_WORKER_40_10_44_100_41_ STRT=x.STRT[4].C.q STATUS=x.WSTATUS[4].C.q
+x.wrkr[5] collatz2.WORKER(10,100) collatz2_46_WORKER_40_10_44_100_41_ STRT=x.STRT[5].C.q STATUS=x.WSTATUS[5].C.q
+x.wrkr[6] collatz2.WORKER(10,100) collatz2_46_WORKER_40_10_44_100_41_ STRT=x.STRT[6].C.q STATUS=x.WSTATUS[6].C.q
+x.wrkr[7] collatz2.WORKER(10,100) collatz2_46_WORKER_40_10_44_100_41_ STRT=x.STRT[7].C.q STATUS=x.WSTATUS[7].C.q
+x.wrkr[8] collatz2.WORKER(10,100) collatz2_46_WORKER_40_10_44_100_41_ STRT=x.STRT[8].C.q STATUS=x.WSTATUS[8].C.q
+x.wrkr[9] collatz2.WORKER(10,100) collatz2_46_WORKER_40_10_44_100_41_ STRT=x.STRT[9].C.q STATUS=x.WSTATUS[9].C.q

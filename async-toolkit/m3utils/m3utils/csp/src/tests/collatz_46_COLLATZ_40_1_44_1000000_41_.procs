@@ -1,0 +1,2 @@
+x.mgr collatz.MANAGER(1) collatz_46_MANAGER_40_1_41_ STATUS=x.STATUS.C.q STRT=x.S.C.q
+x.wrkr[0] collatz.WORKER(1,1000000) collatz_46_WORKER_40_1_44_1000000_41_ STRT=x.S.C.q STATUS=x.STATUS.C.q

@@ -1,0 +1,10 @@
+x.fifo lib.bd.standard.fifo.CSP_FIFO(3,1) lib_46_bd_46_standard_46_fifo_46_CSP__FIFO_40_3_44_1_41_ L=x.sram_ctrl[0].C.q R=x.sram_ctrl[1].C.q
+x.shimL core.test.sram.SRAM_SHIM_L(2048,39) core_46_test_46_sram_46_SRAM__SHIM__L_40_2048_44_39_41_ L=x.dutL.C.q RIA=x.ia.C.q RWD=x.wd.C.q CTRL=x.sram_ctrl[0].C.q
+x.shimR core.test.sram.SRAM_SHIM_R(39) core_46_test_46_sram_46_SRAM__SHIM__R_40_39_41_ CTRL=x.sram_ctrl[1].C.q LRD=x.rd.C.q R=x.dutR.C.q
+x.sram lib.bd.6T.sram.SRAM(1,2048,39,0,0,3,3,0) lib_46_bd_46_6T_46_sram_46_SRAM_40_1_44_2048_44_39_44_0_44_0_44_3_44_3_44_0_41_ IA=x.ia.C.q WD=x.wd.C.q RD=x.rd.C.q
+x.test.sink core.test.dut.TEST_SINK({39,1,11},39) core_46_test_46_dut_46_TEST__SINK_40__123_39_44_1_44_11_125__44_39_41_ CTRL=_env.L.C.q L=x.dutR.C.q R=_env.R.C.q
+x.test.sink._cosim.ctrl core.test.dut.TEST_CTRL core_46_test_46_dut_46_TEST__CTRL CTRL=x.test.sink._cosim.CTRL.C.q C=x.test.sink._cosim.c.C.q
+x.test.sink._cosim.data core.test.dut.TEST_SINK_DATA({39,1,11},39) core_46_test_46_dut_46_TEST__SINK__DATA_40__123_39_44_1_44_11_125__44_39_41_ C=x.test.sink._cosim.c.C.q L=x.test.sink._cosim.L.C.q R=x.test.sink._cosim.R.C.q
+x.test.src core.test.dut.TEST_SOURCE({39,1,11},39) core_46_test_46_dut_46_TEST__SOURCE_40__123_39_44_1_44_11_125__44_39_41_ CTRL=_env.L.C.q L=_env.L.C.q R=x.dutL.C.q
+x.test.src._cosim.ctrl core.test.dut.TEST_CTRL core_46_test_46_dut_46_TEST__CTRL CTRL=x.test.src._cosim.CTRL.C.q C=x.test.src._cosim.c.C.q
+x.test.src._cosim.data core.test.dut.TEST_SOURCE_DATA({39,1,11},39) core_46_test_46_dut_46_TEST__SOURCE__DATA_40__123_39_44_1_44_11_125__44_39_41_ C=x.test.src._cosim.c.C.q L=x.test.src._cosim.L.C.q R=x.test.src._cosim.R.C.q
