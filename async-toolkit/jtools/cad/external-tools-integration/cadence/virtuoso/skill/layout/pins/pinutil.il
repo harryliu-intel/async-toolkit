@@ -460,9 +460,8 @@
 
 ; delete pins and labels
 (defun DeletePins (@key (CV (geGetEditCellView)))
-  (foreach obj (setof x CV->shapes x->pin || x->objType=="label")
-           (dbDeleteObject obj)
-           )
+  (foreach obj (setof x CV->shapes x->pin)              (dbDeleteObject obj))
+  (foreach obj (setof x CV->shapes x->objType=="label") (dbDeleteObject obj))
   t
   )
 
