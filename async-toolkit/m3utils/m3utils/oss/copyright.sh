@@ -9,3 +9,7 @@ M3INSTALL=/nfs/pdx/disks/or_n3a_disk001/w138/mnystroe/m3utils
 
 (find . -type f -and -name m3makefile | xargs -n1 ${M3INSTALL}/copyright/AMD64_LINUX/copyright -type tex -year 2025 -line1 "${LINE1}" -line2 "${LINE2}" )
 
+(find . -type f -and -name Makefile | xargs -n1 ${M3INSTALL}/copyright/AMD64_LINUX/copyright -type sh -year 2025 -line1 "${LINE1}" -line2 "${LINE2}" )
+
+(find . -type f -and -name GNUmakefile | xargs -n1 ${M3INSTALL}/copyright/AMD64_LINUX/copyright -type sh -year 2025 -line1 "${LINE1}" -line2 "${LINE2}" )
+
