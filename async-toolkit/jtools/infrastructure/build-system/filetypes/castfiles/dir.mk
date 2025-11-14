@@ -1,3 +1,6 @@
+# Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+# SPDX-License-Identifier: Apache-2.0
+
 # This file is included by cell.mk in each lve cell directory
 # Remember that $(CURR_CELL_DIR) is evaluated when -reading- in the rules, not when -executing- the rules.
 # Thus, it cannot be used inside rules!

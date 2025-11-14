@@ -1,3 +1,6 @@
+# Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+# SPDX-License-Identifier: Apache-2.0
+
 AUTODEP_TAR_FILE := $(BUILD_SYSTEM_ROOT)/tools/autodep/autodep-0.2.1-fulcrum.tar.gz
 
 AUTODEP_SOURCE_ROOT := $(ROOT_TARGET_DIR)/tools/sources/autodep

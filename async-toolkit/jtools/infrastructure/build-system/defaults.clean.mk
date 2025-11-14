@@ -1,3 +1,6 @@
+# Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+# SPDX-License-Identifier: Apache-2.0
+
 
 CURR_SUB_CLEAN_MAKE_FILES := $(foreach subtargetdir, $(CURR_SUB_TARGETS_DIRS),\
                              $(subtargetdir)/cleanmakefiles )

@@ -1,3 +1,6 @@
+# Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+# SPDX-License-Identifier: Apache-2.0
+
 #Returns the number of words minus one in the specified string.
 NUM_WORDS_MINUS_ONE = $(words $(wordlist 2,$(words $(1)),$(1)))
 

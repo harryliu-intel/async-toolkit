@@ -1,4 +1,7 @@
 #!/usr/local/bin/perl
+# Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+# SPDX-License-Identifier: Apache-2.0
+
 #
 # Convert a GDS-II file into more easily parseable XML
 # (and back again)

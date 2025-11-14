@@ -1,3 +1,6 @@
+# Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+# SPDX-License-Identifier: Apache-2.0
+
 # XXX - remember that $(SPICE_DIR) and $(CELL_DIR) are evaluated when -reading- in the rules, not when -executing- the rules.
 # Thus, they cannot be used inside rules!
 # Instead, use $@, $<, $(@D), $(<D). $^, etc

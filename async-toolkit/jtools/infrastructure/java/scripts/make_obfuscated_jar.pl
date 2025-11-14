@@ -1,4 +1,7 @@
 #!/usr/local/bin/perl -w
+# Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+# SPDX-License-Identifier: Apache-2.0
+
 #
 #      make_obfuscated_jar.pl - obfuscate a jar, and remove jcast cruft
 #

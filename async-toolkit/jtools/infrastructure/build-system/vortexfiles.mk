@@ -1,3 +1,6 @@
+# Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+# SPDX-License-Identifier: Apache-2.0
+
 #rule to make c files into s.jumps files using vcc.
 %s.jumps %.d : %.c
 	$(VCC) $(VCCFLAGS) $< > $@

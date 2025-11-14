@@ -1,3 +1,6 @@
+# Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+# SPDX-License-Identifier: Apache-2.0
+
 #Rule to convert a postscript file to an encapsulated postcript file.
 #Since the .dotoutput.ps file is an intermediate file and
 #the .eps file is a result file they will both be in the target

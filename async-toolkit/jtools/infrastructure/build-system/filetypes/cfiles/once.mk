@@ -1,3 +1,6 @@
+# Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+# SPDX-License-Identifier: Apache-2.0
+
 
 #Get a comprehensive list of library directories.
 #LIBDIRS = $(PROJECT_LIB_DIRS) $(SYSTEM_LIB_DIRS)

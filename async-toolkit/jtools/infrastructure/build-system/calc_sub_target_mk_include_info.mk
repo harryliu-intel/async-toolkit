@@ -1,3 +1,6 @@
+# Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+# SPDX-License-Identifier: Apache-2.0
+
 #Calculate the value of the variables that store information about the
 #default.mk files that we are supposed to include from the subdirectories of
 #the current target directory.

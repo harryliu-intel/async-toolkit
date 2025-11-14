@@ -1,3 +1,6 @@
+# Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+# SPDX-License-Identifier: Apache-2.0
+
 $(SPICE_DIR)/%/cell.lib $(SPICE_DIR)/%/cell.paths: \
 	$(CELL_DIR)/cell.nodeprops$(ROUTED_SUFFIX)$(ACCURATE_SUFFIX) \
 	$(GDS_DIR)/cell.cdl_gds2 \

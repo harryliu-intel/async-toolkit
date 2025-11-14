@@ -1,3 +1,6 @@
+# Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+# SPDX-License-Identifier: Apache-2.0
+
 #all the stuff to do upon entering a directory but before recursing to sub directories.
 
 #Reset variables for this directory.
