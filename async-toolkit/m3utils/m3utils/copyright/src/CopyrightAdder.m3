@@ -46,9 +46,11 @@ CONST
     Mapping{".zsh",   HashStyle}, 
     Mapping{".py",    HashStyle},
     Mapping{".pl",    HashStyle}, 
+    Mapping{".pm",    HashStyle}, 
     Mapping{".perl",  HashStyle},
     Mapping{".rb",    HashStyle}, 
     Mapping{".tcl",   HashStyle},
+    Mapping{".mk",    HashStyle}, 
     Mapping{".c",     CStyle},
     Mapping{".h",     CStyle},
     Mapping{".p4",    CStyle},
@@ -66,7 +68,8 @@ CONST
     Mapping{".cast",  SlashStyle},
     Mapping{".tex",   PercentStyle},
     Mapping{".tmpl",  PercentStyle},
-    Mapping{".scm",   SemicolonStyle}
+    Mapping{".scm",   SemicolonStyle},
+    Mapping{".il",    SemicolonStyle}
   };
 
 VAR
@@ -440,9 +443,10 @@ PROCEDURE PrintUsage() RAISES {Wr.Failure} =
     W("  .m3, .i3, .ig, .mg  Modula-3 files       (* ... *)\n");
     W("  .sh, .zsh           Shell files          # ...\n");
     W("  .py                 Python files         # ...\n");
-    W("  .pl, .perl          Perl files           # ...\n");
+    W("  .pl, .perl, .pm     Perl files           # ...\n");
     W("  .rb                 Ruby files           # ...\n");
     W("  .tcl                Tcl files            # ...\n");
+    W("  .mk                 Makefiles            # ...\n");
     W("  .c, .h, .p4         C files              /* ... */\n");
     W("  .cpp, .java         C++/Java files       // ...\n");
     W("  .scala              Scala files          // ...\n");
@@ -453,6 +457,7 @@ PROCEDURE PrintUsage() RAISES {Wr.Failure} =
     W("  .tex                LaTeX files          % ...\n");
     W("  .tmpl               Template files       % ...\n");
     W("  .scm                Scheme files         ; ...\n");
+    W("  .il                 SKILL files          ; ...\n");
   END PrintUsage;
 
 PROCEDURE DoIt() =
