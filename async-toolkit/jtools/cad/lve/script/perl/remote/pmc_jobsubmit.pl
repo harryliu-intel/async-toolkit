@@ -1,4 +1,7 @@
 #!/usr/intel/bin/perl
+# Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+# SPDX-License-Identifier: Apache-2.0
+
 # $Id$
 # $Log: pmc_jobsubmit.pl,v $
 # Revision 1.12  2004/11/02 19:28:03  deshmane

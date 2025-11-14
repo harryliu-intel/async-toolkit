@@ -1,4 +1,7 @@
 #!/usr/intel/pkgs/perl/5.14.1-threads/bin/perl -l
+# Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+# SPDX-License-Identifier: Apache-2.0
+
 
 BEGIN {
     push @INC, ("/usr/intel/pkgs/perl/5.14.1-threads/lib64/module/r1/x86_64-linux-thread-multi","/usr/intel/pkgs/perl/5.14.1-threads/lib64/module/r1");

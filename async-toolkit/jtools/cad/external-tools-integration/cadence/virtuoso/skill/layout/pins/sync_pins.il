@@ -1,3 +1,6 @@
+; Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+; SPDX-License-Identifier: Apache-2.0
+
 (defun DrawSyncPins (@key (CV (geGetEditCellView)))
  (let (props points layer isPin startVias endVias doubleVias flipX flipY pattern layers
               pitch busShield rotateMetals newpoints paths guideInst guideInstName

@@ -1,3 +1,6 @@
+; Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+; SPDX-License-Identifier: Apache-2.0
+
 CABLE_DENSE_1 = (DefChan (list 
 	list(   "[0]"  dense_e1of4   0*TrackPitch   BusMetal45 )
 ) ) 

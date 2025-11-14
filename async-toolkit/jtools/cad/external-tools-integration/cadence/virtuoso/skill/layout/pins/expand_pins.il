@@ -1,3 +1,6 @@
+; Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+; SPDX-License-Identifier: Apache-2.0
+
 ; Expand rectangle pins to cover all touching metal
 (defun ExpandPins (@key (CV (geGetEditCellView)))
   (let (tempCV overlaps fig dd_CV)

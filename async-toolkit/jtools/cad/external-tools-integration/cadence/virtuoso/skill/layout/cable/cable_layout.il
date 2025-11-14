@@ -1,3 +1,6 @@
+; Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+; SPDX-License-Identifier: Apache-2.0
+
 (defun createCableLayout ( cableGuide @key (CV (geGetEditCellView)) (layoutView "cable"))
  (let ( 
         spec_root spec_temp 

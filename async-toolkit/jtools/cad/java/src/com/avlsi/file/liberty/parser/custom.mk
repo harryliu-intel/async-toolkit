@@ -1,3 +1,6 @@
+# Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+# SPDX-License-Identifier: Apache-2.0
+
 LIBERTY_PARSER_DIST := liberty_parse-2.5
 
 LIBERTY_PARSER_DIR := $(CURR_PROJECT_DIR)/$(LIBERTY_PARSER_DIST)

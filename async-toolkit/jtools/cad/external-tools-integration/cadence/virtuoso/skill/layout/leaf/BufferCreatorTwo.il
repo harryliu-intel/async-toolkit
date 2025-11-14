@@ -1,3 +1,6 @@
+; Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+; SPDX-License-Identifier: Apache-2.0
+
 (defun MakeBuffer (CellView ViewName)
 	(let (text parameter1 parameter2 parameter3 parameter4 cordnx1 cordnx2 cordr1nx1 cordr1nx2 cordr1px1 cordr1px2 cordR0x1 cordR0x2 cordR0y1 cordR0y2 cordR1x1 cordR1x2 cordR1y2 cordResx2 cordresx1 cordrvx1 cordrvx2 cordrvy2 cordLex1 cordLex2 cordLey2 R0NWidth R0PWidth R1NWidth R1PWidth LeNWidth Nr0Width Pr0Width LePWidth ResPWidth ResNWidth rvNWidth rvPWidth ActualcordR1x2 ActualcordR1x1 ActualcordR0x2 ActualcordR0x1 i Actualcordrvx1 ActualcordLex1 actualleftPoly ActualleftPoly ActualrightPoly Actualcordrvx2 prbound pry1 pry2 pry3 pry4 INST SHAPE VIA)
 	i=0

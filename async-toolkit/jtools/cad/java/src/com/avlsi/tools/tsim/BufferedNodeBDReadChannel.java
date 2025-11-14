@@ -1,3 +1,6 @@
+// Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+// SPDX-License-Identifier: Apache-2.0
+
 /*
  * Copyright 2001, 2002, 2003 Fulcrum Microsystems.  All rights reserved.
  * $Id: //mrl/sw/intel/cad/java/src/com/avlsi/tools/tsim/BufferedNodeBDReadChannel.java#1 $

@@ -1,3 +1,6 @@
+; Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+; SPDX-License-Identifier: Apache-2.0
+
 ; Global Variable Used:
 ; 1. TR_Floorplanner_CellGroup_%n (use to display result after analysis)
 ; 2. TR_Floorplanner_CellGroup_x TR_Floorplanner_CellGroup_y (Form Coordinates)

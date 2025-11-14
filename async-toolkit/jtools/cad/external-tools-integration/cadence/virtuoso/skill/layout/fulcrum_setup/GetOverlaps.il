@@ -1,3 +1,6 @@
+; Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+; SPDX-License-Identifier: Apache-2.0
+
 ; This Skill Code will select cells ("inst") whish is overlapping with the seleceted cells
 ; The code will automatically filter out unrelated object type (eg. "shape" "rect") and 
 ; will not consider them in the process

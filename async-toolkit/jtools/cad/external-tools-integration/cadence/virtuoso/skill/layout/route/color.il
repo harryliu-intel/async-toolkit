@@ -1,3 +1,6 @@
+; Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+; SPDX-License-Identifier: Apache-2.0
+
 ; create a FQCN_reverse_color_m0 overlay cell to reverse m0 coloring
 (defun ReverseColorM0 (@key (CV (geGetEditCellView)))
   (let (inMapping outMapping cellName dstCV)

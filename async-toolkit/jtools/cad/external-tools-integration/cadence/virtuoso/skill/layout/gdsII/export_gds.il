@@ -1,3 +1,6 @@
+; Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+; SPDX-License-Identifier: Apache-2.0
+
 ; Export GDS for current cell with only cell name conversion (now also used for lve)
 (defun ExportGDS (@key (CV (geGetEditCellView))
                        (directory nil)

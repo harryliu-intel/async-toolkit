@@ -1,3 +1,6 @@
+; Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+; SPDX-License-Identifier: Apache-2.0
+
 ; Version of MakeLayoutTag for custom leaf cell extraction for 1278.3
 (defun MakeLeafTag (@key (CV (geGetEditCellView))
                          (targetViewName "layout_tag"))

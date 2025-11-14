@@ -1,3 +1,6 @@
+; Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+; SPDX-License-Identifier: Apache-2.0
+
 ; add a standard power grid to a cellview
 (defun AddPowerGrid (@key (CellView nil) (bbox nil))
   (let (x0 y0 x1 y1 power)

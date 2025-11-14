@@ -6,7 +6,6 @@ com.fulcrummicro.hw.verification.lib.constants.*;
 <%args>
 Collection<ConstantsCell> cells;
 </%args>\
-// INTEL TOP SECRET
 // Copyright <% java.util.Calendar.getInstance().get(java.util.Calendar.YEAR) %> Intel Corporation. All Rights Reserved.
 // $Id:  $
 // DO NOT EDIT! Automatically generated from constant xml.

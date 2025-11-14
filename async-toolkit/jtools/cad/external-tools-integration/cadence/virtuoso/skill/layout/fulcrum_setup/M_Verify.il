@@ -1,3 +1,6 @@
+; Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+; SPDX-License-Identifier: Apache-2.0
+
 ; boundp( `M_Verify ) && hiFixedMenuDown( M_Verify )
 
 M_TR_NormalLVS = hiCreateMenuItem( 

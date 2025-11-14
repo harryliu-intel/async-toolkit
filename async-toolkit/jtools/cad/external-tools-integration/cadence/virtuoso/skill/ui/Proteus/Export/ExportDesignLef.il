@@ -1,3 +1,6 @@
+; Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+; SPDX-License-Identifier: Apache-2.0
+
 ; Copyright 2003 Fulcrum Microsystems.  All rights reserved.
 ; $Id: //depot/sw/main/cad/external-tools-integration/cadence/virtuoso/skill/ui/Nano/Export/ExportDesignLef.il#3 $
 ; $DateTime: 2006/07/07 15:13:59 $

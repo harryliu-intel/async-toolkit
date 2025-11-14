@@ -1,3 +1,6 @@
+; Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+; SPDX-License-Identifier: Apache-2.0
+
 ; Flatten floorplan view to flatten view.  CAST cells without
 ; routed=true are inlined.  Also adds power and color grids, and runs
 ; UpdateFloorplan and RedrawAllPins and preps for DEF export.

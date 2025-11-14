@@ -1,3 +1,6 @@
+// Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+// SPDX-License-Identifier: Apache-2.0
+
 import "DPI-C" function int cast2verilog_fopen(input string filename, input string mode);
 import "DPI-C" function int cast2verilog_fgetc(input int fp);
 import "DPI-C" function int cast2verilog_fputc(input byte c, input int fp);

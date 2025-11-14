@@ -1,3 +1,6 @@
+; Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+; SPDX-License-Identifier: Apache-2.0
+
 ; This Fuction is used to initialize the entire IO Pad Frame 
 ; This first function does nothing but just create and display the form
 procedure( TR_DrawIO( )

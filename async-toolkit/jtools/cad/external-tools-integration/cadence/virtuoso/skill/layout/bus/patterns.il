@@ -1,3 +1,6 @@
+; Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+; SPDX-License-Identifier: Apache-2.0
+
 ; Map from BusPattern string name to pattern structure.  All native
 ; patterns of the PDK should be included here.  Wide and sparse array
 ; patterns are parsed separately and can apply to all of these base

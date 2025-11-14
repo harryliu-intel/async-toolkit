@@ -1,3 +1,6 @@
+; Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+; SPDX-License-Identifier: Apache-2.0
+
 ; ======================================================================================================
 ; This procedure is used to produce ("merge") the original binding file with the cellName.map file
 ; (obtained from the Cadence PIPO process)

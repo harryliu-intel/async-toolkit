@@ -1,3 +1,6 @@
+// Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+// SPDX-License-Identifier: Apache-2.0
+
 /************************************************************
  * This verilog model for FILTER prevents both nodes of the
  * metastable pair _D0,_D1 from falling simultaneously,

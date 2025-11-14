@@ -1,3 +1,6 @@
+; Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+; SPDX-License-Identifier: Apache-2.0
+
 ; Functions to move selected cells to minimize the vertical and/or
 ; horizontal wirespan to their fanin or fanout.  Designed to help
 ; placement of complex structures like

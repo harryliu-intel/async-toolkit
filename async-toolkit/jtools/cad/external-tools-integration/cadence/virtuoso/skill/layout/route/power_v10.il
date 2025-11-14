@@ -1,3 +1,6 @@
+; Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+; SPDX-License-Identifier: Apache-2.0
+
 ; Draw v10 to connect subcell m10 pins to m11 power stripe pattern
 (defun PowerV10 (inst_name
                  @key (CV (geGetEditCellView))

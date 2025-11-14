@@ -1,3 +1,6 @@
+; Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+; SPDX-License-Identifier: Apache-2.0
+
 ; Wire length checking functions.  Use net connectivity as a hint, but
 ; use overlaps to find wiring without connectivity as well.
 ; Recursively accumulates lengths in subcells.

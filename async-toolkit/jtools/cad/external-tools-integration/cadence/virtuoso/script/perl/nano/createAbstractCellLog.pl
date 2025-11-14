@@ -1,4 +1,7 @@
 #!/usr/intel/bin/perl -w
+# Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+# SPDX-License-Identifier: Apache-2.0
+
 #
 # Generate abstract.log file with md5sum of source view and optional
 # tool parameters.

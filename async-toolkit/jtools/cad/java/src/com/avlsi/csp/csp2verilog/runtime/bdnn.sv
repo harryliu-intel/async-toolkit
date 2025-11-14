@@ -1,3 +1,6 @@
+// Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+// SPDX-License-Identifier: Apache-2.0
+
 module BDNodes2ChannelConv2
     #(parameter numBits = 3)
     (input [0:numBits-1] nodes,

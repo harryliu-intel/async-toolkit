@@ -1,3 +1,6 @@
+; Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+; SPDX-License-Identifier: Apache-2.0
+
 ; Copyright 2006 Fulcrum Microsystems.  All rights reserved.
 ; $Id: //depot/sw/main/cad/external-tools-integration/cadence/virtuoso/skill/layout/bus/bus.il#5 $
 ; $DateTime: 2006/12/09 12:58:15 $

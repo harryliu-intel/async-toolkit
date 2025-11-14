@@ -1,4 +1,7 @@
 #!/usr/bin/perl
+# Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+# SPDX-License-Identifier: Apache-2.0
+
 # This script wraps around vs2cast and lve to make it easier to construct a PLT
 # simulation from partially extracted .v and .spf files.  The general flow is:
 # 1. Munge .v and .spf files to sanitize special characters.

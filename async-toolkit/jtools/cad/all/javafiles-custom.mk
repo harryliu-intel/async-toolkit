@@ -1,3 +1,6 @@
+# Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+# SPDX-License-Identifier: Apache-2.0
+
 # Copyright 2003 Fulcrum Microsystems.  All rights reserved.
 # $Id: //depot/sw/cad/external-tools-integration/cadence/virtuoso/main/javafiles-custom.mk#2 $
 # $DateTime: 2003/03/18 20:53:51 $

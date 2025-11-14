@@ -1,3 +1,6 @@
+# Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+# SPDX-License-Identifier: Apache-2.0
+
 # vim:et:sw=4:ts=4:tw=79:
 # Makefile for compiling all Jamon templates.
 

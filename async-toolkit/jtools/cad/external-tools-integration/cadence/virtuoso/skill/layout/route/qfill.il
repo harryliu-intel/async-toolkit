@@ -1,3 +1,6 @@
+; Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+; SPDX-License-Identifier: Apache-2.0
+
 ; Run QFILL to add fill and color shapes to a cell
 (defun DoFill (@key (CV (geGetEditCellView)) (botLayer "m0") (topLayer "m10")
                     (layers nil) (delete t))

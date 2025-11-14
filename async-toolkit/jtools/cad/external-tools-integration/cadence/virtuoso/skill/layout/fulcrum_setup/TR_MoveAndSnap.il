@@ -1,3 +1,6 @@
+; Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+; SPDX-License-Identifier: Apache-2.0
+
 ; global variables for alignment
 MoveAndSnap_xSnap=pitch_m3
 MoveAndSnap_ySnap=pitch_m4

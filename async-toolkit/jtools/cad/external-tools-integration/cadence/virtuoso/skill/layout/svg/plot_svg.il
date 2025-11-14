@@ -1,3 +1,6 @@
+; Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+; SPDX-License-Identifier: Apache-2.0
+
 ; plot a cell in SVG format
 (defun PlotSVG (@key (CV (geGetEditCellView)) (power nil) (peak nil))
   (let (map fin name inst density area max_density

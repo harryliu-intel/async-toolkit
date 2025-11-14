@@ -1,3 +1,6 @@
+; Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+; SPDX-License-Identifier: Apache-2.0
+
 ; This Fuction is used to select all the instances in the layout that 
 ; have the same master as the selected cell(s)
 procedure( SelectSameMaster( )

@@ -1,3 +1,6 @@
+; Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+; SPDX-License-Identifier: Apache-2.0
+
 (defvar Scratch1LPP ( list "y1" "drawing" ) )
 (defvar Scratch2LPP ( list "y2" "drawing" ) )
 (defvar Scratch3LPP ( list "y6" "drawing" ) )

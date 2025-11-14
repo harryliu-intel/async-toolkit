@@ -1,4 +1,7 @@
 #!/usr/intel/bin/perl -l
+# Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+# SPDX-License-Identifier: Apache-2.0
+
 # AAG
 # $Id: dangling,v 1.5 2006/04/21 04:10:44 aubrey Exp aubrey $
 # $DateTime$

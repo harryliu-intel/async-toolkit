@@ -1,3 +1,6 @@
+; Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+; SPDX-License-Identifier: Apache-2.0
+
 ; Much faster alternative to SyncToNetlist.  Great for supersize
 ; floorplanning iterations.  Includes net connectivity and pcells in
 ; layout leaf cells.

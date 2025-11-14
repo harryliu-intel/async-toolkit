@@ -1,3 +1,6 @@
+; Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+; SPDX-License-Identifier: Apache-2.0
+
 (defun DecideTemplate ( OutInvNW1 OutInvPW1 NandNW5 NandPW1 LeNW1 LePW1 )
 
 	when((OutInvNW1<=1.56)&&(OutInvPW1<=2.08)&&(NandNW5<1.69)&&(NandPW1<0.65)&&(LeNW1<2.21)&&(LePW1<3.9)

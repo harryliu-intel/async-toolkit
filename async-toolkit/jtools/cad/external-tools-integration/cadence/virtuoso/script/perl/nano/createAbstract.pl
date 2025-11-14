@@ -1,4 +1,7 @@
 #!/usr/bin/perl -w
+# Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+# SPDX-License-Identifier: Apache-2.0
+
 #
 # Generate dfII abstract cellview from routed layout cellview for single cell,
 # using Cadence Abstract Generator. P4 submit generated abstract.

@@ -1,3 +1,6 @@
+/* Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information. */
+/* SPDX-License-Identifier: Apache-2.0 */
+
 #define FUNC_NAME(n) default_func_ ## n
 #define FUNC(n) \
         int FUNC_NAME(n) (int count, int key) { \

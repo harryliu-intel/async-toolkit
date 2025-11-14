@@ -1,3 +1,6 @@
+# Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+# SPDX-License-Identifier: Apache-2.0
+
 # vim:et:sw=4:ts=4:tw=79:
 ###############################################################################
 # File:             job_netbatch.pm
@@ -5,7 +8,6 @@
 # Creation Date:    May 1, 2012
 # Description:      Defines how to run a job using netbatch 
 #
-# INTEL TOP SECRET
 # Copyright 2004 - 2012 Intel Corporation
 # All Rights Reserved.
 ###############################################################################

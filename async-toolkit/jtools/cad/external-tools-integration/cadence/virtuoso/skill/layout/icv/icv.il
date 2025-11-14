@@ -1,3 +1,6 @@
+; Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+; SPDX-License-Identifier: Apache-2.0
+
 ; Copyright 2015 Intel Corporation.  All rights reserved.
 ; $Id: //mrl/sw/intel/cad/external-tools-integration/cadence/virtuoso/skill/layout/assura/assura.il#5 $
 ; $DateTime: 2015/04/02 00:54:56 $

@@ -1,3 +1,6 @@
+; Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+; SPDX-License-Identifier: Apache-2.0
+
 load( sprintf( nil "%s/share/skill/layout/fulcrum_setup/%s" VirtuosoHome "/DrawWellPlugs.il"))
 load( sprintf( nil "%s/share/skill/layout/fulcrum_setup/%s" VirtuosoHome "/AlignCells.il"))
 load( sprintf( nil "%s/share/skill/layout/fulcrum_setup/%s" VirtuosoHome "/AlignCellsNonOverlap.il"))

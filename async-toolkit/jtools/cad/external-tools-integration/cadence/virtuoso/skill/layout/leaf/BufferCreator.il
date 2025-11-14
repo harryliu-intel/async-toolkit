@@ -1,3 +1,6 @@
+; Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+; SPDX-License-Identifier: Apache-2.0
+
 (defun MakeBuffer (CellView ViewName)
 	(let (text parameter1 parameter2 parameter3 parameter4 cordM2_M1 INST SHAPE Inst_Reset cordpx1 cordpx2 cordnx1 cordnx2 cordnrx1 cordnrx2 cordRRx cordRaRx cordR2Rx cordR2Lx cordLeRx cordResRx cordUResRx cordPLx cordPLx1 cordPLx2 ixy1 ixy2 diffpass centreXY cordPCLx DIFF Lpinx foldss) 
 	fl = infile("Parameter.txt")

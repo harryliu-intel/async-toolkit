@@ -1,3 +1,6 @@
+; Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+; SPDX-License-Identifier: Apache-2.0
+
 ; A replacement for dbCopyCellView.  When the b_overwrite bit is true,
 ; it will dbReopen the destination CellView in "r" mode so that
 ; dbCopyCellView will overwrite it without error regardless of locking

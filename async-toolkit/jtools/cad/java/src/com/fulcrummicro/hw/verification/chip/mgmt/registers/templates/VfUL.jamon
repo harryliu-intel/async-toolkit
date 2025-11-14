@@ -1,5 +1,4 @@
 <%doc>
-INTEL TOP SECRET
 Copyright 2013 - 2014 Intel Corporation
 All Rights Reserved.
 </%doc>
@@ -266,7 +265,6 @@ String guard = "__".concat(prefix).concat(output).replaceAll("\\.", "_").toUpper
 String pakkage = prefix.concat("registers_pkg").toLowerCase();
 </%java>
 /**
- * INTEL TOP SECRET
  * Copyright <& copyright_year; creationYear = 2013 &> Intel Corporation
  * All Rights Reserved.
  *

@@ -1,3 +1,6 @@
+# Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+# SPDX-License-Identifier: Apache-2.0
+
 dsimjar : $(APPS_TARGET_DIRS)/dsim.jar
 
 DSIM_BUILD_TEMP := $(APPS_TARGET_DIRS)/dsim.jar-tempdir

@@ -1,3 +1,6 @@
+// Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+// SPDX-License-Identifier: Apache-2.0
+
 /*
  * A multi-rail logic optimizer.  Uses given seed terms in a karnaugh
  * map, grows them maximally, including optional invariant terms, then

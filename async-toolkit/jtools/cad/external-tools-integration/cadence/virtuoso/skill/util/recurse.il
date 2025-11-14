@@ -1,3 +1,6 @@
+; Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+; SPDX-License-Identifier: Apache-2.0
+
 ; From Fulcrum skill code.
 ; Recursively find subcells of a cell that match a filter and apply an
 ; action.  Returns the list of cells that passed the filter.

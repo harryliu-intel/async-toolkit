@@ -1,3 +1,6 @@
+# Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+# SPDX-License-Identifier: Apache-2.0
+
 jauto : $(APPS_TARGET_DIRS)/jauto.jar
 
 JAUTO_BUILD_TEMP := $(APPS_TARGET_DIRS)/jauto.jar-tempdir

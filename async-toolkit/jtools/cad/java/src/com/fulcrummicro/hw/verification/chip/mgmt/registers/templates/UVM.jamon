@@ -1,5 +1,4 @@
 <%doc>
-INTEL TOP SECRET
 Copyright 2012 - 2013 Intel Corporation
 All Rights Reserved.
 </%doc>
@@ -524,7 +523,6 @@ static int FV_SV_INDENT = 4;
 // Description:     UVM (Standard Universal Verification Methodology) register
 //                  classes<%if coverage %> with coverage support</%if>
 //
-// INTEL TOP SECRET
 // Copyright <& copyright_year; creationYear = 2012 &> Intel Corporation
 // All Rights Reserved.
 //

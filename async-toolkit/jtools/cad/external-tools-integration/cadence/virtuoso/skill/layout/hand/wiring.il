@@ -1,3 +1,6 @@
+; Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+; SPDX-License-Identifier: Apache-2.0
+
 ; compare two contacts for electrical connection
 (defun ContactsConnected (obj1 obj2)
   (let (match)

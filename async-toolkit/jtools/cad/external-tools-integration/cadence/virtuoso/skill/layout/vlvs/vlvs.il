@@ -1,3 +1,6 @@
+; Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+; SPDX-License-Identifier: Apache-2.0
+
 ; Support All Orientations
 ; R0 R90 R180 R270 MY MX MXR90 MYR90
 ;

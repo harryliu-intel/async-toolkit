@@ -1,3 +1,6 @@
+; Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+; SPDX-License-Identifier: Apache-2.0
+
 ; Simple flow to import OAS to DFII.  Streams in OSA to a temporary
 ; library.  Does not include CopyToNewLib like ImportGDS does.  This is usually
 ; used to import IP collateral which requires extra skill processing steps.

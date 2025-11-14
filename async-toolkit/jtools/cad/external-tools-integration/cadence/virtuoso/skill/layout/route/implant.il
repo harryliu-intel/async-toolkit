@@ -1,3 +1,6 @@
+; Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+; SPDX-License-Identifier: Apache-2.0
+
 ; draw NV1/PV1 in a custom fragment cell
 (defun DrawUV1 (@key (CV (geGetEditCellView)))
   (let  (x0 x1)

@@ -1,3 +1,6 @@
+; Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+; SPDX-License-Identifier: Apache-2.0
+
 ; This Fuction is used to auto draw well plugs 
 ; Assume that there is only one layer of each NIMP, PIMP and/or NWELL
 ; Multiple overlaps of the same layer may crash the script

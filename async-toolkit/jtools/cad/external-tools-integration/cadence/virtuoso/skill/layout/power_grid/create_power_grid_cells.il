@@ -1,3 +1,6 @@
+; Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+; SPDX-License-Identifier: Apache-2.0
+
 ; Script to create globals.POWER_GRID.m*_pg cells
 ;
 ; Gets all dimensions from PDK businfo.il, but the choice of stripes

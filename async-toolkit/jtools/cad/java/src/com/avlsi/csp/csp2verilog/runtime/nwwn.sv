@@ -1,3 +1,6 @@
+// Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+// SPDX-License-Identifier: Apache-2.0
+
 module csp_e1of_widenarrow #(parameter integer BASE=4, LEN=2, NBITS=3, WBITS=5)
                             (output reg signed [0:LEN-1][NBITS-1:0] NARROW$data,
                              input [0:LEN-1] NARROW$enable,

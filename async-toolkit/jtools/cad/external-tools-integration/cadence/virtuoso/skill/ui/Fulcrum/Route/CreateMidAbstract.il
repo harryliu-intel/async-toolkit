@@ -1,3 +1,6 @@
+; Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+; SPDX-License-Identifier: Apache-2.0
+
 ; Copyright 2002 Fulcrum Microsystems.  All rights reserved.
 ; $Id: //depot/sw/cad/external-tools-integration/cadence/virtuoso/main/skill/ui/Fulcrum/Route/Keepout.il#15 $
 ; $DateTime: 2004/09/22 19:55:39 $

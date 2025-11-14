@@ -1,3 +1,6 @@
+; Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+; SPDX-License-Identifier: Apache-2.0
+
 ; This Fuction is used to align all the selected cells on to the power grids
 ; It is only applicable for instances (cells), if other types (eg. rectangle) are
 ; selected, they will be filtered out by the skill code and automatically unselected

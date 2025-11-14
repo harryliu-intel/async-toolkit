@@ -1,3 +1,6 @@
+; Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+; SPDX-License-Identifier: Apache-2.0
+
 ; Delete shapes with autogen=t property
 (defun DeleteAutoGen (@key (CV (geGetEditCellView)) (propName "autogen") (propValue nil))
   (foreach obj (setof x CV->shapes (dbGetPropByName x propName)->value

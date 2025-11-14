@@ -1,3 +1,6 @@
+; Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+; SPDX-License-Identifier: Apache-2.0
+
 ; Simpler flow to import GDS to DFII.  Streams in GDS to a temporary
 ; library, copies all cells to the desired destination libName,
 ; appends a prefix and suffix to create CAST-style cellName's, and

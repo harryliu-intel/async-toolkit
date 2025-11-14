@@ -1,4 +1,7 @@
 #!/bin/bash
+# Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+# SPDX-License-Identifier: Apache-2.0
+
 
 function my_exec() {
     qrsh -V -now n -cwd -nostdin -noshell -l mem=500 -p -20 $@ </dev/null &>/dev/null &

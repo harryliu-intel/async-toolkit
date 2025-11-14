@@ -1,3 +1,6 @@
+# Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+# SPDX-License-Identifier: Apache-2.0
+
 MAKE_ANTLR_RULES_G_FILE_NAME      := verilog.g
 MAKE_ANTLR_RULES_LEXER_NAME       := VerilogLexer
 MAKE_ANTLR_RULES_PARSER_NAME      := VerilogParser

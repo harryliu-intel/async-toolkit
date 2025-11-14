@@ -1,3 +1,6 @@
+// Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+// SPDX-License-Identifier: Apache-2.0
+
 `ifndef IMPORT_HIST_FUNCS
 `define IMPORT_HIST_FUNCS
 import "DPI-C" function bit histmon_register_node(string node_name);

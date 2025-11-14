@@ -1,3 +1,6 @@
+; Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+; SPDX-License-Identifier: Apache-2.0
+
 ;(defvar dense_sbuf_spec strcat( ( ConfigFileGetValue TheCDSConfigTable "VIRTUOSO_HOME" ) "/share/skill/layout/cable/spec_templates/dense_sbuf_spec.cast") )
 ;(defvar dense_mbuf_spec strcat( ( ConfigFileGetValue TheCDSConfigTable "VIRTUOSO_HOME" ) "/share/skill/layout/cable/spec_templates/dense_mbuf_spec.cast") )
 ;(defvar dense_rbuf_spec strcat( ( ConfigFileGetValue TheCDSConfigTable "VIRTUOSO_HOME" ) "/share/skill/layout/cable/spec_templates/dense_rbuf_spec.cast") )

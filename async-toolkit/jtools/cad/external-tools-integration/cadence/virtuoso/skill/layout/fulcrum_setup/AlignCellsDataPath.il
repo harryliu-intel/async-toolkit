@@ -1,3 +1,6 @@
+; Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+; SPDX-License-Identifier: Apache-2.0
+
 ; This Fuction is used to align all the selected cells on to form a vertical datapath
 ; It only works if the selected cells are of the same master
 ; It will retain the rotation properties of the cells 

@@ -1,3 +1,6 @@
+; Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+; SPDX-License-Identifier: Apache-2.0
+
 ; Get CopyExact or GDS2 cellName
 (defun GetCopyExact (@key (CV (geGetEditCellView)))
   (let (CID copyexact)

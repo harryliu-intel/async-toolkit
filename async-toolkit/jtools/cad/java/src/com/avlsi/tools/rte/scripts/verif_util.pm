@@ -1,3 +1,6 @@
+# Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+# SPDX-License-Identifier: Apache-2.0
+
 # vim:et:sw=4:ts=4:tw=79:
 
 ###############################################################################
@@ -7,7 +10,6 @@
 # Creation Date:    December 11, 2003
 # Description:      Utilities used by the regression/verification scripts
 #
-# INTEL TOP SECRET
 # Copyright 2003 - 2012 Intel Corporation
 # All Rights Reserved.
 ###############################################################################

@@ -1,3 +1,6 @@
+; Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+; SPDX-License-Identifier: Apache-2.0
+
 ; This Fuction is resize the windowsimilar to "dbGetOverlaps" 
 ; except it will filter out completely abutted (aligned) cells
 procedure( dbGetOverlapsNoAbutted( d_cellView )

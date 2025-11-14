@@ -9,8 +9,7 @@ Constants constants;
 </%args>\
 <%escape #n>\
 <%java Collection<ConstantsCell> cells = constants.cells.values(); %>\
-/* INTEL TOP SECRET
- * Copyright <% java.util.Calendar.getInstance().get(java.util.Calendar.YEAR) %> Intel Corporation. All Rights Reserved.
+/* Copyright <% java.util.Calendar.getInstance().get(java.util.Calendar.YEAR) %> Intel Corporation. All Rights Reserved.
  * $Id:  $
  * DO NOT EDIT! Automatically generated from constant xml.  */
 module <% constants.getModule() %>;

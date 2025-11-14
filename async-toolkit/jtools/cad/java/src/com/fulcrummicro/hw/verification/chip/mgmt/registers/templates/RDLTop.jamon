@@ -10,7 +10,6 @@ com.fulcrummicro.hw.verification.chip.mgmt.registers.*;
 Collection<RegisterBase> bases;
 Collection<Register> regs;
 </%args>
-// INTEL TOP SECRET
 // Copyright <& copyright_year; &> Intel Corporation. All Rights Reserved.
 //
 `include "lib_udp.rdl"

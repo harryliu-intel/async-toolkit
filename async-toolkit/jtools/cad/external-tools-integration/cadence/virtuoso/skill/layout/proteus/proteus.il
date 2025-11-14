@@ -1,3 +1,6 @@
+; Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+; SPDX-License-Identifier: Apache-2.0
+
 ; Skill scripts to construct Proteus library LEF.  Source information
 ; is floorplan views from supersize.  Layout views are generated and
 ; pins are added.  Abstract views are created from the layout views.

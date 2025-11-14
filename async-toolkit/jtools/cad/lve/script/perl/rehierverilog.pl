@@ -1,4 +1,7 @@
 #!/usr/intel/bin/perl -l
+# Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+# SPDX-License-Identifier: Apache-2.0
+
 # AAG
 # $Id: rehierverilog.pl,v 1.1 2007/07/26 18:46:08 aubrey Exp aubrey $
 # $DateTime$

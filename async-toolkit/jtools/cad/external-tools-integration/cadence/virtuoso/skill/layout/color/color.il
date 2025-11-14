@@ -1,3 +1,6 @@
+; Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+; SPDX-License-Identifier: Apache-2.0
+
 ; always color metals based on track position since this is invariable
 ; in a fixed track pattern via colors are assigned by ICC during
 ; routing, so don't want to change those unless they are uncolored

@@ -1,3 +1,6 @@
+// Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+// SPDX-License-Identifier: Apache-2.0
+
 module csp_input_dft (input _RESET, output reg enable);
 always @(negedge _RESET) enable = 0;
 always @(posedge _RESET) enable = 1;

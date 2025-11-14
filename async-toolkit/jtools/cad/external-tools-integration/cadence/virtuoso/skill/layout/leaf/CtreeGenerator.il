@@ -1,3 +1,6 @@
+; Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+; SPDX-License-Identifier: Apache-2.0
+
 (defun MakeCtree2 (CellView ViewName)
 	(let (text parameter1 parameter2 parameter3 parameter4 cordnx1 cordnx2 cordpx1 cordpx2 cordR0x1 cordR0x2 cordR0y2 PolyM1x2 ActualPolyM1x2 PolyM1x1 ActualPolyM1x1 PWidth NWidth cordx1 cordx2 INST SHAPE VIA i k)
 	fl = infile("Parameter.txt")

@@ -1,3 +1,6 @@
+; Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+; SPDX-License-Identifier: Apache-2.0
+
 ; Copyright 2004 Fulcrum Microsystems.  All rights reserved.
 ; $Id$
 ; $DateTime$
@@ -649,7 +652,6 @@ defun( defDefOut (  libName cellName viewName
   )
 
   ; HEADER
-  fprintf( pout "# INTEL TOP SECRET\n" )
   fprintf( pout "# Copyright 2012 Intel Corporation. All Rights Reserved.\n" )
   fprintf( pout "#\n" )
   fprintf( pout "# created by Fulcrum defOut program on %s.\n" getCurrentTime() )

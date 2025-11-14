@@ -1,4 +1,7 @@
 #!/usr/intel/bin/perl -l
+# Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+# SPDX-License-Identifier: Apache-2.0
+
 # This script calculates the total csp coverage and the total rule coverage
 # The computeCspCovergage and the computeRulecoverage calculate the total csp and rule coverage respectively
 # It writes into a file called rte.raw.summary. This script is called in the env.mk file at rte.raw.summary rule.
