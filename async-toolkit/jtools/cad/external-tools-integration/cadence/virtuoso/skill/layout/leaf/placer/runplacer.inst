@@ -1,0 +1,39 @@
+#!/bin/bash
+# Copyright 2002 Fulcrum Microsystems.  All rights reserved.
+# $Id$
+# $DateTime$
+# $Author$
+
+function exit_func() {
+  if [ -n "$placer_il_temp" ] ; then
+    rm -f "$placer_il_temp"
+  fi
+}
+
+trap exit_func EXIT
+
+sedcmd=`which sed`
+chmodcmd=`which chmod`
+
+package_root=$1
+install_share_bin=$2
+install_share_data=$3
+install_arch_bin=$4
+install_arch_data=$5
+
+placer_dir="$package_root/share/skill/layout/leaf/placer"
+placer_il="$placer_dir/placer.il"
+placer_il_temp=`mktemp /tmp/runplacer.inst.XXXXXX`
+
+runplacer_sh="$placer_dir/runplacer.sh"
+runplacer_base=`basename $runplacer_sh .sh`
+runplacer="$placer_dir/$runplacer_base"
+
+$sedcmd -e "s=\\\$packageroot\\\$=$package_root=" "$runplacer_sh" >$runplacer
+$chmodcmd "--reference=$runplacer_sh" "$runplacer"
+rm "$runplacer_sh"
+
+$sedcmd -e "s=\\\$runplacer\\\$=$runplacer=" "$placer_il" > "$placer_il_temp"
+$chmodcmd "--reference=$placer_il" "$placer_il_temp"
+rm "$placer_il"
+cp "$placer_il_temp" "$placer_il"

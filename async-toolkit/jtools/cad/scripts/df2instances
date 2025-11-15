@@ -1,0 +1,49 @@
+#!/usr/intel/bin/perl
+
+use strict;
+use Getopt::Long;
+use CadenceLib;
+
+sub usage
+{
+    print STDERR "Usage: df2instances --cdslib=<path to cds.lib> (optional)\n";
+    print STDERR "                    --library=<library>        (required)\n";
+    print STDERR "                    --cell=<cell name>         (required)\n";
+    print STDERR "                    --view=<top-level view>    (optional)\n";
+	exit;
+}
+
+my $cdslib = "~/cds_wd/cds.lib";
+my $library;
+my $cell;
+my $view = "layout";
+
+GetOptions ("cdslib=s" => \$cdslib,
+            "library=s" => \$library,
+            "view=s" => \$view,
+            "cell=s" => \$cell );
+
+if (not defined $library)
+{
+    print STDERR "ERROR!  You must specify a --library\n";
+    usage;
+}
+
+if (not defined $cell)
+{
+    print STDERR "ERROR!  You must specify a --cell\n";
+    usage;
+}
+
+if( not -f $cdslib )
+{
+    print STDERR "Could not locate \"$cdslib\"\n\n";
+    usage;
+}
+
+my $instances = CadenceLib::list_instances($cdslib,$library,$cell,$view);
+
+foreach my $inst(keys %{$instances})
+{
+    print "$instances->{$inst} $inst\n";
+}

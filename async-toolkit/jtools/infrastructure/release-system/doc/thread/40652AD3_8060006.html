@@ -1,0 +1,46 @@
+<pre>
+
+<div class="moz-text-flowed" style="font-family: -moz-fixed">Bevan C. Bennett wrote:
+
+> I emphatically believe/agree that tools should be installed as
+>
+> tool-version
+>
+> -not-
+>
+> tool-date-changenumber 
+
+
+As I proposed in my last email, we should have both the version and the 
+"date-changenum" in each package file.  I do agree that each branch's 
+directory should be named "tool-version".
+
+> Counterproposal:
+> /usr/local/fulcrum/[bin|pdk|config] : as discussed
+> /usr/local/fulcrum/tools/
+> /usr/local/fulcrum/tools/<tool>-nightly/
+> /usr/local/fulcrum/tools/<tool>-version.release/ 
+
+
+Having "<tool>-nightly" and "<tool>-version.release" as peers doesn't 
+really work since "version.release" refers to a particular branch, and 
+each branch will have its own nightly builds.
+
+> Re: PowerPC, I was asking where it came from that Mike listed it as a 
+> required architecture? I suspect it was Patrick and Andrew wanting to 
+> run things natively on their laptops, but I don't believe there's been 
+> any formal discussion of what would be required to properly support it. 
+
+
+True, there hasn't been any "formal discussion" regarding support for 
+Darwin-powerpc.  My feeling is that if we can work out a simple way to 
+cross-compile for the Mac, then let's include the platform in all 
+nightly package builds (with no regression testing as I mentioned 
+earlier.)  If we can't cross-compile, then Andrew, Patrick, or I will 
+undoubtedly eventually figure out how to build our own packages locally 
+on our laptops, and we will grudgingly maintain our own local release trees.
+
+
+
+</div>
+</pre>

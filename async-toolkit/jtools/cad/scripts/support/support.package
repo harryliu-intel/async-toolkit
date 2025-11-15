@@ -1,0 +1,44 @@
+1 1
+# AAG
+# $Id$
+# $DateTime$
+
+$arch/bin/bugmonitor bugmonitor 755 p
+$arch/bin/bugproduct bugproduct 755 p
+$arch/bin/caljul caljul 755 p
+$arch/bin/cwd cwd 755 p
+$arch/bin/date2time date2time 755 p
+$arch/bin/gds2strings gds2strings 755 p
+$arch/bin/gettmp gettmp.sh 755 p
+$arch/bin/graph graph 755 p
+$arch/bin/hencrypt hencrypt 755 p
+$arch/bin/longlines longlines 755 p
+$arch/bin/maxlen maxlen 755 p
+$arch/bin/myqs myqs 755 p
+$arch/bin/p4monitor p4monitor 755 p
+$arch/bin/qacc qacc 755 p
+$arch/bin/qresource qresource 755 p
+$arch/bin/qtrace qtrace 755 p
+$arch/bin/quotacmp quotacmp 755 p
+$arch/bin/quotagraph quotagraph 755 p
+$arch/bin/s2aplt s2aplt 755 p
+$arch/bin/s2iplt s2iplt 755 p
+$arch/bin/drawlef drawlef 755 p
+$arch/bin/tgraph tgraph 755 p
+$arch/bin/lmgraph lmgraph 755 p
+$arch/bin/time2date time2date 755 p
+$arch/bin/unwrap unwrap 755 p
+$arch/bin/wide wide 755 p
+$arch/bin/p5check p5check 755 p
+lib/perl/julian.pl julian.pl 755 p
+lib/perl/date2time.pm date2time.pm 755 p
+
+$arch/bin/getquo  getquo  755 p
+$arch/bin/getquoa getquoa 755 p
+$arch/bin/getquob getquob 755 p
+$arch/bin/getquoh getquoh 755 p
+$arch/bin/getquol getquol 755 p
+$arch/bin/getquos getquos 755 p
+$arch/bin/getquot getquot 755 p
+
+$arch/bin/genconfig genconfig.pl 755 p

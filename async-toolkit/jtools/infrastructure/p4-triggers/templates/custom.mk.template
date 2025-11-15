@@ -1,0 +1,13 @@
+#These need to be set for layout
+CAST_PATH := $cast_path$
+DFII_DIR := $dfII_dir$
+VIRTUOSO_INTEGRATION_PACKAGE_ROOT := $virtuoso_integration_root$
+FULCRUM_PDK_PACKAGE_ROOT := $fulcrum_pdk_root$
+LAYOUT_DB := $project_db$
+EXEC_CADENCE := $exec_cadence$
+FILE_TYPES := cdbfiles castfiles
+MAKE_WITH_MAKE_PWD_ONLY := 1
+MAKE_LAYOUT := 1
+QSUB := $qsub$
+FULCRUM_NO_UTIL_MAKEFILES := 1
+MYSQL_HOST := $mysql_host$

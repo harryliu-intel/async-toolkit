@@ -1,0 +1,25 @@
+; Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+; SPDX-License-Identifier: Apache-2.0
+
+; A replacement for dbCopyCellView.  When the b_overwrite bit is true,
+; it will dbReopen the destination CellView in "r" mode so that
+; dbCopyCellView will overwrite it without error regardless of locking
+; state.  Any other CV pointers to the destination remain valid,
+; although the CV->mode always becomes "a".
+(defun betterCopyCellView (d_srcCVId t_libName t_cellName t_viewName
+                                     @optional (t_version nil) (g_contextId nil) (b_overwrite nil) (warn_only nil))
+  (let (CV)
+    (when b_overwrite
+      (when (ddGetObj t_libName t_cellName t_viewName)
+        CV = (dbOpenCellViewByType t_libName t_cellName t_viewName)
+        (when CV (dbReopen CV "r"))
+        )
+      )
+    CV = (dbCopyCellView d_srcCVId t_libName t_cellName t_viewName t_version g_contextId b_overwrite)
+    (cond (CV        (dbReopen CV "a"))
+          (warn_only (warn  "betterCopyCellView couldn't copy to %s %s %s\n" t_libName t_cellName t_viewName))
+          (t         (error "betterCopyCellView couldn't copy to %s %s %s\n" t_libName t_cellName t_viewName))
+          )
+    CV
+    )
+  )

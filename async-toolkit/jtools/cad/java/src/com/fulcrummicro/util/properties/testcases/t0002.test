@@ -1,0 +1,8 @@
+<config>
+
+<opt name="test.a" type="String" default="1"/>
+<opt name="test.b" type="String" default="$(test.a)2"/>
+<opt name="test.c" type="String" default="$(test.b)3"/>
+<opt name="test.d" type="String" default="$(test.c)4"/>
+
+</config>

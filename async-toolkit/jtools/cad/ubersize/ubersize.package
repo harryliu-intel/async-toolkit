@@ -1,0 +1,59 @@
+1 0
+# Copyright 2002 Fulcrum Microsystems.  All rights reserved.
+# $Id$
+# $DateTime$
+# $Author$
+
+include ../external-tools-integration/cadence/virtuoso/updatenetlist.package ../external-tools-integration/cadence/virtuoso
+include ../external-tools-integration/cadence/virtuoso/cdsp4.package ../external-tools-integration/cadence/virtuoso
+include ../external-tools-integration/cadence/virtuoso/dfII_split_subtypes.package ../external-tools-integration/cadence/virtuoso
+include ../external-tools-integration/cadence/virtuoso/mk_instance.package ../external-tools-integration/cadence/virtuoso
+include ../external-tools-integration/cadence/virtuoso/script/sh/setup/cds_wd.package ../external-tools-integration/cadence/virtuoso/script/sh/setup
+include ../java/src/com/avlsi/tools/jauto/jauto.package ../java/src/com/avlsi/tools/jauto
+include ../java/src/com/avlsi/tools/lvs/jlvs.package ../java/src/com/avlsi/tools/lvs
+
+$arch/bin/supersize.pl          script/perl/supersize 775 p
+$arch/bin/ubersize.pl        script/perl/ubersize 775 p
+$arch/bin/floorplan_init.pl  script/perl/floorplan_init 775 p
+$arch/bin/cells2html.pl      script/perl/cells2html 775 p
+$arch/bin/runincdswd.sh      ../external-tools-integration/cadence/virtuoso/script/sh/setup/runincdswd.sh 775 p
+$arch/bin/mkcdswd.sh         ../external-tools-integration/cadence/virtuoso/script/sh/setup/mkcdswd.sh 775 p
+$arch/bin/lmwait.pl          ../external-tools-integration/cadence/virtuoso/script/sh/setup/lmwait.pl 775 p                                                 
+$arch/bin/leafspec.sh        ../java/src/com/avlsi/tools/jauto/leafspec.sh 775 t
+$arch/bin/compile_cdc        script/perl/compile_cdc.pl 775 p
+$arch/bin/cast2sync          script/perl/cast2sync.pl 775 p
+$arch/bin/generate_sdcinfo   script/perl/generate_sdcinfo.pl 775 p
+$arch/bin/mkdefaultlib       script/perl/mkdefaultlib.pl     775 p
+$arch/bin/compare_cells.pl   script/perl/compare_cells 775 p
+$arch/bin/compare_sizes.pl   script/perl/compare_sizes 775 p
+$arch/bin/check_cutoff       script/perl/check_cutoff 775 p
+
+# Supersize perl modules
+lib/perl/Supersize/FulcrumIntegration.pm  lib/perl/Supersize/FulcrumIntegration.pm 755 p
+lib/perl/Supersize/DensityFactor.pm     lib/perl/Supersize/DensityFactor.pm 755 p
+lib/perl/Supersize/FileIO.pm            lib/perl/Supersize/FileIO.pm      755 p
+lib/perl/Supersize/JavaUtil.pm          lib/perl/Supersize/JavaUtil.pm    755 p
+lib/perl/Supersize/LayoutIntegration.pm lib/perl/Supersize/LayoutIntegration.pm  755 p
+lib/perl/Supersize/LayoutModeling.pm    lib/perl/Supersize/LayoutModeling.pm  755 p
+lib/perl/Supersize/MergeLibrary.pm      lib/perl/Supersize/MergeLibrary.pm 755 p
+lib/perl/Supersize/Merging.pm           lib/perl/Supersize/Merging.pm     755 p
+lib/perl/Supersize/Misc.pm              lib/perl/Supersize/Misc.pm        755 p
+lib/perl/Supersize/ModifySubtypes.pm    lib/perl/Supersize/ModifySubtypes.pm 755 p
+lib/perl/Supersize/Netlist.pm           lib/perl/Supersize/Netlist.pm     755 p
+lib/perl/Supersize/PerforceIntegration.pm lib/perl/Supersize/PerforceIntegration.pm 755 p
+lib/perl/Supersize/PostLayout.pm        lib/perl/Supersize/PostLayout.pm  755 p
+lib/perl/Supersize/Sizing.pm            lib/perl/Supersize/Sizing.pm      755 p
+lib/perl/Supersize/SizingDebug.pm       lib/perl/Supersize/SizingDebug.pm 755 p
+lib/perl/Supersize/SizingDrop.pm        lib/perl/Supersize/SizingDrop.pm  755 p
+lib/perl/Supersize/SubtypeSpace.pm      lib/perl/Supersize/SubtypeSpace.pm 755 p
+lib/perl/Supersize/TypeOps.pm           lib/perl/Supersize/TypeOps.pm     755 p
+lib/perl/Supersize/TypeUtil.pm          lib/perl/Supersize/TypeUtil.pm    755 p
+lib/perl/Supersize/Unmerging.pm         lib/perl/Supersize/Unmerging.pm   755 p
+lib/perl/Supersize/Util.pm              lib/perl/Supersize/Util.pm        755 p
+
+#misc pm
+lib/perl/Perforce.pm                    lib/perl/Perforce.pm        755 p
+
+# misc
+$arch/bin/rtlwait ../scripts/rtlwait         755 p
+$arch/bin/lmusage ../scripts/lmusage         755 p

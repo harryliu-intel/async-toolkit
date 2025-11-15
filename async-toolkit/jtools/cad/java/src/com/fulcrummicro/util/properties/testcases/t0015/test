@@ -1,0 +1,6 @@
+<test>
+<!-- check errors that are suppressed by suppress_named_block_warning in verif_util -->
+<config>
+</config>
+
+</test>

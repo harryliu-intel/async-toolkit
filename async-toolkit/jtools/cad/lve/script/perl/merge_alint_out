@@ -1,0 +1,70 @@
+#!/usr/intel/bin/perl -w
+
+use FileHandle;
+
+# options
+my $num_of_bins = 1;
+my $alint_dir='.';
+my $mode="alint";
+my $postfix="";
+
+# get arguments
+while (@ARGV>0 && $ARGV[0] =~ /--([^=]*)=(.*)/ ) {
+    $key = $1;
+    $value = $2;
+    shift @ARGV;
+    if (!defined($value)) { $value=""; }
+    elsif ($key eq "num-of-bins") { $num_of_bins = $value; }
+    elsif ($key eq "alint-dir")   { $alint_dir   = $value; }
+    elsif ($key eq "mode")        { $mode        = $value; }
+    elsif ($key eq "postfix")     { $postfix     = $value; }
+}
+
+# check usage
+@ARGV==0 or die "USAGE: merge_alint_out [--mode=MODE] [--postfix=POSTFIX][--num-of-bins=NUM_OF_BINS --alint-dir=ALINT_DIR]\n" ;
+
+# open files
+my @alint_out_orig;
+for (my $count = 0; $count < $num_of_bins; $count++) {
+    if ( -f "$alint_dir/${mode}_parallel/${mode}${postfix}.done.$count") {
+        $alint_out_orig[$count] = new FileHandle;
+        $alint_out_orig[$count]->open("< $alint_dir/${mode}_parallel/${mode}${postfix}.out" . '.' . $count)
+            or die "ERROR: can't read ${alint_dir}/${mode}${postfix}.out.*\n";
+    }
+    else { die "ERROR: ${mode}${postfix}.done.$count missing.\n"; }
+}
+my $alint_out = new FileHandle;
+$alint_out->open(">$alint_dir/$mode${postfix}.out") or die "ERROR: can't write ${alint_dir}/$mode${postfix}.out\n";
+
+# aggregate relevant information across alint bins
+my $max_mem      = 0;
+my $setup_time   = 0;
+my $sim_time     = 0;
+my $reorder_time = 0;
+for (my $count = 0; $count < $num_of_bins; $count++) {
+    while (my $line = $alint_out_orig[$count]->getline()) {
+	if ($line =~ /^Total simulation memory\s*(\d*)\s*bytes/) {
+	    if ($1>$max_mem) { $max_mem = $1; }
+	} elsif ($line =~ /^Total setup time=([^\s]*)/) {
+            $setup_time += $1;
+	} elsif ($line =~ /^Simulation time=([^\s]*)/) {
+            $sim_time += $1;
+	} elsif ($line =~ /^Reorder time=([^\s]*)/) {
+            $reorder_time += $1;
+        }
+    }
+}
+
+# print alint.out
+my $total_time = $setup_time + $sim_time + $reorder_time;
+print $alint_out "Maximum simulation memory $max_mem bytes.\n";
+print $alint_out "Total setup time $setup_time seconds.\n";
+print $alint_out "Total simulation time $sim_time seconds.\n";
+print $alint_out "Total reorder time $reorder_time seconds.\n";
+print $alint_out "Total time $total_time seconds.\n";
+
+# close files
+$alint_out->close();
+for (my $count = 0; $count < $num_of_bins; $count++) {
+   $alint_out_orig[$count]->close();
+}

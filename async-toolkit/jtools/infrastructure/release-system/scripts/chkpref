@@ -1,0 +1,53 @@
+#!/usr/intel/bin/perl -l
+# AAG
+# $Id$
+# $DateTime$
+
+use strict;
+use Getopt::Long;
+
+my %pkg=();
+my %count=();
+my %list=();
+my $toolhome="/p/rrc/tools/fulcrum";
+
+GetOptions (
+    "toolhome=s" => \$toolhome,
+) or die();
+
+open (P, "<preferred.txt");
+while (<P>) {
+    chomp;
+    my ($pkg,$exe)=split(/:/,$_);
+    print STDERR "Duplicate $pkg:$exe vs $pkg{$exe}:$exe" if defined ($pkg{$exe});
+    $pkg{$exe}=$pkg;
+    $pkg{"$pkg:$exe"}=0;
+}
+close P;
+open (P, "/p/rrc/tools/bin/listfmdb --toolhome $toolhome latest 2>/dev/null |");
+while (<P>) {
+    chomp;
+    my ($set,$chg)=split(/ /,$_);
+    my ($pkg,$exe)=split(/:/,$set);
+    if (defined $exe) {
+        $count{$exe}++;
+        $list{$exe} .= "$pkg ";
+        $pkg{"$pkg:$exe"}=1;
+    }
+}
+foreach my $exe (sort keys %count) {
+    $list{$exe} =~ s/ $//;
+    if ($count{$exe} > 1 and ! defined ($pkg{$exe})) {
+        print STDERR "Error: $list{$exe} contain $exe";
+    }
+    elsif ($count{$exe} == 1 and ! defined ($pkg{$exe})) {
+        print STDERR "Warning: may wish to add $list{$exe}:$exe";
+    }
+}
+foreach my $exe (sort keys %pkg) {
+    if ($pkg{$exe} eq "0" and $exe =~ /:/) {
+        print "$exe not found";
+        my ($p,$e)=split(/:/, $exe);
+        print " Use $list{$e}:$e";
+    }
+}

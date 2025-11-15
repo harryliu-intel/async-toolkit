@@ -1,0 +1,33 @@
+#!/usr/intel/bin/perl
+
+system "find . -name \*.cast > cells.out";
+system "grep 00\.cast cells.out > types.out";
+system "grep -v 00\.cast cells.out > subtypes.out";
+
+system "rm -f leaf_types.out";
+system "rm -f nonleaf_types.out";
+open IN, "<types.out";
+while($i = <IN>) {
+    chomp($i);
+    system "grep -l netlist \"$i\" >> leaf_types.out";
+    system "grep -L netlist \"$i\" >> nonleaf_types.out";
+}
+close IN;
+
+system "rm -f leaf_subtypes.out";
+system "rm -f nonleaf_subtypes.out";
+open IN, "<subtypes.out";
+while($i = <IN>) {
+    chomp($i);
+    system "grep -l netlist \"$i\" >> leaf_subtypes.out";
+    system "grep -L netlist \"$i\" >> nonleaf_subtypes.out";
+}
+close IN;
+
+system "wc -l cells.out";
+system "wc -l types.out";
+system "wc -l subtypes.out";
+system "wc -l leaf_types.out";
+system "wc -l leaf_subtypes.out";
+system "wc -l nonleaf_types.out";
+system "wc -l nonleaf_subtypes.out";

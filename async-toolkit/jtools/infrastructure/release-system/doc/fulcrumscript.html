@@ -1,0 +1,510 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+  <title>Fulcrum Script</title>
+  <link rel="stylesheet" href="http://www.internal.avlsi.com/fm-basic.css" type="text/css" media="all">
+  <link rel="stylesheet" href="http://www.internal.avlsi.com/basic-print.css" type="text/css" media="print">
+
+  <meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
+  <meta name="P4HD" content="$Id$">
+<style type="text/css">
+<!--
+td {
+    vertical-align: top;
+}
+-->
+</style>
+</head>
+<body>
+<h1>Fulcrum Script</h1>
+<h2>Overview</h2>
+<ol>
+<li>It provides a single executable interface to all internal Fulcrum
+     tools. That is, as long as a user /usr/intel/bin in his/her path,
+     all versions of all Fulcrum tools are accessible.
+</li>
+<li>It provides a simple and powerful mechanism to run particular
+     versions of tools. For example, simple command-line options will
+     allow a user to select between the latest nightly version, the
+     latest released version, and the official project development
+     version of a particular tool. The same command-line options will
+     allow the user to run the official released version of a tool as
+     of a time in the past, as long as the builds were done then.
+</li>
+<li>It will run the particular executable (and set up the child
+     processes' $PATH) appropriately for the user's platform
+     architecture. That is, if the user is logged into a Sun, the
+     SunOS-sun4u builds of all platform-specific files will be invoked
+     automatically.
+</li>
+<li>To simplify user interface, the use of config files in the same
+     paradigm of perforce .p4.config (.fulcrum.config) is
+     available to the user.
+</li>
+</ol>
+<h2>Fulcrum Script Usage</h2>
+<pre>
+Usage: fulcrum [script args] [package:]tool [tool args]
+    script args:
+    --after &lt;chg&gt;      : Tells fulcrum to find change or date immediately after or equal chg
+                         &lt;chg&gt; is either change nr or datetime
+    --all              : used in conjunction with --list to see all changes
+    --before &lt;chg&gt;     : Tells fulcrum to find change or date immediately before cor equal chg
+    --beta             : use latest beta package
+    --branch &lt;branch&gt;  : specify sw or pdk branch from which pkg built
+    --cadence &lt;list&gt;   : list of versions to use (e.g. assura.30.8)
+    --config file      : fulcrum config file
+    --develop          : run bypassing regression checking
+    --doc              : web pages of documentation
+    --help             : print this message
+    --latest           : run the latest build, nightly or triggered
+    --list             : list available tools and packages
+    --path             : Finds the path to the specified tool or pdk
+    --pdk-after &lt;chg&gt;  : overides --after for pdk
+    --pdk-before &lt;chg&gt; : overides --before for pdk
+    --pdk-beta         : overides for --beta for pdk
+    --pdk-latest       : overides for --latest for pdk
+    --pdk-project name : overrides --project for pdk
+    --pdk-release      : overides --release for pdk
+    --pdk name         : Finds the pdk for the specified process
+    --pdkhome dir      : overrides default /home/local/common/fulcrum for pdk
+    --project name     : Uses the project defaults rather than release defaults
+    --release          : use latest released package
+    --toolhome dir     : default /home/local/common/fulcrum
+    --verbose          : a little detail is given
+    --version          : Shows the version and date info of fulcrum
+    --which            : tells path to the selected executable
+    --after --before --beta --develop --latest --project --release 
+       Are all mutually exclusive.
+   Exception: pdkafter and pdkbefore can be used in conjunction with any of the above.
+   Command line arguments override personal fulcrum config file entries.
+</pre>
+<hr>
+<h2>Details</h2>
+<table>
+<tr>
+<td>
+<code>--all</code>
+</td>
+<td>
+When used in conjunction with --list will show all changes which are currently
+available in /home/local/common/fulcrum.
+</td>
+</tr>
+<tr>
+<td>
+<code>--after &lt;chg&gt;<br>
+--before &lt;chg&gt;<br>
+chg=yyyy/mm/dd[:hr:mn:sec] or <br>
+chg=#####</code>
+</td>
+<td>
+These options allow you to select the change number either by change number itself
+or by datetime. If <code>--after</code> then the earliest change equal to or after
+the specified change is selected. If <code>--before</code> then the latest change
+equal to or earlier than the specified change is selected.
+</td>
+</tr>
+<tr>
+<td>
+<code>--pdk-after &lt;chg&gt;<br>
+--pdk-before &lt;chg&gt;<br>
+chg=yyyy/mm/dd[:hr:mn:sec] or <br>
+chg=#####</code>
+</td>
+<td>
+Similar to above but overrides <code>--after</code> or <code>--before</code> for pdk only.
+</td>
+</tr>
+<tr>
+<td>
+<code>--beta</code><br>
+<code>--release</code><br>
+<code>--latest</code>
+</td>
+<td>
+These options specify the stability of the tool to be run. The <code>--release</code>
+option is the default so need not be specified.
+The <code>--release</code> and <code>--beta</code>
+options read the currently specified p4 change numbers from a perl database
+file in <code>/home/local/common/fulcrum/config.</code> The database files are generated from
+text files of the name release and beta respectively. The databases are
+generated with the <code>/home/local/common/fulcrum/bin/updatefmdb</code> perl script.
+</td>
+</tr>
+<tr>
+<td>
+<code>--branch=&lt;branch-name&gt;</code>
+</td>
+<td>
+By specifying the branch, fulcrum looks for packages built in a non-main branch.
+</td>
+</tr>
+<tr>
+<td>
+<code>--cadence=&lt;list&gt;</code>
+</td>
+<td>
+Specific versions of Cadence wrappers may be specified to override the defaults. For example: <code>--cadence ic.51.41,assura.30.8</code> will prefix commands with these two wrappers replacing <code>ic</code> and <code>assura</code> respectively.
+</td>
+</tr>
+<tr>
+<td>
+<code>--change=#</code>
+</td>
+<td>
+<b>Deprecated</b> This allows specific specification of a change number in the set of installed packages. When
+specifying the change number, currently, the change number must be an exact match to the
+installed changes. This change applies to the executable and not to the pdk.
+</td>
+</tr>
+<tr>
+<td>
+<code>--config=&lt;name&gt;</code>
+</td>
+<td>
+Allows override of the FULCRUMCONFIG environment variable (default is .fulcrum.config). Note that unless this is a complete path, the variable specifies a files name which is searched up the directory tree similarly to P4CONFIG.
+</td>
+</tr>
+<tr> 
+<td>
+<code>--datetime=&lt;dt&gt;<br>
+dt=yyyy/mm/dd[:hr:mn:sec]</code>
+</td>
+<td>
+<b>Deprecated</b> Specifying this runs the change number in the installed tool area which is the latest prior
+to or equal to this date/time. The time need not be specified, it will be assumed to be
+midnight.
+</td>
+</tr>
+<tr>
+<td>
+<code>--doc</code>
+</td>
+<td>
+If no executable found, brings up this web page. If an executable
+is found and specific docs for it are found in the package, then it's
+doc is brought up in mozilla. If package docs exist and no executable
+web page exists, then the package doc is displayed. The locations for
+docs are /home/local/common/fulcrum/tools/&lt;package-name&gt;/&lt;change#&gt;/doc
+or /home/local/common/fulcrum/tools/&lt;package-name&gt;/&lt;change#&gt;/share/html.
+</td>
+</tr>
+<tr>
+<td>
+<code>--develop</code>
+</td>
+<td>
+This option allows the <code>--after, --before, --pdk-after,</code> and <code>--pdk-before</code> to point
+to installed packages which have failed regression or which are otherwise not
+available to the 'general public.'  This overrides the absence of the .installed file at
+the package root.
+<tr>
+<td>
+<code>--list</code>
+</td>
+<td>
+Shows the exact change number which is selected or, if <code>--latest</code> is also selected,
+reports all available changes and packages available for that tool.
+</td>
+</tr>
+<tr>
+<td>
+<code>--path</code>
+</td>
+<td>
+Finds the path to the specified executable. <i>e.g.</i> <code>fulcrum --path lve</code> results in <code>/home/local/common/fulcrum/tools/lve/85189/bin/lve</code> if 85189 is the released package for <code>lve</code>. If the 'toolname' specified is 'pdk', then the path to the pdk root is found. Other version finding options, such as <code>--latest</code> are effective.
+</td>
+</tr>
+<tr>
+<td>
+<code>--pdk=name</code>
+</td>
+<td>
+Required unless the <code>--project</code> option is specified and that project
+specifies a pdk. Is also not required if the target tool does not require a pdk or
+if the user specifies a pdk with <code>--fulcrum-pdk-root=&lt;path&gt;</code> on the command line after the tool name.
+</td>
+</tr>
+<tr>
+<td>
+<code>--project=&lt;name&gt;</code>
+</td>
+<td>
+Specifies a specific project. The project configuration will exist by that name in the
+<code>/home/local/common/fulcrum/config</code> directory. The config file syntax is presently as follows:
+<pre>
+package_name change#
+...
+</pre>
+This includes <code>pdk</code>'s. Any package not included in the project config file
+will not be available under this option.
+</td>
+</tr>
+<tr>
+<td>
+<code>--toolhome=&lt;dir&gt;</code>
+</td>
+<td>
+This tells the script to look in a directory other than <code>/home/local/common/fulcrum</code> for the tools. Not recommended for other than debug purposes.
+</td>
+</tr>
+<tr>
+<td>
+<code>--verbose</code>
+</td>
+<td>
+Emits some details about what is being run.
+</td>
+</tr>
+<tr>
+<td>
+<code>--version</code>
+</td>
+<td>
+Shows the P4 version of the fulcrum script as well as it's date and time of
+submission to perforce.
+<pre>
+fulcrum
+    Version #11 2004/06/02 14:56:45
+</pre>
+</td>
+</tr>
+<tr>
+<td>
+<code>--which</code>
+</td>
+<td>
+Without executing anything, shows the command line to be executed
+including the full path. Note that since this also include the cadence wrappers and any added command line arguements to the tool, it is useful for seeing what command line is actually being executed.
+</td>
+</tr>
+<tr>
+<td colspan=2>
+<h2>Fulcrum Config File</h2>
+The fulcrum config file, by default <code>.fulcrum.config</code>, contains
+the command line options for both the fulcrum script and other tools. Any
+option (see Usage above) for the fulcrum script is recognized as such. The
+environment variable FULCRUM_CONFIG overrides the default as does the <code>--config</code> command line option. Any
+unrecognized options are added to the option list for the tool. Examples:
+<pre>
+--pdk nv90
+--latest
+</pre>
+This tells the fulcrum script to use the nv90 pdk and the latest, rather
+than released, versions.
+<pre>
+--pdk tsmc13_lowK
+--cast-path /home/user/joe/hw/cast
+</pre>
+This tells the script to add the following to the command line for the
+tool:
+<pre>--fulcrum-pdk-root=/home/local/common/fulcrum/pdk/fulcrum-tsmc13-pdk/53656 \
+     --cast-path=/home/user/joe/hw/cast
+</pre>
+Note: the = is not required in the config file. The = will be added for
+unrecognized options regardless of whether it is in the config file.
+<p>
+In order to allows tool specific options, the following syntax has been
+added:
+</table>
+<table>
+<tr>
+<td>
+<pre>
+[package] [change]
+</pre>
+</td>
+<td>
+This combination is specifically recognized as the definition of a
+specific package's change number. Presently, these are 5 digit numbers.
+</td>
+</tr>
+<tr>
+<td>
+<pre>
+toolname [toolname...] {
+--cast-path /home/joe/hw/cast
+[list]
+...
+}
+</pre>
+</td>
+<td>
+This syntax specifies that the list of recognized arguments within the
+brackets applies only to the specific tools listed by space separated list before
+the bracket. Please note that this applies only to top level tools and NOT to
+subordinate tools. For example, ubersize calls jauto. Having jauto on the
+list would not be effective for jauto when called by ubersize. The normal jauto.config
+mechanism may be appropriate there. The word 'list' here refers to any correct
+arguments beginning with <code>-</code>.
+</td>
+</tr>
+<tr>
+<td colspan=2>
+As of 7/14/04, the config syntax includes
+the following:
+<ul>
+<li>Within a block for an executable, all args are assigned to the executable and NOT
+to the fulcrum script even if the argument is identical to a fulcrum script argument.</li>
+<li>A block may defined for fulcrum as a virtual executable in which case all valid args
+within that block are always assigned to the script and never to the called executable.</li>
+<li>An executable block may contain arguments with a single <code>'-'</code> prefix to be
+compatible with code which uses this syntax.</li>
+<li>Leading spaces in the config file are ignored.</li>
+</ul>
+</td>
+</tr>
+<tr>
+<td colspan=2>
+<h2>Known Bugs and Future Enhancements</h2>
+<ul>
+<li>Consider adding tool-specific options to project config files</li>
+<li>Consider removing "root" suffix to options such as pdk-root as these no longer make sense</li>
+<li>Formalize CCB committee - who's on it?</li>
+<li>Consider adding access to regression report via fulcrum script</li>
+</ul>
+</td>
+</tr>
+<tr>
+<td colspan=2>
+<h2>Developer Methodology</h2>
+<ul>
+<li>Shortcut: see <code>/home/local/common/fulcrum/bin/developer.csh</code> to
+see ways to setup your environment for local testing.
+<p>
+Recommendations: If you already have a build target directory for tools, then
+the <code>--root-project-dir</code> is the same as the ROOT_PROJECT_DIR
+specified in the Makefiles in the build target tree. Similarly for
+<code>--root-target-dir</code> and ROOT_TARGET_DIR. For the building of PDKs,
+similarly, look in the build target for the Makefiles there and do the same
+substitutions for the BUILD_PDK variable.
+</p>
+<p>
+If you have not done so, the <code>--root-project-dir</code> for tools should point to a p4 checkout which is from the template <code>aubrey-sw</code> client spec. For PDK building, the client spec should be like <code>aubrey-pdk</code>. Variations of these are at your own risk.
+</p>
+<p>
+As a developer, you should have <code>/home/local/common/fulcrum/bin</code> in your path.
+</p>
+</li>
+<li>If you wish to build a clean install from perforce follow these instructions:
+<ol>
+<li>Run /home/local/common/fulcrum/bin/buildfull.pl (<i>aka</i> buildfulcrum)
+<p>
+Needs option <code>--toolhome=[dir]</code> to build into a directory owned by you. You cannot build to the global area. Use trigger for this purpose.
+<br>
+<b>Important</b> Toolhome is interpreted as follows: if the trailing directory
+name is /tools, then it is assumed you want the installation tree to start
+at one level above. If it does not end in tools, then /tools is added.<br>
+.e.g. <code>--toolhome=/home/user/joeblow/tools</code> will result in the creation of
+directories of packages, pdk, config, and tools in your home directory.<br>
+On the other hand, <code>--toolhome=/home/user/joeblow/mytools</code> will create the
+directory mytools in the home directory and tools, packages, config, and pdk
+in the mytools directory.
+<br>
+You usually need only one or a couple of packages and not all of them. If so,
+also specify <code>--packages=[packagename]</code>, e.g. <code>--packages=lve</code>
+<br>
+If you build the a pdk, specify the pdk, e.g. <code>--packages=fulcrum-nv90-pdk</code>. Since
+part of a pdk build runs on Opteron, you may need to type a password partway through the build.
+</p>
+</li>
+<li>run 'fulcrum <code>--toolhome=[dir]</code> <code>--latest [toolname]</code>' to run from your personal
+toolhome area. Note that you need <code>--latest</code> unless you create a release file in your
+toolhome config directory.
+</ol>
+</li>
+<li>If you want to build from an existing project tree and install into the tools
+structure, then follow these instructions:
+<ol>
+<li>Do not use buildfulcrum as it always does a p4 sync.</li>
+<li>Manually create the toolhome tree (see <b>Important</b> message about toolhome above)
+<ul>
+<li>mkdir [toolhome]
+<li>cd [toolhome]
+<li>mkdir tools packages config pdk
+</ul>
+</li>
+<li>Build the target with the standard make command with some additions
+<ul>
+<li>before the target name, add the following:
+<pre>
+BUILD_CHANGE_NUMBER=[change#]
+      ... this specifies a (fictitious) change number
+      to assign to this build. Make sure it is larger than any change number you
+      already used for your local tools directory or <code>--latest</code> will not work correctly.
+      <b>This overrides the package file's internal version numbering scheme</b>.
+You can also specify FULCRUM_BUILD_ID and FULCRUM_RESULTS_DIR, but this is
+unnecessary for this purpose. If, however, you DO specify these, you MUST build
+[package-name]-package and NOT [package-name].tar.gz
+</pre>
+</li>
+<li>Install the package and set up the databases for fulcrum to recognize the files
+<ul>
+<li>/home/local/common/fulcrum/build-system/filetypes/packagingfiles/package-inst.pl [package-file] [toolhome]/tools</li>
+<li>touch [toolhome]/tools/[package-name]/[change#]/.installed # fulcrum will not recognize without this!<br>
+Note: the change# is the same as specified under BUILD_CHANGE_NUMBER above.
+<li>/home/local/common/fulcrum/bin/updatefmdb <code>--toolhome=[toolhome]</code>
+</ul>
+</li>
+<li>Regression<br>
+Regression is run automatically if installed by the nightly build script, buildfulcrum, mentioned above. The build script looks for a file [package-home]/[change#]/regression/run. If that file exists and is executable, it is executed. The return code, and nothing else, is checked for a 0 return code. If it is zero, the regression passes. If not, it fails and the install is not marked complete for the fulcrum script. If the regression does not exist, then no regression is run and the installation is accepted without regression.
+<br>
+Currently, the only package with regression is the gdsii package which can be used as an example, if you desire. Nothing about this is incompatible with Naru's regression methodology and I encourage it's use.
+</li>
+</ul>
+</ol>
+<li>Triggering a build for the global fulcrum area.<br>
+Anybody can trigger a build of the checked-in perforce packages by using <code>/home/local/common/fulcrum/bin/trigger</code><br>
+<pre>
+         Usage: trigger [-v] &lt;package list&gt;
+</pre>
+The package list must be present, there is no default. The list can be a comma separated
+list or a space separated list. Example:
+<pre>
+    /home/local/common/fulcrum/bin/trigger lve ubersize
+</pre>
+You will receive mail upon completion. If there is already a build in progress for the
+same package, no build will be done and no message will be sent, sorry. This should not
+occur very often, hopefully. If you specify an invalid package name, nothing will be done
+but you will receive mail about the attempt. All builds are done under the build username.
+All packages are built for Solaris64, Linux, and Opteron.
+</li>
+</ul>
+</td>
+</tr>
+<tr>
+<td colspan=2>
+<b>Other notes</b>
+<ul>
+<li>
+The fulcrum script is located in <code>/home/local/common/fulcrum/bin</code>.
+This is referenced by a symbolic link from /usr/intel/bin
+so you will not need to change your path if you an ordinary user. You can
+also run
+<code>/home/local/common/fulcrum/bin/fulcrum</code> directly or create an alias
+for this. There are other developer related executables in this directory.
+<li>
+All options following the tool are passed to the tool unchanged. However, if the
+tool uses the <code>--fulcrum-pdk-root</code> option, and if the fulcrum script can identify
+a pdk, it will add an additional <code>--fulcrum-pdk-root</code> option ahead of the specified
+options. This allows the user to specify a different pdk path. If the user does so,
+however, the user will be warned that he is overriding the default pdk. (<i>Developer note:</i> The fulcrum script determines if the program requires a pdk by searching for the string '<code>fulcrum-pdk-root</code>' in the executable file. Even if this string appears in a comment, fulcrum will assume that it is ok to add the <code>--fulcrum-pdk-root</code> argument.)
+</li>
+<li>
+The tools are rebuilt with the build system on a nightly basis. It will NOT fail of one
+or more of the packages fail to build. In addition, if installed, a brief regression
+will be run. If there is no regression or if the regression passes, the installed
+package is marked as installed and recognized by the fulcrum script and the database
+generation script. Packages which fail regression or installation will remain
+but will not be accessible thru the fulcrum script without the <code>--developer</code> option.
+</li>
+<li>
+See also the <a href="releasedoc.html"> Specification Working Document</a> for intended features.
+</li>
+</ul>
+</td>
+</tr>
+</table>
+</body>
+</html>

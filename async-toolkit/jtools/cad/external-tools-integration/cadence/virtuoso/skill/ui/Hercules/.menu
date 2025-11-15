@@ -1,0 +1,5 @@
+( list "Hercules" "UIHercules" )
+
+load("/nfs/site/eda/tools/synopsys/icv/2011.09-SP2/common/etc/VUE/SkillVueMenu.il")
+
+

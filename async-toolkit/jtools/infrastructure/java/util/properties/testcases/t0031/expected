@@ -1,0 +1,4 @@
+cosim.base=chip.bali.top.BALI(24){verilog.fhtest,verilog.rtl,csp,subcells,prs,java}:rtl_mgmt{verilog.rtl,csp,subcells,prs,java}
+cosim.exceptions=port[1].epl{java,subcells,csp,prs}
+cosim.spec=chip.bali.top.BALI(24){verilog.fhtest,verilog.rtl,csp,subcells,prs,java-port[1].epl{java,subcells,csp,prs}}:rtl_mgmt{verilog.rtl,csp,subcells,prs,java}
+topdir=.

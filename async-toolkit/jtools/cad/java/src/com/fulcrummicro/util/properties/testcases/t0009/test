@@ -1,0 +1,11 @@
+<test>
+<config>
+<opt name="N" type="Integer" default="10"></opt>
+<opt name="port.[1-$(N)].opt.[1-2]" type="String" default=""></opt>
+port.1.opt.1=a
+</config>
+
+<config name="ccc">
+port.1.opt.1=c
+</config>
+</test>

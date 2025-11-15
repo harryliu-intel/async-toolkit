@@ -1,0 +1,48 @@
+#!/usr/intel/bin/perl -l
+# AAG
+# $Id: annotatecond,v 1.1 2007/02/28 18:15:21 aubrey Exp aubrey $
+# $DateTime$
+
+while (<>) {
+    chomp;
+    if (/^ *ifneq/ or /^ *ifeq/) {
+        my $l = $_;
+        if (/ifeq/) {
+            $l =~ s/,/ eq /;
+        }
+        else {
+            $l =~ s/,/ ne /;
+        }
+        $l =~ s/^[^\(]*\(//;
+        $l =~ s/\)[^\)]*$//;
+        $l =~ s/  */ /g;
+        unshift @if, $l;
+        unshift @nl, 0;
+        print STDERR;
+
+    }
+    if (/^else/) {
+        $_ = "else # $if[0]";
+        if ($nl[0] > 20) {
+            $_ .= " $nl[0] lines back";
+        }
+    }
+    if (/^ *endif/) {
+        $_= "endif # $if[0]";
+        if ($nl[0] > 20) {
+            $_ .= " $nl[0] lines back";
+        }
+        if ($#if >= 0) {
+            shift @if;
+            shift @nl;
+        }
+        else {
+            print STDERR "Underrun at line $.";
+        }
+    }
+    foreach my $n (0..$#nl) {
+        $nl[$n]++;
+    }
+    print;
+}
+print STDERR "Unbalanced" if @if;

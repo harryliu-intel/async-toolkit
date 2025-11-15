@@ -1,0 +1,15 @@
+-suppress=TFIPC,IPDASP
++vcs+initreg+config+$SPAR/fpga/vcs/initreg.config
++define+ENABLE_CSP_PRINT
++define+CAST2VERILOG_RESET=fpga_reset
++define+PRS2VERILOG_TIMEUNIT=1ns
++define+PRS2VERILOG_TAU=0.001
+-sverilog
+-timescale=1ns/1fs
+-file $CAST2VERILOG_RUNTIME/runtime.vcfg
+$SPAR/fpga/fpga_d04_header.v
+-v $SPAR/fpga/async_fpga_lib.v
+-v $COLLATERAL/d04/p1273/d04hip/16ww43.5_d04_k.0_chvbxtmiggt/v/primitives/d04_primitive_verilog.v
+-v $COLLATERAL/d04/p1273/d04hip/16ww43.5_d04_k.0_chvbxtmiggt/v/ln/d04_ln_core.v
+-v $COLLATERAL/d04/p1273/d04hip/16ww43.5_d04_k.0_chvbxtmiggt/v/nn/d04_nn_core.v
+-v $CAST2VERILOG_RUNTIME/fpga_reset.v

@@ -1,0 +1,437 @@
+#!/usr/intel/bin/perl -w
+
+
+use POSIX;
+use FileHandle;
+use IPC::Open2;
+use Symbol;
+use DBI;
+use Getopt::Long;
+use strict;
+use File::stat;
+use File::Spec;
+use File::Spec::Functions;
+use Archive::Zip qw( :ERROR_CODES :CONSTANTS );
+use Cwd 'abs_path';
+
+
+my $debug=0;
+my $root="";
+my $cell="";
+my $fanout="";
+my $fanin="";
+my $pvt="";
+my $bump_height=12;
+my $bump_width=0.2;
+my $bump_shape="square";
+my $working_dir="lve_bumpsim";
+my $view_mode_order="floorplan/custom,custom_tag/accurate,layout/accurate,floorplan/accurate,custom_tag/extracted,layout/extracted,floorplan/extracted,floorplan/estimated,floorplan/nogeometry";
+my $sub_lve_root_dir="";
+my @sub_lve_root_dir=();
+
+my $result = GetOptions("root=s"      => \$root,
+                        "cell=s"           => \$cell,
+                        "pvt=s" => \$pvt,
+                        "fanout=s" => \$fanout,
+                        "bump-height=s" => \$bump_height,
+                        "bump-width=s" => \$bump_width,
+                        "bump-shape=s" => \$bump_shape,
+                        "debug" => \$debug,
+                        "fanin=s" => \$fanin
+ );
+
+die usage("Root $root does not exist\n") if (! -d $root);
+die usage("Please specify cell, fanout and fanin\n") if ($cell eq "" or $fanin eq "" or $fanout eq "");
+die usage("Please specify pvt\n") if ($pvt eq "");
+$root=~s/\/$//;
+@sub_lve_root_dir = split(":",$sub_lve_root_dir);
+system("mkdir","-p",$working_dir) if(!-d $working_dir);
+
+my $fanin_cell="";
+my $fanin_node="";
+if($fanin =~ /\//){
+  ($fanin_cell,$fanin_node)=split("/",$fanin);
+}else{
+  ($fanin_cell,$fanin_node)=($cell,$fanin);
+}
+
+my $fanout_cell="";
+my $fanout_node="";
+if($fanout =~ /\//){
+  ($fanout_cell,$fanout_node)=split("/",$fanout);
+}else{
+  ($fanout_cell,$fanout_node)=($cell,$fanout);
+}
+
+
+
+#get threshresp file
+my($threshresp_info,$threshPercent)=get_thresh_resp();
+my $bump_data=generate_bump_ziggurat($threshPercent);
+
+bump_check($bump_data,$threshresp_info);
+
+if(! $debug){
+  system("rm","-rf",$working_dir); 
+}
+
+
+
+
+
+
+
+
+sub bump_check{
+  my($bump_data,$threshResponse_infos)=@_;
+  my %br_fh;
+  my %max_Vperc_; my %resp_Vperc; my %resp_time;
+  my $resp_working_dir=`mktemp -d $working_dir/bump_resp.XXXX`;
+  chomp($resp_working_dir);
+  foreach my $step (@$bump_data){
+    my ($dt,$perc)=@$step;
+    foreach my  $thresh_updn (keys %$threshResponse_infos){
+      foreach my  $thresh_cctau (keys %{$threshResponse_infos->{$thresh_updn}}){
+          my $scen="$thresh_updn:$thresh_cctau";
+          if(not defined $br_fh{$scen}) {
+              my $respfile="$resp_working_dir/$thresh_updn:$thresh_cctau.bumpresp";
+              $br_fh{$scen}=new FileHandle;
+              $br_fh{$scen}->open(">$respfile") or die "cannot write $respfile\n";
+          }
+          $resp_Vperc{$scen}=0 if (not defined $resp_Vperc{$scen});
+          $resp_Vperc{$scen}=linearInterp_response($resp_Vperc{$scen},$dt,$threshResponse_infos->{$thresh_updn}->{$thresh_cctau}->{$perc});
+          $resp_time{$scen}=0 if (not defined $resp_time{$scen});
+          $resp_time{$scen}=$resp_time{$scen}+$dt;
+          print " zigdur=$dt $scen $perc% ---> respV=$resp_Vperc{$scen}% time=$resp_time{$scen}\n" if($debug);
+          print {$br_fh{$scen}} "$resp_time{$scen} $resp_Vperc{$scen}\n";
+          if(not defined $max_Vperc_{$scen} or $resp_Vperc{$scen} >= $max_Vperc_{$scen}){
+            $max_Vperc_{$scen}=$resp_Vperc{$scen};
+          }else{
+            last;
+          }
+
+      }
+    }
+  }
+  foreach my $scen (keys %max_Vperc_){
+    my($thresh_updn,$cc,$tau)=split(":",$scen);
+    my $bump_dir="bump_up";
+    $bump_dir="bump_dn" if ($thresh_updn =~ /up/);
+    print "Information: $cell fanin=$fanin_node fanout=$fanout_cell/$fanout_node $bump_dir height=$bump_height(%Vdd) width=$bump_width(ns) resp=$max_Vperc_{$scen}\n";
+  }
+}
+
+sub get_thresh_resp{
+  my $threshResponse_infos={};
+  my @threshPercent;
+  my ($p,$v,$t)=split(":",$pvt);
+  my $fanin_alint_path=get_alint_path($fanin_cell,$p,$v,$t);
+  my $fanout_alint_path=get_alint_path($fanout_cell,$p,$v,$t);
+  print "Information: $fanin_cell alint path $fanin_alint_path\n";
+  print "Information: $fanout_cell alint path $fanout_alint_path\n" if ($fanin_cell ne $fanout_cell);
+  my $fanout_node_agg=get_fanoutcell_faninnode($fanin_cell,$fanin_node,$fanout_cell,$fanout_node );
+  
+  my $fanout_alint_bin=get_alint_bin($fanout_node, "$fanout_alint_path/alint_parallel");
+  print "Information: fanout node $fanout_cell/$fanout_node alint.bin.$fanout_alint_bin\n" if($debug);
+  my $node_path="$fanout_alint_path/alint.bin.$fanout_alint_bin/$fanout_node";
+#  my %resp_files=map{$_=>1} zip_members("$node_path/thresh_resp.zip");
+  my $thresh_working_dir=`mktemp -d $working_dir/thresh_resp.XXXX`;
+  chomp($thresh_working_dir);
+  system("cp","-f", "$node_path/thresh_resp.zip","$thresh_working_dir/.");
+  system("unzip","-q", "$thresh_working_dir/thresh_resp.zip","-d","$thresh_working_dir");
+  opendir(D,"$thresh_working_dir");
+  my $node_fix=$fanout_node_agg;
+  $node_fix =~ s/\[/\\\[/;
+  $node_fix =~ s/\]/\\\]/;
+  $node_fix =~ s/\./\\\./;
+  my @resp_files= grep(/^$node_fix:/, readdir(D));    
+  close(D);
+  foreach my $resp_file(@resp_files){
+    my($status, $thresh_resp_ref)=parse_threshresp($thresh_working_dir,$resp_file);
+    if($status ne "FAIL"){
+      my $thresh_sce=$resp_file; $thresh_sce=~s/\.resp$//;
+      my($in,$thresh_updn,$cc,$tau,$perc)=split(":",$thresh_sce);
+      push @threshPercent, $perc;
+      push @{$threshResponse_infos->{$thresh_updn}->{"$cc:$tau"}->{$perc}},@$thresh_resp_ref;
+    }
+  }
+  my %threshPercent=map{$_=>1} @threshPercent;
+  @threshPercent=sort(keys %threshPercent);
+  return ($threshResponse_infos,\@threshPercent);
+}
+
+sub parse_threshresp{
+  my ($node_path,$thresh_file)=@_;
+  #fine which is the response file for the input node
+  my $thresh_resp_file="$node_path/$thresh_file";
+  if(! -e $thresh_resp_file){
+    print "ERROR: Cannot find $thresh_file\n";
+          return ("FAIL");
+  }
+  open TR,"<$thresh_resp_file" or die "Cannot read file $thresh_resp_file";
+  my @lines=<TR>;
+  close TR;
+  chomp(@lines);
+  unshift (@lines,0);
+  while($lines[$#lines] =~ /^#/){
+    pop(@lines);
+  }
+  return ("SUCESS", \@lines);
+}
+
+sub linearInterp_response{
+    my($last_v,$dt,$threshRespref)=@_;    
+    my $respVp=0;
+    my $max_v= scalar(@$threshRespref)-1;
+    if($threshRespref->[$max_v] == 1e9){
+      $max_v--;
+    }
+    my $max_t= $threshRespref->[$max_v];
+
+    my $last_v_f=int($last_v);
+    my $last_v_c=int($last_v)+1;
+
+    if($last_v_f>=$max_v || $last_v_c>=$max_v){
+    #    print "reach stable voltage, return stable voltage:$max_v%\n";
+        return $max_v;
+    }
+
+    #do linear interpolation
+    my $last_t_f = $threshRespref->[$last_v_f];
+    my $last_t_c = $threshRespref->[$last_v_c];
+      
+    my $delta_t = ($last_t_c-$last_t_f)*($last_v-$last_v_f);
+    #print "delta t= ($last_t_c - $last_t_f)*($last_v-$last_v_f)=$delta_t\n";
+    
+    my $resp_t = $last_t_f+$delta_t+$dt;
+    #search for corresponding Voltage
+    if($resp_t > $max_t){
+      #reach stable voltage
+      return $max_v;
+    }
+
+    $respVp=binary_search_thresh_resp($resp_t,$last_v_f,$max_v,$threshRespref);
+    return $respVp;
+}
+
+sub binary_search_thresh_resp{
+    my($t,$V1,$V2,$table)=@_;
+    if($V1==($V2-1)){
+        my $t1=$table->[$V1];
+        my $t2=$table->[$V2];
+        return $V2 if($t>$t2);
+        my $V=$V1+($t-$t1)/($t2-$t1);
+        return ($V);
+    }
+    return $V1 if($V1==$V2);
+
+    my $Vmid=int(($V1+$V2)/2);
+    if($t >= $table->[$Vmid]){
+      my($V)=binary_search_thresh_resp($t,$Vmid,$V2,$table);
+      return ($V);
+    }else{
+      my($V)=binary_search_thresh_resp($t,$V1,$Vmid,$table);
+      return ($V);
+    }
+}
+
+sub generate_bump_ziggurat{
+  my($threshPercent_ref)=@_;
+  my @threshPercent=@$threshPercent_ref;
+  my @bump_data;
+  system("mkdir","-p",$working_dir) if(!-d $working_dir);
+  open BZF, ">$working_dir/$bump_shape:$bump_height:$bump_width.zig" or die "Cannot write file $working_dir/$bump_shape:$bump_height:$bump_width.zig";
+  print BZF "#bump_height $bump_height $bump_shape\n";
+  print BZF "#format time %vdd\n";
+  print BZF "0 0\n";
+  if($bump_shape =~/square/){
+     for (my $i=0;$i<scalar(@threshPercent);$i++){
+       if($threshPercent[$i]>=$bump_height){
+         print BZF "0 $threshPercent[$i]\n";
+         print BZF "$bump_width $threshPercent[$i]\n";
+         push @bump_data, [$bump_width, $threshPercent[$i]];
+         last;
+       }
+     }
+  }else{
+     my $t_pre=0;my $top_index=0;
+     for (my $i=0;$i<scalar(@threshPercent);$i++){
+       if($threshPercent[$i]>=$bump_height){
+         print BZF "$t_pre $threshPercent[$i]\n";
+         $top_index=$i;
+         last;
+       }else{
+         my $t=($threshPercent[$i]/$bump_height)*($bump_width/2);
+         print BZF "$t_pre $threshPercent[$i]\n";
+         print BZF "$t $threshPercent[$i]\n";
+         my $dur=$t-$t_pre;
+         push @bump_data, [$dur, $threshPercent[$i]];
+         $t_pre=$t; 
+       }
+     }
+     for (my $i=$top_index;$i>=0;$i--){
+       if($i>0){
+         my $t=$bump_width-($threshPercent[$i-1]/$bump_height)*($bump_width/2);
+         print BZF "$t $threshPercent[$i]\n";
+         print BZF "$t $threshPercent[$i-1]\n";
+         my $dur=$t-$t_pre;
+         push @bump_data, [$dur, $threshPercent[$i]];
+         $t_pre=$t; 
+       }else{
+        print BZF "$bump_width $threshPercent[$i]\n";
+         my $dur=$bump_width-$t_pre;
+         push @bump_data, [$dur, $threshPercent[$i]];
+       }
+     }
+     
+  }
+
+  print BZF "$bump_width 0\n";
+  close BZF;
+  return (\@bump_data);
+}
+
+sub get_fanoutcell_faninnode{
+  my($fanin_cell,$fanin_node,$fanout_cell,$fanout_node)=@_;
+  my $jflat_fanout_file=get_jflat_fanout_file($fanin_cell);
+  open(F,"<$jflat_fanout_file") or die "CANNOT open $jflat_fanout_file\n";
+  while(<F>){
+    chomp;
+    my($node, @fanouts)=split(/\s+/,$_);
+    next if ($node ne $fanin_node);
+    foreach my $fanout (@fanouts){
+      my($c,$in,$out)=split("/",$fanout);
+      if($c eq $fanout_cell and $fanout_node eq $out){
+        print "Information: fanout info: $c/$in/$out\n" if($debug);
+        return $in;
+      }
+    } 
+  }
+  close(F);
+  return "";
+
+}
+
+
+
+
+
+sub get_alint_path{
+    my($cellname,$p,$v,$t)=@_;
+    my $search_order=$view_mode_order;
+    my @search_view_mode=split(/,/,$search_order);
+    my $cellpath =$cellname;
+    $cellpath=~s/\./\//g;
+    $v.="V"if($v !~/V$/);
+    $t.="C"if($t !~/C$/);
+    foreach my $dir ("$root", @sub_lve_root_dir){
+      my $cell_dir="$dir/$cellpath";
+      foreach my $view_mode (@search_view_mode) {
+        my $path = "$cell_dir/$view_mode/alint/$p/$v/$t";
+        if ( -d $path) {
+            $path=File::Spec->canonpath( $path ) ;
+            return $path;
+        }
+      }
+    }
+    return "";
+}
+
+sub get_cell_path{
+  my ($path)=@_;
+  my @view_mode=split(/,/,$view_mode_order);
+  foreach my $view_mode (@view_mode){
+    if($path =~/(\S+)\/$view_mode\/(\S+)/){
+      return $1;
+    }
+  }
+  return "";
+}
+sub get_alint_bin {
+  my ($node, $alint_parallel_path)=@_;
+  my $node_fix = $node;
+  my $bin=-1;
+  $node_fix =~ s/\[/\\\[/;
+  $node_fix =~ s/\]/\\\]/;
+  $node_fix =~ s/\./\\\./;
+  my @loc=`grep '^alint ${node_fix}\\s*\$' \"$alint_parallel_path/alint.in.\"*`;
+  if(scalar(@loc)==0){
+      return $bin;
+  }
+  my($bin_path,$rest)=split(":",$loc[0]);
+  if($bin_path =~ /\.(\d+)$/){
+    $bin=$1;
+  }
+   return $bin;
+}
+
+sub get_jflat_fanout_file{
+  my ($cellname)=@_;
+  my $cellpath =$cellname; $cellpath=~s/\./\//g;
+  if(! -d "$root/$cellpath"){
+      print "ERROR: no lve path for $fanin_cell\n";
+      exit;
+  }
+  my @jflat=`find \"$root/$cellpath\" -follow -type d -name jflat\\*`;
+  my $jflat_path="";
+  foreach my $j (@jflat){
+      chomp($j);
+      $jflat_path=$j;
+  }
+  my $jflat_file_path="$jflat_path/fanout/default.latest";
+  if(!-e "$jflat_file_path"){
+      print "ERROR: missing $cellname jflat fanout file\n";    
+      exit;
+  }
+  return "$jflat_file_path";
+}
+
+sub zip_members{
+  my ($file)=@_;
+  my $zip = Archive::Zip->new();
+    unless ( $zip->read( "$file" ) == AZ_OK ) {
+       die "Cannot read $file";
+    }
+    my @mbrs = $zip->memberNames();
+    return (@mbrs);
+}
+sub archive_extract_files{
+  my ($archive,$extract_path,@files)=@_;
+  if (@files){
+     my $zip = Archive::Zip->new();
+     unless ( $zip->read( $archive ) == AZ_OK ) {
+         die "Read error on $archive";
+     }
+     foreach my $element (@files) {
+         $zip->extractMember($element, "$extract_path/$element");
+     }
+  }else{
+     my $ae = Archive::Extract->new( archive => "$archive" );
+     my $status = $ae->extract( to => $extract_path ) or die $ae->error;
+  }
+  `chmod 02775 $extract_path`;
+  `chmod -R g+w   $extract_path`;
+  return $extract_path;
+}
+
+sub usage {
+    my ($msg)=@_;
+    local $"=",";
+print STDERR $msg if(defined $msg);
+    my $usages = <<ET;
+
+Check lve alint
+
+USAGE: $0 
+-root=<lve root>
+--cell=<fqcn>
+--fanin=<node>
+--fanout=<node or fanout_cell/node>
+--pvt=<pvt>
+--bump-height=<%Vdd>
+--bump-width=<>  (unit is ns)
+--bump-shape=[square|triangle]
+ET
+   return $usages;
+}
+

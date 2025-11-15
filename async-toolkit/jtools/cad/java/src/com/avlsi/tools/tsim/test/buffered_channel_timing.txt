@@ -1,0 +1,6 @@
+The proper inputs for a BufferedChannel mimicking a line of N bufs or
+fullbufs where the tokens are flowing freely are N+1, 200, and 100.
+The proper inputs for a BufferedChannel mimicking a line of N bufs or
+fullbufs where the tokens are backed up (waiting on the next cell) are
+N+1, 200, and 300.  There will still be occasional time discrepancies
+(gremlins?)  but only by a few hundred (= a few gate transitions).

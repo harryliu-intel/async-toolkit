@@ -1,0 +1,45 @@
+#!/usr/intel/bin/perl -l
+# AAG
+# $Id$
+# $DateTime$
+
+BEGIN {
+    my $package_root = $0;
+    my $exe = $package_root;
+    $exe =~ s:.*/::;
+    if (! ($package_root =~ m:^/:)) {
+        my $pwd = `pwd`;
+        chomp $pwd;
+        $package_root = $pwd;
+        $package_root .= "/$0";
+        $package_root =~ s:$exe$::;
+        $package_root =~ s://:/:g;
+        chdir $package_root;
+        $package_root = `pwd`;
+        chomp $package_root;
+        chdir $pwd;
+    }
+    else {
+        $package_root =~ s:/bin/$exe::;
+    }
+    if ( -d $package_root ) {
+        push @INC, "$package_root/lib/perl";
+    }
+}
+require 'julian.pl';
+
+if ($#ARGV < 0) {
+   ($se,$mn,$hr,$da,$mo,$yr)=localtime(time);
+   $x=sprintf ("%02d%02d%02d", $yr%100,$mo+1,$da);
+   $d=caljul($x);
+}
+elsif (! ($ARGV[0] =~ /^\d\d\d\d\d\d$/) ) {
+    print <<EU;
+Usage: caljul yymmdd
+EU
+    exit 1;
+}
+else {
+   $d=caljul($ARGV[0]);
+}
+print $d;

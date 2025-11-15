@@ -1,0 +1,2394 @@
+// Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+// SPDX-License-Identifier: Apache-2.0
+
+/* Copyright 2003 Fulcrum Microsystems.  All rights reserved.
+ * $Id$
+ * $DateTime$
+ * $Author$
+ */
+package com.avlsi.tools.cdl2cast;
+
+
+import java.util.Arrays;
+import java.util.BitSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.HashSet;
+import java.util.HashMap;
+import java.util.TreeMap;
+import java.util.Iterator;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Calendar;
+import java.util.GregorianCalendar;
+import java.util.ListIterator;
+import java.util.LinkedHashSet;
+import java.util.ArrayList;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
+
+import java.io.Writer;
+import java.io.PrintWriter;
+import java.io.Reader;
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.OutputStream;
+import java.io.InputStream;
+import java.io.OutputStreamWriter;
+import java.io.InputStreamReader;
+import java.io.FileOutputStream;
+import java.io.FileInputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.FileNotFoundException;
+
+import com.avlsi.cast.impl.DenseSubscriptSpec;
+import com.avlsi.cast.impl.Environment;
+import com.avlsi.cast.impl.LocalEnvironment;
+import com.avlsi.cast.impl.Range;
+import com.avlsi.file.cdl.parser.CDLLexer;
+import com.avlsi.util.text.StringUtil;
+
+import com.avlsi.file.cdl.util.rename.CadenceNameInterface;
+import com.avlsi.file.cdl.util.rename.CDLNameInterface;
+import com.avlsi.file.cdl.util.rename.CDLNameInterfaceProxy;
+import com.avlsi.file.cdl.util.rename.BindRulNameInterfaceFactory;
+import com.avlsi.file.cdl.util.rename.CompositeCDLNameInterface;
+import com.avlsi.file.cdl.util.rename.CompositeCDLNameInterfaceFactory;
+import com.avlsi.file.cdl.util.rename.IdentityNameInterface;
+import com.avlsi.file.cdl.util.rename.CDLRenameFactory;
+import com.avlsi.file.cdl.util.rename.CDLNameInterfaceFactory;
+import com.avlsi.file.cdl.util.rename.TrivialCDLNameInterfaceFactory;
+import com.avlsi.file.cdl.util.rename.CDLRenameException;
+
+import com.avlsi.layout.gdsII.GenerateGDSIIDataFactory;
+import com.avlsi.layout.gdsII.SkillTableEmitterFactory;
+import com.avlsi.layout.gdsII.TableEmitterFactoryInterface;
+
+import com.avlsi.file.cdl.parser.SplittingFactory;
+import com.avlsi.file.cdl.parser.TemplateSplitterFactory;
+import com.avlsi.file.cdl.parser.ReadCDLIntoFactory;
+
+import com.avlsi.file.cdl.parser.CDLFactoryInterface;
+import com.avlsi.file.cdl.parser.CDLFactoryAdaptor;
+import com.avlsi.file.cdl.parser.CDLFactoryEmitter;
+import com.avlsi.file.cdl.parser.CDLFactoryFilter;
+import com.avlsi.file.cdl.parser.CDLSimpleInterface;
+import com.avlsi.file.cdl.parser.CDLInterfaceSimplifier;
+import com.avlsi.file.cdl.parser.CDLInlineFactory;
+import com.avlsi.file.cdl.parser.CDLScalingFactory;
+import com.avlsi.file.cdl.parser.Template;
+
+import com.avlsi.file.liberty.parser.FunctionParser;
+import com.avlsi.file.liberty.parser.LibertyAttr;
+import com.avlsi.file.liberty.parser.LibertyParser;
+import com.avlsi.file.liberty.parser.LibertyGroup;
+
+import com.avlsi.util.bool.BooleanExpressionInterface;
+import com.avlsi.util.bool.BooleanUtils;
+
+import com.avlsi.util.container.CollectionUtils;
+import com.avlsi.util.container.Pair;
+
+import com.avlsi.file.common.HierName;
+import com.avlsi.file.common.InvalidHierNameException;
+
+import com.avlsi.io.IndentWriter;
+
+import com.avlsi.util.exception.AssertionFailure;
+
+import com.avlsi.util.cmdlineargs.CommandLineArg;
+import com.avlsi.util.cmdlineargs.CommandLineArgs;
+import com.avlsi.util.cmdlineargs.defimpl.PedanticCommandLineArgs;
+import com.avlsi.util.cmdlineargs.defimpl.CommandLineArgsDefImpl;
+import com.avlsi.util.cmdlineargs.defimpl.CachingCommandLineArgs;
+import com.avlsi.util.cmdlineargs.defimpl.CommandLineArgsWithConfigFiles;
+
+import com.avlsi.layout.gdsII.AssuraBindRulTableEmitterFactory;
+
+import com.avlsi.tools.lvs.NetGraph;
+import com.avlsi.prs.ProductionRule;
+import com.avlsi.prs.ProductionRuleSet;
+import com.avlsi.file.aspice.AspiceFile;
+import com.avlsi.file.cdl.parser.AspiceCellAdapter;
+
+/**
+ * This class writes out a hierarchical cdl file as a tree
+ * of .cast files in a spec tree and digital tree, and a SKILL names.il table
+ * directory of mappings from existing layout names -> desired layout names which
+ * will be used in gds2hier.il dfII library munging.  It includes prs generated
+ * from NetGraph, or alternatively, from the function attributes from a Liberty
+ * description.
+ **/
+
+public class CDL2Cast {
+
+    /** The names for Vdd and GND **/
+    static String[] power_nets;
+    static String[] ground_nets;
+    private static Set<String> IMPLIED_PORTS;
+    private static Predicate<String> isNonImpliedPort;
+    private static Predicate<String> isPowerNet;
+    private static Predicate<String> isGroundNet;
+
+    /** renaming table for transistor types **/
+    static Map transistorTypeMap;
+
+    /** normalize width and length **/
+    static double widthGrid;
+    static double lengthGrid;
+
+    /** should CAST include fized_size=false netlist? **/
+    static boolean netlistInCast;
+    
+    /** Only import leaf cells **/
+    static boolean onlyLeafCells;
+    
+    private final CellPortsReverseMapper reverseMap;
+
+    /**
+     * Characters used to delimit an array index.
+     **/
+    private final char[] busBitChars;
+
+    /**
+     * Characters used to delimit an array index in CAST.
+     **/
+    private static final char[] CAST_BUSBITCHARS = new char[] { '[', ']' };
+
+    /**
+     * Used to create boolean expressions for PRS generation.
+     **/
+    private final BooleanUtils bu = new BooleanUtils();
+
+    /**
+     * Cached map from cell to map of pin to function, using Liberty names.
+     **/
+    private Map<String,Map<String,String>> libertyFunctions;
+
+    /**
+     * Cached map from cell to attribute name to attribute value.
+     **/
+    private Map<String,Map<String,LibertyAttr>> libertyAttributes;
+
+    /**
+     * Cached map from cell to pin to port direction.
+     **/
+    private Map<String,Map<String,Direction>> libertyPortDirections;
+
+    private static final String LIBERTY_PRS_DEFINE = "USE_LIBERTY_PRS";
+
+    /**
+     * Boolean expressions involving equal or more number of literals will be
+     * converted to a truth table.
+     **/
+    private static final int MIN_TRUTH_TABLE_LITERALS = 5;
+
+    private final boolean detectGendev;
+
+    private static enum Direction {
+        INPUT("-"),
+        OUTPUT("+"),
+        INOUT("-+"),
+        INTERNAL("-+");
+        private final String castDirection;
+        Direction(String castDirection) {
+            this.castDirection = castDirection;
+        }
+        public String getCast() {
+            return castDirection;
+        }
+        public static Direction getDirection(String libDir) {
+            if (libDir.equals("input")) return INPUT;
+            else if (libDir.equals("output")) return OUTPUT;
+            else if (libDir.equals("inout")) return INOUT;
+            else if (libDir.equals("internal")) return INTERNAL;
+            else throw new IllegalArgumentException(
+                    "Invalid Liberty pin direction: " + libDir);
+        }
+    }
+
+    private static void usage( String m ) {
+
+        final String className = CDL2Cast.class.getName();
+        
+        System.out.println( "Usage: " +
+                            System.getProperty( "java.home" ) +
+                            System.getProperty( "file.separator" ) +
+                            "bin" +
+                            System.getProperty( "file.separator" ) +
+                            "java " +
+                            " -classpath " +
+                            System.getProperty( "java.class.path" ) + " " +
+                            className + "\n" +
+                            "    --cdl-file=file\n" +
+                            "    --output-spec=dir\n" +
+                            "    --output-cast=dir\n" +
+                            "    --lib-name=mod.ule\n" +
+                            "    [--pedantic]\n" +
+                            "    [--vdd-node=name]\n" +
+                            "    [--gnd-node=name]\n" +
+                            "    [--node-prefix=prefix]\n" +
+                            "    [--instance-prefix=prefix]\n" +
+                            "    [--refinement-parent=type,...]\n" +
+                            "    [--top-refinement-parent=type,...]\n" +
+                            "    [--name-table-dir=.]\n" +
+                            "    [--sub-type=num]\n" +
+                            "    [--meters-per-input-unit=1]\n" +
+                            "    [--layout-to-cdl-bind-rul=/dev/null]\n" +
+                            "    [--output-cdl-to-layout-bind-rul=/dev/null]\n" +
+                            "    [--bind-rul-in=/dev/null]\n" +
+                            "    [--bind-rul-template=/dev/null]\n" +
+                            "    [--skip-prs-generation]\n" +
+                            "    [--all-cells]\n" +
+                            "    [--netlist-in-cast]\n" +
+                            "    [--only-leaf-cells]\n" +
+                            "    [--rename-transistor-type=old1:new1,old2:new2,...]\n" +
+                            "    [--width-grid=W]\n" +
+                            "    [--length-grid=L]\n" +
+                            "    [--bus-bit-chars=\"[]\"]\n" +
+                            "    [--write-verilog-rtl=[all|top]]\n" +
+                            "    [--top-cells=regex]\n" +
+                            "    [--liberty-file=file]\n" +
+                            "    [--detect-gendev]\n" +
+                            "    [--use-multiple]\n"
+                            );
+        if (m != null && m.length() > 0)
+            System.err.println ( m );
+        System.exit(1);
+    }
+
+    /**
+     * returns a <code>Writer</code> to <code>fileName</code>
+     **/
+    public static Writer openOutputFile( final String fileName )
+        throws IOException
+    {
+        final Writer ret;
+
+        final OutputStream outputStream =
+            new FileOutputStream( fileName );
+
+        ret  = new BufferedWriter( new OutputStreamWriter( outputStream ) );
+
+        return ret;
+    }
+
+    public static File makeDir( final String dirName ) {
+        File dir;
+        if ( dirName != null ) {
+            dir = new File( dirName );
+        }
+        else {
+            dir = null ;
+        }
+
+        if ( ( dir != null ) &&
+             ( ! ( dir.exists() ) ) ) {
+            dir.mkdirs();
+        }
+        return dir;
+    }
+
+    /**
+     * Used to find the name mapping from CAST to CDL, by "sandwiching" a
+     * CDLRenameFactory with instances from getBread.
+     **/
+    private static class CellPortsReverseMapper {
+        private final Map<String,String> cellMapping;
+        private final Map<String,Map<String,String>> nodeMapping;
+        String oldSub;
+        String[] oldIn;
+        String[] oldOut;
+        private class Proxy extends CDLFactoryFilter {
+            public Proxy(final CDLFactoryInterface inner) {
+                super(inner);
+            }
+            private void mapNodes(final Map<String,String> nodeMap,
+                                  final String[] from,
+                                  final String[] to) {
+                for (int i = 0; i < from.length; ++i) {
+                    nodeMap.put(from[i], to[i]);
+                }
+            }
+            public void beginSubcircuit(String subName, String[] in,
+                                        String[] out, Map parameters,
+                                        Environment env) {
+                // Due to the "sandwiching", this function body gets executed
+                // twice for each subcircuit definition: first with the
+                // original names, then immediately with renamed names.
+                if (oldSub == null) {
+                    oldSub = subName;
+                    oldIn = in;
+                    oldOut = out;
+                } else {
+                    cellMapping.put(subName, oldSub);
+                    final Map<String,String> nodeMap = new HashMap<>();
+                    mapNodes(nodeMap, in, oldIn);
+                    mapNodes(nodeMap, out, oldOut);
+                    nodeMapping.put(subName, nodeMap);
+                    oldSub = null;
+                }
+                super.beginSubcircuit(subName, in, out, parameters, env);
+            }
+        }
+        public CDLFactoryInterface getBread(final CDLFactoryInterface inner) {
+            return new Proxy(inner);
+        }
+        public CellPortsReverseMapper() {
+            cellMapping = new HashMap<>();
+            nodeMapping = new HashMap<>();
+        }
+        public String getCellName(final String cell) {
+            return cellMapping.get(cell);
+        }
+        public Map<String,String> getNodeMap(final String cell) {
+            return nodeMapping.get(cell);
+        }
+    }
+
+    private static String getCastArray(final String stem,
+                                       final List<Integer> indices) {
+        return indices.stream()
+                      .map(Object::toString)
+                      .collect(Collectors.joining(
+                                  ",",
+                                  stem + CAST_BUSBITCHARS[0],
+                                  String.valueOf(CAST_BUSBITCHARS[1])));
+    }
+
+    /**
+     * Detect node array references in the port list using custom bus bit
+     * characters, and rename them to valid CAST names.
+     **/
+    private class ArrayNamingFactory extends CDLFactoryAdaptor
+                                     implements CDLNameInterfaceFactory {
+        private final CDLNameInterfaceFactory chained;
+        private final Map<String,Map<String,String>> nodeMap;
+        private final Map<String,Map<String,String>> instMap;
+        private String currSubcircuit;
+        public ArrayNamingFactory(final CDLNameInterfaceFactory chained) {
+            this.chained = chained;
+            this.nodeMap = new HashMap<>();
+            this.instMap = new HashMap<>();
+        }
+        public CDLNameInterface getNameInterface(final String cellName)
+            throws CDLRenameException {
+            final CDLNameInterface next = chained.getNameInterface(cellName);
+            return new CDLNameInterfaceProxy(next) {
+                public String renameNode(String old) throws CDLRenameException {
+                    final Map<String,String> map = nodeMap.get(cellName);
+                    final String mapped = map == null ? null : map.get(old);
+                    return mapped == null ? next.renameNode(old) : mapped;
+                }
+                public String renameDevice(String old) throws CDLRenameException {
+                    final Map<String,String> map = instMap.get(cellName);
+                    final String mapped = map == null ? null : map.get(old);
+                    return mapped == null ? next.renameSubCellInstance(old)
+                                          : mapped;
+                }
+            };
+        }
+        private void addMapping(final Map<String,Map<String,String>> nameMap,
+                                final String orig,
+                                final String stem,
+                                final List<Integer> indices) {
+            Map<String,String> map = nameMap.get(currSubcircuit);
+            if (map == null) {
+                map = new HashMap<>();
+                nameMap.put(currSubcircuit, map);
+            }
+            map.put(orig, getCastArray(stem, indices));
+        }
+        public void beginSubcircuit(String subName, String[] in, String[] out,
+                                    Map parameters, Environment env) {
+            currSubcircuit = subName;
+            getNonImpliedPorts(in, out).forEach(port -> {
+                final Pair<String,List<Integer>> portInfo =
+                    parsePortNodeName(port, busBitChars);
+                final List<Integer> indices = portInfo.getSecond();
+                if (!indices.isEmpty()) {
+                    addMapping(nodeMap, port, portInfo.getFirst(), indices);
+                }
+            });
+        }
+        public void makeCall(HierName name, String subName, HierName[] args,
+                             Map parameters, Environment env) {
+            final String sname = name.getCadenceString();
+            final Pair<String,List<Integer>> portInfo =
+                parsePortNodeName(sname, busBitChars);
+            final List<Integer> indices = portInfo.getSecond();
+            if (!indices.isEmpty()) {
+                addMapping(instMap, sname, portInfo.getFirst(), indices);
+            }
+        }
+    }
+
+    public CDL2Cast(CellPortsReverseMapper reverseMap, final char leftBitChar,
+                    final char rightBitChar, final boolean detectGendev) {
+        this.reverseMap = reverseMap;
+        this.busBitChars = new char[] { leftBitChar, rightBitChar };
+        this.detectGendev = detectGendev;
+    }
+
+    public static void main(String[] args)
+        throws Exception
+    {
+        final CommandLineArgs parsedArgs =
+            new CommandLineArgsDefImpl( args );
+        final CommandLineArgs argsWithConfigs =
+            new CommandLineArgsWithConfigFiles( parsedArgs );
+        final CommandLineArgs cachedArgs =
+            new CachingCommandLineArgs( argsWithConfigs );
+        final PedanticCommandLineArgs pedanticArgs =
+            new PedanticCommandLineArgs(cachedArgs);
+        final CommandLineArgs theArgs = pedanticArgs;
+
+        final Boolean allCells = theArgs.argExists( "all-cells" );
+
+        final String sourceCDLFileName =
+            theArgs.getArgValue( "cdl-file", null );
+
+        final String inputBindRulFileName =
+            theArgs.getArgValue( "bind-rul-in", "/dev/null" );
+
+        final String bindRulHeaderFileName =
+            theArgs.getArgValue( "bind-rul-header", "/dev/null" );
+
+        /**
+         * The location of the <cell>.names.il output.  These files contain
+         * SKILL tables with naem mappings from
+         **/
+        final String outputSkillTableDirName =
+            theArgs.getArgValue( "name-table-dir", "." );
+
+
+        /**
+         * The location of the digital cast output.  The digital cast
+         * will contain port definitions and a subcells block for each cell
+         * with a .SUBCKT in the cdl file
+         **/
+        final String outputSpecTreeDirName =
+            theArgs.getArgValue( "output-spec", null );
+
+        /**
+         * The location of the digital cast output.  The digital cast
+         * will contain port definitions and a subcells block for each cell
+         * with a .SUBCKT in the cdl file
+         **/
+        final String outputCastTreeDirName =
+            theArgs.getArgValue( "output-cast", null );
+
+        /**
+         * The names for Vdd and GND.  The first nodes in each list
+         * are assumed to be implicit ports.
+         **/
+        String VddString = theArgs.getArgValue("vdd-node", "vcc");
+        String GNDString = theArgs.getArgValue("gnd-node", "vss");
+        power_nets  = StringUtil.split(VddString, ',');
+        ground_nets = StringUtil.split(GNDString, ',');
+        IMPLIED_PORTS =
+            new LinkedHashSet<>(Arrays.asList(new String[] { power_nets[0], ground_nets[0] }));
+        /**
+         * HACK to check for the nodes which are in the STD_CELL parent
+         * should really check the refinement parent
+        **/
+        isNonImpliedPort = port -> !IMPLIED_PORTS.contains(port);
+
+        final Set<String> powerNets = new HashSet<>(Arrays.asList(power_nets));
+        final Set<String> groundNets = new HashSet<>(Arrays.asList(ground_nets));
+        isPowerNet = port -> powerNets.contains(port);
+        isGroundNet = port -> groundNets.contains(port);
+
+        /**
+         * Prefixes to apply to node and instance names to make sure
+         * they aren't ambiguous.
+         **/
+        final String nodePrefix     = theArgs.getArgValue("node-prefix","");
+        final String instancePrefix = theArgs.getArgValue("instance-prefix","");
+
+        /**
+         * The libname and subtype for backstop renamed cells
+         **/
+        final String subType = theArgs.getArgValue( "sub-type", "0" );
+        final String libName = theArgs.getArgValue( "lib-name", null );
+
+        /**
+         * Sometimes, generated CDL will have non meter units
+         * e.g. M0 a b c d n w=1.2 l=0.13
+         * will imlicitly have units of microns.
+         * All length units in the output CAST will be multiplied
+         * by this constant
+         **/
+        final double metersPerInputUnit =
+            Double.parseDouble
+            ( theArgs.getArgValue( "meters-per-input-unit", "1" ) );
+
+        /** 
+         * Emit width and length parameters as expressions of constants.
+         */
+        widthGrid  = Double.parseDouble(theArgs.getArgValue("width-grid","0"));
+        lengthGrid = Double.parseDouble(theArgs.getArgValue("length-grid","0"));
+
+        /**
+         * Transistor type renaming table.
+         **/
+        final String renameTransistorTypeString =
+            theArgs.getArgValue( "rename-transistor-type", "");
+        transistorTypeMap = new TreeMap();
+        for (String map : StringUtil.split(renameTransistorTypeString, ',')) {
+            final String[] keyval = StringUtil.split(map, ':');
+            transistorTypeMap.put(keyval[0],keyval[1]);
+        }
+ 
+        /**
+         * The refinement parent for generated digital CAST cells
+         **/
+        final String refinementParent =
+            theArgs.getArgValue( "refinement-parent", "NULL" );
+        final String topParent =
+            theArgs.getArgValue( "top-refinement-parent", refinementParent );
+
+        /**
+         * bind.rul format mappings from cdl -> existing layout
+         * Can be generated (.cxl) by running Assura LVS
+         */
+        final String cdlToLayoutInputBindRulFileName =
+            theArgs.getArgValue( "layout-to-cdl-bind-rul", "/dev/null" );
+
+        /**
+         * bind.rul format mappings from cdl -> desired layout
+         */
+        final String cdlToDesiredLayoutOutputBindRulFileName =
+            theArgs.getArgValue( "output-cdl-to-layout-bind-rul", "/dev/null" );
+
+        final String outputCastCellsFileName =
+            theArgs.getArgValue( "output-cast-cells", "/dev/null" );
+
+        final Writer outputCastCellsWriter =
+            new BufferedWriter(new FileWriter( new File(outputCastCellsFileName)));
+
+        final boolean skipPrsGeneration =
+            theArgs.argExists("skip-prs-generation");
+
+        final Predicate<String> topCells;
+        final String topCellsRegex = theArgs.getArgValue("top-cells", null);
+        if (topCellsRegex == null) {
+            topCells = new Predicate<String>() {
+                public boolean test(String t) { return true; }
+            };
+        } else {
+            topCells = Pattern.compile(topCellsRegex).asPredicate();
+        }
+
+        final boolean writeVerilogRTL = theArgs.argExists("write-verilog-rtl");
+        
+        final boolean useMultiple = theArgs.argExists("use-multiple");
+
+        netlistInCast = theArgs.argExists("netlist-in-cast");
+        onlyLeafCells = theArgs.argExists("only-leaf-cells");
+
+        /**
+         * Bus bit characters to reconstitute array
+         **/
+        final String busBitChars = theArgs.getArgValue("bus-bit-chars", "[]");
+
+
+        /** Liberty file from which to extract PRS */
+        final List<LibertyParser> libertyParser =
+            Optional.ofNullable(theArgs.getArgValue("liberty-file", null))
+                    .map(arg -> Stream.of(arg.split(","))
+                                      .map(LibertyParser::new)
+                                      .collect(Collectors.toList()))
+                    .orElse(Collections.emptyList());
+
+        final boolean detectGendev = theArgs.argExists("detect-gendev");
+
+        if (! pedanticArgs.pedanticOK(false, true)) {
+            usage(pedanticArgs.pedanticString());
+        }
+
+        if ( ( sourceCDLFileName != null ) &&
+             ( inputBindRulFileName != null ) &&
+             ( bindRulHeaderFileName != null ) &&
+             ( outputSkillTableDirName != null ) &&
+             ( outputSpecTreeDirName != null  ) &&
+             ( outputCastTreeDirName != null  ) &&
+             ( libName != null  ) && ( libName.matches("[^.]+\\.[^.]+.*") ) &&
+             ( subType != null  ) &&
+             ( refinementParent != null ) &&
+             ( topParent != null ) &&
+             ( cdlToLayoutInputBindRulFileName != null ) &&
+             ( cdlToDesiredLayoutOutputBindRulFileName != null )
+             ) {
+
+            final File bindRulHeaderFile = new File(bindRulHeaderFileName);
+            final File sourceCDLFile = new File( sourceCDLFileName );
+            final File inputBindRulFile = new File( inputBindRulFileName );
+            final File cdlToLayoutInputBindRulFile =
+                new File( cdlToLayoutInputBindRulFileName );
+            final File cdlToDesiredLayoutOutputBindRulFile =
+                new File( cdlToDesiredLayoutOutputBindRulFileName );
+            final File outputSkillTableDir;
+            final File outputSpecTreeDir;
+            final File outputCastTreeDir;
+
+            if ( ( sourceCDLFile.isFile() ) &&
+                 ( sourceCDLFile.canRead() ) ) {
+                if ( ( inputBindRulFile.canRead() ) &&
+                     ( cdlToLayoutInputBindRulFile.canRead() ) ) {
+                    final InputStream sourceCDLInputStream =
+                        new FileInputStream( sourceCDLFile );
+
+                    final Reader sourceCDLReader =
+                        new InputStreamReader( sourceCDLInputStream, "UTF-8" );
+
+                    final InputStream inputBindRulInputStream =
+                        new FileInputStream( inputBindRulFile );
+
+                    final Reader inputBindRulReader =
+                        new InputStreamReader( inputBindRulInputStream, "UTF-8" );
+
+                    final InputStream cdlToLayoutInputBindRulStream =
+                        new FileInputStream( cdlToLayoutInputBindRulFile );
+
+
+                    final Reader cdlToLayoutInputBindRulReader =
+                        new InputStreamReader( cdlToLayoutInputBindRulStream, "UTF-8" );
+
+                    outputSpecTreeDir    = makeDir(outputSpecTreeDirName);
+                    outputCastTreeDir = makeDir(outputCastTreeDirName);
+                    outputSkillTableDir  = makeDir(outputSkillTableDirName);
+
+                    /**
+                     *  The cdl is split into 2 factories, one which turns
+                     *  it into templates, one which creates a directory
+                     *  of names.il tables.
+                     *
+                     *  The templates are renamed to CAST names, which are
+                     *  the names mapped from CDL names by the bind-rul-in file
+                     *  ( If no mapping is given, a backstop CAST-lagalizing
+                     *    renaming is enforced )
+                     *  They are then flattened if they have both components
+                     *  and subcell instantiations, and templates with multiple
+                     *  parameterizations are split into new templates
+                     *
+                     *  The names.il files map from the existing layout names
+                     *  to the cadence translated CAST names.  The existing
+                     *  layout names are just the CDL names mapped to layout
+                     *  names with the layout-cdl-bind-rul
+                     **/
+
+                    /**
+                     * The back-stop for convertng cdl names to CAST names
+                     * Alter names so that they are CAST legal and have no
+                     * special meaning, and so that node names don't conflict
+                     * with instantiations
+                     **/
+                    final CDLNameInterface castLegalizingNI =
+                        new CDLNameInterface() {
+                            private String escape( final String name ) {
+                                final String S0 = name.replaceAll( "\\." , "_D_" );
+                                final String S1 = S0.replaceAll( "\\[", "_L_");
+                                final String S2 = S1.replaceAll( "\\]", "_R_" );
+                                final String S3 = S2.replaceAll( "-" , "_M_" );
+                                return S3;
+                            }
+
+                            public String renameCell( final String oldCellName )
+                                throws CDLRenameException {
+                                final String S0;
+                                if( !libName.equals("") )
+                                    S0 = libName  + "." + oldCellName;
+                                else
+                                    S0 = oldCellName;
+                                final String S1 = S0.replaceAll( "-" , "_M_" );
+                                return S1 + "." + subType;
+                            }
+
+                            public String renameNode( final String oldNodeName )
+                                throws CDLRenameException {
+                                return escape(nodePrefix + oldNodeName);
+                            }
+
+                            public String renameDevice( final String oldDeviceName )
+                                throws CDLRenameException {
+                                return escape(instancePrefix + oldDeviceName);
+                            }
+
+                            public String renameSubCellInstance( final String oldInstanceName )
+                                throws CDLRenameException {
+                                return escape(instancePrefix + oldInstanceName);
+                            }
+
+                            public String renameTransistorModel( final String oldTransistorModel )
+                                throws CDLRenameException {
+                                return oldTransistorModel;
+                            }
+
+                        };
+
+                    final CDLNameInterfaceFactory castLegalizingNIF =
+                        new TrivialCDLNameInterfaceFactory(castLegalizingNI);
+
+                    final CellPortsReverseMapper reverseMap =
+                        new CellPortsReverseMapper();
+
+                    final CDL2Cast cdl2cast = new CDL2Cast(reverseMap,
+                            busBitChars.charAt(0), busBitChars.charAt(1), detectGendev);
+
+                    final ArrayNamingFactory arrayNamingFactory =
+                        cdl2cast.new ArrayNamingFactory( castLegalizingNIF );
+
+                    /**
+                     * Maps from CDL names to desired CAST names w/ subtypes
+                     * if not in bind.rul uses guaranteed CAST legal names
+                     **/
+                    final BindRulNameInterfaceFactory
+                        cdlToCastNameInterfaceFactory =
+                        new BindRulNameInterfaceFactory( inputBindRulReader,
+                                                         arrayNamingFactory );
+
+                    /**
+                     * Maps from CDL names to desired layout names
+                     * which are just cast names translated to cadence names
+                     * This is what Cast2CDL will output, and thus
+                     * is what we we'll LVS the layout against, so we want
+                     * it to match
+                     **/
+                    final CDLNameInterfaceFactory
+                        cdlToDesiredLayoutNameInterfaceFactory =
+                        new CompositeCDLNameInterfaceFactory
+                        ( cdlToCastNameInterfaceFactory,
+                          new TrivialCDLNameInterfaceFactory
+                          ( new CadenceNameInterface(Collections.EMPTY_SET)));
+
+
+                    final CDLNameInterfaceFactory identityNIF =
+                        new TrivialCDLNameInterfaceFactory
+                        ( new IdentityNameInterface() );
+
+                    /**
+                     * Maps from CDL names to existing layout names, with
+                     * identity backstop.  The cdlToLayoutInputBindRul will
+                     * typically be from a .cxl file from running LVS
+                     **/
+                    final CDLNameInterfaceFactory
+                        cdlToExistingLayoutNameInterfaceFactory =
+                        new BindRulNameInterfaceFactory
+                        ( cdlToLayoutInputBindRulReader,
+                          identityNIF );
+
+                    /**
+                     * Writes bind.rul from cdl -> layout names
+                     **/
+                    final TableEmitterFactoryInterface
+                        cdlToDesiredLayoutOutputBindRulEmitterFactory =
+                        new AssuraBindRulTableEmitterFactory
+                        ( cdlToDesiredLayoutOutputBindRulFile,
+                          bindRulHeaderFile );
+
+                    final CDLFactoryInterface bindRulFactory =
+                        new GenerateGDSIIDataFactory
+                        ( cdlToDesiredLayoutOutputBindRulEmitterFactory,
+                          identityNIF,
+                          cdlToDesiredLayoutNameInterfaceFactory );
+
+                    /**
+                     * Writes names.il table map from existing layout
+                     * names to desired layout names
+                     **/
+                    final TableEmitterFactoryInterface skillEmitterFactory =
+                        new SkillTableEmitterFactory
+                        ( outputSkillTableDir,
+                          "CadenceNodeToGDSIINodeTable",
+                          "CadenceCellToGDSIICellTable",
+                          "CadenceInstanceToGDSIIInstanceTable" );
+
+                    final CDLFactoryInterface oldToNewLayoutNameTableFactory =
+                        new GenerateGDSIIDataFactory
+                        ( skillEmitterFactory,
+                          cdlToExistingLayoutNameInterfaceFactory,
+                          cdlToDesiredLayoutNameInterfaceFactory );
+
+                    /**
+                     * Output names.il and bind.rul
+                     **/
+                    final CDLFactoryInterface tableFactory =
+                        new SplittingFactory( bindRulFactory,
+                                              oldToNewLayoutNameTableFactory);
+                    /**
+                     * Create the templates
+                     **/
+                    final Map templates = new TreeMap();
+
+                    final Template templateFactory =
+                        new Template(templates);
+
+                    /**
+                     * split different parameterizations of templates
+                     * into new templates
+                     **/
+                    final CDLFactoryInterface templateSplitterFactory =
+                        new TemplateSplitterFactory(templateFactory) {
+                            private final Map<Template,Boolean> genDevs =
+                                new HashMap<>();
+                            private boolean isGenericDevice(Template templ) {
+                                return genDevs.computeIfAbsent(templ,
+                                        k -> TemplateContentSniffer.sniff(templ, detectGendev)
+                                                                   .isGenericDevice());
+                            }
+                            public void makeCall(HierName name,
+                                                 String subName,
+                                                 HierName[] args,
+                                                 Map parameters,
+                                                 Environment env) {
+                                // don't specialize undefined subcircuits or
+                                // generic devices
+                                final Template subtempl =
+                                    templateFactory.getTemplate(subName);
+                                if (subtempl != null && !isGenericDevice(subtempl)) {
+                                    super.makeCall(
+                                        name, subName, args, parameters, env);
+                                } else {
+                                    templateFactory.makeCall(
+                                        name, subName, args, parameters, env);
+                                }
+                            }
+                        };
+
+                    final AspiceCellAdapter aspicer;
+                    final CDLFactoryInterface outputFactory;
+                    if (skipPrsGeneration) {
+                        aspicer = null;
+                        outputFactory = templateSplitterFactory;
+                    } else {
+                        /**
+                         * Also read CDL into AspiceCellAdapter -- AML
+                         **/
+                        aspicer = new AspiceCellAdapter() {
+                            public void makeCall(HierName name,
+                                                 String subName,
+                                                 HierName[] args,
+                                                 Map parameters,
+                                                 Environment env) {
+                                if (templateFactory.containsTemplate(subName)) {
+                                    super.makeCall(name, subName, args,
+                                                   parameters, env);
+                                }
+                            }
+                        };
+                        // this is where we branch between outputs :
+                        // aspice and templates
+                        outputFactory =
+                            new SplittingFactory( templateSplitterFactory,
+                                                  aspicer );
+                    }
+
+                    final CDLFactoryInterface renamedOutputFactory =
+                        reverseMap.getBread(
+                            new CDLRenameFactory(
+                                reverseMap.getBread(outputFactory),
+                                cdlToCastNameInterfaceFactory));
+
+                    /**
+                     * Make templates and tables
+                     **/
+                    final CDLFactoryInterface splittingFactory =
+                        new SplittingFactory( arrayNamingFactory,
+                            new SplittingFactory( renamedOutputFactory,
+                                                  tableFactory) );
+
+                    final CDLFactoryInterface firstFactory =
+                        new CDLScalingFactory( metersPerInputUnit,
+                                               metersPerInputUnit,
+                                               1,
+                                               1,
+                                               1,
+                                               1,
+                                               splittingFactory);
+
+                    ReadCDLIntoFactory.readCDL( sourceCDLReader,
+                                                firstFactory );
+
+                    try {
+                        cdl2cast.writeTemplates(templates,
+                                                aspicer,
+                                                libertyParser,
+                                                outputCastCellsWriter,
+                                                outputSpecTreeDir,
+                                                outputCastTreeDir,
+                                                StringUtil.split(refinementParent, ':'),
+                                                StringUtil.split(topParent, ':'),
+                                                allCells,
+                                                topCells,
+                                                writeVerilogRTL,
+                                                useMultiple );
+                        outputCastCellsWriter.close();
+
+                    }
+                    catch(Exception e ) {
+                        e.printStackTrace();
+                    }
+                }
+                else
+                    System.out.println( "\"" +
+                                        inputBindRulFileName +
+                                        "\" is not a readable file." );
+            }
+            else {
+                System.out.println( "\"" +
+                                    sourceCDLFileName +
+                                    "\" is not a readable file." );
+            }
+        }
+        else {
+            usage(null);
+        }
+    }
+
+    /**
+     * Get the subtype for a fqcn
+     * e.g. lib.buffer.half.BUF_1of4.0 -> 0
+     **/
+    public String getSubType(HierName fqcn) {
+        return fqcn.getSuffixString();
+    }
+
+    private static HierName toHier(final String s) {
+        try {
+            return HierName.makeHierName(s, '.');
+        } catch(InvalidHierNameException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public String getCellModule(String fqcn) {
+        return getCellModule(toHier(fqcn)).getCadenceString();
+    }
+
+    /**
+     * Get the CAST name w/o subtype for a given fqcn
+     * e.g. lib.buffer.half.BUF_1of4.0 -> lib.buffer.half.BUF_1of4
+     **/
+    public HierName getCellModule(HierName fqcn) {
+        return fqcn.getParent();
+    }
+
+    /**
+     * Get the CAST library name for a given fqcn
+     * e.g. lib.buffer.half.BUF_1of4.0 -> lib.buffer.half
+     **/
+    public HierName getLibName(HierName fqcn) {
+        return fqcn.getParent().getParent();
+    }
+
+    /**
+     * Get the CAST library module for a given fqcn
+     * e.g. lib.buffer.half.BUF_1of4 -> lib.buffer
+     **/
+    public HierName getLibraryModule(HierName fqcn) {
+        return fqcn.getParent().getParent().getParent();
+    }
+
+    /**
+     * Write templates in cast format to spec tree and digital tree
+     **/
+    public void writeTemplates( final Map<String,Template> templates,
+                                final AspiceCellAdapter aspicer,
+                                final List<LibertyParser> libertyParser,
+                                final Writer outputCastCellsWriter,
+                                final File outputSpecTreeDir,
+                                final File outputCastTreeDir,
+                                final String[] refinementParents,
+                                final String[] topParents,
+                                final Boolean allCells,
+                                final Predicate<String> topCells,
+                                final boolean writeVerilogRTL,
+                                final boolean useMultiple )
+        throws Exception {
+
+        //determine which templates should be inlined.
+        //If a template contains both instantiation calls and
+        //components(R,C,M, etc), then all the calls in that template
+        //should be flattened to components so that the resulting
+        //cast cell has either a subcells block or a netlist block, not both.
+
+        /**
+         * Set of leaf cells which have components.
+         **/
+        final Set leafSet = new HashSet();
+
+        /**
+         * Set of generic devices.
+         **/
+        final Set genDevSet = new HashSet();
+
+        /**
+         * Set of cells to keep even though they are empty.
+         **/
+        final Set keepEmpty = new HashSet();
+
+        /**
+         * Set of cells which are instantiated somewhere.
+         * If a flattened cell is not instantiated, then it should not
+         * be output.
+         **/
+        final Set instantiatedSet = new HashSet();
+
+        /**
+         * Set of cells that have components and subcells.
+         * These will be flattened, and the flattened cells
+         * automatically added to the templates
+         **/
+        final Set flattenedSet = new HashSet();
+
+        /**
+         * map from cast file to writer
+         **/
+        final Map digitalLibWriterMap = new HashMap();
+        final Map emitterMap = new HashMap();
+        final Set cellModuleDone = new HashSet();
+        final Map<Template,TemplateContentSniffer> sniffedResult = new HashMap<>();
+        for(Template template : templates.values()) {
+            sniffedResult.put(template,
+                    TemplateContentSniffer.sniff(template, detectGendev));
+        }
+        for(Map.Entry<String,Template> entry : templates.entrySet()) {
+            final String fqcn = entry.getKey();
+            final Template template = entry.getValue();
+            final TemplateContentSniffer sniffer = sniffedResult.get(template);
+
+            outputCastCellsWriter.write(fqcn+"\n");
+            final HierName hName   = HierName.makeHierName(fqcn,'.');
+            final HierName module  = getLibraryModule(hName);
+            final HierName libName = getLibName(hName);
+
+            /**
+             * if this is the first time we've seen this library
+             * open a writer to it and write the CAST Header
+             **/
+            if(!digitalLibWriterMap.containsKey(libName) ) {
+                final Writer digitalLibWriter =
+                    openFile( cellPath(outputCastTreeDir, module),
+                              libName.getSuffixString() + ".cast" );
+                digitalLibWriterMap.put(libName, digitalLibWriter);
+                writeCastFileHeader(digitalLibWriter);
+                digitalLibWriter.write("\n");
+                digitalLibWriter.write("module " +
+                                       libName.getCadenceString() + ";\n");
+                digitalLibWriter.write("\n");
+            }
+
+            template.execute( sniffer );
+            boolean hasComponents = sniffer.hasComponents();
+            if(!hasComponents) {
+                for(Iterator<String> j = sniffer.getSubCells(); j.hasNext(); ) {
+                    final String subname = j.next();
+                    Template subtempl = templates.get(subname);
+                    if(subtempl != null && sniffedResult.get(subtempl).isGenericDevice()) {
+                        hasComponents = true;
+                        break;
+                    }
+                }
+            }
+            // if a cell is defined in Liberty, then keep it even if it's empty
+            if(!hasComponents &&
+               !getLibertyPortDirections(
+                   libertyParser,reverseMap.getCellName(fqcn)).isEmpty()) {
+                keepEmpty.add(template);
+                hasComponents = true;
+            }
+            if(hasComponents || sniffer.isGenericDevice()) {
+                leafSet.add(template);
+                if (sniffer.isGenericDevice()) {
+                    genDevSet.add(template);
+                }
+                for(Iterator j = sniffer.getSubCells(); j.hasNext(); ) {
+                    String cellName = (String)j.next();
+                    if (!sniffedResult.get(templates.get(cellName)).isGenericDevice()) {
+                        flattenedSet.add( templates.get( cellName ) );
+                    }
+                }
+            }
+            else {
+                for(Iterator j = sniffer.getSubCells(); j.hasNext(); ) {
+                    String cellName = (String)j.next();
+                    instantiatedSet.add( templates.get( cellName ) );
+                }
+            }
+        }
+
+        CDLInlineFactory flatten =
+            new CDLInlineFactory(false, null, false, useMultiple);
+        flatten.addTargets(templates);
+
+        for(Iterator i=templates.entrySet().iterator(); i.hasNext(); ) {
+            Map.Entry entry = (Map.Entry)i.next();
+            String fqcn = (String)entry.getKey();
+            Template template = (Template)entry.getValue();
+            if ( ! allCells && flattenedSet.contains(template) &&
+                !instantiatedSet.contains(template) )
+                continue;
+
+            final HierName hName      = HierName.makeHierName(fqcn,'.');
+            final HierName libName    = getLibName(hName);
+            final HierName cellModule = getCellModule(hName);
+            final String subType      = getSubType(hName);
+
+            // get NetGraph if one exists
+            AspiceFile aspiceCell =
+                aspicer == null ? null : aspicer.getCell(fqcn);
+            NetGraph netgraph = null;
+            if (aspiceCell!=null) {
+                netgraph = new NetGraph(power_nets,ground_nets);
+                netgraph.addAspice(aspiceCell);
+                netgraph.prepareForLvs();
+            }
+
+            // skip non-leaf cells if we are only importing leaf cells
+            boolean isLeaf = leafSet.contains(template);
+            if (!isLeaf && onlyLeafCells) continue;
+
+            final Writer specWriter =
+                openFile( cellPath(outputSpecTreeDir, cellModule),
+                          subType + ".cast" );
+            final Writer digitalWriter =
+                (Writer) digitalLibWriterMap.get(libName);
+
+            writeTemplateToSpecTree(hName,
+                                    template,
+                                    netgraph,
+                                    flatten,
+                                    isLeaf,
+                                    genDevSet,
+                                    specWriter);
+
+            specWriter.close();
+
+            //only add a cellModule once to digital library cast file
+            // and for gods sake, wait until we have prs for leaf cells
+            if(cellModuleDone.contains(cellModule)||
+               ( leafSet.contains(template) &&
+                 aspicer != null &&
+                 aspiceCell == null ) ) continue;
+            cellModuleDone.add(cellModule);
+            
+            writeTemplateToCastTree(hName,
+                                    refinementParents,
+                                    topParents,
+                                    template,
+                                    templates,
+                                    netgraph,
+                                    libertyParser,
+                                    flatten,
+                                    topCells,
+                                    writeVerilogRTL,
+                                    isLeaf,
+                                    genDevSet,
+                                    keepEmpty,
+                                    digitalWriter);
+        }
+
+        /**
+         * Close all digital CAST library files
+         **/
+        for(Iterator i=digitalLibWriterMap.entrySet().iterator();
+            i.hasNext(); ) {
+            Map.Entry entry = (Map.Entry)i.next();
+            Writer writer = (Writer)entry.getValue();
+            writer.close();
+        }
+    }
+
+    /**
+     * When executed by a template,
+     * collects information about instantiations of subcells and components.
+     * Used to determine what ever to do with this template.  e.g. if it has
+     * both components and calls, it will be flattened
+     **/
+    private static class TemplateContentSniffer extends CDLInterfaceSimplifier
+    {
+        private boolean bComponent = false;
+        private boolean bCall = false;
+        private Collection<String> subCells = new HashSet<>();
+        private final Template templ;
+        private final boolean detectGendev;
+
+        TemplateContentSniffer(final Template templ, final boolean detectGendev) {
+            this.templ = templ;
+            this.detectGendev = detectGendev;
+        }
+
+        public void makeCall(HierName name, String subName, HierName[] args,
+                             Map parameters) {
+            if (templ.containsTemplate(subName)) {
+                bCall = true;
+                subCells.add(subName);
+            }
+        }
+        public void makeResistor(HierName name, HierName n1, HierName n2,
+                                 double val) {
+            bComponent = true;
+        }
+
+        public void makeCapacitor(HierName name, HierName npos, HierName nneg,
+                                  double val) {
+            bComponent = true;
+        }
+
+        public void makeTransistor(HierName name, int type, HierName ns,
+                                   HierName nd, HierName ng, HierName nb,
+                                   double w, double l) {
+            bComponent = true;
+        }
+
+        public void makeDiode(HierName name, int type, HierName npos,
+                              HierName nneg, double w, double l, double a,
+                              double p) {
+            bComponent = true;
+        }
+        public void makeInductor(HierName name, HierName npos, HierName nneg,
+                                 double val) {
+            bComponent = true;
+        }
+        public void makeBipolar(HierName name, int type, HierName nc,
+                                HierName nb, HierName ne, double a) {
+            bComponent = true;
+        }
+        public void beginSubcircuit(String subName, String[] in, String[] out) {
+            throw new AssertionFailure("Should not happen!");
+        }
+        public void endSubcircuit(String subName) {
+            throw new AssertionFailure("Should not happen!");
+        }
+
+        public boolean hasSubCells() { return bCall; }
+        public Iterator<String> getSubCells() { return subCells.iterator(); }
+        public boolean hasComponents() { return bComponent; }
+        public boolean isGenericDevice() {
+            return detectGendev && !hasSubCells() && !hasComponents();
+        }
+
+        public static TemplateContentSniffer sniff(Template templ, boolean detectGendev) {
+            final TemplateContentSniffer sniffer =
+                new TemplateContentSniffer(templ, detectGendev);
+            templ.execute(sniffer);
+            return sniffer;
+        }
+    }
+
+    /**
+     * Writes all non-port nodes references in all statements in a template
+     * in CAST format.  This will presumably be called before writing
+     * instantiations to the subcells block, as undefined nodes cannot be
+     * referenced by instantiations
+     **/
+    private class CastLocalNodesDeclarationEmitter extends CDLInterfaceSimplifier
+    {
+        private final Collection nodes = new HashSet();
+        private final Collection args = new HashSet();
+        private final Writer w;
+
+        public CastLocalNodesDeclarationEmitter(final Template template,
+                                                final Writer w) {
+            this.w = w;
+            final Pair p = template.getArguments();
+            final String[] in = (String []) p.getFirst();
+            final String[] out = (String []) p.getSecond();
+            for(int i=0; i<in.length; i++) {
+                args.add(in[i]);
+            }
+            for(int i=0; i<out.length; i++) {
+                args.add(out[i]);
+            }
+        }
+
+        private void add(HierName node) {
+            String val = node.getCadenceString();
+            if(!args.contains(val))
+                if(!nodes.contains(val)) {
+                    nodes.add(val);
+                    try {
+                        w.write("node " + val + ";\n" );
+                    }
+                    catch(Exception e ) {
+                        throw new RuntimeException(e);
+                    }
+                }
+        }
+
+        public void makeCall(HierName name, String subName, HierName[] args,
+                             Map parameters) {
+            for(int i=0; i<args.length; i++) {
+                add(args[i]);
+            }
+        }
+        public void makeResistor(HierName name, HierName n1, HierName n2,
+                                 double val) {
+            add(n1);
+            add(n2);
+        }
+
+        public void makeCapacitor(HierName name, HierName npos, HierName nneg,
+                                  double val) {
+            add(npos);
+            add(nneg);
+        }
+
+        public void makeTransistor(HierName name, int type, HierName ns,
+                                   HierName nd, HierName ng, HierName nb,
+                                   double w, double l) {
+            add(ns);
+            add(nd);
+            add(ng);
+            add(nb);
+        }
+
+        public void makeDiode(HierName name, int type, HierName npos,
+                              HierName nneg, double w, double l, double a,
+                              double p) {
+            add(npos);
+            add(nneg);
+        }
+
+        public void makeInductor(HierName name, HierName npos, HierName nneg,
+                                 double val) {
+            add(npos);
+            add(nneg);
+        }
+
+        public void makeBipolar(HierName name, int type, HierName nc,
+                                HierName nb, HierName ne, double a) {
+            add(nc);
+            add(nb);
+            add(ne);
+        }
+
+        public void beginSubcircuit(String subName, String[] in, String[] out) {
+            throw new AssertionFailure("Should not happen!");
+        }
+
+        public void endSubcircuit(String subName) {
+            throw new AssertionFailure("Should not happen!");
+        }
+
+        public Iterator getNodes() { return nodes.iterator(); }
+    }
+
+    private File cellPath(final File path, final HierName name) {
+        return new File(path, name.getAsString(File.separatorChar));
+    }
+
+    /**
+     * Opens a file given a directory and the file name, creating the directory
+     * if necessary.
+     **/
+    private Writer openFile(final File dir, final String name)
+        throws IOException {
+        if (!dir.isDirectory() && !dir.mkdirs()) {
+            throw new IOException("Unable to create directory: " + dir);
+        }
+        final File file = new File(dir, name);
+        return new BufferedWriter(new FileWriter(file));
+    }
+
+
+    /**
+     * Returns a <code>List</code> if <code>Integers</code> in
+     * a bracket string
+     * e.g.
+     * [0][1] -> (0,1)
+     * [0,1] -> (0,1)
+     **/
+    private final List<Integer> parseBracketStr( final String bracketStr,
+                                                 final char[] busBitChars ) {
+        final int len = bracketStr.length();
+
+        final StringBuffer accum = new StringBuffer();
+
+        final List<Integer> ret = new ArrayList<>();
+
+        boolean bracketOpen = false;
+
+        for ( int i = 0 ; i < len ; ++i ) {
+            final char c = bracketStr.charAt( i );
+
+            if (c == busBitChars[0]) {
+                if ( bracketOpen ) {
+                    throw new RuntimeException( "\"" +
+                                                bracketStr +
+                                                "\" is not a valid array index string." );
+                }
+                bracketOpen = true;
+            } else if (c == busBitChars[1]) {
+                if ( ! bracketOpen ) {
+                    throw new RuntimeException( "\"" +
+                                                bracketStr +
+                                                "\" is not a valid array index string." );
+                }
+                bracketOpen = false;
+
+                ret.add( new Integer( accum.toString() ) );
+                accum.delete( 0, accum.length() );
+            } else {
+                switch ( c ) {
+                case ',':
+                    if ( ! bracketOpen ) {
+                        throw new RuntimeException( "\"" +
+                                                    bracketStr +
+                                                    "\" is not a valid array index string." );
+                    }
+                    ret.add( new Integer( accum.toString() ) );
+                    accum.delete( 0, accum.length() );
+                    break;
+                case '0':
+                case '1':
+                case '2':
+                case '3':
+                case '4':
+                case '5':
+                case '6':
+                case '7':
+                case '8':
+                case '9':
+                    accum.append( c );
+                    break;
+                default:
+                    throw new RuntimeException( "\"" +
+                                                bracketStr +
+                                                "\" is not a valid array index string." );
+                }
+            }
+        }
+        return ret;
+    }
+
+    /**
+     * Returns a <code>Pair</code> (stem<String>, indices<List<Integer>>) for a
+     * <code>String</portNodeName>
+     * e.g.
+     * a[0][1] -> (a,(0,1))
+     * d -> (d,())
+     **/
+    private final Pair<String,List<Integer>> parsePortNodeName(
+            final String portNodeName, final char[] busBitChars ) {
+        final int len = portNodeName.length();
+
+        final int indexOfFirstOpenBracket = portNodeName.indexOf( busBitChars[0] );
+
+        final int indexOfLastCloseBracket = portNodeName.lastIndexOf( busBitChars[1] );
+
+
+        if ( ( ( indexOfFirstOpenBracket == -1 ) &&
+               ( indexOfLastCloseBracket == -1 ) ) ||
+             ( ( indexOfFirstOpenBracket > 0 ) &&
+               ( indexOfLastCloseBracket > 0 ) &&
+               ( indexOfLastCloseBracket == ( len - 1 ) ) &&
+               ( ( indexOfFirstOpenBracket + 1 ) < indexOfLastCloseBracket ) ) ) {
+            if ( indexOfFirstOpenBracket != -1 ) {
+                final String stem = portNodeName.substring( 0, indexOfFirstOpenBracket );
+                assert stem.length() > 0 ;
+                final String bracketStr = portNodeName.substring( indexOfFirstOpenBracket, indexOfLastCloseBracket + 1 );
+                return new Pair<>( stem, parseBracketStr( bracketStr, busBitChars ) );
+            }
+            else {
+                return new Pair<>( portNodeName, Collections.emptyList() );
+            }
+        }
+        else {
+            throw new RuntimeException( "\"" +
+                                        portNodeName +
+                                        "\" is not a valid port name because a misplaced '" +
+                                        busBitChars[0] + "' or '" + busBitChars[1] + "'." );
+        }
+    }
+
+    private Stream<String> getPortsAsStream(Template t) {
+        final Pair<String[],String[]> p = t.getArguments();
+        return Stream.concat(Arrays.stream(p.getFirst()),
+                             Arrays.stream(p.getSecond()));
+    }
+
+    private Stream<String> getNonImpliedPorts(String[] in, String[] out) {
+        return Stream.concat(Arrays.stream(in), Arrays.stream(out))
+                     .filter(isNonImpliedPort);
+    }
+
+    private Stream<String> getNonImpliedPorts(Template t) {
+        return getPortsAsStream(t).filter(isNonImpliedPort);
+    }
+
+    /**
+     * Given a <code>List</code> of <code>ports</code>, return
+     * a <code>Pair<Map,Set></code> of
+     * the Map is a <code>Map<String,List<Pair<Integer,Integer>>
+     *   from stems to min/max ranges for each index of the array
+     * the Set is a <code>Set<String></code>
+     *   of stems in order of first appearance
+     * So if ports = (b[0], a[0][0], a[0][1], a[1][0], a[1][1], d, DOG, b[1] )
+     * returns
+     * ({a->((0,1),(0,1)), b->((0,1)), d->(), DOG->()}, {b,a,d,DOG})
+     **/
+    private Pair<Map<String,List<Pair<Integer,Integer>>>,Set<String>>
+        sniffArrays(final Stream<String> ports, final char[] busBitChars) {
+        final Map<String,List<Pair<Integer,Integer>>> portMap = new HashMap<>();
+        final Set<String> portStems = new LinkedHashSet<>();
+
+        ports.forEach(currPortNode -> {
+            final Pair<String,List<Integer>> portInfo =
+                parsePortNodeName( currPortNode, busBitChars );
+
+            final String stem = portInfo.getFirst();
+            final List<Integer> indices = portInfo.getSecond();
+
+            final List<Pair<Integer,Integer>> existingPortDimensions =
+                portMap.get( stem );
+
+            if ( existingPortDimensions == null ) {
+                final List<Pair<Integer,Integer>> dimensions;
+                if ( indices.size() > 0 ) {
+                    dimensions =
+                        indices.stream()
+                               .map(i -> new Pair<>( i, i ))
+                               .collect(Collectors.toList());
+                }
+                else {
+                    dimensions = Collections.emptyList();
+                }
+                portMap.put( stem, dimensions );
+                portStems.add( stem );
+            }
+            else {
+                if ( indices.size() == existingPortDimensions.size() ) {
+                    final Iterator indexIter = indices.iterator();
+                    final ListIterator dimensionIter =
+                        existingPortDimensions.listIterator();
+                    while ( indexIter.hasNext() ) {
+                        final Integer index = ( Integer ) indexIter.next();
+                        final Pair minMaxPair = ( Pair ) dimensionIter.next();
+
+                        final Integer min = ( Integer ) minMaxPair.getFirst();
+                        final Integer max = ( Integer ) minMaxPair.getSecond();
+
+                        assert min.intValue() <= max.intValue();
+
+                        if ( index.intValue() < min.intValue() ) {
+                            dimensionIter.set( new Pair( index, max ) );
+                        }
+                        else if ( index.intValue() > max.intValue() ) {
+                            dimensionIter.set( new Pair( min, index ) );
+                        }
+                    }
+
+                }
+                else {
+                    throw new RuntimeException( "Can not change number of dimensions of \"" + stem + "\"." );
+                }
+            }
+        });
+
+        return new Pair<>( portMap, portStems );
+
+    }
+
+    /**
+     * Return a concatenation expression for an arrayed port in the Verilog
+     * block.  If all nodes share a common stem in CAST, pass in the CAST array
+     * directly for conciseness.
+     **/
+    private String getArrayedActual(final Map<String,String> nodeMap,
+                                    final int min,
+                                    final int max,
+                                    final String stem) {
+        final List<String> actuals = new ArrayList<>();
+        String lastStem = null;
+        boolean commonStem = true;
+        for (int i = min; i <= max; ++i) {
+            final String actual = nodeMap.get(stem + "[" + i + "]");
+            actuals.add(actual);
+            final int idx = actual.indexOf('[');
+            final String actualStem = idx > 0 ? actual.substring(0, idx) : actual;
+            if (lastStem != null) {
+                commonStem &= lastStem.equals(actualStem);
+            }
+            lastStem = actualStem;
+        }
+        if (commonStem) {
+            return lastStem;
+        } else {
+            return actuals.stream().collect(Collectors.joining(",", "{", "}"));
+        }
+    }
+
+    /**
+     * Write out an actual port list appropriate for a Verilog block.  It's
+     * impossible to know whether a bit vector is declared as [MSB:LSB] or
+     * [LSB:MSB] without reading the Verilog, assume [MSB:LSB] since that is
+     * the usual convention.  Throw an exception if the port list contains
+     * multidimensional arrays.
+     **/
+    private void writeVerilogActualPorts(final Stream<String> ports,
+                                         final Map<String,String> nodeMap,
+                                         final IndentWriter iw)
+        throws IOException {
+        iw.write("(\n");
+        iw.nextLevel();
+        final Pair<Map<String,List<Pair<Integer,Integer>>>,Set<String>> portInfo =
+            sniffArrays(ports, CAST_BUSBITCHARS);
+
+        final Map<String,List<Pair<Integer,Integer>>> portMap =
+            portInfo.getFirst();
+        final Set<String> portStems = portInfo.getSecond();
+
+        final Iterator<String> stemIter = portStems.iterator();
+
+        while (stemIter.hasNext()) {
+            final String stem = stemIter.next();
+            final List<Pair<Integer,Integer>> dimensions = portMap.get(stem);
+            if (dimensions.size() > 1) {
+                throw new RuntimeException("Can't handle multidimensional port: " + stem);
+            }
+            iw.write("." + stem + "(");
+            if (dimensions.isEmpty()) {
+                iw.write(nodeMap.get(stem));
+            } else {
+                final Pair<Integer,Integer> minmax = dimensions.get(0);
+                iw.write(getArrayedActual(nodeMap, minmax.getFirst(), minmax.getSecond(), stem));
+            }
+            iw.write(")");
+            if (stemIter.hasNext()) {
+                iw.write( "," );
+            }
+            iw.write("\n");
+        }
+
+        iw.prevLevel();
+        iw.write(");\n");
+    }
+
+    private void writeCellPorts(
+            final Template template,
+            final NetGraph netgraph,
+            final Optional<Function<String,Optional<Direction>>> getLibertyDir,
+            final Writer writer)
+        throws IOException {
+        writer.write("(");
+
+        final Pair<Map<String,List<Pair<Integer,Integer>>>,Set<String>> portInfo =
+            sniffArrays( getNonImpliedPorts(template), CAST_BUSBITCHARS );
+
+        final Map<String,List<Pair<Integer,Integer>>> portMap =
+            portInfo.getFirst();
+        final Set<String> portStems = portInfo.getSecond();
+
+        final Iterator<String> stemIter = portStems.iterator();
+
+        if ( stemIter.hasNext() ) writer.write("node ");
+
+        while ( stemIter.hasNext() ) {
+            final String stem = stemIter.next();
+            final List<Pair<Integer,Integer>> dimensions = portMap.get( stem );
+            String dir = "-+";
+            final Optional<Direction> libertyDir =
+                getLibertyDir.flatMap(f -> f.apply(stem));
+            if (libertyDir.isPresent()) {
+                dir = libertyDir.get().getCast();
+            } else if (netgraph!=null) { // infer directionality of port
+                NetGraph.NetNode node =
+                    netgraph.findNetNode(HierName.makeHierName(stem));
+                if ((node!=null) && node.isGate() && !node.isOutput()) dir = "-";
+                if ((node!=null) && !node.isGate() && node.isOutput()) dir = "+";
+            }
+            writer.write(dir + stem );
+            if ( dimensions.size() > 0 ) {
+                final Iterator<Pair<Integer,Integer>> dimenIter =
+                    dimensions.iterator();
+                writer.write( "[" );
+                while ( dimenIter.hasNext() ) {
+                    final Pair<Integer,Integer> minMaxPair = dimenIter.next();
+                    final Integer min = minMaxPair.getFirst();
+                    final Integer max = minMaxPair.getSecond();
+                    assert min.intValue() <= max.intValue();
+
+                    writer.write( min.toString() + ".." + max.toString() );
+                    if ( dimenIter.hasNext() ) {
+                        writer.write( ',' );
+                    }
+                }
+                writer.write( ']' );
+            }
+            if ( stemIter.hasNext() ) {
+                writer.write( ", " );
+            }
+        }
+
+        writer.write(")");
+    }
+
+    /**
+     * writes the CAST cell declaration
+     * define "cell"(node b[0..1],
+     *               node a[0..1,0..1],
+     *               node d,
+     *               node BAD)
+     * from the examples above
+     **/
+    private void writeCellHeader(
+            String cell,
+            String[] parents,
+            Template template,
+            NetGraph netgraph,
+            Optional<Function<String,Optional<Direction>>> getLibertyDir,
+            Writer writer,
+            boolean elidePorts)
+        throws IOException {
+        writer.write("define \"" + cell + "\"()" );
+
+        if (!elidePorts) {
+            writeCellPorts(template, netgraph, getLibertyDir, writer);
+        }
+
+        for (int i = 0; i < parents.length; i++) {
+            final String op = i == parents.length - 1 ? ":" : "+";
+            writer.write(" <" + op + " " + parents[i]);
+        }
+        writer.write(" ");
+    }
+
+    private void writeCastFileHeader(Writer w)
+        throws IOException {
+        w.write("/* Copyright " + (new GregorianCalendar()).get(Calendar.YEAR) +
+                " Intel Corporation.  All rights reserved.\n");
+        // Prevent Perforce from doing substitution on the string literal
+        // (otherwise $ Author $ in the string literal will be expanded to be
+        // the author of this Java file)
+        w.write(" * $" + "Id$\n");
+        w.write(" * $" + "DateTime$\n");
+        w.write(" * $" + "Author$\n");
+        w.write(" */\n");
+        w.write("/* Automatically generated.  Modify at your own risk. */\n");
+    }
+
+    /**
+     * a CDLFactory executed by a template for a mid-level cell
+     * (with only instantiataions) to write a CAST spec definition.
+     * just writes the subtypes all the instances
+     **/
+
+    private class CastSubTypeEmitter extends CDLFactoryAdaptor {
+        private PrintWriter w;
+        public CastSubTypeEmitter(Writer w ) {
+            this.w = new PrintWriter(w);
+        }
+
+        public void makeCall(HierName name, String subName, HierName[] args,
+                             Map parameters, Environment env) {
+            String cellModule = getCellModule(subName);
+            w.print(cellModule + " :> \n" );
+            w.print("   " + subName + " " + name.getCadenceString() + ";\n" );
+        }
+    }
+
+    /**
+     * a CDLFactory executed by a template for a mid-level cell
+     * (with only instantiataions) to write a CAST digital definition.
+     * Just writes the instantiations
+     **/
+    private class CastSubCellEmitter extends CDLFactoryAdaptor {
+        private PrintWriter w;
+        private Map templates;
+        private String subckt;
+        public CastSubCellEmitter(Map templates, Writer w ) {
+            this.templates = templates;
+            this.w = new PrintWriter(w);
+            this.subckt = "<unknown>";
+        }
+        public void beginSubcircuit(String subName, String[] in, String[] out,
+                                    Map parameters, Environment env) {
+            subckt = subName;
+        }
+        public void makeCall(HierName name, String subName, HierName[] args,
+                             Map parameters, Environment env) {
+            final List<String> realargs;
+            final Template template = (Template) templates.get(subName);
+            final Map<String,HierName> formalToActual = new HashMap<>();
+            if (template == null) {
+                System.out.println("Warning: SUBCKT " + subckt +
+                                   " instantiates unknown subcell " +
+                                   name.getAsString('.') + "/" +
+                                   subName);
+                realargs = Arrays.stream(args)
+                                 .map(arg -> arg.getCadenceString())
+                                 .collect(Collectors.toList());
+            } else {
+                realargs = new ArrayList<>();
+                final Pair p = template.getArguments();
+                final String[] in = (String []) p.getFirst();
+                final String[] out = (String []) p.getSecond();
+                if (in.length + out.length != args.length) {
+                    System.out.println("Warning: parameter mismatch in " +
+                                       "SUBCKT " + subckt + " instantiating " +
+                                       name.getAsString('.') + "/" +
+                                       subName);
+                }
+
+                int argidx = 0;
+                for (int i = 0; i < in.length && argidx < args.length;
+                     ++i, ++argidx) {
+                    formalToActual.put(in[i], args[argidx]);
+                }
+                for (int i = 0; i < out.length && argidx < args.length;
+                     ++i, ++argidx) {
+                    formalToActual.put(out[i], args[argidx]);
+                }
+
+                final Pair<Map<String,List<Pair<Integer,Integer>>>,Set<String>> portInfo =
+                    sniffArrays(getNonImpliedPorts(in, out), CAST_BUSBITCHARS);
+
+                final Map<String,List<Pair<Integer,Integer>>> dimsMap =
+                    portInfo.getFirst();
+                final Set<String> stems = portInfo.getSecond();
+                for (String stem : stems) {
+                    final List<Pair<Integer,Integer>> dims = dimsMap.get(stem);
+                    if (dims.isEmpty()) {
+                        final HierName actual = formalToActual.get(stem);
+                        realargs.add(actual.getCadenceString());
+                    } else {
+                        final DenseSubscriptSpec subscriptSpec =
+                            new DenseSubscriptSpec(
+                                dims.stream()
+                                    .map(r -> new Range(r.getFirst(),
+                                                        r.getSecond()))
+                                    .toArray(Range[]::new));
+                        realargs.add(
+                            IntStream.range(0, subscriptSpec.getNumElements())
+                                     .mapToObj(pos -> getCastArray(
+                                                 stem,
+                                                 CollectionUtils.asList(
+                                                     subscriptSpec.indexOf(pos))))
+                                     .map(formal -> formalToActual.get(formal))
+                                     .map(actual -> actual == null ?
+                                         "_" : actual.getCadenceString())
+                                     .collect(Collectors.joining(",", "{", "}")));
+                    }
+                }
+            }
+
+            String cellModule = getCellModule(subName);
+            w.print(cellModule + " " + name.getCadenceString() + "(" );
+            w.print(realargs.stream()
+                            .collect(Collectors.joining(",")));
+            w.print(")");
+
+            StringBuffer impliedPorts = new StringBuffer();
+            boolean sameImplied = true;
+            for(Iterator i = IMPLIED_PORTS.iterator(); i.hasNext(); ) {
+                final String imp = (String) i.next();
+                final HierName actual = formalToActual.get(imp);
+                if (actual == null) {
+                    impliedPorts.append(imp);
+                } else {
+                    sameImplied &= imp.equals(actual.getAsString('.'));
+                    impliedPorts.append(actual);
+                }
+                if (i.hasNext()) impliedPorts.append(",");
+            }
+            if (!sameImplied) {
+                w.print("(" + impliedPorts.toString() + ")");
+            }
+            w.print(";\n");
+        }
+    }
+
+    private void writeVerilogBlock(final String blockName,
+                                   final String moduleName,
+                                   final Stream<String> ports,
+                                   final IndentWriter iw)
+        throws IOException {
+        iw.write(blockName + " {\n");
+        iw.nextLevel();
+        iw.write(reverseMap.getCellName(moduleName));
+        final Map<String,String> nodeMap = reverseMap.getNodeMap(moduleName);
+        try {
+            writeVerilogActualPorts(ports, nodeMap, iw);
+        } catch (RuntimeException e) {
+            throw new RuntimeException("Can't generate Verilog block for: " +
+                    moduleName, e);
+        }
+        iw.prevLevel();
+        iw.write("}\n");
+
+    }
+
+    private void writeTemplateToSpecTree(final HierName fqcn,
+                                         final Template template,
+                                         final NetGraph netgraph,
+                                         final CDLInlineFactory flatten,
+                                         final boolean isLeaf,
+                                         final Set genDevSet,
+                                         final Writer writer)
+        throws IOException {
+
+        final String subType = getSubType(fqcn);
+        final HierName cellModule = getCellModule(fqcn);
+
+        final IndentWriter iw = new IndentWriter(writer);
+
+        writeCastFileHeader(iw);
+        iw.write("\n");
+        iw.write("module " + cellModule.getCadenceString() + ";\n");
+        iw.write("\n");
+        writeCellHeader(subType,
+                        new String[] {cellModule.getCadenceString()},
+                        template,
+                        netgraph,
+                        Optional.empty(),
+                        iw,
+                        true);
+        iw.write("{\n");
+        iw.nextLevel();
+
+        if(isLeaf) {
+            // write fixed size netlist to the SPEC
+            iw.write("netlist {\n");
+            iw.nextLevel();
+            if (widthGrid>0)  iw.write(".param WG=TRANSISTOR_WIDTH_GRID\n");
+            if (lengthGrid>0) iw.write(".param LG=TRANSISTOR_LENGTH_GRID\n");
+
+            final CDLFactoryInterface emitter =
+                new CDLFactoryEmitter(iw, true, 999, true, true, "" /*"/"*/,
+                                      transistorTypeMap, widthGrid, lengthGrid) {
+                    public void makeCall(HierName name,
+                                         String subName,
+                                         HierName[] args,
+                                         Map parameters,
+                                         Environment env) {
+                        final Template sub = template.getTemplate(subName);
+                        if (sub != null && !genDevSet.contains(sub)) {
+                            // flatten through
+                            flatten.makeCall(name, subName, args,
+                                             parameters, env);
+                        } else {
+                            // emit reference to undefined subcircuit as is
+                            super.makeCall(name, subName, args,
+                                           parameters, env);
+                        }
+                    }
+                };
+            flatten.setProxy(emitter);
+            template.execute(emitter);
+
+            iw.prevLevel();
+            iw.write("}\n");
+            iw.write("directives { ");
+            iw.write("fixed_size = true; ");
+            if (genDevSet.contains(template)) iw.write("wiring = true; ");
+            iw.write("}\n");
+        }
+        else {
+            iw.write("subtypes {\n");
+            iw.nextLevel();
+
+            final CDLFactoryInterface emitter = new CastSubTypeEmitter(iw);
+            template.execute(emitter);
+
+            iw.prevLevel();
+            iw.write("}\n");
+        }
+        iw.prevLevel();
+        iw.write("}\n");
+    }
+
+    /** Interpret BitSet as an unsigned integer, and increment it. */
+    private void incrementBitSet(final BitSet s) {
+        final int zeroBit = s.nextClearBit(0);
+        s.clear(0, zeroBit);
+        s.set(zeroBit);
+    }
+
+    /** Create a possibly negated boolean literal */
+    private BooleanExpressionInterface literal(final boolean nonNegated,
+                                               final HierName n) {
+        final BooleanExpressionInterface result = bu.literal(n);
+        return nonNegated ? result : bu.not(result);
+    }
+
+    /** Generate prs by creating a truth table */
+    private void createRules(final BooleanExpressionInterface func,
+                             final HierName target,
+                             final Map<HierName,Integer> literals,
+                             final ProductionRuleSet rules) {
+        final int size = literals.size();
+        final BitSet inputs = new BitSet(size);
+        while (!inputs.get(size)) {
+            final boolean output =
+                BooleanUtils.evaluate(func, x -> inputs.get(literals.get(x)));
+            final BooleanExpressionInterface guard;
+            if (size == 0) {
+                // constant expression with no literals
+                guard = bu.literal(power_nets[0]);
+            } else {
+                guard = bu.and(
+                    literals.entrySet()
+                            .stream()
+                            .map(e -> literal(inputs.get(e.getValue()),
+                                                         e.getKey()))
+                            .toArray(BooleanExpressionInterface[]::new));
+            }
+            final ProductionRule rule = new ProductionRule(
+                    guard, target, null,
+                    output ? ProductionRule.UP : ProductionRule.DOWN,
+                    false, true, false, false, -1, false);
+            rules.addProductionRule(rule);
+            incrementBitSet(inputs);
+        }
+    }
+
+    /** Generate prs from the boolean function that drives target */
+    private void createRules(final BooleanExpressionInterface func,
+                             final HierName target,
+                             final ProductionRuleSet rules) {
+        final Map<HierName,Integer> literals = new TreeMap<>();
+        BooleanUtils.foreachHierName(func,
+                x -> literals.computeIfAbsent(x, y -> literals.size()));
+        if (literals.size() == 0 ||  // handle constant expression
+            literals.size() >= MIN_TRUTH_TABLE_LITERALS) {
+            createRules(func, target, literals, rules);
+        } else {
+            final ProductionRule rule = new ProductionRule(
+                    func, target, null, ProductionRule.UP,
+                    false, true, false, false, -1, false);
+            rules.addProductionRule(rule);
+            rules.addProductionRule(rule.combinationalComplement(null));
+        }
+    }
+
+    /** Returns a stream of groups matching the given type. */
+    private Stream<LibertyGroup> findGroup(final Iterator<LibertyGroup> groups,
+                                           final String type) {
+        return CollectionUtils.stream(groups)
+                              .filter(g -> g.getGroupType().equals(type));
+    }
+
+    /** Group types that indicate a cell is sequential */
+    private static Set<String> SEQUENTIAL_GROUP_TYPES =
+        new HashSet<>(Arrays.asList("ff", "ff_bank", "latch", "latch_bank"));
+
+    /** Liberty cell level attributes of interest */
+    private static Set<String> LIBERTY_CELL_ATTRS =
+        new HashSet<>(Arrays.asList("is_level_shifter", "cell_description",
+                                    "is_isolation_cell", "always_on"));
+
+    /** Returns whether the liberty cell is combinational */
+    private boolean isCombinational(final LibertyGroup cell) {
+        return CollectionUtils.stream(cell.getGroups())
+                              .map(g -> g.getGroupType())
+                              .noneMatch(n -> SEQUENTIAL_GROUP_TYPES.contains(n));
+    }
+
+    /** Fill in output pin function attribute, and cell attributes */
+    private void findLibertyInfo(final LibertyParser libertyParser,
+                                 final Map<String,Map<String,String>> funcs,
+                                 final Map<String,Map<String,LibertyAttr>> attrs,
+                                 final Map<String,Map<String,Direction>> dirs) {
+        findGroup(libertyParser.getGroups(), "library")
+            .flatMap(lib -> findGroup(lib.getGroups(), "cell"))
+            .forEach(cell -> {
+                for (String attr : LIBERTY_CELL_ATTRS) {
+                    Optional.ofNullable(cell.findAttrByName(attr))
+                            .ifPresent(val -> {
+                                attrs.computeIfAbsent(cell.getNames().next(),
+                                                      k -> new HashMap<>())
+                                     .put(attr, val);
+                            });
+                }
+                if (isCombinational(cell)) {
+                    findGroup(cell.getGroups(), "pin")
+                        .forEach(pin -> {
+                            Optional.ofNullable(pin.findAttrByName("function"))
+                                    .ifPresent(func -> {
+                                        funcs.computeIfAbsent(cell.getNames().next(),
+                                                              k -> new HashMap<>())
+                                             .put(pin.getNames().next(),
+                                                  func.getSimpleAttr()
+                                                      .getStringValue());
+                                    });
+                        });
+                }
+                findGroup(cell.getGroups(), "pin")
+                    .forEach(pin -> {
+                        Optional.ofNullable(pin.findAttrByName("direction"))
+                                .ifPresent(func -> {
+                                    dirs.computeIfAbsent(cell.getNames().next(),
+                                                         k -> new HashMap<>())
+                                         .put(pin.getNames().next(),
+                                              Direction.getDirection(
+                                                  func.getSimpleAttr()
+                                                      .getStringValue()));
+                                });
+                    });
+            });
+    }
+
+    /** Update cached liberty function and cell attributes, if necessary */
+    private void updateLibertyCache(List<LibertyParser> libertyParser) {
+        if (libertyFunctions == null) {
+            libertyFunctions = new HashMap<>();
+            libertyAttributes = new HashMap<>();
+            libertyPortDirections = new HashMap<>();
+            for (LibertyParser lp : libertyParser) {
+                findLibertyInfo(lp, libertyFunctions, libertyAttributes,
+                                libertyPortDirections);
+            }
+        }
+    }
+
+    /** Returns map from pin to function for the given cell. */
+    private Map<String,String> getLibertyFunction(List<LibertyParser> libertyParser,
+                                                  String cell) {
+        updateLibertyCache(libertyParser);
+        return libertyFunctions.getOrDefault(cell, Collections.emptyMap());
+    }
+
+    /** Returns map from attribute key to attribute value for the given cell. */
+    private Map<String,LibertyAttr> getLibertyAttributes(List<LibertyParser> libertyParser,
+                                                         String cell) {
+        updateLibertyCache(libertyParser);
+        return libertyAttributes.getOrDefault(cell, Collections.emptyMap());
+    }
+
+    /** Returns map from pin to direction for the given cell. */
+    private Map<String,Direction> getLibertyPortDirections(
+        List<LibertyParser> libertyParser, String cell) {
+        updateLibertyCache(libertyParser);
+        return libertyPortDirections.getOrDefault(cell, Collections.emptyMap());
+    }
+
+    private void writeTemplateToCastTree(final HierName fqcn,
+                                         final String[] refinementParents,
+                                         final String[] topParents,
+                                         final Template template,
+                                         final Map templates,
+                                         final NetGraph netgraph,
+                                         final List<LibertyParser> libertyParser,
+                                         final CDLInlineFactory flatten,
+                                         final Predicate<String> topCells,
+                                         final boolean writeVerilogRTL,
+                                         final boolean isLeaf,
+                                         final Set genDevSet,
+                                         final Set keepEmpty,
+                                         final Writer writer)
+        throws IOException {
+
+        final IndentWriter iw = new IndentWriter(writer);
+
+        final HierName cellModule = getCellModule(fqcn);
+
+        final String cellName = fqcn.getAsString('.');
+
+        final String origName = reverseMap.getCellName(cellName);
+
+        final String[] parents;
+        if (genDevSet.contains(template)) {
+            parents = new String[] { "NULL" };
+        } else if (topCells.test(origName)) {
+            parents = topParents;
+        } else {
+            parents = refinementParents;
+        }
+        final LibertyAttr desc = getLibertyAttributes(libertyParser, origName)
+            .get("cell_description");
+        if (desc != null) {
+            iw.write("/** " + desc.getSimpleAttr().getStringValue() + " **/\n");
+        }
+
+        final Map<String,String> nodeMap = reverseMap.getNodeMap(cellName);
+
+        final Map<String,Direction> libertyDirections =
+            getLibertyPortDirections(libertyParser, origName);
+
+        writeCellHeader(cellModule.getSuffixString(),
+                        parents,
+                        template,
+                        netgraph,
+                        Optional.of(
+                            p -> Optional.ofNullable(nodeMap.get(p))
+                                         .map(n -> libertyDirections.get(n))),
+                        iw,
+                        false);
+
+        iw.write("{\n");
+        iw.nextLevel();
+
+        if (!isLeaf) {
+            // write subcells body
+            iw.write("subcells {\n");
+            iw.nextLevel();
+
+            final CDLFactoryInterface nodeEmitter =
+                new CastLocalNodesDeclarationEmitter(template, iw);
+            template.execute(nodeEmitter);
+
+            final CDLFactoryInterface emitter =
+                new CastSubCellEmitter(templates, iw);
+            template.execute(emitter);
+
+            iw.prevLevel();
+            iw.write("}\n");
+        }
+        else if (netgraph!=null) {
+            final ProductionRuleSet libertyPrs = new ProductionRuleSet();
+            // try to generate PRS from Liberty file if available
+            if (!libertyParser.isEmpty()) {
+                final Map<HierName,HierName> forwardMap = new HashMap<>();
+                nodeMap.entrySet()
+                       .stream()
+                       .forEach(e -> forwardMap.put(toHier(e.getValue()),
+                                                    toHier(e.getKey())));
+                getLibertyFunction(libertyParser, origName)
+                    .entrySet()
+                    .stream()
+                    .forEach(et -> {
+                        try {
+                            BooleanExpressionInterface func =
+                                BooleanUtils.mapBooleanExpressionHierNames(
+                                    FunctionParser.parse(et.getValue()),
+                                    x -> forwardMap.get(x));
+                            createRules(func,
+                                forwardMap.get(toHier(et.getKey())), libertyPrs);
+                        } catch (Exception e) {
+                            System.err.println("Error generating PRS: " + e);
+                        }
+                    });
+            }
+
+            // generate PRS from CDL
+            final ProductionRuleSet cdlPrs = new ProductionRuleSet();
+            cdlPrs.addProductionRule(netgraph.getProductionRuleSet());
+
+            if (cdlPrs.size() > 0 || libertyPrs.size() > 0) {
+                iw.write("prs {\n");
+                final boolean hasBoth = cdlPrs.size() > 0 && libertyPrs.size() > 0;
+                if (libertyPrs.size() > 0) {
+                    if (hasBoth) {
+                        iw.write("[ " + LIBERTY_PRS_DEFINE + " ->\n");
+                    }
+                    iw.nextLevel();
+                    iw.write(libertyPrs.toString());
+                    iw.prevLevel();
+                    if (hasBoth) {
+                        iw.write("]\n");
+                    }
+                }
+
+                if (cdlPrs.size() > 0) {
+                    if (hasBoth) {
+                        iw.write("[ ~" + LIBERTY_PRS_DEFINE + " ->\n");
+                    }
+                    iw.nextLevel();
+                    for (Iterator i = netgraph.getNodes().iterator(); i.hasNext(); ) {
+                        NetGraph.NetNode node = (NetGraph.NetNode) i.next();
+                        if (!node.isPort() && !node.isRail() && !node.isStaticizerInverter() &&
+                            (node.isGate() || node.isOutput()))
+                            iw.write("node \"" + node.name + "\";\n");
+                    }
+                    iw.write(cdlPrs.toString());
+                    iw.prevLevel();
+                    if (hasBoth) {
+                        iw.write("]\n");
+                    }
+                }
+                iw.write("}\n");
+            }
+
+            // write sizable netlist to the CAST
+            if (netlistInCast) {
+                iw.write("netlist {\n");
+                iw.nextLevel();
+                if (widthGrid>0)  iw.write(".param WG=TRANSISTOR_WIDTH_GRID\n");
+                if (lengthGrid>0) iw.write(".param LG=TRANSISTOR_LENGTH_GRID\n");
+
+                final CDLFactoryInterface emitter =
+                    new CDLFactoryEmitter(iw, true, 999, true, true, "" /*"/"*/,
+                                          transistorTypeMap, widthGrid, lengthGrid) {
+                        public void makeCall(HierName name,
+                                         String subName,
+                                             HierName[] args,
+                                             Map parameters,
+                                             Environment env) {
+                            if (template.containsTemplate(subName)) {
+                                // flatten through
+                                flatten.makeCall(name, subName, args,
+                                                 parameters, env);
+                            } else {
+                                // emit reference to undefined subcircuit as is
+                                super.makeCall(name, subName, args,
+                                               parameters, env);
+                            }
+                        }
+                    };
+                flatten.setProxy(emitter);
+                template.execute(emitter);
+                iw.prevLevel();
+                iw.write("}\n");
+                iw.write("directives { fixed_size = false; }\n");
+                if (keepEmpty.contains(template)) {
+                    iw.write("directives { wiring = true; }\n");
+                }
+            }
+        }
+
+        final String supplies =
+            Stream.concat(getPortsAsStream(template)
+                            .filter(isPowerNet.and(isNonImpliedPort))
+                            .map(port -> "power_net(" + port + ") = true;"),
+                          getPortsAsStream(template)
+                            .filter(isGroundNet.and(isNonImpliedPort))
+                            .map(port -> "ground_net(" + port + ") = true;"))
+                  .collect(Collectors.joining(" "));
+        if (!supplies.equals("")) {
+            iw.write("directives { " + supplies + " }\n");
+        }
+
+        if (writeVerilogRTL && topCells.test(origName)) {
+            iw.write("verilog {\n");
+            iw.nextLevel();
+            Stream<String> ports = getPortsAsStream(template);
+            boolean keepSupply = false;
+            for (String attrName : Arrays.asList("is_level_shifter",
+                                                 "is_isolation_cell",
+                                                 "always_on")) {
+                final LibertyAttr attr =
+                    getLibertyAttributes(libertyParser, origName).get(attrName);
+                if (attr != null && attr.getSimpleAttr().getBooleanValue()) {
+                    keepSupply = true;
+                    break;
+                }
+            }
+            if (!keepSupply) {
+                // if not a level shifter, isolation cell, or AON cell, exclude
+                // power/ground pins
+                ports = ports.filter(isPowerNet.or(isGroundNet).negate());
+            }
+            writeVerilogBlock(
+                "rtl",
+                cellName,
+                ports,
+                iw);
+            iw.prevLevel();
+            iw.write("}\n");
+        }
+        iw.prevLevel();
+        iw.write("}\n\n");
+    }
+
+}

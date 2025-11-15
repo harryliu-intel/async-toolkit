@@ -1,0 +1,5 @@
+--port.4.opt=d
+--port.[2-5].opt=b
+--port.5.opt=d
+--port.3.a=q
+--variant=ccc

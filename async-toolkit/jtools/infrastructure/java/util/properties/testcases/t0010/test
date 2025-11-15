@@ -1,0 +1,9 @@
+<test>
+<config>
+port.1.opt=a
+</config>
+
+<config name="ccc">
+port.1.opt=c
+</config>
+</test>

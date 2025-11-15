@@ -1,0 +1,7 @@
+Hello, $brokenuserfirstname$
+  You submitted change list #$brokenchangenum$.  Change list #$brokenchangenum$
+broke the $buildname$ build.  Lucky for you $userfullname$ ( $user$ ) fixed the $buildname$ 
+build, by submitting change list #$changenum$.  You owe $userfirstname$ big time.
+
+Sincerely,
+  The Build User

@@ -1,0 +1,310 @@
+#!/usr/intel/bin/perl -l
+# AAG
+# $Id: drawlef,v 1.3 2012/11/28 23:25:31 aubrey Exp $
+# $DateTime$
+
+use Getopt::Long;
+use strict;
+
+my $maxx = 0;
+my $maxy = 0;
+my $minx = 1e9;
+my $miny = 1e9;
+my $scale;
+my $fill = -1;
+my $sizex;
+my $sizey;
+my $dolayer=undef;
+my $file=undef;
+my $cell=undef;
+my $argpin=undef;
+
+sub usage {
+    print STDERR "Usage: drawlef [options] [lef] [cell]";
+    print STDERR "  --layer=#    ; draw just this layer";
+    print STDERR "  --lef=file   ; instead of lef above";
+    print STDERR "  --cell=name  ; cellname instead of above";
+    print STDERR "  --pin=<name> : pin name if just one pin";
+    print STDERR "  --help       ; this message";
+    exit 1;
+}
+
+GetOptions (
+    "layer=i" => \$dolayer,
+    "lef=s" => \$file,
+    "cell=s" => \$cell,
+    "pin=s" => \$argpin,
+    "help" => sub {usage();},
+) or usage();
+
+if ( ! defined $file) {
+    $file = shift;
+    $cell = shift;
+}
+
+usage if ! defined $file;
+
+sub text {
+    my ($x1, $y1, $f, $t) = @_;
+    printf "t %.3f %.3f $f \"$t\"\n", $y1, $x1;
+}
+
+sub rectns {
+    my ($x1, $y1, $x2, $y2, $f) = @_;
+    if ($fill != $f) {
+        $fill = $f;
+        print "f $fill";
+    }
+    printf "r %.3f %.3f %.3f %.3f 1\n",
+        $y1, $x1, $y2, $x2;
+}
+
+sub rect {
+    my ($x1, $y1, $x2, $y2, $f) = @_;
+    if ($fill != $f) {
+        $fill = $f;
+        print "f $fill";
+    }
+    printf "r %.3f %.3f %.3f %.3f 1\n",
+        ($y1-$miny)*$scale,
+        ($x1-$minx)*$scale,
+        ($y2-$miny)*$scale,
+        ($x2-$minx)*$scale;
+}
+
+sub poly {
+    my ($f, @xy) = @_;
+    if ($fill != $f) {
+        $fill = $f;
+        print "f $fill";
+    }
+    for(my $n = 0; $n < $#xy; $n += 2) {
+        $xy[$n] = sprintf "%.3f", ($xy[$n]-$minx)*$scale;
+        $xy[$n+1] = sprintf "%.3f", ($xy[$n+1]-$miny)*$scale;
+        my $t = $xy[$n];
+        $xy[$n] = $xy[$n+1];
+        $xy[$n+1] = $t;
+    }
+    print "p ".join(" ", @xy)." 1";
+}
+
+my $in=0;
+my %rect;
+my %pinnr;
+my $pinnr=1;
+my %pin;
+my $pin;
+my %obs;
+my $layer;
+my $x;
+my $originx=0;
+my $originy=0;
+open (P, "<$file");
+while (<P>) {
+    chomp;
+    s/^  *//;
+    s/  */ /g;
+    if (! defined ($cell) and /^MACRO/) {
+        s/MACRO //;
+        $cell = $_;
+        $in = 1;
+        next;
+    }
+    if (/^MACRO $cell/) {
+        $in = 1;
+        next;
+    }
+    if (/^END $cell/) {
+        last;
+    }
+    next if (! $in);
+    s/^ //;
+    if (/^\s*ORIGIN (\S+) (\S+)\s*;/) {
+        $originx=$1;
+        $originy=$2;
+    }
+    if (/^\s*SIZE .* BY .*/) {
+        my @f=split;
+        $sizex = $f[1];
+        $sizey = $f[3];
+    }
+    if (/^PIN/) {
+        ($x, $pin)=split;
+        $pin = "Vdd" if ($pin eq "VDD");
+        $pin = "GND" if ($pin eq "VSS");
+    }
+    if (/^LAYER/) {
+        ($x, $layer)=split;
+#        $layer =~ s/METAL//;
+#        $layer =~ s/M//;
+        $layer =~ s/[^\d]//g;
+    }
+    if (/^RECT/) {
+        next if (! ($layer =~ /^\d+$/));
+        next if defined $dolayer and $layer != $dolayer;
+        s/;//;
+        my ($x, $x1, $y1, $x2, $y2) = split;
+        $maxx = $x1 if ($x1 > $maxx);
+        $maxx = $x2 if ($x2 > $maxx);
+        $minx = $x1 if ($x1 < $minx);
+        $minx = $x2 if ($x2 < $minx);
+        $maxy = $y1 if ($y1 > $maxy);
+        $maxy = $y2 if ($y2 > $maxy);
+        $miny = $y1 if ($y1 < $miny);
+        $miny = $y2 if ($y2 < $miny);
+        if ($pin ne "OBS") {
+            push @{$pin{"$pin $layer"}},"$x1 $y1 $x2 $y2";
+        }
+        else {
+            push @{$obs{$layer}}, "$x1 $y1 $x2 $y2";
+        }
+    }
+    if (/^POLYGON/) {
+        next if (! ($layer =~ /^\d+$/));
+        next if defined $dolayer and $layer != $dolayer;
+        while (! /;/) {
+            my $ln = $_;
+            $_ = <P>;
+            $ln .= $_;
+            $_ = $ln;
+        }
+        s/;//;
+        s/\s+/ /g;
+        my ($x,@xy) = split;
+        foreach my $n (0..$#xy) {
+            if ($n % 2) {
+                $maxy = $xy[$n] if ($xy[$n] > $maxy);
+                $miny = $xy[$n] if ($xy[$n] < $miny);
+            }
+            else {
+                $maxx = $xy[$n] if ($xy[$n] > $maxx);
+                $minx = $xy[$n] if ($xy[$n] < $minx);
+            }
+        }
+        if ($pin ne "OBS") {
+            push @{$pin{"$pin $layer"}},join(" ", @xy);
+        }
+        else {
+            push @{$obs{$layer}}, join(" ", @xy);
+            push @{$pin{"$pin $layer"}},join(" ", @xy);
+        }
+    }
+    if (/^OBS/) {
+        $pin = "OBS";
+    }
+}
+close P;
+exit if ($maxx == 0);
+$originx=-$originx;
+$originy=-$originy;
+$minx=$originx if $minx > $originx;
+$miny=$originy if $miny > $originy;
+$maxx=$originx+$sizex if $maxx < $originx+$sizex;
+$maxy=$originy+$sizey if $maxy < $originy+$sizey;
+$scale = 8/($maxx-$minx);
+$scale = 5.5/($maxy-$miny) if $5.5/($maxy-$miny) < $scale;
+$|=1;
+print "x 0\ny 0\nm 1\ns 1 0";
+rect ($originx, $originy, $originx+$sizex, $originy+$sizey, 0);
+#foreach my $key (sort keys %obs) {
+#    foreach my $list (@{$obs{$key}}) {
+#        my ($x1, $y1, $x2, $y2) = split (/ /,$list);
+#    }
+#}
+my %layernr=();
+foreach my $key (sort keys %pin) {
+    my ($pin,$layer) = split(/ /,$key);
+#   next if $pin ne "GND" and $pin ne "Vdd";
+    if (defined ($argpin)) {
+        next if $argpin ne $pin;
+        if ( ! defined ($layernr{$layer})) {
+            $layernr{$layer}=(++$pinnr % 15) + 1;
+        }
+    }
+    else {
+        if (! defined ($pinnr{$pin})) {
+            $pinnr{$pin}= (++$pinnr % 15) + 1;
+        }
+    }
+    my $px = $pinnr{$pin};
+    $px = $layernr{$layer} if defined $argpin;
+    foreach my $list (@{$pin{$key}}) {
+        my @xy = split(/ /, $list);
+        if ($#xy == 3) {
+            my ($x1, $y1, $x2, $y2) = @xy;
+            rect ($x1, $y1, $x2, $y2, $px);
+        }
+        elsif ($#xy == 9) {
+            rect($xy[0],$xy[1],$xy[4],$xy[5],$px);
+        }
+        elsif ($#xy % 2 == 1) {
+            poly ($px,@xy);
+        }
+        else {
+            print STDERR "Error in polygon";
+        }
+    }
+}
+if (0) {
+    foreach my $key (sort keys %pin) {
+        my ($pin,$layer) = split(/ /,$key);
+    #   next if $pin eq "GND" or $pin eq "Vdd";
+        if (! defined ($pinnr{$pin})) {
+            $pinnr{$pin}=++$pinnr;
+        }
+        my $px = $pinnr{$pin};
+        foreach my $list (@{$pin{$key}}) {
+            my @xy = split(/ /, $list);
+            if ($#xy == 3) {
+                my ($x1, $y1, $x2, $y2) = @xy;
+                rect ($x1, $y1, $x2, $y2, $px);
+            }
+            elsif ($#xy == 9) {
+                rect($xy[0],$xy[1],$xy[4],$xy[5],$px);
+            }
+            elsif ($#xy %2 == 1) {
+                print STDERR "PG $cell $#xy $pin";
+                poly ($px,@xy);
+            }
+            else {
+                print STDERR "Error in polygon";
+            }
+        }
+    }
+}
+my $n=0;
+my $d=1;
+my $s = 0.07;
+my $y0 = -$s;
+if (defined ($argpin)) {
+    foreach my $layer (sort keys %layernr) {
+        if ($n == 7) {
+            $y0 += $s*2;
+            $n = 0;
+        }
+        rectns ($n*$d, -0.3-$y0, $n*$d+$s, -0.3+$s-$y0, $layernr{$layer});
+        $n++;
+        text ($n*$d+2*$s-1, -0.3-$y0, 2, "M$layer");
+    }
+}
+else {
+    foreach my $pin (sort keys %pinnr) {
+        if ($pin ne "") {
+            if ($n == 7) {
+                $y0 += $s*2;
+                $n = 0;
+            }
+            rectns ($n*$d, -0.3-$y0, $n*$d+$s, -0.3+$s-$y0, $pinnr{$pin});
+            $n++;
+            text ($n*$d+2*$s-1, -0.3-$y0, 2, $pin);
+        }
+    }
+}
+$file =~ s:.*/::;
+$dolayer="" if ! defined $dolayer;
+$dolayer = "M$dolayer" if $dolayer ne "";
+if (defined $argpin) {
+    $dolayer="PIN=$argpin";
+}
+text (0, -0.7, 4, "$file $dolayer $cell");
+close X;

@@ -1,0 +1,37 @@
+#!/usr/intel/bin/perl -w
+
+my @lines;
+my @column_width;
+while (my $line = <STDIN>) {
+    my @f = split(" ",$line);
+    for (my $i=0; $i<@f; $i++) {
+        $column_width[$i] = my_max($column_width[$i],length($f[$i]));
+    }
+    push @lines, $line;
+}
+
+# output results
+foreach $line (@lines) {
+    my @f = split(" ",$line);
+    for (my $i=0; $i<@f; $i++) {
+        print_field($f[$i],$column_width[$i]);
+    }
+    print "\n";
+}
+
+# print a field with padding
+sub print_field {
+    my ($str,$length) = @_;
+    print "$str";
+    for (my $i=length($str); $i<$length; $i++) {
+        print " ";
+    }
+    print " ";
+}
+
+# max two numbers allowing the first to be undefined
+sub my_max {
+    my ($a, $b) = @_;
+    if (!defined($a) || $b>$a) { return $b; }
+    return $a;
+}

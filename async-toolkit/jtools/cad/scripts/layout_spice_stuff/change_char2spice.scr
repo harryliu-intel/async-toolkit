@@ -1,0 +1,99 @@
+#!/usr/intel/bin/perl
+# This script accepts as input a file whose characters need to be changed
+# It also accepts a match file with first column as the char to be replaced (Ai) and
+# the second column as the char's to replace with (Bi)
+# It parses each line, searches first whether B is already found and if it is found it makes a note 
+# and stops substituting 
+# If Bi is not found it replaces Ai ( if present ) with Bi.
+# It stops creating the output file if a Bi is found and it deletes output file at the end
+# However it still continues to check whther any of the Bi are valid replacements
+# At the end it returns a substitued output file and prints all B already found
+# 2 modes Line mode or File mode
+# File mode=0, Line mode=1
+# In Mode 1 it accepts mode, then accepts a match file then rest of arguments comprise line to be modified. 
+# Then it prints a return code of 1 if successfull and then output line
+my $Mode=shift(@ARGV);
+my $MatchFile=shift(@ARGV);
+my %MatchHash=();
+my @ArBiPresent=();
+my $Correctable=1;
+my $InLine="";
+open MATCH,"<$MatchFile" or die "Can't open Input file $InFile\n";
+while (my $line=<MATCH>)  {
+  my @fields=split/\s+/,$line;
+  $MatchHash{$fields[0]}=$fields[1];
+}
+close(MATCH);
+
+if($Mode==1)  {
+  $InLine="";
+  while( my $temp=shift(@ARGV))  {
+    $InLine=$InLine."$temp ";
+  }
+  chop($line);
+  foreach my $key (keys %MatchHash)  {
+    if($line=~/$MatchHash{$key}/)  {
+      push @ArBiPresent,$key;
+      if($Correctable==1)  {
+          $Correctable=0;
+      }
+    }
+    elsif($Correctable==1)  {
+      $_=$InLine;
+      s/$key/$MatchHash{$key}/g;
+      $InLine=$_;
+    }
+  }
+}
+else   {
+  my $InFile=shift(@ARGV);
+  my $OutFile=shift(@ARGV);
+  open INSPICE,"<$InFile" or die "Can't open Input file $InFile\n";
+  open OUTSPICE,">$OutFile" or die "Can't open Output File $OutFile\n";
+  L1w:while(my $line=<INSPICE>)  {
+    foreach my $key (keys %MatchHash)  {
+      if($line=~/$MatchHash{$key}/)  {
+        push @ArBiPresent,$key;
+        delete $MatchHash{$key};
+        if($Correctable==1)  {
+          $Correctable=0;
+          close(OUTSPICE);
+          `rm -rf $OutFile`;
+        }
+        next L1w;
+      }
+      elsif($Correctable==1)  {
+        $_=$line;
+        s/$key/$MatchHash{$key}/g;
+        $line=$_;
+      }
+      else  {
+        next L1w;
+      }
+    }
+    print OUTSPICE $line;  
+  }
+  close(INSPICE);
+}
+ 
+
+if($Correctable==1)  {
+  print "ExitCode 1\n";
+  if($Mode==1)  {
+    print "$InLine\n";
+  }
+  else  {
+    close(OUTSPICE);
+  }
+}
+else  {
+  print "ExitCode 0\n";
+  my $Temp="";  
+  foreach my $val (@ArBiPresent)  {
+    $Temp=$Temp."$val ";
+  }
+  print "Following_Entries_Found $Temp\n";
+}  
+
+
+

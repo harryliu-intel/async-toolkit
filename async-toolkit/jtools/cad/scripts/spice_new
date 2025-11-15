@@ -1,0 +1,352 @@
+#!/usr/intel/bin/perl
+
+# default parameters
+$minCC = 1e-15;  # minimum coupling capacitance (lump to GND if less)
+$minC = 0.1e-15; # minimum capacitance (discard if less)
+$minR = 1;       # minimum resistance (short if less)
+$time = 20e-9;   # time to run simulation
+$true = 1.2;     # voltage of Vdd
+$temp = 27;      # temperature in Celcius
+$chargeSharing = 0; # perform charge sharing instead of transient analysis
+$internalWires = 0; # alias internal node names with wires
+$f_include = "fulcrum_tsmc13lv.asp"; # sets up basic aspice stuff for a technology
+$aspice_path = ".:/usr/local/cad/lib/aspice:/usr/local/cad/lib/bsim3"; # search path
+$config_file = "$ENV{HOME}/.castrc2";
+$config_file = "" if ( ! -e $config_file );
+$cds_dir = "$ENV{HOME}/cds_wd/F16"; # cds_wd
+$cast_path = ""; # default cast path
+$cdl_path = "";  # search path for cdl files
+$allEnv = 0;     # enables spicing all environments
+$autoEnv = 0;    # enables auto selecting environments
+$batch = "";     # enables batch processing
+
+# qsub commands and options
+$qsub_sun     = "/usr/local/PBS/bin/qsub -l walltime=06:00:00 -l nodes=sun";
+$qsub_lin_sim = "/usr/local/PBS/bin/qsub -l walltime=96:00:00";
+$qsub_lin_pp  = "/usr/local/PBS/bin/qsub -l walltime=01:00:00";
+$job_id = "";
+
+# postprocessing scripts
+$time_domain_postprocess    = "time_domain_postprocess";
+$charge_sharing_postprocess = "charge_sharing_postprocess";
+
+# usage banner
+sub usage() {
+    $usage  = "USAGE: spice [args] [cell [env [ntpc_node ntpc_spec_value]]]\n";
+    $usage .= "  Args includes:\n";
+    $usage .= "    --batch=[$batch]  (specify batch mode)\n";
+    $usage .= "    --minC=[$minC]  (minimum capacitance)\n";
+    $usage .= "    --minCC=[$minCC]  (minimum coupling capacitance)\n";
+    $usage .= "    --minR=[$minR]  (minimum resistance)\n";
+    $usage .= "    --time=[$time]  (time to run simulation, in seconds)\n";
+    $usage .= "    --true=[$true]  (voltage of Vdd)\n";
+    $usage .= "    --temp=[$temp]  (temperature, in Celcius)\n";
+    $usage .= "    --chargeSharing=[$chargeSharing]  (do charge sharing instead of transient)\n";
+    $usage .= "    --internalWires=[$internalWires]  (short all CAST aliases together)\n";
+    $usage .= "    --config=[$config_file]  (config file for jflat)\n";
+    $usage .= "    --cast-path=[$cast_path]  (cast search path for jflat)\n";
+    $usage .= "    --cds-dir=[$cds_dir]  (Cadence working directory)\n";
+    $usage .= "    --aspice-path=[$aspice_path]  (search path for aspice)\n";
+    $usage .= "    --include=[$f_include]  (aspice file to include)\n";
+    $usage .= "    --auto-env=[$autoEnv] (whether to auto find list of environments)\n";
+    $usage .= "    --all-env=[$allEnv] (whether to run all environments or best environment, assumes significance only if autoEnv is 1)\n";
+    $usage .= "    --cdl-path=[$cdl_path] (path to CDL file for circuit)\n";
+    $usage .= "  If --batch=todo, provide a todo file with lines like:\n";
+    $usage .= "    cell [env [node]]\n";
+    $usage .= "    escape special characters like []() with \\.\n";
+    die "$usage";
+}
+
+# parse command line arguments
+while (defined $ARGV[0] && $ARGV[0] =~ /^--(.*)/) {
+    ($flag, $value) = split("=",$1);
+    if    ($flag eq "batch") { $batch = $value; }
+    elsif ($flag eq "minC") { $minC = $value; } 
+    elsif ($flag eq "minCC") { $minCC = $value; }
+    elsif ($flag eq "minR") { $minR = $value; }
+    elsif ($flag eq "time") { $time = $value; }
+    elsif ($flag eq "true") { $true = $value; }
+    elsif ($flag eq "temp") { $temp = $value; }
+    elsif ($flag eq "include") { $f_include = $value; }
+    elsif ($flag eq "config") { $config_file = $value; }
+    elsif ($flag eq "all-env") { $allEnv = $value; }
+    elsif ($flag eq "auto-env") { $autoEnv = $value; }
+    elsif ($flag eq "cds_dir") { $cds_dir = $value; }
+    elsif ($flag eq "cast_path") { $cast_path = $value; }
+    elsif ($flag eq "cdl_path") { $cdl_path = $value; }
+    elsif ($flag eq "chargeSharing") { $chargeSharing = $value; }
+    elsif ($flag eq "internalWires") { $internalWires = $value; }
+    else { die "ERROR: argument --${flag}=${value} not recognized.\n"; }
+    shift @ARGV;
+}
+
+# derived variables
+$jflat  = "jflat --max-heap-size=256M ";
+$jflat .= "--config=$config_file " if (! $config_file eq "");
+$jflat .= "--cast-path=$cast_path " if (! $cast_path eq "");
+$pwd = "$ENV{PWD}";
+chomp($host = `uname -n`);
+
+# create working directory and main asp file.
+sub PrepSim {
+    our $true,$temp,$f_include,$time;
+    my $envName=$_[0];
+    my $runType=$_[1];
+    my $runName = "$cellName:$envName";
+#    if($runType eq "CHRG_SHR")  {
+#        $runName="$cellName";  
+#    }
+#    else  {
+#        $runName="$cellName:$envName";
+#    }
+    my $f_aspice = "$cellName.aspice";
+    my $f_asp = "$runName.asp";
+    my $f_env = "$runName.aspice";
+    
+    # Creating cellName.asp
+    open  ASP, ">$f_asp" or die "Can't open '$f_asp' for writing.\n";
+    print ASP ".true=$true;\n";
+    print ASP ".temperature=$temp;\n";
+    print ASP ".include \"$f_include\";\n";      
+    print ASP ".include \"$f_aspice\";\n";
+    print ASP ".include \"$f_env\";\n";
+    print ASP ".timemax=$time;\n";
+    close(ASP); 
+}
+
+# create todo file if necessary.
+if(! $batch eq "")  {
+
+    # batch mode
+    @ARGV == 0 or usage();
+    $todo = $batch;
+    
+} else {
+    
+    # non batch mode, create todo file
+    $todo = "$pwd/$ARGV[0].todo";
+    open HANDLE1 ,">$todo" or die "Can't write $todo\n";
+    if ($chargeSharing == 1) {
+        @ARGV == 1 or usage();
+        print HANDLE1 "$ARGV[0]\n";
+    }
+    else {
+        my $cell,$env;
+        ($cell,$env) = split(":",$ARGV[0]);
+        print HANDLE1 "$cell $env $ARGV[1] $ARGV[2]\n";
+    }
+    close(HANDLE1);
+
+}
+
+# process todo file
+open TODO, "<$todo" or die "Can't read $todo\n";
+while (<TODO>) {
+    my @fields=split;
+    $cellName=shift(@fields); # global
+    $envName = ""; # global
+    
+    # automatically select file.spice, file.cdl or extract new file.spice
+    $date = `date`;
+    if ( -e "$cellName.spice" ) {
+        $f_spice = "$cellName.spice";
+    } elsif ( -e "$cellName.cdl") {
+        $f_spice = "$cellName.cdl";
+    }
+    else {
+        # automatically extract to cellName.spice
+        my $libName = $cellName;
+        $libName =~ s/\.[^\.]+\.[^\.]+$//;
+        print STDERR "extracting started $date";
+        $do_ext = "do_ext";
+        open OUT_EXT, ">$do_ext" or die "Can't open $do_ext for writing.\n";
+        print OUT_EXT "#!/bin/csh -f \n";
+        print OUT_EXT "#PBS -N Extract\n";
+        print OUT_EXT "/home/group/cadadmin/simplex_extractor/1.0/share/script/perl/stream_and_extract_0.13um  --spice $cellName.spice --top_level_name $cellName  --view layout --cds_loc $cds_dir --cdl_loc $cdl_path --minC $minC --minR $minR --minCC $minCC --lowK  $cellName $libName\n";
+        `chmod +x $do_ext`;    
+        $f_spice = "$cellName.spice";
+        $job_id= `$qsub_sun -e err_ext -o out_ext $do_ext`; 
+        chomp($job_id);
+        print "$job_id\n"; 
+    }
+
+    # summarize arguments
+    chomp($date = `date`);
+    print STDERR "cell = $cellName";
+    print STDERR "spice file = $f_spice\n";
+    print STDERR "aspice path = $aspice_path\n";
+    print STDERR "aspice include = $f_include\n";
+    print STDERR "config = $config_file\n";
+    print STDERR "true = $true, temp = $temp, time = $time\n";
+    print STDERR "minC = $minC, minCC= $minCC, minR = $minR\n";
+    print STDERR "host = $host\n";
+    print STDERR "date = $date\n";
+    
+    # Simulation
+    if ($chargeSharing == 1) {
+        $envName="CS";
+        &PrepSim($envName,"CHRG_SHR");
+        &CHRG_SHR_DO($job_id);
+    } 
+    else {
+        ## Running TDS
+        ## if autoEnv is set run Jflat to find environment else take specified environment
+        ## Cast path needs to be specified for running Jflat to find list of environments 
+        ## with details about ntpc nodes and ntpc_spec values to be found
+        if($autoEnv==1)  {
+            my $EnvLine="";
+            if($cast_path eq "")  { die "Cast Path Needs to be specified for TDS\n"; }
+            `$jflat --cell=$cellName --tool=env-ntpc > ENV.fil`;
+            open ENVHANDLE , "<ENV.fil" or die "ENV file not created\n";          
+            if(!(-s ENVHANDLE > 0))  { die "Empty ENV file \n"; }
+            while(my $linerd=<ENVHANDLE>)  {
+                chomp($linerd);
+                ## $allEnv is 0 by default
+                ## when it is 0 the best environment suited for TDS is found
+                ## Analog is the best, if not found search for Performance else digital else take the only environment
+                ## Once the environment is found store the ntpc spec nodes and values in a hash
+                ## $allEnv means simulatneously launching multiple TDS jobs. Currently not supported.
+                my @EnvFields = split /\s+/, $linerd;
+                ##Creating a hash called $env_analog or $env_digital or $env_envName with key as ntpc node and value as ntpc value
+                my $Key , $Val;
+                ($Key,$Val)=($EnvFields[1],$EnvFields[2]);
+                $HoHEnv{$EnvFields[0]}{$Key}=$Val;
+                $EnvLine=$EnvLine."$EnvFields[0]  ";
+            }  
+            if($allEnv==0)  {
+                if($EnvLine=~/(analog)/i)  {
+                    $envName=$1;              
+                }
+                elsif($EnvLine=~/(performance)/i)  {
+                    $envName=$1;
+                } 
+                elsif($EnvLine=~/(digital)/i)  {
+                    $envName=$1;
+                }
+                else  {
+                    ## None of the expected environments are found
+                    ## Run the first one you find
+                    my @EnvList=split /\s+/, $EnvLine;
+                    $envName=$EnvList[0];                  
+                }
+                &PrepSim($envName,"TDS");
+                &TDS_DO_GEN($envName,$job_id);           
+            }
+            else  {  
+                # Facilities to run all environments
+                #TO BE DONE
+                #die "To BE Implemented\n";
+                my $EnvK;
+                for $EnvK (keys %HoHEnv)  {
+                    print "Environment is $EnvK\n";
+                    $envName=$EnvK;
+                    &PrepSim($envName,"TDS");  
+                    &TDS_DO_GEN($envName,$job_id);
+                }
+            }
+        }
+        else  {
+            ##autoEnv=0
+            ## So user specifies environment and ntpc nodes and values
+            ## format is cellName envName ntpcnode1 ntpcval1 ntpcnode2 ntpcval2....
+            ##Creating a hash of hashes with first key being envName and then key val pairs of ntpc_node ntpc_val
+            $envName=shift(@fields);
+            %{$HoHEnv{$envName}}=@fields;
+            &PrepSim($envName,"TDS");
+            &TDS_DO_GEN($envName,$job_id);             
+        }           
+    }
+}    
+if($batch==0)  { `rm  $todo`; } 
+
+# subroutine to launch charge sharing simulation
+sub CHRG_SHR_DO {
+    our $cellName,$f_spice,$minR,$minC,$config_file,$dir,$aspice_path,$pwd;
+    my $runName=$cellName;
+    my $run_dir="CHRG_SHR_CS";
+    my $f_aspice="$cellName.aspice";
+    my $job_id=$_[0];
+    my $job_id1="";
+    chdir $run_dir;
+    my $do_chrg_shr ="do_chrg_shr";
+    open OUT_CHRG_SHR, ">$do_chrg_shr" or die "Can't open $do_chrg_shr for writing.\n";
+    # convert cellName.spice to cellName.aspice
+    print OUT_CHRG_SHR "#!/usr/intel/bin/perl \n";
+    print OUT_CHRG_SHR  "#PBS -N charge_share\n";  
+    print OUT_CHRG_SHR  qq{chdir "$run_dir";\n}; 
+    print OUT_CHRG_SHR qq| if(!((-e "$f_spice")&&(-s "$f_spice" > 100))) { die "Extraction failed\\n";}\n|;
+    print OUT_CHRG_SHR  "`rc_spice2aspice --minR $minR --minC $minC --quote --cell $cellName $f_spice $f_aspice`;\n";
+    print OUT_CHRG_SHR  qq{`$jflat --tool=csim --cell=$cellName | egrep "^up|^dn" | cut -d" " -f 2 | sort | uniq | sed s:'"'::g > $runName.nodes`;\n};
+    print OUT_CHRG_SHR  qq{open NODES, "<$runName.nodes" or die "Can't open .nodes for reading\\n";\n};
+    print OUT_CHRG_SHR qq{my \$line = <NODES>;\n};
+    print OUT_CHRG_SHR qq|while (\$line) {\n|;
+                                          print OUT_CHRG_SHR qq{  \$line =~ s/(\\S+)\\s+//;\n};
+                                          print OUT_CHRG_SHR qq{  \$nodeName = \$1;\n};
+                                          print OUT_CHRG_SHR "  `ln -sf $runName.asp $runName:\$nodeName:up.asp`;\n";
+                                          print OUT_CHRG_SHR "  `aspice -path $aspice_path -up \$nodeName $runName:\$nodeName:up`;\n";
+                                          print OUT_CHRG_SHR "  `minmaxv $runName:\$nodeName:up \$nodeName > $runName:\$nodeName:up.out`;\n";
+                                          print OUT_CHRG_SHR "  `ln -sf $runName.asp $runName:\$nodeName:dn.asp`;\n";
+                                          print OUT_CHRG_SHR "  `aspice -path $aspice_path -dn \$nodeName $runName:\$nodeName:dn`;\n";
+                                          print OUT_CHRG_SHR "  `minmaxv $runName:\$nodeName:dn \$nodeName > $runName:\$nodeName:dn.out`;\n";
+                                          print OUT_CHRG_SHR qq{  \$line = <NODES>;\n};
+                                          print OUT_CHRG_SHR qq|}\n|;
+    print OUT_CHRG_SHR " `grep Maximum $runName:*:up.out | sort -n -k 3 -r > $runName:up.out`;\n";
+    print OUT_CHRG_SHR " `grep Minimum $runName:*:dn.out | sort -n -k 3 > $runName:dn.out`;\n";
+    close(OUT_CHRG_SHR);
+    `chmod +x $do_chrg_shr`;
+    $job_id1=`$qsub_lin_sim -e err_chrg_shr -o out_chrg_shr -W depend=afterany:$job_id $do_chrg_shr`; 
+    chomp($job_id1);
+    print "$job_id1\n";
+    $do_cs_pp="do_cs_pp";
+    open OUT_CS_PP , ">$do_cs_pp" or die "Can't open $do_cs_pp for writing.\n";
+    print OUT_CS_PP "#!/bin/csh -f \n";
+    print OUT_CS_PP  "#PBS -N   cs_post_proc\n";      
+    print OUT_CS_PP "cd $run_dir\n";  
+    print OUT_CS_PP "$charge_sharing_postprocess $pwd $cellName\n";
+    `chmod +x $do_cs_pp`;
+    print `$qsub_lin_pp -e err_cs_pp -o out_cs_pp -W depend=afterany:$job_id1 $do_cs_pp`;       
+}
+
+# subroutine to launch time domain simulation
+sub TDS_DO_GEN {
+    our %HoHEnv;
+    our $minR,$minC,$cellName,$f_spice,$config_file,$internalWires,$pwd,$intWire;
+    my $enV=$_[0];
+    my $runName="$cellName:$enV";
+    my $job_id=$_[1];
+    my $job_id1="";
+    my $f_aspice="$cellName.aspice";
+    my $f_env="$runName.aspice";
+    $do_tds ="do_tds";
+    open OUT_TDS, ">$do_tds" or die "Can't open $do_tds for writing.\n";
+    ## Interesting Point we are using normal shell not my default TCSH or the CSH
+    ## this is becoz any shell derived from CSH does not allow for 2 way redirection of output
+    ## notice this happens with our aspice statement
+    print OUT_TDS "#!/bin/sh  \n";
+    print OUT_TDS "#PBS -N tds\n";
+    print OUT_TDS "cd $run_dir\n";
+    print OUT_TDS  "rc_spice2aspice --minR $minR --minC $minC --quote --cell $cellName $f_spice $f_aspice\n";
+    if ( $internalWires == 0 ) {
+        my $intWire = "";
+    } else {
+        my $intWire = "--internalWires";
+    }
+    print OUT_TDS  "$jflat --tool=aspice $intWire --cell=$runName |grep -v layout > $f_env\n";
+    print OUT_TDS  "aspice -path $aspice_path $runName > $runName.out 2> $runName.err\n";
+    close(OUT_TDS);  
+    `chmod +x $do_tds`;
+    $job_id1= `$qsub_lin_sim -e err_tds -o out_tds -W depend=afterany:$job_id $do_tds`;
+    print "$job_id1";
+    chomp($job_id1); 
+    $do_mes="do_mes";
+    open OUT_MES, ">$do_mes" or die "Can't open $do_mes for writing.\n";
+    print OUT_MES "#!/bin/csh -f \n";
+    print OUT_MES  "#PBS -N   tdsmes\n";      
+    print OUT_MES "cd $run_dir\n";
+    my $ntpcNode;
+    for $ntpcNode (keys %{$HoHEnv{$enV}})  {
+        print OUT_MES qq{$time_domain_postprocess $runName $ntpcNode $HoHEnv{$enV}{$ntpcNode} "$pwd/TDS_RESULTS" \n};    
+    }
+    `chmod +x $do_mes`;  
+    print `$qsub_lin_pp -e err_mes -o out_mes -W depend=afterany:$job_id1 $do_mes`;  
+}

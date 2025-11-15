@@ -1,0 +1,20 @@
+<test>
+<config>
+
+log.scope=x.a:1
+log.scope=x.b:1
+
+</config>
+
+    <config name="log_fc">
+    log.scope=TESTBENCH.inst1.x.fc:-1,TESTBENCH.inst1.x.mgmt:-1,TESTBENCH.inst1._env:-1,TESTBENCH:2
+    </config>
+
+    <config name="log_all" uses="log_base">
+    log.scope=TESTBENCH.inst1._env:-1,TESTBENCH.inst1.x:-1,TESTBENCH:5
+    </config>
+
+    <config name="log_base">
+    log.scope=x:5
+    </config>
+</test>

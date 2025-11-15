@@ -1,0 +1,10 @@
+# Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+# SPDX-License-Identifier: Apache-2.0
+
+
+CPPFILES_COMPILER     := $(GCXX)
+CPPFILES_PREPROCESSOR := $(CPPFILES_COMPILER) -E
+
+CPPFILES_PROJECT_INCLUDE_DIRS := $(CURR_TARGET_DIR)/ $(CURR_PROJECT_DIR)/ $(JAVAFILES_JDK_ROOT)/include/ $(CURR_PROJECT_DIR)/transrecord/include
+
+CPPFILES_PROJECT_INCLUDE_DIRS := $(CPPFILES_PROJECT_INCLUDE_DIRS) $(JAVAFILES_JNI_INCLUDE_DIR)

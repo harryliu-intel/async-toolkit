@@ -1,0 +1,1330 @@
+#!/usr/intel/bin/perl
+# vim:et:sw=4:ts=4:tw=79:
+#
+# report_coverage.pl
+
+use Cwd qw(abs_path getcwd);
+use File::Spec::Functions;
+use File::Temp qw/ tempfile tempdir /;
+use FindBin qw($Bin);
+use File::Temp;
+use IO::File;
+use List::MoreUtils 'uniq';
+use IO::Uncompress::Gunzip;
+
+use DBI();
+
+
+use lib "$Bin/../scripts";
+use lib "$Bin/../shared/perl";
+
+$Bin =~ s/(.*)\/scripts/$1/;
+# verification toplevel
+my $root = $Bin;
+use strict 'vars';
+use strict 'subs';
+
+######################### GLOBAL SYMBOLS ####################################
+#output disk to store coverage data published to database
+my $global_merged_dir="/p/rrc/verification/merged_coverage";
+my $global_regression_dir="/p/rrc/verification/regression";
+my @partitions=qw/
+chip__rrc__fabric__array__ARRAY_SUBSEG__1000
+chip__rrc__fabric__fc__FFU__1000
+chip__rrc__fabric__fc__ffu__FFU_SLICE_4__1000
+chip__rrc__fabric__fc__FRAME_CONTROL__1000
+chip__rrc__fabric__fc__PARSING__1000
+chip__rrc__fabric__fc__POST__1000
+chip__rrc__fabric__fc__TAIL__1000
+chip__rrc__fabric__modify__mod_sync__MOD_SYNC__1000
+chip__rrc__fabric__scheduler__SCHEDULER__1000
+chip__rrc__mgmt__MGMT__1000
+chip__rrc__mgmt__lsm__LSM__1000
+chip__rrc__mgmt__testif__TESTIF__1000
+chip__rrc__port__epl__EPL__1000
+chip__rrc__port__mgmt__PORTS_MGMT__1000
+chip__rrc__hosts__pcie_host__PCIE_HOST__1000
+chip__rrc__hosts__pcie_mgmt__PCIE_MGMT__1000
+/;
+
+my $user = $ENV{"USER"};
+my $umask = umask();
+umask(007);
+
+my $LOG;
+my $pwd=getcwd();
+
+
+my $DEBUG_LEVEL=0;
+
+# task steps
+my %validtasks=("merge"  => 1,
+                "report" => 2,
+                "publish"=> 3,
+                "all"=> 0);
+my %task=();
+my $task_str="";
+my $invalid_task="";
+
+
+
+#report coverage from which urg database
+my $report_from= "";
+#publish coverage result to database
+my $publish= 0;
+my $publish_from= "";
+my $only_publish=0;
+
+
+# module
+my $chiplevel=0;
+my $module=undef;
+my %map_modules=();
+
+my $vcsCoverageMetrics="line+cond+branch+tgl+fsm";
+
+# vcs coverage source directory file
+my $urgFile=undef;
+
+# urg coverage mapping
+# these values are passed to urg using 
+# -map xxx
+# comma-seperated string will be unrolled
+# into individual -map xxx arguments
+# see bug 26431
+my $urgMergeMapping = undef; # comma-sep string
+
+# exclude coverage modules
+my %excludes=();
+
+#user input files
+my $user_exclude_file=undef;
+my $user_hier_file=undef;
+my $user_urg_options=undef;
+
+#regression id
+my @regression_id=();
+
+#coverage sources
+my @cov_sources=();
+
+#output directory
+my $user_output_dir=undef;
+my $output_dir=undef;
+my $publish_output_dir="";
+
+#coverage report data
+my $coverage_data={};
+
+#RTL shape mismatch    
+my %misshape=();
+my %nonmerged=();
+
+#netbatch
+my $nb_mem = "4";
+my $nb_cores = "1";
+my $runlocal = 0;
+my $nb_qslot="dvcoverage";
+my $nb_class="Arch=='x86_64' && SLES10";
+
+#vcs tool setting
+my $vcs_tool="vcs";
+my $vcs_version="vcs.2012.09sp1";
+
+
+#sql database
+my $dbh_rrc;
+my $sth_rrc;
+my $dbh;
+my $sth;
+my $coverage_table="coverage_stats";
+my @coverage_table_entry=(
+    "id INT NOT NULL AUTO_INCREMENT PRIMARY KEY",
+    "module varchar(64) ",
+    "user varchar(64)",
+    "datetime DATETIME",
+    "score float",
+    "line:coverage float default NULL",
+    "line:info varchar(64)",
+    "cond:coverage float default NULL",
+    "cond:info varchar(64)",
+    "toggle:coverage float default NULL",
+    "toggle:info varchar(64)",
+    "fsm:coverage float default NULL",
+    "fsm:info varchar(64)",
+    "branch:coverage float default NULL",
+    "branch:info varchar(64)",
+    "regressions varchar(255) default NULL",
+    "total_test INT",
+    "report_url varchar(255)",
+    "report_dir TEXT"
+);
+
+my $is_pep_cov=0;
+
+########################### MAIN #################################
+&parseArgs(@ARGV);
+
+die usage() if (!keys %task);
+if($task_str =~ /(merge|all)/){
+    die usage() if (! defined ($urgFile) and (scalar(@regression_id) == 0));
+}
+if($task_str =~ /report/){
+    die usage() if ( $report_from eq "");
+}
+if($task_str =~ /publish/){
+    die usage() if ( $publish_from eq "" and (not defined $task{report}));
+}
+die usage() if ! defined ($module);
+
+#### prepare output directory
+if(not defined $user_output_dir){
+    $output_dir = "$pwd/$module";
+}else{
+    my $abs  = File::Spec->rel2abs( $user_output_dir );
+    $output_dir = catdir($abs, $module);
+}
+#### Prepare directory & log ##################
+my $date_time = `date +%Y-%m-%d-%H-%M-%S`; chomp $date_time;
+system("mkdir -p $output_dir") if (!-e $output_dir);
+my $lognum=get_log_postfix($output_dir);
+my $logfilename=sprintf("$output_dir/report_coverage.log.%04d", $lognum);
+open ($LOG, ">$logfilename");
+debug_print(0, "***Infromation: report_coverage log file is $logfilename\n");
+print $LOG `date`;
+print $LOG usage(1);
+print $LOG "=================================================================\n";
+
+
+pipe_stdout();
+pipe_stderr();
+
+#### netbatch command #########################
+my $nb_cmd = "NBUMASK=007 nbjob run --mode interactive --class-reservation 'memory=$nb_mem,cores=$nb_cores'";
+$nb_cmd.=join(" ", (" --qslot", $nb_qslot)) if $nb_qslot ne "";
+$nb_cmd.=join(" ", (" --class", "\"$nb_class\"")) if $nb_class ne "";
+$nb_cmd.=" --log-file report_coverage.nb.log --task urg sh -c ";
+
+#### URG ######################################
+if(defined $task{"merge"} or defined $task{"all"}){
+    #prepare urg source file
+    if(scalar(@regression_id)>0){
+        push @cov_sources, get_regression_models(@regression_id);
+    }
+    if(defined $urgFile){
+        #get coverage sources
+        push @cov_sources, get_coverage_sources($urgFile);    
+    }
+    if(scalar(@cov_sources)>0){
+        $urgFile = catfile($output_dir, "urg.merge.conf");
+        open(FH, ">$urgFile") or die "Cannot write $urgFile\n";
+        debug_print(0, "***Infromation: Save urgfile to $urgFile\n");
+        print FH join("\n",@cov_sources);
+        close(FH);
+    }else{
+        debug_print(0, "***Error: no input urg coverage source specified. Please verify the regression id or urg file\n");
+    }
+    
+    # exclude file
+    if(defined $user_exclude_file){
+        if(-e $user_exclude_file){
+            my ($vol,$dir,$file)= File::Spec->splitpath($user_exclude_file);
+            my $new_excludeFile = catfile($output_dir, "exclude.merge.config");
+            system("rsync -H $user_exclude_file $new_excludeFile");
+            $user_exclude_file = $new_excludeFile;
+            debug_print(0, "***Infromation: Saved urg exclude file $user_exclude_file\n");
+        }else{
+            die "Cannot fine user defined excluded file $user_exclude_file\n";
+        }
+    }
+    
+    
+    #prepare exclude file to exclude coverage of modules.
+    # hier file
+    my $urgHierFile = generate_urg_hierfile($module, $cov_sources[0], $output_dir, $user_hier_file);
+    #call urg to generate coverage
+    debug_print(0, "\n================= Generate Coverage Report ======================\n");
+    merge_coverage($module, $output_dir, $urgHierFile, $user_exclude_file);
+
+    $report_from=catdir($output_dir, "merged_coverage");
+    $publish_from=catdir($output_dir, "coverage_report");
+    report_misshape($publish_from, \%misshape);
+    #report unmerged partition level
+    if(scalar(keys %nonmerged)){
+        debug_print(0, "***Warning: Below modules/partitions are not instantiated in base design. Cannot merge coverage of those modules:\n\t(Please check merge log file for detail information)\n\t".join(",", (keys %nonmerged))."\n");
+    }
+
+    if($task_str !~ /(report|publish|all)/){
+        debug_print(0, "***Infromation: User can use below options to report submodule's coverage\n\t\t--module=<module name> --task=report --report-from=$report_from\n");
+        debug_print(0, "***Infromation: User can use below options to publish to SQL database\n\t\t--task=publish --publish-from=$publish_from\n");
+    }
+    end_merge($output_dir);
+}
+
+#### Report #################################
+if(defined $task{"report"}){
+    if(not defined $task{"merge"}){
+        #report is already generated. when running merge in same execution.
+        my $from_dir = $report_from;
+        if($from_dir !~ /\//){
+            $from_dir=$pwd;
+        }else{
+            $from_dir =~ s/(.*)\/([\w|\.]+)/$1/;
+        }
+        my $from_dir_abs  = File::Spec->rel2abs( $from_dir );
+        my $merge_setting_file=catfile($from_dir_abs,"merge.setting");
+        my $merge_urg_file=catfile($from_dir_abs,"urg.merge.log");
+        my $merge_hier_file=catfile($from_dir_abs,"hier.merge.config");
+        my $merge_ex_file=catfile($from_dir_abs,"exclude.merge.config");
+        my $merge_conf_file=catfile($from_dir_abs,"urg.merge.conf");
+        if($from_dir_abs ne $output_dir){
+            #link files to report dir
+            system("ln -sf $merge_setting_file $output_dir/.") if (-e $merge_setting_file);
+            system("ln -sf $merge_urg_file $output_dir/.") if (-e $merge_urg_file);
+            system("ln -sf $merge_hier_file $output_dir/.") if (-e $merge_hier_file);
+            system("ln -sf $merge_ex_file $output_dir/.") if (-e $merge_ex_file);
+            system("ln -sf $merge_conf_file $output_dir/.") if (-e $merge_conf_file);
+        }
+        my $hier_file=gen_urg_report_hierfile($module, $merge_hier_file, $output_dir);
+        gen_coverage_report($report_from, $output_dir, $hier_file, $user_exclude_file);
+        parse_urg_log($merge_urg_file);
+        report_misshape("$output_dir/coverage_report", \%misshape);
+        
+    }
+
+    $publish_from=catdir($output_dir, "coverage_report");
+    if($task_str !~ /(publish|all)/){
+        debug_print(0, "***Infromation: User can use below options to publish to SQL database\n\t\t--task=publish --publish-from=$publish_from\n");
+    }
+}
+
+#### Publish ################################
+if(defined $task{"publish"} or defined $task{"all"}){
+
+    #get regression id from previos run
+    my $publish_from_abs  = File::Spec->rel2abs( $publish_from );
+    my $publish_from_dir  = $publish_from_abs;
+    $publish_from_dir =~ s/(.*)\/(\w+)/$1/;
+    my $preMergeSettingFile=catfile($publish_from_dir, "merge.setting");
+    my $preUrgLogFile=catfile($publish_from_dir, "urg.merge.log");
+    if(-e $preMergeSettingFile and -e $preUrgLogFile){
+        ($date_time, @regression_id)=parse_merge_setting($preMergeSettingFile);
+        parse_urg_log($preUrgLogFile) if(!keys %misshape);
+    }else{
+        debug_print(0, "***Warning: pubish-from directory is not generated by this script.\n\tSome information may missing when publish to database\n");
+    }
+    
+    #prepare directory at global verification dir
+    my $uniq_id=get_random_string();
+    $publish_output_dir = catdir($global_merged_dir, "$module/$user/$date_time/$uniq_id");
+    if(!-e "$global_merged_dir/$module"){
+        system("mkdir -p $global_merged_dir/$module");
+        system("chmod g+w -R $global_merged_dir/$module");
+    }
+    system("mkdir -p $publish_output_dir") if (!-e $publish_output_dir);
+    $publish_output_dir = catdir($global_merged_dir, "$module/$user/$date_time/$uniq_id");
+    system("chmod g+w -R $global_merged_dir/$module/$user");
+    
+
+    $coverage_data->{$module}={};
+    my $coverage_data_str=parse_coverage_report($module, $date_time, $publish_from_abs,join(":",@regression_id), $coverage_data->{$module},$publish_output_dir);
+
+
+
+    ## Update data base
+    checkin_coverage_database($coverage_data_str, $publish_from_dir, $publish_output_dir);
+
+}
+
+close($LOG);
+umask($umask);
+######################## FUNCTIONS ################################
+sub parse_merge_setting{
+    my($file)=@_;
+    open(F, "<$file") or die "Cannot open $file\n";
+    my $merge_time=$date_time;
+    my @reg_id=();
+    while(<F>){
+        if(/Merged Time:\s+(\S+)/){
+            $merge_time=$1;
+        }elsif(/--regression-id=\[(\S*)\]/){
+            @reg_id=split(":",$1); 
+        }
+    }
+    return($merge_time, @reg_id); 
+}
+
+sub pipe_stdout{
+    # pipes to record 
+    if (open(STDOUT, "|-") == 0) {
+        select $LOG; $| = 1;
+        while (<STDIN>) {
+            if(/^Warning-\[UCAPI-MAP-SHAPEMISMATCH\]/){
+                print $LOG $_;
+                while(<STDIN>){
+                    print $LOG $_;
+                    chomp;
+                    last if(/^\s*$/);
+                }
+            }elsif(/^Map Module Error:/){
+                print $LOG $_;
+                while(<STDIN>){
+                    print $LOG $_;
+                    chomp;
+                    last if(/^\s*$/);
+                }
+            }else{
+                chomp;
+                if(/^\s*$/){
+                  next;
+                }
+                print $LOG "$_\n";
+                print STDOUT "$_\n";
+            }
+        }
+        #while (<STDIN>) {
+        #    print $LOG $_;
+        #    print STDOUT $_;
+        #}
+        exit;
+    }
+}
+sub pipe_stderr{
+    # pipes to record 
+    if (open(STDERR, "|-") == 0) {
+        select $LOG; $| = 1;
+        while (<STDIN>) {
+            if(/^Warning-\[UCAPI-MAP-SHAPEMISMATCH\]/){
+                print $LOG $_;
+                while(<STDIN>){
+                    print $LOG $_;
+                    chomp;
+                    last if(/^\s*$/);
+                }
+            }elsif(/^Map Module Error:/){
+                print $LOG $_;
+                while(<STDIN>){
+                    print $LOG $_;
+                    chomp;
+                    last if(/^\s*$/);
+                }
+            }else{
+                chomp;
+                if(/^\s*$/){
+                  next;
+                }
+                print $LOG "$_\n";
+                print STDERR "$_\n";
+            }
+        }
+        exit;
+    }
+}
+
+sub end_merge{
+    my($dir)=@_;
+    my $merge_source_file=catfile($dir,"merge.setting");
+    open(FH, ">$merge_source_file") or die "Cannot write $merge_source_file\n";
+    #writeout merge setting for other tasks.
+    print FH "Merged Time: $date_time\n";
+    print FH usage();
+    close FH;
+}
+
+# generates a merged coverage report from all passing tests using urg
+sub merge_coverage
+{   
+    my ($module, $dir, $hier_file, $exclude_file)=@_;
+
+    my $urgCoverageRpt=catdir($dir, "coverage_report");
+    my $urgMergedCoverage=catdir($dir, "merged_coverage/merged");
+    my $urgLogFile=catfile($dir, "urg.merge.log");
+
+    debug_print(0, "***Infromation: Saved urg log file $urgLogFile\n");
+    debug_print(0, "***Infromation: Writing coverage report to $output_dir\n");
+
+    my $urg                 = "fulcrum --wrapper $vcs_version $vcs_tool urg";
+    my $cmd = "$urg -full64 -f $urgFile          \\
+     -metric $vcsCoverageMetrics          \\
+     -report $urgCoverageRpt   \\
+     -format both              \\
+     -show ratios              \\
+     -log $urgLogFile          \\
+     -dbname $urgMergedCoverage    \\
+     -hier $hier_file    \\
+     -map $module ";
+
+    my @additionalMaps = split /\s*,\s*/, $urgMergeMapping;
+    foreach my $map (@additionalMaps)
+    {
+        $cmd .= "-map $map ";
+    }
+
+    $cmd .= "-group instcov_for_score -group flex_merge_drop -group merge_across_scopes ";
+
+    if($chiplevel){
+        foreach my $m (@partitions){
+            $cmd .= "\\\n     -map $m ";
+        }
+    }
+
+    $cmd .= "\\\n     -elfile $exclude_file -excl_bypass_checks " if (defined $exclude_file);
+    $cmd .= "\\\n     $user_urg_options " if (defined $user_urg_options);
+    debug_print(0, "***Infromation: Running URG command :\n$cmd\n");
+    my $cmd = $runlocal ? "$cmd" : "$nb_cmd \"$cmd\"";
+    system($cmd);
+    debug_print(0, "***Infromation: End URG\n");
+     #-warn noUCAPI-HIER-IEIHCF \\
+
+    parse_urg_log($urgLogFile);
+        
+}   # end coverage_report
+
+# generates a merged coverage report from all passing tests using urg
+sub gen_coverage_report
+{   
+    my ($urg_database, $dir, $hier_file, $exclude_file)=@_;
+    my $urg                 = "fulcrum --wrapper $vcs_version $vcs_tool urg";
+
+    my $report_dir=catdir($dir, "coverage_report");
+    my $report_log=catfile($dir, "urg.report.log");
+    debug_print(0, "***Infromation: Writing coverage report to $output_dir\n");
+
+    my $cmd = "$urg -full64 \\
+     -dir $urg_database \\
+     -metric $vcsCoverageMetrics            \\
+     -report $report_dir   \\
+     -format both                           \\
+     -show ratios                           \\
+     -log $report_log                        \\
+     -hier $hier_file \\
+     -group instcov_for_score -group flex_merge_drop -group merge_across_scopes";
+    $cmd .= "\\\n     -elfile $exclude_file " if (defined $exclude_file);
+    $cmd .= "\\\n     $user_urg_options " if (defined $user_urg_options);
+
+    debug_print(0, "***Infromation: Running URG command :\n$cmd\n");
+    my $cmd = $runlocal ? "$cmd" : "$nb_cmd \"$cmd\"";
+    system($cmd);
+    
+    debug_print(0, "***Infromation: End URG\n");
+     #-warn noUCAPI-HIER-IEIHCF \\
+
+    parse_urg_log($report_log);
+        
+}   # end coverage_report
+
+sub parse_urg_log{
+    my ($urgLogFile)=@_;
+    open(LF, "<$urgLogFile") or die "Cannot access $urgLogFile\n";
+    while(my $line=<LF>){
+        if($line =~ /UCAPI-MAP-SHAPEMISMATCH/){
+            my ($metric,$base,$base_i,$input, $input_i, $module_name);
+            $line=<LF>;
+            if($line =~ /The '(\S+)' metric shape of/){
+                $metric=$1;
+            }
+            $line=<LF>;
+            if($line =~ /^\s+'(\S+)'/){
+                $base_i=$1;
+            }
+            $line=<LF>;
+            if($line =~ /of module '(\S+)'/){
+                $module_name=$1;
+            }
+            $misshape{$module_name}=1;
+            
+        }elsif($line =~ /\[UCAPI-MMNF\]/){
+            my $msg="";
+            while($line=<LF>){
+                chomp $line;
+                last if($line=~/^\s*$/);
+                $line =~ s/^\s+//;
+                $msg.=" $line";
+            }
+            if($msg =~ /The given module '(\S+)'\s+is\s+not\s+found\s+in\s+base\s+design/){
+                $nonmerged{$1}=1;
+            }
+        }
+    }
+    close(LF);
+}
+
+sub gen_urg_report_hierfile{
+    my ($module,$merge_hier_file, $dir)=@_;
+    my $hier_file=catfile($dir,"hier.report.config");
+    open(HF, ">$hier_file") or die "CANNOT write $hier_file\n";
+    my $m_tr = $module;
+    $m_tr = "\\".$module if ($module =~ /\./);
+    print HF "+moduletree $m_tr\n";
+    open(MF, "<$merge_hier_file") or die "CANNOT write $merge_hier_file\n";
+    while(<MF>){
+        next if(/^\+/);
+        print HF $_;
+    }
+    close(HF);
+    return $hier_file;
+}
+
+sub report_misshape{
+    my ($report_dir,$misshape_ref)=@_;
+    my $modlist_file = catfile($report_dir,"modlist.txt");
+    open (MF, "<$modlist_file") or die "Cannot open $modlist_file\n";
+    my @rtl_mismatch=();
+    while(my $line=<MF>){
+        chomp($line);
+        if($line=~/Total modules in report:\s*(\d+)/){
+            my $total_modules=$1;
+            $line=<MF>;
+            $line=<MF>;
+            while($line=<MF>){
+                chomp($line); $line=~ s/^\s*//;
+                my @values=split(/\s+/, $line);
+                last if (scalar(@values)==0);
+                my $modulename=$values[-1];
+                if(defined  $misshape_ref->{$modulename}){
+                    push @rtl_mismatch, $modulename;
+                }
+            }
+        }else{ next; }
+    }
+    close(MF);
+    if(scalar(@rtl_mismatch)>0){
+        debug_print(0, "***Error: design shape mismatch at below modules. (Please check merge log file for detail information)\n\t".join(",", @rtl_mismatch)."\n");
+    }
+}
+
+sub parse_coverage_report{
+    my($module, $date_time, $report_dir, $regressions, $coverage_data,$publish_dir)=@_;
+    my $tests_file = catfile($report_dir,"tests.txt");
+    my $modlist_file = catfile($report_dir,"modlist.txt");
+    my $dashboard_file = catfile($report_dir,"dashboard.txt");
+    my $top_level="";
+    open (DF, "<$dashboard_file") or die "Cannot open $dashboard_file\n";
+    
+    while(my $line=<DF>){
+        chomp($line);
+        if($line=~/^Command line:\s*(.*)/){
+             $coverage_data->{'cmd'}=$1;
+        }elsif($line=~/^Total Coverage Summary/){
+            $line=<DF>;
+            my @data_types=split(/\s+/, $line);
+            $line=<DF>;
+            chomp($line); $line=~ s/^\s*//;
+            my @values=split(/\s+/, $line);
+            foreach my $t (@data_types){
+                if($t =~ /SCORE/){
+                    $coverage_data->{'inst'}->{$t}=shift(@values);
+                }else{
+                    $coverage_data->{'inst'}->{$t}->{'%'}=shift(@values);
+                    $coverage_data->{'inst'}->{$t}->{'detail'}=shift(@values);
+                }
+            }
+        }elsif($line=~/^Hierarchical coverage data/){
+            $line=<DF>;
+            my @data_types=split(/\s+/, $line);
+            pop(@data_types);
+            while($line=<DF>){
+                chomp($line); $line=~ s/^\s*//;
+                my @values=split(/\s+/, $line);
+                last if (scalar(@values)==0);
+                $top_level=$values[-1];
+                foreach my $t (@data_types){
+                    if($t =~ /SCORE/){
+                        $coverage_data->{'inst.hier'}->{$top_level}->{$t}=shift(@values);
+                    }else{
+                        $coverage_data->{'inst.hier'}->{$top_level}->{$t}->{'%'}=shift(@values);
+                        $coverage_data->{'inst.hier'}->{$top_level}->{$t}->{'detail'}=shift(@values);
+                    }
+                }
+            }
+        }else{ next; }
+    }
+    close(DF);
+
+    
+    open (TF, "<$tests_file") or die "Cannot open $tests_file\n";
+    while(my $line=<TF>){
+        chomp($line);
+        if($line=~/^\s*Total tests in report:\s*(\d+)/){
+            $coverage_data->{"test_num"}=$1;
+        }elsif($line=~/^\s*Data from the following tests/){
+            @{$coverage_data->{"test_source"}}=();
+            for(1..$coverage_data->{"test_num"}){
+                $line=<TF>;
+                chomp($line);
+                $line=~ s/\s+$//;
+                push @{$coverage_data->{"test_source"}}, $line;
+            }
+        }else{ next; }
+    }
+    close(TF);
+
+    open (MF, "<$modlist_file") or die "Cannot open $modlist_file\n";
+    while(my $line=<MF>){
+        chomp($line);
+        if($line=~/^Total Module Definition Coverage Summary/){
+            $line=<MF>;
+            my @data_types=split(/\s+/, $line);
+            $line=<MF>;
+            chomp($line); $line=~ s/^\s*//;
+            my @values=split(/\s+/, $line);
+            foreach my $t (@data_types){
+                if($t =~ /SCORE/){
+                    $coverage_data->{'mod'}->{$t}=shift(@values);
+                }else{
+                    $coverage_data->{'mod'}->{$t}->{'%'}=shift(@values);
+                    $coverage_data->{'mod'}->{$t}->{'detail'}=shift(@values);
+                }
+            }
+            last;
+        }else{ next; }
+    }
+    close(MF);
+    
+    my ($date, $time)= transfer_datetime_to_cvs($date_time);
+    my $result_str=",$module,$user,$date $time";
+
+    my @order=qw/SCORE LINE COND TOGGLE FSM BRANCH/;
+    my $inst_mc; my $hier_mc;
+    my $isInstBase=0;
+    if($isInstBase){
+        foreach my $entry (@order){
+            if($entry eq "SCORE" ){
+                $inst_mc=$coverage_data->{'inst'}->{$entry};
+                $hier_mc=$coverage_data->{'inst.hier'}->{$top_level}->{$entry};
+                if($inst_mc != $hier_mc){
+                    debug_print(0, "$entry doesn't match! inst: $inst_mc, hier: $hier_mc\n");
+                }
+                $result_str.=",$hier_mc";
+            }else{
+                $inst_mc=$coverage_data->{'inst'}->{$entry}->{'%'};
+                
+                $hier_mc=$coverage_data->{'inst.hier'}->{$top_level}->{$entry}->{'%'};
+                if($inst_mc != $hier_mc){
+                    debug_print(0, "$entry doesn't match! inst: $inst_mc, hier: $hier_mc\n");
+                }
+                $result_str.=",$hier_mc,".$coverage_data->{'inst.hier'}->{$top_level}->{$entry}->{'detail'};
+            }
+        }
+    }else{
+        foreach my $entry (@order){
+            if($entry eq "SCORE" ){
+                $result_str.=",".$coverage_data->{'mod'}->{$entry};
+            }else{
+                $result_str.=",".$coverage_data->{'mod'}->{$entry}->{'%'};
+                $result_str.=",".$coverage_data->{'mod'}->{$entry}->{'detail'};
+            }
+        }
+    }
+    $result_str .=",".$regressions.",".$coverage_data->{"test_num"};
+    
+    my $url = catfile($publish_dir,"coverage_report/dashboard.html");
+    $url="http://chipdev".$url;
+    $result_str .=",$url,$publish_dir";
+    
+
+
+    return $result_str;
+}
+
+sub parseArgs() {
+    my @args = @_;
+    my $help = 0; $help = 1 if (@args==0);
+    foreach my $arg (@args) {
+        next if($arg =~ /^\#/ );
+        if ($arg =~ /^--(.*)/) {
+            # key-value pair
+            my ($key, $value) = split("=",$1,2);
+            if (!defined $value) { $value=1; } # fulcrum standard, assume 1
+            if ($key eq "include" || $key eq "config" ) {
+                my @config_args = ();
+                includeConfig($value,\@config_args);
+                &parseArgs(@config_args);
+            } elsif ($key eq "help") {
+                $help = 1;
+            } elsif($key eq "task") {
+               $task_str=$value;
+               foreach my $t (split(/,/,$value)){
+                    if(not defined $validtasks{$t}){
+                        %task=();
+                        $invalid_task="$t";
+                        last;
+                    }else{
+                      $task{$t}=1;
+                    }
+               }
+            } elsif($key eq "publish") {
+               $publish = ($value =~ /(true|yes|y|1)/)?1:0;
+            } elsif($key eq "publish-from") {
+               $value =~ s/\/\s*$//;
+               $value =~ s/^\s+//;
+               $publish_from=$value;
+               my $report_file=catfile($publish_from, "tests.txt");
+               if(-e $report_file){
+                  $only_publish=1;
+               }else{
+                  debug_print(0, "***Error: Invalid coverage report directory $publish_from\n");
+                  die usage();
+               }
+            } elsif($key eq "report-from") {
+               $value =~ s/\/\s*$//;
+               $value =~ s/^\s+//;
+               $report_from=$value;
+                
+               my $report_from_vdb=$value.".vdb";
+               if(-e $report_from or -e $report_from_vdb){
+                
+               }else{
+                  debug_print(0, "***Error: Invalid urg coverage source $$report_from\n");
+                  die usage();
+               }
+            } elsif($key eq "metric") {
+                $vcsCoverageMetrics = $value;
+            } elsif($key eq "regression-id") {
+                @regression_id = split(/:/,$value);
+            } elsif($key eq "urg-file") {
+                $urgFile = $value;
+            } elsif($key eq "module") {
+                $module = $value;
+            } elsif($key eq "chiplevel") {
+                $chiplevel = $value;
+            } elsif($key eq "debug-level") {
+                $DEBUG_LEVEL = $value;
+            } elsif($key eq "exclude-file") {
+                $user_exclude_file=$value;
+            } elsif($key eq "output-dir") {
+                $user_output_dir=$value;
+            } elsif($key eq "hier-file") {
+                $user_hier_file=$value;
+            } elsif($key eq "nb-mem") {
+                $nb_mem=$value;
+            } elsif($key eq "nb-cores") {
+                $nb_cores=$value;
+            } elsif($key eq "nb-qslot") {
+                $nb_qslot=$value;
+            } elsif($key eq "nb-class") {
+                $nb_class=$value;
+            } elsif($key eq "runlocal") {
+                $runlocal=$value;
+            } elsif($key eq "map") {
+                $urgMergeMapping=$value;
+            } elsif($key eq "urg-options") {
+                $user_urg_options=$value;
+            } elsif($key eq "enable-pep-coverage") {
+                $is_pep_cov=$value;
+            } elsif($key eq "vcs-tool") {
+                $vcs_tool=$value;
+            } elsif($key eq "vcs-version") {
+                $vcs_version=$value;
+            } else {
+               debug_print(0, "WARNING: unknown argument $arg\n");
+            }
+        }
+    }
+
+    die usage() if $help;
+}
+
+sub usage {
+    local $"=",";
+    my $regression_id_str=join(":",@regression_id);
+    my $urgfile_str = (defined $urgFile) ? $urgFile:"";
+    my $module_str = (defined $module) ? $module:"";
+    my $user_hier_file_str=(defined $user_hier_file) ? $user_hier_file:"";
+    my $user_exclude_file_str=(defined $user_exclude_file) ? $user_exclude_file:"";
+    my $user_urg_options_str=(defined $user_urg_options) ? $user_urg_options:"";
+    my $output_dir_str = (defined $user_output_dir) ? $user_output_dir:"";
+
+    my $usages = <<ET;
+
+Report Coverage. 
+    Report coverage contain 3 steps: merge, report and publish.
+    User can use --task=[merge|report|publish] or concate by "," to execute each step.
+    
+USAGE: $0 [options]
+
+  Options:
+    --help\t\t(display this usage manual)
+    --task=[$task_str]\n\t\t\t([merge|report|publish|all] Execute the step. User should flow the sequence to execute the report coverage.
+\t\t\tOr use --task=all to execute all steps)
+
+    --regression-id=[$regression_id_str]\n\t\t\t(Regression ID number. seperate by ":". URG will merged all regression coverages)
+    --urg-file=[$urgfile_str]\n\t\t\t(A file contains a vcs coverage source list)\n\t\t\t(User need to specify regression-id or urg-file. Two setting can be used simultaneously)
+    --module=[$module_str]\n\t\t\t(Module name of synchronous partition. Coverage merge will be based on this module.)
+    --chiplevel=[$chiplevel]\n\t\t\t([0|1] The specified module name is chip level module.)
+    --metric=[$vcsCoverageMetrics]\n\t\t\t(Optional. vcs coverage metrics. Note: urg map merging does not support assert and group metrics)
+    --report-from=[$report_from]\n\t\t\t(Skip re-run merge process. Use existing merged coverage data to write out report when --task=report)
+    --publish-from=[$publish_from]\n\t\t\t(Skip re-run URG merge and report. Use existing report coverage directory to publish to database when --task=publish)
+    --output-dir=[$output_dir_str]\n\t\t\t(Optional. The default output directory is <pwd>/<module>)
+    --hier-file=[$user_hier_file_str]\n\t\t\t(Optional. URG hier file format)
+    --exclude-file=[$user_hier_file_str]\n\t\t\t(Optional. URG exclude file format)
+    --urg-options=[$user_urg_options_str]\n\t\t\t(Optional. URG options. User can specify any user options by --urg-options="<options>")
+    --nb-mem=[$nb_mem]\n\t\t\t(in GBs, default is 2)
+    --nb-cores=[$nb_cores]\n\t\t\t(num of cores, default is 1)
+    --nb-qslot=[$nb_qslot]\n\t\t\t(netbatch --qslot option)
+    --nb-class=[$nb_class]\n\t\t\t(netbatch --class option)
+    --runlocal=[$runlocal]\n\t\t\t([0|1] running urg at netbatch or not)
+    --debug-level=[$DEBUG_LEVEL]\n\t\t\t(Optional. print debug information according to level setting)
+    --enable-pep-coverage=[$is_pep_cov]\n\t\t\t(enable pep coverage report. Otherwise, pep will be excluded)
+    --vcs-tool=[$vcs_tool]\n\t\t\t(VCS tool name, default is vcs. User can use vcs-mx by setting this variable)
+    --vcs-version=[$vcs_version]\n\t\t\t(VCS version wrapper, default is vcs.2012.09sp1.)
+    
+ET
+   return $usages;
+}
+
+sub get_random_string{
+    my @chars = ("A".."Z", "a".."z", "0".."9");
+    my $string;
+    $string .= $chars[rand @chars] for 1..8;
+    return $string;
+}
+
+sub parse_excludefile{
+    my ($file)=@_;
+    my @em=();
+    open(FP, "<$file") or die "CANNOT open file $file\n";
+    while(<FP>){
+        chomp;
+        $_ =~ s/\s//g;
+        next if(/^(#|\/)/);
+        push @em, $_;
+    }
+    return @em;
+}
+
+sub get_coverage_sources{
+    my ($urg_file)=@_;
+    open(UF, "<$urg_file") or die "CANNOT open $urg_file\n";
+    my @sources=<UF>;
+    chomp(@sources);
+    return @sources;
+}
+
+sub get_log_postfix{
+    my($dir)=@_;
+    my $lognr=0;
+    opendir (D, "$dir");
+    my @logs=sort(grep(/report_coverage\.log\./, readdir(D)));
+    closedir D;
+    $lognr = $#logs+1;
+    foreach my $log (@logs) {
+        $log =~ s/report_coverage\.log.//;
+        $log =~ s/\..*//;
+        if ($log =~ /^\d+$/) {
+            $log += 0;
+            $lognr = $log + 1 if $log >= $lognr;
+        }
+    }
+    undef @logs;
+    return $lognr;
+}
+
+
+sub generate_urg_hierfile{
+    my ($module, $base, $dir, $user_file)=@_;
+
+    my $urgHierFile=catfile($dir,"hier.merge.config");
+    debug_print(0, "***Infromation: Saved urg hier file $urgHierFile\n");
+
+    open (OF, ">$urgHierFile") or die "CANNOT write $urgHierFile\n";   
+    #generate coverage only on specified module
+    chomp($base);
+    my $m_tr = $module;
+    $m_tr = "\\".$module if ($module =~ /\./);
+    print OF "+moduletree $m_tr\n";
+
+    my $modelfile = $base; $modelfile =~ s/(.*)\/coverage/$1/;
+    $modelfile = catfile($modelfile, "model.vcfg");
+
+    debug_print(2, "***Infromation: Parse urg base model file: $modelfile\n");
+
+    #exclude memories
+    my @mem_wrapper=`grep \'verilog/lib/avago/mem\' $modelfile`;
+    foreach my $wrapper (@mem_wrapper) {
+        chomp($wrapper);
+        $wrapper =~ s/.*\/(\w+)\.(v|sv)/$1/;
+        $excludes{$wrapper}=1;
+        print OF "-moduletree $wrapper\n";
+    }
+
+    #exclude avago IP
+    my @stdlib_map=`grep \'verilog/lib/avago/stdlib/map\' $modelfile`;
+    foreach my $mapfile (@stdlib_map) {
+        chomp($mapfile);
+        my @items=`grep \'module\' $mapfile`;
+        foreach my $item (@items){
+            next if($item =~ /endmodule/);
+            if($item =~ /^\s*module\s+(\w+)/){
+                print OF "-moduletree $1\n";
+                $excludes{$1}=1;
+            }
+        }
+    }
+
+    #exclude cast files
+    my @c2v_files=`grep \'c2v_output/\' $modelfile`;
+    foreach my $f (@c2v_files) {
+        my @modules=`grep \'module \' $f`;
+        foreach my $m (@modules){
+            if($m =~ /^\s*module\s+(\S+)/){
+                my $mn=$1; $mn =~ s/;$//;
+                print OF "-module $mn\n";
+                $excludes{$mn}=1;
+            }
+        }
+    }
+    #exclude CDCs
+    my @cdc_files=`grep \'verilog/lib/synchronous/conversion/a2s_hs/\' $modelfile`;
+    push @cdc_files, `grep \'verilog/lib/synchronous/conversion/s2a_hs/\' $modelfile`;
+    push @cdc_files, `grep \'verilog/lib/synchronous/conversion/a2s_ls/\' $modelfile`;
+    push @cdc_files, `grep \'verilog/lib/synchronous/conversion/s2a_ls/\' $modelfile`;
+    foreach my $f (@cdc_files) {
+        chomp($f);
+        $f =~ s/.*\/(\w+)\.(v|sv)/$1/;
+        $excludes{$f}=1;
+        print OF "-moduletree $f\n";
+    }
+
+    my @avagoIPs=`grep \'verilog/vendor/avago\' $modelfile`;
+    foreach my $avagoip (@avagoIPs) {
+        next if ($avagoip =~ /stdlib/);
+        chomp($avagoip);
+       # print "$avagoip\n";
+        my $modulename="";
+        if($avagoip =~ /\/(\w+)_behavioral_enc_(vcs|ver)\.v/){
+           $modulename = $1;
+        }elsif($avagoip =~ /\/(\w+)_composite_gate_verilog_enc_vcs.v/){
+           $modulename = $1; 
+        }elsif($avagoip =~ /(mem28\w+).v/){
+           $modulename = $1; 
+        }elsif($avagoip =~ /tap\/(\w+).v/){
+           $modulename = $1; 
+        }else{
+            debug_print(0, "***Infromation: no exclusion for $avagoip\n");
+           
+        }
+        if($modulename ne ""){
+           print OF "-moduletree $1\n";
+           $excludes{$1}=1;
+        }
+    }
+    if ($is_pep_cov==0){
+    #don't need to report coverage of pep
+    my @pep=`grep \'\/pep\.\' $modelfile`;
+    if(scalar(@pep)>0){
+        print OF "-moduletree pep\n";
+    }
+    }
+
+    if(defined $user_file){
+        open (UF, "<$user_file") or die "CANNOT open $user_file\n";
+        while(<UF>){
+            print OF $_;
+            chomp;
+            if(/-(\S+)\s+(\S+)/){
+                $excludes{$2}=1;
+            }
+        }
+        close(UF);
+        
+    }
+    
+    close(OF);
+    return  $urgHierFile;
+}
+
+sub uniq_array{
+    my @s = uniq(sort(@_));
+    return @s;
+}
+
+
+sub debug_print{
+    my ($level, $string) = @_;
+    print $string if ($level <= $DEBUG_LEVEL);
+}
+
+sub transfer_datetime_to_cvs{
+    my ($org)=@_;
+ my $date = $org; $date =~ s/(\d+-\d+-\d+)-(.*)/$1/;
+ my $time = $org; $time =~ s/(\d+-\d+-\d+)-(\d+)-(\d+)-(\d+)/$2:$3:$4/;
+ return ($date, $time);
+}
+
+sub get_regression_urgfile{
+    my (@regressions)=@_;
+    my @urg_sources=();
+    $dbh_rrc = DBI->connect("DBI:mysql:database=hw_rrc;host=tsyvsqlm01",
+                     "verif", "verif", { RaiseError => 1 });
+    my $reg_table="verification_regression";
+    
+    foreach my $reg_id (@regressions){
+        $sth_rrc = $dbh_rrc->prepare(qq{
+              SELECT result_root from $reg_table where id=$reg_id
+            });
+        $sth_rrc->execute();
+        if ($sth_rrc->rows < 0) {
+            debug_print(0, "***Error: Cannot find regression id $reg_id in database.\n");
+            $dbh_rrc->disconnect();
+            exit;
+        }else{
+            while (my $results = $sth_rrc->fetchrow_hashref) {
+                my $reg_root = $results->{result_root}; # get the domain name field
+                my $reg_urg = catfile($reg_root,"urg.conf");
+                open (FH, "<$reg_urg") or die "Cannot access file $reg_urg\n";
+                push @urg_sources, <FH>;
+                close(FH);            
+            }
+        }
+    }
+
+  $dbh_rrc->disconnect();
+    return @urg_sources;
+}
+
+sub search_reg_disks{
+    my($test_dir)=@_;
+    $test_dir =~ s/^\/(\d+)\/(.*)/$2/;
+
+    opendir (D, "$global_regression_dir");
+    my @disks=readdir(D);
+    closedir D;
+    foreach my $disk (@disks){
+       my $search_dir=catdir($global_regression_dir,$disk,$test_dir,"fulcrum_tmp/coverage.vdb");
+       if(-e $search_dir){
+            return catdir("/$disk",$test_dir);
+       }
+    }
+
+    return "";
+}
+
+sub search_output_file{
+    my($test_output_dir)=@_;
+    my $dir=catdir($global_regression_dir,$test_output_dir);
+    opendir (D, "$dir");
+    my @items=readdir(D);
+    closedir D;
+    foreach my $item (@items){
+       return $item if($item =~ /\.output$/)
+    }
+
+    return "";
+}
+
+sub get_regression_models{
+    my (@regressions)=@_;
+    my $base_model_id=-1;
+    my @urg_sources=();
+    my @map_modules=();
+
+    debug_print(0, "***Information: Connecting to hw_rrc database to get regression data ...\n");
+    my @base_urg_sources=();
+    $dbh_rrc = DBI->connect("DBI:mysql:database=hw_rrc;host=tsyvsqlm01",
+                     "verif", "verif", { RaiseError => 1 });
+    my $testrun={};
+    my %hdl_models=();
+    my $core_dump_str="";
+    my $non_pass_str="";
+    my $non_cvdb_str="";
+    my %hdl_models_notfind=();
+
+    my $hdl_index=0;
+    foreach my $reg_id (@regressions){
+        debug_print(0, "***Information: Search hw_rrc database for regression $reg_id ...\n");
+        my $sth_tr = $dbh_rrc->prepare(qq{
+              SELECT * from verification_testrun where regression_id=$reg_id
+            });
+        $sth_tr->execute();
+
+        debug_print(2, "***Information: \n");
+        if ($sth_tr->rows < 0) {
+            debug_print(0, "***Error: Cannot find regression id $reg_id in database.\n");
+            $dbh_rrc->disconnect();
+            exit;
+        }else{
+            while (my $results = $sth_tr->fetchrow_hashref) {
+                my $test_id = $results->{id};
+                my $test_status = $results->{status};
+                my $test_output_dir = $results->{output_dir};
+                my $test_output_file = catdir($global_regression_dir,$results->{output_file});
+                if($test_status ne "pass"){
+                    $non_pass_str .="$test_id $test_status $test_output_dir\n";
+                    next;
+                }
+                #check vcs simulation output file to see if core dump happened.
+                if(!-e $test_output_file){
+                    debug_print(2, "***Debug: db text width limited. The output file does not have complete name:$test_output_file\n");
+                    my $output_file=search_output_file($test_output_dir);
+                    $test_output_file=catfile($global_regression_dir,$test_output_dir,$output_file);
+                }
+                
+                my @isCoreDump=`grep \'VCS runtime internal error (core dumped)\' $test_output_file`;
+                if(@isCoreDump){
+                    my $dir = catdir($global_regression_dir,$test_output_dir);
+                    $core_dump_str .="\ttest_id: $test_id output_dir:$dir\n";
+                    next;
+                }
+
+                #find coverage directory
+                my $coverage_dir=catdir($global_regression_dir,$test_output_dir,"fulcrum_tmp/coverage.vdb");
+                if(! -e $coverage_dir){
+                    my $new_test_output_dir= search_reg_disks($test_output_dir);
+                    if($new_test_output_dir eq ""){
+                        $non_cvdb_str .="$test_id $test_status $test_output_dir\n";
+                        next;
+                    }else{
+                        $test_output_dir = $new_test_output_dir;
+                    }
+                }
+                my $ary_ref = $dbh_rrc->selectcol_arrayref(
+                  "SELECT model_id from verification_testrun_model where test_run_id=$test_id"
+                );
+                foreach my $mid (@$ary_ref){
+                    my $type_ref = $dbh_rrc->selectcol_arrayref(
+                      "select type, location from verification_model where id=$mid", { Columns=>[1,2] }
+                    );
+                    if($type_ref->[0] eq "hdl"){
+                        $testrun->{$mid}->{$test_id}=$test_output_dir;
+                        next if(defined $hdl_models{$mid});
+                        next if (defined $hdl_models_notfind{$mid});
+                        my $model_output=catfile($type_ref->[1],"coverage.vdb/snps/coverage/db/design/verilog.design.xml");
+                        $hdl_models{$mid}=[$hdl_index, $type_ref->[1]] if(-e $model_output);
+                        $hdl_models_notfind{$mid}=$type_ref->[1] if(!-e $model_output);
+                        $hdl_index++;
+                    }
+                }
+
+            }
+            debug_print(0, "***Warning: Core Dump at below VCS simulations. Ignore merge coverage for below testcases:\n$core_dump_str\n") if ($core_dump_str ne "");
+            debug_print(0, "***Warning: Cannot find fulcrum_tmp/coverage.vdb directory for below tests:\n$non_cvdb_str\n") if($non_cvdb_str ne "");
+            debug_print(0, "***Warning: Below tests do not pass VCS simulation:\n$non_pass_str\n") if($non_pass_str ne "");
+            
+            if((keys %hdl_models_notfind)){
+                debug_print(0, "***Warning: Below hdl models do not exist:\n");
+                foreach my $mid (keys %hdl_models_notfind){
+                    debug_print(0, "$mid:".$hdl_models_notfind{$mid}."\n");
+                    foreach my $tid (keys %{$testrun->{$mid}}){
+                        debug_print(0, "\t".$testrun->{$mid}->{$tid}."\n");
+                    }
+                }    
+            }
+        }
+    }
+
+    $dbh_rrc->disconnect();
+    debug_print(0, "***Information: Finished query information from hw_rrc database\n");
+
+    sub hashValueIncrNum {
+        $hdl_models{$a}[0] <=> $hdl_models{$b}[0];
+    }
+
+    #get the base urg source
+    #search models to find which is base model
+    foreach my $mid (sort hashValueIncrNum (keys(%hdl_models))){
+        my $model_output=catfile($hdl_models{$mid}[1],"coverage.vdb/snps/coverage/db/design/verilog.design.xml");
+        if($base_model_id==-1){
+            #parse design file to find module
+            my $df = new IO::Uncompress::Gunzip($model_output) or die $!;    
+            debug_print(0, "***Information: Parsing $model_output\n");
+            while (defined (my $line = $df->getline())) {
+                if($line =~ /<srcdef\s+id=\".*\"\s+name=\"\s*(\S+)\s*\"/ ){
+                    my $m=$1; $m =~ s/^\\//;
+                    if ($m eq $module){
+                        $base_model_id=$mid;
+                        last;
+                    }
+                }
+            }
+            $df->close();
+        }
+        next if($chiplevel == 0);
+    }
+
+    if($base_model_id == -1){
+       die debug_print(0, "***Error: Cannot find $module in any coverage source.
+       \t\tPlease check if module name is correct or  regression-id/urg-file contain correct module.\n");
+    }
+    my $nofulcrumtmp="";
+    foreach my $mid (keys %$testrun){
+        next if (defined $hdl_models_notfind{$mid});
+        my $cov_dir=catdir($hdl_models{$mid}[1],"coverage");
+        push @urg_sources, $cov_dir if($base_model_id != $mid);
+        push @base_urg_sources, $cov_dir if($base_model_id == $mid);
+        
+        foreach my $tid (keys %{$testrun->{$mid}}){
+            my $cov_dir=catdir($global_regression_dir,$testrun->{$mid}->{$tid},"fulcrum_tmp/coverage");
+            my $cov_dir_tmp=catdir($global_regression_dir,$testrun->{$mid}->{$tid},"fulcrum_tmp");
+            if(! -e "$cov_dir_tmp"){
+                $nofulcrumtmp .= "$tid $cov_dir_tmp\n";
+            }
+            push @urg_sources, $cov_dir if($base_model_id != $mid);
+            push @base_urg_sources, $cov_dir if($base_model_id == $mid);
+        }
+    }
+    debug_print(0, "***Error: cannot find fulcrum_tmp directory for below tests:\n$nofulcrumtmp\n") if($nofulcrumtmp ne "");
+    @urg_sources=(@base_urg_sources, @urg_sources);
+    return (@urg_sources);
+}
+
+
+###### SQL functions ######
+sub init_table {
+    $dbh = DBI->connect("DBI:mysql:database=pfhistory;host=tsyvweb03",
+                     "pfhistory", "pfhistory1", { RaiseError => 1 });
+    my @table_str;
+    foreach my $entry (@coverage_table_entry){
+        if ($entry=~/([\w|:]+)\s+(.*)/){
+            push @table_str, "`$1` $2";
+        }
+    }
+    my @value_fields;
+    my $value_str =  join( ',', ('?') x @table_str );
+
+    my $table_str = join(", ", @table_str);
+
+    $sth = $dbh->prepare(qq{
+          CREATE TABLE IF NOT EXISTS $coverage_table ($table_str)
+        });
+    $sth->execute();
+    $dbh->begin_work() or die $dbh->errstr;
+
+    $sth = $dbh->prepare(qq{
+          INSERT IGNORE INTO $coverage_table VALUES($value_str)
+        });
+
+}
+
+sub add_data_to_table {
+  my ($table_data) = @_;
+  chomp $table_data;
+  my @table_data_array = split ("\n", $table_data);
+  foreach my $table_line (@table_data_array) {
+    my @table_line_array = split (',', $table_line);
+     for(my $i=0; $i< scalar(@table_line_array); $i++){
+        $table_line_array[$i] =undef if($table_line_array[$i] eq "--" or $table_line_array[$i] eq "");
+     }
+    $sth->execute(@table_line_array);
+  }
+}
+
+sub commit_table {
+  $dbh->commit();
+  $dbh->disconnect();
+}
+
+
+
+sub checkin_coverage_database{
+    my($data_str, $from, $to)=@_;
+    debug_print(0, "***Infromation: Update SQL database ...\n");
+    debug_print(2, "***Insert table: $data_str\n");
+    init_table();
+    add_data_to_table($data_str);
+    commit_table();
+    debug_print(0, "***Infromation: Copy URG related files to $to\n");
+    system("rsync -rL $from/* $to/.");
+    system("chmod g+w -R $to");
+}
+

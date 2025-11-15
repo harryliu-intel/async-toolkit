@@ -1,0 +1,18 @@
+cat <<EOF> dag.html
+<link rel="stylesheet" href="http://internal/fm-basic.css" type="text/css" media="all">
+<title>LVE Dependency Graph</title>
+<h1>LVE Dependency Graph</h1>
+<ul>
+<li> The starting points are the CAST path and the DFII Directory.
+<li> Nodes correspond to make targets files.
+<li> Arrows correspond to make rules and have links to the tools that implement the make rules.
+<li> Red nodes are .raw files
+
+</ul>
+EOF
+
+
+dot -Tcmapx lve.dot >> dag.html
+echo '<IMG SRC="lve.png" ISMAP USEMAP="#_anonymous_0">' >> dag.html
+dot -Tpng lve.dot > lve.png
+

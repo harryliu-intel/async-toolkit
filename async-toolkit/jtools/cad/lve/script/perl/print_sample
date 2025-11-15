@@ -1,0 +1,103 @@
+#!/usr/bin/perl -w
+#
+# Read aplot traces for multi-bit datapaths and print sampled integers
+# given a trigger signal and transition type.
+
+# find relevant packaged tools and libraries
+BEGIN {
+    $lve_root = $0;
+    my $exe = $lve_root;
+    $exe =~ s:.*/::;
+    if (! ($lve_root =~ m:^/:)) {
+        my $pwd = `pwd`;
+        chomp $pwd;
+        $lve_root = $pwd;
+        $lve_root .= "/$0";
+        $lve_root =~ s:$exe$::;
+        $lve_root =~ s://:/:g;
+        chdir $lve_root;
+        $lve_root = `pwd`;
+        chomp $lve_root;
+        chdir $pwd;
+    }
+    else {
+        $lve_root =~ s:/bin/$exe::;
+    }
+    @INC = ("$lve_root/lib/perl", @INC);
+}
+use LveAspice;
+use LveUtil;
+use LveStatus;
+
+my $vdd_node="Vdd";
+my $reset_node="_RESET";
+my $trigger_dir="edge";
+my $aplot = "aplot";
+my $apr_names=0;
+my $first_index=0;
+while (@ARGV) {
+    if    ($ARGV[0] eq "--apr-names")         { shift; $apr_names=1; }
+    elsif ($ARGV[0] =~ /--first-index=(\d+)/) { shift; $first_index=$1; }
+    elsif ($ARGV[0] =~ /--vdd=(\S+)/)         { shift; $vdd_node=$1; }
+    elsif ($ARGV[0] =~ /--reset=(\S+)/)       { shift; $reset_node=$1; }
+    elsif ($ARGV[0] =~ /--trigger-dir=(\S+)/) { shift; $trigger_dir=$1; }
+    else { last; }
+}
+
+@ARGV>=4 or die "USAGE: print_sample\n" .
+    "  [--apr-names] [--vdd=$vdd_node] [--reset=$reset_node] [--trigger-dir=[rise|fall|edge]] [--first-index=0]\n" .
+    "  trigger_node bus_prefix width ztrace\n";
+my $trigger_node = shift(@ARGV);
+my $bus = shift(@ARGV);
+my $w=shift(@ARGV);
+my $trace=shift(@ARGV);
+my %value;
+my $file=$trace;
+$file =~ s/\.ztrace//g;
+if    ($trigger_dir eq "rise") { $trigger_dir=">"; }
+elsif ($trigger_dir eq "fall") { $trigger_dir="<"; }
+elsif ($trigger_dir eq "edge") { $trigger_dir="="; }
+else { die "unsupported --trigger-dir=$trigger_dir\n"; }
+
+open_aplot($aplot);
+write_aplot("file \"$file\"");
+write_aplot("with dut.");
+write_aplot("maxv $vdd_node");
+($t, $v) = split(" ", read_aplot());
+my $v50=0.5*$v;
+write_aplot("trigger $reset_node > $v50 1");
+my $reset = read_aplot();
+write_aplot("range $reset");
+my $trigger = "$trigger_node $trigger_dir $v50";
+write_aplot("trigger $trigger");
+($n) = split(" ", read_aplot());
+
+# measure values of all D[i] at each C.a transition
+for (my $i=0; $i<$w; $i++) {
+    my $idx=$first_index+$i;
+    my $D="${bus}[$idx]";
+    $D="${bus}_${idx}_0" if ($apr_names);
+    write_aplot("sample $trigger $D");
+    for (my $j=0; $j<$n; $j++) {
+        my $line=read_aplot();
+        if ($line =~ /^WARNING/) { print $line; exit(1); }
+        ($t, $v) = split(" ",$line);
+        $value{"$i $j"}=$v>$v50;
+    }
+}
+
+close_aplot();
+
+# print as hex big-integers
+for (my $j=0; $j<$n; $j++) {
+    my @x;
+    for (my $i=0; $i<$w; $i++) {
+        unless (defined($x[$i/32])) { $x[$i/32]=0; }
+        $x[$i/32]|=$value{"$i $j"}<<($i % 32);
+    }
+    printf("0x");
+    for (my $i=@x-1; $i>=0; $i--) {
+        printf("%08X",$x[$i]);
+    }
+    print("\n");
+}

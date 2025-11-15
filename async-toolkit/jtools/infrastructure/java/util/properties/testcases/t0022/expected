@@ -1,0 +1,8 @@
+testbench.unit.epl.0.type_b=xaui
+testbench.unit.epl.1.type_b=xaui
+testbench.unit.epl.2.type_b=xaui
+testbench.unit.epl.3.type_b=xgmii
+testbench.unit.epl.4.type_b=xgmii
+testbench.unit.epl.M=4
+testbench.unit.epl.N=2
+topdir=.

@@ -1,0 +1,32 @@
+#!/usr/intel/bin/perl -l
+# AAG
+# $Id$
+# $DateTime$
+
+use strict;
+
+if ( $#ARGV < 0 or ! -f $ARGV[0] ) {
+    print STDERR "Usage: unwrap <spicefile>";
+    exit 1;
+}
+open (P, "<$ARGV[0]");
+my $ln="";
+while (<P>) {
+    chomp;
+    if (/^\+/) {
+        s/^\+/ /;
+        $ln .= $_;
+        next;
+    }
+    my $lx = $_;
+    $_ = $ln;
+    $ln = $lx;
+    s/  */ /g;
+    s/ $//;
+    print;
+}
+close P;
+$_=$ln;
+s/  */ /g;
+s/ $//;
+print;

@@ -1,0 +1,200 @@
+#!/usr/intel/bin/perl
+
+use strict;
+
+# usage banner
+sub usage
+{
+    print STDERR "\n\n";
+    print STDERR "Usage:  $0\n";
+    print STDERR "     --max-heap-size=<heapsize>\n";
+    print STDERR "     --mode={floorplan|subtype|size}\n";
+    print STDERR "     [--trial]\n";
+    print STDERR "     --cast-path=<path>\n";
+    print STDERR "     --cellname=<fully.qualified.cellname>\n";
+    print STDERR "     --subtype=<subtype>\n";
+    print STDERR "     --outdir=<path>\n";
+    print STDERR "     [--spec-path=<path>]\n";
+    print STDERR "     [--classpath=<path> | --jauto-path=<path>]\n";
+    print STDERR "     --noFloorplan | --cds-lib=<path>\n";
+    print STDERR "     [--lvs & --jlvs-path=<path>]\n";
+    print STDERR "     [--tau=<##s>]\n";
+    print STDERR "     [--mapping=<path>]\n";
+    print STDERR "     [--view=<view name>] (defaults to floorplan)\n";
+    print STDERR "     [--noHaltOnWarn] (don't use this)\n";
+    print STDERR "     [--config=(/home/group/microarch/bin/jauto.config)]\n";
+    exit;
+}
+
+# parse command line arguments into $options{blah} variables
+my @args;
+my %options;
+foreach my $option (@ARGV)
+{
+    if( $option =~ /^--(.*)/ )
+    {
+        $option = $1;
+        my $val;
+        if( $option =~ /([^=]+)=(.*)/ )
+        {
+            $val = $2;
+            $option = $1;
+            #$option =~ s/\-/_/g;
+        }
+        $options{$option} = $val;
+    }
+    else
+    {
+        push @args, $option;
+    }
+}
+
+# create outdir
+if( not $options{outdir} =~ /^\/home/ )
+{
+    print STDERR "ERROR: Invalid --outdir specified.\n";
+    print STDERR "ERROR:    Must give full path, and must be located\n";
+    print STDERR "ERROR:    on file server. (ie /home/...)\n";
+    usage;
+}
+
+system "rm -rf $options{outdir}";
+system "mkdir -p $options{outdir}";
+
+if( not defined $options{'jauto-path'} and not defined $options{classpath})
+{
+    $options{'jauto-path'} = "/home/group/microarch/cad/bin/jauto";
+}
+if( not defined $options{cellname} )
+{
+    print "*** YOU NEED TO SPECIFY A --cellname=<path>\n\n";
+    usage;
+}
+if( not defined $options{'cast-path'} )
+{
+    print "*** YOU NEED TO SPECIFY A --cast-path=<path>\n\n";
+    usage;
+}
+if( not defined $options{outdir} )
+{
+    print "*** YOU NEED TO SPECIFY A --outdir=<path>\n\n";
+    usage;
+}
+if( not defined $options{mode} ) 
+{
+    print "*** YOU MUST SPECIFY ONE OF --mode={floorplan|subtype|size}\n\n";
+    usage;
+}
+
+if( ($options{mode} eq "floorplan" || $options{mode} eq "size") &&
+    not defined $options{subtype} )
+{
+    print "*** $options{mode} requires a --subtype=<subtype>\n\n";
+    usage;
+}
+
+my $CP = "cast-path";
+
+# get floorplan from Cadence
+if( $options{mode} eq "size" && not exists $options{"noFloorplan"} )
+{
+    if( not -f $options{'cds-lib'} . "/cds.lib" )
+    {
+        print STDERR "ERROR: Invalid cds-lib: cds.lib not found\n";
+        usage;
+    }
+    print "GENERATING INSTANCES...\n";
+
+    system "mkdir -p $options{outdir}/instances";
+
+    my $cadence_library = $options{cellname};
+    $cadence_library =~ s/\.[^\.]+$//;
+    my $fqcn = $options{cellname};
+    $fqcn .= "." . $options{subtype};
+    my $viewname = "floorplan";
+    $viewname = $options{view} if( defined $options{view} );
+    system "ssh rupee \"cd ".$options{'cds-lib'}."; /home/group/microarch/cad/bin/mk_instance $cadence_library $fqcn $options{outdir}/instances $viewname\" > $options{outdir}/mk_instance.out 2> $options{outdir}/mk_instance.err";
+    if( not -f "$options{outdir}/instances/$fqcn.instances" )
+    {
+        print STDERR "ERROR: Could not generate .instances files.\n";
+        print STDERR "ERROR: cat $options{outdir}/mk_instance.out\n";
+        exit;
+    }
+}
+
+$options{config} = "/home/group/microarch/cad/bin/jauto.config" 
+    if (! defined $options{config});
+
+# construct jauto command line
+my $cmdline ="";
+
+$cmdline .= " LANDIR=/home/user/qwu/Lancelot/lancelot ";
+$cmdline .= " CLASSPATH=$options{classpath} " 
+                        if (! defined $options{'jauto-path'});
+$cmdline .= $options{'jauto-path'} . " \\\n" 
+                        if (defined $options{'jauto-path'});
+$cmdline .= " --max-heap-size=" . $options{'max-heap-size'} . " \\\n"
+                        if (defined $options{'max-heap-size'} &&
+                            defined $options{'jauto-path'});
+$cmdline .= " java -Xmx1G com.avlsi.tools.jauto.Jauto \\\n" 
+                        if (! defined $options{'jauto-path'});
+$cmdline .= " --config=$options{config} \\\n";
+$cmdline .= " --lancelotTemp=$options{outdir} \\\n";
+$cmdline .= " --trial" if (exists $options{trial});
+$cmdline .= " --mode=$options{mode} \\\n";
+$cmdline .= " --mapping=$options{mapping} \\\n" if( defined $options{mapping} );
+$cmdline .= " --unitSize \\\n" if( not defined $options{tau} );
+$cmdline .= " --tau=$options{tau} \\\n" if( defined $options{tau} );
+$cmdline .= " --cellName=$options{cellname}";
+$cmdline .= " --subtype=$options{subtype} \\\n";
+$cmdline .= " --cdlRoot=$options{outdir} \\\n";
+$cmdline .= " --outRoot=$options{outdir} \\\n";
+$cmdline .= " --results-dir=$options{outdir} \\\n";
+$cmdline .= " --results-root=$options{outdir} \\\n";
+$cmdline .= " --cast-path=$options{$CP} \\\n";
+$cmdline .= " --castInRoot=$options{$CP} \\\n";
+$cmdline .= " --noFloorplan \\\n" if( exists $options{noFloorplan} );
+$cmdline .= " --layoutRoot=$options{outdir}/instances \\\n" 
+                        if ( ! exists $options{noFloorplan} );
+$cmdline .= " --subtypePath=" . $options{'spec-path'} . " \\\n" 
+                        if ( defined $options{'spec-path'});
+$cmdline .= " > $options{outdir}/jauto.out";
+$cmdline .= " 2> $options{outdir}/jauto.err";
+
+# user feedback
+if( $options{mode} eq "size" ) {
+    print "SIZING...\n";
+}
+else {
+    print "GENERATING NETLIST SPEC...\n";
+}
+open CMDLINE, ">$options{outdir}/jauto.cmdline" or die;
+print CMDLINE "$cmdline\n";
+close CMDLINE;
+
+# run jauto
+system "$cmdline";
+system "mv $options{outdir}/transistors.cdl $options{outdir}/$options{cellname}.$options{subtype}.spice";
+
+# report errors if any
+if( -s "$options{outdir}/jauto.err" )
+{
+    print "ERROR: P2N FAILED due to fatal errors\n";
+    print "ERROR: cat $options{outdir}/jauto.err\n";
+    exit;
+}
+
+if( not -f "$options{outdir}/$options{cellname}.$options{subtype}.spice" )
+{
+    print "ERROR: P2N FAILED due to sizing errorsn";
+    print "ERROR: cat $options{outdir}/jauto.out\n";
+    exit;
+}
+
+if( $options{mode} eq "size" ) {
+    print "SIZING COMPLETE.\n";
+}
+else {
+    print "NETLIST GENERATION COMPLETE.\n";
+}
+

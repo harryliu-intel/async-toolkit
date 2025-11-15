@@ -1,0 +1,160 @@
+#!/usr/intel/bin/perl
+use strict;
+use Getopt::Long;
+use File::Path;
+use File::Spec::Functions qw/:ALL/;
+use File::Temp qw/tempfile tempdir/;
+
+my $dir = '';
+my $castpath = '';
+my $precmd = '';
+my $cmd = $ENV{'EDITOR'};
+my $postcmd = '';
+my $fixed = 1;
+my $broken;
+GetOptions('dir=s' => \$dir,
+           'precmd=s' => \$precmd,
+           'cmd=s' => \$cmd,
+           'postcmd=s' => \$postcmd,
+           'cast-path=s' => \$castpath,
+           'fixed!' => \$fixed,
+           'broken!' => \$broken);
+
+sub write_directives {
+    my $fh = shift;
+    my $dirs = shift;
+    my $cell = shift;
+    print $fh "    directives {\n";
+    print $fh "      // XXXX: Generated automatically for $cell\n";
+    foreach my $dir (@{$dirs}) {
+        $dir =~ s/^\s+(.*)/\1/;
+        print $fh "      " . $dir;
+    }
+    print $fh "    }\n";
+}
+
+if (!$dir || !$castpath) {
+    print <<EOF;
+USAGE: apply_fixes [options ...]
+
+Options are:
+    --dir=[$dir] (fix_charge_sharing directory)
+    --cast-path=[$castpath] (CAST path; can only contain a single component)
+    --precmd=[$precmd] (command to run before modifying CAST)
+    --cmd=[$cmd] (command to confirm CAST modification, defaults to \$EDITOR)
+    --postcmd=[$postcmd] (command to run to finalize CAST changes)
+    --fixed (insert directives that fixed charge sharing)
+    --broken (insert directives that could not fix charge sharing)
+
+A good set of options would be:
+    --precmd="p4 edit"
+    --cmd="vim" or --cmd="emacs"
+    --postcmd="cp"
+EOF
+    exit 1;
+}
+
+opendir(my $dh, $dir) || die "Can't opendir $dir: $!";
+my @results = grep { /.*\.result\.\d+/ } readdir($dh);
+closedir($dh);
+
+my %cells = ();
+foreach my $result (@results) {
+    my $cell = $result;
+    $cell =~ s/^(.*)\.result\.\d+$/\1/;
+    push @{$cells{$cell}}, catfile($dir, $result);
+}
+
+foreach my $cell (keys %cells) {
+    my @directives = ();
+    foreach my $result (@{$cells{$cell}}) {
+        open(my $fh, $result) || die "Can't open $result: $!";
+        my $status = <$fh>;
+        if (($status =~ /Charge sharing fixed for/ && $fixed) ||
+            ($status =~ /Cannot fix charge sharing/ && $broken)) {
+            my @lines = <$fh>;
+            shift @lines;  # remove directives {
+            pop @lines;    # remove }
+            push @directives, @lines;
+        }
+        close($fh);
+    }
+    if (scalar(@directives)) {
+        my $file = $cell;
+        $file =~ s/(.*)\.[^.]+\.[^.]+/\1/; # get the module
+        $file =~ s:\.:/:g;
+        $file .= ".cast";
+        $file = catfile($castpath, $file);
+print "CAST file: $file\n";
+        my $fh;
+        if (!open($fh, $file)) {
+            print STDERR "Cannot find CAST file for $cell\n";
+            next;
+        }
+
+        if ($precmd) {
+            system "$precmd $file";
+            if ($?) {
+                print STDERR "Precmd returned $?; skipping\n";
+                next;
+            }
+        }
+
+        (my $tmp, my $name) = tempfile("apply_fixXXXXXX", DIR => "/tmp");
+
+        my $nometa = $cell;
+        $nometa =~ s/(.*)\.[^.]+/\1/; # remove subtype number
+        $nometa = (split(/\./, $nometa))[-1]; # get base type
+        $nometa =~ s/(.*)\(.*\)/\1/; # remove meta parameters
+print "CAST cell: $nometa\n";
+
+        my $spot = 0;
+        my $lineno = 1;
+        my $state = 0;
+        my $braces;
+        while(my $line = <$fh>) {
+            if ($line =~ /define\s+\Q$nometa\E\b/ && $state == 0) {
+                $state = 1;
+            } elsif ($line =~ /\bprs\s+{/ && $state == 1) {
+                $state = 2;
+                $braces = 1;
+            } elsif ($line =~ /[{}]/ && $state == 2) {
+                $braces += scalar(split(/{/, $line)) - 1;
+                $braces -= scalar(split(/}/, $line)) - 1;
+            }
+            if ($state == 2 && $braces == 0) {
+                write_directives($tmp, \@directives, $nometa);
+                $state = 3;
+                $spot = $lineno;
+            }
+            print $tmp $line;
+            $lineno++;
+        }
+        close($fh);
+
+        if (! $spot) {  # we didn't find the spot, just put it at the end
+            $spot = $lineno;
+            write_directives($tmp, \@directives, $nometa);
+        }
+        close($tmp);
+        my $go = "$cmd +$spot $name";
+        print "Execute $go? (y/n) [y] ";
+        chomp(my $yes = <STDIN>);
+        if ($yes eq "" || $yes eq "y") {
+            system($go);
+            if ($?) {
+                print STDERR "Cmd returned $?; skipping\n";
+                next;
+            }
+        }
+
+        if ($postcmd) {
+            system("$postcmd $name $file");
+            if ($?) {
+                print STDERR "Postcmd returned $?\n";
+            }
+        }
+    }
+}
+
+# vim:sw=4:ts=4:expandtab

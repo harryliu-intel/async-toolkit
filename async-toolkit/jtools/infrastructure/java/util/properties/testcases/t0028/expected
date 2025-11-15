@@ -1,0 +1,6 @@
+test.minPort=1
+test.range.0.enable=false
+test.range.1.enable=true
+test.range.2.enable=false
+test.range.3.enable=false
+topdir=.

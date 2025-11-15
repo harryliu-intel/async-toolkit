@@ -1,0 +1,87 @@
+#!/usr/intel/bin/perl -l
+# AAG
+# $Id$
+# $DateTime$
+
+use strict;
+
+if ( $#ARGV == 0 and ! -f $ARGV[0]) {
+   print STDERR "Usage: wide file | lpr";
+   print STDERR "   output is landscape postscript";
+   exit 1;
+}
+my @lines=();
+if ($#ARGV >= 0 and -r $ARGV[0] ) {
+   open (STDIN, "expand $ARGV[0] |") || die "Cannot open $ARGV[0]";
+}
+else {
+    open (O, ">/tmp/wide$$.txt");
+    while (<>) {
+        chomp;
+        print O;
+    }
+    close O;
+    open (STDIN, "expand /tmp/wide$$.txt |");
+}
+my $maxlen=0;
+while (<STDIN>) {
+    chomp;
+    $maxlen = length if length > $maxlen;
+    push @lines, $_;
+}
+unlink "/tmp/wide$$.txt";
+my $fontsize=29.2;
+$fontsize = sprintf("%.1f", 29.2*150/$maxlen) if $maxlen > 150;
+print "%!PS-Adobe-2.0";
+print "/start_file {/saved_state save def 1 setlinecap} def";
+print "/start_page {0 setgray 1 setlinecap 0.24 0.24 scale} def";
+print "/end_page {showpage} def";
+print "/end_file {saved_state restore} def";
+print "/sh {show} def";
+print "/mt {moveto} def";
+print "/sa {save} def";
+print "/re {restore} def";
+print "/ro {rotate} def";
+print "/ff {findfont} def";
+print "/sf {scalefont} def";
+print "/bd{bind def}bind def";
+print "/ld{load def}bd";
+print "/:F/setrgbcolor ld";
+print "start_file";
+print "start_page";
+print "/Courier ff";
+print "$fontsize sf";
+print "setfont";
+print "0 setgray";
+my $ln=0;
+while (@lines) {
+  $_ = shift @lines;
+  s/\\/\\\\/g;
+  s/\(/\\\(/g;
+  s/\)/\\\)/g;
+  $ln++;
+  if ( "$_" =~ // ) {
+     $ln = 1000;
+     s///g;
+  }
+  if ( $ln >= 78) {
+     $ln = 0;
+     print "end_page";
+     print "start_page";
+     print "/Courier ff";
+     print "$fontsize sf";
+     print "setfont";
+     print "0 setgray";
+  }
+  if ( length ("$_") > 0 ) {
+     my $r = $ln + 300 + 300/12*$ln;
+     print "$r 300 mt";
+     print "sa 90 ro";
+     print "($_) sh";
+     print "re";
+  }
+}
+close(STDIN);
+print "end_page";
+print "end_file";
+unlink ("/tmp/wide$$.txt");

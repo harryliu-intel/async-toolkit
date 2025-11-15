@@ -1,0 +1,22 @@
+#!/usr/intel/bin/perl
+my $rnDir=shift(@ARGV);
+chdir $rnDir;
+my $setup_root="/usr/local/cad/lib/spice";
+
+# SETTING ENVIRONMENT VARIABLES
+$ENV{"NASSDA_HOME"} = "/usr/local/cad/nassda/nassda2.0";
+$ENV{"LM_LICENSE_FILE"} = "/usr/local/flexlm/licenses/license.0048546B71E0.dat:/usr/local/flexlm/licenses/license.80e5b6d8.dat";
+$ENV{"PATH"} = "$ENV{\"PATH\"}:$ENV{\"NASSDA_HOME\"}/bin";
+if($Sim64==1)  {
+  $ENV{"NASSDA_64"} = 1;
+}
+
+`hsim -case 1 -i $rnDir/run.sp`;
+`grep -i warn hsim.log > temp1`;
+`grep -i -v $setup_root/match/match_file_warn temp > $rnDir/WARN`;
+`grep -i err hsim.log > temp2`;
+`grep -i -v $setup_root/match/match_file_err temp > $rnDir/ERR`;
+`rm -rf temp1 temp2`;
+
+
+

@@ -1,0 +1,118 @@
+#!/usr/intel/bin/perl -w
+
+# find relevant packaged tools and libraries
+BEGIN {
+    $lve_root = $0;
+    $lve_root =~ s:/[^/]*$::;
+    $lve_root =~ s:/[^/]*$::;
+    @INC = ("$lve_root/lib/perl", @INC);
+}
+use LveStatus;
+
+# command line arguments
+$"=",";
+my $Task="";
+my @true=(0.6,0.7,0.8,0.9,1.0,1.1,1.2);
+my @temp=(0,25,50,75,100,125);
+my @ignore = ("frequency");
+while (@ARGV>0 && $ARGV[0] =~ /--(\S+)/) {
+    my $arg = $1;
+    if    ($arg =~ /true=(\S+)/ )  { @true   = split(",",$1); }
+    elsif ($arg =~ /temp=(\S+)/)   { @temp   = split(",",$1); }
+    elsif ($arg =~ /ignore=(\S*)/) { @ignore = split(",",$1); }
+    elsif ($arg eq "help") { usage(); }
+    else { $Task = $arg; }
+    shift;
+}
+
+# mark ignored results
+my %ignore = ();
+foreach $x (@ignore) { $ignore{$x} = 1; }
+
+# get raw files
+my @files = @ARGV;
+if (@files==0) {
+    @files = `find . -name cell.raw`;
+}
+
+# parse the files
+foreach my $file (@files) {
+    my %pass = ();
+    my @raw = get_lines($file);
+    my ($status, $task, $cell, $path, %results);
+    foreach my $line (sort @raw) {
+	($status, $task, $cell, $path, %results) = parse_raw_line($line);
+        if ($Task eq "" || $task eq $Task) {
+            my ($c,$v,$t);
+            my $ig = 0;
+            foreach $k (keys %results) {
+                if ($ignore{$k}) {
+                    $ig = 1;
+                }
+            }
+            if (!$ig) {
+                if ($path =~ /\/([^\/]+)\/([^\/]+)V\/([^\/]+)C/) {
+                    $c = $1;
+                    $v = $2*1;
+                    $t = $3*1;
+                    if ($status eq "FAIL"  ||
+                        !defined($pass{"${c}_${v}_${t}"}) ||
+                        $pass{"${c}_${v}_${t}"} eq "PASS") {
+                        $pass{"${c}_${v}_${t}"} = $status;
+                    }
+                }
+            }
+        }
+    }
+   
+    # output results
+    print "$cell\n";
+    print "$Task\n" if ($Task ne "");
+    print "true=@true\n";
+    print "temp=@temp\n";
+    print "\n";
+    for (my $y = 3*@temp-1; $y>=0; $y--) {
+        for (my $x = 0; $x < 3*@true; $x++) {
+            my $c;
+            if    ($x<1*@true) { $c = "s"; }
+            elsif ($x<2*@true) { $c = "t"; }
+            elsif ($x<3*@true) { $c = "f"; }
+            if    ($y<1*@temp) { $c .= "s"; }
+            elsif ($y<2*@temp) { $c .= "t"; }
+            elsif ($y<3*@temp) { $c .= "f"; }
+            $v = $true[$x%@true];
+            $t = $temp[$y%@temp];
+            my $status = "."; # default is missing data
+            if (defined($pass{"${c}_${v}_${t}"})) {
+                if ($pass{"${c}_${v}_${t}"} eq "PASS") {
+                    $status = "+";
+                } elsif ($pass{"${c}_${v}_${t}"} eq "NOT_TESTED") {
+                    $status = "N";
+                } else {
+                    $status = "F";
+                }
+            }
+            elsif ($c eq "tf" || $c eq "ts" || $c eq "st" || $c eq "ft") {
+                $status = " "; # blank for unused corners
+            }
+            print "$status";
+        }
+        print "\n";
+    }
+    print "\n\n";
+}
+
+# usage banner
+sub usage {
+    die "USAGE: shmoo\n" .
+        " [--alint|--aspice|--hsim|--hspice|--lib]\n" .
+        " [--true=@true]\n" .
+        " [--temp=@temp]\n" .
+        " [--ignore=@ignore]\n" .
+        " [cell1.raw cell2.raw ...]\n" .
+        "\n" .
+        " Prints a shmoo plot over process corner, voltage, and temperature.\n" .
+        " Fast N, high V to the right.  Fast P, high T to the top.  Results\n" .
+        " are . for missing data, + for pass, F for FAIL, and N for NOT_TESTED.\n" .
+        " Ignores raw lines that contain any result in the ignore list.\n";
+}

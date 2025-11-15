@@ -1,0 +1,8 @@
+#!/bin/sh
+# handy batch aspice measuring script
+echo -n "POWER: " > $1.measure
+trace $1 QVdd | power 10 100 $2 >> $1.measure
+echo -n "SPEED: " >> $1.measure
+trace $1 MEASURE | trig fall 0.6 2 4 8 >> $1.measure
+echo -n "ERROR: " >> $1.measure
+trace $1 ERROR | trig rise 0.25 2 1 >> $1.measure

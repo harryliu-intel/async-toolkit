@@ -1,0 +1,106 @@
+<%extends CastCommon>
+<%import>
+java.util.Collection;
+com.fulcrummicro.util.misc.Utility;
+com.fulcrummicro.hw.verification.chip.mgmt.registers.*;
+</%import>\
+<%args>
+Collection<RegisterBase> bases;
+Collection<Register> regs;
+String chip;
+</%args>\
+module chip.<% chip %>.base.register_mgmt;
+
+import chip.<% chip %>.base.functions.*;
+import chip.<% chip %>.base.registers.*;
+import chip.<% chip %>.mgmt.base.MgmtIfCell;
+
+<%for RegisterBase base : bases %>
+<%java String camelCaseBaseName = Utility.underscoreToCamelCase(base.getName(), true);
+Collection<Register> registers = base.getRegisters(); %>
+define <% camelCaseBaseName %>Management() attributes
+  <+ <% camelCaseBaseName %>RegisterFields
+  <+ AddressSpace <+ MgmtIfCell <+ RegisterFunctions {
+  csp {
+<%doc>************************************************************</%doc>\
+<& registerStructure; registers=registers; camelCaseBaseName=camelCaseBaseName &>
+<%doc>************************************************************</%doc>\
+
+<%doc><& _generateTcamLookupFunction; base = base &></%doc>
+<& CastMgmtTcam; base = base; registers=registers; baseNamePrefixCC = camelCaseBaseName &>
+<%doc>************************************************************</%doc>\
+<%doc>Initialization of Registers</%doc>\
+    function rw<% camelCaseBaseName %>Registers(int(1) -rw; int -addr; int -+data;
+                               <% camelCaseBaseName %>Registers -+s) = (
+      int reg;              // packed register value
+      int(32) i, i0, i1, i2, word, offset;  // indices
+      #[regRange(addr, <% base.getFullName() %>, <% base.getName() %>_SIZE, offset) ->
+        #[\
+<%java boolean first = true; %>\
+<%doc></%doc><%for Register reg : base.getRegisters() %><%if reg.getAlias() == null %>\
+<%java String index; %>\
+<% first ? "" : "        []" %><%java first=false; %>\
+<%doc>----</%doc><%if reg.getNumEntries() == 1 %><%doc>single entry</%doc>\
+addrMatch(offset,
+              <% reg.getName() %>_ADDR,
+              <% reg.getName() %>_BITS,
+              word) ->
+<%java index = ""; %>\
+<%doc>----</%doc><%elseif reg.getNumEntries1() == 1 %>\
+addrMatch1D(offset,
+              <% reg.getName() %>_BASE,
+              <% reg.getName() %>_ENTRIES,
+              <% reg.getName() %>_STRIDE,
+              <% reg.getName() %>_BITS,
+              i, word) ->
+<%java index = "[i]"; %>\
+<%doc>----</%doc><%elseif reg.getNumEntries2() == 1 %>\
+addrMatch2D(offset,
+              <% reg.getName() %>_BASE,
+              <% reg.getName() %>_ENTRIES_0,
+              <% reg.getName() %>_ENTRIES_1,
+              <% reg.getName() %>_STRIDE_0,
+              <% reg.getName() %>_STRIDE_1,
+              <% reg.getName() %>_BITS,
+              i0, i1, word) ->
+<%java index = "[i1, i0]"; %>\
+<%doc>----</%doc><%else>\
+addrMatch3D(offset,
+              <% reg.getName() %>_BASE,
+              <% reg.getName() %>_ENTRIES_0,
+              <% reg.getName() %>_ENTRIES_1,
+              <% reg.getName() %>_ENTRIES_2,
+              <% reg.getName() %>_STRIDE_0,
+              <% reg.getName() %>_STRIDE_1,
+              <% reg.getName() %>_STRIDE_2,
+              <% reg.getName() %>_BITS,
+              i0, i1, i2, word) ->
+<%java index = "[i2, i1, i0]"; %>\
+<%doc>----</%doc></%if>\
+\
+<%doc>----</%doc><%if reg.isStructure() %>\
+            reg = pack(s::<% reg.getName().toLowerCase() %><% index %>);
+<%doc>----</%doc></%if>\
+            regReadWrite(rw, word,
+              <% reg.getName() %>_ATOMIC_WIDTH,
+              <% reg.getName() %>_RW_MASK | <% reg.getName() %>_RV_MASK,
+              <% reg.getName() %>_RO_MASK,
+              <% reg.getName() %>_CW_MASK,
+              <% reg.getName() %>_CW1_MASK,
+              data, <%if reg.isStructure() %>reg<%else>s::<% reg.getName().toLowerCase() %><% index %></%if>);
+<%doc>----</%doc><%if reg.isStructure() %>\
+            unpack(s::<% reg.getName().toLowerCase() %><% index %>, reg)
+<%doc>----</%doc></%if>\
+<%doc></%doc></%if></%for>\
+        ]
+      ]
+    );
+
+<%doc>************************************************************</%doc>\
+<& registerInit; registers=registers; camelCaseBaseName=camelCaseBaseName &>
+<%doc>************************************************************</%doc>\
+  }
+}
+</%for>
+
+

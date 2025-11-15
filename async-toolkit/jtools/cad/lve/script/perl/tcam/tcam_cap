@@ -1,0 +1,7 @@
+#!/usr/intel/bin/perl -w
+
+my $fulcrum = "fulcrum --pdk=fulcrum-tsmc13-pdk";
+
+system("$fulcrum captally --cdl TCAM/lib/cam/sync_tcam/TCAM512_36/600/layout/extracted/cell.spice --cell lib.cam.sync_tcam.TCAM512_36.600 > TCAM512_36_LIB/TCAM512_36.cap");
+
+system("$fulcrum captally --cdl TCAM/lib/cam/sync_tcam/TCAM256_16/600/layout/extracted/cell.spice --cell lib.cam.sync_tcam.TCAM256_16.600 > TCAM256_16_LIB/TCAM256_16.cap");

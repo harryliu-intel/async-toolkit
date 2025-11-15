@@ -1,0 +1,312 @@
+#!/usr/intel/bin/perl -w
+
+# Copyright 2002 Fulcrum Microsystems.  All rights reserved.
+# $Id$
+# $DateTime$
+# $Author$
+
+#
+# Verification Front End
+#
+# Usage: vfe ['NAME=VALUE' | 'NAME.=VALUE']*
+#
+# 'NAME.=VALUE', assignment in append mode, indicates that values of lower
+# precedence for the same name (e.g.  appearing later on the command line or as
+# a built-in default) should be appended to this value to construct a list,
+# whereas 'NAME=VALUE', assignment in set mode, indicates that values of lower
+# precedence for the same name should be ignored.  
+#
+# (name, value) pairs are read from the command line, environment variables,
+# configuration files, cast, and built-in defaults.  Precedence is as follows
+# (first item has highest precedence):
+#
+#	1.  Command line
+#	2.  Environment variables
+#	3.  Configuration files
+#	4.  Cast
+#	5.  Built-in defaults
+#
+# The verification front end performs the following series of steps:
+#
+# 1.	Build data structures from built-in defaults and the command line.
+# 
+# 2.	Search the (name, value) pairs specified on the command line for the 
+# name 'VerificationEnv', which specifies the environment variable(s) used for
+# configuration.  If VerificationEnv is not specified on the command line, the
+# default environment variable used is 'VFE_ENVIRONMENT', unless this 
+# environment variable is not defined, in which case no environment variable is
+# used.  It is possible to specify that no environment variable be used by
+# setting VerificationEnv to the empty string.  Each environment variable
+# should contain a set of strings "NAME=VALUE" and "NAME.=VALUE" separated by
+# the '+' character.
+#
+# 3.	Search the (name, value) pairs specified on the command line and in 
+# environment variables for the name 'VerificationRc', which specifies the 
+# configuration file(s) used.  If VerificationRc is not specified on the
+# command line or in environment variables, the default configuration file
+# used is the file .vferc in the directory specified by the environment
+# variable 'HOME', unless the environment variable 'HOME' is not defined, or
+# the file .vferc does not exist, in which case no configuration file is
+# used.  It is possible to specify that no configuration file be used by
+# setting VerificationRc to the empty string.  Each file should contain
+# a set of strings "NAME=VALUE" and "NAME.=VALUE" separated by the newline
+# character.  Lines beginning with a '#' character are ignored.
+#
+# 4.	Search the (name, value) pairs specified on the command line, in
+# environment variables, and in the configuration file, for the names
+# CastPath and CastExecutable, which specify the path to the Cast hierarchy
+# and the filename of the executable which processes Cast.  If no such (name,
+# value) pairs are found, or if the specified hierarchy or executable is not
+# found, an error is reported, and the program exits.  If a value is specified
+# with 'append', or if more than one value is specified for either name, an
+# error is reported, and the program exits, since only one value can be used
+# for each name.  (Perhaps multiple values should be allowed, esp. for
+# CastPath.)
+#
+# 5. 	Gather remaining (name, value) pairs according to precedence.  Values
+# specified in cast cause defaults to be ignored.  (Effectively, only the
+# 'NAME=VALUE' style assignments are allowed in cast, not the 'NAME.=VALUE'.
+# Perhaps this should be changed to allow for 'NAME.=VALUE' as well.)
+#
+# 6.	Select verification tool back-end based on the value of
+# 'VerificationType'.  (The default is AlwaysError, which always returns an
+# error status.)
+#
+# 7.	Load corresponding verification module.
+#
+# 8.	Run corresponding verification routine, and collect results as a
+# ternary (PASS, FAIL, ERROR) as well as a verbose log report.
+#
+# 9.	Return ternary (PASS, FAIL, ERROR), the verbose log report from the
+# module, and a report on the configuration used, including the sources of
+# configuration variables.
+
+#
+# Load front-end library
+#
+
+use File::Basename;
+use File::Spec;
+
+BEGIN {
+    my $self = File::Spec->rel2abs($0);
+    while ( -l $self ) { $self = readlink($self); }
+    push @INC, dirname($self) . "/../front-end";
+    push @INC, dirname($self) . "/../back-end";
+}
+
+use Lvfe;
+
+#
+# Load back-end library
+# 
+
+use Lvbe;
+
+#
+# Display documentation
+#
+
+Lvfe::doc_header "COMMAND LINE USAGE INFORMATION";
+
+Lvfe::doc "Usage: $0 [<NAME>=<VALUE> | <NAME>.=<VALUE>]*";
+Lvfe::doc "";
+Lvfe::doc "'=' implies 'set' semantics, in which further assignments";
+Lvfe::doc "are ignored.  '.=' implies 'append' semantics, in which";
+Lvfe::doc "further assignments are appended to create a list of values.";
+
+Lvfe::doc_header "ENVIRONMENT VARIABLE USAGE INFORMATION";
+
+Lvfe::doc "Each environment variable specified should contain a string of";
+Lvfe::doc "pairs <NAME>=<VALUE> or <NAME>.=<VALUE>, for 'set' or 'append'";
+Lvfe::doc "semantics, respectively.  The pairs should be separated by the";
+Lvfe::doc "'+' character.  Environment variables are specified by values";
+Lvfe::doc "associated with the name 'VerificationEnv'.";
+
+Lvfe::doc_header "CONFIGURATION FILE USAGE INFORMATION";
+
+Lvfe::doc "Each configuration file specified should contain a set of pairs";
+Lvfe::doc "<NAME>=<VALUE> or <NAME>.=<VALUE>, for 'set' or 'append'";
+Lvfe::doc "semantics, respectively.  The pairs should be separated by the";
+Lvfe::doc "newline character.  Configuration files are specified by values";
+Lvfe::doc "associated with the name 'VerificationRc'.";
+
+Lvfe::doc_header "PRECEDENCE";
+
+Lvfe::doc "Precedence is as follows (highest to lowest):";
+Lvfe::doc "\t1.  Command Line";
+Lvfe::doc "\t2.  Environment Variables";
+Lvfe::doc "\t3.  Configuration Files";
+Lvfe::doc "\t4.  Cast";
+Lvfe::doc "\t5.  Built-in Defaults";
+
+Lvfe::doc_header "DOCUMENTATION";
+
+Lvfe::doc "See source for further documentation";
+
+#
+# Emit header about checking built-in defaults
+#
+
+Lvfe::header "CHECK BUILT-IN DEFAULTS";
+
+#
+# Set static values to be used as defaults
+#
+
+%nvpair_defaults = (
+	VerificationType => "AlwaysError"
+);
+
+#
+# Check for the existence of the default environment variable VFE_ENVIRONMENT
+#
+
+# Set a default for (name, value) pair VerificationEnv if VFE_ENVIRONMENT
+# is defined.  
+
+if (defined $ENV{"VFE_ENVIRONMENT"}) {
+	$nvpair_defaults{"VerificationEnv"} = "VFE_ENVIRONMENT";
+	Lvfe::info "Default environment variable VFE_ENVIRONMENT defined";
+} else {
+	Lvfe::info "Default environment variable VFE_ENVIRONMENT not defined";
+}
+
+#
+# Check for the existence of the default configuration file $HOME/.vferc
+#
+
+# Set a default for (name, value) pair VerificationRc if $HOME/.vferc
+# exists.
+
+if (defined $ENV{"HOME"} && -e "$ENV{\"HOME\"}/.vferc") {
+	$nvpair_defaults{"VerificationRc"} = "$ENV{\"HOME\"}/.vferc";
+	Lvfe::info "Default configuration file $ENV{\"HOME\"}/.vferc exists";
+} elsif (defined $ENV{"HOME"}) {
+	Lvfe::info "Default configuration file "
+               . "$ENV{\"HOME\"}/.vferc does not exist";
+} else {
+	Lvfe::info "No default configuration file, since \$HOME is undefined.";
+}
+
+#
+# Emit header about collecting name-value pairs
+#
+
+Lvfe::header "COLLECT NAME-VALUE PAIRS ('' denotes an undefined value)";
+
+#
+# Collect name-value pairs from the command line
+#
+
+foreach $nvpair (@ARGV) {
+	Lvfe::add_nvpair_string ($nvpair, "Command line");
+}
+
+#
+# Add a default value for VerificationEnv to any command-line values
+#
+
+# If the default environment variable is not defined, VerificationEnv will
+# be set to a value which is considered to be undefined by the pair-processing
+# routines in the front-end library.  
+
+Lvfe::add_nvpair ("VerificationEnv", $nvpair_defaults{"VerificationEnv"}, "set",
+  		  "Default");
+
+#
+# Read (name, value) pairs from the environment variables specified
+# 
+
+@VConfEnvs = Lvfe::get_nvpairs ("VerificationEnv");
+foreach $VConfEnv (@VConfEnvs) {
+	next if $VConfEnv eq "";
+	if (!defined $ENV{$VConfEnv}) {
+		Lvfe::error "Environment variable $VConfEnv is not defined";
+	}
+	@VConfPairs = split /\+/, $ENV{$VConfEnv};
+
+	foreach $VConfPair (@VConfPairs) {
+		Lvfe::add_nvpair_string ($VConfPair, 
+			"Environment Var. '$VConfEnv'");
+	}
+}
+
+#
+# Add default value for VerificationRc
+#
+
+# If the default configuration file does not exist, VerificationRc will
+# be set to a value which is considered to be undefined by the pair-processing
+# routines in the front-end library.
+
+Lvfe::add_nvpair ("VerificationRc", $nvpair_defaults{"VerificationRc"}, "set",
+		  "Default");
+
+#
+# Read (name, value) pairs from the configuration files specified
+#
+
+@VConfFiles = Lvfe::get_nvpairs ("VerificationRc");
+foreach $VConfFile (@VConfFiles) {
+	next if $VConfFile eq "";
+	-e $VConfFile 
+		or Lvfe::error "Configuration file $VConfFile does not exist";
+	@VConfPairs = split /\n/, `cat $VConfFile`;
+
+	foreach $VConfPair (@VConfPairs) {
+		next if $VConfPair =~ /^#/;
+		next if $VConfPair =~ /^\s*$/;
+		Lvfe::add_nvpair_string ($VConfPair, "File '$VConfFile'");
+	}
+}
+
+#
+# Add default values for CastPath and CastExecutable
+#
+
+Lvfe::add_nvpair ("CastPath", $nvpair_defaults{"CastPath"}, "set", "Default");
+Lvfe::add_nvpair ("CastExecutable", $nvpair_defaults{"CastExecutable"}, "set", 
+		"Default");
+
+#
+# XXX: Read (name, value) pairs from cast configuration
+#
+
+#
+# Add default value for VerificationType
+#
+
+Lvfe::add_nvpair ("VerificationType", $nvpair_defaults{"VerificationType"}, 
+		"set",
+		"Default");
+
+#
+# Run stage-one hacks (XXX: stage one only)
+#
+
+Lvfe::stage_one_hacks();
+
+#
+# Find the appropriate back end
+#
+
+
+$VBE_noprefix = Lvfe::get_nvpair ("VerificationType");
+$VBE = "Lvbe" . $VBE_noprefix;
+        
+        
+ Lvfe::header "RUN BACK-END";
+ Lvfe::info "Using perl module mechanism to load back-end '${VBE_noprefix}' ...";
+eval { require "${VBE}.pm"; };
+ Lvfe::error "Could not load back-end '${VBE_noprefix}'.\n$@" if $@;
+ Lvfe::info "Back-end loaded ...";
+
+#
+#         Run back-end verification routine
+#
+ Lvfe::info "Running verification ...";
+eval { &{"${VBE}::verify"} (); };
+ Lvfe::info "Done.";
+
+

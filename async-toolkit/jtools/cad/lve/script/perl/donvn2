@@ -1,0 +1,224 @@
+#!/usr/intel/bin/perl -l
+# AAG
+# $Id$
+# $DateTime$
+
+# this script is NOT ready for prime time, but Kai asked me to check
+# in. Here it is.
+
+my $maxlen=256;
+
+sub wrap {
+    my $ln = $_[0];
+    my $lx=0;
+    while (length ($ln) > $maxlen) {
+        my $i;
+        for ($i = $maxlen; $i > 0 and substr($ln,$i,1) ne " "; $i--) { }
+        printf "+" if $lx;
+        print substr($ln,0,$i);
+        $ln = substr($ln,$i+1);
+        $lx++;
+    }
+    printf "+" if $lx;
+    print $ln;
+}
+
+my %found=();
+
+sub writefile {
+    my $file=$_[0];
+    local(*G,$_);
+    return if ($found{$file});
+    $found{$file}=1;
+    open (G, "<$file") or warn "Cannot open $file : $!";
+    while (<G>) {
+        chomp;
+        if (/^\.inc/) {
+            my ($x,$fx)=split;
+            $fx =~ s/"//g;
+            $fx =~ s/'//g;
+            &writefile($fx);
+        }
+        else {
+            print;
+        }
+    }
+    close G;
+}
+
+sub gennmap {
+    my ($cellname,$path)=@_;
+    ## creating nmap file
+    open CXL, "<$path/$cellname.cxl" or die "Not found $path/$cellname.cxl";
+    open NMAP_ERR, ">$path/${cellname}.nmap.err";
+    my $main_subckt=0;
+    my $count=0;
+    my $swap=0;
+    while(<CXL>)  {
+        # XXX - why do we get rid of these bindings?
+        $main_subckt=0 if /^C/;
+        $main_subckt=1 if($_=~/^C \Q$cellname\E/);
+        if(($main_subckt==1)and($_=~/^N/)and($_!~/DRAIN|GATE|SOURCE|SUBSTRATE/)) {
+           chomp($_);
+           my @fields=split;
+           @x=@fields;
+           $fields[1] =~ s/^X//;
+           $fields[2] =~ s/^X//;
+           my @parts=split("\/", $fields[1]);
+           my $lastPart="$parts[$#parts]";
+           $fields[1] =~ s/$lastPart$//;
+           $fields[1] =~ s/\/X/_D_/g;
+           $fields[1] =~ s/\/$/_D_/g;
+           $fields[1] =~ s/\//_D_/g;
+           $fields[1] ="$fields[1]$lastPart";
+           my $xf=$fields[2];
+#           $fields[2] =~ s/_U_(\d)$/_D_$1/;
+           if( ($fields[2] ne $fields[1]) and ! (($fields[1] =~ /^\d+$/) and ($fields[2] =~ /#N/))) {
+             print NMAP_ERR "$fields[2] $fields[1]";
+             $fields[1] =~ s/(.*)_[^_]*$/$1/;
+             $fields[2] =~ s/(.*)_[^_]*$/$1/;
+             $count++;
+             $swap++ if ($fields[1] eq $fields[2]);
+           }
+        }
+    }
+    close(CXL);
+    close(NMAP_ERR);
+    unlink "$path/${cellname}.nmap.err" if $count == 0;
+    $swap;
+}
+
+foreach my $cell (@ARGV) {
+    my $path=$cell;
+    $path =~ s/\./\//g;
+    my @path = `find '$path' -maxdepth 2 -name extracted`;
+    chomp @path;
+    foreach my $path (@path) {
+        if ( -s "$path/cell.spice_gds2") {
+            my $gdsname;
+            undef %found;
+            %found=();
+            printf "$path/cell.spice_nvn2";
+            if ( -s "$path/cell.spice_nvn2") {
+                open (P, "<$path/cell.spice_gds2");
+                my $ln = "";
+                while (<P>) {
+                    chomp;
+                    if (/^\+/) {
+                        s/^\+/ /;
+                        $ln .= $_;
+                        next;
+                    }
+                    my $lx = $_;
+                    $_=$ln;
+                    $ln = $lx;
+                    s/  */ /g;
+                    if (/^.SUBCKT/i) {
+                        my @f=split;
+                        $gdsname=$f[1];
+                        last;
+                    }
+                }
+                close P;
+            }
+            else {
+                open (P, "<$path/cell.spice_gds2");
+                open (Q, ">$path/cell.spice_nvn2");
+                select Q;
+                my $ln = "";
+                while (<P>) {
+                    chomp;
+                    if (/^\+/) {
+                        s/^\+/ /;
+                        $ln .= $_;
+                        next;
+                    }
+                    my $lx = $_;
+                    $_=$ln;
+                    $ln = $lx;
+                    s/  */ /g;
+                    next if (/^[rc]/i or $_ eq "");
+                    s/:[^ ]*//g;
+                    if (/^\.inc/) {
+                        s/cell.spice_gds2/cell.spice_nvn2/;
+                        my @f=split;
+                        my $file=$f[1];
+                        $file =~ s/"//g;
+                        $file =~ s/'//g;
+                        writefile($file);
+                    }
+                    else {
+                        if (/^.SUBCKT/i) {
+                            my @f=split;
+                            $gdsname=$f[1];
+                        }
+                        wrap ($_);
+                    }
+                }
+                print $ln;
+                select STDOUT;
+                close P;
+                close Q;
+            }
+            my $ok=0;
+            if ( -s "$path/$gdsname.cls") {
+                $ok=`grep -c 'Schematic and Layout Match' '$path/$gdsname.cls'`;
+                chomp $ok;
+            }
+            else {
+                open (P, "<bind.rul");
+                open (Q, ">$path/bind.rul");
+                while (<P>) {
+                    chomp;
+                    s:GDSCELL:$gdsname:g;
+                    print Q;
+                }
+                close P;
+                close Q;
+                open (P, "<run.rsf");
+                open (Q, ">$path/run.rsf");
+                while (<P>) {
+                    chomp;
+                    s:PATH:$path:g;
+                    s:CELLNVN2:$path/cell.spice_nvn2:;
+                    s/CELLNAME/$gdsname/;
+                    print Q;
+                }
+                close P;
+                close Q;
+                system "sync";
+                open P, "assura nvn '$path/run.rsf' 2>&1 |";
+                while (<P>) {
+                    chomp;
+                    if (/Schematic and Layout Match/) {
+                        $ok=1;
+                    }
+                }
+                close P;
+            }
+            printf " OK=$ok";
+            my $ner=0;
+            $ner = -1 if ! $ok;
+            my $swap=-1;
+            if (! $nerr) {
+                $swap=gennmap ($gdsname, $path);
+                if ( -s "$path/$gdsname.nmap.err") {
+                    $ner = `wc -l '$path/$gdsname.nmap.err' | awk '{print \$1}'`;
+                    chomp $ner;
+                }
+            }
+            print " NMERR=$ner SWAP=$swap";
+            opendir (D, "<$path");
+            my @fx = grep ("$gdsname\.", readdir (D));
+            closedir D;
+            foreach my $fx (@fx) {
+                if ( -f "$path/$f" and ! ( $f =~ /\.cls$/ ) and ! ( $f =~ /\.nmap/ ) and ! ( $f =~ /\.cxl$/) ) {
+                    unlink "$path/$f";
+                }
+                elsif ( -d "$path/$f") {
+                    system "/bin/rm -rf '$path/$f'";
+                }
+            }
+        }
+    }
+}

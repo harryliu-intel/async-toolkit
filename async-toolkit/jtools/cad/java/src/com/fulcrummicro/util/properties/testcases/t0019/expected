@@ -1,0 +1,9 @@
+cosim.base=chip.bali.top.BALI(24){verilog.fhtest,verilog.rtl,csp,subcells,prs,java}:rtl_mgmt{verilog.rtl,csp,subcells,prs,java}
+cosim.exceptions=chip.bali.datapath.SET_EPL_NUMBERS{subcells,prs},fc.handlerRingNode{subcells,prs},core.mgmt.xring.x2r.X2R_18_9_2_3{subcells,prs},mgmt.xring{subcells,prs},core.mgmt.xring.ring_node.RING_NODE_4_2_2_3{subcells,prs},mgmt.epl_root{subcells,prs}
+cosim.spec=chip.bali.top.BALI(24){verilog.fhtest,verilog.rtl,csp,subcells,prs,java-chip.bali.datapath.SET_EPL_NUMBERS{subcells,prs}-fc.handlerRingNode{subcells,prs}-core.mgmt.xring.x2r.X2R_18_9_2_3{subcells,prs}-mgmt.xring{subcells,prs}-core.mgmt.xring.ring_node.RING_NODE_4_2_2_3{subcells,prs}-mgmt.epl_root{subcells,prs}}:rtl_mgmt{verilog.rtl,csp,subcells,prs,java}
+models.qsub_mem=0
+platform=test
+regress.qsub_mem=0
+regress.test_feature=
+testbench.tchk.scope=
+topdir=.

@@ -1,0 +1,808 @@
+#!/usr/intel/bin/perl -w
+
+use FileHandle;
+use IPC::Open2;
+
+#############################################################################
+# Custom alint testing of SRAM and TCAM nodes
+#############################################################################
+
+# find relevant packaged tools and libraries
+BEGIN {
+$lve_root = $0;
+$lve_root =~ s:/[^/]*$::;
+$lib_dir = "$lve_root/../lib/perl";
+if (!(-e $lib_dir)) { $lib_dir = "$lve_root/../../lib/perl"; }
+@INC = ($lib_dir, @INC);
+}
+use LveUtil;
+use LveAspice;
+use LveDelay;
+$aspice = "aspice";
+$aplot  = "aplot";
+
+# parse options
+undef $cell;
+$sramType = "10T";
+$addresses = 32;
+$bits = 16;
+undef $addr;
+$bit = 0;
+$rail = 0;
+$lveDir = "/mnt/fulcrum/alta/lve/lve";
+$maxBump  = 15; # bumps should be this % near rail
+$maxWrite = 25; # state-bit writes or nowrites stay this % near rail
+$maxLeak  = 10; # leakage should be this percent % near rail
+$maxInterfere = 15; # interfering precharges stay this % near rail
+$justMeasure = 0; # skip actual alint runs
+@true = (1);
+@corner = ("tt");
+@temp = (125);
+while (@ARGV>0 && $ARGV[0] =~ /--([^=]*)=(.*)/ ) {
+    $key = $1;
+    $value = $2;
+    shift @ARGV;
+    if (!defined($value)) { $value=""; }
+    if    ($key eq "lve-dir")   { $lveDir = $value; }
+    elsif ($key eq "cell")      { $cell = $value; }
+    elsif ($key eq "sram-type") { $sramType = $value; }
+    elsif ($key eq "addresses") { $addresses = $value; }
+    elsif ($key eq "addr")      { $addr = $value; }
+    elsif ($key eq "bit")       { $bit = $value; }
+    elsif ($key eq "bits")      { $bits = $value; }
+    elsif ($key eq "rail")      { $rail = $value; }
+    elsif ($key eq "true")      { @true    = split(",",$value); }
+    elsif ($key eq "corner")    { @corner  = split(",",$value); }
+    elsif ($key eq "temp")      { @temp    = split(",",$value); }
+    elsif ($key eq "maxBump")   { $maxBump = $value; }
+    elsif ($key eq "maxWrite")  { $maxWrite = $value; }
+    elsif ($key eq "maxLeak")   { $maxLeak = $value; }
+    elsif ($key eq "maxInterfere") { $maxInterfere = $value; }
+    elsif ($key eq "justMeasure") { $justMeasure = 1; }
+}
+if (!defined($addr)) { $addr = $addresses-1; }
+usage() if (!defined $cell);
+
+# usage banner
+sub usage {
+    die "USAGE: lve_sram \n" . 
+        "  --cell=FQCN\n" . 
+        "  --sram-type=[10T|6T|TCAM]\n" .
+        "  --lve-dir=$lveDir\n" .
+        "  --addresses=$addresses\n" .
+        "  --addr=$addr\n" .
+        "  --bit=$bit\n" .
+        "  --rail=$rail\n" .
+        "  --true=@true\n" .
+        "  --corner=@corner\n" .
+        "  --temp=@temp\n" .
+        "  --maxBump=$maxBump\n" .
+        "  --maxWrite=$maxWrite\n" .
+        "  --maxLeak=$maxLeak\n" .
+        "  --maxInterfere=$maxInterfere\n" . 
+        "  --justMeasure=$justMeasure\n";
+}
+
+# default alint.in
+$bumpTau=20;
+$delayTau=29;
+$alint_in = 
+    "/*** setup ***/\n" .
+    "leakage 0\n" .
+    "bumpCC\n" .
+    "delayCC\n" .
+    "delayFast 0\n" .
+    "bumpTau ${bumpTau}e-12\n" .
+    "delayTau ${delayTau}e-12\n" .
+    "max_bump_fanin_aggressors 1\n" .
+    "max_delay_fanin_aggressors 1\n\n";
+
+# cell path
+$cellDir = $cell;
+$cellDir =~ s:\.:/:g;
+
+# sweep
+open_aplot("$aplot");
+foreach $corner (@corner) {
+    foreach $true (@true) {
+        foreach $temp (@temp) {
+            free_aplot();
+            my $view = "layout";
+            $view = "layout_pg"  if (-e "$lveDir/$cellDir/layout_pg");
+            $view = "layout_tag" if (-e "$lveDir/$cellDir/layout_tag");
+            $dir = "$cellDir/$view/extracted/alint/$corner/${true}V/${temp}C";
+            system("mkdir -p \"$dir\"");
+            system("rm -f \"$dir/cell.aspice\"");
+            system("rm -f \"$dir/noprs.asp\"");
+            system("rm -f \"$dir/noprs.modify.asp.latest\"");
+            system("ln -s \"$lveDir/$cellDir/$view/extracted/cell.aspice\" \"$dir\"");
+            system("ln -s \"$lveDir/$cellDir/jflat.routed/aspice/default/noprs.asp.latest\" \"$dir/noprs.asp\"");
+            system("echo > \"$dir/noprs.modify.asp.latest\"");
+
+            make_alint_asp($dir);
+            if    ($sramType eq "10T") { do_10T($dir); }
+            elsif ($sramType eq "6T")  { do_6T($dir); }
+            elsif ($sramType eq "TCAM") { do_TCAM($dir); }
+        }
+    }
+}
+close_aplot();
+
+# write the alint.asp file
+sub make_alint_asp {
+    my ($dir) = @_;
+    open OUT, ">$dir/alint.asp" or die "ERROR: can't write $dir/alint.asp\n";
+    print OUT ".true=$true;\n";
+    print OUT ".temperature=$temp;\n";
+    print OUT ".corner \"$corner\"\n";
+    print OUT ".include \"tech.asp\";\n";
+    print OUT ".include \"cell.aspice\";\n";
+    print OUT ".include \"noprs.asp\";\n";
+    print OUT ".poststep=5e-12;\n";
+    print OUT ".prstau=40e-12;\n";
+    print OUT ".scenario_timemax=2e-9;\n";
+    my $x = $maxLeak/100;
+    print OUT ".small_leak_voltage=$x*true;\n";
+    print OUT ".large_leak_voltage=$x*true;\n";
+    close OUT;
+}
+
+# alint delay
+sub alint_delay {
+    my ($scenarios, $dir, $node, $force) = @_;
+    my $str = "";
+    $str = ":force" if ($force);
+    return
+        "/*** $dir $node ***/\n" .
+        "leakage 0\n" .
+        "bumpCC\n" .
+        "delayCC 0\n" .
+        "$scenarios\n" .
+        "workdir \"$dir\"\n" .
+        "output \"$dir/$node/out\"\n" .
+        "outerr \"$dir/$node/err\"\n" .
+        "alint $node $str\n\n";
+}
+
+# alint bump
+sub alint_bump {
+    my ($scenarios, $dir, $node) = @_;
+    return
+        "/*** $dir $node ***/\n" .
+        "leakage 0\n" .
+        "bumpCC 1\n" .
+        "delayCC\n" .
+        "$scenarios\n" .
+        "workdir \"$dir\"\n" .
+        "output \"$dir/$node/out\"\n" .
+        "outerr \"$dir/$node/err\"\n" .
+        "alint $node\n\n";
+}
+
+# alint leak
+sub alint_leak {
+    my ($scenarios, $dir, $node) = @_;
+    return
+        "/*** $dir $node ***/\n" .
+        "leakage 1\n" .
+        "bumpCC\n" .
+        "delayCC\n" .
+        "$scenarios\n" .
+        "workdir \"$dir\"\n" .
+        "output \"$dir/$node/out\"\n" .
+        "outerr \"$dir/$node/err\"\n" .
+        "alint $node\n\n";
+}
+
+# run alint
+sub run_alint {
+    my ($dir,$in) = @_;
+    return if ($justMeasure);
+    system("mkdir -p \"$dir\"");
+    open OUT, ">$dir/alint.in"
+        or die "ERROR: can't write $dir/alint.in\n";
+    print OUT "$alint_in";
+    print OUT "$in\n";
+    close OUT;
+    system("cd \"$dir\";" .
+           " $aspice" .
+           " -top \"$cell\"" .
+           " -path \"$ENV{ASPICE_PATH}:${lveDir}:..\"" .
+           " -include alint.in" .
+           " alint" .
+           " 1> alint.out 2> alint.err");
+}
+
+# shortcut
+sub my_slew_dn {
+    my ($dir, $node, $run) = @_;
+    $run = $node if (!defined $run);
+    my ($t, $slew_dn) = measure_slew("$dir/$run/slow_dn:0:${delayTau}",
+                                     "maxdelay","<","$node",2*$true/3,$true/3);
+    ns_to_ps($slew_dn);
+    return $slew_dn;
+}
+
+# shortcut
+sub my_slew_up {
+    my ($dir, $node) = @_;
+    my ($t, $slew_dn) = measure_slew("$dir/$node/slow_up:0:${delayTau}",
+                                     "maxdelay",">","$node",$true/3,2*$true/3);
+    ns_to_ps($slew_dn);
+    return $slew_dn;
+}
+
+# shortcut
+sub my_minv {
+    my ($run, $node) = @_;
+    my ($t, $minv) = measure_minv($run,$node);
+    if (is_numeric($minv)) { return int(100 * $minv/$true + 0.5); }
+    return "FAIL";
+}
+
+# shortcut
+sub my_maxv {
+    my ($run, $node) = @_;
+    my ($t, $maxv) = measure_maxv($run,$node);
+    if (is_numeric($maxv)) { return int(100 * $maxv/$true + 0.5); }
+    return "FAIL";
+}
+
+# check for measurement failures
+sub measure_status {
+    my $status = "PASS";
+    foreach $measurement (@_) {
+        $status = "FAIL" if ($measurement eq "FAIL") 
+        }
+    return $status;
+}
+
+# verify a 10T sram
+sub do_10T {
+    my ($dir) = @_;
+
+    # output
+    print "$dir\n";
+    
+    # some relevant nodes
+    $nr = 1-$rail;
+    $x0 ="x[$addr,$bit,$rail]";
+    $x1 ="x[$addr,$bit,$nr]";
+    $jr = "jr.d[$addr]";
+    $jw = "jw.d[$addr]";
+    $_r0 = "_r[$bit].$rail";
+    $_w0 = "_w[$bit].$rail";
+    $W0 = "W[$bit].$rail";
+    $W1 = "W[$bit].$nr";
+    $go = "go[$bit]";
+    $all0 = "";
+    $all1 = "";
+    for ($i=0; $i<$addresses; $i++) {
+        $all0 .= " x[$i,$bit,$rail]=0";
+        $all1 .= " x[$i,$bit,$rail]=1";
+    }
+
+    # bump scenarios
+    $in = alint_bump("max_bump_fanin_aggressors 1","bump",$_r0)
+        . alint_bump("max_bump_fanin_aggressors 1","bump",$_w0)
+        . alint_bump("max_bump_fanin_aggressors 1","bump",$x0);
+    
+    # write scenarios
+    $in .= alint_delay("scenario $jw+  $W1=1\n" .
+                       "scenario $jw=1 $W1+\n" .
+                       "scenario $jw+  $W1+",
+                       "write",$x0,1) 
+        .  alint_delay("scenario $jw+  $W0=1\n" .
+                       "scenario $jw=1 $W0+\n" .
+                       "scenario $jw+  $W0+",
+                       "write","$_w0",1);
+    # nowrite scenarios
+    $in .= alint_delay("scenario $jw+ $x1=1","nowrite",$x0,1);
+
+    # read scenarios
+    $in .= alint_delay("scenario $go=1 $jr+  $x0=1\n" .
+                      "scenario $go+  $jr+  $x0=1\n" .
+                      "scenario $go+  $jr=1 $x0=1",
+                      "read","$_r0",1);
+
+    # precharge scenarios
+    $in .= alint_delay("scenario $go- $jr-  $x0=1\n" .
+                       "scenario $go- $jr=0 $x0=1",
+                       "precharge","$_r0",1);
+
+    # precharge_interfering scenarios
+    $in .= alint_delay("scenario $go- $jr=1 $x0=1",
+                       "precharge_interfering","$_r0",1);
+
+    # leakage scenarios
+    $in .= alint_leak("scenario $go=1 $all1\n" .
+                      "scenario $go=1 $all0",
+                      "leakage","$_r0")
+        .  alint_leak("scenario $W0=0 $all1\n" .
+                      "scenario $W0=0 $all0\n" .
+                      "scenario $W0=1 $all1\n" .
+                      "scenario $W0=1 $all0\n",
+                      "leakage","$_w0");
+
+    # run alint
+    run_alint($dir,$in);
+    
+    # measure bump
+    $bump_dn = 100-my_minv("$dir/bump/$_r0/bump_dn:1:${bumpTau}",$_r0);
+    $bump_up = my_maxv("$dir/bump/$_r0/bump_up:1:${bumpTau}",$_r0);
+    $status = measure_status($bump_up,$bump_dn);
+    $status = "FAIL" if ($status eq "FAIL" || $bump_up>$maxBump || $bump_dn>$maxBump);
+    print "  $status bump $_r0 up=$bump_up dn=$bump_dn\n";
+
+    $bump_dn = 100-my_minv("$dir/bump/$_w0/bump_dn:1:${bumpTau}","$_w0");
+    $bump_up = my_maxv("$dir/bump/$_w0/bump_up:1:${bumpTau}","$_w0");
+    $status = measure_status($bump_up,$bump_dn);
+    $status = "FAIL" if ($status eq "FAIL" || $bump_up>$maxBump || $bump_dn>$maxBump);
+    print "  $status bump $_w0 up=$bump_up dn=$bump_dn\n";
+
+    $bump_dn = 100-my_minv("$dir/bump/$x0/bump_dn:1:${bumpTau}","$x0");
+    $bump_up = my_maxv("$dir/bump/$x0/bump_up:1:${bumpTau}","$x0");
+    $status = measure_status($bump_up,$bump_dn);
+    $status = "FAIL" if ($status eq "FAIL" || $bump_up>$maxBump || $bump_dn>$maxBump);
+    print "  $status bump $x0 up=$bump_up dn=$bump_dn\n";
+    
+    # measure write
+    $slew_dn = my_slew_dn("$dir/write",$x0);
+    $minv = my_minv("$dir/write/$x0/slow_dn:0:${delayTau}",$x0);
+    $status = measure_status($slew_dn,$minv);
+    $status = "FAIL" if ($status eq "FAIL" || $minv>$maxWrite);
+    print "  $status write $x0 slew_dn=$slew_dn minv=$minv\n";
+
+    $slew_dn = my_slew_dn("$dir/write","$_w0");
+    $minv = measure_minv("$dir/write/$_w0/slow_dn:0:${delayTau}","$_w0");
+    $status = measure_status($slew_dn,$minv);
+    $status = "FAIL" if ($status eq "FAIL" || $minv>$maxInterfere);
+    print "  $status write $_w0 slew_dn=$slew_dn minv=$minv\n";
+
+    # measure nowrite
+    $maxv = my_maxv("$dir/nowrite/$x0/slow_up:0:${delayTau}",$x0);
+    $status = measure_status($maxv);
+    $status = "FAIL" if ($status eq "FAIL" || $maxv>$maxWrite);
+    print "  $status nowrite $x0 maxv=$maxv\n";
+    
+    # measure read
+    $slew_dn = my_slew_dn("$dir/read","$_r0");
+    $status = measure_status($slew_dn);
+    print "  $status read $_r0 slew_dn=$slew_dn\n";
+    
+    # measure precharge
+    $slew_up = my_slew_up("$dir/precharge","$_r0");
+    $status = measure_status($slew_up);
+    print "  $status precharge $_r0 slew_up=$slew_up\n";
+    
+    # measure precharge_interfering
+    $slew_up = my_slew_up("$dir/precharge_interfering","$_r0");
+    $maxv = my_maxv("$dir/precharge_interfering/$_r0/slow_up:0:${delayTau}","$_r0");
+    $status = measure_status($slew_up,$maxv);
+    $status = "FAIL" if ($status eq "FAIL" || $maxv<100-$maxInterfere);
+    print "  $status precharge_interfering $_r0 slew_up=$slew_up maxv=$maxv\n";
+    
+    # measure leakage
+    $leak_dn = 100-my_minv("$dir/leakage/$_r0/leak_dn","$_r0");
+    $leak_up = my_maxv("$dir/leakage/$_r0/leak_up","$_r0");
+    $status = measure_status($leak_dn,$leak_up);
+    $status = "FAIL" if ($status eq "FAIL" || $leak_dn>$maxLeak || $leak_up>$maxLeak);
+    print "  $status leakage $_r0 leak_dn=$leak_dn leak_up=$leak_up\n";
+
+    $leak_dn = 100-my_minv("$dir/leakage/$_w0/leak_dn","$_w0");
+    $leak_up = my_maxv("$dir/leakage/$_w0/leak_up","$_w0");
+    $status = measure_status($leak_dn,$leak_up);
+    $status = "FAIL" if ($status eq "FAIL" || $leak_dn>$maxLeak || $leak_up>$maxLeak);
+    print "  $status leakage $_w0 leak_dn=$leak_dn leak_up=$leak_up\n";
+    
+    # output
+    print "\n";
+}
+
+# verify a 6T sram
+sub do_6T {
+    my ($dir) = @_;
+
+    # output
+    print "$dir\n";
+
+    # some relevant nodes
+    $c = "z[0].c[3]";
+    $a  = "$c.a[1].d[31]";
+    $s  = "$c.s[1].0";
+    $x0 = "$c.array[1].z[31,0].x[0]";
+    $x1 = "$c.array[1].z[31,0].x[1]";
+    $b0 = "$c.b[1,0,0]";
+    $b1 = "$c.b[1,0,1]";
+    $w0 = "$c.W[0].0";
+    $r0 = "$c.bit[0].r[1,0]";
+    $d  = "demux.c[3].set[1]";
+    $_s = "$d._s.3";
+    $all0 = "";
+    $all1 = "";
+    for ($i=0; $i<32; $i++) {
+        for ($j=0; $j<2; $j++) {
+            $all0 .= " $c.array[1].z[$i,$j].x[1]=0";
+            $all1 .= " $c.array[1].z[$i,$j].x[1]=1";
+        }
+    }
+
+    # bump scenarios
+    $in = alint_bump("scenario $s=1 $a=1 $b1=1 $x1=1\n" .
+                     "scenario $s=1 $a=1 $b1=0 $x1=0\n" .
+                     "scenario $s=0 $a=0 $b1=1",
+                     "bump",$b0);
+
+    # write scenarios
+    $in .= alint_delay("scenario $s+  $a+  $w0=1 $x1=0 $b1=1\n" .
+                       "scenario $s=1 $a=1 $w0+  $x1=0 $b1=1",
+                       "write",$x0,1);
+    # read scenarios
+    $in .= alint_delay("scenario $s+ $a+ $x1=1 $b1=1",
+                       "read",$b0,0);
+    
+    # precharge scenarios
+    $in .= alint_delay("scenario $s- $b1=1","precharge",$b0,1);
+
+    # precharge_interfering scenarios
+    $in .= alint_delay("scenario $s- $b1=1 $a=1 $x1=1",
+                       "precharge_interfering",$b0,1);
+
+    # leakage scenarios
+    $in .= alint_leak("scenario $b1=1 $all0\n" .
+                      "scenario $b1=1 $all1\n" .
+                      "scenario $s=1 $a=1 $b1=1 $all0 $x1=1\n" .
+                      "scenario $s=1 $a=1 $b1=1 $all1 $x1=1",
+                      "leakage",$b0)
+        . alint_leak("scenario $c.b[1,0,0]=1 $c.b[1,1,0]=1 $c.b[1,2,0]=1 $c.b[1,3,0]=1",
+                     "leakage",$r0);
+
+    # DEMUX_SET delay
+    $in .= alint_delay("scenario $d.a0.3+ $d.av[1]+ $d.av[2]+ $d.a3[1]+ $d.a4+\n" .
+                       "scenario $d.a0.3- $d.av[1]- $d.av[2]- $d.a3[1]- $d.a4-",
+                       "delay",$_s);
+    # DEMUX_SET bumps
+    $in .= alint_bump("scenario $d.a0.3+ $d.av[1]+ $d.av[2]+ $d.a3[1]+ $d.a4=0\n" .
+                      "scenario $d.a0.3- $d.av[1]- $d.av[2]- $d.a3[1]- $d.a4=0\n" .
+                      "scenario $d.a0.3=1 $d.av[1]=1 $d.av[2]=1 $d.a3[1]=1 $d.a4=1",
+                      "bump",$_s);
+
+    # DEMUX_SET leakage
+    $in .= alint_leak("scenario $d.a0.3=1 $d.av[1]=1 $d.av[2]=1 $d.a3[1]=1 $d.a4=0\n" .
+                      "scenario $d.a0.3=0 $d.av[1]=1 $d.av[2]=1 $d.a3[1]=1 $d.a4=1\n" .
+                      "scenario $d.a0.3=1 $d.av[1]=1 $d.av[2]=1 $d.a3[1]=1 $d.a4=1",
+                      "leakage",$_s);
+    
+    # run alint
+    run_alint($dir,$in);
+
+    # measure bump
+    $bump_dn = 100-my_minv("$dir/bump/$b0/bump_dn:1:${bumpTau}",$b0);
+    $bump_up = my_maxv("$dir/bump/$b0/bump_up:1:${bumpTau}",$b0);
+    $status = measure_status($bump_dn,$bump_up);
+    $status = "FAIL" if ($status eq "FAIL" || $bump_dn>$maxBump || $bump_up>$maxBump);
+    print "  $status bump $b0 up=$bump_up dn=$bump_dn\n";
+
+    # measure write
+    $slew_dn = my_slew_dn("$dir/write",$x0);
+    $minv = my_minv("$dir/write/$x0/slow_dn:0:${delayTau}",$x0);
+    $status = measure_status($minv);
+    $status = "FAIL" if ($status eq "FAIL" || $minv>$maxWrite);
+    print "  $status write $x0 slew_dn=$slew_dn minv=$minv\n";
+
+    $slew_dn = my_slew_dn("$dir/write",$b0,$x0);
+    $minv = my_minv("$dir/write/$x0/slow_dn:0:${delayTau}",$b0);
+    $status = measure_status($slew_dn,$minv);
+    $status = "FAIL" if ($status eq "FAIL" || $minv>$maxInterfere);
+    print "  $status write $b0 slew_dn=$slew_dn minv=$minv\n";
+
+    # measure read
+    $slew_dn = my_slew_dn("$dir/read",$b0);
+    $status = measure_status($slew_dn);
+    print "  $status read $b0 slew_dn=$slew_dn\n";
+
+    # measure precharge
+    $slew_up = my_slew_up("$dir/precharge",$b0);
+    $status = measure_status($slew_up);
+    print "  $status precharge $b0 slew_up=$slew_up\n";
+
+    # measure precharge_interfering
+    $slew_up = my_slew_up("$dir/precharge_interfering",$b0);
+    $maxv = my_maxv("$dir/precharge_interfering/$b0/slow_up:0:${delayTau}",$b0);
+    $status = measure_status($slew_up,$maxv);
+    $status = "FAIL" if ($status eq "FAIL" || $maxv<100-$maxInterfere);
+    print "  $status precharge_interfering $b0 slew_up=$slew_up maxv=$maxv\n";
+
+    $maxv = my_maxv("$dir/precharge_interfering/$b0/slow_up:0:${delayTau}",$x0);
+    $status = measure_status($maxv);
+    $status = "FAIL" if ($status eq "FAIL" || $maxv>$maxWrite);
+    print "  $status precharge_interfering $x0 maxv=$maxv\n";
+
+    # measure leakage
+    $leak_dn = 100-my_minv("$dir/leakage/$b0/leak_dn",$b0);
+    $leak_up = my_maxv("$dir/leakage/$b0/leak_up",$b0);
+    $status = measure_status($leak_dn,$leak_up);
+    $status = "FAIL" if ($status eq "FAIL" || $leak_dn>$maxLeak || $leak_up>$maxLeak);
+    print "  $status leakage $b0 leak_dn=$leak_dn leak_up=$leak_up\n";
+
+    $leak_up = my_maxv("$dir/leakage/$r0/leak_up",$r0);
+    $status = measure_status($leak_up);
+    $status = "FAIL" if ($status eq "FAIL" || $leak_up>$maxLeak);
+    print "  $status leakage $r0 leak_up=$leak_up\n";
+
+    # measure DEMUX_SET bumps
+    $bump_dn = 100-my_minv("$dir/bump/$_s/bump_dn:1:${bumpTau}",$_s);
+    $bump_up = my_maxv("$dir/bump/$_s/bump_up:1:${bumpTau}",$_s);
+    $status = measure_status($bump_dn,$bump_up);
+    $status = "FAIL" if ($status eq "FAIL" || $bump_dn>$maxBump || $bump_up>$maxBump);
+    print "  $status bump $_s up=$bump_up dn=$bump_dn\n";
+
+    # measure DEMUX_SET delays
+    $slew_up = my_slew_up("$dir/delay",$_s);
+    $slew_dn = my_slew_dn("$dir/delay",$_s);
+    $status = measure_status($slew_up);
+    print "  $status delay $s slew_up=$slew_up slew_dn=$slew_dn\n";
+
+    # measure DEMUX_SET leakage
+    $leak_dn = 100-my_minv("$dir/leakage/$_s/leak_dn",$_s);
+    $leak_up = my_maxv("$dir/leakage/$_s/leak_up",$_s);
+    $status = measure_status($leak_dn,$leak_up);
+    $status = "FAIL" if ($status eq "FAIL" || $leak_dn>$maxLeak || $leak_up>$maxLeak);
+    print "  $status leakage $_s leak_dn=$leak_dn leak_up=$leak_up\n";
+
+    # output
+    print "\n";
+}
+
+# verify a TCAM
+sub do_TCAM {
+    my ($dir) = @_;
+
+    # output
+    print "$dir\n";
+
+    # prepare for bit-line testing
+    $a    = "a[63]";
+    $x    = "array0.z[31,$bit].x[1]";
+    $_x   = "array0.z[31,$bit]._x[1]";
+    $b0   = "_b[$bit].0";
+    $b1   = "_b[$bit].1";
+    $LD0  = "LD[$bit].0";
+    $LD1  = "LD[$bit].1";
+    $leakx0 = "";
+    $leakx1 = "";
+    $leak_x0 = "";
+    $leak_x1 = "";
+    for ($i=0; $i<32; $i++) {
+        for ($j=0; $j<2; $j++) {
+            $leakx0  .= " array0.z[$i,$bit].x[$j]=0";
+            $leak_x1 .= " array0.z[$i,$bit]._x[$j]=1";
+            $leakx1  .= " array0.z[$i,$bit].x[$j]=1";
+            $leak_x0 .= " array0.z[$i,$bit]._x[$j]=0";
+        }
+    }
+
+    # prepare for hit-line testing
+    $enh  = "detect.out[7,3].enh[0]";
+    $hit = "hit[0,31]";
+    $k1  = "RK[$bit].1";
+    $all_k0 = "";
+    $all_k1 = "";
+    $all_k0up = "";
+    $all_k1up = "";
+    $all_x0 = "";
+    $all_x1 = "";
+    for (my $b=0; $b<$bits; $b++) {
+        $all_x0   .= " array0.z[31,$b].x[1]=0";
+        $all_x1   .= " array0.z[31,$b].x[1]=1";
+        $all_k0   .= " RK[$b].0=1";
+        $all_k1   .= " RK[$b].1=1";
+        $all_k0up .= " RK[$b].0+";
+        $all_k1up .= " RK[$b].1+";
+    }
+
+    # NOTE.  The bitlines of the TCAM are driven by shared
+    # transistors, which baffles alint's normal node marking
+    # mechanism.  To hack around this, the mark_barrier command is
+    # used to mark the opposite bitline as a barrier.  Alint will
+    # block S/D recursive marking through the barrier, then delete the
+    # barrier marking and still set MARK_GATE on nodes that gate the
+    # victim or shared network.
+
+    # bumps on bit-lines scenarios
+    $in = "mark_barrier $b1\n"
+        . alint_bump("scenario go=1\n" .        # floating
+                     "scenario go=1 do=1 $b1-", # other rail writes
+                     "bump",$b0)
+        . "mark_barrier $b0\n"
+        . alint_bump("scenario go=1\n" .
+                     "scenario go=1 do=1 $b0-",
+                     "bump",$b1);
+
+    # write scenarios (address+ last for x's)
+    $in .= "mark_barrier $b1\n"
+        .  alint_delay("scenario go=1 do=1 $a+ $LD1=1",
+                       "write",$x,1)
+        .  "mark_barrier $b0\n"
+        .  alint_delay("scenario go=1 do=1 $a+ $LD0=1",
+                       "write",$_x,1)
+        .  "mark_barrier $b1\n"
+        .  alint_delay("scenario go+  do=1 $LD1=1\n" .
+                       "scenario go=1 do+  $LD1=1\n" .
+                       "scenario go=1 do=1 $LD1+",
+                       "write",$b0)
+        .  "mark_barrier $b0\n"
+        .  alint_delay("scenario go+  do=1 $LD0=1\n" .
+                       "scenario go=1 do+  $LD0=1\n" .
+                       "scenario go=1 do=1 $LD0+",
+                       "write",$b1);
+
+    # read scenarios (address+ always last)
+    $in .= "mark_barrier $b1\n"
+        .  alint_delay("scenario go=1 $a+ $_x=1","read",$b0)
+        .  "mark_barrier $b0\n"
+        .  alint_delay("scenario go=1 $a+ $x=1","read",$b1);
+
+    # precharge bit-lines scenarios
+    $in .= "mark_barrier $b1\n"
+        .  alint_delay("scenario go-","precharge",$b0)
+        .  "mark_barrier $b0\n"
+        .  alint_delay("scenario go-","precharge",$b1);
+
+    # precharge_interfering scenarios
+    $in .= alint_delay("scenario go- $a=1 $_x=1",
+                       "precharge_interfering",$b0,1)
+        .  alint_delay("scenario go- $a=1 $x=1",
+                       "precharge_interfering",$b1,1);
+
+    # leakage on bit-lines scenarios
+    $in .= "mark_barrier $b1\n"
+        .  alint_leak("scenario go=1 do=1 $leak_x1\n" .
+                      "scenario go=1      $leak_x0",
+                      "leakage",$b0)
+        .  "mark_barrier $b0\n"
+        .  alint_leak("scenario go=1 do=1 $leakx1\n" .
+                      "scenario go=1      $leakx0",
+                      "leakage",$b1);
+
+    # bumps on hit-lines scenarios
+    $in .= alint_bump("scenario $enh=1 $all_x0\n" .            # floating
+                      "scenario $enh=1 $all_x0 $all_k0up\n" .  # missing
+                      "scenario $enh=1 $all_x0 $all_k0\n" .    # missing
+                      "scenario $enh=0 $all_x0 $all_k0",       # precharging
+                      "hit_bump",$hit);
+
+    # miss on hit-lines scenarios
+    $in .= alint_delay("scenario $enh=1 $all_x1 $k1+\n" .   # slow
+                       "scenario $enh=1 $all_x1 $all_k1up", # fast
+                       "hit_delay",$hit);
+
+    # precharge hit-lines scenarios
+    $in .= alint_delay("scenario $enh- $all_x1\n" . # slow
+                       "scenario $enh- $all_x0",    # fast
+                       "hit_precharge",$hit);
+
+    # leakage on hit-lines scenarios
+    $in .= alint_leak("scenario $enh=1 $all_x1 $all_k0",
+                      "hit_leakage",$hit);
+    
+    # run alint
+    run_alint($dir,$in);
+    
+    # measure bumps on bit-lines
+    $bump_dn = 100-my_minv("$dir/bump/$b0/bump_dn:1:${bumpTau}",$b0);
+    $bump_up = my_maxv("$dir/bump/$b0/bump_up:1:${bumpTau}",$b0);
+    $status = measure_status($bump_dn,$bump_up);
+    $status = "FAIL" if ($status eq "FAIL" || $bump_dn>$maxBump || $bump_up>$maxBump);
+    print "  $status bump $b0 up=$bump_up dn=$bump_dn\n";
+
+    $bump_dn = 100-my_minv("$dir/bump/$b1/bump_dn:1:${bumpTau}",$b1);
+    $bump_up = my_maxv("$dir/bump/$b1/bump_up:1:${bumpTau}",$b1);
+    $status = measure_status($bump_dn,$bump_up);
+    $status = "FAIL" if ($status eq "FAIL" || $bump_dn>$maxBump || $bump_up>$maxBump);
+    print "  $status bump $b1 up=$bump_up dn=$bump_dn\n";
+
+    # measure write
+    $slew_dn = my_slew_dn("$dir/write",$x);
+    $minv = my_minv("$dir/write/$x/slow_dn:0:${delayTau}",$x);
+    $status = measure_status($minv);
+    $status = "FAIL" if ($status eq "FAIL" || $minv>$maxWrite);
+    print "  $status write $x slew_dn=$slew_dn minv=$minv\n";
+
+    $slew_dn = my_slew_dn("$dir/write",$_x);
+    $minv = my_minv("$dir/write/$_x/slow_dn:0:${delayTau}",$_x);
+    $status = measure_status($minv);
+    $status = "FAIL" if ($status eq "FAIL" || $minv>$maxWrite);
+    print "  $status write $_x slew_dn=$slew_dn minv=$minv\n";
+
+    $slew_dn = my_slew_dn("$dir/write",$b0);
+    $minv = my_minv("$dir/write/$b0/slow_dn:0:${delayTau}",$b0);
+    $status = measure_status($slew_dn,$minv);
+    $status = "FAIL" if ($status eq "FAIL" || $minv>$maxInterfere);
+    print "  $status write $b0 slew_dn=$slew_dn minv=$minv\n";
+
+    $slew_dn = my_slew_dn("$dir/write",$b1);
+    $minv = my_minv("$dir/write/$b1/slow_dn:0:${delayTau}",$b1);
+    $status = measure_status($slew_dn,$minv);
+    $status = "FAIL" if ($status eq "FAIL" || $minv>$maxInterfere);
+    print "  $status write $b1 slew_dn=$slew_dn minv=$minv\n";
+
+    # measure read
+    $slew_dn = my_slew_dn("$dir/read",$b0);
+    $status = measure_status($slew_dn);
+    print "  $status read $b0 slew_dn=$slew_dn\n";
+    $slew_dn = my_slew_dn("$dir/read",$b1);
+    $status = measure_status($slew_dn);
+    print "  $status read $b1 slew_dn=$slew_dn\n";
+
+    # measure precharge bit-lines
+    $slew_up = my_slew_up("$dir/precharge",$b0);
+    $status = measure_status($slew_up);
+    print "  $status precharge $b0 slew_up=$slew_up\n";
+    $slew_up = my_slew_up("$dir/precharge",$b1);
+    $status = measure_status($slew_up);
+    print "  $status precharge $b1 slew_up=$slew_up\n";
+
+    # measure precharge_interfering
+    $slew_up = my_slew_up("$dir/precharge_interfering",$b0);
+    $maxv = my_maxv("$dir/precharge_interfering/$b0/slow_up:0:${delayTau}",$b0);
+    $status = measure_status($slew_up,$maxv);
+    $status = "FAIL" if ($status eq "FAIL" || $maxv<100-$maxInterfere);
+    print "  $status precharge_interfering $b0 slew_up=$slew_up maxv=$maxv\n";
+
+    $slew_up = my_slew_up("$dir/precharge_interfering",$b1);
+    $maxv = my_maxv("$dir/precharge_interfering/$b1/slow_up:0:${delayTau}",$b1);
+    $status = measure_status($slew_up,$maxv);
+    $status = "FAIL" if ($status eq "FAIL" || $maxv<100-$maxInterfere);
+    print "  $status precharge_interfering $b1 slew_up=$slew_up maxv=$maxv\n";
+
+    $maxv = my_maxv("$dir/precharge_interfering/$b0/slow_up:0:${delayTau}",$x);
+    $status = measure_status($maxv);
+    $status = "FAIL" if ($status eq "FAIL" || $maxv>$maxWrite);
+    print "  $status precharge_interfering $x maxv=$maxv\n";
+
+    $maxv = my_maxv("$dir/precharge_interfering/$b1/slow_up:0:${delayTau}",$_x);
+    $status = measure_status($maxv);
+    $status = "FAIL" if ($status eq "FAIL" || $maxv>$maxWrite);
+    print "  $status precharge_interfering $_x maxv=$maxv\n";
+
+    # measure leakage on bit-lines
+    $leak_dn = 100-my_minv("$dir/leakage/$b0/leak_dn",$b0);
+    $leak_up = my_maxv("$dir/leakage/$b0/leak_up",$b0);
+    $status = measure_status($leak_dn,$leak_up);
+    $status = "FAIL" if ($status eq "FAIL" || $leak_dn>$maxLeak || $leak_up>$maxLeak);
+    print "  $status leakage $b0 leak_dn=$leak_dn leak_up=$leak_up\n";
+
+    $leak_dn = 100-my_minv("$dir/leakage/$b1/leak_dn",$b1);
+    $leak_up = my_maxv("$dir/leakage/$b1/leak_up",$b1);
+    $status = measure_status($leak_dn,$leak_up);
+    $status = "FAIL" if ($status eq "FAIL" || $leak_dn>$maxLeak || $leak_up>$maxLeak);
+    print "  $status leakage $b1 leak_dn=$leak_dn leak_up=$leak_up\n";
+
+    # measure bumps on hit-lines
+    $bump_dn = 100-my_minv("$dir/hit_bump/$hit/bump_dn:1:${bumpTau}",$hit);
+    $bump_up = my_maxv("$dir/hit_bump/$hit/bump_up:1:${bumpTau}",$hit);
+    $status = measure_status($bump_dn,$bump_up);
+    $status = "FAIL" if ($status eq "FAIL" || $bump_dn>$maxBump || $bump_up>$maxBump);
+    print "  $status hit_bump $hit up=$bump_up dn=$bump_dn\n";
+
+    # measure miss on hit-lines
+    $slew_dn = my_slew_dn("$dir/hit_delay",$hit);
+    $status = measure_status($slew_dn);
+    print "  $status hit_delay $hit slew_dn=$slew_dn\n";
+
+    # measure precharge of hit-lines
+    $slew_up = my_slew_up("$dir/hit_precharge",$hit);
+    $status = measure_status($slew_up);
+    print "  $status hit_precharge $hit slew_up=$slew_up\n";
+
+    # measure leakage on hit-lines
+    $leak_dn = 100-my_minv("$dir/hit_leakage/$hit/leak_dn",$hit);
+    $leak_up = my_maxv("$dir/hit_leakage/$hit/leak_up",$hit);
+    $status = measure_status($leak_dn,$leak_up);
+    $status = "FAIL" if ($status eq "FAIL" || $leak_dn>$maxLeak || $leak_up>$maxLeak);
+    print "  $status hit_leakage $hit leak_dn=$leak_dn leak_up=$leak_up\n";
+
+    # end
+    print "\n";
+}

@@ -1,0 +1,130 @@
+#!/usr/intel/bin/perl -w
+
+# Script to update estimated_delay and cap directives in spec tree
+# without altering other things.  Takes a new spec directory produced
+# by Jauto, an old spec tree, and creates the destination spec tree
+# with estimated_delay and cap from the new tree but everything else
+# from the old tree.  Can make destinatin directory the same as old to
+# overwrite files.  Doesn't do any p4 stuff.
+
+# get arguments
+@ARGV == 3 or die "USAGE: update_delay_and_cap NEW_SPEC_DIR OLD_SPEC_DIR DST_SPEC_DIR\n";
+$new = $ARGV[0];
+$old = $ARGV[1];
+$dst = $ARGV[2];
+
+# get relative path to all cells in src directory
+@cells = split("\n",`find $new -name \*.cast`);
+for ($i=0; $i<@cells; $i++) {
+    $cells[$i] =~ s:^$new/::g;
+}
+
+# process cells in new/old pairs
+foreach $cell (@cells) {
+    if (! -e "$new/$cell" || ! -e "$old/$cell") { next; }
+
+    # read relevant directives from src cell
+    my @directives = ();
+    open NEW, "< $new/$cell" or die "ERROR: can't read $new/$cell.\n";
+    $nest = 0;
+    while (my $line = <NEW>) {
+        if    ($nest==0 && $line =~ /^define/)            { $nest=1; }
+        elsif ($nest==1 && $line =~ /^  prs \{/)          { $nest=2; }
+        elsif ($nest==1 && $line =~ /^  subtypes \{/)     { $nest=2; }
+        elsif ($nest==1 && $line =~ /^  netlist \{/)      { $nest=2; }
+        elsif ($nest==1 && $line =~ /^  directives \{/)   { $nest=2; }
+        elsif ($nest==2 && $line =~ /^    directives \{/) { $nest=3; }
+        elsif ($nest==1 && $line =~ /^\}/)                { $nest=0; }
+        elsif ($nest==2 && $line =~ /^  \}/)              { $nest=1; }
+        elsif ($nest==3 && $line =~ /^    \}/)            { $nest=2; }
+        elsif ($nest==3 && $line =~ /^      estimated_delay\(/) {
+            push @directives, $line;
+        } 
+        elsif ($nest==3 && $line =~ /^      cap\(/) {
+            push @directives, $line;
+        }
+    }
+    close NEW;
+
+    # patch destination cell
+    open OLD, "< $old/$cell" or die "ERROR: can't read $old/$cell.\n";
+    $celldir = $cell;
+    $celldir =~ s:/[^/]*$::g;
+    system("mkdir -p \"$dst/$celldir\"");
+    open DST, "> $dst/$cell.patched" or die "ERROR: can't write $dst/$cell.patched.\n";
+    $nest=0;
+    $type="";
+    while (my $line = <OLD>) {
+        if    ($nest==0 && $line =~ /^define/) {
+            $nest=1; print DST $line;
+        }
+        elsif ($nest==1 && $line =~ /^  prs \{/) {
+            $nest=2; $type="prs"; print DST $line;
+        }
+        elsif ($nest==1 && $line =~ /^  netlist \{/) {
+            $nest=2; $type="netlist"; print DST $line;
+        }
+        elsif ($nest==1 && $line =~ /^  subtypes \{/) {
+            $nest=2; $type="subtypes"; print DST $line;
+        }
+        elsif ($nest==1 && $line =~ /^  directives \{/) {
+            $nest=2; $type="directives"; print DST $line;
+        }
+        elsif ($nest==2 && $line =~ /^    directives \{/) {
+            $nest=3; print DST $line;
+        }
+        elsif ($nest==1 && $line =~ /^\}/) {
+            if (@directives>0) {
+                print DST "  prs {\n";
+                print DST "    directives {\n";
+                print DST @directives;
+                print DST "    }\n";
+                print DST "  }\n";
+                @directives=();
+            }
+            $nest=0;
+            print DST $line;
+        }
+        elsif ($nest==2 && $line =~ /^  \}/) {
+            if ((@directives>0) && ($type eq "subtypes")) {
+                print DST "    directives {\n";
+                print DST @directives;
+                print DST "    }\n";
+                @directives=();
+            }
+            $nest=1;
+            print DST $line;
+        }
+        elsif ($nest==3 && $line =~ /^    \}/) {
+            if (($type eq "prs") || ($type eq "subtypes")) {
+                print DST @directives;
+                @directives=();
+            }
+            $nest=2;
+            print DST $line;
+        }
+        elsif ($nest==3 && $line =~ /^      estimated_delay\(/) {
+        }
+        elsif ($nest==3 && $line =~ /^      cap\(/) {
+        }
+        else {
+            print DST $line;
+        }
+    }
+    close OLD;
+    close DST;
+    
+    # describe changes to dst cell
+    if (@directives>0) {
+        print STDERR "WARNING: couldn't patch $cell\n";
+        system("rm -f \"$dst/$cell.patched\"");
+    } else {
+        print "Changes to $cell\n";
+        system("diff \"$old/$cell\" \"$dst/$cell.patched\"");
+        system("mv -f \"$dst/$cell.patched\" \"$dst/$cell\"");
+    }
+}
+
+# list cells
+$" = " \\\n";
+print STDERR "@cells\n";

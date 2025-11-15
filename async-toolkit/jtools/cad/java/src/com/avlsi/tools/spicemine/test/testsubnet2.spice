@@ -1,0 +1,169 @@
+*
+* TEST SPICE INPUT FILE FOR
+* Subnet test environment generation
+*
+.SUBCKT TESTSUBNET_TEST a b c z
+*
+* Subnet is 'x'.  Production rules driving x:
+*
+*   a & (b1 & b2 | c1 & c2) -> x-
+*   (~b | ~c1 & ~c2) & ~a | ~d & ~e -> x+
+*
+* Transistors are all folded twice.  The b-driven NFET
+* is connected at x:1; the c-driven NFETs are connected at x:2;
+* the a-driven PFETs are connected at x:1 and x:2 (each folding).
+* The e-driven PFETs are connected at x:3.
+*
+*   x:1               x:6
+*     \               /
+*      x:3 - x:4 - x:5 
+*     /               \
+*   x:2               x:7
+*
+*  Parasitic capacitance:
+*       x:1  -  y:1 (1e-15)
+*               x:3 (1e-16)
+*       x:2  -  y:2 (1e-15)
+*               x:3 (1e-16)
+*       x:3  -  GND! (1e-15)
+*               Vdd! (1e-15)
+*       x:4  -  y:2  (1e-16)
+*               z:3  (1e-15)
+*               GND! (1e-15)
+*               Vdd! (1e-15)
+*       x:5  -  z:2  (1e-15)
+*               GND! (1e-15)
+*               Vdd! (1e-15)
+*       x:6  -  GND! (1e-15)
+*               Vdd! (1e-15)
+*               z:1  (1e-15)
+*       x:7  -  GND! (1e-15)
+*               Vdd! (1e-15)
+*               z:2  (1e-15)
+*
+*   Gate load:
+*       x:6  -  Drives PFET (Vdd,z:1)
+*       x:7  -  Drives NFET (GND,z:2)
+*
+* EXPECTED OUTPUT:
+*   Should identify following conjunctive driver paths:
+*       a & b -> x-
+*       a & c -> x-
+*      ~b & ~a -> x+
+*      ~c & ~a -> x+
+*
+*   .aspice output file should include 19 capacitor devices,
+*   12 mosfets in the x driver network, 2 mosfets in the z 
+*   driver network, and 6 resistors in the x network.
+*
+**********************************************************************
+*  x- pull-down: (a:1 | a:2) & ((b1:1 & b1:2) & (b2:1 & b2:2) |
+*                               (c1:1 & c1:2) & (c2:1 & c2:2)) -> x-
+*
+M0  x:1     b2:1    11      GND! nmos_2v L=0.18U W=1.2U
+M1  x:1     b2:2    11      GND! nmos_2v L=0.18U W=1.2U
+M0b 11      b1:1    22:1    GND! nmos_2v L=0.18U W=1.2U
+M1b 11      b1:2    22:1    GND! nmos_2v L=0.18U W=1.2U
+M2  x:2     c2:1    33      GND! nmos_2v L=0.18U W=1.2U
+M3  x:2     c2:2    33:1    GND! nmos_2v L=0.18U W=1.2U
+M2b 33      c1:1    22:2    GND! nmos_2v L=0.18U W=1.2U
+M3b 33:1    c1:2    22:2    GND! nmos_2v L=0.18U W=1.2U
+M4  22:1    a:1     GND!    GND! nmos_2v L=0.18U W=1.2U
+M5  22:2    a:2     GND!    GND! nmos_2v L=0.18U W=1.2U
+*
+R0  22:1    22:2    1.0 $x
+R1  c:1     c:2     1.0 $x
+R2  a:1     a:2     1.0 $x
+R2b 33      33:1    1.0 $x
+*
+**********************************************************************
+*  x+ pull-up: (~b:1 | ~b:1 | ~c:1 | ~c:2) & (~a:1 | ~a:2) -> x+
+*
+M6  x:1     a:1     44:1    Vdd! pmos_2v L=0.18U W=2.4U
+M7  x:2     a:2     44:2    Vdd! pmos_2v L=0.18U W=2.4U
+M8  44:1    b:1     Vdd!    Vdd! pmos_2v L=0.18U W=2.4U
+M9  44:1    b:2     Vdd!    Vdd! pmos_2v L=0.18U W=2.4U
+MA  44:2    c:1     Vdd!    Vdd! pmos_2v L=0.18U W=2.4U
+MB  44:3    c:2     Vdd!    Vdd! pmos_2v L=0.18U W=2.4U
+MC  x:3     e:1     55      Vdd! pmos_2v L=0.18U W=2.4U
+MD  x:3     e:2     55      Vdd! pmos_2v L=0.18U W=2.4U
+ME  55      d:22    Vdd!    Vdd! pmos_2v L=0.18U W=2.4U
+MF  55      d:x4    Vdd!    Vdd! pmos_2v L=0.18U W=2.4U
+*
+R3  b:1     b:2     1.0 $x
+R4  44:1    44:2    1.0 $x
+R5  44:2    44:3    1.0 $x
+R5b e:1     e:2     1.0 $x
+R5c d:22    d:x4    1.0 $x
+*
+**********************************************************************
+*  x resistive network:
+*
+R6  x:1     x:3     10.0 $x
+R7  x:3     x:2     15.0 $x
+R8  x:3     x:4      8.0 $x
+R9  x:4     x:5    100.0 $x
+RA  x:5     x:6     40.0 $x
+RB  x:5     x:7     10.0 $x
+*
+**********************************************************************
+*  Parasitic Cap:
+*
+C0  x:1     y:1     1.0e-15
+C1  x:1     x:3     1.0e-16
+C2  x:2     y:2     1.0e-15
+C3  x:2     x:3     1.0e-16
+C4  x:3     GND!    1.0e-15
+C5  x:3     Vdd!    1.0e-15
+C6  x:4     y:2     1.0e-16
+C7  x:4     z:3     1.0e-15
+C8  x:4     GND!    1.0e-15
+C9  x:4     Vdd!    1.0e-15
+CA  x:5     z:2     1.0e-15
+CB  x:5     GND!    1.0e-15
+CC  x:5     Vdd!    1.0e-15
+CD  x:6     GND!    1.0e-15
+CE  x:6     Vdd!    1.0e-15
+CF  x:6     z:1     1.0e-15
+CG  x:7     GND!    1.0e-15
+CH  x:7     Vdd!    1.0e-15
+CI  x:7     z:2     1.0e-15
+*
+**********************************************************************
+*  y,z resistive networks + misc parasitic cap:
+*
+RC  y:1     y:2     100.0 $x
+RD  y:2     y:3      10.0 $x
+RE  y:2     y:4      40.0 $x
+RF  z:1     z:2      10.0 $x
+RG  z:2     z:3      50.0 $x
+*
+CJ  y:1     z:1     1.0e-15
+CK  y:1     GND!    1.0e-15
+CL  y:2     z:2     1.0e-15
+CM  y:3     y:2     1.0e-15
+CN  y:3     z:2     1.0e-15
+CO  z:2     z:3     1.0e-15
+CP  z:2     Vdd!    1.0e-15
+CQ  z:3     Vdd!    1.0e-15
+CR  z:1     GND!    1.0e-15
+CS  z:1     22:1    1.0e-15
+CT  z:2     44:1    1.0e-15
+CU  y:3     22:2    1.0e-15
+CV  y:2     44:1    1.0e-15
+CW  y:1     44:2    1.0e-15
+CX  y:1     22:1    1.0e-15
+CY  a:1     GND!    1.0e-15
+CZ  a:2     GND!    1.0e-15
+C00 b:1     GND!    1.0e-15
+C01 b:2     a:1     1.0e-15
+C02 c:1     GND!    1.0e-15
+C03 c:2     Vdd!    1.0e-15
+*
+**********************************************************************
+*  x gate load:  (~x:6 -> z:1+)  (x:7 -> z:2-)
+*
+MG  z:1     x:6     Vdd!    Vdd! pmos_2v L=0.18U W=2.4U
+MH  z:2     x:7     GND!    GND! nmos_2v L=0.18U W=1.2U
+*
+.ENDS

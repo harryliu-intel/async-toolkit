@@ -1,0 +1,9 @@
+<test>
+<config>
+<!-- test that numbers are printed in the desired format -->
+
+<opt name="testint" type="Integer" default="1"/>
+<opt name="testfloat" type="Float" default="1"/>
+
+</config>
+</test>

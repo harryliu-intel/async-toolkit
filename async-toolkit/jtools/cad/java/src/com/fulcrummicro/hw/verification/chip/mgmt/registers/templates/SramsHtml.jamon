@@ -1,0 +1,26 @@
+<%import>
+java.util.Collection;
+com.fulcrummicro.hw.verification.chip.mgmt.registers.*;
+</%import>\
+<%args>
+Collection<Register> regs;
+</%args>\
+
+<html><table border="1">
+Shows all registers with any single dimension > 32
+<tr>
+<th>Register</th>
+<th>Bit width</th>
+</tr>
+
+<%for Register reg : regs %>\
+<%if (reg.getNumEntries() > 32) || (reg.getNumEntries1() > 32) || (reg.getNumEntries2() > 32)  %>\
+<tr>
+<td><% reg.getSpecString() %></td>
+<td><% reg.getNumberFieldBits() %></td>
+</tr>
+
+</%if>\
+</%for>\
+
+</table></html>

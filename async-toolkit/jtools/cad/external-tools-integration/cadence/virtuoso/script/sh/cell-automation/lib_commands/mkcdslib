@@ -1,0 +1,157 @@
+#!/bin/bash
+# Copyright 2002 Fulcrum Microsystems.  All rights reserved.
+# $Id$
+# $DateTime$
+# $Author$
+
+function usage() {
+  echo "$0 --cds-wd=dir --generated-libraries-root=dir"
+  echo "    --blank-cds-library=dir --lib=libname"
+  echo "    --cadence-shell-library=dir"
+}
+
+sedcmd=`which sed`
+grepcmd=`which grep`
+gawkcmd=`which gawk`
+findcmd=`which find`
+
+check_executable_file "$sedcmd" "Unable to find sed in \"$PATH\"" 2
+check_executable_file "$grepcmd" "Unable to find grep in \"$PATH\"" 2
+check_executable_file "$gawkcmd" "Unable to find gawk in \"$PATH\"" 2
+check_executable_file "$findcmd" "Unable to find find in \"$PATH\"" 2
+
+cds_wd=
+generated_libs_root=
+blank_cds_library=
+lib=
+cds_sh_lib=
+
+for arg in $@ ; do
+  
+  case "$arg" in
+   --cds-wd=* )
+    cds_wd=`echo $arg | $sedcmd -e "s/--cds-wd=//"`
+    ;;
+  --generated-libraries-root=* )
+    generated_libs_root=`echo $arg | $sedcmd -e "s/--generated-libraries-root=//"`
+    ;;
+  --blank-cds-library=* )
+    blank_cds_library=`echo $arg | $sedcmd -e "s/--blank-cds-library=//"`
+    ;;
+  --lib=* )
+    lib=`echo $arg | $sedcmd -e "s/--lib=//"`
+    ;;
+  --cadence-shell-library=* )
+    cds_sh_lib=`echo $arg | $sedcmd -e "s/--cadence-shell-library=//"`
+    ;;
+  esac
+done
+
+
+check_for_empty_arg "$cds_wd"              "You must specify the cadence working directory."                    2
+check_for_empty_arg "$generated_libs_root" "A generated libraries root directory was not specified."            2
+check_for_empty_arg "$blank_cds_library"   "A directory containing a blank cadence library was not specified."  2
+check_for_empty_arg "$lib"                 "\"$cell\"'s library was not specified."                             2
+check_for_empty_arg "$cds_sh_lib"          "You must specify the location of the cadence shell script library." 2
+
+check_writeable_dir "$cds_wd" "Cadence Working Directory: \"$cds_wd\" is not a readable, writeable directory."  2
+conon_path "$cds_wd"
+cds_wd="$ret"
+
+check_writeable_dir "$generated_libs_root" \
+                    "Generated Libraries Root Directory: \"$generated_libs_root\" is not a readable, writeable directory." 2
+conon_path "$generated_libs_root"
+generated_libs_root="$ret"
+
+check_readable_dir "$blank_cds_library" \
+                   "Blank Cadence Library: \"$blank_cds_library\" is not a readable directory." 2
+conon_path "$blank_cds_library"
+blank_cds_library="$ret"
+
+check_readable_dir "$cds_sh_lib" \
+    "Cadence Shell Script Library: \"$cds_sh_lib\" is not a readable directory." 2
+conon_path "$cds_sh_lib"
+cds_sh_lib="$ret"
+
+cds_sh_lib_files=`$findcmd "$cds_sh_lib" \! -type d`
+for file in $cds_sh_lib_files ; do
+  source "$file"
+done
+
+get_escaped_library_name_for_library "$lib"
+escaped_lib_name="$ret"
+
+cds_lib_generated="$generated_libs_root/cds.lib.generated"
+
+lib_exists_already=
+if [ -f "$cds_lib_generated" ] ; then
+  existing_cds_lib_libs=`$grepcmd -ve "--" $cds_lib_generated | $grepcmd -e "^DEFINE" | $gawkcmd -- "{ print \\\$2 }"`
+  for existing_lib in $existing_cds_lib_libs ; do
+    if [[ "$escaped_lib_name" == "$existing_lib" ]] ; then
+      lib_exists_already=1
+    fi
+  done
+fi
+
+cds_lib="$cds_wd/cds.lib"
+
+if [ -f "$cds_lib" ] ; then
+  existing_cds_lib_libs=`$grepcmd -ve "--" $cds_lib | $grepcmd -e "^DEFINE" | $gawkcmd -- "{ print \\\$2 }"`
+  for existing_lib in $existing_cds_lib_libs ; do
+    if [[ "$escaped_lib_name" == "$existing_lib" ]] ; then
+      lib_exists_already=1
+    fi
+  done
+fi
+
+if [ -z "$lib_exists_already" ] ; then
+  get_library_dir_for_libraray "$lib" "$generated_libs_root"
+  newlibdir="$ret"
+  
+  escaped_generated_libs_root=`echo "$generated_libs_root" | $sedcmd -e "s/\//\\\\\\\\\\//g"`
+
+  relative_new_lib_dir=`echo "$newlibdir" | $sedcmd -e "s/$escaped_generated_libs_root\///g"`
+
+  cds_lib_entry="DEFINE $escaped_lib_name $relative_new_lib_dir"
+  
+  if [ ! -d "$newlibdir" ] ; then
+    libparentdir=`dirname $newlibdir`
+    if [ ! -d "$libparentdir" ]; then
+        mkdir -p "$libparentdir"
+    fi
+    cp -a "$blank_cds_library" "$newlibdir"
+    $findcmd "$newlibdir" -print0 | xargs -0 chmod u+w 
+  else
+    dirs_in_blank=`(cd "$blank_cds_library" ; $findcmd . -type d)`
+    files_in_blank=`(cd "$blank_cds_library" ; $findcmd . -type f)`
+    for dir in $dirs_in_blank ; do
+        dir=`echo "$dir" | $sedcmd -e "s:^./:$newlibdir/:"`
+        if [ ! -d "$dir" ]; then
+            mkdir -p "$dir"
+            chmod u+w "$dir"
+        fi
+    done
+    for file in $files_in_blank ; do
+        nfile=`echo "$file" | $sedcmd -e "s:^./:$newlibdir/:"`
+        file=`echo "$file" | $sedcmd -e "s:^./:$blank_cds_library/:"`
+        if [ ! -f "$nfile" ]; then
+            cp -p "$file" "$nfile"
+            chmod u+w "$nfile"
+        fi
+    done
+  fi
+
+  echo "$cds_lib_entry" >>$cds_lib_generated
+
+fi
+
+cds_lib_generated_base=`basename $cds_lib_generated`
+
+cds_lib_tmp=`mktemp /tmp/ensurecelllib.XXXXXX`
+if [ -f "$cds_lib" ] ; then
+  cat $cds_lib | \
+    $grepcmd -ve "^SOFTINCLUDE[[:space:]]\+.*$cds_lib_generated_base" >$cds_lib_tmp
+fi
+echo "SOFTINCLUDE $cds_lib_generated" >>$cds_lib_tmp
+cp $cds_lib_tmp $cds_lib
+rm $cds_lib_tmp

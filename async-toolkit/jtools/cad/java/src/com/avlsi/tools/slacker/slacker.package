@@ -1,0 +1,9 @@
+1 0
+# Copyright 2002 Fulcrum Microsystems.  All rights reserved.
+# $Id$
+# $DateTime$
+# $Author$
+
+java com.avlsi.tools.slacker.Slacker
+$arch/bin/slacker.sh	slacker.sh 775
+$arch/bin/solve ../../../../../../c/solve/solve 775

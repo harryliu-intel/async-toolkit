@@ -1,0 +1,228 @@
+when( $debug$ 
+ilToolBox()
+ilDebugToolBox()
+ilDebugToolBoxForm->autoStacktrace->value = "16"
+hiCloseWindow(ilDebugToolBoxWindow) )
+
+( UseGraphics= $graphics$ )
+( OptionRoute= $route$ )
+( OptionPlace= $place$ )
+( OptionCompactSuperstacks= $compactsuperstacks$ )
+( OptionKeepPlacerViewHistory= $keepplacerviews$ )
+( OptionKeepRouterViewHistory= $keeprouterviews$ )
+( OptionSemiAutomatedMode= t )
+( PlugsInRoutingStage= $plugs_in_routing_search$ )
+( OptionDetailedRouterSearch= t )
+( OptionBackwardsRouterSearch= t )
+
+
+
+( CellDir= "$cell_dir$" )
+( LibName= "$lib$" )
+( CellName= "$cell$" )
+( PackageRoot= "$package_root$" )
+( ScriptRoot= sprintf( nil "%s/share/script" PackageRoot  ) )
+( SkillLibRoot= sprintf( nil "%s/share/skill" PackageRoot  ) )
+
+
+
+( GateLibrary= "$gate_lib$" )
+( StackLibrary= "$stack_lib$" )
+
+( PinsDirectory= "$cell_dir$/autopins" )
+( SkillNetlistDir= "$cell_dir$/ilnets" )
+( SkillDirectivesDir= "$cell_dir$/ildirectives" )
+( LogFileName= "$logfile$" )
+
+
+;load autoload and pdkinfo
+( PDKRoot= "$fulcrum_pdk_root$" )
+load( sprintf( nil "%s/share/Fulcrum/pdkinfo.il" PDKRoot ) )
+load( sprintf( nil "%s/autoload.il" SkillLibRoot ) )
+
+( RouterDir= ( sprintf nil "%s/router" CellDir ) )
+createDir( RouterDir )
+
+;routing
+( RouterRuleFile= sprintf( nil "%s/share/Fulcrum/cell_automation/router/runleaf.rul" PDKRoot ) )
+( RouterMinDoFile= sprintf( nil "%s/share/Fulcrum/cell_automation/router/runleaf_min.do" PDKRoot ) )
+( RouterDoFile= sprintf( nil "%s/share/Fulcrum/cell_automation/router/runleaf.do" PDKRoot ) )
+( RouterTemplateTclFile= sprintf( nil "%s/share/Fulcrum/cell_automation/router/leaf_vsr.tcl" PDKRoot ) )
+( RouterExcludeNetFile= sprintf( nil "%s/share/Fulcrum/cell_automation/router/leaf.excludenet" PDKRoot ) )
+
+( RouterConductorDepth= 0 )
+( RouterKeepOutDepth= 32 )
+
+
+( PlacerRuleFile= sprintf( nil "%s/share/Fulcrum/cell_automation/placer.rules" PDKRoot ) )
+
+( WorkingDir= "$cds_wd$" )
+
+;auto pin template
+glcFindPinTemplate( CellName
+                     ?PinGlobalWirePitch 0.24
+                     ?PinGlobalWireWidth 0.12
+                     ?PinGlobalWireSpacing 0.12
+                     ?PowerGridTrackOffset -1 
+                     ?AutoPinFileName sprintf(nil "%s/%s.pins.il" PinsDirectory CellName)
+                     ?templateViewName "layout"
+                   )
+
+;assura stuff
+( SchematicFile= "$cdl_file$" )
+
+( PlacerCheckDRCRuleFile= sprintf( nil "%s/share/Fulcrum/cell_automation/placer_check_drc_assura.txt" PDKRoot ) )
+( PlacerCheckDRCAssuraSets= list( "LATCH_UP" ) )
+( LVSRuleFile= sprintf( nil "%s/share/Fulcrum/assura/extract.rul" PDKRoot ) )
+( LVSBindFile= sprintf( nil "%s/share/Fulcrum/assura/bind.rul" PDKRoot ) )
+( LVSCompareFile= sprintf( nil "%s/share/Fulcrum/assura/compare.rul" PDKRoot ) )
+( LVSIncludeFile= sprintf( nil "%s/share/Fulcrum/assura/LVSinclude.rsf" PDKRoot ) )
+( PlugDRCRuleFile= sprintf( nil "%s/share/Fulcrum/plugs/plugs.assura.rules" PDKRoot ) )
+( NotchDRCRuleFile= sprintf( nil "%s/share/Fulcrum/notch/fill_notches.assura.rules" PDKRoot ) )
+( KeepOutDRCRuleFile= sprintf( nil "%s/share/Fulcrum/cell_automation/keepout.rules" PDKRoot ) )
+( AssuraPlacerCheckDRCDir= sprintf( nil "%s/assura_drc" CellDir ) )
+createDir( AssuraPlacerCheckDRCDir )
+
+( AssuraLVSDir= sprintf( nil "%s/assura_lvs" CellDir ) )
+createDir( AssuraLVSDir )
+
+( NetListTable= NetlistTableGetSkillNetlistTableForCellName(
+   CellName SkillNetlistDir ) )
+( DirectiveTable= CellInfoGetTableForCellName(
+   CellName SkillDirectivesDir ) )
+
+
+;do some dealings with the tables
+( YPitch= UserUnitsPerMeter * CellInfoGetHeightInMeters( DirectiveTable DirectiveUnitsPerMeter ) )
+( StatisticsTable= arrayref( NetListTable "s" ) )
+
+( TotalTransistorArea= UserUnitsPerMeter * UserUnitsPerMeter *
+arrayref( StatisticsTable "a" ) )
+( TargetCellArea=  TotalTransistorArea*
+cond( (CellInfoLookup( DirectiveTable "density_factor" ) )
+( 20.0 )  
+) )
+FinalBoundaryPosition= cond( 
+  (CellInfoLookup( DirectiveTable "boundary_position" ) )
+  (list( 0 0 ))
+)
+
+( LeftBuffer= -car( BoundaryPosition )*UserUnitsPerMeter )
+( RightBuffer= -car( BoundaryPosition )*UserUnitsPerMeter )
+
+
+;fudged
+( TargetCellWidth=  3.0*quotient( TargetCellArea YPitch) )
+
+;all the various view names used
+( ScratchViewName= "scratch" )
+
+;placement phase
+( NetListViewName= "netlist" )
+( GenFromSourceViewName= "genfromsource" )
+( PlacedOnlyViewName= "placedonly" )
+( PlacedViewName= "placed" )
+( PlacedScratchViewName= "placedscratch" )
+( PreRouteViewName= "preroute" )
+( PreRouteScratchViewName= "preroutescratch" )
+
+;routing phase
+( RoutedScratchViewName= "routedscratch" )
+( RoutedViewName= "routed" )
+( PreKeepOutRoutedViewName= "prekeepoutrouted" )
+( PreKeepOutRoutedScratchViewName= "prekeepoutroutedscratch" )
+( KeepOutRoutedViewName= "keepoutrouted" )
+( RoutingViewName= "routing" )
+( AbstractViewName= "abstract" )
+
+BestPlacedViewName= nil
+BestPreRouteViewName= nil
+BestRoutedViewName= nil
+BestPlacedViewArea= 1e9
+BestRoutedViewArea= 1e9
+PreRouteViewNames= nil
+BestPreKeepOutRoutedViewName= nil
+
+;cdf, placer info
+TransistorLayoutViewName= "layout"
+NRegionComponentClassName= "NSTACK"
+PRegionComponentClassName= "PSTACK"
+GateRegionComponentClassName= "GATE"
+
+
+InitialRoutingSearchPassed= nil
+RoutingGood= nil
+PlacementGood= nil
+
+;binary search tables
+ColumnSearchTable= makeTable( `ColumnSearchTable )
+NWidthSearchTable= makeTable( `NWidthSearchTable )
+PWidthSearchTable= makeTable( `PWidthSearchTable )
+RouterGapWidthInitialSearchTable= nil
+RouterGapWidthSearchTableList= nil
+InitialRoutingSearchDone= nil
+
+;chain/superstack 
+NComponentLibCellPairRegExs= NSuperStackLibCellPairRegExs
+PComponentLibCellPairRegExs= PSuperStackLibCellPairRegExs
+MaxMergeHeight= YPitch - 2.0* UserUnitsPerMeter * LeafCellMinVerticalSpacingToBoundary
+MaxNonPowerMergeHeight= min( 0.5* YPitch 3.0+ YPitch * 0.2 )
+MaxPowerMergeHeight= min( 0.5* YPitch 3.0+ YPitch * 0.1 )
+PreferEvenFolds= t
+
+
+;binary search values
+NMinimumTrialMaximumTriple= nil
+PMinimumTrialMaximumTriple= nil
+InitialColumnCount= nil
+NWidthData= nil
+PWidthData= nil
+NWidth= nil
+PWidth= nil
+ColumnCount= nil
+InitialColumnInfo= nil
+GateRegionHeight= nil
+GateTransistorSpacing= 0
+ColumnSpacing= 0
+
+;step number
+CurrentStepNumber= 0 
+
+;Licenses
+VirtuosoXLVersion= 5.0
+VirtuosoVersion= 5.0
+LicensesToLeave= 0
+
+;instantiator
+DFIIDir= "$dfII_dir$" 
+InstantiatorView= dbOpenCellViewByType( car( ( NameParseCellName "$cell$" ) )
+"$cell$" "instantiator" nil "r" ) 
+
+;insantiate netlist
+errset( GenFromSourceView = GenFromSourceMain( 
+  LibName CellName GenFromSourceViewName SkillNetlistDir SkillDirectivesDir) t)
+CurrentSearchTable= (if OptionPlace ColumnSearchTable )
+
+CurrentStepNumber = 0
+
+;place
+PlacedView= nrOpenCellViewReadable( LibName CellName  PlacedViewName )
+(when OptionPlace && !PlacedView
+  PlacerSearchStatus = nil
+  errset( while((PlacerSearchStatus != t && CurrentStepNumber<100 )
+                PlacerSearchStatus = PlacerSearch()
+        if((CurrentStepNumber==99) printf("Error: Placing over 100 iteration. Giving up!\n"))
+) t) )
+
+CurrentStepNumber = 0
+
+;route
+RoutedView= nrOpenCellViewReadable( LibName CellName RoutedViewName )
+(when OptionRoute && !RoutedView
+  RouterSearchStatus = nil
+  errset( while((RouterSearchStatus != t && CurrentStepNumber<1000)  
+                RouterSearchStatus = RouterSearch()
+        if((CurrentStepNumber==999) printf("Error: Routing over 1000 iteration. Giving up!\n"))
+) t) )
+
+(exit)

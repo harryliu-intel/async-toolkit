@@ -1,0 +1,42 @@
+#!/usr/intel/bin/perl -l
+use strict;
+use Getopt::Long;
+
+my @lt = localtime(time);
+$lt[5] += 1900;
+$lt[4]++;
+my $file= sprintf "/mnt/fulcrum/scratch1/aubrey/quotas/quotas%4d%02d%02d%02d%02d.txt", $lt[5],$lt[4],$lt[3],$lt[2],$lt[1];
+my $server="na3020-b";
+my $volume="scratch";
+
+GetOptions (
+    "file=s" => \$file,
+    "server=s" => \$server,
+    "volume=s" => \$volume,
+);
+
+$server .= ".internal.avlsi.com" if ! ($server =~ /\.internal.avlsi.com/);
+if ($file ne "" and $file ne "-") {
+    select O if open (O, ">$file");
+}
+open (P, "wget --ca-directory=/etc/openldap/cacerts --http-user=quotauser --http-password=quotas4me -O - -o /dev/null --no-check-certificate 'https://$server/api?api=/util/true&onsuccess=fv_quota_report&breadcrumb=Volumes%2CQuotas%2CReport' |");
+while (<P>) {
+    chomp;
+    if (/<pre>/) {
+        last;
+    }
+}
+while (<P>) {
+    chomp;
+    if (/<\/pre>/) {
+        last;
+    }
+    next if /^Permission denied/;
+    my @f=split;
+    next if $f[2] ne $volume and $f[2] ne "Volume" and (! /^--/) and (! /^  /);
+    print;
+}
+while (<P>) {
+}
+close P;
+close O;

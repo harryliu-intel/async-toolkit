@@ -1,0 +1,1 @@
+--variant=log_xbar,log_fc --log.scope=TESTBENCH.inst1.x.getSome:-1 --regress.qsub_mem=1

@@ -1,0 +1,8 @@
+Hello, $userfirstname$
+  You submitted change list #$changenum$.  Change list #$changenum$
+fixed the $buildname$ build. The $buildname$ build had been broken by 
+change list #$brokenchangenum$, which was submitted by $brokenuserfullname$ ( $brokenuser$ ).
+You deserve a cookie.  You should go steal one from $brokenuserfirstname$.
+
+Sincerely,
+  The Build User

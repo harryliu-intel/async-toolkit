@@ -1,0 +1,15 @@
+#!/usr/intel/bin/perl
+
+# Computes finite derivative of trace file output.
+# Used to compute I(t) and dI(t)/dt.
+$line = <STDIN>;
+while ($line) {
+    ($t, $v) = split(" ",$line);
+    if ($last_t) {
+        $dv = ($v - $last_v) / (1e-9 * ($t - $last_t));
+        print STDOUT "$t $dv\n";
+    }
+    $last_v = $v;
+    $last_t = $t;
+    $line = <STDIN>;
+}

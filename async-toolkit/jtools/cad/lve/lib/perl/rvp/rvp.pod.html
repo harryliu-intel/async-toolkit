@@ -1,0 +1,747 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>rvp - rough verilog parser</title>
+<link rev="made" href="mailto:root@localhost" />
+</head>
+
+<body style="background-color: white">
+
+<p><a name="__index__"></a></p>
+<!-- INDEX BEGIN -->
+
+<ul>
+
+	<li><a href="#rvp__rough_verilog_parser_perl_module">rvp - Rough Verilog Parser Perl Module</a></li>
+	<li><a href="#read_verilog">read_verilog</a></li>
+	<li><a href="#get_problems">get_problems</a></li>
+	<li><a href="#set_debug">set_debug</a></li>
+	<li><a href="#unset_debug">unset_debug</a></li>
+	<li><a href="#get_files">get_files</a></li>
+	<li><a href="#get_files_modules">get_files_modules</a></li>
+	<li><a href="#get_files_full_name">get_files_full_name</a></li>
+	<li><a href="#get_files_stats">get_files_stats</a></li>
+	<li><a href="#file_exists">file_exists</a></li>
+	<li><a href="#get_modules">get_modules</a></li>
+	<li><a href="#get_modules_t_and_f">get_modules_t_and_f</a></li>
+	<li><a href="#get_modules_t_or_f">get_modules_t_or_f</a></li>
+	<li><a href="#get_modules_signals">get_modules_signals</a></li>
+	<li><a href="#get_modules_file">get_modules_file</a></li>
+	<li><a href="#get_modules_type">get_modules_type</a></li>
+	<li><a href="#get_files_includes">get_files_includes</a></li>
+	<li><a href="#get_files_included_by">get_files_included_by</a></li>
+	<li><a href="#module_ignored">module_ignored</a></li>
+	<li><a href="#module_exists">module_exists</a></li>
+	<li><a href="#get_ignored_modules">get_ignored_modules</a></li>
+	<li><a href="#get_module_signal">get_module_signal</a></li>
+	<li><a href="#get_first_signal_port_con">get_first_signal_port_con</a></li>
+	<li><a href="#get_next_signal_port_con">get_next_signal_port_con</a></li>
+	<li><a href="#get_first_signal_con_to">get_first_signal_con_to</a></li>
+	<li><a href="#get_next_signal_con_to">get_next_signal_con_to</a></li>
+	<li><a href="#get_first_instantiator">get_first_instantiator</a></li>
+	<li><a href="#get_next_instantiator">get_next_instantiator</a></li>
+	<li><a href="#get_first_instantiation">get_first_instantiation</a></li>
+	<li><a href="#get_next_instantiation">get_next_instantiation</a></li>
+	<li><a href="#get_current_instantiations_port_con">get_current_instantiations_port_con</a></li>
+	<li><a href="#get_current_instantiations_parameters">get_current_instantiations_parameters</a></li>
+	<li><a href="#get_modules_parameters">get_modules_parameters</a></li>
+	<li><a href="#get_define">get_define</a></li>
+	<li><a href="#get_context">get_context</a></li>
+	<li><a href="#get_module_start_by_context">get_module_start_by_context</a></li>
+	<li><a href="#get_has_value_by_context">get_has_value_by_context</a></li>
+	<li><a href="#get_context_name_type">get_context_name_type</a></li>
+	<li><a href="#get_pre_ignore_by_context">get_pre_ignore_by_context</a></li>
+	<li><a href="#get_first_instantiator_by_context">get_first_instantiator_by_context</a></li>
+	<li><a href="#get_inst_on_line">get_inst_on_line</a></li>
+	<li><a href="#get_signal_by_context">get_signal_by_context</a></li>
+	<li><a href="#get_t_or_f_by_context">get_t_or_f_by_context</a></li>
+	<li><a href="#get_parameter_by_context">get_parameter_by_context</a></li>
+	<li><a href="#get_anchors">get_anchors</a></li>
+	<li><a href="#expand_defines">expand_defines</a></li>
+	<li><a href="#verilog_gatetype_keywords">verilog_gatetype_keywords</a></li>
+	<li><a href="#verilog_compiler_keywords">verilog_compiler_keywords</a></li>
+	<li><a href="#verilog_signal_keywords">verilog_signal_keywords</a></li>
+	<li><a href="#chunk_read_init">chunk_read_init</a></li>
+	<li><a href="#chunk_read">chunk_read</a></li>
+</ul>
+<!-- INDEX END -->
+
+<hr />
+<p>
+</p>
+<h1><a name="rvp__rough_verilog_parser_perl_module">rvp - Rough Verilog Parser Perl Module</a></h1>
+<p>The basic idea is that first you call read_verilog will a list of all of your
+files. The files are parsed and information stored away. You are then 
+handed back a pointer to the information which you can use in calls
+to the various get_ function to get information about the verilog design.</p>
+<p>For Example:</p>
+<pre>
+ #!/usr/bin/perl -w
+ use rvp;   # use the rough verilog parser</pre>
+<pre>
+ # Read in all the files specified on the command line
+ $vdata = rvp-&gt;read_verilog(\@ARGV,[],{},1,[],[],'');</pre>
+<pre>
+ # Print out all the modules found
+ foreach $module ($vdata-&gt;get_modules()) { print &quot;$module\n&quot;; }</pre>
+<p>Unless you are doing something very strange, you can probably ignore all
+of the functions that have the words 'context' or 'anchors' in them!</p>
+<p>
+</p>
+<hr />
+<h1><a name="read_verilog">read_verilog</a></h1>
+<p>reads in verilog files, parses them and stores results in an internal 
+data structure (which I call a RVP database).</p>
+<pre>
+  Arguments:  - reference to array of files to read (can have paths)
+              - reference to hash of defines with names as keys
+              - reference to array of global includes - not used anymore,
+                 just kept for backwards compatibility
+              - quite flag. 1=be quiet, 0=be chatty.
+              - reference to array of include directories
+              - reference to array of library directories
+              - library extension string (eg '.v') or reference to array of strings</pre>
+<pre>
+  Returns:    - a pointer to the internal data structure.</pre>
+<pre>
+  Example:
+    $defines{'TRUE'}=1;  # same as +define+TRUE=1 on verilog cmd line
+    $vdata = rvp-&gt;read_verilog(\@files,[],\%defines,1,
+                                     \@inc_dirs,\@lib_dirs,\@lib_exts);</pre>
+<p>
+</p>
+<hr />
+<h1><a name="get_problems">get_problems</a></h1>
+<p>Return any problems that happened during parsing</p>
+<pre>
+  Returns:    - array of strings of problems. Each one is:
+                    &quot;TYPE:<a href="FILE:LINE">FILE:LINE</a>: description&quot;</pre>
+<p>
+</p>
+<hr />
+<h1><a name="set_debug">set_debug</a></h1>
+<p>Turns on debug printing in the parser.</p>
+<pre>
+  Returns:    - nothing</pre>
+<p>
+</p>
+<hr />
+<h1><a name="unset_debug">unset_debug</a></h1>
+<p>Turns off debug printing in the parser.</p>
+<pre>
+  Returns:    - nothing</pre>
+<p>
+</p>
+<hr />
+<h1><a name="get_files">get_files</a></h1>
+<p>Get a list of all the files in the database.</p>
+<pre>
+  Returns:    - list of all the files</pre>
+<pre>
+  Example:   @all_files = $vdata-&gt;get_files();</pre>
+<p>
+</p>
+<hr />
+<h1><a name="get_files_modules">get_files_modules</a></h1>
+<p>Get a list of all the modules in a particular file.</p>
+<pre>
+  Arguments:  - name of file</pre>
+<pre>
+  Returns:    - list of module names</pre>
+<pre>
+  Example:   @modules = $vdata-&gt;get_files_modules($file);</pre>
+<p>
+</p>
+<hr />
+<h1><a name="get_files_full_name">get_files_full_name</a></h1>
+<p>Get the full name (including path) of a file.</p>
+<pre>
+  Arguments:  - name of file</pre>
+<pre>
+  Returns:    - full path name</pre>
+<pre>
+  Example  $full_name = $vdata-&gt;get_files_full_name($file);</pre>
+<p>
+</p>
+<hr />
+<h1><a name="get_files_stats">get_files_stats</a></h1>
+<p>Get statistics about a file</p>
+<pre>
+  Arguments:  - name of file</pre>
+<pre>
+  Returns:    - number of lines in the file (more later...)</pre>
+<pre>
+  Example  $full_name = $vdata-&gt;get_files_stats($file);</pre>
+<p>
+</p>
+<hr />
+<h1><a name="file_exists">file_exists</a></h1>
+<p>Test if a particular module file  in the database.</p>
+<pre>
+  Arguments:  - file name to test.</pre>
+<pre>
+  Returns:    - 1 if exists otherwise 0</pre>
+<pre>
+  Example:   if ($vdata-&gt;file_exists($file))....</pre>
+<p>
+</p>
+<hr />
+<h1><a name="get_modules">get_modules</a></h1>
+<p>Get a list of all the modules in the database.</p>
+<pre>
+  Returns:   - list of all the modules</pre>
+<pre>
+  Example:   @all_modules = $vdata-&gt;get_modules();</pre>
+<p>
+</p>
+<hr />
+<h1><a name="get_modules_t_and_f">get_modules_t_and_f</a></h1>
+<p>Get a list of all the tasks and functions in a particular module.</p>
+<pre>
+  Arguments:  - name of module</pre>
+<pre>
+  Returns:    - list of tasks and function names</pre>
+<pre>
+  Example:    if ( @t_and_f = $vdata-&gt;get_modules_t_and_f($m))...</pre>
+<p>
+</p>
+<hr />
+<h1><a name="get_modules_t_or_f">get_modules_t_or_f</a></h1>
+<p>Get information on a task or function in a module.</p>
+<pre>
+  Arguments:  - module name
+              - task or function name</pre>
+<pre>
+  Returns:    - A 4 element list: type (task or function), definition line,
+                  file, anchor</pre>
+<pre>
+  Example:    ($t_type,$t_line ,$t_file,$t_anchor)=
+                $vdata-&gt;get_modules_t_or_f($m,$tf);</pre>
+<p>
+</p>
+<hr />
+<h1><a name="get_modules_signals">get_modules_signals</a></h1>
+<p>Get a list of all the signals in a particular module.</p>
+<pre>
+  Arguments:  - name of module</pre>
+<pre>
+  Returns:    - list of signal names</pre>
+<pre>
+  Example:    if ( @signs = $vdata-&gt;get_modules_signals($m))...</pre>
+<p>
+</p>
+<hr />
+<h1><a name="get_modules_file">get_modules_file</a></h1>
+<p>Get the file name (no path) that a module is defined in.</p>
+<pre>
+  Arguments:  - module name</pre>
+<pre>
+  Returns:    - file name without path, and the line number module starts on</pre>
+<pre>
+  Example:    ($f) = $vdata-&gt;get_modules_file($m);</pre>
+<p>
+</p>
+<hr />
+<h1><a name="get_modules_type">get_modules_type</a></h1>
+<p>Get the type of the module - It is one of: module, macromodule or primitive
+(rvp treats these all as modules).</p>
+<pre>
+  Arguments:  - module name</pre>
+<pre>
+  Returns:    - type</pre>
+<pre>
+  Example:    $t = $vdata-&gt;get_modules_type($m);</pre>
+<p>
+</p>
+<hr />
+<h1><a name="get_files_includes">get_files_includes</a></h1>
+<p>Get the file names (no path) of files included in a file.</p>
+<pre>
+  Arguments:  - file name</pre>
+<pre>
+  Returns:    - list of file names without paths</pre>
+<pre>
+  Example:    @f = $vdata-&gt;get_files_includes($file);</pre>
+<p>
+</p>
+<hr />
+<h1><a name="get_files_included_by">get_files_included_by</a></h1>
+<p>Get the file names (no path) of files that included this file.</p>
+<pre>
+  Arguments:  - file name</pre>
+<pre>
+  Returns:    - list of file names without paths</pre>
+<pre>
+  Example:    @f = $vdata-&gt;get_files_included_by($file);</pre>
+<p>
+</p>
+<hr />
+<h1><a name="module_ignored">module_ignored</a></h1>
+<p>Test if a particular module has been ignored because of duplicates found</p>
+<pre>
+  Arguments:  - module name to test</pre>
+<pre>
+  Returns:    - 1 if ignored otherwise 0</pre>
+<pre>
+  Example:   if ($vdata-&gt;module_ignored($module))....</pre>
+<p>
+</p>
+<hr />
+<h1><a name="module_exists">module_exists</a></h1>
+<p>Test if a particular module exists in the database.</p>
+<pre>
+  Arguments:  - module name to test</pre>
+<pre>
+  Returns:    - 1 if exists otherwise 0</pre>
+<pre>
+  Example:   if ($vdata-&gt;module_exists($module))....</pre>
+<p>
+</p>
+<hr />
+<h1><a name="get_ignored_modules">get_ignored_modules</a></h1>
+<p>Return a list of the ignored modules. These are modules where duplicates
+have been found.</p>
+<pre>
+  Returns:    - List of ignored modules</pre>
+<pre>
+  Example:    - foreach $module ($vdata-&gt;get_ignored_modules())....</pre>
+<p>
+</p>
+<hr />
+<h1><a name="get_module_signal">get_module_signal</a></h1>
+<p>Get information about a particular signal in a particular module.</p>
+<pre>
+  Arguments:  - name of module
+              - name of signal</pre>
+<pre>
+  Returns:    - A list containing: 
+                 - the line signal is defined
+                 - the line signal is assigned first (or -1)
+                 - line in instantiating module where an input 
+                       is driven from (or -1)
+                 - the type of the signal (input,output,reg etc)
+                 - the file the signal is in
+                 - posedge flag (1 if signal ever seen with posedge)
+                 - negedge flag (1 if signal ever seen with negedge)
+                 - second type (eg reg for a registered output)
+                 - signal real source file
+                 - signal real source line
+                 - range string if any ( not including [ and ] )
+                 - the file signal is assigned first (or '')
+                 - file for the instantiating module where an input 
+                       is driven from (or &quot;&quot;)
+                 - a pointer to an array of dimensions for memories
+                       each element of the array is a dimension, array
+                       is empty for non-memories</pre>
+<pre>
+  Note posedge and negedge information is propagated up the hierarchy to
+  attached signals. It is not propagated down the hierarchy.</pre>
+<pre>
+  Example:    ($s_line,$s_a_line,$s_i_line,$s_type,$s_file,$s_p,$s_n,
+               $s_type2,$s_r_file,$s_r_line,$range,$s_a_file,$s_i_file) = 
+                      $vdata-&gt;get_module_signal($m,$sig);</pre>
+<p>
+</p>
+<hr />
+<h1><a name="get_first_signal_port_con">get_first_signal_port_con</a></h1>
+<p>Get the first port that this signal in this module is connected to.</p>
+<pre>
+  Arguments:  - module name
+              - signal name</pre>
+<pre>
+  Returns:    - a 5 element list: instantiated module name, instance name
+                  port name, line number and file</pre>
+<pre>
+  Example:    ($im,$in,$p,$l,$f)=$vdata-&gt;get_first_signal_port_con($m,$s);</pre>
+<p>
+</p>
+<hr />
+<h1><a name="get_next_signal_port_con">get_next_signal_port_con</a></h1>
+<p>Get the next port that this signal in this module is connected to.</p>
+<pre>
+  Returns:    - a 5 element list: instantiated module name, instance name
+                  port name, line number and file</pre>
+<pre>
+  Example:    ($im,$in,$p,$l,$f)=$vdata-&gt;get_next_signal_port_con();</pre>
+<p>
+</p>
+<hr />
+<h1><a name="get_first_signal_con_to">get_first_signal_con_to</a></h1>
+<p>Get the first signal that is connected to this port in an
+instantiation of this module. This only works for instances that use
+the .port(sig) notation.</p>
+<pre>
+  Arguments:  - module name
+              - signal name</pre>
+<pre>
+  Returns:    - a 4 element list: signal connected to this port
+                                  module signal is in
+                                  instance (of this module) where the connection
+                                    occurs</pre>
+<pre>
+  Example:    ($cts,$ctm,$cti)=$vdata-&gt;get_first_signal_con_to($m,$s);</pre>
+<p>
+</p>
+<hr />
+<h1><a name="get_next_signal_con_to">get_next_signal_con_to</a></h1>
+<p>Get the next signal that is connected to this port in an
+instantiation of this module. This only works for instances that use
+the .port(sig) notation.</p>
+<pre>
+  Arguments:  - module name
+              - signal name</pre>
+<pre>
+  Returns:    - a 4 element list: signal connected to this port
+                                  module signal is in
+                                  instance (of this module) where the connection
+                                    occurs</pre>
+<pre>
+  Example:    ($cts,$ctm,$cti)=$vdata-&gt;get_next_signal_con_to();</pre>
+<p>
+</p>
+<hr />
+<h1><a name="get_first_instantiator">get_first_instantiator</a></h1>
+<p>Get the first thing that instantiates this module.</p>
+<pre>
+  Arguments:  - module name</pre>
+<pre>
+  Returns:    - a 4 element list: instantiating module, file, instance name, line</pre>
+<pre>
+  Example:    
+                ($im,$f,$i) = $vdata-&gt;get_first_instantiator($m );</pre>
+<p>
+</p>
+<hr />
+<h1><a name="get_next_instantiator">get_next_instantiator</a></h1>
+<p>Get the first thing that instantiates the module specified in 
+get_first_instantiator (or _by_context).</p>
+<pre>
+  Returns:    - a 4 element list: instantiating module, file, 
+                                    instance name, line</pre>
+<pre>
+  Example:    
+                ($im,$f,$i) = $vdata-&gt;get_next_instantiator();</pre>
+<p>
+</p>
+<hr />
+<h1><a name="get_first_instantiation">get_first_instantiation</a></h1>
+<p>Get the first thing that this module instantiates.</p>
+<pre>
+  Arguments:  - module name</pre>
+<pre>
+  Returns:    - a 4 element list: instantiated module name, file, 
+                  instance name, and line number</pre>
+<pre>
+  Example:    
+                ($im,$f,$i,$l) = $vdata-&gt;get_first_instantiation($m);</pre>
+<p>
+</p>
+<hr />
+<h1><a name="get_next_instantiation">get_next_instantiation</a></h1>
+<p>Get the next thing that this module instantiates.</p>
+<pre>
+  Returns:    - a 4 element list: instantiated module name, file, 
+                  instance name, and line number</pre>
+<pre>
+  Example:    
+                ($im,$f,$i,$l) = $vdata-&gt;get_next_instantiation();</pre>
+<p>
+</p>
+<hr />
+<h1><a name="get_current_instantiations_port_con">get_current_instantiations_port_con</a></h1>
+<p>Gets the port connections for the current instantiations (which is got
+using get_first_instantiation and get_next_instantiation). If the 
+instantiation does not use .port(...) syntax and rvp does not have the
+access to the source of the module then the port names will be returned as
+numbers in connection order starting at 0.</p>
+<pre>
+  Returns:    - A hash (well, really a list that can be assigned to a hash). 
+               The keys of the hash are the port names. The values of the
+               hash is everything (except comments) that appeared in the 
+               brackets in the verilog.</pre>
+<pre>
+  Example:    %port_con = $vdata-&gt;get_current_instantiations_port_con();
+              foreach $port (keys %port_con) { ...</pre>
+<p>
+</p>
+<hr />
+<h1><a name="get_current_instantiations_parameters">get_current_instantiations_parameters</a></h1>
+<p>Gets the parameters for the current instantiations (which is set using
+get_first_instantiation and get_next_instantiation).  If the
+instantiation parameters does not use the verilog 2001 .name(...)
+syntax and rvp does not have the access to the source of the module
+then the parameter names will be returned as numbers reflecting the
+order (starting at 0).</p>
+<pre>
+  Returns:    - A hash (well, really a list that can be assigned to a hash). 
+               The keys of the hash are the parameters names. The values of the
+               hash is everything (except comments) in the value.</pre>
+<pre>
+  Example:    %parameters = $vdata-&gt;get_current_instantiations_parameters();
+              foreach my $p (keys %parameters) { ...</pre>
+<p>
+</p>
+<hr />
+<h1><a name="get_modules_parameters">get_modules_parameters</a></h1>
+<p>Gets the parameters for a module.</p>
+<pre>
+  Arguments:  - module name</pre>
+<pre>
+  Returns:    - A hash (well, really a list that can be assigned to a hash). 
+               The keys of the hash are the parameters names. The values of the
+               hash is everything (except comments) in the value.</pre>
+<pre>
+  Example:    %parameters = $vdata-&gt;get_modules_parameters();
+              foreach my $p (keys %parameters) { ...</pre>
+<p>
+</p>
+<hr />
+<h1><a name="get_define">get_define</a></h1>
+<p>Find out where a define is defined and what the value is</p>
+<pre>
+  Arguments:  - name of the define
+             Optional arguments where a you want the correct location and
+               value for a particular use of a multiplely defined define:
+              - file where define is used 
+              - line where define is used</pre>
+<pre>
+  Returns:    - list with three elements: file, line, value
+                 or if the define does not exist it returns a empty list.
+                 if the define was defined on the command line it sets file=&quot;&quot;
+                  and line=0</pre>
+<pre>
+  Example:    ($f,$l,$v) = $vdata-&gt;get_define($word,$file,$line);</pre>
+<p>
+</p>
+<hr />
+<h1><a name="get_context">get_context</a></h1>
+<p>Get the context (if any) for a line in a file.</p>
+<pre>
+  Arguments:  - file name
+              - line number</pre>
+<pre>
+  Returns:    - line number if there is a context, zero if there is none.</pre>
+<pre>
+  Example:      $l = $vdata-&gt;get_context($filename,$line);</pre>
+<p>
+</p>
+<hr />
+<h1><a name="get_module_start_by_context">get_module_start_by_context</a></h1>
+<p>Test if the context is a module definition start.</p>
+<pre>
+  Arguments:  - file name
+              - line number</pre>
+<pre>
+  Returns:    - module name if it is a module start, 0 otherwise</pre>
+<pre>
+  Example:     if($vdata-&gt;get_module_start_by_context($filename,$line))..</pre>
+<p>
+</p>
+<hr />
+<h1><a name="get_has_value_by_context">get_has_value_by_context</a></h1>
+<p>Check if the context has a value (ie a new module or something). Contexts
+that just turn on and off preprocessor ignoring do not have values.</p>
+<pre>
+  Arguments:  - file name
+              - line number</pre>
+<pre>
+  Returns:    - 1 if there is a value, 0 otherwise</pre>
+<pre>
+  Example:    if ($vdata-&gt;get_has_value_by_context($file,$line))..</pre>
+<p>
+</p>
+<hr />
+<h1><a name="get_context_name_type">get_context_name_type</a></h1>
+<p>Find the reason for a new context - is it a module / function or task.
+Contexts that just turn on and off preprocessor ignoring do not have values.</p>
+<pre>
+  Arguments:  - file name
+              - line number</pre>
+<pre>
+  Returns:    - name
+              - type [ module | function | task ]</pre>
+<pre>
+  Example:    ($n,$t)=$vdata-&gt;get_context_name_type($file,$line);</pre>
+<p>
+</p>
+<hr />
+<h1><a name="get_pre_ignore_by_context">get_pre_ignore_by_context</a></h1>
+<p>Test if the context is preprocessor ignore.</p>
+<pre>
+  Arguments:  - file name
+              - line number</pre>
+<pre>
+  Returns:    - 1 if it is, 0 otherwise</pre>
+<pre>
+  Example:    if ($vdata-&gt;get_pre_ignore_by_context($file,$line))..</pre>
+<p>
+</p>
+<hr />
+<h1><a name="get_first_instantiator_by_context">get_first_instantiator_by_context</a></h1>
+<p>Get the first thing that instantiates this module using the context. The
+context must be a module_start.</p>
+<pre>
+  Arguments:  - file name (for context) 
+              - line name (for context)</pre>
+<pre>
+  Returns:    - a 4 element list: instantiating module, file, instance name, line</pre>
+<pre>
+  Example:    
+              @i=$vdata-&gt;get_first_instantiator_by_context($f,$l );</pre>
+<p>
+</p>
+<hr />
+<h1><a name="get_inst_on_line">get_inst_on_line</a></h1>
+<p>Gets the instance name of a line in a file</p>
+<pre>
+  Arguments:  - file name
+              - line number</pre>
+<pre>
+  Returns:    - name if the line has an instance name, 0 otherwise</pre>
+<pre>
+  Example:    if ( $new_inst = $vdata-&gt;get_inst_on_line($file,$line) ) ...</pre>
+<p>
+</p>
+<hr />
+<h1><a name="get_signal_by_context">get_signal_by_context</a></h1>
+<p>Same as get_module_signal but works by specifying a context.</p>
+<pre>
+  Arguments:  - context file name
+              - context line number
+              - signal name</pre>
+<pre>
+  Returns:    same as get_module_signal</pre>
+<pre>
+  Example:</pre>
+<p>
+</p>
+<hr />
+<h1><a name="get_t_or_f_by_context">get_t_or_f_by_context</a></h1>
+<p>Same as get_modules_t_or_f but works by specifying a context.</p>
+<pre>
+  Arguments:  - context file name
+              - context line number
+              - task name</pre>
+<pre>
+  Returns:    - same as get_modules_t_or_f</pre>
+<pre>
+  Example:</pre>
+<p>
+</p>
+<hr />
+<h1><a name="get_parameter_by_context">get_parameter_by_context</a></h1>
+<p>Return the file and line for a named parameter using context</p>
+<pre>
+  Arguments:  - context file name
+              - context line number
+              - parameter name</pre>
+<pre>
+  Returns:    - file and line of definition</pre>
+<pre>
+  Example:</pre>
+<p>
+</p>
+<hr />
+<h1><a name="get_anchors">get_anchors</a></h1>
+<p>Get the anchors for a line in a file.</p>
+<pre>
+  Returns:    - a list of anchors</pre>
+<pre>
+  Example:   foreach $anchor ( $vdata-&gt;get_anchors($file,$line) ) ..</pre>
+<p>
+</p>
+<hr />
+<h1><a name="expand_defines">expand_defines</a></h1>
+<p>Expand the defines in a line of verilog code.  for best use this
+should be called line by line, so that the defines get the correct
+values when defines are defined multiple times</p>
+<pre>
+  Arguments:  - a pointer to the string to expand the defines in
+              - the file the line is from
+              - the line number of the line</pre>
+<pre>
+  Returns:    - nothing</pre>
+<pre>
+  Example:   $vdata-&gt;expand_defines(\$line_to_expand,$file,$line);</pre>
+<p>
+</p>
+<hr />
+<h1><a name="verilog_gatetype_keywords">verilog_gatetype_keywords</a></h1>
+<pre>
+  Returns:    - a list of verilog gatetype keywords</pre>
+<pre>
+  Example:   @keywords = rvp-&gt;verilog_gatetype_keywords();</pre>
+<p>
+</p>
+<hr />
+<h1><a name="verilog_compiler_keywords">verilog_compiler_keywords</a></h1>
+<pre>
+  Returns:    - a list of verilog compiler keywords</pre>
+<pre>
+  Example:   @keywords = rvp-&gt;verilog_compiler_keywords();</pre>
+<p>
+</p>
+<hr />
+<h1><a name="verilog_signal_keywords">verilog_signal_keywords</a></h1>
+<pre>
+  Returns:    - a list of verilog signal keywords</pre>
+<pre>
+  Example:   @keywords = rvp-&gt;verilog_signal_keywords();</pre>
+<p>
+</p>
+<hr />
+<h1><a name="chunk_read_init">chunk_read_init</a></h1>
+<p>Initialise a file for chunk reading (see chunk_read for more
+details). It actually reads the whole file into a string, which
+chunk_read then reads a chunk at a time. The file is closed before
+chuck_read_init returns.</p>
+<pre>
+  Arguments:  - the file to read (with path if needed)
+              - tabstop: 0 = leave tabs alone
+                         N = turn tabs spaces with each tabstop=N
+  Returns:    - a handle to pass to chunk_read or 0 if file open fails</pre>
+<pre>
+  Example:    
+            my $chunkRead = rvp-&gt;chunkr_read_init($f,$opts{tabstop});</pre>
+<p>
+</p>
+<hr />
+<h1><a name="chunk_read">chunk_read</a></h1>
+<p>Reads verilog a chunk at a time. The file is opened using
+chunk_read_init. Then chunk_read is used to read the file a chunk at a
+time.  A chunk is a line or part of a line that is all the same type.</p>
+<pre>
+  The types are: 
+              comment   - either // or /* */ comment
+              attribute - verilog 2001 (* *) atribute
+              include   - a line containing `include &quot;file&quot;
+              string    - a string
+              code      - anything else (verilog code, defines, compliler keywords)</pre>
+<p>Nothing is removed from the file, so if each chunk is printed after being read
+you will end up with exactly the same file as you put in.</p>
+<pre>
+  Arguments:  - handle (from chunk_read_init)</pre>
+<pre>
+  Returns:    - 0 at the end of file, or a hash ref with the following keys:
+              type       - one of the types (see above)
+              text       - the text read from the file
+              line       - the line number the text is on
+              isANewLine - true if chunk is the first chunk of the line
+              isStart    - true if the chunk is the start (eg &quot;/*...&quot; for 
+                             a comment )
+              isEnd      - true if the chunk is the end ( eg &quot;*/&quot; )
+                      NOTE: isEnd is set to undefined for a
+                       type=&quot;code&quot; that ends in a newline. This is
+                       because chunk_read doesn't know if the code is
+                       ending or not. If you need to know in this case
+                       you can read the next chunk and see what type it is.</pre>
+<pre>
+  Example:    
+            my $chunkRead = rvp-&gt;chunk_read_init($f,0);
+            while ($chunk = rvp-&gt;chunk_read($chunkRead)) {
+                    print $chunk-&gt;{text} unless $chunk-&gt;{type} eq &quot;comment&quot;;
+            }</pre>
+
+</body>
+
+</html>

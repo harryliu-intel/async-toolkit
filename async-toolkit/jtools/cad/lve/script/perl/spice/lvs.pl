@@ -1,0 +1,506 @@
+#!/usr/intel/bin/perl -w
+# Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+# SPDX-License-Identifier: Apache-2.0
+
+# $Id$
+# $DateTime$
+# $Author$
+use strict;
+
+BEGIN {
+    unshift @INC, "$ENV{'FULCRUM_PACKAGE_ROOT'}/lib/perl";
+}
+
+use Cwd;
+use IPC::Open2;
+use Getopt::Long;
+use LveUtil qw /reName parse_nodeprops/;
+
+
+$ENV{SNPSLMD_QUEUE}="true";
+my $pwd=getcwd();
+
+my $working_dir = "$pwd";
+my $gdsii="";
+my $oasis=0;
+my $graycell_file="";
+my $cdl_file="";
+my $cdl_cell_name="";
+my @include_before=();
+my $pdk_root="";
+my $task;
+my $extra_extract_equiv="";
+my $extra_sp='';
+my $blackbox=0;
+my $icv_options;
+my $threads=2;
+my $icv_path="$ENV{PDK_CPDK_PATH}/runsets/icvtdr/";
+my $rc_database=0;
+my $nodeprops='';
+my $setuponly=0;
+my $cell_name_limit=75;
+my $subcell_name_limit=64;
+my $dup_cell="USE_MULTIPLE";
+
+sub usage {
+    my ($msg) = @_;
+    print STDERR "$msg\n" if defined $msg;
+    my $usage  = "Usage: lvs [args] cell\n";
+    $usage .= "  Args includes:\n";
+    $usage .= "    GENERAL OPTIONS\n";
+    $usage .= "    --gds2-file=[$gdsii]\n";
+    $usage .= "    --oasis=[$oasis] (set to 1 if input is OASIS)\n";
+    $usage .= "    --working-dir=[$working_dir]\n";
+    $usage .= "    --cdl-file=[$cdl_file]\n";
+    $usage .= "    --cdl-cell-name=[$cdl_cell_name]\n";
+    $usage .= "    --include-before=[@include_before] (Prepend directory to include search path)\n";
+    $usage .= "    --gray-cell-list=[$graycell_file] (gray box cell list)\n";
+    $usage .= "    --extra-sp=[$extra_sp] (extra SPICE files to include)\n";
+    $usage .= "    --dup-cell=[$dup_cell] (USE_MULTIPLE, USE_ONE, ABORT)\n";
+    $usage .= "    --extra-extract-equiv=[$extra_extract_equiv] (file with list of extra equiv cast cells.
+                    \t\tFormat: cast_cell_name  layout_cell_name)\n";
+    $usage .= "    --blackbox=[$blackbox]\n";
+    $usage .= "    --icv-options=[$icv_options] (Extra ICV command options)\n";
+    $usage .= "    --threads=[$threads] (ICV thread)\n";
+    $usage .= "    --rc-database=[$rc_database] (Generate RC database)\n";
+    $usage .= "    --node-props=[$nodeprops] (Node properties file to find supply nets)\n";
+    $usage .= "    --setup-only=[$setuponly] (Prepare files but don't run ICV)\n";
+    $usage .= "    --fulcrum-pdk-root=[$pdk_root]\n";
+
+    print STDERR "$usage\n";
+    exit 1;
+}
+
+#my %options = (
+#   "working-dir=s" => \$working_dir,
+#   "gds2-file=s" => \$gdsii,
+#   "cdl-file=s" => \$cdl_file,
+#   "cdl-cell-name=s" => \$cdl_cell_name,
+#   "blackbox:i" => \$blackbox,
+#   "gray-cell-list=s" => \$graycell_file,
+#   "extra-extract-equiv=s" => \$extra_extract_equiv,
+#   "icv-options=s" => \$icv_options,
+#   "threads=i" => \$threads,
+#   "rc-database=i" => \$rc_database,
+#   "fulcrum-pdk-root=s" => \$pdk_root
+#);
+#GetOptions( %options ) or usage("Illegal Option");
+while (defined $ARGV[0] and $ARGV[0] =~ /^--(.*)/) {
+    my ($flag, $value) = split("=",$1);
+#    my $value_org=$value;
+    $value=1 if ! defined $value;
+    if ($flag eq "working-dir") {
+            $working_dir = $value if(defined $value);
+    } elsif ($flag eq "gds2-file") {
+            $gdsii = $value if(defined $value);
+    } elsif ($flag eq "oasis") {
+            $oasis = $value;
+    } elsif ($flag eq "gray-cell-list") {
+            $graycell_file = $value if(defined $value);
+    } elsif ($flag eq "cdl-file") {
+            $cdl_file = $value if(defined $value);
+    } elsif ($flag eq "cdl-cell-name") {
+            $cdl_cell_name = $value if(defined $value);
+    } elsif ($flag eq "include-before") {
+            unshift @include_before, $value;
+    } elsif ($flag eq "fulcrum-pdk-root") {
+            $pdk_root = $value  if(defined $value);
+    } elsif ($flag eq "blackbox") {
+            if(defined $value){
+              $blackbox = $value;
+            }else{
+              $blackbox = 1;
+            }
+    } elsif ($flag eq "threads") {
+        $threads = $value if (defined $value);
+    } elsif ($flag eq "extra-extract-equiv") {
+        $extra_extract_equiv = $value  if(defined $value);
+    } elsif ($flag eq "extra-sp") {
+        $extra_sp = $value if(defined $value);
+    } elsif ($flag eq "dup-cell") {
+        $dup_cell = $value if(defined $value);
+    } elsif ($flag eq "icv-options") {
+        $icv_options = $value  if(defined $value);
+    } elsif ($flag eq "rc-database") {
+            if(defined $value){
+              $rc_database = $value;
+            }else{
+              $rc_database = 1;
+            }
+    } elsif ($flag eq "node-props") {
+        $nodeprops = $value;
+    } elsif ($flag eq "setup-only") {
+        $setuponly = $value;
+    } else {
+        print STDERR "Error: argument --${flag}=${value} not recognized.\n";
+        &usage();
+    }
+    shift @ARGV;
+}
+
+
+@ARGV == 1 or usage("No Cell");
+my $cell_name = shift;
+
+if ($threads < 1) {
+    $threads=1;
+}
+-d $working_dir or $working_dir = `mktemp -d /scratch/lvs.XXXXXX`;
+chomp $working_dir;
+$pdk_root="$ENV{FULCRUM_PDK_ROOT}" if ( ! ( -d $pdk_root ) and -d $ENV{FULCRUM_PDK_ROOT});
+-d $pdk_root or usage("fulcrum-pdk-root improperly defined");
+
+if ($oasis) {
+    $cell_name_limit = 1023;
+    $subcell_name_limit = 1023;
+}
+
+
+my $longcellnametop = length($cell_name) > $cell_name_limit ? 1 : 0;
+my $topcell=$longcellnametop ? "TOP_CELL" : $cell_name;
+$cdl_cell_name ne "" or $cdl_cell_name=$cell_name;
+my $longcellnamegray=0;
+my %graylist=();
+my %reversegraylist=();
+
+sub makegdsgraylist {
+    my ($graycell_file) = @_;
+    my $n=0;
+    if ( -s "$graycell_file") {
+        open (P, "rename --type=cell --from=cast --to=gds2 <'$graycell_file' |");
+        while (<P>) {
+            chomp;
+            s/\s+/ /g;
+            s/^\s//;
+            s/\s$//;
+            if (length ($_) > 1) {
+                $graylist{$_}=$_;
+                $reversegraylist{$_}=$_;
+                if (length ($_) > $subcell_name_limit) {
+                    $graylist{$_}=sprintf "SUBCELL_%04d", $n;
+                    $reversegraylist{$graylist{$_}} = $_;
+                    $longcellnamegray = 1;
+                }
+                $n++;
+            }
+        }
+        close P;
+    }
+    if ($longcellnamegray==1 or 1) {
+        my $fx;
+        open $fx, ">$working_dir/gray_list.xref" or warn "Cannot create $working_dir/gray_list.xref\n";
+        foreach my $name (sort keys %graylist) {
+            print $fx "$name $graylist{$name}\n";
+        }
+        close $fx;
+    }
+}
+
+## CREATING DIRECTORY STRUCTURE AND COPYING FILES
+system("chmod 2755 \"$working_dir\"");
+
+##########################################################################
+#                               LVS                                      #
+##########################################################################
+main();
+
+
+
+
+
+##########################################################################
+sub main{
+  if( -e "$working_dir/group") {
+     my_system("rm -rf '$working_dir/group'");
+  } 
+  my_system("mkdir -p '$working_dir'"); 
+  chdir "$working_dir";
+
+  makegdsgraylist($graycell_file);
+
+  fix_gds_long_name(); 
+  fix_cdl_long_name();
+  
+  my %lvs_options = ();
+  my $equivlance_file=prepare_equiv_file(\%lvs_options);
+  my $schematic_file="$working_dir/cell.cdl_gds2";
+
+  if ($extra_sp) {
+      my @args = ('-sp', $schematic_file);
+      foreach my $sp (split(/:/, $extra_sp)) {
+          push @args, '-sp', $sp;
+      }
+      my_system($ENV{'ICV_SCRIPT'}, 'icv_nettran', @args, '-outType', 'SPICE',
+                '-dupCell', $dup_cell, '-sp-chopXPrefix', '-outName', 'combined.sp');
+      $schematic_file="$working_dir/combined.sp";
+  }
+  my $clf_file=prepare_clf_file($schematic_file,$equivlance_file,\%lvs_options);
+
+  if ($setuponly) {
+      print "Exiting without running ICV due to --setup-only=1\n";
+      exit 0;
+  }
+
+  {
+      local %ENV = %ENV;
+      delete $ENV{'LD_LIBRARY_PATH'};
+      #my_system("source $lvs_cmd_file");
+      my_system($ENV{'ICV_SCRIPT'}, 'icv', '-clf',"$clf_file");
+  }
+  if( -e "$topcell.LVS_ERRORS" ){
+    open LVS_ERRORS, "<$topcell.LVS_ERRORS";
+    my $Result=1;
+    while(<LVS_ERRORS>)  {
+      if(/^Final comparison result:PASS/){ $Result=0; }
+    }
+    if($Result == 0){
+      print "ICV/NVN SUCCESS!\n";
+    } else {
+      # note that the string 'NVN FAILED' must appear for lve
+      print "ICV/NVN FAILED: schematic and layout does not match.\n";
+      die "Error: ICV/NVN FAILED: schematic and layout does not match for $topcell\n";
+    }
+
+  } else {
+    die "Error: ICV/NVN FAILED: fail to extract layout for $topcell.\n";
+  }
+}
+
+
+sub prepare_clf_file {
+   my ($sch_file, $equivlance_file, $lvs_options)=@_;
+
+   # write supply net derived from CAST
+   my $supply_file="$working_dir/lve_supplies.rs";
+   open(my $supply_fh, ">$supply_file") or die "Cannot write to $supply_file\n";
+   if ($nodeprops) {
+      my $props=parse_nodeprops($nodeprops);
+      my @types=('ground', 'power');
+      my %nets=();
+      foreach my $type (@types) {
+         $nets{$type}=[ grep { $props->{$_}->{"is_$type"} } keys %{$props} ];
+      }
+      my %nmap=();
+      reName('rename', 'cast', 'gds2', 'node', \%nmap,
+             [ map { @{$nets{$_}} } @types ]);
+      foreach my $type (@types) {
+         print $supply_fh "lve_$type = {" .
+                          join(', ', map { "\"$nmap{$_}\"" } @{$nets{$type}}) .
+                          "};\n";
+      }
+   } else {
+      print $supply_fh "// --node-props not given\n";
+   }
+   close($supply_fh);
+
+   if (%{$lvs_options}) {
+      my $user_options = "$working_dir/p12723_UserIncrementalOptions.rs";
+      open(my $options_fh, ">$user_options") or die "Cannot write to $user_options\n";
+      print $options_fh "lvs_options(\n" .
+                        join(",\n", map { "$_ = $lvs_options->{$_}" } sort keys %{$lvs_options}) .
+                        ");\n";
+      close($options_fh);
+   }
+
+   my $clf_config="$pdk_root/share/Fulcrum/icv/lvs/lvs_clf.config";
+   my $rs_path="";
+   my $lvs_rs="";
+   my $lvs_process;
+   open(CLF_CFG, "$clf_config") or die "Cannot read $clf_config\n";
+   while(my $line=<CLF_CFG>) {
+       chomp $line;
+       my @data = split("=", $line);
+       if( $data[0] =~ "ICV_PATH") {
+           $icv_path=$data[1];
+       } elsif( $data[0] =~ "RUNSET_PATH") {
+           $rs_path=$data[1];
+       } elsif( $data[0] =~ "ILVS_DECK") {
+           $lvs_rs=$data[1];
+       } elsif( $data[0] =~ "PROCESS") {
+           $lvs_process=$data[1];
+       }
+   }
+   close(CLF_CFG);
+
+   my $lvs_clf_file="$working_dir/lvs.clf";
+   my $format = $oasis ? "OASIS" : "GDSII";
+   my @all_includes = (
+       @include_before,
+       ".",
+       "$pdk_root/share/Fulcrum/icv/lvs",
+       "$icv_path/PXL",
+       "$icv_path/$rs_path",
+       "$icv_path/../../libraries/icv/libcells",
+       "$working_dir"
+   );
+   my $all_includes = join("\n", map { "-I $_" } @all_includes);
+   open(LVS_CLF, ">$lvs_clf_file") or die "Cannot write to $lvs_clf_file\n";
+   print LVS_CLF <<ET;
+$all_includes
+-D _drIncludePort
+-D NOCLD
+-vue
+-host_init $threads
+-D _drMaxError=100000000
+-D _drUSENDG=_drNO
+-D _drUSERDEFINESUIN
+-D _drMSR
+-D _drCaseSensitive
+-D _drTOPCHECK=_drmixed
+-D _drTSV_WAIVER=_drNO
+-i cell.gds2
+-s $sch_file
+-sf SPICE
+-stc $cdl_cell_name
+-c $topcell
+-f $format
+ET
+    print LVS_CLF "-D _drPROCESS=$lvs_process\n" if defined($lvs_process);
+    print LVS_CLF "-D _drRCextract\n"  if ($rc_database);
+    # v0.8.1 runset bug prevents unconditional use of flag, fixed in v1.2.0
+    print LVS_CLF "-D _drDONTCMPCAPS\n" unless ($rc_database);
+    print LVS_CLF "-e $equivlance_file\n" if (-r $equivlance_file);
+    print LVS_CLF "$icv_options\n" if (defined $icv_options and $icv_options ne "");
+
+    my $ilvs_deck=$icv_path . $rs_path . $lvs_rs;
+    print LVS_CLF "$ilvs_deck\n";
+    close(LVS_CLF);
+    return $lvs_clf_file;
+}
+
+sub fix_gds_long_name {
+  unlink "cell.gds2";
+  if ($longcellnametop or $longcellnamegray) {
+      die "Unable to fix long names in OASIS input files" if $oasis;
+      open (GIN, "rdgds '$gdsii' |");
+      open (GOUT, "| wrgds > cell.gds2");
+      while (<GIN>) {
+          chomp;
+          s/^  *//;
+          my ($x,$name)=split;
+          if ($x eq "SNAME" or $x eq "STRNAME") {
+              $_ = "$x $topcell" if ($longcellnametop and $name eq $cell_name);
+              $_ = "$x $graylist{$name}" if ($longcellnamegray and defined ($graylist{$name}));
+          }
+          print GOUT "$_\n";
+      }
+      close GIN;
+      close GOUT;
+  }
+  else {
+      my_system("ln -sf '$gdsii' cell.gds2"); 
+  }
+}
+
+sub fix_cdl_long_name {
+    unlink "cell.cdl_gds2";
+    if ($longcellnametop or $longcellnamegray) {
+        open (GOUT, '>', 'longcell.map');
+        if ($longcellnametop) {
+            print GOUT "cell $cell_name $topcell\n";
+            $cdl_cell_name = $topcell if $cdl_cell_name eq $cell_name;
+        }
+        if ($longcellnamegray) {
+            foreach my $name (sort keys %graylist) {
+                print GOUT "cell $name $graylist{$name}\n";
+                $cdl_cell_name = $graylist{$name} if $cdl_cell_name eq $name;
+            }
+        }
+        close GOUT;
+        my_system("cdl_renamer --source-cdl-file='$cdl_file' --name-in=gds2 --name-out=gds2 --nmap-in=longcell.map --translated-cdl=cell.cdl_gds2");
+    } else {
+        my_system("ln -sf '$cdl_file' cell.cdl_gds2");
+    }
+}
+
+sub get_equiv {
+    my ($graylist, $extra_extract_equiv) = @_;
+
+    my %equiv = ();
+    if (-e $extra_extract_equiv) {
+        open(my $fh, $extra_extract_equiv)
+            or die "Error: can't read $extra_extract_equiv: $!";
+        while (<$fh>) {
+            next if /^#/ || /^\s+$/;
+            my @parts = split;
+            my ($sch, $lay);
+            if (@parts == 1) {
+                ($sch, $lay) = ($parts[0], '');
+            } elsif (@parts == 2) {
+                ($sch, $lay) = ($parts[0], $parts[1]);
+            } else {
+                warn "Warning: malformed equiv on line $. in $extra_extract_equiv";
+            }
+            $equiv{$sch} = $lay;
+        }
+        close $fh;
+    }
+
+    my %nmap = ();
+    reName('rename', 'cast', 'gds2', 'cell', \%nmap, [ keys %equiv ])
+        if %equiv;
+
+    my %result = map { $graylist->{$_} => { $graylist->{$_} => 1 } } keys %{$graylist};
+    foreach my $sch (keys %equiv) {
+        my $schgds = $nmap{$sch};
+        $schgds = $graylist->{$schgds} if exists $graylist->{$schgds};
+        my $lay = $equiv{$sch};
+        if ($lay eq '') {
+            $lay = $schgds;
+        } else {
+            $lay = $graylist->{$lay} if exists $graylist->{$lay};
+        }
+        my $prev = $result{$schgds};
+        $prev = $result{$schgds} = {} unless $prev;
+        $prev->{$lay} = 1;
+    }
+
+    return \%result;
+}
+
+
+
+
+sub prepare_equiv_file{
+  my ($lvs_options) = @_;
+  my %equiv=();
+  my $equivalence="equiv"; 
+  
+  if(-s $graycell_file) {
+      open EQUIV_FILE, ">$working_dir/equiv" or die "CAN'T OPEN $working_dir/equiv for write\n";
+      print EQUIV_FILE "equiv_options(equiv_cells={{\"$cdl_cell_name\",\"$topcell\"}});\n";
+      my $equiv = get_equiv(\%graylist, $extra_extract_equiv);
+      
+      my %preserved_cells = ();
+      foreach my $sch (sort keys %{$equiv}) {
+          foreach my $lay (sort keys %{$equiv->{$sch}}) {
+              my $type = $blackbox == 1 ? 'lvs_black_box_options'
+                                                : 'equiv_options';
+              $preserved_cells{$lay} = 1;
+              print EQUIV_FILE "$type(equiv_cells={{\"$sch\",\"$lay\"}});\n";
+          }
+      }
+      close(EQUIV_FILE);
+      $lvs_options->{'device_extraction_preserved_cells'} =
+          "{ " . join(",\n", map { "\"$_\"" } sort keys %preserved_cells) . " }";
+  }
+
+  return $equivalence;
+}
+
+
+
+
+# execute a command, taking care of exit status
+sub my_system {
+    my ($cmd)=@_;
+    my @cmdlist=@_;
+    if ($#cmdlist > 0) {
+    my $status = system(@_);
+    $status == 0 or die "ERROR: @_ failed.\n";
+    }
+    else {
+    my $status = system($cmd);
+    $status == 0 or die "ERROR: $cmd failed.\n";
+    }
+}

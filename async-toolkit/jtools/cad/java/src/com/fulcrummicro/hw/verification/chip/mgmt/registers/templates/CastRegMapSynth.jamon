@@ -1,0 +1,151 @@
+<%extends CastCommon>
+<%import>
+java.util.Collection;
+com.fulcrummicro.util.misc.Utility;
+com.fulcrummicro.hw.verification.chip.mgmt.registers.*;
+</%import>\
+<%args>
+Collection<RegisterCrossbarPort> crossbarPorts;
+Collection<RegisterBase> bases;
+Collection<Register> regs;
+String chip;
+</%args>\
+module chip.<% chip %>.base.register_map_synth;
+
+import chip.<% chip %>.base.functions.*;
+import chip.<% chip %>.base.registers.*;
+
+/**
+ * Functions defined:
+ *
+<%for RegisterCrossbarPort xbPort : crossbarPorts %>\
+<%if xbPort.hasBusStops() %>\
+ * <% xbPort.getBusStopCspAttributeName() %>
+</%if>\
+</%for>\
+ *
+ * CbpDecoderFunctions
+ *
+ */
+
+define BusFunctions()() attributes {
+  csp {
+    structure DecodedRegister = (
+//FIXME addr using chip_addr for now
+//if changed to block_offset_addr there will be aliasing problems
+//if 2 or more register sets map onto the same bus stop
+      int(32) addr;       // index into structure (in units of register width)
+      int(8) bus_stop_nr; // target bus stop
+      int(8) num_words;   // number of atomic words in this register
+                          // otherwise one for non-atomic reg
+      int(4) word_nr;     // word offset for current mgmt cycle for atomic reg
+                          // otherwise zero for non-atomic reg
+    );
+  }
+}
+
+<%for RegisterCrossbarPort xbPort : crossbarPorts %>\
+<%if xbPort.hasBusStops() %>\
+//Mgmt linear bus register decode functions
+define <% xbPort.getBusStopCspAttributeName() %>()() attributes
+  <+ chip.<% chip %>.base.functions.RegisterFunctions
+  <+ chip.<% chip %>.base.registers.AddressSpace
+  <+ BusFunctions
+{
+  csp {
+//FIXME dec_reg::addr using chip_addr for now
+//if changed to block_offset_addr there will be aliasing problems
+//if 2 or more register sets map onto the same bus stop
+
+    //decode chip address into bus stop address for MGMT_IN
+    function <% Utility.camelCaseToUnderscore(xbPort.getBusStopCspRawName()).toLowerCase() %>_reg_map(
+      int(32) -chip_addr; //chip level address
+      DecodedRegister +dec_reg) = (
+      //int(32) block_addr;
+      //int(16) i, i0, i1, i2;
+
+      dec_reg::num_words = 1; // default for registers w/ atomic width 1
+      dec_reg::word_nr   = 0; // default for registers w/ atomic width 1
+      dec_reg::addr = chip_addr; //FIXME may want to change to block_addr later
+      //assumes all registers aligned to power of 2
+      //assumes max atomic width < 4
+      int(2)  word = chip_addr{1:0};
+<%java boolean firstBusStop = true; %>\
+      #[\
+<%doc></%doc><%for RegisterBusStop busStop : xbPort.getBusStops() %>\
+<%doc>--</%doc><%for RegisterBase base : busStop.getRegisterBases() %>\
+<% firstBusStop ? "" : "      []" %><%java firstBusStop=false; %>\
+(chip_addr & <% String.format("0x%08x", ~(base.getSize() - 1)) %>) == <% String.format("0x%08x", base.getAbsoluteAddress()) %> ->
+        //regRange(chip_addr, <% base.getFullName() %>, <% base.getName() %>_SIZE, block_addr) ->
+<%doc>----</%doc><%if busStop.getStride() > 0 %>\
+        int bus_stop_offset = (chip_addr - <% base.getFullName() %>) / <% String.format("0x%x",busStop.getStride()) %>;
+        dec_reg::bus_stop_nr = <% busStop.getName() %> + bus_stop_offset;
+        block_addr = block_addr - <% String.format("0x%x",busStop.getStride()) %> * bus_stop_offset;
+<%doc>----</%doc><%else>\
+        dec_reg::bus_stop_nr = <% busStop.getName() %>;
+<%doc>----</%doc></%if>\
+<%doc>  disable block_offset_addr until issue of how to handle
+overlapping address ranges is resolved. currently multiple ranges
+can map onto a bus stop.
+        int block_base_addr = <% base.getFullName() %>;
+        int block_offset_addr = chip_addr - block_base_addr;
+</%doc>\
+        dec_reg::num_words   = <% base.getAtomicWidth() %>;
+        <& print_atomic_word_nr; atomicWidth=base.getAtomicWidth() &>;
+<%java boolean firstReg = true; %>\
+<%doc>----</%doc><%for Register reg : base.getRegisters() %>\
+<%if (reg.getAlias() == null) && (reg.getAtomicWidth()!=base.getAtomicWidth())%>\
+<% firstReg ? "        #[" : "        []" %><%java firstReg=false; %>\
+<%doc>Compute the address mask per register</%doc>\
+<& registerAddressGuard; reg=reg; &><%doc>( chip_addr & <% String.format("0x%h",matchMask) %> ) == <% String.format("0x%h",regBaseAddr) %> -></%doc>\
+<%java
+int atomicWidth = reg.getAtomicWidth();
+//MGMT_IN address decoding requirements:
+//mgmt_in needs a word number in the atomic cache, ideally we take
+//address % atomicWidth to get word number, however we want to use bit select
+//for optimization
+//if bit select is used, then % operator is the same as bit select when
+//atomicWidth is a power of 2
+//when atomic width is not a power of 2, then the bit select does not work if
+//the register length is greater than the atomic width because the upper words
+//will not be written
+if (!Util.isPowerOf2(atomicWidth)) {
+	if (reg.getEntryWidth() > atomicWidth) {
+		System.out.printf("ERROR %s reg width = %d > atomic width = %d, upper words inaccessible\n",
+			reg.getName(), reg.getEntryWidth(), atomicWidth);
+	}
+}
+if(reg.getAtomicWidth()<base.getAtomicWidth()) {
+    System.out.printf("WARNING %s base atomic width = %d > atomic width = %d\n",
+                      reg.getName(), base.getAtomicWidth(), atomicWidth);
+}
+%>\
+//atomic width  <% atomicWidth %>
+          dec_reg::num_words   = <% reg.getName() %>_ATOMIC_WIDTH;
+          <& print_atomic_word_nr; atomicWidth=atomicWidth &>
+
+<%doc>----</%doc></%if></%for><%doc>register</%doc>\
+<% firstReg ? "        /* no registers with atomic width greater than base width */\n" : "        ]" %>
+<%doc>--</%doc></%for><%doc>register base in bus stop</%doc>\
+<%doc></%doc></%for><%doc>bus stop</%doc>\
+      ]
+    );
+  }
+}
+
+</%if><%doc>has bus stops</%doc>
+</%for><%doc>crossbar ports</%doc>
+<%doc>End Mgmt Linear Bus Decode Function</%doc>
+\
+\
+<%def print_atomic_word_nr>\
+<%args>int atomicWidth;</%args>\
+<%java
+if (atomicWidth > 4) {
+	System.out.printf("ERROR register map synth version does not support atomic width=%d > 4\n",atomicWidth);
+}
+int atomicMask = (1 << Util.log2(atomicWidth)) - 1;
+%>\
+dec_reg::word_nr     = word & <% String.format("0x%h",atomicMask) %>\
+</%def>\
+

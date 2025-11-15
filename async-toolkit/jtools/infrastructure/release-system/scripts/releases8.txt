@@ -1,0 +1,16 @@
+#os solaris8
+cadalyze 100615
+cast2verilog 100615
+dsim 100615
+dsim-readlineonly 100615
+gdsii 100615
+lve 104160
+presto 100615
+prs2verilog 100615
+rte 100615
+slacker 100615
+synthesis 100615
+ubersize 100615
+virtuoso-integration 100615
+include tbdev
+include releasepdk

@@ -1,0 +1,441 @@
+#!/usr/intel/bin/perl -lw
+# AAG
+# $Id$
+# $DateTime$
+
+use strict;
+
+my $cmpval=-10e6;
+my $minval=1e6;
+
+my %user1;
+my %user2;
+my %group1;
+my %group2;
+my %uquota1;
+my %uquota2;
+my %gquota1;
+my %gquota2;
+my $sortby = "d";
+my $dogrp=0;
+my $doinodes=0;
+my $reverse=0;
+my $dird="/mnt/fulcrum/scratch1/aubrey/quotas/";
+my $dir=$dird;
+my $home=0;
+my $tahoe=0;
+my $scratch5=0;
+my $scratch6=0;
+my $scratch3a=0;
+my $scratch3b=0;
+my $bali=0;
+my $alta=0;
+my $local=0;
+my $scratch1=0;
+my %groupname;
+my $username;
+my @files;
+my %user;
+my %group;
+my $fmt="%.2f";
+my $pfmt="%7.2f";
+my $sfmt="%6.2f";
+my $selector="d";
+my %tags=(
+    "h" => ["home", "quota20",$dird, "getquo -f - -s na3020-a -v home"],
+    "t" => ["tahoe", "quotat20",$dird, "getquot -f -"],
+    "b" => ["bali", "quotab20",$dird,"getquob -f - -s na3020-b -v bali"],
+    "a" => ["alta", "quotaa20",$dird, "getquoa -f -"],
+    "s" => ["scratch1", "quotas20",$dird, "getquos -f -"],
+    "l" => ["local", "quotal20",$dird, "getquol -f -"],
+    "5" => ["scratch5", "quotas520",$dird, "getquos5 -f -"],
+    "6" => ["scratch6", "quotas620",$dird, "getquos6 -f -"],
+);
+
+sub sortbydelta {
+    my $an;
+    my $bn;
+    if ($sortby =~ /^d/) {
+        $user2{$a}=0 if ! defined $user2{$a};
+        $user1{$a}=0 if ! defined $user1{$a};
+        $user2{$b}=0 if ! defined $user2{$b};
+        $user1{$b}=0 if ! defined $user1{$b};
+        $an=($user2{$a}-$user1{$a});
+        $bn=($user2{$b}-$user1{$b});
+        return 0 if $an == $bn;
+        return -1 if $an > $bn and $reverse or $an < $bn and ! $reverse;
+        return 1 if $an < $bn and $reverse or $an > $bn and ! $reverse;
+    }
+    elsif ($sortby =~ /^b/) {
+        $an=defined $user1{$a} ? $user1{$a} : 0;
+        $bn=defined $user1{$b} ? $user1{$b} : 0;
+        return 0 if $an == $bn;
+        return -1 if $an > $bn and $reverse or $an < $bn and ! $reverse;
+        return 1 if $an < $bn and $reverse or $an > $bn and ! $reverse;
+    }
+    elsif ($sortby =~ /^[an]/) {
+        $an=defined $user2{$a} ? $user2{$a} : 0;
+        $bn=defined $user2{$b} ? $user2{$b} : 0;
+        return 0 if $an == $bn;
+        return -1 if $an > $bn and $reverse or $an < $bn and ! $reverse;
+        return 1 if $an < $bn and $reverse or $an > $bn and ! $reverse;
+    }
+    return $a cmp $b if ! $reverse;
+    $b cmp $a;
+}
+
+sub sortgbydelta {
+    my $an;
+    my $bn;
+    if ($sortby =~ /^d/) {
+        $group2{$a}=0 if ! defined $group2{$a};
+        $group1{$a}=0 if ! defined $group1{$a};
+        $group2{$b}=0 if ! defined $group2{$b};
+        $group1{$b}=0 if ! defined $group1{$b};
+        $an=($group2{$a}-$group1{$a});
+        $bn=($group2{$b}-$group1{$b});
+        return 0 if $an == $bn;
+        return -1 if $an > $bn and $reverse or $an < $bn and ! $reverse;
+        return 1 if $an < $bn and $reverse or $an > $bn and ! $reverse;
+    }
+    elsif ($sortby =~ /^b/) {
+        $an=defined $group1{$a} ? $group1{$a} : 0;
+        $bn=defined $group1{$b} ? $group1{$b} : 0;
+        return 0 if $an == $bn;
+        return -1 if $an > $bn and $reverse or $an < $bn and ! $reverse;
+        return 1 if $an < $bn and $reverse or $an > $bn and ! $reverse;
+    }
+    elsif ($sortby =~ /^[an]/) {
+        $an=defined $group2{$a} ? $group2{$a} : 0;
+        $bn=defined $group2{$b} ? $group2{$b} : 0;
+        return 0 if $an == $bn;
+        return -1 if $an > $bn and $reverse or $an < $bn and ! $reverse;
+        return 1 if $an < $bn and $reverse or $an > $bn and ! $reverse;
+    }
+    return $a cmp $b if ! $reverse;
+    $b cmp $a;
+}
+
+sub usage {
+    print STDERR <<EU;
+Usage: quotacmp [options]
+    -f[abfstd56]   which disk (home is default)
+        a = alta
+        b = bali
+        h = home
+        s = scratch1
+        t = tahoe
+        5 = scratch5
+        6 = scratch6
+        default is this disk
+    -a          sort by current total usage, show all > 0
+    -b          sort by earlier usage
+    -d          sort by delta (change)
+    -g          show groups instead of user names
+    -i          inode quotas instead of space
+    -n          sort by current total usage, show all >= 1G
+    -q          show quota for this entry
+    -r          reverse sort
+    -t          compare to exactly now
+    -#          how many days back
+EU
+    exit 1;
+}
+
+my $fn = -1;
+my $now = 0;
+my $showquota=0;
+while (defined($ARGV[0]) and $ARGV[0] =~ /^-/) {
+    if ($ARGV[0] =~ /^-f/) {
+        $tahoe=0;
+        $bali=0;
+        $scratch1=0;
+        $local=0;
+        $alta=0;
+        $scratch5=0;
+        $scratch6=0;
+        $scratch3a=0;
+        $scratch3b=0;
+        $selector = $ARGV[0];
+        $selector =~ s/^-f//;
+        if ($selector eq "") {
+            shift @ARGV;
+            $selector=$ARGV[0];
+        }
+        $selector=substr($selector,0,1);
+        $selector = "h" if ! defined $tags{$selector};
+        shift @ARGV;
+        next;
+    }
+    if ($ARGV[0] =~ /^-u/) {
+        $username=$ARGV[0];
+        $username =~ s/-u//;
+        $sortby='n';
+        if ($username eq "") {
+            shift @ARGV;
+            $username=$ARGV[0];
+        }
+        next;
+    }
+    if ($ARGV[0] =~ /i/i) {
+        $doinodes=1;
+        $minval=100 if $minval == 1e6;
+        $cmpval=-1 if $cmpval == -10e6;
+        $fmt="%.3f";
+        $pfmt="%8.3f";
+        $sfmt="%7.3f";
+    }
+    if ($ARGV[0] =~ /g/i) {
+        $dogrp=1;
+    }
+    if ($ARGV[0] =~ /d/i) {
+        $sortby = "d";
+    }
+    if ($ARGV[0] =~ /b/i) {
+        $sortby = "b";
+    }
+    if ($ARGV[0] =~ /a/i) {
+        $sortby = "a";
+        $minval = 0;
+    }
+    if ($ARGV[0] =~ /n/i) {
+        $sortby = "n";
+    }
+    if ($ARGV[0] =~ /q/) {
+        $showquota=1;
+    }
+    if ($ARGV[0] =~ /r/) {
+        $reverse=1;
+    }
+    if ($ARGV[0] =~ /t/i) {
+        $now = 1;
+    }
+    if ($ARGV[0] =~ /\d/) {
+        $fn = $ARGV[0];
+        $fn =~ s/[^\d]//g;
+        $fn = -$fn;
+    }
+    if ($ARGV[0] =~ /h/i) {
+        usage;
+    }
+    shift @ARGV;
+}
+
+sub doone {
+    my ($selector)=@_;
+    if ($selector eq "d") {
+        my $dir=`/bin/df . | awk '{print \$NF}'`;
+        chomp $dir;
+        if ($dir =~ /\/mnt\/fulcrum\/(.*)$/) {
+            $dir = $1;
+        }
+        else {
+            $dir = "h";
+        }
+        foreach my $key (keys %tags) {
+            if ($dir eq $tags{$key}[0]) {
+                $selector = $key;
+            }
+        }
+    }
+    $tahoe=$alta=$bali=$scratch1=$local=$scratch5=$scratch6=$scratch3a=$scratch3b=0;
+    if (! defined($tags{$selector})) {
+        $selector="h";
+    }
+    my $disk;
+    my $prefix;
+    my $nowcmd;
+    if (defined($tags{$selector})) {
+        $disk=$tags{$selector}[0];
+        eval "\$$disk=1";
+        $prefix=$tags{$selector}[1];
+        $dir=$tags{$selector}[2];
+        $nowcmd=$tags{$selector}[3];
+        print STDERR "/mnt/fulcrum/$disk" if ! defined $username;
+    }
+    elsif (! defined $username) {
+        print STDERR "-f[tabfsn56] defaulting to /home";
+    }
+    if ($dogrp) {
+        open (P, "ldapsearch -x -LLL '(&(objectClass=posixGroup)(gidNumber=*))' gidNumber |");
+        my $cn;
+        my $gid;
+        while (<P>) {
+            chomp;
+            if (/^dn:/) {
+                s/.*cn=//;
+                s/,.*//;
+                $cn = $_;
+                $_=<P>;
+                chomp;
+                s/gidNumber: //;
+                s/  *//g;
+                $groupname{$_}=$cn;
+            }
+        }
+        if (! defined ($groupname{0})) {
+            $groupname{0}="root";
+        }
+        close P;
+    }
+    if ( defined ($ARGV[1])) {
+        @files=@ARGV;
+        $fn = -1;
+    }
+    if ( ! @files) {
+        opendir (P, "$dir");
+        @files=sort(grep(/^$prefix/,readdir(P)));
+        closedir P;
+        die "$dir $prefix" if $#files < 0;
+    }
+    my $file1 = "$dir"."$files[$#files+$fn]";
+    foreach my $u (keys %user1) {
+        $user1{$u}=0;
+    }
+    foreach my $u (keys %group1) {
+        $group1{$u}=0;
+    }
+    foreach my $u (keys %user2) {
+        $user2{$u}=0;
+    }
+    foreach my $u (keys %group2) {
+        $group2{$u}=0;
+    }
+    open (P, "<$file1") or die "Cannot open $file1 ".$!;
+    while (<P>) {
+        chomp;
+        my @f=split;
+        if ($f[1] eq "0") {
+            $f[1] = "root";
+        }
+        if (/^user/) {
+            $user1{$f[1]}=$f[4];
+            $user1{$f[1]}=$f[7] if $doinodes;
+            $user{$f[1]}=1;
+            $uquota1{$f[1]}=$f[5];
+            $uquota1{$f[1]}=$f[8] if $doinodes;
+        }
+        elsif (/^group/) {
+            $groupname{$f[1]}=$f[1] if ! defined ($groupname{$f[1]});
+            $group1{$groupname{$f[1]}}=$f[4];
+            $group1{$groupname{$f[1]}}=$f[7] if $doinodes;
+            $group{$groupname{$f[1]}}=1;
+            $gquota1{$groupname{$f[1]}}=$f[5];
+            $gquota1{$groupname{$f[1]}}=$f[8] if $doinodes;
+        }
+    }
+    my $file2="";
+    if ($now) {
+        open (P, "$nowcmd |") or die;
+    }
+    else {
+        $file2="$dir"."$files[$#files]";
+        open (P, "<$file2") or die "Cannot open $file2 ".$!;
+    }
+    while (<P>) {
+        chomp;
+        my @f=split;
+        if ($f[1] eq "0") {
+            $f[1] = "root";
+        }
+        if (/^user/) {
+            $user2{$f[1]}=$f[4];
+            $user2{$f[1]}=$f[7] if $doinodes;
+            $user{$f[1]}=1;
+            $uquota2{$f[1]}=$f[5];
+            $uquota2{$f[1]}=$f[8] if $doinodes;
+        }
+        elsif (/^group/) {
+            $groupname{$f[1]}=$f[1] if ! defined ($groupname{$f[1]});
+            $group2{$groupname{$f[1]}}=$f[4];
+            $group2{$groupname{$f[1]}}=$f[7] if $doinodes;
+            $group{$groupname{$f[1]}}=1;
+            $gquota2{$groupname{$f[1]}}=$f[5];
+            $gquota2{$groupname{$f[1]}}=$f[8] if $doinodes;
+        }
+    }
+    my $x1 = $files[$#files+$fn];
+    my $x2 = "";
+    $x1 =~ s/[a-z]//g;
+    $x1 =~ s/^[3456]//;
+    $x1 =~ s/\.//;
+    $x1 = substr($x1,0,4)."-".substr($x1,4,2)."-".substr($x1,6,2)." ".
+        substr($x1,8,2).':'.substr($x1,10,2);
+    if ($now) {
+        my @lt=localtime(time);
+        my $x3 = sprintf "%04d-%02d-%02d %02d:%02d",
+            $lt[5]+1900,$lt[4]+1,$lt[3],$lt[2],$lt[1];
+        print "$x1 vs. $x3".($doinodes ? " (M files)" : " G bytes")
+            if ! defined $username;
+    }
+    else {
+        $x2 = $files[$#files];
+        $x2 =~ s/[a-z]//g;
+        $x2 =~ s/^[3456]//;
+        $x2 =~ s/\.//;
+        $x2 = substr($x2,0,4)."-".substr($x2,4,2)."-".substr($x2,6,2)." ".
+            substr($x2,8,2).':'.substr($x2,10,2);
+        print "$x1 vs. $x2".($doinodes ? " (M files)" : " G bytes")
+            if ! defined $username;
+    }
+    if (! $dogrp) {
+        foreach my $user (sort sortbydelta keys %user) {
+            my $u1=$user1{$user} ? $user1{$user} : 0;
+            my $u2=$user2{$user} ? $user2{$user} : 0;
+            my $u3=sprintf $fmt, ($u2-$u1)/1e6;
+            $uquota2{$user}=0 if ! defined $uquota2{$user};
+            my $q = $uquota2{$user} eq '-' ? '   -' : sprintf "%4.0f", $uquota2{$user}/1e6;
+            next if ($u3 == 0 and $sortby eq "d");
+            if (($u1 >= $minval or $u2 >= $minval) and ((! defined($username)) or ($username eq $user))) {
+                if (defined $username) {
+                    if ($showquota) {
+                        my $q = $uquota2{$user} eq '-' ? '   -' : sprintf "%4.0f", $uquota2{$user}/1e6;
+                        printf "%-11.11s $pfmt $pfmt $sfmt $q\n", $disk,$u1/1e6,$u2/1e6,$u3;
+                    }
+                    else {
+                        printf "%-11.11s $pfmt $pfmt $sfmt\n", $disk,$u1/1e6,$u2/1e6,$u3;
+                    }
+                }
+                else {
+                    if ($showquota) {
+                        my $q = $uquota2{$user} eq '-' ? '   -' : sprintf "%4.0f", $uquota2{$user}/1e6;
+                        printf "%-11.11s $pfmt $pfmt $sfmt $q\n", $user,$u1/1e6,$u2/1e6,$u3;
+                    }
+                    else {
+                        printf "%-11.11s $pfmt $pfmt $sfmt\n", $user,$u1/1e6,$u2/1e6,$u3;
+                    }
+                }
+            }
+        }
+    }
+    else {
+        foreach my $group (sort sortgbydelta keys %group1) {
+            my $u1=$group1{$group};
+            my $u2=$group2{$group};
+            my $u3=sprintf $fmt, ($group2{$group}-$group1{$group})/1e6;
+            next if ($u3 == 0 and $sortby eq "d");
+            if (($group1{$group} > $minval or $group2{$group} > $minval) and $group2{$group} - $group1{$group} > $cmpval and (! defined($username) or ($username eq $group))) {
+                if ($showquota) {
+                    $gquota2{$group} = 0 if ! defined $gquota2{$group};
+                    my $q = $gquota2{$group} eq '-' ? '-' : sprintf $fmt, $gquota2{$group}/1e6;
+                    printf "%-11.11s $pfmt $pfmt $sfmt $q\n", $group,$group1{$group}/1e6,$group2{$group}/1e6,$u3;
+                }
+                else {
+                    printf "%-11.11s $pfmt $pfmt $sfmt\n", $group,$group1{$group}/1e6,$group2{$group}/1e6,$u3;
+                }
+            }
+        }
+    }
+}
+
+if (defined $username) {
+    print STDERR $username;
+    foreach my $s ("a","b","h","l","s","t","5","6") {
+        %user1=();
+        @files=();
+        doone($s);
+    }
+}
+else {
+    doone $selector;
+}

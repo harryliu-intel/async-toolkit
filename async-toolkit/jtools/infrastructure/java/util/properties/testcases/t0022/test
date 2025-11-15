@@ -1,0 +1,7 @@
+<test>
+<!-- basic math test w/ subst 2 and longer variables with '.' in them -->
+<config>
+testbench.unit.epl.[3-$(testbench.unit.epl.M)].type_b=xgmii
+</config>
+
+</test>

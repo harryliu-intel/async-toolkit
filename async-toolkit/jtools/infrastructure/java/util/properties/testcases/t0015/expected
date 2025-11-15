@@ -1,0 +1,4 @@
+ERROR: abc does not exist in the XML defaults
+WARNING: no properties from block named var were found
+topdir=.
+variant=var

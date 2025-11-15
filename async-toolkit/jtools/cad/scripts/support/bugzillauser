@@ -1,0 +1,51 @@
+#!/usr/intel/bin/perl -l
+# AAG
+# $Id: //depot/sw/rrc/cad/scripts/support/bugproduct#1 $
+# $DateTime: 2013/02/11 15:53:25 $
+
+use strict;
+
+use DBI();
+use CGI;
+use File::Temp qw( tempfile );
+
+sub usage {
+    print STDERR <<EU;
+Usage: bugzillauser email
+EU
+    exit 1;
+}
+
+usage unless defined $ARGV[0];
+my $email = $ARGV[0];
+# open db
+my $dsn = "DBI:mysql:database=bugs;host=tsyvsqlm01.ts.intel.com";
+my $bugdb = DBI->connect($dsn, "readonly", "readonly") || die "Cannot open db";
+my $sth=$bugdb->prepare("select userid from profiles where login_name = '$email'") or die "cannot prepare";
+$sth->execute or die "cannot execute";
+my $n=0;
+my $userid=-1;
+while (my @ref=$sth->fetchrow_array()) {
+    ($userid)=@ref;
+    $n++;
+}
+$sth->finish;
+if ($userid < 0) {
+    print "$email Not in bugzilla";
+    exit 0;
+}
+$sth=$bugdb->prepare("select name,id from groups where isbuggroup = 1") or die "cannot prepare";
+$sth->execute or die "cannot execute";
+my %groups=();
+while (my ($group,$groupid)=$sth->fetchrow_array()) {
+    $groups{$groupid}=$group;
+}
+$sth->finish;
+$sth=$bugdb->prepare("select group_id from user_group_map where user_id=$userid") or die "cannot prepare";
+$sth->execute or die "cannot execute";
+my @groups=();
+while (my ($group_id)=$sth->fetchrow_array()) {
+    push @groups, $groups{$group_id};
+}
+$sth->finish;
+print "Bugzilla groups for $email: ".join(" ", @groups);
