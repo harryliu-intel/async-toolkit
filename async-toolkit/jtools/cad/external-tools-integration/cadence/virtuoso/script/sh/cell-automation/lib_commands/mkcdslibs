@@ -1,0 +1,126 @@
+#!/bin/sh
+# Copyright 2002 Fulcrum Microsystems.  All rights reserved.
+# $Id$
+# $DateTime$
+# $Author$
+
+sedcmd=`which sed`
+findcmd=`which find`
+
+# commented out as of today
+#check_executable_file "$sedcmd" "Unable to find sed in \"$PATH\"" 2
+#check_executable_file "$findcmd" "Unable to find find in \"$PATH\"" 2
+if [ ! -x "$sedcmd" ]; then
+  echo "Unable to find sed in \"$PATH\""
+  exit 2
+fi
+if [ ! -x "$findcmd" ]; then
+  echo "Unable to find find in \"$PATH\""
+  exit 2
+fi
+
+function usage() {
+  echo "$0 --cell-list=cell_list_file --target-cds-root=root_dir_to_contain_generated_libs --cds-wd=cds_wd --blank-lib=template_lib"
+}
+cell_list_file=
+target_cds_root=
+cds_wd=
+blank_lib=
+
+command_args=
+for arg in $@ ; do
+  case "$arg" in
+  --cell-list=* )
+    cell_list_file=`echo $arg | sed -e "s/--cell-list=//"`
+    ;;
+  --target-cds-root=* )
+    target_cds_root=`echo $arg | sed -e "s/--target-cds-root=//"`
+    ;;
+  --cds-wd=* )
+    cds_wd=`echo $arg | sed -e "s/--cds-wd=//"`
+    ;;
+  --blank-lib=* )
+    blank_lib=`echo $arg | sed -e "s/--blank-lib=//"`
+    ;;
+  esac
+done
+
+
+if [[ -n "$cell_list_file" && -n "$target_cds_root" && -n "$cds_wd" && -n "$blank_lib" ]] ; then  
+  if [ -f "$cell_list_file" ] ; then
+
+    if [[ -d "$target_cds_root" && -w "$target_cds_root" ]] ; then
+      pushd "$target_cds_root" >/dev/null
+      target_cds_root=`pwd`
+      popd >/dev/null
+      
+      if [[ -d "$cds_wd" && -r "$cds_wd" ]] ; then
+        pushd "$cds_wd" >/dev/null
+        cds_wd=`pwd`
+        popd >/dev/null
+
+        if [[ -d "$blank_lib" && -r "$blank_lib" ]] ; then
+          pushd "$blank_lib" >/dev/null
+          blank_lib=`pwd`
+          popd >/dev/null
+
+          libnames=`cat $cell_list_file | sed -e "s/\.[^\.]\+\$//" -e "s/\.[^\.]\+\$//" | sort | uniq`
+
+          cds_lib_generated="$target_cds_root/cds.lib.generated"
+
+          if [ -f "$cds_lib_generated" ] ; then
+            rm "$cds_lib_generated"
+          fi
+
+          for lib in $libnames ; do
+            parentlib=`echo $lib | sed -e "s/\.[^\.]\+\$//"`
+            if [ -n "$parentlib" ] ; then
+              libparentdir=`echo $parentlib | sed -e "s/\./\\//g"`
+              if [ ! -d "$target_cds_root/$libparentdir" ] ; then
+                mkdir -p "$target_cds_root/$libparentdir"
+              fi
+              newlibdir=$target_cds_root/$libparentdir/$lib
+              if [ ! -d "$newlibdir" ] ; then
+                cp -a "$blank_lib" "$newlibdir"
+              else
+                dirs_in_blank=`(cd "$blank_lib" ; $findcmd . -type d)`
+                files_in_blank=`(cd "$blank_lib" ; $findcmd . -type f)`
+                for dir in $dirs_in_blank ; do
+                    dir=`echo "$dir" | $sedcmd -e "s:^./:$newlibdir/:"`
+                    if [ ! -d "$dir" ]; then
+                        mkdir -p "$dir"
+                        chmod u+w "$dir"
+                    fi
+                done
+                for file in $files_in_blank ; do
+                    nfile=`echo "$file" | $sedcmd -e "s:^./:$newlibdir/:"`
+                    file=`echo "$file" | $sedcmd -e "s:^./:$blank_lib/:"`
+                    if [ ! -f "$nfile" ]; then
+                        cp -p "$file" "$nfile"
+                        chmod u+w "$nfile"
+                    fi
+                done
+              fi
+              escaped_lib_name=`echo $lib | sed -e "s/\./#2e/g"`
+              echo "DEFINE $escaped_lib_name $newlibdir" >>$cds_lib_generated
+            else
+              echo "\"$lib\" is not a valid library name."            
+            fi
+          done
+
+        else
+          echo "\"$blank_lib\" is not a readable library directory."
+        fi
+      else
+        echo "\"$cds_wd\" is not a readable directory."
+      fi
+    else
+      echo "\"$target_cds_root\" is not a writeable directory."
+    fi
+  else
+    echo "\"$cell_list_file\" is not a file."
+  fi
+else
+  usage
+  exit 2
+fi

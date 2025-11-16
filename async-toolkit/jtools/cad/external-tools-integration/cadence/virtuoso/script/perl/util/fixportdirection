@@ -1,0 +1,259 @@
+#!/usr/bin/perl -l
+# AAG
+# $Id: cdl2mycast,v 1.8 2013/04/01 16:41:42 aagrey Exp $
+# $DateTime$
+
+use strict;
+use Getopt::Long;
+
+my $library;
+my $sub_type=0;
+my $refinement_parent="";
+my $gnd_node="VSS";
+my $vdd_node="VDD";
+my @implied=();
+my %implied=();
+my $verbose=0;
+my $max_heap_size="2G";
+my $libfile=""; # for determining port direction
+my %direction=();
+my %dirlookup=("input" => "-", "output" => "+", "inout" => "-+", "" => "-+");
+my $searchdir=undef;
+my %resistors=(
+   "rm1" => 1,
+   "rnpolywo" => 1,
+   "rppolywo" => 1,
+   "rm10w" => 1,
+   "rm1w" => 1,
+   "rm2w" => 1,
+   "rm3w" => 1,
+   "rm4w" => 1,
+   "rm5w" => 1,
+   "rm6w" => 1,
+   "rm7w" => 1,
+   "rm8w" => 1,
+   "rm9w" => 1,
+   "rupolym" => 1,
+);
+
+my $cdl;
+
+my $topcell;
+
+my %devicetranslation = (
+   "N" => "nmos",
+   "NCH" => "nmos",
+   "NCHPD_SR" => "nmospd_sr",
+   "NCHPG_SR" => "nmospg_sr",
+   "NCH_HVT" => "nmos_hvt",
+   "NCH_SRAM" => "nmos_sram",
+   "P" => "pmos",
+   "PCH" => "pmos",
+   "PCHPU_SR" => "pmospu_sr",
+   "PCH_HVT" => "pmos_hvt",
+   "PCH_SRAM" => "pmos_sram",
+   "nch" => "nmos",
+   "nch_18" => "nmos_18",
+   "nch_dnw" => "nmos_dnw",
+   "nch_hvt" => "nmos_hvt",
+   "nch_lvt" => "nmos_lvt",
+   "nch_na18" => "nmos_na18",
+   "pch" => "pmos",
+   "pch_18" => "pmos_18",
+   "pch_hvt" => "pmos_hvt",
+   "pch_lvt" => "pmos_lvt",
+);
+
+sub usage {
+    my ($msg) = @_;
+    print STDERR "$msg" if defined $msg;
+    print <<EU;
+Usage mycdl2cast [options] <cdlfile>
+    options
+    lib               : the cast library name
+    sub-type          : the desired subtype for this cell
+    refinement-parent : the cast refinement parent
+    gnd-node          : the cdl GND node
+    vdd-node          : the cdl Vdd node
+    implied           : extra implied node(s)
+    max-heap-size     : normal java max-heap-size
+    cell              : the name of the top cell
+    libfile           : file with cell lib port directions defined
+    verbose           :
+EU
+exit 1;
+}
+
+sub getdirection {
+    my ($cell,$pin) = @_;
+    my %dir=();
+    %dir=%{$direction{$cell}} if defined $direction{$cell};
+    if (! defined ($dir{$pin})) {
+        my $x = $pin;
+        $x =~ s/\[.*//;
+        $dir{$pin} = $dir{$x} if defined $dir{$x};
+        $dir{$pin} = "-" if ! defined($dir{$pin}) and $pin =~ /VDD/i;
+        $dir{$pin} = "-" if ! defined($dir{$pin}) and $pin =~ /GND$/i;
+        $dir{$pin} = "-+" if ! defined $dir{$pin};
+#        print STDERR "$pin $dir{$pin}" if $dir{$pin} eq "-+";
+    }
+    $dir{$pin};
+}
+
+sub parselibfile {
+    my ($file) = @_;
+    open (P, "<$file");
+    print STDERR "Parsing $file" if $verbose;
+    my $cell;
+    my $pin;
+    my $bus;
+    my $bus_type;
+    my %bit_width;
+    my %bit_from;
+    my %bit_to;
+    my $direction;
+    while (<P>) {
+        chomp;
+        if (/^\s*cell\s*\(\s*(.*)\s*\)/) {
+            $cell=$1;
+            $cell =~ s/\s//g;
+            $cell =~ s/"//g;
+            $cell =~ s/'//g;
+        }
+        if (/^\s*type\s*\(\s*(.*)\s*\)/) {
+            $bus_type = $1;
+            while (<P>) {
+                chomp;
+                if (/^\s*([^\s]+)\s*:\s*([^\s]+)\s*;/) {
+                    if ($1 eq "bit_width") {
+                        $bit_width{$bus_type}=$2;
+                    }
+                    if ($1 eq "bit_from") {
+                        $bit_from{$bus_type}=$2;
+                    }
+                    if ($1 eq "bit_to") {
+                        $bit_to{$bus_type}=$2;
+                    }
+                }
+                if (/^\s*\x7d/) {
+                    last;
+                }
+            }
+        }
+        if (/^\s*pin\s*\(\s*(.*)\s*\)/) {
+            $pin = $1;
+            $pin =~ tr/a-z/A-Z/;
+            $direction{$cell}->{$pin}="undefined";
+            $direction="undefined";
+            undef $bus;
+        }
+        if (/^\s*bus\s*\(\s*(.*)\s*\)/) {
+            $bus = $1;
+            undef $pin;
+        }
+        if (/^\s*bus_type\s*:\s*(.*)\s*;/) {
+            $bus_type = $1;
+            print STDERR "BUS TYPE $bus_type not defined" if ! defined $bit_width{$bus_type};
+        }
+        if (/^\s*direction\s*:\s*(.*)\s*;/) {
+            $direction=$1;
+            $direction =~ s/\s//g;
+            $direction = $dirlookup{$direction};
+            if (defined ($pin)) {
+                $direction{$cell}->{$pin}=$direction;
+                if ($pin =~ /\[/) {
+                    my $base=$pin;
+                    $base =~ s/\[.*//;
+                    $direction{$cell}->{$base}=$direction;
+                }
+            }
+            elsif (defined ($bus)) {
+                my $to = $bit_to{$bus_type};
+                my $from = $bit_from{$bus_type};
+                my $width = $bit_width{$bus_type};
+                if (defined ($to) and defined ($from) and abs($from-$to)+1 != $width) {
+                    print STDERR "Bus definition may be inconsistent for $bus_type";
+                }
+                if ($to < $from) {
+                    my $x = $from;
+                    $from = $to;
+                    $to = $x;
+                }
+                $direction{$cell}->{"$bus"}=$direction;
+                for (my $n = $from; $n <= $to; $n++) {
+                    $direction{$cell}->{"$bus\[$n\]"}=$direction;
+                }
+            }
+        }
+    }
+}
+
+GetOptions (
+    "lib=s" => \$library,
+    "libfile=s" => \$libfile,
+    "search-dir=s" => \$searchdir,
+    "sub-type=s" => \$sub_type,
+    "refinement-parent=s" => \$refinement_parent,
+    "gnd-node=s" => \$gnd_node,
+    "vdd-node=s" => \$vdd_node,
+    "verbose" => \$verbose,
+    "implied=s" => sub {
+        push @implied, split(/,/,$_[1]);
+        foreach my $i (@implied) {
+            $implied{$i}=1;
+        }
+    },
+    "max-heap-size=s" => \$max_heap_size,
+    "cell=s" => \$topcell,
+) or usage "GetOptions";
+
+$implied{$gnd_node}=1;
+$implied{$vdd_node}=1;
+if ($libfile ne "" and -f $libfile) {
+    parselibfile($libfile);
+}
+print STDERR "Warning: $libfile not found" if (! -f $libfile and $libfile ne "");
+
+if ( -d "$searchdir") {
+    @ARGV=`find $searchdir -name '*.cast'`;
+    chomp @ARGV;
+}
+foreach my $file (@ARGV) {
+    open (P, "<$file");
+    my $module;
+    my @lines=();
+    while (<P>) {
+        chomp;
+        if (/^module\s+(\S+)\s*;/) {
+            $module=$1;
+            push @lines, $_;
+        }
+        elsif (/^define\s+"(\S+)"\(\)\((.*)\)(.*)/) {
+            my $cell=$1;
+            my $nodes=$2;
+            my $rest=$3;
+            my $lookupcell=$cell;
+            if ($cell eq "0") {
+                $lookupcell=$module;
+                $lookupcell =~ s/.*\.//;
+            }
+            if (defined ($direction{$lookupcell})) {
+                my %dir=%{$direction{$lookupcell}};
+                my @nodes=();
+                foreach my $pin (sort keys %dir) {
+                    $dir{$pin}="-" if $dir{$pin} eq "";
+                    push @nodes, "$dir{$pin}$pin" if $dir{$pin} ne "undefined";
+                }
+                $nodes="node ".join(", ", @nodes);
+            }
+            push @lines, "define \"$cell\"()($nodes)$rest";
+        }
+        else {
+            push @lines, $_;
+        }
+    }
+    close P;
+    open (P, ">$file");
+    print P join("\n", @lines);
+    close P;
+}

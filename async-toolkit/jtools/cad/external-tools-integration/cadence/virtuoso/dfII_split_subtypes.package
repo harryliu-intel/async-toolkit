@@ -1,0 +1,17 @@
+1 0
+# Copyright 2002 Fulcrum Microsystems.  All rights reserved.
+# $Id$
+# $DateTime$
+# $Author$
+
+# This package contains scripts for creating splitting subtypes in dfII
+# from subtype spec files
+
+# see this file for documentation of the spec file format
+$arch/bin/dfII_split_subtypes.sh                            script/sh/subtyping/dfII_split_subtypes.sh                775 p
+
+share/script/sh/sh-lib/file/filecheck.sh                    ../../../../infrastructure/sh-lib/file/filecheck.sh       775 p
+share/script/sh/sh-lib/file/conon.sh                        ../../../../infrastructure/sh-lib/file/conon.sh           775 p
+share/script/sh/sh-lib/script/generate_script_with_libs.sh  ../../../../infrastructure/sh-lib/script/generate_script_with_libs.sh 775 p
+share/script/sh/util/parsecellname                          script/sh/util/parsecellname                              775 p
+share/script/sh/cell-automation/lib_commands/mkcdslib       script/sh/cell-automation/lib_commands/mkcdslib           775 p

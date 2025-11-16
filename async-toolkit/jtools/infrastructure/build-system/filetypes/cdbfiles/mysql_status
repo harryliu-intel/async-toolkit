@@ -1,0 +1,58 @@
+#!/bin/bash
+USER=build
+
+type=$1
+file=$2
+cell=$3
+db=$4
+mysql_host=$5
+
+status=
+
+if [ "$type" == drc ] ; then
+    if [ -e "$file" ] ; then
+        ret=$(tar -Oxjf "$file" ./drc.err)
+        if [ -z "$ret" ] ; then
+            status=PASS
+        else
+            status=FAIL
+        fi
+    else 
+        status=ERROR;
+    fi
+elif [ "$type" == lvs ] ; then
+    if [ -e "$file" ] ; then
+        ret=$(tar -Oxjf "$file" ./lvs.cls | grep "Schematic and Layout Match" )
+        if [ -n "$ret" ] ; then
+            status=PASS
+        else
+            status=FAIL
+        fi
+    else
+        status=ERROR
+    fi
+elif [ "$type" == charge ] ; then
+    if [ -e "$file" ] ; then
+        down=$(tar -Oxjf "$file" ./$cell:dn.measure )
+        dnerr=$(echo $down | grep ERROR)
+        up=$(tar -Oxjf "$file" ./$cell:up.measure )
+        uperr=$(echo $up | grep ERROR)
+        if [[ ( -z $dnerr ) && ( -z $uperr ) ]] ; then
+            status=PASS
+        else
+            status=FAIL
+        fi
+    else
+        status=ERROR
+    fi
+fi
+
+echo $status
+
+if [[ ( -n "$db" ) && ( -n "$mysql_host" ) ]] ; then
+stamp="$(date --reference=$file +"%Y/%m/%d %H:%M:%S")"
+mysql -h $mysql_host -u $USER<<EOF
+use $db;
+INSERT INTO result (cell, stamp, type, status, reference ) VALUES ("$cell", "$stamp", "$type", "$status", "$file");
+EOF
+fi

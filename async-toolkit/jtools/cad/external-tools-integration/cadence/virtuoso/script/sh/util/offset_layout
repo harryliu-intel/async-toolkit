@@ -1,0 +1,16 @@
+#!/bin/bash
+offsetx=$1
+offsety=$2
+infile=$3
+outfile=$4
+calibre calibredrv -shell <<EOF
+if {[catch {layout create {$infile} -dt_expand -preserveProperties -preservePaths -preserveTextAttributes} L]} {
+    puts "Can't read $infile"
+    exit 1
+}
+\$L modify origin [\$L topcell] [expr {round($offsetx/[\$L units user])}] [expr {round($offsety/[\$L units user])}]
+if {[catch {\$L "[\$L layoutType]out" {$outfile}}]} {
+    puts "Can't write $outfile"
+    exit 1
+}
+EOF

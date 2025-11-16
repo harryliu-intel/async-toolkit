@@ -1,0 +1,11 @@
+models.qsub_mem=0
+platform=test
+regress.qsub_mem=0
+regress.test_feature=
+test.minPort=1
+test.range.0.enable=false
+test.range.1.enable=true
+test.range.2.enable=false
+test.range.3.enable=false
+testbench.tchk.scope=
+topdir=.

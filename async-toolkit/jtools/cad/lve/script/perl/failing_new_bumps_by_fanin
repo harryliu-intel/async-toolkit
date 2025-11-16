@@ -1,0 +1,224 @@
+#!/usr/intel/bin/perl -w
+
+# find relevant packaged tools and libraries
+BEGIN {
+    $lve_root = $0;
+    $lve_root =~ s:/[^/]*$::;
+    $lve_root =~ s:/[^/]*$::;
+    @INC = ("$lve_root/lib/perl", @INC);
+    $cad_dir = $lve_root;
+    $cad_dir =~s:/[^/]*$::;
+    @INC = ("$cad_dir/lib/perl", @INC);
+}
+use LveStatus;
+use LveUtil;
+use LveAlint;
+use Getopt::Long;
+use strict;
+
+# read lve dir
+# read cell list
+
+sub usage {
+    my $usage_str = "USAGE: $0 \n";
+    $usage_str .=   "  --lve-dir=<: separated string of lve dirs>\n";
+    $usage_str .=   "  --cells=<file specifying cells in the format: <FQCN> <level> >\n";
+    $usage_str .=   "  --suffix=<suffix for filenames that contains details of alint fails\n";
+    die "$usage_str";
+}
+sub write_lines {
+    my ($file, $lines) = @_;
+    open RAW, ">$file" or die "Can't write $file\n";
+    foreach my $l (@$lines)   { print RAW "$l\n"; }
+    close RAW;
+}
+sub count_failing_nodes {
+    my ($fails) = @_;
+    my ($leaf_fails, $mid_fails) = (0,0);
+    foreach my $k (keys %$fails) {
+        if ($fails->{$k} == 0) {
+            $mid_fails++;
+        } else {
+            $leaf_fails++;
+        }
+    }
+    return ($leaf_fails, $mid_fails);
+}
+sub record_failures {
+    my ($keys, $threshCC, $cc, $cell, 
+        $resp_l, $resp_m, $width, $height, 
+        $resp_nodes, $width_nodes, $height_nodes,
+        $raw, $is_leaf) = @_;
+    if(is_new_bump_result($keys, $threshCC, $cc) && 
+       new_bump_measurement_successful($keys)) {
+        my $ft = $keys->{"fail_type"};
+        my $node = $keys->{"node"};
+        if ($ft eq "bump_width") {
+            push @$width, "$cell/$node $raw";
+            $width_nodes->{"$cell/$node"} = $is_leaf->{$cell};
+        } elsif ($ft eq "max_thresh_percent") {
+            push @$height, "$cell/$node $raw";
+            $width_nodes->{"$cell/$node"} = $is_leaf->{$cell};
+        } else { 
+            if ($keys->{"fanout_type"} eq "INTERNAL"){
+                my $fanin_cell;
+                my $fanin_node;
+                if(is_fanin_result($keys, $threshCC, $cc)) {
+                    $fanin_node = $keys->{"fanin_node"};
+                    $fanin_cell = $keys->{"fanin_cell"};
+                } else {
+                    $fanin_node = $keys->{"node"};
+                    $fanin_cell = $cell;
+                }
+                my $fanout_cell = $keys->{"fanout_cell"};
+                my $fanout_info = $keys->{"fanout_info"};
+                if ($is_leaf->{$fanin_cell} == 1) {
+                    push @$resp_l, "$fanin_cell/$fanin_node $fanout_cell/$fanout_info $raw";
+                } else {
+                    push @$resp_m, "$fanin_cell/$fanin_node $fanout_cell/$fanout_info $raw";
+                }
+
+                $resp_nodes->{"$fanin_cell/$fanin_node"} = $is_leaf->{$fanin_cell};
+            }
+        }
+    }
+}
+
+my $lve_dir;
+my $cell_list;
+my $suffix = "";
+
+GetOptions (
+    "lve-dir=s"   => \$lve_dir,
+    "cells=s"     => \$cell_list,
+    "suffix=s"    => \$suffix,
+    ) or usage;
+
+my @cells = ();
+my @paths = ();
+my %is_leaf = ();
+my @lve_dirs = split(":", $lve_dir);
+@cells = get_lines($cell_list);
+foreach my $d (@lve_dirs) {
+    foreach my $l (@cells) {
+        my @split_l = split(" ", $l);
+        my ($c, $level) = ($split_l[0], $split_l[1]);
+        my $p = "$d/";
+        $p .= fqcn_to_path($c);
+        if ($level ==0) {
+            $is_leaf{$c} = 1;
+        } else {
+            $is_leaf{$c} = 0;
+        }
+        if (-d $p) {
+            push @paths, $p;
+        }
+    }
+}
+
+# bump width check failures
+my @width_leaf_0 = ();
+my @width_leaf_1 = ();
+my @width_mid_0  = ();
+my @width_mid_1  = ();
+
+#bump height check failures
+my @height_leaf_0 = ();
+my @height_leaf_1 = ();
+my @height_mid_0  = ();
+my @height_mid_1  = ();
+
+#bump_response check failures
+my @resp_leaf_0 = ();
+my @resp_leaf_1 = ();
+my @resp_mid_0 = ();
+my @resp_mid_1 = ();
+
+my %width_nodes_0 = ();
+my %height_nodes_0 = ();
+my %resp_nodes_0 = ();
+
+my %width_nodes_1 = ();
+my %height_nodes_1 = ();
+my %resp_nodes_1 = ();
+
+foreach my $p (@paths) {
+    my @raw_files = find_rawfiles($p);
+    foreach my $raw (@raw_files) {
+        if ($raw =~ /alint.raw$/) {
+            my @raw_lines = get_lines($raw);
+            foreach my $rl (@raw_lines) {
+                my ($status, $task, $cell, $path, %keys) = parse_raw_line($rl);
+                if ($status =~ /FAIL/) {
+                    if ($is_leaf{$cell} == 1) {
+                        record_failures(\%keys, 0, 0, $cell, 
+                                        \@resp_leaf_0,
+                                        \@resp_mid_0,
+                                        \@width_leaf_0,
+                                        \@height_leaf_0,
+                                        \%resp_nodes_0,
+                                        \%width_nodes_0,
+                                        \%height_nodes_0,
+                                        $raw, \%is_leaf);
+                        record_failures(\%keys, 0, 1, $cell, 
+                                        \@resp_leaf_1,
+                                        \@resp_mid_1,
+                                        \@width_leaf_1,
+                                        \@height_leaf_1,
+                                        \%resp_nodes_1,
+                                        \%width_nodes_1,
+                                        \%height_nodes_1,
+                                        $raw, \%is_leaf);
+                    } else {
+                        record_failures(\%keys, 0, 0, $cell, 
+                                        \@resp_leaf_1,
+                                        \@resp_mid_0,
+                                        \@width_mid_0,
+                                        \@height_mid_0,
+                                        \%resp_nodes_0,
+                                        \%width_nodes_0,
+                                        \%height_nodes_0,
+                                        $raw, \%is_leaf);
+                        record_failures(\%keys, 0, 1, $cell, 
+                                        \@resp_leaf_1,
+                                        \@resp_mid_1,
+                                        \@width_mid_1,
+                                        \@height_mid_1,
+                                        \%resp_nodes_1,
+                                        \%width_nodes_1,
+                                        \%height_nodes_1,
+                                        $raw, \%is_leaf)
+                    }
+                }
+            }
+        }
+    }
+}
+
+write_lines("${suffix}.resp.leaf.0", \@resp_leaf_0 );
+write_lines("${suffix}.resp.leaf.1", \@resp_leaf_1 );
+write_lines("${suffix}.resp.mid.0",  \@resp_mid_0 );
+write_lines("${suffix}.resp.mid.1",  \@resp_mid_1 );
+write_lines("${suffix}.width.leaf.0", \@width_leaf_0 );
+write_lines("${suffix}.width.leaf.1", \@width_leaf_1 );
+write_lines("${suffix}.width.mid.0",  \@width_mid_0 );
+write_lines("${suffix}.width.mid.1",  \@width_mid_1 );
+write_lines("${suffix}.height.leaf.0", \@height_leaf_0 );
+write_lines("${suffix}.height.leaf.1", \@height_leaf_1 );
+write_lines("${suffix}.height.mid.0",  \@height_mid_0 );
+write_lines("${suffix}.height.mid.1",  \@height_mid_1 );
+
+my ($l,$m);
+
+($l,$m) = count_failing_nodes(\%resp_nodes_0);
+print "response bump cc=0 $l $m\n";
+($l,$m) = count_failing_nodes(\%resp_nodes_1);
+print "response bump cc=1 $l $m\n";
+($l,$m) = count_failing_nodes(\%width_nodes_0);
+print "bump width cc=0 $l $m\n";
+($l,$m) = count_failing_nodes(\%width_nodes_1);
+print "bump width cc=1 $l $m\n";
+($l,$m) = count_failing_nodes(\%height_nodes_0);
+print "bump height cc=0 $l $m\n";
+($l,$m) = count_failing_nodes(\%height_nodes_0);
+print "bump height cc=0 $l $m\n";

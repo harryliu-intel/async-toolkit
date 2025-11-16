@@ -1,0 +1,125 @@
+#!/bin/bash
+# Copyright 2002 Fulcrum Microsystems.  All rights reserved.
+# $Id$
+# $DateTime$
+# $Author$
+
+function usage() {
+  echo "$0 --cds-wd=dir --generated-libraries-root=dir --blank-cds-library=dir --cell=cellname --lib=libname --short-name=cellshortname --lib-dir=librarydir --cell-dir=celldir --cell-number=num --number-of-cells=numcells --percent-complete=percentcomplete"
+}
+
+
+sedcmd=`which sed`
+grepcmd=`which grep`
+gawkcmd=`which gawk`
+findcmd=`which find`
+bashcmd=`which bash`
+
+check_executable_file "$sedcmd" "Unable to find sed in \"$PATH\"" 2
+check_executable_file "$grepcmd" "Unable to find grep in \"$PATH\"" 2
+check_executable_file "$gawkcmd" "Unable to find gawk in \"$PATH\"" 2
+check_executable_file "$findcmd" "Unable to find find in \"$PATH\"" 2
+check_executable_file "$bashcmd" "Unable to find bash in \"$PATH\"" 2
+
+cds_wd=
+generated_libs_root=
+blank_cds_library=
+lib_commands_dir=
+sh_lib_dir=
+
+lib=
+
+cell_num=
+cell_count=
+percent_complete=
+
+for arg in $@ ; do
+  
+  case "$arg" in
+   --cds-wd=* )
+    cds_wd=`echo $arg | $sedcmd -e "s/--cds-wd=//"`
+    ;;
+  --generated-libraries-root=* )
+    generated_libs_root=`echo $arg | $sedcmd -e "s/--generated-libraries-root=//"`
+    ;;
+  --blank-cds-library=* )
+    blank_cds_library=`echo $arg | $sedcmd -e "s/--blank-cds-library=//"`
+    ;;
+  --library-commands-dir=* )
+    lib_commands_dir=`echo $arg | $sedcmd -e "s/--library-commands-dir=//"`
+    ;;
+  --shell-library=* )
+    sh_lib_dir=`echo $arg | $sedcmd -e "s/--shell-library=//"`
+    ;;
+  --lib=* )
+    lib=`echo $arg | $sedcmd -e "s/--lib=//"`
+    ;;
+  --number-of-cells=* )
+    cell_count=`echo $arg | $sedcmd -e "s/--number-of-cells=//"`
+    ;;
+  --percent-complete=* )
+    percent_complete=`echo $arg | $sedcmd -e "s/--percent-complete=//"`
+    ;;
+  esac
+done
+
+check_for_empty_arg "$cds_wd"              "You must specify the cadence working directory."                   2
+check_for_empty_arg "$generated_libs_root" "A generated libraries root directory was not specified."           2
+check_for_empty_arg "$blank_cds_library"   "A directory containing a blank cadence library was not specified." 2
+check_for_empty_arg "$lib_commands_dir"    "You must specify the library commands directory."                  2
+
+check_for_empty_arg "$sh_lib_dir"                                                \
+    "The directory containing the shell script library was not specified."                      2
+
+check_for_empty_arg "$lib"                 "\"$cell\"'s library was not specified."                            2
+
+
+check_writeable_dir "$cds_wd" "Cadence Working Directory: \"$cds_wd\" is not a readable, writeable directory." 2
+conon_path "$cds_wd"
+cds_wd="$ret"
+
+check_writeable_dir "$generated_libs_root" \
+                    "Generated Libraries Root Directory: \"$generated_libs_root\" is not a readable, writeable directory." 2
+conon_path "$generated_libs_root"
+generated_libs_root="$ret"
+
+check_readable_dir "$blank_cds_library" \
+                   "Blank Cadence Library: \"$blank_cds_library\" is not a readable directory." 2
+conon_path "$blank_cds_library"
+blank_cds_library="$ret"
+
+
+check_readable_dir "$sh_lib_dir" "Shell Library: \"$sh_lib_dir\" is not a readable directory."  2
+conon_path "$sh_lib_dir"
+sh_lib_dir="$ret"
+
+check_readable_dir "$lib_commands_dir" \
+    "Library Commands Directory: \"$lib_commands_dir\" is not a readable directory." 2
+conon_path "$lib_commands_dir"
+lib_commands_dir="$ret"
+                 
+mkcdslib_src="$lib_commands_dir/mkcdslib"
+check_readable_file "$mkcdslib_src" \
+   "mkcdslib: \"$mkcdslib_src\" is not a readable file." 2
+
+
+cmd_tmp_dir=`mktemp -d /tmp/ensurecelllib.XXXXXX`
+
+generate_command_script "$cmd_tmp_dir" "$mkcdslib_src" "$sh_lib_dir" "$bashcmd"
+mkcdslib="$ret"
+
+if [[ -n "$cell_num" && -n "$cell_count" ]] ; then
+  echo "Doing $cell ( $cell_num of $cell_count )"
+fi
+
+$mkcdslib --cds-wd=$cds_wd                                \
+          --generated-libraries-root=$generated_libs_root \
+          --blank-cds-library=$blank_cds_library          \
+          --lib=$lib
+
+rm -rf $cmd_tmp_dir
+
+if [ -n "$percent_complete" ] ; then
+  echo "$percent_complete% complete."
+fi
+                  

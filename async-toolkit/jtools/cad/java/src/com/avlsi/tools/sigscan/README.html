@@ -1,0 +1,271 @@
+<html>
+<body bgcolor=white>
+
+<h2>JavaChannel Transaction Logging</h2>
+
+<p>Alpha Release</p>
+
+<hr>
+Features<br>
+Coding Conventions<br>
+Running the Examples<br>
+Release Notes<br>
+<hr>
+
+<h3>Features</h3>
+
+<p><b>Overview:</b>  JavaChannel has been integrated with signalscan, a
+cadence tool used to log simulations, and to analyze logged data.  The
+integration most notably introduces the concept of transaction-based
+logging to JavaChannel.  A transaction is a period of time that can be
+parameterized to record the actions taking place during that timespan.
+A progression of transactions is a fiber, and
+in JavaChannel each device has one fiber that describes the activity on
+the device.
+Each transaction can be linked with other transactions on other fibers
+to show data flow between devices.  For more information on signalscan
+logging, view the Signalscan API in the jcast javadoc:
+<p>
+<code>
+com.avlsi.tools.sigscan.Sigscan<br>
+com.avlsi.tools.sigscan.TransactionFiber<br>
+</code>
+<p>These are the main classes to view, however you in most cases won't
+access the Sigscan class directly.</p>
+
+
+<h2>Features</h2>
+The main features of this logging scheme:
+
+<ol>
+<li>Logged data is rearranged chronologically, making output
+statements much more easy to follow than using printlns.
+<li>Logged data arranged by device, making debugging of multiple
+modules much simpler.
+<li>Errors for each device are arranged by device and can be looped
+through easily.  This allows the user to run a long simulation without
+having to later 'grep' through a log file for errors.
+<li>More advanced debugging techniques can be employed, which go beyond
+simple print statements:
+<ol>
+<li>Individual variables of basic type (boolean, int, string, etc) can
+be logged and monitored throughout the duration of the simulation.
+Using special LoggedVars will log these variables automatically.
+<li>Transactions can be built and designed to more robustly display
+debug and run information.
+<li>Transactions can be characterized by not only their start and
+duration but also by user-defined attributes.
+<li>Transactions can be linked to show the progression of transactions
+through the simulation.
+<li>Transactions can be nested so that sub-transactions can break up
+larger transactions into finer detail.
+<li>These transactions can be post-processed and analyzed to ensure test
+coverage and test correctness.
+</ol>
+</ol>
+
+<h2>Coding Conventions</h2>
+
+<p>To build a new database suitable for JavaChannel logging, you will
+begin with code similar to below(found in the vortex example in
+jsim.java):<br>
+<code><pre>
+    private static void doSigscan() {
+        try {
+            //Default scope name for this run, will file everything
+            //under the vortex name
+            String def_scope = "vortex";
+            String filename = "vortex";
+            //Opens a new database file in the current dir called filename
+            com.avlsi.tools.sigscan.ChannelSigscan cs =
+                new com.avlsi.tools.sigscan.ChannelSigscan(filename);
+            AbstractDevice.setSigscanDefaults(cs, def_scope,
+                                              AbstractDevice.LOG_ALL_SST);
+            //Start the polling thread to get the DigitalScheduler started
+            //Not that this technique except when we run into ParallelSend....
+            //as of 1/10/02 -dd
+            cs.start();
+        } catch (com.avlsi.tools.sigscan.SigscanException e) {
+            System.out.println("SigscanException detected: "+e);
+            System.out.println("All signalscan logging disabled.");
+            AbstractDevice.setSigscanDefaults(null, "void",
+                                              AbstractDevice.LOG_NOTHING);
+        }
+    }
+</pre></code>
+
+<p>This piece of code begins by setting up a new signalscan database
+with the instantiation of a new ChannelSigscan.  Later, the thread
+within that object is started.  Without starting this thread, no
+transactions will be logged (the thread is partially responsible for the
+reordering of events).
+<p>Signalscan logging in JavaChannel is facilitated by the
+AbstractDevice class, the base class for all JavaChannel devices.  To
+setup AbstractDevice to log transactions, you will begin by setting the
+defaults as above.  Later in your code, you may optionally override
+these defaults in each of your device's constructors.  This would be
+important if for example you only wanted to log a certain set of
+devices, or log in different manners.  You can combine types of logging,
+for example to log vars and msgs, set the last default parameter to
+AbstractDevice.LOG_VARS_SST+AbstractDevice.LOG_MSGS_SST).
+</p>
+
+<p>Once set up, most logging will begin automatically as long as you
+use the built in functions of AbstractDevice in your code. If you
+override any of these functions, be sure to call the superclasses'
+methods to preserve your device's logging abilites.</p>
+
+<p>For feature 1, to print out output messages, use:<br>
+<code><pre>
+protected void output(String text);
+</pre></code>
+<p>Depending on your log options, this may print a string to the screen
+or to the signalscan database.  For feature 3, when printing out errors, use the
+method:<br>
+<code><pre>
+protected void outerr(String text);
+</pre></code>
+This may print text to standard error, or log the text into the database
+(depending on your options).
+<p>To log variables within your code, build a LoggedVar object that
+corresponds to the type of data to log (ie logging an int would require
+a LoggedInt object).  This object can be used to shadow the variable to
+be logged or can encapsulate it, removing the need for the old variable.
+<p>To log transactions, enable transaction logging by passing the bit
+vector LOG_CHAN_SST.  Then the following commands are enabled:<br>
+<code><pre>
+public Transaction beginTransaction(TransactionType type,
+                                    String label, String desc);
+
+public void endTransaction();
+
+</code></pre>
+
+<p>This allows you to begin and end transactions.  The time of these
+events is equal to the device's current internal time.  You can also nest
+transactions on a fiber using these same commands.  The TransactionType
+is used to specify the kind of transaction, and to place attributes on that type.  
+For example:<br>
+
+<code><pre>
+TransactionType newmsgT = fiber.newBeginEndType("New Message");
+StringAttribute msg_attr = new StringAttribute("msgtext");
+newmsgT.addAttribute(msg_attr);
+</code></pre>
+
+<p>This builds a new TransactionType from the default fiber on the
+device, calling it newmsgT.  It also adds a string attribute field that will hold the
+message data for this type of transaction.  There are three kinds of
+transaction types, BEGINEND, EVENT and ERROR.  BEGINEND kinds require a
+call to endTransaction to be valid, while EVENT and ERROR do not.
+
+<P>Attributes are very useful when trying to log different aspects of
+the design into the database.  To set an attribute on a transaction, the
+setting is done on the Attribute object itself and not the transaction.
+For example, to set the attribute above:<br>
+<code><pre>
+
+currTran = beginTransaction(newmsgT,"New Incoming Message", "Got a new message");
+msg_attr.set(message.getText());
+</pre></code>
+
+<p>If the attribute changes more than once before another transaction is
+started, the last value of the attribute will be capatured by the log
+file.
+
+<p>Transactions can also be linked together.  You can link Transactions
+using the Sigscan class, which is the Transaction Logging API.  Or you
+can use the built in linking of AbstractDevice to link the current
+device's transactions to transactions of device's that send it messages.
+The call:<br>
+<code><pre>
+public void link(Message m);
+</pre></code>
+<P>Will link the current transaction with the transaction that caused
+the Message m.  To correctly track the current transaction, be sure that
+you record it when you beginTransaction:<br>
+<code><pre>
+currTran = beginTransaction( .... );
+link(message);
+</code></pre>
+
+<h2>Running the Examples</h2>
+
+<p>To demostrate all of these features, I have modified some of the
+vortex code.  To run this example:
+
+<ul>Vortex Example
+<li>CVS update your jcast using -dPA flagset.
+<li>Build your jcast, and set your CLASSPATH so that it points to your
+jcast/classes, and not to the installed jar.
+<li>Set your LD_LIBRARY_PATH:<br>
+<code>setenv LD_LIBRARY_PATH
+/usr/local/jars/native:$LD_LIBRARY_PATH</code>
+<li>Run:<br>
+<code>tsim --suppress-output --enable-sigscan
+~/hardware/cast/vortex/test/muldiv.vo</code><br>
+This is a fun one to do.
+<li>This should place a vortex.dsn and vortex.trn in your working
+directory.
+<li>To view the results, first:<Br>
+<code>source /usr/local/cad/cds/cadence.csh<BR>signalscan</code>
+<br>
+This will set you up for cadence and start up signalscan.
+<li>Once in signalscan, go to File-&gt;Open and choose the vortex.trn
+file.
+<li>Click on the [DesBrows] button on the top right to broswe the
+database.  Click on vortex in green to view all of the devices in the
+simulation.  Choose the elements you wish to view and click [Add,
+Close].
+<li>To view errors on a fiber, click on that fiber and choose
+Control-&gt;Show Next Error.
+<li>To loop through the transactions on a fiber, click on
+Windows-&gt;Transaction List.  To view the related transactions, use the
+pulldown menu on the upper right of this new menu.  You can also use
+this window to view the errors on this fiber.
+<li>To view an event (a transaction that is only a delta in time)
+left-click the event and then choose View-&gt;Expand Cursor Time-&gt;at
+Cursor1.  Then you should be able to the view the properties of this
+transaction.  You can alternatively click on the fiber which holds the
+events and choose Control-&gt;Variable Change-&gt;Next which will
+display the event's properties underneath the fiber name.
+</ul>
+
+<p>That should get you started.  The changes I made:
+<ul>
+<li>Changed jsim to add the --enable-sigscan and the doSigscan method.
+<li>Used output, outerr, and setState in Alu, Dispatch and MulDiv.
+<li>Added a LoggedLong in MulDiv.
+<li>Added begin/end transaction block in Alu, Dispatch and MulDiv.  I
+also set a few attributes in Alu and MulDiv to demonstrate how that is done.
+<li>I linked transactions using the modifications to the Message class.
+I also modified VectorUnroller to correctly clone the message.
+</ul>
+
+
+<h2>Release Notes</h2>
+<ol>
+<li><b>Asoc.java</b>  It will give set time errors (its wait is weird).
+<li><b>ParallelSend:</b>  You'll notice that when you run the vortex
+example a ton of SDI errors occurs.  This is due to a timing malfunction
+in ParallelSend.  This will be fixed soon- it doesn't affect the
+simulation, only the times at which transactions are logged to the
+database.  The times on all messages involving ParallelSend are
+incorrect (in fact they have the timestamps they would get if only
+normal sends are used instead.  ParallelSend violates a key timing assumption).
+<li><b>Purple Dots:</b> A purple dot in signalscan is a multi-value
+indicator, it means that a signal or transaction has been set multiple
+times at that moment in time.  setState does this a lot, as does output.
+To view all events inside a purple dot, use View-&gt;Expand Cursor Time-&gt;at
+Cursor1.
+<li><b>Early Output:</b>output, outerr, etc, will not work until the
+Abstractdevice is started.
+<li><b>Deadlock</b>  The deadlock case hasn't been tested, so if you are
+logging and it deadlocks, and the data is not logged, please tell me!
+If the close() call is never made, then the database cannot be read.
+When in deadlock, try killing without -9 first, and then do a -9 (this
+will allow the sigscan to close ( I think...))
+<li>I'm also up for suggestions on how more of this could be
+internalized.
+<li>It would be nice to incorporate this into the CSP to Java project
+</ol>

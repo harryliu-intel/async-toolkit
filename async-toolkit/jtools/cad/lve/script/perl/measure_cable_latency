@@ -1,0 +1,95 @@
+#!/usr/intel/bin/perl -w
+
+# find relevant packaged tools and libraries
+BEGIN {
+    $lve_root = $0;
+    $lve_root =~ s:/[^/]*$::;
+    $lve_root =~ s:/[^/]*$::;
+    @INC = ("$lve_root/lib/perl", @INC);
+    $cad_dir = $lve_root;
+    $cad_dir =~s:/[^/]*$::;
+    @INC = ("$cad_dir/lib/perl", @INC);
+}
+use LveStatus;
+use LveUtil;
+use Getopt::Long;
+use strict;
+
+sub usage {
+    my $usage_str = "USAGE: $0 \n";
+    $usage_str .=   "  --lve-dir=<path>\n";
+    $usage_str .=   "  --cell=<FQCN>\n";
+    $usage_str .=   "  --env=<env name>\n";
+    $usage_str .=   "  --pvt=<pvt string>\n"; 
+    $usage_str .=   "  --mode=<extract mode [typ|rcw|rcb|cbe|cwo]>\n"; 
+    $usage_str .=   "  --view=<view name>\n"; 
+    $usage_str .=   "  --analog-time=<analog simulation time in ns>\n";
+    die "$usage_str";
+}
+
+my $mode = "typ";
+my $lve_dir;
+my $cell;
+my $env;
+my $pvt;
+my $view;
+my $analog_time;
+
+GetOptions(
+    "lve-dir=s"   => \$lve_dir,
+    "cell=s"      => \$cell,
+    "env=s"       => \$env,
+    "pvt=s"       => \$pvt,
+    "mode=s"      => \$mode,
+    "view=s"      => \$view,
+    "analog-time=s" => \$analog_time,
+);
+
+usage unless (defined($cell) && defined($lve_dir) && defined($pvt) && defined($env));
+
+my $aspice_log = "$lve_dir/";
+$aspice_log .= fqcn_to_path($cell);
+
+my @pvt_splt = split(":", $pvt);
+my $pvt_path = "$pvt_splt[0]/$pvt_splt[1]V/$pvt_splt[2]C";
+
+my $suffix = "";
+unless ($mode eq "typ") {
+  $suffix = "-$mode";
+}
+
+$aspice_log .= "/$view/extracted$suffix/aspice/$env/$pvt_path/";
+$aspice_log .= "${analog_time}ns/0.95_1.05/aspice.log";
+
+my %L = ();
+my %R = ();
+
+my @lines = get_lines("$aspice_log");
+foreach my $l (@lines) {
+  chomp ($l);
+  my @spl_l = split (" ", $l);
+  if ($spl_l[1] eq "#1") {
+    if ($spl_l[2] =~ /L\[\d+\].\d:1/) {
+       my $key = $spl_l[2];
+       $key =~ s/L//g;
+       $key =~ s/:1//g;
+       my $t = $spl_l[0];
+       $t =~ s/@//g;
+       $L{$key} = $t;
+    }
+    if ($spl_l[2] =~ /R\[\d+\].\d:1/) {
+       my $key = $spl_l[2];
+       $key =~ s/R//g;
+       $key =~ s/:1//g;
+       my $t = $spl_l[0];
+       $t =~ s/@//g;
+       $R{$key} = $t;
+    }
+  }
+}
+
+foreach my $k (sort(keys %L)) {
+   my $latency = ($R{$k} - $L{$k});
+   print "L$k : $latency\n";
+}
+

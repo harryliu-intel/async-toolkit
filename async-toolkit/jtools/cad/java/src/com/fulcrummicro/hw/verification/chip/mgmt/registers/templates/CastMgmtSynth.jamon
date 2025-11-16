@@ -1,0 +1,461 @@
+<%extends CastCommon>
+<%import>
+java.lang.Math;
+java.util.Collection;
+com.fulcrummicro.util.misc.Utility;
+com.fulcrummicro.hw.verification.chip.mgmt.registers.*;
+</%import>\
+<%args>
+Collection<RegisterBase> bases;
+Collection<Register> regs;
+String chip;
+</%args>\
+module chip.<% chip %>.base.register_mgmt_synth;
+
+import chip.<% chip %>.base.functions.*;
+import chip.<% chip %>.base.registers.*;
+import chip.<% chip %>.mgmt.base.MgmtIfCell;
+
+import chip.<% chip %>.mgmt.channel.IntMgmtGroupChannel;
+import chip.<% chip %>.mgmt.channel.IntMgmtChannel;
+import chip.<% chip %>.mgmt.channel.IntMgmtIChannel;
+import chip.<% chip %>.mgmt.channel.IntMgmtWChannel;
+import chip.<% chip %>.mgmt.channel.IntMgmtIWChannel;
+
+<%def e1ofN>\
+<%args>int w;</%args>\
+<%if w <= 2 %>e1of<% w*2 %>\
+<%else>e1of4[<% String.format("%.0f", Math.ceil(w/2.0)) %>]\
+</%if>\
+</%def>\
+<%doc>************************************************************</%doc>\
+<%doc>************************************************************</%doc>\
+
+<%for RegisterBase base : bases %>
+<%for String group : base.getGroups() %>
+<%java>
+String baseName = base.getName(); if(group != null) baseName += "_" + group.toUpperCase();
+String camelCaseBaseName = Utility.underscoreToCamelCase(baseName, true);
+int maxAtomicWidth = 1; for(Register reg : base.getRegisters()) {maxAtomicWidth=Math.max(maxAtomicWidth,reg.getAtomicWidth());}
+Collection<Register> registers = base.getRegisters("group", group);
+int maxSramBits = 1; for(Register reg : registers) {maxSramBits=Math.max(maxSramBits,reg.getImplementationWidth());}
+int mgmtDataBits = (group == null) ? 32*maxAtomicWidth : maxSramBits;
+</%java>\
+define <% camelCaseBaseName %>Management() attributes
+  <+ <% Utility.underscoreToCamelCase(base.getName(), true) %>RegisterFields
+<%if group == null %><%for String g : base.getGroups() %><%if g != null %>\
+  <+ <% Utility.underscoreToCamelCase(base.getName() + "_" + g.toUpperCase(), true) %>Management
+</%if></%for></%if>\
+  <+ AddressSpace <+ MgmtIfCell <+ RegisterFunctions {
+  int <% baseName %>_MGMT_BITS = <% mgmtDataBits %>;
+  csp {
+<%doc>************************************************************</%doc>\
+<& registerStructureBase; registers=registers; camelCaseBaseName=camelCaseBaseName &>
+<%if group == null %><%for String g : base.getGroups() %><%if g != null %>\
+      <% Utility.underscoreToCamelCase(base.getName() + "_" + g.toUpperCase(), true) %>Registers <% g.toLowerCase() %>;
+</%if></%for></%if>\
+    );
+<%doc>************************************************************</%doc>\
+
+<%doc><& _generateTcamLookupFunction; base = base &></%doc>
+<& CastMgmtTcam; base=base; registers = registers; baseNamePrefixCC = camelCaseBaseName &>
+<%doc>************************************************************</%doc>\
+<%doc>check if register hit</%doc>\
+<%for Register reg : registers %><%if reg.getAlias() == null %>\
+    function is<% Utility.underscoreToCamelCase(reg.getName(), true) %>(int(24) -chip_addr) : boolean = (
+      is<% Utility.underscoreToCamelCase(reg.getName(), true) %> = <& registerAddressGuardExpr; reg=reg; &>
+    );
+</%if></%for>\
+
+<%doc>************************************************************</%doc>\
+<%doc>atomic word address decode</%doc>\
+<%for Register reg : registers %><%if reg.getAlias() == null %>\
+    function getAtomicWordNumber<% Utility.underscoreToCamelCase(reg.getName(), true) %>(int(24) -chip_addr) : int(8) = (
+<%if reg.getAtomicWidth() >= reg.getEntryWidth() %>\
+      getAtomicWordNumber<% Utility.underscoreToCamelCase(reg.getName(), true) %> = 0
+<%else>\
+      int(4) atomicWordBits = log2(<% reg.getName() %>_ATOMIC_WIDTH);
+      int(4) widthBits = log2(<% reg.getName() %>_WIDTH);
+      getAtomicWordNumber<% Utility.underscoreToCamelCase(reg.getName(), true) %> = chip_addr{widthBits-1:atomicWordBits}
+</%if>\
+    );
+</%if></%for>\
+
+<%doc>************************************************************</%doc>\
+<%doc>entry address decode</%doc>\
+<%for Register reg : registers %><%if (reg.getAlias() == null) && (reg.getNumEntries() > 1) %>\
+    function getEntryAddress<% Utility.underscoreToCamelCase(reg.getName(), true) %>(int(24) -chip_addr) : int(16) = (
+      int(8) entryBits = log2(<% reg.getName() %>_ENTRIES<%if reg.getNumEntries1()>1 %>_0</%if>);
+      getEntryAddress<% Utility.underscoreToCamelCase(reg.getName(), true) %> = (chip_addr >> log2(<% reg.getName() %>_STRIDE<%if reg.getNumEntries1()>1 %>_0</%if>)) & ((1<<entryBits) - 1)
+    );
+</%if></%for>\
+
+<%doc>************************************************************</%doc>\
+<%doc>entry 1 address decode</%doc>\
+<%for Register reg : registers %><%if (reg.getAlias() == null) && (reg.getNumEntries1() > 1) %>\
+    function getEntry1Address<% Utility.underscoreToCamelCase(reg.getName(), true) %>(int(24) -chip_addr) : int(16) = (
+      int(8) entry1Bits = log2(<% reg.getName() %>_ENTRIES_1);
+      getEntry1Address<% Utility.underscoreToCamelCase(reg.getName(), true) %> = (chip_addr >> log2(<% reg.getName() %>_STRIDE_1)) & ((1<<entry1Bits) - 1)
+    );
+</%if></%for>\
+
+<%doc>************************************************************</%doc>\
+<%doc>entry 2 address decode</%doc>\
+<%for Register reg : registers %><%if (reg.getAlias() == null) && (reg.getNumEntries2() > 1) %>\
+    function getEntry2Address<% Utility.underscoreToCamelCase(reg.getName(), true) %>(int(24) -chip_addr) : int(16) = (
+      int(8) entry2Bits = log2(<% reg.getName() %>_ENTRIES_2);
+      getEntry2Address<% Utility.underscoreToCamelCase(reg.getName(), true) %> = (chip_addr >> log2(<% reg.getName() %>_STRIDE_2)) & ((1<<entry2Bits) - 1)
+    );
+</%if></%for>\
+
+<%doc>************************************************************</%doc>\
+<%doc>Read/write of Registers</%doc>\
+    function rw<% camelCaseBaseName %>Registers(int(1) -rw; int -chip_addr; int -+data;
+                               <% camelCaseBaseName %>Registers -+s) = (
+<%if group == null %><%for String g : base.getGroups() %><%if g != null %>\
+      rw<% Utility.underscoreToCamelCase(base.getName() + "_" + g.toUpperCase(), true) %>Registers(rw,chip_addr,data,s::<% g.toLowerCase() %>);
+</%if></%for></%if>\
+<%if !registers.isEmpty() %>\
+      int offset;
+      #[regRange(chip_addr, <% base.getFullName() %>, <% base.getName() %>_SIZE, offset) ->
+        #[\
+<%java boolean first = true; %>\
+<%doc></%doc><%for Register reg : registers %><%if reg.getAlias() == null %>\
+<%java String index = ""; %>\
+<% first ? "" : "        []" %><%java first=false; %>\
+is<% Utility.underscoreToCamelCase(reg.getName(), true) %>(chip_addr) -><%doc>match -></%doc>\
+
+            int(<% reg.getImplementationWidth() %>) data_atomic;
+<%doc>----</%doc><%if reg.getEntryWidth() > 1 %>\
+            int(8) atomic_word = getAtomicWordNumber<% Utility.underscoreToCamelCase(reg.getName(), true) %>(chip_addr);
+<%doc>----</%doc><%else>\
+            int(8) atomic_word = 0;
+<%doc>----</%doc></%if>\
+<%doc>----</%doc><%if reg.getNumEntries() > 1 %>\
+            int(16) i0 = getEntryAddress<% Utility.underscoreToCamelCase(reg.getName(), true) %>(chip_addr);
+<%java index = "[i0]"; %>\
+<%doc>----</%doc></%if>\
+<%doc>----</%doc><%if reg.getNumEntries1() > 1 %>\
+            int(16) i1 = getEntry1Address<% Utility.underscoreToCamelCase(reg.getName(), true) %>(chip_addr);
+<%java index = "[i1, i0]"; %>\
+<%doc>----</%doc></%if>\
+<%doc>----</%doc><%if reg.getNumEntries2() > 1 %>\
+            int(16) i2 = getEntry2Address<% Utility.underscoreToCamelCase(reg.getName(), true) %>(chip_addr);
+<%java index = "[i2, i1, i0]"; %>\
+<%doc>----</%doc></%if>\
+
+<%doc>----</%doc><%if reg.isStructure() %>\
+            int(<% reg.getImplementationWidth() %>) reg = pack(s::<% reg.getName().toLowerCase() %><% index %>);
+<%doc>----</%doc><%else>\
+            int(<% reg.getImplementationWidth() %>) reg = s::<% reg.getName().toLowerCase() %><% index %>;
+<%doc>----</%doc></%if>\
+            int(<% reg.getImplementationWidth() %>) reg_read = reg & ~<% reg.getName() %>_WO_MASK;
+
+            [ rw == 0 ->
+<%doc>----</%doc><%if reg.getEntryWidth() > 1 %>\
+              [ \
+<%doc>------</%doc><%for int i=0; i<Math.ceil(1.0*reg.getEntryWidth()/reg.getAtomicWidth()); i++ %>atomic_word == <% i %> -> \
+<%java int max = Math.min(reg.getAtomicWidth()*32*(i+1) - 1, reg.getImplementationWidth()-1); %>\
+<%java int min = reg.getAtomicWidth()*32*(i); %>\
+data = reg_read{<% max %>:<% min %>}
+              []\
+<%doc>------</%doc></%for>else -> skip ];
+<%doc>----</%doc><%else>\
+              data = reg_read
+<%doc>----</%doc></%if>\
+            [] else ->
+              [ \
+<%doc>------</%doc><%for int i=0; i<Math.ceil(1.0*reg.getEntryWidth()/reg.getAtomicWidth()); i++ %>atomic_word == <% i %> -> \
+<%java int max = Math.min(reg.getAtomicWidth()*32*(i+1) - 1, reg.getImplementationWidth()-1); %>\
+<%java int min = reg.getAtomicWidth()*32*(i); %>\
+data_atomic{<% max %>:<% min %>} = data;
+                <i:<% min %>..<% max %>:( regWriteBit(i,
+                  <% reg.getName() %>_RW_MASK | <% reg.getName() %>_RV_MASK | <% reg.getName() %>_WO_MASK,
+                  <% reg.getName() %>_RO_MASK,
+                  <% reg.getName() %>_CW_MASK,
+                  <% reg.getName() %>_CW1_MASK,
+                  data_atomic, reg); )>
+              []\
+<%doc>------</%doc></%for>else -> skip ];
+            ];
+<%doc>----</%doc><%if reg.isShadow() %>\
+            #[rw == 1 ->
+<%doc>-------</%doc><%if reg.isStructure() %>\
+              unpack(s::shadow_<% reg.getName().toLowerCase() %><% index %>, reg);
+<%doc>-------</%doc><%else>\
+              s::shadow_<% reg.getName().toLowerCase() %><% index %> = reg;
+<%doc>-------</%doc></%if>\
+            ]
+<%doc>----</%doc><%else>\
+<%doc>-------</%doc><%if reg.isStructure() %>\
+            unpack(s::<% reg.getName().toLowerCase() %><% index %>, reg);
+<%doc>-------</%doc><%else>\
+            s::<% reg.getName().toLowerCase() %><% index %> = reg;
+<%doc>-------</%doc></%if>\
+<%doc>----</%doc></%if>\
+<%doc></%doc></%if></%for>\
+        ]
+      ]
+</%if>\
+    );
+
+<%doc>************************************************************</%doc>\
+    function shadowApply<% camelCaseBaseName %>Registers(<% camelCaseBaseName %>Registers -+s) = (
+<%if group == null %><%for String g : base.getGroups() %><%if g != null %>\
+      shadowApply<% Utility.underscoreToCamelCase(base.getName() + "_" + g.toUpperCase(), true) %>Registers(s::<% g.toLowerCase() %>);
+</%if></%for></%if>\
+<%if !registers.isEmpty() %>\
+<%doc></%doc><%for Register reg : registers %><%if reg.getAlias() == null %>\
+<%doc>----</%doc><%if reg.isShadow() %>\
+      s::<% reg.getName().toLowerCase() %> = s::shadow_<% reg.getName().toLowerCase() %>;
+<%doc>----</%doc></%if>\
+<%doc></%doc></%if></%for>\
+</%if>\
+      skip
+    );
+
+<%doc>************************************************************</%doc>\
+<& registerInitBase; registers=registers; camelCaseBaseName=camelCaseBaseName &>
+<%if group == null %><%for String g : base.getGroups() %><%if g != null %>\
+      init<% Utility.underscoreToCamelCase(base.getName() + "_" + g.toUpperCase(), true) %>Registers(s::<% g.toLowerCase() %>);
+</%if></%for></%if>\
+    );
+<%doc>************************************************************</%doc>\
+  }
+}
+
+
+</%for>
+</%for>
+
+<%doc>************************************************************</%doc>\
+<%doc>************************************************************</%doc>\
+<%doc>************************************************************</%doc>\
+/****************************************************************************/
+/****************************************************************************/
+
+// Versions without data
+defchan IntMgmtGroupChannelND(int W_A)(
+  e1of2            +RW;
+  e1of4[(W_A+1)/2] +ADDR
+){}
+
+defchan IntMgmtChannelND()(
+  e1of2            +HIT;
+  e1of2            +RW
+){}
+defchan IntMgmtIChannelND(int W_I)(
+  e1of2            +HIT;
+  e1of2            +RW;
+  e1of4[(W_I+1)/2] +I
+){}
+defchan IntMgmtWChannelND(int N_AW)(
+  e1of2             +HIT;
+  e1of2             +RW;
+  e1of4[log4(N_AW)] +AW
+){}
+defchan IntMgmtIWChannelND(int W_I, N_AW)(
+  e1of2             +HIT;
+  e1of2             +RW;
+  e1of4[(W_I+1)/2]  +I;
+  e1of4[log4(N_AW)] +AW
+){}
+
+<%for RegisterBase base : bases %>
+<%for String group : base.getGroups() %>
+<%java>
+String baseName = base.getName(); if(group != null) baseName += "_" + group.toUpperCase();
+String camelCaseBaseName = Utility.underscoreToCamelCase(baseName, true);
+int maxAtomicWidth = 1; for(Register reg : base.getRegisters()) {maxAtomicWidth=Math.max(maxAtomicWidth,reg.getAtomicWidth());}
+Collection<Register> registers = base.getRegisters("group", group);
+int maxSramBits = 1; for(Register reg : registers) {maxSramBits=Math.max(maxSramBits,reg.getImplementationWidth());}
+int mgmtDataBits = (group == null) ? 32*maxAtomicWidth : maxSramBits;
+int wAddr = 24;
+</%java>
+<%doc>************************************************************</%doc>\
+define <% baseName %>_MGMT_IN() (
+    e1of2 -RW; e1of4[(<% wAddr %>+1)/2] -ADDR; e1of4[(<% mgmtDataBits %>+1)/2] -DATA\
+<%doc></%doc><%for Register reg : registers %><%if reg.getAlias() == null %>;
+<%java>
+Register.IndexInfo indexInfo = reg.getIndexInfo();
+int wD = reg.getImplementationWidth();
+</%java>\
+<%doc>----</%doc><%if reg.getEntryWidth() > reg.getAtomicWidth() %>\
+<%java int wW = Double.valueOf(Math.ceil(1.0*reg.getEntryWidth()/reg.getAtomicWidth())).intValue(); %>
+<%doc>--------</%doc><%if indexInfo.totalEntryBits > 0 %>\
+    IntMgmtIWChannel(<% wD %>, <% indexInfo.totalEntryBits %>, <% wW %>)\
+<%doc>--------</%doc><%else>\
+    IntMgmtWChannel(<% wD %>, <% wW %>)\
+<%doc>--------</%doc></%if>\
+<%doc>----</%doc><%else>\
+<%doc>--------</%doc><%if indexInfo.totalEntryBits > 0 %>\
+    IntMgmtIChannel(<% wD %>, <% indexInfo.totalEntryBits %>)\
+<%doc>--------</%doc><%else>\
+    IntMgmtChannel(<% wD %>)\
+<%doc>--------</%doc></%if>\
+<%doc>----</%doc></%if> +<% reg.getName() %>\
+<%doc></%doc></%if></%for>\
+<%doc></%doc><%if group == null %><%for String g : base.getGroups() %><%if g != null %>;
+<%java int mW = 1; for(Register reg : base.getRegisters("group", g)) {mW=Math.max(mW,reg.getImplementationWidth());}  %>\
+    IntMgmtGroupChannel(<% wAddr %>, <% mW %>) +<% g %>\
+<%doc></%doc></%if></%for></%if>\
+
+  ) {
+  subcells {
+<%doc></%doc><%for Register reg : registers %><%if reg.getAlias() == null %>\
+<%java>
+Register.IndexInfo indexInfo = reg.getIndexInfo();
+</%java>\
+<%doc>----</%doc><%if reg.getEntryWidth() > reg.getAtomicWidth() %>\
+<%java int wW = Double.valueOf(Math.ceil(1.0*reg.getEntryWidth()/reg.getAtomicWidth())).intValue(); %>
+<%doc>--------</%doc><%if indexInfo.totalEntryBits > 0 %>\
+    IntMgmtIWChannelND(<% indexInfo.totalEntryBits %>, <% wW %>) <% Utility.underscoreToCamelCase(reg.getName(), false) %>_nd(\
+<% reg.getName() %>.HIT, <% reg.getName() %>.RW, <% reg.getName() %>.I, <% reg.getName() %>.AW);
+<%doc>--------</%doc><%else>\
+    IntMgmtWChannelND(<% wW %>) <% Utility.underscoreToCamelCase(reg.getName(), false) %>_nd(\
+<% reg.getName() %>.HIT, <% reg.getName() %>.RW, <% reg.getName() %>.AW);
+<%doc>--------</%doc></%if>\
+<%doc>----</%doc><%else>\
+<%doc>--------</%doc><%if indexInfo.totalEntryBits > 0 %>\
+    IntMgmtIChannelND(<% indexInfo.totalEntryBits %>) <% Utility.underscoreToCamelCase(reg.getName(), false) %>_nd(\
+<% reg.getName() %>.HIT, <% reg.getName() %>.RW, <% reg.getName() %>.I);
+<%doc>--------</%doc><%else>\
+    IntMgmtChannelND() <% Utility.underscoreToCamelCase(reg.getName(), false) %>_nd(<% reg.getName() %>.HIT, <% reg.getName() %>.RW);
+<%doc>--------</%doc></%if>\
+<%doc>----</%doc></%if>\
+<%doc></%doc></%if></%for>\
+<%doc></%doc><%if group == null %><%for String g : base.getGroups() %><%if g != null %>\
+    IntMgmtGroupChannelND(<% wAddr %>) <% Utility.underscoreToCamelCase(g, false) %>_nd(<% g %>.RW, <% g %>.ADDR);
+<%doc></%doc></%if></%for></%if>\
+
+    <% baseName %>_MGMT_IN_CTRL ctrl(RW, ADDR\
+<%doc></%doc><%for Register reg : registers %><%if reg.getAlias() == null %>,
+      <% Utility.underscoreToCamelCase(reg.getName(), false) %>_nd\
+<%doc></%doc></%if></%for>\
+<%doc></%doc><%if group == null %><%for String g : base.getGroups() %><%if g != null %>,
+      <% Utility.underscoreToCamelCase(g, false) %>_nd\
+<%doc></%doc></%if></%for></%if>\
+    );
+    <% baseName %>_MGMT_IN_DATA data(DATA\
+<%doc></%doc><%for Register reg : registers %><%if reg.getAlias() == null %>,
+      <% reg.getName() %>.D\
+<%doc></%doc></%if></%for>\
+<%doc></%doc><%if group == null %><%for String g : base.getGroups() %><%if g != null %>,
+      <% g %>.DATA\
+<%doc></%doc></%if></%for></%if>\
+    );
+  }
+}
+
+
+<%doc>************************************************************</%doc>\
+define <% baseName %>_MGMT_IN_CTRL() (
+    e1of2 -RW; e1of4[(<% wAddr %>+1)/2] -ADDR
+<%doc></%doc><%for Register reg : registers %><%if reg.getAlias() == null %>;
+<%java>
+Register.IndexInfo indexInfo = reg.getIndexInfo();
+</%java>\
+<%doc>----</%doc><%if reg.getEntryWidth() > reg.getAtomicWidth() %>\
+<%java int wW = Double.valueOf(Math.ceil(1.0*reg.getEntryWidth()/reg.getAtomicWidth())).intValue(); %>
+<%doc>--------</%doc><%if indexInfo.totalEntryBits > 0 %>\
+    IntMgmtIWChannelND(<% indexInfo.totalEntryBits %>, <% wW %>)\
+<%doc>--------</%doc><%else>\
+    IntMgmtWChannelND(<% wW %>)\
+<%doc>--------</%doc></%if>\
+<%doc>----</%doc><%else>\
+<%doc>--------</%doc><%if indexInfo.totalEntryBits > 0 %>\
+    IntMgmtIChannelND(<% indexInfo.totalEntryBits %>)\
+<%doc>--------</%doc><%else>\
+    IntMgmtChannelND()\
+<%doc>--------</%doc></%if>\
+<%doc>----</%doc></%if> +<% reg.getName() %>\
+<%doc></%doc></%if></%for>\
+<%doc></%doc><%if group == null %><%for String g : base.getGroups() %><%if g != null %>;
+    IntMgmtGroupChannelND(<% wAddr %>) +<% g %>\
+<%doc></%doc></%if></%for></%if>\
+
+  )
+  <+ <% Utility.underscoreToCamelCase(base.getName(), true) %>RegisterFields <+ <% camelCaseBaseName %>Management
+  <+ AddressSpace <+ MgmtIfCell <+ RegisterFunctions {
+  csp {
+    *[ int(1) rw;
+       int(<% wAddr %>) chip_addr;
+       RW?rw, ADDR?chip_addr;
+<%doc></%doc><%for Register reg : registers %><%if reg.getAlias() == null %>\
+<%java Register.IndexInfo indexInfo = reg.getIndexInfo(); %>\
+       <% reg.getName() %>.RW!rw,
+<%doc>----</%doc><%if reg.getEntryWidth() > reg.getAtomicWidth() %>\
+       <% reg.getName() %>.AW!( getAtomicWordNumber<% Utility.underscoreToCamelCase(reg.getName(), true) %>(chip_addr) ),
+<%doc>----</%doc></%if>\
+<%doc>----</%doc><%if reg.getNumEntries() > 1 %>\
+       <% reg.getName() %>.I!( \
+<%doc>--------</%doc><%if reg.getNumEntries2() > 1 %>\
+(chip_addr{<% indexInfo.entry2UpperIdx %>:<% indexInfo.entry2Idx %>} << <% indexInfo.entry0Bits + indexInfo.entry1Bits %>) | \
+<%doc>--------</%doc></%if>\
+<%doc>--------</%doc><%if reg.getNumEntries1() > 1 %>\
+(chip_addr{<% indexInfo.entry1UpperIdx %>:<% indexInfo.entry1Idx %>} << <% indexInfo.entry0Bits %>) | \
+<%doc>--------</%doc></%if>chip_addr{<% indexInfo.entry0UpperIdx %>:<% indexInfo.entry0Idx %>} ),
+<%doc>----</%doc></%if>\
+       <% reg.getName() %>.HIT!(<& registerAddressGuardExpr; reg=reg; &>),
+
+<%doc></%doc></%if></%for>\
+<%doc></%doc><%if group == null %><%for String g : base.getGroups() %><%if g != null %>\
+       <% g %>.RW!rw, <% g %>.ADDR!chip_addr,
+<%doc></%doc></%if></%for></%if>\
+       skip
+    ]
+  }
+}
+
+<%doc>************************************************************</%doc>\
+define <% baseName %>_MGMT_IN_DATA() (
+    e1of4[(<% mgmtDataBits %>+1)/2] -DATA\
+<%doc></%doc><%for Register reg : registers %><%if reg.getAlias() == null %>;
+    e1of4[(<% reg.getImplementationWidth() %>+1)/2] +<% reg.getName() %>\
+<%doc></%doc></%if></%for>\
+<%doc></%doc><%if group == null %><%for String g : base.getGroups() %><%if g != null %>;
+<%java int mW = 1; for(Register reg : base.getRegisters("group", g)) {mW=Math.max(mW,reg.getImplementationWidth());}  %>\
+    e1of4[(<% mW %>+1)/2] +<% g %>\
+<%doc></%doc></%if></%for></%if>\
+
+  ) {
+  csp {
+    *[ int(<% mgmtDataBits %>) d;
+       DATA?d;
+<%doc></%doc><%for Register reg : registers %><%if reg.getAlias() == null %>\
+       <% reg.getName() %>!d,
+<%doc></%doc></%if></%for>\
+<%doc></%doc><%if group == null %><%for String g : base.getGroups() %><%if g != null %>\
+       <% g %>!d,
+<%doc></%doc></%if></%for></%if>\
+       skip
+    ]
+  }
+}
+
+<%doc>************************************************************</%doc>\
+
+define <% baseName %>_MGMT_OUT() (
+    e1of4[(<% mgmtDataBits %>+1)/2] +DATA\
+<%doc></%doc><%for Register reg : registers %><%if reg.getAlias() == null %>;
+    e1of4[(<% reg.getImplementationWidth() %>+1)/2] -<% reg.getName() %>\
+<%doc></%doc></%if></%for>\
+<%doc></%doc><%if group == null %><%for String g : base.getGroups() %><%if g != null %>;
+<%java int mW = 1; for(Register reg : base.getRegisters("group", g)) {mW=Math.max(mW,reg.getImplementationWidth());}  %>\
+    e1of4[(<% mW %>+1)/2] -<% g %>\
+<%doc></%doc></%if></%for></%if>\
+) {
+  csp {
+    *[ DATA!(\
+<%for Register reg : registers %><%if reg.getAlias() == null %><% reg.getName() %>? | </%if></%for>\
+<%if group == null %><%for String g : base.getGroups() %><%if g != null %><% g %>? | </%if></%for></%if>\
+0) ]
+  }
+}
+
+
+
+</%for>
+</%for>
+
+

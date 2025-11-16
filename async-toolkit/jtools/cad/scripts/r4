@@ -1,0 +1,52 @@
+#!/usr/intel/bin/perl -w
+
+$p4 = "p4 -c $ENV{P4CLIENT}";
+$r4_todo = "$ENV{HOME}/r4_todo";
+open OUT, ">>$r4_todo" or die "Can't append to $r4_todo.\n";
+
+# get arguments
+if (defined $ARGV[0] && $ARGV[0] eq "-c") {
+    shift @ARGV;
+    $p4 = "p4 -c $ARGV[0]";
+    shift @ARGV;
+}
+if (@ARGV<1) { die "USAGE: r4 [-c client-spec] [edit|add|delete|submit] files\n"; }
+$cmd = $ARGV[0];
+shift @ARGV;
+
+# handle comands
+if ($cmd eq "edit") {
+    foreach $todo (@ARGV) {
+        if ( -e "$ENV{PWD}/$todo" ) {
+            system "chmod +w \"$todo\"";
+            print OUT "$p4 edit \"$ENV{PWD}/$todo\"\n";
+        } else {
+            print "$ENV{PWD}/$todo not found\n";
+        }
+    }
+} elsif ($cmd eq "add") {
+    foreach $todo (@ARGV) {
+        if ( -e "$ENV{PWD}/$todo" ) {
+            print OUT "$p4 add \"$ENV{PWD}/$todo\"\n";
+        } else {
+            print "$ENV{PWD}/$todo not found\n";
+        }
+    }
+} elsif ($cmd eq "delete") {
+    foreach $todo (@ARGV) {
+        if ( -e "$ENV{PWD}/$todo" ) {
+            system "rm -f \"$todo\"";
+            print OUT "$p4 delete \"$ENV{PWD}/$todo\"\n";
+        } else {
+            print "$ENV{PWD}/$todo not found\n";
+        }
+    }
+} elsif ($cmd eq "submit") {
+    open IN, "<$r4_todo" or die "Can't read $r4_todo\n";
+    while ($line = <IN>) {
+        print "$line";
+        system "$line";
+    }
+    close IN;
+}
+close OUT;

@@ -1,0 +1,13 @@
+#!/bin/bash
+# $Id$
+# $DateTime$
+# $Author$
+
+gnuCPreProcessor="$1 -E"
+gnuGrep="$2"
+gnuSed="$3"
+javaFileName="$4"
+
+$gnuCPreProcessor -undef -nostdinc -x c++ "$javaFileName" | \
+  $gnuGrep -e "package[[:space:]]\+[a-zA-Z0-9_]\+\(\.[a-zA-Z0-9_\-]\+\)*;" | \
+  $gnuSed -e "s/[[:space:]]*package[[:space:]]*//" -e "s/;//" 

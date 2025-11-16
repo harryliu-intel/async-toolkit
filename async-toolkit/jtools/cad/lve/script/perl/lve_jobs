@@ -1,0 +1,26 @@
+#!/usr/intel/bin/perl -w
+
+my $user;
+if (@ARGV>0) { $user = $ARGV[0]; }
+my $args = "";
+if (defined($user)) { $args .= " -u $user"; }
+my @jobs = split("\n",`qstat $args`);
+shift(@jobs);
+shift(@jobs);
+foreach my $job (@jobs) {
+    if ($job =~ /^\s*(\d+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)/ ) {
+        my $id   = $1;
+        my $task = $3;
+        my $user = $4;
+        my $mode = $5;
+        my $date = $6;
+        my $time = $7;
+        my $server = "";
+        if ($8 =~ /.*@([^\.]+)/ ) { $server = $1; }
+        my $info = `qstat -j $id`;
+        if ($info =~ /QB_DIAG_FILE=(\S+)\.diag/) {
+            $diag = $1;
+            print("$id $task $user $mode $date $time $server\n\t$diag\n\n");
+        }
+    }
+}

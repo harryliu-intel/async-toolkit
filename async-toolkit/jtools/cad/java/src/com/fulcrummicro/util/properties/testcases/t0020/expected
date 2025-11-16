@@ -1,0 +1,8 @@
+models.qsub_mem=0
+platform=test
+regress.qsub_mem=0
+regress.test_feature=
+testbench.tchk.scope=
+testfloat=1
+testint=1
+topdir=.

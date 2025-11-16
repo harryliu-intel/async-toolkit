@@ -1,0 +1,13 @@
+1 0
+# Copyright 2002 Fulcrum Microsystems.  All rights reserved.
+# $Id$
+# $DateTime$
+# $Author$
+
+
+<<DOC
+
+DOC
+
+java com.avlsi.tools.jauto.Cast2Cdl
+$arch/bin/cast2cdl.sh   cast2cdl.sh 775

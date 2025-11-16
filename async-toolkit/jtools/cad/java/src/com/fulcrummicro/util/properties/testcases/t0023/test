@@ -1,0 +1,25 @@
+<test>
+<!-- test of multi-level variants -->
+<config>
+<opt name="N" type="Integer" default="3"></opt>
+<opt name="port.[1-$(N)].opt" type="String" default=""></opt>
+port.1.opt=a
+</config>
+
+<variant name="ccc">
+  port.[1-2].opt=c
+  <variant name="ddd">
+    port.1.opt=d
+    port.3.opt=d
+    <variant name="fff">
+      port.3.opt=f
+      <variant name="ggg">
+        port.3.opt=g
+      </variant>
+    </variant>
+  </variant>
+  <variant name="eee">
+    port.2.opt=e
+  </variant>
+</variant>
+</test>

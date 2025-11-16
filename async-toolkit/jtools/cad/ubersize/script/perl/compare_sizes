@@ -1,0 +1,60 @@
+#!/usr/intel/bin/perl -w
+
+# Compares sizes.debug files for all cells and half-operators two
+# sizing runs have in common.  Filters out differences less than a
+# specified threshold, in percent.
+
+@ARGV==3 or die "USAGE: percent_threshold sizes1.debug sizes2.debug\n";
+my $r = $ARGV[0];
+my $a = $ARGV[1];
+my $b = $ARGV[2];
+print "Comparing $a to $b\n  with $r% threshold\n";
+$r=$r*0.01;
+
+# parse sizes.debug into hash tables
+my %a_sizes = read_sizes($a);
+my %b_sizes = read_sizes($b);
+
+# compare all cells and all half-operator sizes
+foreach my $cell (sort keys %a_sizes) {
+    print "CELL $cell\n";
+    my $as = $a_sizes{$cell};
+    my $bs = $b_sizes{$cell};
+    foreach my $ho (sort keys %{$as}) {
+        my $av = $as->{$ho};
+        my $bv = $bs->{$ho};
+        if (defined($av) && defined($bv)) {
+            $ba = $bv/$av;
+            if ($ba>(1+$r) || $ba<1/(1+$r)) {
+                print "  $ho a=$av b=$bv ratio=$ba\n";
+            }
+        }
+    }
+}
+
+# reads sizes.debug into hash table
+sub read_sizes {
+    my $file = shift;
+    my %sizes;
+    my %cell_sizes;
+    my $cell;
+    open IN, "<$file" or die "ERROR: can't read $file\n";
+    while (my $line = <IN>) {
+        if ($line =~ /^CELL (.*) {/) {
+            if (defined($cell)) {
+                my %sizes2 = %sizes;
+                $cell_sizes{$cell} = \%sizes2;
+            }
+            $cell = $1;
+            %sizes = ();
+        } elsif ($line =~ /^  (.*) .W.=(.*)u/ ) {
+            $sizes{$1} = $2;
+        }
+    }
+    if (defined($cell)) {
+        my %sizes2 = %sizes;
+        $cell_sizes{$cell} = \%sizes2;
+    }
+    close IN;
+    return %cell_sizes;
+}

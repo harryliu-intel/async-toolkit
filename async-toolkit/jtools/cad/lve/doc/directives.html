@@ -1,0 +1,329 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+  <title>Directive Support in LVE</title>
+  <meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
+  <link REL ="stylesheet" TYPE="text/css" HREF="lve.css">
+</head>
+<body>
+<table border="0" cellpadding="1" cellspacing="0" width="100%">
+  <tbody>
+    <tr>
+      <td><br>
+      </td>
+      <td align="left" height="90"><img src="logo.png" alt="Fulcrum" style="border: 0px solid ; width: 250px; height: 90px;" align="left"> </td>
+    </tr>
+  </tbody>
+</table>
+<!-- ========== START OF NAVBAR ========== --> <a name="navbar_top"><!-- --></a>
+<table border="0" cellpadding="1" cellspacing="0" width="100%">
+  <tbody>
+    <tr>
+      <td colspan="2" class="NavBarCell1"> <a name="navbar_top_firstrow"><!-- --></a>
+      <table border="0" cellpadding="0" cellspacing="3">
+        <tbody>
+          <tr align="center" valign="top">
+            <td class="NavBarCell1"> <a href="index.html"><b>Static Index</b></a></td>
+            <td class="NavBarCell1"> <a href="tracking.html"><b>Tracking</b></a>
+            </td>
+            <td class="NavBarCell1"> <a href="$help_page"><b>Help Doc</b></a></td>
+            <td class="NavBarCell1"> <a href="../statistics.html"><b>Statistics</b></a></td>
+          </tr>
+        </tbody>
+      </table>
+      </td>
+      <td rowspan="3" align="right" valign="top">
+      </td>
+    </tr>
+  </tbody>
+</table>
+<!-- =========== END OF NAVBAR =========== -->
+<p> <br>
+</p>
+<h2 style="text-align: center;">Diretive Support in LVE</h2>
+<div style="text-align: left;"> The notion of directives in CAST
+provides a mechanism for annotating information about how a particular
+circuit should be synthesized, simulated or how these simulation
+results
+should be interperrated. Directives associated with the LVE fall in two
+broad categories. The first class of directive are not directly
+understood by the LVE but instead influence how the <span
+ style="font-style: italic;">todo </span>file for the LVE is generated
+using <span style="font-style: italic;">cast_query. </span>Two
+directives fall in this category -- <span style="font-style: italic;">aspice_ignore</span>and<span
+ style="font-style: italic;">rte_ignore. </span>When these directives
+are specified in a given environment that environment is omitted from
+the generated todo file, if the directive is specified in the CELL
+level
+the cell is emitted with no environments, <span
+ style="font-style: italic;">even if these directives are also
+specified in the cells environment and set to false. </span>Note that
+this is a special case handling provided in <span
+ style="font-style: italic;">cast_query. </span><br>
+<br>
+The LVE proper supports the following directives.<br>
+<br>
+<table style="text-align: left; width: 100%;" border="1" cellpadding="2"
+ cellspacing="2">
+  <tbody>
+    <tr>
+      <td
+ style="vertical-align: top; text-align: center; font-weight: bold;">Directive<br>
+      </td>
+      <td
+ style="vertical-align: top; text-align: center; font-weight: bold;">Type<br>
+      </td>
+      <td
+ style="vertical-align: top; text-align: center; font-weight: bold;">Default
+Value<br>
+      </td>
+      <td
+ style="vertical-align: top; text-align: center; font-weight: bold;">Parameter<br>
+      </td>
+      <td
+ style="vertical-align: top; text-align: center; font-weight: bold;">Scope<br>
+      </td>
+      <td
+ style="vertical-align: top; text-align: center; font-weight: bold;">Description/Notes<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">cycle_node<br>
+      </td>
+      <td style="vertical-align: top;">node<br>
+      </td>
+      <td style="vertical-align: top;">nil<br>
+      </td>
+      <td style="vertical-align: top;">nil<br>
+      </td>
+      <td style="vertical-align: top;">ENV<br>
+      </td>
+      <td style="vertical-align: top;">LVE measures frequency on this
+node simply for information purposes, and provides a plot. An aspice
+simulation will never fail a frequency measurement due to this node.<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">ntpc_spec<br>
+      </td>
+      <td style="vertical-align: top;">float<br>
+      </td>
+      <td style="vertical-align: top;">nil<br>
+      </td>
+      <td style="vertical-align: top;">node<br>
+      </td>
+      <td style="vertical-align: top;">ENV<br>
+      </td>
+      <td style="vertical-align: top;">The number of transitions per
+cycle translates to an expected frequency measurement on this node. A
+measured value smaller than the <a
+ href="data_mining.html#aspice">expected</a>
+value is indicated as an aspice failure.<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">ntpc_scaling<br>
+      </td>
+      <td style="vertical-align: top;">float<br>
+      </td>
+      <td style="vertical-align: top;">1.0<br>
+      </td>
+      <td style="vertical-align: top;">nil<br>
+      </td>
+      <td style="vertical-align: top;">CELL<br>
+      </td>
+      <td style="vertical-align: top;">The directive scales the
+specified ntpc by the specified value. Useful for cells which have the
+specification, but different performance due to synthesis or other
+implementation differences.<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">aspice_digital_cycles<br>
+      </td>
+      <td style="vertical-align: top;">int<br>
+      </td>
+      <td style="vertical-align: top;">nil<br>
+      </td>
+      <td style="vertical-align: top;">node<br>
+      </td>
+      <td style="vertical-align: top;">ENV/CELL<br>
+      </td>
+      <td style="vertical-align: top;">Directive implemented as part of
+the <a
+ href="intro.html#aspice_toggle">aspice
+analog toggle feature</a>. This directive indicates how many cycles the
+specified node is toggled before enabling an analog simulation.<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">aspice_analog_cycles<br>
+      </td>
+      <td style="vertical-align: top;">int<br>
+      </td>
+      <td style="vertical-align: top;">nil<br>
+      </td>
+      <td style="vertical-align: top;">node<br>
+      </td>
+      <td style="vertical-align: top;">ENV/CELL<br>
+      </td>
+      <td style="vertical-align: top;">Directive implemented as part of
+the <a
+ href="intro.html#aspice_toggle">aspice
+analog toggle feature.</a><br>
+This directives indicates how many cycles a node should be simulated
+after analog behavior is enabled.<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">aspice_time_max<br>
+      </td>
+      <td style="vertical-align: top;">float<br>
+      </td>
+      <td style="vertical-align: top;">nil/Defaults to LVE specified
+value<br>
+      </td>
+      <td style="vertical-align: top;">nil<br>
+      </td>
+      <td style="vertical-align: top;">ENV/CELL<br>
+      </td>
+      <td style="vertical-align: top;">If specified, it would allow the
+cell to simulate for that many nanoseconds, unless the effect of an
+aspice_analog_cycles directive ends the simulation sooner.<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">estimated_delay<br>
+      </td>
+      <td style="vertical-align: top;">float<br>
+      </td>
+      <td style="vertical-align: top;">0.0<br>
+      </td>
+      <td style="vertical-align: top;">halfop<br>
+      </td>
+      <td style="vertical-align: top;">SUBCELLS/PRS<br>
+      </td>
+      <td style="vertical-align: top;">Delay information output from
+jauto based on path based sizing delay budget. Also includes intrinsic
+delay information based on characterizing different stacks and gates
+used in our design.<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">prs_netlist_mismatch_ok<br>
+      </td>
+      <td style="vertical-align: top;">boolean<br>
+      </td>
+      <td style="vertical-align: top;">false<br>
+      </td>
+      <td style="vertical-align: top;">nil<br>
+      </td>
+      <td style="vertical-align: top;">CELL<br>
+      </td>
+      <td style="vertical-align: top;">This directive is used by jlvs.
+In specified jlvs checking is skipped for the given prs/netlist block.
+If specified in a given cell the LVE reports the status of this cell as
+a SIGNOFF.<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">estimated_delay_signoff<br>
+      </td>
+      <td style="vertical-align: top;">float<br>
+      </td>
+      <td style="vertical-align: top;">0.0<br>
+      </td>
+      <td style="vertical-align: top;">halfop<br>
+      </td>
+      <td style="vertical-align: top;">SUBCELLS/PRS<br>
+      </td>
+      <td style="vertical-align: top;">The value is used to override
+the auto generated estimated delay value, emitted by jauto. LVE
+reporting mechanism flagged this node as being signed off. Note the if
+the measured value is still worse than the signed off value the
+node/test is still flagged as having failed. Ideally, these directives
+will be applied in the spec tree.<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">ntpc_scaling_signoff<br>
+      </td>
+      <td style="vertical-align: top;">float<br>
+      </td>
+      <td style="vertical-align: top;">1.0<br>
+      </td>
+      <td style="vertical-align: top;">nil<br>
+      </td>
+      <td style="vertical-align: top;">CELL<br>
+      </td>
+      <td style="vertical-align: top;">This directive is used to sign
+off performance failures reported by the LVE. The scaling directives is
+applied to all ntpc_spec values associated with a given cell and if the
+measured value if greater than or equal to the worst performance we
+wish
+to tolerate the cell is signoff, otherwise the results still fails.<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">slew_signoff<br>
+      </td>
+      <td style="vertical-align: top;">float<br>
+      </td>
+      <td style="vertical-align: top;">0.0<br>
+      </td>
+      <td style="vertical-align: top;">halfop<br>
+      </td>
+      <td style="vertical-align: top;">SUBCELLS/PRS<br>
+      </td>
+      <td style="vertical-align: top;">Slew rate failures are signoff
+by introducing this directive into the spec tree. The specified value
+is
+the slew value in nanoseconds which we wish to tolerate, a value worse
+than this is still reported as a failure.<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">skew_signoff<br>
+      </td>
+      <td style="vertical-align: top;">float<br>
+      </td>
+      <td style="vertical-align: top;">0.0<br>
+      </td>
+      <td style="vertical-align: top;">halfop<br>
+      </td>
+      <td style="vertical-align: top;">SUBCELLS/PRS<br>
+      </td>
+      <td style="vertical-align: top;">This directive behaves like its
+slew_signoff counter part, except that it is applied to the skew on a
+given node, instead of slew. Specify this value in nanoseconds as well.<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">alint_signoff<br>
+      </td>
+      <td style="vertical-align: top;">boolean<br>
+      </td>
+      <td style="vertical-align: top;">false<br>
+      </td>
+      <td style="vertical-align: top;">node<br>
+      </td>
+      <td style="vertical-align: top;">SUBCELLS/PRS/CELL<br>
+      </td>
+      <td style="vertical-align: top;">When specified the given node is
+not simuated under alint. When specified at the cell level none of the
+local nodes in the cell are run through alint. If all the other nodes
+pass the cell is indicated as a SIGNOFF.<br>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<span style="font-style: italic;"><span style="font-style: italic;"><span
+ style="font-style: italic;"></span></span><br>
+</span><br>
+<br>
+<hr style="width: 100%; height: 2px;"><i>Fulcrum Microsystems.</i>&copy;
+copyright 2003. All Rights Reserved. <br>
+<br>
+</div>
+</body>
+</html>

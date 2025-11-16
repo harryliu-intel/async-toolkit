@@ -1,0 +1,7 @@
+is_infinite := true;
+repeats := 20;
+
+x := 1;
+[ is_infinite -> *[ x := 1 - x ; X ! x]
+[] else -> i := 0; *[ i < repeats -> x := 1 - x ; X ! x ]
+]

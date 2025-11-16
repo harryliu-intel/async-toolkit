@@ -1,0 +1,287 @@
+1 0
+# Copyright 2002 Fulcrum Microsystems.  All rights reserved.
+# $Id$
+# $DateTime$
+# $Author$
+
+<<DOC
+<h2> Description </h2>
+<p> The implementation of the Fulcrum ui, a menu usable when editing layout.  See <skill ui.ui> for the SKILL implementation.</p>
+
+<p> Many of the features share their implementation with <tool gen_leaf_cells> and the automated flow.  The same SKILL code is run, but with parameters filled in from a menu, or from information in the cds.config file, created by <tool mkcdswd>.</p>
+
+<h2> The Menus </h2>
+A quick overview of how it works:
+<ul>
+<li> The menus are initialized with UInit in the <tool mkcsdwd> generated .cdsinit.
+<li> The file share/A/B/.menu turns into a hierarchical layout editor menu A/B
+<li> The top level menu is named Fulcrum
+<li> The .menu file should have ( list "menu-name" "menu-symbol" )
+</ul>
+DOC
+
+# Top level menu
+share/Fulcrum/.menu                   Fulcrum/.menu                       644 p
+
+# General options for other menus(e.g. max-heap-size)
+#share/Fulcrum/Options.il              Fulcrum/Options.il                  644 p
+
+# <h3>Importing CAST to layout</h3>
+# Effectively calls updatenetlist on the current cellview.
+# The hierarchy/parameters will be made to match CAST
+#share/Fulcrum/SyncToNetList.il        Fulcrum/SyncToNetList.il            644 pA
+
+# Starts a background process to run cast2cdl
+share/Fulcrum/CreateCDL.il            Fulcrum/CreateCDL.il                644 p
+
+# Create prBound
+share/Fulcrum/CreatePrBound.il        Fulcrum/CreatePrBound.il                644 p
+share/Fulcrum/GetCellArea.il          Fulcrum/GetCellArea.il                  644 p
+share/Fulcrum/GetFigArea.il          Fulcrum/GetFigArea.il                  644 p
+
+# Create floorplan
+share/Fulcrum/CreateFloorplan.il        Fulcrum/CreateFloorplan.il                644 p
+
+# Delete all shapes
+#share/Fulcrum/DeleteAllShapes.il            Fulcrum/DeleteAllShapes.il                644 p
+
+# Create floorplan
+share/Fulcrum/EstimateWireDistance.il        Fulcrum/EstimateWireDistance.il                644 p
+
+# Opens the dialog to run Virtual lvs
+#share/Fulcrum/StartVLVS.il            Fulcrum/StartVLVS.il                644 p
+
+# Create and abstracts for a list of leaf cells
+share/Fulcrum/LeafAbstractList.il            Fulcrum/LeafAbstractList.il     644 p
+
+# cell alignment
+share/Fulcrum/Align/.menu                    Fulcrum/Align/.menu                   644 p
+share/Fulcrum/Align/SetAlignment.il          Fulcrum/Align/SetAlignment.il         644 p
+share/Fulcrum/Align/CheckAlignment.il        Fulcrum/Align/CheckAlignment.il       644 p
+share/Fulcrum/Align/FixAlignment.il          Fulcrum/Align/FixAlignment.il         644 p
+
+
+# common leaf cell functions
+share/Fulcrum/Leaf/.menu                     Fulcrum/Leaf/.menu                    644 p
+share/Fulcrum/Leaf/SyncToNetlist.il          Fulcrum/Leaf/SyncToNetlist.il         644 p
+share/Fulcrum/Leaf/DrawPins.il               Fulcrum/Leaf/DrawPins.il              644 p
+share/Fulcrum/Leaf/GroupChains.il            Fulcrum/Leaf/GroupChains.il           644 p
+share/Fulcrum/Leaf/Clean.il                  Fulcrum/Leaf/Clean.il           644 p
+share/Fulcrum/Leaf/PlaceGates.il             Fulcrum/Leaf/PlaceGates.il            644 p
+share/Fulcrum/Leaf/DrawStruts.il             Fulcrum/Leaf/DrawStruts.il            644 p
+share/Fulcrum/Leaf/PlacePlugs.il             Fulcrum/Leaf/PlacePlugs.il            644 p
+share/Fulcrum/Leaf/DrawImplant.il            Fulcrum/Leaf/DrawImplant.il           644 p
+share/Fulcrum/Leaf/RouteLeaf.il              Fulcrum/Leaf/RouteLeaf.il             644 p
+share/Fulcrum/Leaf/DrawPoly.il               Fulcrum/Leaf/DrawPoly.il              644 p
+share/Fulcrum/Leaf/MakeAbstract.il           Fulcrum/Leaf/MakeAbstract.il          644 p
+
+
+# top level menu MidLevel
+share/Fulcrum/MidLevel/.menu               Fulcrum/MidLevel/.menu                 644 p
+share/Fulcrum/MidLevel/MakePrelayout.il    Fulcrum/MidLevel/MakePrelayout.il      644 p
+share/Fulcrum/MidLevel/MakeFlatten.il      Fulcrum/MidLevel/MakeFlatten.il        644 p
+share/Fulcrum/MidLevel/MakeLayout.il       Fulcrum/MidLevel/MakeLayout.il         644 p
+share/Fulcrum/MidLevel/MakeAbstract.il     Fulcrum/MidLevel/MakeAbstract.il       644 p
+share/Fulcrum/MidLevel/Clean.il     Fulcrum/MidLevel/Clean.il       644 p
+
+# top level menu for Cable Flow
+#share/Fulcrum/Cable/.menu                     Fulcrum/Cable/.menu                    644 p
+#share/Fulcrum/Cable/Placer.il               Fulcrum/Cable/Placer.il              644 p
+
+
+
+# <h3>Pins</h3>
+#share/Fulcrum/Pins/.menu              Fulcrum/Pins/.menu                  644 p
+# Draw pitched/inplace pins and powergrid.
+#share/Fulcrum/Pins/DrawPins.il        Fulcrum/Pins/DrawPins.il            644 p
+#share/Fulcrum/Pins/DrawResetPins.il        Fulcrum/Pins/DrawResetPins.il            644 p
+#share/Fulcrum/Pins/DrawSubPins.il        Fulcrum/Pins/DrawSubPins.il            644 p
+#share/Fulcrum/Pins/CanonicalizePins.il        Fulcrum/Pins/CanonicalizePins.il            644 p
+#share/Fulcrum/PreroutePins.il        Fulcrum/PreroutePins.il            644 p
+
+# <h3>Bus Scripts</h3>
+share/Fulcrum/Bus/.menu               Fulcrum/Bus/.menu                   644 p
+share/Fulcrum/Bus/SetBusPattern.il    Fulcrum/Bus/SetBusPattern.il        644 p
+share/Fulcrum/Bus/DrawWires.il        Fulcrum/Bus/DrawWires.il            644 p
+share/Fulcrum/Bus/DeleteWires.il      Fulcrum/Bus/DeleteWires.il          644 p
+share/Fulcrum/Bus/DrawAllPins.il      Fulcrum/Bus/DrawAllPins.il          644 p
+share/Fulcrum/Bus/RefreshAll.il       Fulcrum/Bus/RefreshAll.il           644 p
+share/Fulcrum/Bus/DeleteBusWires.il   Fulcrum/Bus/DeleteBusWires.il       644 p
+share/Fulcrum/Bus/CreateGuideInst.il  Fulcrum/Bus/CreateGuideInst.il      644 p
+share/Fulcrum/Bus/CopyBusGuidesToPrelayout.il  Fulcrum/Bus/CopyBusGuidesToPrelayout.il      644 p
+share/Fulcrum/Bus/RoundGuidePaths.il  Fulcrum/Bus/RoundGuidePaths.il      644 p
+share/Fulcrum/Bus/FindOverlaps.il  Fulcrum/Bus/FindOverlaps.il      644 p
+share/Fulcrum/Bus/DeleteOverlapMarkers.il  Fulcrum/Bus/DeleteOverlapMarkers.il      644 p
+share/Fulcrum/Bus/MoveGuidesToBuswires.il  Fulcrum/Bus/MoveGuidesToBuswires.il      644 p
+share/Fulcrum/Bus/FindCopies.il       Fulcrum/Bus/FindCopies.il           644 p
+
+# <h3>Wirelengths</h3>
+share/Fulcrum/Wiring/.menu                 Fulcrum/Wiring/.menu                 644 p
+share/Fulcrum/Wiring/ReportWirelengths.il  Fulcrum/Wiring/ReportWirelengths.il  644 p
+share/Fulcrum/Wiring/InteractiveReport.il  Fulcrum/Wiring/InteractiveReport.il  644 p
+share/Fulcrum/Wiring/CheckBusWires.il      Fulcrum/Wiring/CheckBusWires.il      644 p
+share/Fulcrum/Wiring/ReportMBUFChannels.il Fulcrum/Wiring/ReportMBUFChannels.il 644 p
+
+# <h3>Stacking/Folding</h3>
+share/Fulcrum/Stacks/.menu            Fulcrum/Stacks/.menu                644 p
+# Uses stack.*_SUPERSTACK.0 pcells and 
+# <skill layout.chain.superstack>
+# <skill layout.chain.superstack_tools>
+# to share contacts or place instances as close as possible together
+# Relies on contact sharing properties csBottom/csTop defined in 
+# the gate/chain pcells.
+share/Fulcrum/Stacks/Stack.il         Fulcrum/Stacks/Stack.il             644 p
+# Uses PDKCombineFolds and PDKFoldChain, defined in the pdk in
+# Fulcrum/pdkinfo.il
+share/Fulcrum/Stacks/Fold.il          Fulcrum/Stacks/Fold.il              644 p
+share/Fulcrum/Stacks/Inline.il          Fulcrum/Stacks/Inline.il              644 p
+
+
+# <h3>Perforce Integration</h3>
+# Uses P4HOST, P4USER, P4PASSWD, P4CLIENT, P4CONFIG, P4LOG, TEMP
+# environment variables, and shells out to cdsp4*
+share/Fulcrum/P4/.menu                Fulcrum/P4/.menu                    644 p
+share/Fulcrum/P4/cdsp4edit.il         Fulcrum/P4/cdsp4edit.il             644 p
+share/Fulcrum/P4/cdsp4add.il          Fulcrum/P4/cdsp4add.il              644 p
+share/Fulcrum/P4/cdsp4revert.il       Fulcrum/P4/cdsp4revert.il           644 p
+share/Fulcrum/P4/P4EditAllSubcells.il Fulcrum/P4/P4EditAllSubcells.il     644 p
+share/Fulcrum/P4/P4Cell.il            Fulcrum/P4/P4Cell.il                644 p
+
+
+# Inline selected cells, making sure to preserve hierarchical names, connections
+share/Fulcrum/Hierarchy/.menu         Fulcrum/Hierarchy/.menu             644 p
+share/Fulcrum/Hierarchy/Inline.il     Fulcrum/Hierarchy/Inline.il         644 p
+share/Fulcrum/Hierarchy/ReplaceSubcells.il     Fulcrum/Hierarchy/ReplaceSubcells.il         644 p
+share/Fulcrum/Hierarchy/ReportInstances.il     Fulcrum/Hierarchy/ReportInstances.il         644 p
+
+# leaf cell hand layout functions
+share/Fulcrum/HandLayout/.menu                  Fulcrum/HandLayout/.menu                  644 p
+share/Fulcrum/HandLayout/SetHandAll.il          Fulcrum/HandLayout/SetHandAll.il          644 p
+share/Fulcrum/HandLayout/SetHandSelected.il     Fulcrum/HandLayout/SetHandSelected.il     644 p
+share/Fulcrum/HandLayout/DeleteNotHand.il       Fulcrum/HandLayout/DeleteNotHand.il       644 p
+share/Fulcrum/HandLayout/Struts.il              Fulcrum/HandLayout/Struts.il              644 p
+
+
+share/Fulcrum/GoTo.il        Fulcrum/GoTo.il            644 p
+#share/Fulcrum/AutoPowerGrid.il        Fulcrum/AutoPowerGrid.il            644 p
+#share/Fulcrum/AutoPowerGridAbstract.il        Fulcrum/AutoPowerGridAbstract.il            644 p
+
+
+
+# <h3>Routing</h3>
+
+# Traverses entire dfII database for floorplan views.
+# Builds a type hierarchy from this, and returns a list of cells that instanciate the current cell.
+share/Fulcrum/Hierarchy/Instanciators.il Fulcrum/Hierarchy/Instanciators.il 644 p
+share/Fulcrum/Route/.menu             Fulcrum/Route/.menu                 644 p
+
+# Routing.  Calls CCAR, using templates from PDK.  
+share/Fulcrum/Route/Route.il          Fulcrum/Route/Route.il              644 p
+
+# Create routing views.  See <skill layout.keepout.keepout>.
+share/Fulcrum/Route/CreateMidAbstract.il        Fulcrum/Route/CreateMidAbstract.il            644 p
+
+# Attempts to fix area/extension/notch violations from CCAR.
+# Calls pdk/Fulcrum/notches/fill_notches.assura.rules.all
+#share/Fulcrum/Route/Clean.il          Fulcrum/Route/Clean.il              644 p
+share/Fulcrum/Route/ViaExtension.il          Fulcrum/Route/ViaExtension.il              644 p
+
+# Draw's implant/well/plugs
+#share/Fulcrum/Route/DrawPlugs.il      Fulcrum/Route/DrawPlugs.il          644 p
+#share/Fulcrum/Verify/.menu            Fulcrum/Verify/.menu                644 p
+
+# <h3>DRC Signoffs </h3>
+# Signoff will create a signoff file for check-in based on a drc signoff file created with assura DRC.  Signoff files should go in the dfII cell directory in a file called drc_signoff.  This way, <tool lve> will also understand the signoffs.
+# This uses <tool signoff>.
+# This processing will add gds2 names to the list of cellnames that get the signoffs.  
+# This will not be relevant if gds2 renaming is not done.
+# gds2 renaming is done because certain tools like <cadence sev> have trouble with structure <flow names> in gds2 files.
+#share/Fulcrum/Verify/Signoff.il       Fulcrum/Verify/Signoff.il           644 p
+
+# SignoffInclude creates an rsf that can be used in any assura run
+# based on a signoff file.
+#share/Fulcrum/Verify/SignoffInclude.il       Fulcrum/Verify/SignoffInclude.il           644 p
+
+
+# standard bindkeys independent of PDK
+share/autoload/bindkeys               autoload/bindkeys                   644 p
+share/autoload/bindkeys_hand          autoload/bindkeys_hand              644 p
+
+# CCAR menu
+#share/Fulcrum/CCAR.il              Fulcrum/CCAR.il                  644 p
+share/Fulcrum/CheckSubcell.il      Fulcrum/CheckSubcell.il                  644 p
+
+
+#
+# Floorplan menus
+#
+share/Floorplan/.menu                  Floorplan/.menu          644 p
+share/Floorplan/LoadFloorplan.il       Floorplan/LoadFloorplan.il          644 p
+share/Floorplan/ResolveOverlap.il      Floorplan/ResolveOverlap.il          644 p
+share/Floorplan/SaveFloorplan.il       Floorplan/SaveFloorplan.il          644 p
+share/Floorplan/InitFloorplan.il       Floorplan/InitFloorplan.il          644 p
+share/Floorplan/FloorplanTemplate.il   Floorplan/FloorplanTemplate.il          644 p
+share/Floorplan/FloorplanAllSubcells.il   Floorplan/FloorplanAllSubcells.il          644 p
+share/Floorplan/ArrayCells.il   Floorplan/ArrayCells.il          644 p
+share/Floorplan/FLOverlap.il    Floorplan/FLOverlap.il          644 p
+share/Floorplan/PromoteInplacePins.il    Floorplan/PromoteInplacePins.il          644 p
+share/Floorplan/ReplaceSubcells.il    Floorplan/ReplaceSubcells.il          644 p
+
+# Fill Spare Gate
+#share/Fulcrum/FillSpareGate.il         Fulcrum/FillSpareGate.il             644 p
+#share/Fulcrum/Fill.il         Fulcrum/Fill.il             644 p
+
+# Fill Spare Gate
+#share/Fulcrum/DiffLayout.il         Fulcrum/DiffLayout.il             644 p
+
+# Fiji Functions
+#share/Fulcrum/Fiji/.menu         Fulcrum/Fiji/.menu             644 p
+#share/Fulcrum/Fiji/AttachPinShape.il         Fulcrum/Fiji/AttachPinShape.il             644 p
+#share/Fulcrum/Fiji/ShrinkBaliToFiji.il         Fulcrum/Fiji/ShrinkBaliToFiji.il             644 p
+#share/Fulcrum/Fiji/ShrinkPrelayout.il         Fulcrum/Fiji/ShrinkPrelayout.il             644 p
+#share/Fulcrum/Fiji/SnapPowerGrid.il         Fulcrum/Fiji/SnapPowerGrid.il             644 p
+#share/Fulcrum/Fiji/CheckSubcellPins.il         Fulcrum/Fiji/CheckSubcellPins.il             644 p
+
+# Create new library
+share/Fulcrum/CreateLib.il        Fulcrum/CreateLib.il                644 p
+
+# Hercules Menu
+share/Hercules/.menu                    Hercules/.menu               644 p
+share/Hercules/runVue.il                Hercules/runVue.il               644 p
+#share/Hercules/setVueWindow.il          Hercules/setVueWindow.il               644 p
+share/Hercules/createTagView.il          Hercules/createTagView.il               644 p
+
+# Proteus Menu
+share/Proteus/.menu                                     Proteus/.menu               644 p
+share/Proteus/Abstracts/.menu                           Proteus/Abstracts/.menu               644 p
+share/Proteus/Abstracts/CreateLeafAbstract.il           Proteus/Abstracts/CreateLeafAbstract.il 644 p
+share/Proteus/Abstracts/CreateMidAbstract.il            Proteus/Abstracts/CreateMidAbstract.il 644 p
+share/Proteus/Abstracts/ListMissingAbstracts.il         Proteus/Abstracts/ListMissingAbstracts.il 644 p
+share/Proteus/Export/.menu                              Proteus/Export/.menu               644 p
+share/Proteus/Export/ExportDesignLef.il                 Proteus/Export/ExportDesignLef.il 644 p
+share/Proteus/Export/ExportProteusFloorplanDef.il       Proteus/Export/ExportProteusFloorplanDef.il 644 p
+share/Proteus/Export/ExportNondefaultRuleDef.il         Proteus/Export/ExportNondefaultRuleDef.il 644 p
+share/Proteus/Export/CreateTracksDef.il                 Proteus/Export/CreateTracksDef.il 644 p
+share/Proteus/Flatten/.menu                             Proteus/Flatten/.menu               644 p
+share/Proteus/Flatten/DrawPins.il                       Proteus/Flatten/DrawPins.il 644 p
+share/Proteus/Flatten/FlattenView.il                    Proteus/Flatten/FlattenView.il 644 p
+share/Proteus/Prelayout/.menu                           Proteus/Prelayout/.menu               644 p
+share/Proteus/Prelayout/CreatePrelayout.il              Proteus/Prelayout/CreatePrelayout.il 644 p
+share/Proteus/Prelayout/CreatePrBound.il                Proteus/Prelayout/CreatePrBound.il 644 p
+share/Proteus/Prelayout/GetCellArea.il                  Proteus/Prelayout/GetCellArea.il 644 p
+share/Proteus/Prelayout/DrawWires.il                    Proteus/Prelayout/DrawWires.il 644 p
+share/Proteus/Prelayout/FlushAndSync.il                 Proteus/Prelayout/FlushAndSync.il 644 p
+share/Proteus/Synch/Flush.il                            Proteus/Synch/Flush.il 644 p
+share/Proteus/Synch/AllSync.il                          Proteus/Synch/AllSync.il 644 p
+
+#
+# The Proteus/Synch menu represents the steps in the Synch Flow. 
+# The menu items are in flow order.
+#
+share/Proteus/Synch/.menu  Proteus/Synch/.menu 644 p
+share/Proteus/Synch/CreateCellList.il  Proteus/Synch/CreateCellList.il 644 p
+share/Proteus/Synch/CreateGuideInst.il  Proteus/Synch/CreateGuideInst.il 644 p
+share/Proteus/Synch/ExportDesignDef.il  Proteus/Synch/ExportDesignDef.il 644 p
+share/Proteus/Synch/ExportDesignLef.il  Proteus/Synch/ExportDesignLef.il 644 p
+# does not work anyway
+#share/Proteus/Synch/ExportNondefaultRuleDef.il  Proteus/Synch/ExportNondefaultRuleDef.il 644 p

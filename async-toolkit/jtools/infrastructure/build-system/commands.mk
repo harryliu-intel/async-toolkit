@@ -1,0 +1,6 @@
+# Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+# SPDX-License-Identifier: Apache-2.0
+
+DEFAULTS_MK_TEMPL := $(BUILD_SYSTEM_ROOT)/defaults.mk.tmpl
+DEFAULTS_MK_GEN_SCRIPT := $(BUILD_SYSTEM_ROOT)/defaults.mk.gen
+DEFAULTS_MK_GEN_CMD := $(DEFAULTS_MK_GEN_SCRIPT) $(GNUSED) $(DEFAULTS_MK_TEMPL)

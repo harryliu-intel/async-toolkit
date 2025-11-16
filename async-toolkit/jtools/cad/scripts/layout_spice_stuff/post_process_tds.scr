@@ -1,0 +1,26 @@
+#!/usr/intel/bin/perl
+my $date=`date`;
+my $runName=shift(@ARGV);
+my $ntpcNode=shift(@ARGV);
+my $ntpcVal=shift(@ARGV);
+my $Res_File=shift(@ARGV);
+my $path=shift(@ARGV);
+## Setting environment variables and Paths
+
+$ENV{"PATH"} = "$ENV{\"PATH\"}:$path";
+my $TDS_result=` /usr/local/cad/bin/trace $runName $ntpcNode | /usr/local/cad/bin/trig rise 0.6 5 4 8`;
+open HANDLE1, ">>$Res_File";
+if($TDS_result =~ /no trigger/)  {
+  print HANDLE1 "$date $runName   $ntpcNode   $ntpcVal  $TDS_result";
+}
+else {
+chomp($TDS_result);
+my @Res=split/\s+/, $TDS_result;
+my $ConcRes=$Res[2];
+   @Res=split/=/, $ConcRes;
+   $ConcRes=$Res[1];
+   $ConcRes=~/([0-9\.]*)/;
+my $SimFreq=$1;
+   print HANDLE1 "$date $runName $ntpcNode $ntpcVal Simulation frequency is $SimFreq\n";
+}
+close(HANDLE1);

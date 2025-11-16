@@ -1,0 +1,57 @@
+<pre>
+
+<div class="moz-text-flowed" style="font-family: -moz-fixed">Mike Davies wrote:
+
+> Aubrey Grey wrote:
+>
+>> One additional point on /usr/local/fulcrum is this: Are we considering
+>> the fact that the tools and the pdk, for example, are highly cross 
+>> dependent... in other words, updates
+>> to the pdk can affect tools and tool improvements may require changes 
+>> to the pdk. Therefore,
+>> they really cannot be released separately without some serious cross 
+>> checking by the tool
+>> for compatibility. 
+>
+>
+>
+> This won't be a significant problem if we require a 1-to-1 
+> correspondence between PDK and tool branch names.  (Technically, this 
+> would be a requirement only of tools which require a PDK.)  Any ( 
+> <tool>-x.y.date.changenum_i , <pdk>-x.y.date.changenum_j ) pair can be 
+> guaranteed to work together as long as
+>
+> (A) changenum_j <= changenum_i and there exists no ( 
+> <tool>-x.y.date.changenum_k , <tool>-x.y.date.changenum_l ) with 
+> changenum_j < changenum_k <= changenum_l < changenum_i.
+>
+> -or-
+>
+> (B) changenum_j > changenum_i and there exists no 
+> <tool>-x.y.date.changenum_k ,with changenum_i < changenum_k <= 
+> changenum_j.
+>
+> The fulcrum wrapper script could check for such conditions and warn 
+> the user if they attempt to run a ( <tool>, <pdk> ) pair that might 
+> not work.
+>
+> (Note that this assumes that whenever a developer changes a tool in a 
+> way that has pdk-visible implications, such as changing configuration 
+> parameter names/meanings, he remembers to update the pdk -- a 
+> regression test system will be able to check this.)
+>
+> No ( <tool>-x.y.date.changenum , <pdk>-z.w.date.changenum ) 
+> combination would be guaranteed to work if x.y != z.w.
+>
+>
+>
+That being the case, what is the point of keeping them separate if they 
+must be used
+together and updated together? It seems like you are saying the same 
+thing as I am
+in a different way. If so, I would certainly agree.
+
+
+
+</div>
+</pre>

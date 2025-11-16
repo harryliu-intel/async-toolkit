@@ -1,0 +1,9 @@
+<test>
+<!-- basic math test -->
+<config>
+test.a=${1+1}
+test.b=${1+1.5}x
+test.c=${1+}
+</config>
+
+</test>

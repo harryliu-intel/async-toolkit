@@ -1,0 +1,9 @@
+#!/bin/sh --
+#
+
+CLASSPATH=$HOME/jars/antlr.jar:$HOME/jars/csp2java.jar
+export CLASSPATH
+
+exec /usr/intel/bin/java -Xmx256M -DHOME="$HOME" \
+    com.avlsi.csp.csp2java.CSP2Java "$@"
+

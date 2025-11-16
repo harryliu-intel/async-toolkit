@@ -1,0 +1,9 @@
+2 0
+# Copyright 2002 Fulcrum Microsystems.  All rights reserved.
+# $Id$
+# $DateTime$
+# $Author$
+
+share/java/dsim.jar		dsim.jar 664
+$arch/bin/jdsim.sh              jdsim.sh 664
+$arch/lib/libReadline.so	../../util/readline/libReadline.so 775

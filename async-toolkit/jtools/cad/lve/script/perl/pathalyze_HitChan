@@ -1,0 +1,300 @@
+#!/usr/intel/bin/perl -w
+
+# Use pathalyze to verify bundled-data timing assumptions on the
+# HitChan of TCAM related cells.  Hard-coded for Alta 65nm lib.cam.*.
+# Pipe in an input file with all HitChan's to verify in the format:
+#
+# cell bytes chan src_type src_prefix snk_type snk_prefix
+#
+# Hash comments and empty lines are allowed.
+
+# defaults
+my $corner = "tt";
+my $voltage = 0.9;
+my $temp = 125;
+my $ocv = 0.9;
+my $mono_margin = 25;
+my $non_mono_margin = 50;
+my $verbose = 0;
+my $debug = 0;
+my $skip_pathalyze = 0;
+my $lve_dir = "lve";
+my $cast_dir = "$ENV{CAST_DIR}";
+my $spec_dir = "$ENV{SPEC_DIR}";
+my $mem = '';
+my @mono_snk_types = ("AND_H","AND_LH","CASCADE_TCAM","CASCADE_PREV");
+
+# parse command-line arguments
+while (@ARGV>0) {
+    my $arg = shift(@ARGV);
+    if    ($arg =~ /--corner=(.*)/ )   { $corner = $1; }
+    elsif ($arg =~ /--voltage=(.*)/)   { $voltage = $1; }
+    elsif ($arg =~ /--temp=(.*)/)      { $temp = $1; }
+    elsif ($arg =~ /--skip-pathalyze/) { $skip_pathalyze = 1; }
+    elsif ($arg =~ /--lve-dir=(.*)/)   { $lve_dir = $1; }
+    elsif ($arg =~ /--cast-dir=(.*)/)  { $cast_dir = $1; }
+    elsif ($arg =~ /--spec-dir=(.*)/)  { $cast_dir = $1; }
+    elsif ($arg =~ /--verbose/)        { $verbose = 1; }
+    elsif ($arg =~ /--debug/)          { $debug = 1; }
+    elsif ($arg =~ /--ocv=(.*)/)       { $ocv = $1; }
+    elsif ($arg =~ /--margin=(.*)/)    { $non_mono_margin = $1; }
+    elsif ($arg =~ /--mono-margin=(.*)/) { $mono_margin = $1; }
+    elsif ($arg =~ /--mem=(.*)/)       { $mem = $1; }
+    else                               { usage(); }
+}
+
+# common arguments to run pathalyze
+my $output_dir = "${corner}/${voltage}V/${temp}C";
+my $pathalyze = "$ENV{FULCRUM} pathalyze " .
+    "--corner=$corner --voltage=$voltage --temp=$temp " .
+    "--cast-dir=$cast_dir --spec-dir=$spec_dir --lve-dir=$lve_dir " .
+    "--output-dir=$output_dir " .
+    "--routed ";
+$pathalyze .= "--verbose " if ($verbose);
+$pathalyze .= "--debug " if ($debug);
+$pathalyze .= "--max-heap-size=$mem " if ($mem);
+
+# parse problem definitions
+my @problems = ();
+while (my $line = <STDIN> ) {
+    next if ($line =~ /^\#/ );
+    chomp($line);
+    my @fields = split(" ",$line);
+    push @problems, \@fields if @fields==7;
+}
+
+# iterate over problem definitions
+my $n = 0;
+for (my $p=0; $p<@problems; $p++) {
+    my ($cell,$bytes,$chan,$src_type,$src_prefix,
+        $snk_type,$snk_prefix) = @{$problems[$p]};
+    my $last_same = ($p>0)           && (@{$problems[$p-1]}[0] eq $cell);
+    my $next_same = ($p+1<@problems) && (@{$problems[$p+1]}[0] eq $cell);
+
+    # spec file header
+    if (!$last_same) {
+        open SPEC, ">${cell}.spec" or die "ERROR: can't write ${cell}.spec\n";
+        print SPEC "cell $cell;\n\n";
+        $n = 0;
+    }
+
+    # outer loop over bits, only when needed
+    my $do_bits = $snk_type eq "DETECT";
+    for (my $bit=0; $bit==0 || $do_bits && $bit<8; $bit++) {
+        my $bitstr = "i";
+        $bitstr = $bit if ($do_bits);
+        
+        # inner loop over bytes
+        for (my $b=0; $b<$bytes; $b++) {
+            my $c = "$chan\[$b\]";
+            $c =~ s/\]\[/,/g;
+            my $start = "\n  (${c}.e)+";
+            my @paths = ($start,$start);
+            @paths = append_paths_src($src_type,$src_prefix,$b,$bitstr,@paths);
+            $paths[0] .= "\n  ${c}.v+";
+            $paths[1] .= "\n  ${c}.d[${bitstr}]+";
+            @paths = append_paths_snk($snk_type,$snk_prefix,$b,$bitstr,@paths);
+            print SPEC "# byte $b\n\n";
+            print SPEC "path valid_${n} =$paths[0];\n\n";
+            for (my $i=1; $i<@paths; $i++) {
+                my $bitrange = "";
+                $bitrange = "[i:8]" if (!$do_bits);
+                print SPEC "path data_${n}_${i}${bitrange} =$paths[$i];\n\n";
+            }
+            my $m = $non_mono_margin;
+            for my $t (@mono_snk_types) {
+                if ($snk_type eq $t) { $m = $mono_margin; }
+            }
+            print SPEC "param setup_${n} = $ocv*min(valid_${n}) - max(";
+            for (my $i=1; $i<@paths; $i++) {
+                print SPEC "max(data_${n}_${i})+max_slew(data_${n}_${i})";
+                print SPEC "," if ($i+1<@paths);
+            }
+            print SPEC ") - $m;\n\n";
+            $n++;
+        }
+    }
+
+    # finish SPEC and run pathalyze
+    if (!$next_same) {
+        close SPEC;
+        if (!$skip_pathalyze) {
+            system("$pathalyze --root-subtype=\"$cell\" \"${cell}.spec\"\n");
+        }
+    }
+}
+
+# measure margins
+for (my $p=0; $p<@problems; $p++) {
+    my $cell = @{$problems[$p]}[0];
+    my $last_same = ($p>0) && (@{$problems[$p-1]}[0] eq $cell);
+    next if ($last_same);
+    my $file = "$output_dir/$cell/properties";
+    open PROPS, "$file" or die "ERROR: can't read $file to measure results\n";
+    my $margin;
+    while (my $line = <PROPS> ) {
+        if ($line =~ /delay = (.*),/) {
+            if (!defined($margin) || $1<$margin) { $margin = $1; }
+        }
+    }
+    close PROPS;
+    if (defined($margin)) { $margin = sprintf("%gps", $margin); }
+    else { $margin = "ERROR"; }
+    print "$cell margin=$margin\n";
+}
+
+# append to valid, data paths inside src cell
+sub append_paths_src {
+    my $type = shift;
+    my $prefix = shift;
+    my $byte = shift;
+    my $bit = shift;
+    my $valid;
+    my $data;
+    my @paths = @_;
+    my @newpaths;
+    if ($type eq "SLICE0" || $type eq "SLICE1" ||
+        $type eq "SLICE2" || $type eq "SLICE3") {
+        $type =~ /SLICE(\d)+/;
+        my $s = $1;
+        my $_H;
+        if ($s==0) { $s = "slice0";    $_H = "_H"; }
+        else       { $s = "slice[$s]"; $_H = "_RH"; }
+        my $i = int($byte/4);
+        my $j = $byte%4;
+        $valid = "\n  ${prefix}.core[$i].$s.detect.__ke[$j]-";
+        $data  = "\n  ${prefix}.core[$i].$s.detect.out[($bit+$j*8)/4,($bit+$j*8)%4].${_H}-";
+    } elsif ($type eq "CASCADE_HIT") {
+        my $i = int($byte/4);
+        my $j = $byte%4;
+        $valid = "\n  ${prefix}.core[$i].byte[$j].ve._HITv-";
+        $data  = "\n  ${prefix}.core[$i].byte[$j].bit[$bit]._HIT-";
+    } elsif ($type eq "CASCADE_NEXT") {
+        my $i = int($byte/4);
+        my $j = $byte%4;
+        $valid = "\n  ${prefix}.core[$i].byte[$j].ve._NEXTv-";
+        $data  = "\n  ${prefix}.core[$i].byte[$j].bit[$bit]._NEXT-";
+    } elsif ($type eq "AND" || $type eq "NAND") {
+        my $i = int($byte/4);
+        my $j = $byte%4;
+        $valid = "\n  ${prefix}.core[$i].byte[$j].ctrl._RHv-";
+        $data  = "\n  ${prefix}.core[$i].byte[$j].bit[$bit]._RH-";
+    } else {
+        die "Unrecognized src_type=$type\n";
+    }
+    push @newpaths, $paths[0] . $valid;
+    push @newpaths, $paths[1] . $data;
+    return @newpaths;
+}
+
+# append to valid, data1, [data2 ...] paths inside snk cell
+sub append_paths_snk {
+    my $type = shift;
+    my $prefix = shift;
+    my $byte = shift;
+    my $bit = shift;
+    my @paths = @_;
+    my @newpaths;
+    if ($type eq "TO_DI") {
+        my $i = int($byte/4);
+        my $j = $byte%4;
+        push @newpaths, $paths[0] .
+            "\n  ${prefix}.core[$i].byte[$j].ctrl._LHv-" .
+            "\n  ${prefix}.core[$i].byte[$j].ctrl.LHV+";
+        push @newpaths, $paths[1];
+        push @newpaths, $paths[1] .
+            "\n  ${prefix}.core[$i].byte[$j].dyb[$bit/2]._LH[$bit%2]-";
+    } elsif ($type eq "CASCADE_TCAM") {
+        my $i = int($byte/4);
+        my $j = $byte%4;
+        push @newpaths, $paths[0] .
+            "\n  ${prefix}.core[$i].byte[$j].ve.x[0]-" .
+            "\n  ${prefix}.core[$i].byte[$j].ve.x[1]+" .
+            "\n  ${prefix}.core[$i].byte[$j].ve._TCAMv-" .
+            "\n  ${prefix}.core[$i].byte[$j].ve.TCAMv+";
+        push @newpaths, $paths[1];
+    } elsif ($type eq "CASCADE_PREV") {
+        my $i = int($byte/4);
+        my $j = $byte%4;
+        push @newpaths, $paths[0] .
+            "\n  ${prefix}.core[$i].byte[$j].ve.y[0]-" .
+            "\n  ${prefix}.core[$i].byte[$j].ve.y[1]+" .
+            "\n  ${prefix}.core[$i].byte[$j].ve._PREVv-" .
+            "\n  ${prefix}.core[$i].byte[$j].ve.PREVv+";
+        push @newpaths, $paths[1];
+    } elsif ($type eq "DETECT") {
+        my $i = int($byte/4);
+        my $j = int(($byte%4)/2);
+        my $k = ($byte%4)%2;
+        my $l = int($bit/4);
+        push @newpaths, $paths[0] .
+            "\n  ${prefix}.core[$i].det[$j].det[$k].ctrl.x[0]-" .
+            "\n  ${prefix}.core[$i].det[$j].det[$k].ctrl.x[1]+" .
+            "\n  ${prefix}.core[$i].det[$j].det[$k].ctrl._Lv-" .
+            "\n  ${prefix}.core[$i].det[$j].det[$k].ctrl.Lv+";
+        push @newpaths, $paths[1];
+        push @newpaths, $paths[1] .
+            "\n  ${prefix}.core[$i].det[$j].det[$k].nyb[$l]._L[1]-" if ($bit%4==1);
+        push @newpaths, $paths[1] .
+            "\n  ${prefix}.core[$i].det[$j].det[$k].nyb[$l]._L[3]-" if ($bit%4==3);
+        push @newpaths, $paths[1] .
+            "\n  ${prefix}.core[$i].det[$j].det[$k].nyb[$l]._L_01-" if ($bit%4<=1);
+        push @newpaths, $paths[1] .
+            "\n  ${prefix}.core[$i].det[$j].det[$k].nyb[$l]._L_23-" if ($bit%4>=2);
+    } elsif ($type eq "AND_H") {
+        my $i = int($byte/4);
+        my $j = $byte%4;
+        push @newpaths, $paths[0] .
+            "\n  ${prefix}.core[$i].byte[$j].ctrl._Hv-" .
+            "\n  ${prefix}.core[$i].byte[$j].ctrl.Lv+";
+        push @newpaths, $paths[1];
+    } elsif ($type eq "AND_LH") {
+        my $i = int($byte/4);
+        my $j = $byte%4;
+        push @newpaths, $paths[0] .
+            "\n  ${prefix}.core[$i].byte[$j].ctrl._LHv-" .
+            "\n  ${prefix}.core[$i].byte[$j].ctrl.Lv+";
+        push @newpaths, $paths[1];
+    } elsif ($type eq "NAND_0") {
+        my $i = int($byte/4);
+        my $j = $byte%4;
+        push @newpaths, $paths[0] .
+            "\n  ${prefix}.core[$i].byte[$j].ctrl._LHv-" .
+            "\n  ${prefix}.core[$i].byte[$j].ctrl.LHv+";
+        push @newpaths, $paths[1];
+        push @newpaths, $paths[1] .
+            "\n  ${prefix}.core[$i].byte[$j].bit[$bit]._LH[0]-";
+    } elsif ($type eq "NAND_1") {
+        my $i = int($byte/4);
+        my $j = $byte%4;
+        push @newpaths, $paths[0] .
+            "\n  ${prefix}.core[$i].byte[$j].ctrl._LHv-" .
+            "\n  ${prefix}.core[$i].byte[$j].ctrl.LHv+";
+        push @newpaths, $paths[1];
+        push @newpaths, $paths[1] .
+            "\n  ${prefix}.core[$i].byte[$j].bit[$bit]._LH[1]-";
+    } else {
+        die "Unrecognized snk_type=$type\n";
+    }
+    return @newpaths;
+}
+
+# usage banner
+sub usage {
+    die "pathalyze_HitChan\n" .
+        "  [--corner=$corner]\n" .
+        "  [--voltage=$voltage]\n" .
+        "  [--temp=$temp]\n" .
+        "  [--ocv=$ocv]  on-chip-variation factor applied to long path\n" .
+        "  [--margin=$non_mono_margin]  timing margin for non-monotonic sink types\n" .
+        "  [--mono-margin=$mono_margin]  timing margin for monotonic sink types\n" .
+        "  [--lve-dir=$lve_dir]\n" .
+        "  [--cast-dir=$cast_dir]\n" .
+        "  [--spec-dir=$spec_dir]\n" .
+        "  [--verbose]\n" .
+        "  [--debug]\n" .
+        "  [--skip-pathalyze]\n" .
+        "  [--mem=$mem] Max heap size to pass to pathalyze\n" .
+        "  [--help]\n" .
+        "  < HitChan.in\n";
+}

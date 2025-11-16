@@ -1,0 +1,52 @@
+1 0
+# Copyright 2002 Fulcrum Microsystems.  All rights reserved.
+# $Id$
+# $DateTime$
+# $Author$
+
+<<DOC
+ Used for streaming out dfII into gds2.  Used as a shim for
+ <ul>
+<li> cell renaming </li>
+<li> partial extraction </li>
+<li> lvs-nodes (deprecated now that Assura LVS seems to work w/o them) </li>
+</ul>
+DOC
+
+# JAVA
+java com.avlsi.layout.gdsII.GenerateGDSIIData
+include assura.package .
+
+# SH wrapper scripts
+$arch/bin/generate_gdsII_data.sh          ../../../java/src/com/avlsi/layout/gdsII/generate_gdsII_data.sh  775
+$arch/bin/gdsIIWrite.pl                   script/sh/cell-automation/one_cell_commands/gdsIIWrite.pl        775 p
+$arch/bin/writegds                        script/sh/cell-automation/one_cell_commands/writegds             775 p
+$arch/bin/Tapeout.pl                      script/sh/cell-automation/one_cell_commands/Tapeout.pl           775 p
+$arch/bin/cdlsize265.pl                   script/sh/cell-automation/one_cell_commands/cdlsize265.pl        775 p
+$arch/bin/size265.pl                      script/sh/cell-automation/one_cell_commands/size265.pl           775 p
+
+# SKILL
+install/share/bin/gen_autoload            skill/gen_autoload                                               775 p
+share/skill/layout/hierarchy/hierarchy.il skill/layout/hierarchy/hierarchy.il                              664 p
+share/skill/layout/gdsII/gdsIIhier.il     skill/layout/gdsII/gdsIIhier.il                                  664 p
+share/skill/util/list/list.il             skill/util/list/list.il                                          664 p
+share/skill/util/table/table.il           skill/util/table/table.il                                        664 p
+share/skill/util/expression/expression.il skill/util/expression/expression.il                              664 p
+share/skill/util/lib.il                   skill/util/lib.il                                                664 p
+share/skill/schematic/updatenetlist.il    skill/schematic/updatenetlist.il                                 664 p
+share/skill/util/string/strutil.il        skill/util/string/strutil.il                                     664 p
+share/skill/util/name.il                  skill/util/name.il                                               664 p
+share/skill/schematic/lvsnodes.il         skill/schematic/lvsnodes.il                                      664 p
+share/skill/layout/keepout/abstract.il    skill/layout/keepout/abstract.il                                 664 p
+share/skill/layout/keepout/conductor.il   skill/layout/keepout/conductor.il                                664 p
+share/skill/layout/transform/transform.il skill/layout/transform/transform.il                              664 p
+share/skill/layout/hierarchy/hierarchy.il skill/layout/hierarchy/hierarchy.il                              664 p
+share/skill/layout/pins/pinutil.il        skill/layout/pins/pinutil.il                                     664 p
+
+# External
+$arch/bin/rdgds                           ../../../c/gdsii/aaggds/rdgds                                    775
+$arch/bin/wrgds                           ../../../c/gdsii/aaggds/wrgds                                    775
+$arch/bin/aaggds                          ../../../c/gdsii/aaggds/aaggds                                   775
+
+# for tapeout utility
+$arch/bin/gdsxor                          ../../../c/gdsii/scripts/gdsxor                                  775 p

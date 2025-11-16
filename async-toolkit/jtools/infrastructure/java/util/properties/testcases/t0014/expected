@@ -1,0 +1,5 @@
+ERROR: Failure to parse math expression ${1+} in key test.c: Encountered "<EOF>" at line 1, column 2. Was expecting one of:     "+" ...     "-" ...     "!" ...     <STRING_LITERAL> ...     <INTEGER_LITERAL> ...     <FLOATING_POINT_LITERAL> ...     <INDENTIFIER1> ...     <INDENTIFIER2> ...     "(" ...     "[" ...      
+test.a=2
+test.b=2.5x
+test.c=${1+}
+topdir=.

@@ -1,0 +1,95 @@
+#!/usr/intel/bin/perl -l
+# AAG
+# $Id$
+# $DateTime$
+
+use strict;
+
+my $count=0;
+my %resource=();
+my %host=();
+my %count=();
+my %res=();
+my %list=();
+my $resource = undef;
+
+sub usage {
+    print STDERR <<EU;
+Usage: qresource [resource-name[=value]]...
+    with no arg, gives list of significant resources
+EU
+    exit 1;
+}
+
+foreach my $resource (@ARGV) {
+    my ($res,$val)=split(/=/,$resource);
+    usage if $res =~ /^-/;
+    $val = "empty" if !defined ($val);
+    $resource{$res}=$val;
+    $count++;
+}
+open (P, "qhost -F |");
+my $in=0;
+my $host=0;
+while (<P>) {
+    chomp;
+    if (/^[a-z]/) {
+        ($host)=split;
+        $in = 0;
+    }
+    if (/:/) {
+        s/ //g;
+        my (@f)=split(/:/,$_,2);
+        next if $f[0] eq "gc";
+        my($res,$val)=split(/=/,$f[1],2);
+        $val =~ s/\.[0]*$//;
+        $val =~ s/[0]+$// if $val =~ /\./;
+        push @{$host{$host}}, "$res=$val" if $val ne "0" and $val ne "default";
+        if (defined ($resource{$res}) and ($val eq "$resource{$res}" or
+            ($resource{$res} eq "empty" and $val ne "default"))) {
+            $count{$host}++;
+            push @{$res{$res}}, "$host=$val";
+        }
+    }
+    if ($#ARGV == -1) {
+        if (/h[fl]:/ and $host ne "global") {
+            s/^  *//;
+            s/0+$//;
+            s/\.$//;
+            my ($x,$v)=split(/=/,$_);
+            $list{$x}++;
+        }
+    }
+}
+close P;
+my %lx;
+my $size=0;
+foreach my $res (sort keys %resource) {
+    $res =~ s/=1//;
+    if (defined ($host{$res})) {
+        foreach my $set (@{$host{$res}}) {
+            my ($r,$val)=split(/=/,$set);
+            $lx{$r} = "" if ! defined ($lx{$r});
+            $lx{$r} .= " $res=$val";
+            $size = length($r) if length($r) > $size;
+        }
+    }
+    elsif (defined ($res{$res})) {
+        foreach my $set (@{$res{$res}}) {
+            my ($host,$val)=split(/=/,$set);
+            if ($count{$host} == $count) {
+                $lx{$host} = "" if ! defined ($lx{$host});
+                $lx{$host} .= " $res=$val";
+                $size = length($host) if length($host) > $size;
+            }
+        }
+    }
+}
+foreach my $key (sort keys %lx) {
+    printf "%-*.*s %s\n", $size,$size,$key, $lx{$key};
+}
+if (! defined ($resource) or $host) {
+    foreach my $f (sort keys %list) {
+        print $f;
+    }
+}

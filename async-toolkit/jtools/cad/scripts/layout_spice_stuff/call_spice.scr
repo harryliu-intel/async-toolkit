@@ -1,0 +1,135 @@
+#!/usr/intel/bin/perl
+
+
+my ($runName,$runNameOrig,$run_dir,$f_aspice,$f_env);
+#List of arguments
+my $cellName=shift(@ARGV);
+my $cellNameMod=shift(@ARGV);
+my $aspice_path=shift(@ARGV);
+if(($cellName ne $cellNameMod)  && ($cellName!~/\"/))  {  $cellName="\"$cellName\"";  }
+my $dir=shift(@ARGV);
+my $f_spice=shift(@ARGV);
+my $minR=shift(@ARGV);
+my $minC=shift(@ARGV);
+my $diffusionOverhang=shift(@ARGV);
+#my $f_config=shift(@ARGV);
+my $path=shift(@ARGV);
+my $type=shift(@ARGV);
+my $castPath=shift(@ARGV);
+my ($enV,$DynNd,$castQuery,$jflat,$BigJob,$Mem);
+
+my %HashCdl2Layout;
+
+
+$castQuery="/home/group/microarch/cad/bin/cast_query --cast-version=2  --cast-path=$castPath ";
+$jflat="/home/group/microarch/cad/bin/jflat --cast-version=2 --cast-path=$castPath ";
+open HANDLE1, "<$dir/$cellNameMod.nmap";
+while(my $line=<HANDLE1>)  {
+  my @fields=split/\s+/,$line;
+  if(!($fields[0]=~/^\#/))  {
+    $HashCdl2Layout{$fields[1]}=$fields[0];
+  }
+} 
+
+if($type eq "TDS")  {
+  $enV=shift(@ARGV);
+  $BigJob=shift(@ARGV);
+  $Mem=shift(@ARGV);
+  $intWire=shift(@ARGV);
+  if($BigJob==1)  {  $jflat="$jflat --max-heap-size=$Mem\n";  }
+  $runName="$cellNameMod:$enV";
+  $runNameOrig="$cellName:$enV";
+  $run_dir="$dir/TDS_$enV";
+  $f_aspice="$run_dir/$cellNameMod.aspice";
+  if($enV ne "noEnv")  {
+    $f_env="$run_dir/$runName.aspice";
+  }
+}
+else  {
+  $DynNd=shift(@ARGV);
+  $runName=$cellNameMod;
+  $runNameOrig="$cellName:$enV";
+  $run_dir="$dir/CHRG_SHR_CS";
+  $f_aspice="$run_dir/$cellNameMod.aspice";
+}
+
+
+
+my $aspice="aspice -path $aspice_path"; 
+
+## Setting environment variables and Paths
+
+$ENV{"PATH"} = "$ENV{\"PATH\"}:$path";
+print "$ENV{'PATH'}\n";
+
+
+  chdir $run_dir;
+  ## To see whther spice file exists
+  if(!((-e "$f_spice")&&(-s "$f_spice" > 100))) { die "Extraction failed\n";}
+
+  ## Converting spice file to aspice
+
+  `rc_spice2aspice --minR $minR --minC $minC --diffusionOverhang $diffusionOverhang --quote --cell $cellNameMod $f_spice $f_aspice`;
+
+
+
+if($type eq "TDS")  {
+  if($enV ne "noEnv")  {
+    print `$jflat --tool=aspice $intWire --cell=$runNameOrig |grep -v layout > $f_env`;
+  }
+  `$aspice $runName > $runName.out 2> $runName.err`;
+}
+else  {
+  my $Output_Node_Line="List_of_Output_Dynamic_Nodes ";
+  my $Pass_Gate_Node_Line="List_Of_Pass_Gate_Dynamic_Nodes ";
+  if($DynNd==0)  {
+    ## Creating list of nodes to do charge sharing on
+    print qq{$jflat --tool=csim --cell=$cellName | egrep "^up|^dn" | cut -d" " -f 2 | sort | uniq | sed s:'"'::g > $runName.nodes\n};
+    `$jflat --tool=csim --cell=$cellName | egrep "^up|^dn" | cut -d" " -f 2 | sort | uniq | sed s:'"'::g > $runName.nodes`; 
+  }
+  else  {
+    print "$castQuery --jre-args=-ea --cell=$cellName --task=dynamic_nodes > $runName.nodes\n";
+    `$castQuery --jre-args=-ea --cell=$cellName --task=dynamic_nodes > $runName.nodes`;
+  }
+  open NODES, "<$runName.nodes" or die "Can't open .nodes for reading\n";
+  Lx:while(my $line=<NODES>)  {
+    my @fields=split/\s+/,$line;
+    if(exists $HashCdl2Layout{$fields[0]})  { $fields[0]=$HashCdl2Layout{$fields[0]}; }
+    if($DynNd==1)  {      
+      if($line=~/NOTE\: Found NetPath ending with passgate/)  {
+	$line=<NODES>;
+        $line=~/Ending Node\: (\S*)/;
+        my $temp=$1;
+        if(exists $HashCdl2Layout{$temp})  { $temp=$HashCdl2Layout{$temp}; }
+        $Pass_Gate_Node_Line=$Pass_Gate_Node_Line."$temp ";
+        next Lx;
+      }
+      elsif($line=~/Dynamic nodes of/)  {
+	next Lx;
+      }
+      if($fields[1] eq "*")  {
+        ###Note that certain dynamic nodes are output nodes
+        ### These are simulated under no load conditions
+        ### Hence it might not be surprising if they fail charge sharing
+        ### a record of these nodes is made in out_chrg_shr
+        ### Also there are nodes that are associated with pass gates
+        ### This is read by the post processing script and in the 
+        ### Node report the user is notified
+	$Output_Node_Line=$Output_Node_Line."$fields[0] ";
+      }
+    }
+    if($fields[0] eq "")  { next Lx; }
+    my $nodeName = $fields[0];
+    `ln -sf $runName.asp $runName:$nodeName:up.asp`;
+    `$aspice -up $nodeName $runName:$nodeName:up`;
+    `minmaxv $runName:$nodeName:up $nodeName > $runName:$nodeName:up.out`;
+    `ln -sf $runName.asp $runName:$nodeName:dn.asp`;
+    `$aspice -dn $nodeName $runName:$nodeName:dn`;
+    `minmaxv $runName:$nodeName:dn $nodeName > $runName:$nodeName:dn.out`;
+  }
+  `grep Maximum $runName:*:up.out | sort -n -k 3 -r > $runName:up.out`;
+  `grep Minimum $runName:*:dn.out | sort -n -k 3 > $runName:dn.out`;
+  close(NODES);
+  print "$Output_Node_Line\n";
+  print "$Pass_Gate_Node_Line\n";
+}

@@ -1,0 +1,9 @@
+2 0
+# Copyright 2002 Fulcrum Microsystems.  All rights reserved.
+# $Id: //depot/sw/rrc/cad/java/src/com/avlsi/tools/vdcverify/vdcverify.package#1 $
+# $DateTime: 2014/06/01 14:51:55 $
+# $Author: epakbazn $
+
+java com.avlsi.tools.vdcverify.VDCVerify
+$arch/bin/vdcverify.sh              vdcverify.sh 775
+

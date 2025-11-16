@@ -1,0 +1,17 @@
+<test>
+<config>
+<opt name="N" type="Integer" default="10"></opt>
+<opt name="X" type="Integer" default="2"></opt>
+<opt name="Y" type="Integer" default="2"></opt>
+<opt name="variant" type="String" default=""></opt>
+<opt name="port.[1-$(N)].opt" type="String" default=""></opt>
+<opt name="port.[$(X)-$(Y)].a" type="String" default="aa"></opt>
+<opt name="port.[1-$(Y)].b" type="String" default="bb"></opt>
+port.1.opt=a
+</config>
+
+<config name="ccc">
+port.1.opt=c
+Y=3
+</config>
+</test>

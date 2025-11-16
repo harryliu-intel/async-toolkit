@@ -1,0 +1,356 @@
+#!/usr/intel/bin/perl -w
+
+# find relevant packaged tools and libraries
+BEGIN {
+    $lve_root = $0;
+    $lve_root =~ s:/[^/]*$::;
+    $lve_root =~ s:/[^/]*$::;
+    @INC = ("$lve_root/lib/perl", @INC);
+    $cad_dir = $lve_root;
+    $cad_dir =~s:/[^/]*$::;
+    @INC = ("$cad_dir/lib/perl", @INC);
+}
+use LveStatus;
+use LveUtil;
+use LveAlint;
+use Getopt::Long;
+use strict;
+
+sub report_fails {
+    my ($key, $nodes, $levels) = @_;
+    my %nodes_by_type = initialize_nodes_by_type();
+    foreach my $n (keys %$nodes) {
+        classify_failing_nodes($n, $levels, \%nodes_by_type);
+    }
+    my ($t, $v, $c, $l, $m) = ($nodes_by_type{"total"},
+                               $nodes_by_type{"vendor"},
+                               $nodes_by_type{"cable"},
+                               $nodes_by_type{"leaf"},
+                               $nodes_by_type{"mid"});
+    print "$key: $t $v $c $l $m\n";
+}
+
+sub initialize_nodes_by_type {
+    my %nodes_by_type = ();
+    $nodes_by_type{"vendor"} = 0;
+    $nodes_by_type{"cable"} = 0;
+    $nodes_by_type{"leaf"} = 0;
+    $nodes_by_type{"mid"} = 0;
+    $nodes_by_type{"total"} = 0;
+    return %nodes_by_type;
+}
+
+sub classify_failing_nodes {
+    my ($fqcn_node, $levels, $nodes_by_type) = @_;
+    my @split_key = split('/', $fqcn_node);
+    my $c = $split_key[0];
+    if ($c =~ /vendor.avago/) {
+        $nodes_by_type->{"vendor"}++;
+    } elsif ($c =~ /chip.rrc.util.cable/) {
+        $nodes_by_type->{"cable"}++;
+    } elsif (defined($levels->{$c})) {
+        if ($levels->{$c} == 0) {
+            $nodes_by_type->{"leaf"}++;
+        } else {
+            $nodes_by_type->{"mid"}++;
+        }
+    } else {
+        print "Cell not found: $c\n";
+    }
+    $nodes_by_type->{"total"}++;
+}
+sub get_fail_type {
+    my ($line) = @_;
+    my $retval = "OTHER";
+    if ($line =~ /FAIL\@FAIL/ ) {
+        $retval = 'FAIL@FAIL';
+    } elsif ($line =~ /fail_type=no_thresh_scenario/ ) {
+        $retval = "NTS";
+    } elsif ($line =~ /fail_type=no_such_fanin/) {
+        $retval = "NSFI";
+    } elsif ($line =~ /fail_type=no_such_fanout/) {
+        $retval = "NSFO";
+    } elsif ($line =~ /fail_type=no_such_node/) {
+        $retval = "NSN";
+    } elsif ($line =~ /fail_type=no_such_bump/) {
+        $retval = "NSB";
+    } elsif ($line =~ /fail_type=illegal_fanin_node/) {
+        $retval = "IFN";
+    } elsif ($line =~ "circuit_") {
+        $retval = "CIRCUIT";
+    } elsif ($line =~ /SIGNOFF/) {
+        $retval = "SIGNOFF";
+    }
+    return $retval;
+}
+
+sub record_fail {
+    my ($fqcn_node, $fails, $fail_logs, $key, $line) = @_;
+    print {$fail_logs->{$key}} "$fqcn_node $line";
+    my $fail_by_key_ref = $fails->{$key};
+    $fail_by_key_ref->{$fqcn_node} = 1;
+    unless ($key =~ /new_bumps/ || $key =~ /skew/) {
+        my $checked_fails_ref = $fails->{"Total"};
+        $checked_fails_ref->{$fqcn_node} = 1;
+    }
+}
+
+sub record_run_err {
+    my ($fqcn_node, $meas_fails, $meas_logs, $line) = @_;
+    my $fail_type = get_fail_type($line);
+    print {$meas_logs->{$fail_type}} "$fqcn_node $line";
+    my $meas_fails_by_key_ref = $meas_fails->{$fail_type};
+    my $meas_totals_ref = $meas_fails->{"Total"};
+
+    $meas_fails_by_key_ref->{$fqcn_node} = 1;
+    $meas_totals_ref->{$fqcn_node} = 1;
+}
+sub record_results {
+    my ($fqcn_node, $fails, $meas_fails, $fail_logs, 
+        $meas_logs, $key, $passed, $measured, $line) = @_;
+    if ($passed == 0) {
+        record_fail($fqcn_node, $fails, $fail_logs,
+                    $key, $line);
+    } elsif ($measured == 0) {
+       record_run_err($fqcn_node, $meas_fails, $meas_logs,
+                      $line);
+    }
+    return $passed == 0 || $measured == 0;
+}
+sub read_results_from_raw {
+    my ($raw_file, 
+        $fails,
+        $meas_fails,
+        $fail_logs,
+        $meas_logs) = @_;
+                 
+    my @raw_lines = get_lines($raw_file);
+    foreach my $line (@raw_lines) {
+        my ($status, $task, $cell, $path, %keys) = parse_raw_line($line);
+        my $node;
+        my $fqcn_node;
+        my $measured;
+        my $passed;
+        my $rf = 0;
+        if ($status eq "PASS") { next; }
+        if ($status eq "SIGNOFF") {
+            $fqcn_node = "$cell";
+            record_run_err($fqcn_node, $meas_fails, $meas_logs, $line);
+            next;
+        }
+        if(is_bump_result(\%keys, 0)) {
+            ($node,$measured,$passed) = get_bump_result(\%keys);
+            $fqcn_node = "$cell/$node";
+            $rf += record_results($fqcn_node, $fails, $meas_fails,
+                                  $fail_logs, $meas_logs, "old_bumps0",
+                                  $passed, $measured, $line);
+        } 
+        if(is_inv_bump_result(\%keys,0)) {
+            ($node,$measured,$passed) = get_inv_bump_result(\%keys);
+            $fqcn_node = "$cell/$node";
+            $rf += record_results($fqcn_node, $fails, $meas_fails,
+                                  $fail_logs, $meas_logs, "inv_bumps0",
+                                  $passed, $measured, $line);
+        } 
+        if(is_bump_result(\%keys, 1)) {
+            ($node,$measured,$passed) = get_bump_result(\%keys);
+            $fqcn_node = "$cell/$node";
+            $rf += record_results($fqcn_node, $fails, $meas_fails,
+                                  $fail_logs, $meas_logs, "old_bumps1",
+                                  $passed, $measured, $line);
+        } 
+        if(is_inv_bump_result(\%keys, 1)) {
+            ($node,$measured,$passed) = get_inv_bump_result(\%keys);
+            $fqcn_node = "$cell/$node";
+            $rf += record_results($fqcn_node, $fails, $meas_fails,
+                                  $fail_logs, $meas_logs, "inv_bumps1",
+                                  $passed, $measured, $line);
+        }
+
+        if(is_delay_result(\%keys)) {
+            ($node,$measured,$passed) = get_delay_result(\%keys);
+            $fqcn_node = "$cell/$node";
+            $rf += record_results($fqcn_node, $fails, $meas_fails,
+                                  $fail_logs, $meas_logs, "delay",
+                                  $passed, $measured, $line);
+        }
+        if(is_slew_result(\%keys)) {
+            ($node,$measured,$passed) = get_slew_result(\%keys);
+            $fqcn_node = "$cell/$node";
+            $rf += record_results($fqcn_node, $fails, $meas_fails,
+                                  $fail_logs, $meas_logs, "slew",
+                                  $passed, $measured, $line);
+        }
+        if(is_skew_result(\%keys)) {
+            ($node,$measured,$passed) = get_skew_result(\%keys);
+            $fqcn_node = "$cell/$node";
+            $rf += record_results($fqcn_node, $fails, $meas_fails,
+                                  $fail_logs, $meas_logs, "skew",
+                                  $passed, $measured, $line);
+        }
+
+        if(is_leakage_result(\%keys)) {
+            ($node,$measured,$passed) = get_leakage_result(\%keys);
+            $fqcn_node = "$cell/$node";
+            $rf += record_results($fqcn_node, $fails, $meas_fails,
+                                  $fail_logs, $meas_logs, "leakage",
+                                  $passed, $measured, $line);
+        }
+        if(is_new_bump_result(\%keys, 0, 0)) {
+            ($fqcn_node,$measured,$passed) = 
+                get_new_bump_result(\%keys, $cell);
+            $rf += record_results($fqcn_node, $fails, $meas_fails,
+                                  $fail_logs, $meas_logs, "new_bumps00",
+                                  $passed, $measured, $line);
+        }
+        if(is_new_bump_result(\%keys,0,1)) {
+            ($fqcn_node,$measured,$passed) = 
+                get_new_bump_result(\%keys, $cell);
+            $rf += record_results($fqcn_node, $fails, $meas_fails,
+                                  $fail_logs, $meas_logs, "new_bumps01",
+                                  $passed, $measured, $line);
+        }
+        if(is_new_bump_result(\%keys,1,0)) {
+            ($fqcn_node,$measured,$passed) = 
+                get_new_bump_result(\%keys, $cell);
+            record_results($fqcn_node, $fails, $meas_fails,
+                           $fail_logs, $meas_logs, "new_bumps10",
+                           $passed, $measured, $line);
+        }
+        if(is_new_bump_result(\%keys,1,1)) {
+            ($fqcn_node,$measured,$passed) = 
+                get_new_bump_result(\%keys, $cell);
+            $rf += record_results($fqcn_node, $fails, $meas_fails,
+                                  $fail_logs, $meas_logs, "new_bumps11",
+                                  $passed, $measured, $line);
+        }
+        if ($rf == 0) {
+            my $fqcn_node = "${raw_file}/NODE_NOT_DETECTED";
+            if (defined($keys{"node"})) {
+                $fqcn_node = $keys{"node"};
+                $fqcn_node = "$cell/$fqcn_node";
+            } elsif (defined($keys{"fanin"})){
+                if ($keys{"fanin"} =~ /\//) {
+                    $fqcn_node = $keys{"fanin"};
+                } else {
+                    $fqcn_node = $keys{"fanin"};
+                    $fqcn_node = "$cell/$fqcn_node";
+                }
+            } elsif (defined($keys{"fanout"})) {
+                if ($keys{"fanout"} =~ /\//) {
+                    $fqcn_node = $keys{"fanout"};
+                } else {
+                    $fqcn_node = $keys{"fanout"};
+                    $fqcn_node = "$cell/$fqcn_node";
+                }
+            }
+            record_run_err($fqcn_node, $meas_fails, $meas_logs, $line);
+        }
+    }
+}
+
+sub process_cell {
+    my ($path, $fails, $meas_fails,
+        $fail_logs, $meas_logs) = @_;
+    my @raw_files = find_rawfiles($path);
+    foreach my $raw (@raw_files) {
+        if ($raw =~ /alint.raw$/) {
+            read_results_from_raw($raw,
+                                  $fails, $meas_fails,
+                                  $fail_logs, $meas_logs);
+        }
+    }
+}
+
+sub open_log {
+    my ($table, $key, $suffix) = @_;
+    my $fh;
+    open ($fh, ">${key}.${suffix}");
+    $table->{$key} = $fh;
+}
+
+sub usage {
+    my $usage_str = "USAGE: $0 \n";
+    $usage_str .=   "  --lve-dir=<: separated string of lve dirs>\n";
+    $usage_str .=   "  --cells=<file specifying cells in the format: <FQCN> <level> >\n";
+    $usage_str .=   "  --suffix=<suffix for filenames that contains details of alint fails\n";
+    die "$usage_str";
+}
+
+my $lve_dir;
+my $cell_list;
+my $suffix = "";
+GetOptions (
+    "lve-dir=s"   => \$lve_dir,
+    "cells=s"     => \$cell_list,
+    "suffix=s"    => \$suffix,
+    ) or usage;
+
+usage() unless (defined($cell_list) && defined($lve_dir));
+
+my @paths = ();
+my @lve_dirs = split(":", $lve_dir);
+my @levels = get_lines($cell_list);
+my $p;
+my %cell_levels = ();
+
+foreach my $d (@lve_dirs) {
+    foreach my $l (@levels) {
+        my @split_l = split(" ", $l);
+        my ($c, $level) = ($split_l[0], $split_l[1]);
+        $cell_levels{$c} = $level;
+        $p = "$d/";
+        $p .= fqcn_to_path($c);
+        if (-d $p) {
+            push @paths, $p;
+        }
+    }
+}
+
+my %fails;
+my %meas_fails;
+my %fail_logs = ();
+my %meas_logs = ();
+my @fail_keys = ("old_bumps0", "old_bumps1", "inv_bumps0", "inv_bumps1",
+                 "leakage", "delay", "slew", "skew",
+                 "new_bumps00", "new_bumps01", 
+                 "new_bumps10", "new_bumps11");
+my @meas_keys = ("OTHER", "CIRCUIT", "IFN", "NSB", "NSN", "NSFO", "NSFI",
+                 "NTS", 'FAIL@FAIL', 'SIGNOFF');
+
+foreach my $k (@fail_keys) {
+    open_log(\%fail_logs, $k, $suffix);
+    $fails{$k}={};
+}
+$fails{"Total"}={};
+foreach my $k (@meas_keys) {
+    open_log(\%meas_logs, $k, $suffix);
+    $meas_fails{$k}={};
+}
+$meas_fails{"Total"}={};
+
+foreach my $path (@paths) {
+    process_cell($path, 
+                 \%fails, \%meas_fails,
+                 \%fail_logs, \%meas_logs);
+}
+
+foreach my $k (@fail_keys) {
+    report_fails($k, $fails{$k},\%cell_levels);
+}
+report_fails("Total Fails", $fails{"Total"}, \%cell_levels);
+
+foreach my $k (@meas_keys) {
+    my $n = scalar (keys %{$meas_fails{$k}});
+    print "Run Error $k $n \n";
+}
+my $n = scalar (keys %{$meas_fails{"Total"}});
+print "Run Error Total: $n \n";
+
+foreach my $v (values %meas_logs) {
+    close $v;
+}
+
+foreach my $v (values %fail_logs) {
+    close $v;
+}

@@ -1,0 +1,27 @@
+#this is no longer used
+assura
+build-and-test
+build-system
+cast2cdl
+cdl2cast
+cdlrenamer
+cds_wd
+cdsp4
+channellib
+countprs
+csp2java
+dfII_split_subtypes
+gdsIIWrite
+jauto
+jflat
+jlvs
+lefdef
+lve-safe
+mk_instance
+nano
+p4-triggers
+rename
+ubersize-safe
+ui
+updatenetlist
+ve

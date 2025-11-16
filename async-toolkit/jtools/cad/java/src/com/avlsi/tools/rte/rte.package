@@ -1,0 +1,28 @@
+1 0
+# Copyright 2002 Fulcrum Microsystems.  All rights reserved.
+# $Id$
+# $DateTime$
+# $Author$
+
+java com.avlsi.tools.rte.RegressionTestEngine
+include ../../csp/csp2java/runtime/cspruntime.package.inc ../../csp/csp2java/runtime
+include ../tsim/channellib.package ../tsim
+include ../../util/readline/readline.package.inc ../../util/readline
+$arch/bin/rte.sh		scripts/rte 				775 p 
+$arch/bin/server.sh             server.sh                       664
+$arch/bin/client.sh             client.sh                       664
+$arch/bin/jdsim-auto.sh         jdsim-auto.sh                   664
+$arch/bin/rteCellListGen        scripts/rteCellListGen  755 p
+$arch/bin/rteLauncher           scripts/rteLauncher     755 p
+$arch/bin/rteReporter           scripts/rteReporter     755 p
+$arch/bin/rteDbMerge            scripts/rteDbMerge      755 p
+$arch/bin/pltReporter           scripts/pltReporter     755 p
+lib/perl/rteLib.pm             scripts/rteLib.pm       755 p
+lib/perl/job_netbatch.pm             scripts/job_netbatch.pm       755 p
+lib/perl/util.pm             scripts/util.pm       755 p
+lib/perl/verif_util.pm             scripts/verif_util.pm       755 p
+share/html/examples.html	share/examples.html 664 p
+share/html/help-doc.html	share/help-doc.html 664 p
+share/html/stylesheet.css 	share/stylesheet.css 664 p
+share/html/test-info.html	share/test-info.html 664 p
+share/html/logo.png		share/logo.png 664 p

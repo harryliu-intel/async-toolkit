@@ -1,0 +1,695 @@
+#!/usr/intel/bin/perl
+
+use strict;
+use warnings;
+
+BEGIN {
+    # Path + script name
+    my $scriptPath = $0;
+    # Extract script name
+    my @tmp = split('/', $0);
+    my $exe = $tmp[(@tmp)-1];
+    # Remove script name from end of path
+    $scriptPath =~ s/$exe$//;
+    if(! ($scriptPath =~ /^\//)) {
+        # Relative path, so convert to full path
+        my $pwd = `pwd`;
+        chomp $pwd;
+        $scriptPath = $pwd . "/$scriptPath/../lib/perl";
+        chdir $scriptPath;
+        $scriptPath = `pwd`;
+        chomp $scriptPath;
+        chdir $pwd; 
+        push @INC, "$scriptPath";
+    }else
+    {
+        # Already full path
+        push @INC, "$scriptPath/../lib/perl";
+    }
+}
+
+use rteLib;
+use Getopt::Long qw(:config no_ignore_case);
+use Data::Dumper;
+use Pod::Usage;
+use XML::Simple;
+
+my $cmdLine = cmdLineOpts(@ARGV);
+
+my $db = rteLib::openCellDatabase($cmdLine);
+
+my $cells = rteLib::readSuiteFile($cmdLine);
+
+foreach my $cell (@{$cells})
+{
+    printf("%s\n", $cell->{name});
+}
+
+reportResults($cmdLine, $db, $cells);
+
+exit(0);
+
+#---------------------------------------------------------
+sub cmdLineOpts
+{
+    my %cmdLine = ( cellDb => "pltResults.xml",
+                    suiteFile => "",
+                    masterCellDb => "",
+                    castPath => ".",
+                    output => "pltResult.html",
+                    signoffTau => -1
+                    );
+
+    my @values;
+    GetOptions('h|help' => sub { pod2usage( { -verbose => 2, -noperldoc=>1}) },
+               'db|cellDb=s' => \$cmdLine{cellDb},
+               'masterCellDb=s' => \$cmdLine{masterCellDb},
+               'o|output=s' => \$cmdLine{output},
+               'cast-path=s' => \$cmdLine{castPath},
+               's|suite=s' => \$cmdLine{suiteFile},
+               'signoffTau=f' => \$cmdLine{signoffTau}
+              );
+
+    $cmdLine{cellList} = rteLib::expandOption($cmdLine{cellList});
+
+    if($cmdLine{suiteFile} eq "")
+    {
+        printf("ERROR a suite file must be specified via the -s of --suite option\n");
+        pod2usage( { -exitval => 2,
+                     -verbose => 2,
+                     -noperldoc => 1});
+    }#elsif($cmdLine{signoffTau} == -1)
+   # {
+   #     printf("ERROR a signoff Tau must be specified via the -signoffTau option\n");
+   #     pod2usage( { -exitval => 2,
+   #                  -verbose => 2,
+   #                  -noperldoc => 1});
+#    }
+
+    return \%cmdLine;
+}
+
+sub reportResults
+{
+    my ($cmdLine, $db, $cellList) = @_;
+
+    printf("Building result html page...\n");
+    # First sort the cell list:
+    #my $cellList = [keys %{$cellListHash}];
+
+    my $fh;
+    open($fh, ">", $cmdLine->{output});
+
+    printFileHeader($fh);
+    printf $fh ("<BR><BR><H1>PLT Results</H1>\n");
+    printf $fh ("Signoff Tau: " . sprintf("%0.2f", $cmdLine->{signoffTau}) . "<BR><BR>\n");
+    printTableHeader($fh);
+    printTableColumnTitles($fh);
+    my $i = 0;
+    foreach my $cell (@{$cellList})
+    {
+        if(defined $db->{rteLib::dbEscapeCellName($cell->{name})})
+        {
+            my $cellName = $db->{rteLib::dbEscapeCellName($cell->{name})}->{cellName};
+            my ($result, $totalLineCount) = getResults($cellName, $db);
+
+            #print Dumper($result);
+            #printf("line count: $totalLineCount\n");
+            my $firstEnv = 1;
+            foreach my $env (keys(%{$result->{env}}))
+            {
+                my $firstNode = 1;
+
+                my $numNodes = scalar(keys(%{$result->{env}->{$env}->{nodes}}));
+                foreach my $node (keys(%{$result->{env}->{$env}->{nodes}}))
+                {
+                    print $fh
+                    "<TR>\n";
+
+                    if($firstEnv)
+                    {
+                        print $fh
+                        "<TD NOWRAP rowspan=\"$totalLineCount\">" . 
+                                    $db->{rteLib::dbEscapeCellName($cellName)}->{cellName} . "</TD>\n" .
+                        "<TD NOWRAP rowspan=\"$totalLineCount\" BGCOLOR=\"" . 
+                                $result->{passFailColor} . "\">" .
+                                "<CENTER>" . $result->{passFail} . "</CENTER></TD>\n";
+                    }
+
+                    if($firstNode)
+                    {
+                        print $fh 
+                        "<TD NOWRAP rowspan=\"$numNodes\"><CENTER>$env</CENTER></TD>\n".
+                        "<TD NOWRAP rowspan=\"$numNodes\" BGCOLOR=\"" .
+                            $result->{env}->{$env}->{delayWarningsColor} . "\"><CENTER>"; 
+
+                        if(!($result->{env}->{$env}->{delayWarnings} eq "No"))
+                        {
+                            print $fh
+                            "<A HREF=\"http:\/" . $result->{rawRteFile} . 
+                            "\">" . $result->{env}->{$env}->{delayWarnings} . "</A>";
+                        }else
+                        {
+                            print $fh $result->{env}->{$env}->{delayWarnings};
+                            
+                        }
+
+                        print $fh
+                        "</CENTER></TD>\n".
+                        "<TD NOWRAP rowspan=\"$numNodes\"><CENTER>" . $result->{env}->{$env}->{digitalDelay} . "</CENTER></TD>\n";
+                    }
+
+                    print $fh 
+                    "<TD NOWRAP><CENTER>" . $result->{env}->{$env}->{nodes}->{$node}->{name} . "</CENTER></TD>\n";
+                    print $fh 
+                    "<TD NOWRAP><CENTER>" . 
+                            sprintf("%0.2f", $result->{env}->{$env}->{nodes}->{$node}->{targetPeriod}) . "</CENTER></TD>\n";
+                    print $fh 
+                    "<TD NOWRAP BGCOLOR=\"" . $result->{env}->{$env}->{nodes}->{$node}->{measuredPeriodColor}  . "\"><CENTER>" . 
+                            sprintf("%0.2f", $result->{env}->{$env}->{nodes}->{$node}->{measuredPeriod}) . "</CENTER></TD>\n";
+                    print $fh 
+                    "<TD NOWRAP><CENTER>" .  $result->{env}->{$env}->{nodes}->{$node}->{freq} . "</CENTER></TD>\n" ;
+                    print $fh 
+                    "<TD NOWRAP BGCOLOR=\"" . 
+                        $result->{env}->{$env}->{nodes}->{$node}->{effectiveTauColor} . "\"><CENTER>" .  
+                        $result->{env}->{$env}->{nodes}->{$node}->{effectiveTau} . "</CENTER></TD>\n";
+
+                    my $crit = "NA";
+                    if($result->{env}->{$env}->{nodes}->{$node}->{loopCount} != 0)
+                    {
+                        $crit = sprintf("%0.2f", $result->{env}->{$env}->{nodes}->{$node}->{criticalPeriod}/100.0/
+                              $result->{env}->{$env}->{nodes}->{$node}->{loopCount});
+                    }
+
+                    if(!($result->{env}->{$env}->{nodes}->{$node}->{criticalFile} eq "-1"))
+                    {
+                        print $fh
+                        "<TD NOWRAP><CENTER><A HREF=\"http:\/" .
+                              $result->{env}->{$env}->{nodes}->{$node}->{criticalFile} ."\">" .
+                              $crit .
+                            "</A></CENTER></TD>\n";
+                    }else
+                    {
+                        print $fh
+                        "<TD NOWRAP><CENTER>" .  $crit .  "</CENTER></TD>\n";
+                    }
+
+                    if($firstEnv)
+                    {
+                        print $fh
+                        "<TD NOWRAP rowspan=\"$totalLineCount\"><A HREF=\"http:\/" .
+                              $result->{outputFile} ."\">output</A></TD>\n" .
+                        "<TD NOWRAP rowspan=\"$totalLineCount\"><CENTER>" .
+                                $result->{runDate} . "</CENTER></TD>\n";
+                    }
+
+                    print $fh "</TR>\n";
+    
+                    $firstEnv = 0; 
+                    $firstNode = 0; 
+                    $i++;
+                }
+            }
+        }else
+        {
+            printf("WARNING: unable to find cell %s in database\n", $cell->{name});
+            print $fh
+            "<TR>\n" .
+            "<TD NOWRAP BGCOLOR=\"red\">" . $cell->{name} . "</TD>\n" .
+            "<TD NOWRAP BGCOLOR=\"red\"><CENTER>NA</CENTER></TD>\n";
+            for(my $j = 0 ; $j < 9; $j++)
+            {
+                print $fh "<TD BGCOLOR=\"red\">-1</TD>\n";
+            }
+            print $fh "</TR>\n";
+        }
+
+        if($i == 31)
+        {
+            printTableColumnTitles($fh);
+            $i = 0;
+        }
+    }
+    print $fh "</TABLE>";
+
+    printFileTail($fh);
+
+    close($fh);
+}
+
+sub printFileHeader
+{
+    my ($fh) = @_;
+
+    my $date = localtime;
+    print $fh 
+"<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0 Transitional//EN\"\"http://www.w3.org/TR/REC-html40/loose.dtd>
+<!--NewPage-->
+<HTML>
+<HEAD>
+<TITLE>
+Simulations Statistics $date
+</TITLE>
+<LINK REL =\"stylesheet\" TYPE=\"text/css\" HREF=\"stylesheet.css\" TITLE=\"Style\">
+</HEAD>
+<BODY BGCOLOR=\"#ffffff\">
+";
+}
+
+sub printTableHeader
+{
+    my ($fh) = @_;
+
+    print $fh 
+"<TABLE BORDER=\"1\" WIDTH=\"100%\" CELLPADDING=\"0\" CELLSPACING=\"1\">
+";
+}
+
+sub printTableColumnTitles
+{
+    my ($fh) = @_;
+    print $fh
+"<TR>
+<TD BGCOLOR=\"lightblue\"><B><CENTER>Cell</CENTER></B></TD>
+<TD BGCOLOR=\"lightblue\"><B><CENTER>Pass/Fail</CENTER></B</TD>
+<TD BGCOLOR=\"lightblue\"><B><CENTER>Env</CENTER></B></TD>
+<TD BGCOLOR=\"lightblue\"><B><CENTER>Delay Warnings</CENTER></B></TD>
+<TD BGCOLOR=\"lightblue\"><B><CENTER>Digital Delay</CENTER></B</TD>
+<TD BGCOLOR=\"lightblue\"><B><CENTER>Measured Node</CENTER></B</TD>
+<TD BGCOLOR=\"lightblue\"><B><CENTER>Signoff Target Period</CENTER></B</TD>
+<TD BGCOLOR=\"lightblue\"><B><CENTER>Measured Period</CENTER></B</TD>
+<TD BGCOLOR=\"lightblue\"><B><CENTER>Measured Frequency</CENTER></B</TD>
+<TD BGCOLOR=\"lightblue\"><B><CENTER>Effective Tau</CENTER></B</TD>
+<TD BGCOLOR=\"lightblue\"><B><CENTER>Critical Cycle</CENTER></B></TD>
+<TD BGCOLOR=\"lightblue\"><B><CENTER>Output</CENTER></B></TD>
+<TD BGCOLOR=\"lightblue\"><B><CENTER>Run Date/Time</CENTER></B</TD>
+</TR>
+";
+}
+
+sub getResults
+{
+    my ($cell, $db) = @_;
+    
+    my %result;
+    my $totalLineCount = 0;
+
+    #print Dumper($db->{rteLib::dbEscapeCellName($cell)});
+
+    $result{outputFile} = $db->{rteLib::dbEscapeCellName($cell)}->{outputDir} . "/" .
+                rteLib::replaceParenthesisWith_($db->{rteLib::dbEscapeCellName($cell)}->{cellName}) . "/modules/" .
+                join('/', split(/\./, $cell)) . ".html";
+
+    $result{outputFile} =~ s/\/mnt\/fulcrum\//\/internal\/eng\//;
+
+    $result{runDate} = $db->{rteLib::dbEscapeCellName($cell)}->{runStartTime};
+
+    $result{rawRteFile} = $db->{rteLib::dbEscapeCellName($cell)}->{outputDir} . "/" .
+                rteLib::replaceParenthesisWith_($db->{rteLib::dbEscapeCellName($cell)}->{cellName}) . "/" .
+                rteLib::replaceParenthesisWith_($db->{rteLib::dbEscapeCellName($cell)}->{cellName}) . ".output";
+    $result{rawRteFile} =~ s/\/mnt\/fulcrum\//\/internal\/eng\//;
+
+    $result{outputFile} =~ s/\/mnt\/fulcrum\//\/internal\/eng\//;
+    if(defined($db->{rteLib::dbEscapeCellName($cell)}->{outOfMemory}) &&
+        $db->{rteLib::dbEscapeCellName($cell)}->{outOfMemory} == 1)
+    {
+        $result{passFail} = "FAIL: Out of Memory";
+        $result{passFailColor} = "red";
+    }elsif($db->{rteLib::dbEscapeCellName($cell)}->{exceptionOnInstantiation} == 1)
+    {
+        $result{passFail} = "FAIL: Exception on Instantiation";
+        $result{passFailColor} = "red";
+    }elsif(defined($db->{rteLib::dbEscapeCellName($cell)}->{timeout}) &&
+        (!$db->{rteLib::dbEscapeCellName($cell)}->{timeout} eq "") &&
+        $db->{rteLib::dbEscapeCellName($cell)}->{timeout} == 1)
+    {
+        $result{passFail} = "FAIL: Job Timeout";
+        $result{passFailColor} = "red";
+    }elsif( (defined($db->{rteLib::dbEscapeCellName($cell)}->{failedToComplete})) &&
+        ($db->{rteLib::dbEscapeCellName($cell)}->{failedToComplete} == 1) )
+    {
+        $result{passFail} = "FAIL: Failed To Complete";
+        $result{passFailColor} = "red";
+    }elsif($db->{rteLib::dbEscapeCellName($cell)}->{passed} eq "FAILED")
+    {
+        $result{passFail} = "FAIL: RTE Failed";
+        $result{passFailColor} = "red";
+    }elsif($db->{rteLib::dbEscapeCellName($cell)}->{missingTests} == 1)
+    {
+        $result{passFail} = "FAIL: Missing Tests";
+        $result{passFailColor} = "red";
+    }elsif( ($db->{rteLib::dbEscapeCellName($cell)}->{missingCycleNode} == 1) &&
+        ($db->{rteLib::dbEscapeCellName($cell)}->{missingNTPC} == 1) )
+    {
+        $result{passFail} = "FAIL: Missing NTPC/CycleNode";
+        $result{passFailColor} = "red";
+    }elsif( ($db->{rteLib::dbEscapeCellName($cell)}->{failedNTPCTarget} == 1) &&
+        ($db->{rteLib::dbEscapeCellName($cell)}->{failedNTPCTarget} == 1) )
+    {
+        $result{passFail} = "FAIL: Failed NTPC Spec";
+        $result{passFailColor} = "red";
+    }else
+    {
+        $result{passFail} = "Pass";
+        $result{passFailColor} = "limegreen";
+    }
+
+    #printf("cell $cell numplt: %s\n", scalar(keys(%{$db->{rteLib::dbEscapeCellName($cell)}->{plt}})));
+
+    if(scalar(keys(%{$db->{rteLib::dbEscapeCellName($cell)}->{plt}})) == 0)
+    {
+        # Cell has no plt data, so fill in the data with -1
+        my %envs;
+        my %envData;
+        $envData{delayWarnings} = "-1";
+        $envData{delayWarningsColor} = "white";
+        $envData{digitalDelay} = -1;
+        my %nodeData;
+        $nodeData{name} = -1;
+        $nodeData{targetPeriod} = -1;
+        $nodeData{measuredPeriod} = -1;
+        $nodeData{measuredPeriodColor} = "white";
+        $nodeData{freq} = "NA";
+        $nodeData{loopCount} = 0;
+        $nodeData{effectiveTau} = "NA";
+        $nodeData{effectiveTauColor} = "white";
+        $nodeData{criticalLength} = -1;
+        $nodeData{criticalPeriod} = -1;
+        $nodeData{criticalFile} = -1;
+        my %nodes;
+        $nodes{-1} = \%nodeData;
+        $envData{nodes}=\%nodes;
+        $envs{-1} = \%envData;
+        $result{env} = \%envs;
+
+        $totalLineCount++;
+        #printf("2 cell: $cell totalLineCount: $totalLineCount\n");
+    }else
+    {
+        my %envs;
+        #printf("$cell: %s\n", join(",", keys(%{$db->{rteLib::dbEscapeCellName($cell)}->{plt}})));
+        foreach my $envName (keys(%{$db->{rteLib::dbEscapeCellName($cell)}->{plt}}))
+        {
+            my %envData;
+
+            my $pltVersion = 0;
+            if(defined($db->{rteLib::dbEscapeCellName($cell)}->{pltVersion}))
+            {
+                $pltVersion = $db->{rteLib::dbEscapeCellName($cell)}->{pltVersion};
+            }
+
+            if($db->{rteLib::dbEscapeCellName($cell)}->{plt}->{$envName}->{delayWarnings} eq "")
+            {
+                $envData{delayWarnings} = "No";
+                $envData{delayWarningsColor} = "white";
+            }else
+            {
+                $envData{delayWarnings} = $db->{rteLib::dbEscapeCellName($cell)}->{plt}->{$envName}->{delayWarnings};
+                $envData{delayWarningsColor} = "yellow";
+            }
+
+            $envData{digitalDelay} = $db->{rteLib::dbEscapeCellName($cell)}->{plt}->{$envName}->{digitalDelay};
+
+            my $criticalFile;
+            if($pltVersion == 0)
+            {
+                if(defined($db->{rteLib::dbEscapeCellName($cell)}->{plt}->{$envName}->{criticalFile}))
+                {
+                    $criticalFile = $db->{rteLib::dbEscapeCellName($cell)}->{plt}->{$envName}->{criticalFile};
+                }else
+                {
+                    $criticalFile = $db->{rteLib::dbEscapeCellName($cell)}->{outputDir} . "/" .
+                        rteLib::replaceParenthesisWith_($db->{rteLib::dbEscapeCellName($cell)}->{cellName}) . "/modules/" .
+                        join('/', split(/\./, $cell)) . ":$envName.critical_cycle";
+
+                }
+            }
+
+            #printf("cell $cell env $envName numntpc: %s\n", scalar(keys(%{$db->{rteLib::dbEscapeCellName($cell)}->{plt}->{$envName}->{ntpc_spec}})));
+            if(scalar(keys(%{$db->{rteLib::dbEscapeCellName($cell)}->{plt}->{$envName}->{ntpc_spec}})) == 0)
+            {
+                #ENV doesn't have any nodes
+                my %nodes;
+                my %nodeData;
+                $nodeData{name} = -1;
+                $nodeData{targetPeriod} = -1;
+                $nodeData{measuredPeriod} = -1;
+                $nodeData{measuredPeriodColor} = "white";
+                $nodeData{effectiveTau} = "NA";
+                $nodeData{effectiveTauColor} = "white";
+                $nodeData{freq} = "NA";
+                $nodeData{criticalLength} = -1;
+                $nodeData{criticalPeriod} = -1;
+                $nodeData{criticalFile} = -1;
+                $nodeData{loopCount} = 0;
+                $nodes{-1} = \%nodeData;
+                $envData{nodes} = \%nodes;
+                $totalLineCount++;
+                #printf("cell: $cell env: $envName no ntpcNodes in env totalLineCount: $totalLineCount\n");
+            }else
+            {
+                my %nodes;
+                foreach my $node (keys(%{$db->{rteLib::dbEscapeCellName($cell)}->{plt}->{$envName}->{ntpc_spec}}))
+                {
+                    my %nodeData;
+
+                    $nodeData{name} = $db->{rteLib::dbEscapeCellName($cell)}->{plt}->{$envName}->{ntpc_spec}->{$node}->{name};
+
+                    if($pltVersion >= 1)
+                    {
+                        if(defined($db->{rteLib::dbEscapeCellName($cell)}->{plt}->{$envName}->{ntpc_spec}->{$node}->{criticalFile}))
+                        {
+                            $criticalFile = $db->{rteLib::dbEscapeCellName($cell)}->{plt}->{$envName}->{ntpc_spec}->{$node}->{criticalFile};
+                        }
+                    }
+
+                    $nodeData{criticalFile} = $criticalFile;
+                    if((defined $nodeData{criticalFile}) &&
+                        (-e $nodeData{criticalFile}))
+                    {
+                        my $cmd = sprintf("cat %s | wc -l",
+                                rteLib::escapeParenthesis($nodeData{criticalFile}));
+                        $nodeData{criticalLength} = `$cmd`;
+                        $nodeData{criticalLength}--;
+
+                        $cmd = sprintf("cat %s | head -1 | cut -f2 -d\'@\' | cut -f1 -d\' \'", 
+                                rteLib::escapeParenthesis($nodeData{criticalFile}));
+                        $nodeData{criticalPeriod} = `$cmd`;
+                        $cmd = sprintf("cat %s | tail -1 | cut -f2 -d\'@\' | cut -f1 -d\' \'", 
+                                rteLib::escapeParenthesis($nodeData{criticalFile}));
+                        $nodeData{criticalPeriod} -= `$cmd`;
+
+
+                        $cmd = sprintf("cat %s | tail -1",
+                                rteLib::escapeParenthesis($nodeData{criticalFile}));
+                        my $tmpLine = `$cmd`;
+                        chomp $tmpLine;
+                        my $loopNode;
+                        # new format:
+                        #  @43900615 #982 +  9.90 M  1500 __rte_.trap_header_wrap_D_trap_header.data.sip96[2].c[1].e:1
+                        if ($tmpLine =~ /^\s+\@\d+\s+#\d+\s+[+-]\s*((\d+\.\d+)|(NaN))\s+.\s+\S+\s+([^:]+:[01])/) {
+                            $loopNode = $4;
+                        }else
+                        {
+                            # assume old format if can't parse new format
+                            $tmpLine =~ /^\s+\@\d+\s+#\d+\s+[+-]\s*((\d+\.\d+)|(NaN))\s+.\s+([^:]+:[01])/;
+                            $loopNode = $4;
+                        }
+                        $cmd = sprintf("cat %s | grep \'%s\' | wc -l",
+                                rteLib::escapeParenthesis($nodeData{criticalFile}),
+                                rteLib::escapeParenthesis($loopNode));
+                        $nodeData{loopCount} = `$cmd`;
+                        $nodeData{loopCount}--;
+
+                        $nodeData{criticalFile} =~ s/\/mnt\/fulcrum\//\/internal\/eng\//;
+
+                        # Since we have per node critical data, invalidate the env level data
+                        $envData{criticalFile} = -1;
+                    }else
+                    {
+                        $nodeData{criticalLength} = -1;
+                        $nodeData{criticalPeriod} = -1;
+                        $nodeData{criticalFile} = -1;
+                        $nodeData{loopCount} = 0;
+                    }
+
+
+                    if(defined($db->{rteLib::dbEscapeCellName($cell)}->{plt}->{$envName}->{ntpc_spec}->{$node}->{cycleTarget}))
+                    {
+                        $nodeData{targetPeriod} = 
+                            $db->{rteLib::dbEscapeCellName($cell)}->{plt}->{$envName}->{ntpc_spec}->{$node}->{cycleTarget} * $cmdLine->{signoffTau} / $envData{digitalDelay};
+                    }else
+                    {   
+                        $nodeData{targetPeriod} = -1;
+                    }
+
+
+                    if(defined($db->{rteLib::dbEscapeCellName($cell)}->{plt}->{$envName}->{ntpc_spec}->{$node}->{cycleMeasured}))
+                    {
+                        $nodeData{measuredPeriod} = 
+                            $db->{rteLib::dbEscapeCellName($cell)}->{plt}->{$envName}->{ntpc_spec}->{$node}->{cycleMeasured};
+
+                        $nodeData{freq} = sprintf("%0.2f GHz", 1000.0 / 
+                                $db->{rteLib::dbEscapeCellName($cell)}->{plt}->{$envName}->{ntpc_spec}->{$node}->{cycleMeasured});
+                    
+                        if($nodeData{measuredPeriod} <= $nodeData{targetPeriod})
+                        {
+                            $nodeData{measuredPeriodColor} = "limegreen";
+                        }elsif($nodeData{measuredPeriod} <= $nodeData{targetPeriod}*1.05)
+                        {
+                            $nodeData{measuredPeriodColor} = "yellow";
+                        }else
+                        {
+                            $nodeData{measuredPeriodColor} = "red";
+                        }
+                    }else
+                    {
+                        $nodeData{measuredPeriod} = -1;
+                        $nodeData{freq} = "NA";
+                        $nodeData{measuredPeriodColor} = "white";
+                    }
+
+                    if(defined($db->{rteLib::dbEscapeCellName($cell)}->{plt}->{$envName}->{ntpc_spec}->{$node}->{effectiveTau}))
+                    {
+                        $nodeData{effectiveTau} = sprintf("%0.2f", $db->{rteLib::dbEscapeCellName($cell)}->{plt}->{$envName}->{ntpc_spec}->{$node}->{effectiveTau});
+
+                        if($nodeData{effectiveTau} <= $cmdLine->{signoffTau})
+                        {
+                            $nodeData{effectiveTauColor} = "limegreen";
+                        }elsif($nodeData{effectiveTau} <= 1.05*$cmdLine->{signoffTau})
+                        {
+                            $nodeData{effectiveTauColor} = "yellow";
+                        }else
+                        {
+                            $nodeData{effectiveTauColor} = "red";
+                        }
+                    }else
+                    {
+                        $nodeData{effectiveTau} = "NA";
+                        $nodeData{effectiveTauColor} = "white";
+                    }
+
+                    $nodes{$node} = \%nodeData;
+                    $totalLineCount++;
+                    #printf("cell $cell env $envName node $node lineCount: $totalLineCount\n");
+                }
+                $envData{nodes} = \%nodes;
+            }
+            #}else
+            #{
+            #    $totalLineCount++;
+                #printf("cell $cell env $envName has no critical file lineCount: $totalLineCount\n");
+            $envs{$envName} = \%envData;
+            #}
+        }
+        $result{env} = \%envs;
+    }
+    #print Dumper(\%result);
+    return (\%result, $totalLineCount);
+}
+
+sub printTableEntryLine
+{
+    my ($value, $color) = @_;
+
+    return "<TD NOWRAP BGCOLOR=$color><CENTER>$value</CENTER></TD>\n";
+}
+
+sub printTableTail
+{
+    my ($fh) = @_;
+}
+
+sub printFileTail
+{
+    my ($fh) = @_;
+    print $fh
+"<br/>Delay Warnings:
+<ul>
+    <li>Digital: rte reported using digital delays for some nodes</li>
+    <li>Estimated: rte reported using estimated delays for some nodes</li>
+    <li>Critial: Critical path contains non-measured delays</li>
+</ul>
+<br/>Critical cycle = Critical period from critical file divided by the number of loops in file
+<br/>Signoff Target Period = Target Period from output file * signoff Tau / digital-delay
+";
+
+    print $fh
+"</BODY>
+</HTML>";
+}
+
+sub isRteIgnore
+{
+    my ($cell) = @_;
+
+    if( ($cell->{version} <= 4) &&
+        ($cell->{rteIgnore})    && 
+        ($cell->{coverage} == 0)
+      )
+    {
+            return 1;
+    }elsif( ($cell->{version} >= 5) &&
+            ($cell->{rteIgnore}) &&
+            ($cell->{passed} eq "NOTTESTED"))
+    {
+        return 1;
+    }else
+    {
+        return 0;
+    }
+}
+
+__END__
+
+=head1 NAME
+
+pltReporter - Give a cell and a database, create PLT report
+
+=head1 SYNOPSYS
+
+pltReporter [OPTIONS] B<-s>=string
+
+=head1 OPTIONS
+
+=over 4
+
+=item B<-s>=string B<--suite>=string
+
+A text file containing a list of cells to run. Empty lines are ignored. 
+
+=item B<-masterCellDb>=file
+
+This allows a master cell database to be specified. This database can provide 
+a base set of run results. This database is read before the local cell database
+(specified by cellDb). Any results read from the local cell database will 
+override results found in the master database. This option would be used if, 
+for example, you wanted to rerun several cells out of a run someone else ran. 
+You would specify their cell database as the master database, and a local 
+file for your own database.
+
+=item B<-db>=string B<--cellDb>=string
+
+Points to the xml file that contains the RTE run results. If not specified,
+the default file: ./rteResults.xml will be used
+
+=item B<-o>=string B<--output>=string
+
+The html file name the report will be written to
+
+=item B<--cast-path>=string
+
+Path to cast files, : separated
+
+=item B<--signoffTau>=float
+
+Used to calculate Signoff Target Period
+
+=back
+
+=head1 AUTHOR
+
+Copyright (C) 2011 Fulcrum Microsystem, Inc. All rights reserved
+
+=cut
+

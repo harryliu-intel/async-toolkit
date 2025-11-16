@@ -1,0 +1,95 @@
+<pre>
+
+<div class="moz-text-flowed" style="font-family: -moz-fixed">Jesse Rosenstock wrote:
+
+>I'll just put my comments here rather than in the document.
+>
+>If we support three platforms, we should do the nightly build on all
+>three platforms to make sure one doesn't get broken.  That would also
+>mean having Bevan buy and maintain a Mac.  As you mention, we will also
+>want build support to build and install on all 3 platforms, either through
+>qsub or cross compilers.
+>
+
+Indeed, supporting multiple platforms will probably be the trickiest 
+part of putting together this new system.  Rather than requiring that 
+Bevan buy and maintain a Mac, we could restrict support for 
+Darwin-powerpc to cover only packages that can be cross-compiled from 
+Linux.  We could also omit the regression testing of the Mac builds 
+(which obviously would be the initial state, since we currently have no 
+regression tests for any platform.)
+
+Supporting Darwin-powerpc is just a convenience for our workaholic 
+engineers who wish to work out of the office on their Mac laptops.  It 
+is in the company's interest to support this ever-growing set of 
+individuals (which includes Andrew, Patrick, myself, and perhaps you, 
+too, Jesse.)  I'll add the support myself if I have to.
+
+>The use of beta, or even alpha for a nightly build seems whacked.  
+>Why not call it nightly?  Alpha or beta imply some level of stabilization
+>and feature freeze in the code base.
+>
+
+I agree, "beta" is the wrong term.  "nightly" does seem to be a better 
+choice.
+
+>The structure of /usr/local/fulcrum/ and indeed the entire document seems
+>to assume that we stick with our current paradigm of having one line of
+>development.  
+>
+
+That's true, the document does assume that all releases are linear 
+snapshots of a single development branch.  After thinking it over, your 
+suggestion ---
+
+>Instead, what I suggest is a
+>branch for each project (as long as we have a small number of projects,
+>if we have many, then multiple projects will use tools from the same
+>branch).  For example, now, we would have a branch, say 1.1, for the
+>tools that will be used for Nevada.  This will have the features that they
+>need and any bug fixes to those features, but not other random features
+>that are being developed.  When we have a tool set in the main line
+>that it looks like we can use for Tahoe, we can create the 1.5 branch.
+>Then development can continue in the main line without breaking the
+>users on a weekly basis.
+>
+
+would seem to be a better system.  It allows significant tool 
+development to overlap with hardware development projects while avoiding 
+user-visible tool instability.  It definitely makes sense.
+
+I will update the document to support multiple development branches.  
+Briefly, this is how I suggest the directory tree change:
+
+/usr/local/fulcrum/tools/nightly/<tool>-x.y/<tool>-x.y.YYYY-MM-DD.changenum.tar.gz
+/usr/local/fulcrum/tools/released/<tool>-x.y/<tool>-x.y.YYYY-MM-DD.changenum.tar.gz
+
+
+The "x.y" component would correspond to the Perforce branch name.  To 
+avoid endless nightly builds of old, stable branches, the nightly build 
+script could check if any files had changed since the prior night.
+
+Leaving the "YYYY-MM-DD.changenum" in the package names still seems 
+highly desirable to me since an incrementing number (e.g. the "27" in 
+"ubersize-1.1.27") would mean absolutely nothing to users, whereas 
+having the date of build/release and the change number associated with 
+that build is actually useful information.  It's a long filename, sure, 
+but no one ever needs to actually type it out (thanks to the wonderful 
+fulcrum wrapper script.)
+
+>An alternative to the above, which we sometimes do now is to do any
+>significant development in a side branch, in order to keep the main
+>branch stable, but this creates a proliferation of side branches,
+>and requires more reverse integration, which is annoying.
+>
+
+The problem with this model is that it can easily force such development 
+side branches to wait a very long time before being reverse integrated.  
+It creates an incentive for developers to reverse integrate their new 
+features frequently, leading to instability in the main branch.
+
+
+
+
+</div>
+</pre>

@@ -1,0 +1,18 @@
+<%import>
+java.util.Collection;
+com.fulcrummicro.hw.verification.chip.mgmt.registers.*;
+</%import>\
+<%args>
+Collection<Register> regs;
+</%args>\
+<%for Register reg : regs %>\
+NAME=<% reg.getName() %>,\
+ADDR=<% reg.getAddressOffset() %>,\
+MSB=<% reg.getNumberFieldBits() %>,\
+RW_MASK=0x<% reg.getTypeMask(RegisterType.RW).toHexString() %>,\
+CW_MASK=0x<% reg.getTypeMask(RegisterType.CW).toHexString() %>,\
+CW1_MASK=0x<% reg.getTypeMask(RegisterType.CW1).toHexString() %>,\
+CR_MASK=0x<% reg.getTypeMask(RegisterType.CR).toHexString() %>,\
+DEFAULT=0x<% reg.getDefault(0).toString(16) %>,\
+ALIAS=<% reg.getAlias() == null ? "FALSE" : reg.getAlias() %>
+</%for>\

@@ -1,0 +1,12 @@
+<test>
+<config>
+
+<opt name="hw.models.partial_exclude"
+     type="String"
+     default="(^verilog\.|\.v[ms]?$|(??{ quotemeta '$(xml.filename)'
+})$|registerInfo\.dtd$|(??{ quotemeta '$(xml_constant.filename)' }))">
+</opt>
+<opt name="xml.filename" type="String" default="registerInfo.xml"/>
+<opt name="xml_constant.filename" type="String" default="constant.xml"/>
+</config>
+</test>

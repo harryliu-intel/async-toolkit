@@ -1,0 +1,20 @@
+#!/bin/csh
+
+# install tools to /home/group/microarch/cad/bin
+setenv INSTALL "install -m 775"
+setenv DIR /usr/local/cad/bin
+foreach i ( cdl2dot graph_netlist jauto.config tsmc13hs_lowk.config tsmc13hs_fsg.config ubersize mk_instance p2n cells2html spice_batch r4 )
+	echo $INSTALL $i $DIR
+	$INSTALL $i $DIR
+end
+
+# install tools to /usr/local/cad/bin
+setenv INSTALL "install -m 775"
+setenv DIR /usr/local/cad/bin
+foreach i ( rc_spice2aspice spice2spice trace_deriv spice spice_new \
+	time_domain_postprocess charge_sharing_postprocess measure minmaxv \
+        p4_html_diff html_diff tidier group_members fix_charge_sharing \
+		apply_fixes )
+	echo $INSTALL $i $DIR
+	$INSTALL $i $DIR
+end

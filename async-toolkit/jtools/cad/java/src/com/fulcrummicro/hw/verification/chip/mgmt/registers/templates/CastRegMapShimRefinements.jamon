@@ -1,0 +1,171 @@
+<%extends CastCommon>
+<%import>
+java.util.Collection;
+java.util.Iterator;
+com.fulcrummicro.util.misc.Utility;
+com.fulcrummicro.hw.verification.chip.mgmt.registers.*;
+</%import>\
+<%args>
+Collection<RegisterCrossbarPort> crossbarPorts;
+String chip;
+</%args>\
+module chip.<% chip %>.mgmt.crossbar.shim.impl;
+
+import chip.<% chip %>.mgmt.channel.XbusPort;
+import chip.<% chip %>.mgmt.channel.TargetInternalMgmtInterface;
+import chip.<% chip %>.mgmt.crossbar.shim.target.TARGET_SHIM_TOP;
+import deprecated.lib.serial.scan.ChanDft;
+
+<%for RegisterCrossbarPort xbPort : crossbarPorts %>\
+<%if !xbPort.hasBusStops() %>\
+\
+define <% xbPort.getName() %>_TARGET_SHIM (int N_D)(ChanDft  -LS, +RS;
+                                               XbusPort +X;
+                                               TargetInternalMgmtInterface(
+                                                 <% xbPort.getNumRegisters() %> /*=N_REG*/,
+                                                 <% xbPort.getMaxEntriesAtomic() %> /*=MAX_ENTRIES_A*/,
+                                                 <% xbPort.getMaxEntries(0) %> /*=MAX_ENTRIES_0*/,
+                                                 <% xbPort.getMaxEntries(1) %> /*=MAX_ENTRIES_1*/,
+                                                 <% xbPort.getMaxEntries(2) %> /*=MAX_ENTRIES_2*/,
+                                                 N_D) +M)
+  <: TARGET_SHIM_TOP(N_D,
+        <% xbPort.getNumRegisters() %> /*=N_REG*/,
+        false /*=SUPPORT_PER_MASTER_CACHE*/,
+        <% xbPort.getMaxEntriesAtomic() %> /*=MAX_ENTRIES_A*/,
+        <% xbPort.getMaxEntries(0) %> /*=MAX_ENTRIES_0*/,
+        <% xbPort.getMaxEntries(1) %> /*=MAX_ENTRIES_1*/,
+        <% xbPort.getMaxEntries(2) %> /*=MAX_ENTRIES_2*/,
+        { /* BASE[0..N_REG-1]: */
+<%java Iterator<RegisterBase> baseIt = xbPort.getRegisterBases().iterator(); %>\
+<%while baseIt.hasNext() %>\
+<%java RegisterBase base = baseIt.next();
+       Iterator<Register> regIt = base.getRegisters().iterator(); %>\
+<%while regIt.hasNext() %>\
+<%java Register reg = regIt.next(); %>\
+          <% String.format("0x%06x", reg.getAddressOffset()+base.getAbsoluteAddress()) %><%if regIt.hasNext() || baseIt.hasNext() %>,</%if> /* <% reg.getName() %> */
+</%while>\
+</%while>\
+        },
+        { /* BASE_MASK[0..N_REG-1]: */
+<%java baseIt = xbPort.getRegisterBases().iterator(); %>\
+<%while baseIt.hasNext() %>\
+<%java RegisterBase base = baseIt.next();
+       Iterator<Register> regIt = base.getRegisters().iterator(); %>\
+<%while regIt.hasNext() %>\
+<%java Register reg = regIt.next(); %>\
+          <% String.format("0x%06x", reg.getAddressMatchMask() & ((1<<22)-1)) %><%if regIt.hasNext() || baseIt.hasNext() %>,</%if>
+</%while>\
+</%while>\
+        },
+        { /* STRIDE_0: */
+<%java baseIt = xbPort.getRegisterBases().iterator(); %>\
+<%while baseIt.hasNext() %>\
+<%java RegisterBase base = baseIt.next();
+       Iterator<Register> regIt = base.getRegisters().iterator(); %>\
+<%while regIt.hasNext() %>\
+<%java Register reg = regIt.next(); %>\
+          <% reg.getEntrySpace() %><%if regIt.hasNext() || baseIt.hasNext() %>,</%if>
+</%while>\
+</%while>\
+        },
+        { /* STRIDE_1: */
+<%java baseIt = xbPort.getRegisterBases().iterator(); %>\
+<%while baseIt.hasNext() %>\
+<%java RegisterBase base = baseIt.next();
+       Iterator<Register> regIt = base.getRegisters().iterator(); %>\
+<%while regIt.hasNext() %>\
+<%java Register reg = regIt.next(); %>\
+          <% reg.getEntrySpace1() %><%if regIt.hasNext() || baseIt.hasNext() %>,</%if>
+</%while>\
+</%while>\
+        },
+        { /* STRIDE_2: */
+<%java baseIt = xbPort.getRegisterBases().iterator(); %>\
+<%while baseIt.hasNext() %>\
+<%java RegisterBase base = baseIt.next();
+       Iterator<Register> regIt = base.getRegisters().iterator(); %>\
+<%while regIt.hasNext() %>\
+<%java Register reg = regIt.next(); %>\
+          <% reg.getEntrySpace2() %><%if regIt.hasNext() || baseIt.hasNext() %>,</%if>
+</%while>\
+</%while>\
+        },
+        { /* ENTRIES_A: */
+<%java baseIt = xbPort.getRegisterBases().iterator(); %>\
+<%while baseIt.hasNext() %>\
+<%java RegisterBase base = baseIt.next();
+       Iterator<Register> regIt = base.getRegisters().iterator(); %>\
+<%while regIt.hasNext() %>\
+<%java Register reg = regIt.next(); %>\
+          <% (reg.getEntryWidth()+reg.getAtomicWidth()-1)/reg.getAtomicWidth() %><%if regIt.hasNext() || baseIt.hasNext() %>,</%if>
+</%while>\
+</%while>\
+        },
+        { /* ENTRIES_0: */
+<%java baseIt = xbPort.getRegisterBases().iterator(); %>\
+<%while baseIt.hasNext() %>\
+<%java RegisterBase base = baseIt.next();
+       Iterator<Register> regIt = base.getRegisters().iterator(); %>\
+<%while regIt.hasNext() %>\
+<%java Register reg = regIt.next(); %>\
+          <% reg.getNumEntries() %><%if regIt.hasNext() || baseIt.hasNext() %>,</%if>
+</%while>\
+</%while>\
+        },
+        { /* ENTRIES_1: */
+<%java baseIt = xbPort.getRegisterBases().iterator(); %>\
+<%while baseIt.hasNext() %>\
+<%java RegisterBase base = baseIt.next();
+       Iterator<Register> regIt = base.getRegisters().iterator(); %>\
+<%while regIt.hasNext() %>\
+<%java Register reg = regIt.next(); %>\
+          <% reg.getNumEntries1() %><%if regIt.hasNext() || baseIt.hasNext() %>,</%if>
+</%while>\
+</%while>\
+        },
+        { /* ENTRIES_2: */
+<%java baseIt = xbPort.getRegisterBases().iterator(); %>\
+<%while baseIt.hasNext() %>\
+<%java RegisterBase base = baseIt.next();
+       Iterator<Register> regIt = base.getRegisters().iterator(); %>\
+<%while regIt.hasNext() %>\
+<%java Register reg = regIt.next(); %>\
+          <% reg.getNumEntries2() %><%if regIt.hasNext() || baseIt.hasNext() %>,</%if>
+</%while>\
+</%while>\
+        },
+        { /* WIDTH: */
+<%java baseIt = xbPort.getRegisterBases().iterator(); %>\
+<%while baseIt.hasNext() %>\
+<%java RegisterBase base = baseIt.next();
+       Iterator<Register> regIt = base.getRegisters().iterator(); %>\
+<%while regIt.hasNext() %>\
+<%java Register reg = regIt.next(); %>\
+          <% reg.getEntryWidth() %><%if regIt.hasNext() || baseIt.hasNext() %>,</%if>
+</%while>\
+</%while>\
+        },
+        { /* ATOMIC_WIDTH: */
+<%java baseIt = xbPort.getRegisterBases().iterator(); %>\
+<%while baseIt.hasNext() %>\
+<%java RegisterBase base = baseIt.next();
+       Iterator<Register> regIt = base.getRegisters().iterator(); %>\
+<%while regIt.hasNext() %>\
+<%java Register reg = regIt.next(); %>\
+          <% reg.getAtomicWidth() %><%if regIt.hasNext() || baseIt.hasNext() %>,</%if>
+</%while>\
+</%while>\
+        }) {}
+
+define <% xbPort.getName() %>_RegisterEnumeration ()() attributes {
+<%java int regNum = 0; %>\
+<%for RegisterBase base : xbPort.getRegisterBases()%>\
+<%for   Register reg : base.getRegisters() %>\
+    int <% reg.getName() %>_NUM = <% String.valueOf(regNum) %>;
+<%java  regNum++;%>\
+</%for>\
+</%for>\
+}
+</%if>
+</%for>
+

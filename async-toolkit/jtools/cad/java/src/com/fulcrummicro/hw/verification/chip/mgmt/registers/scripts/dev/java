@@ -1,0 +1,14 @@
+#!/usr/intel/bin/zsh
+dir=$(dirname $(realpath $0))
+opts=()
+cp=
+for arg; do
+	if [[ -n "$cp" ]]; then
+		arg="$dir/classes:$arg"
+		cp=
+	elif [[ $arg == "-cp" ]]; then
+		cp=1
+	fi
+	opts=(${opts[@]} $arg)
+done
+exec /usr/intel/bin/java "${(@)opts}"

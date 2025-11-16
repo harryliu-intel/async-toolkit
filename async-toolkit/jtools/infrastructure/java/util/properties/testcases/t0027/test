@@ -1,0 +1,11 @@
+<test>
+<!-- check loop range override on the command line of a named config block -->
+<config uses="conf">
+
+</config>
+
+<config name="conf">
+port.[1-10].opt=false
+</config>
+
+</test>

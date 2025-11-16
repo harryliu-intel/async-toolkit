@@ -1,0 +1,21 @@
+<options>
+
+  <opt name="testbench.unit.epl.N" type="Integer" default="2">
+    The number of EPL cells to instantiate.
+  </opt>
+
+  <opt name="testbench.unit.epl.M"
+       type="Integer"
+       default="${2 * $(testbench.unit.epl.N)}">
+    The number of instantiated port channels.
+  </opt>
+
+  <opt name="testbench.unit.epl.[0-$(testbench.unit.epl.M)].type_b"
+       type="String"
+       default="xaui">
+  </opt>
+
+
+
+</options>
+

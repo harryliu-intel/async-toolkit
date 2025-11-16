@@ -1,0 +1,44 @@
+# Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+# SPDX-License-Identifier: Apache-2.0
+
+LIBERTY_PARSER_DIST := liberty_parse-2.5
+
+LIBERTY_PARSER_DIR := $(CURR_PROJECT_DIR)/$(LIBERTY_PARSER_DIST)
+
+CURR_NON_BUILD_DIRS := $(LIBERTY_PARSER_DIST) $(CURR_NON_BUILD_DIRS)
+
+CURR_RESULT_FILES := $(CURR_RESULT_FILES) 
+
+LIBERTY_PARSER_SOURCE := \
+	PI.c \
+	attr_lookup.c \
+	group_lookup.c \
+	liberty_front_lex.c \
+	liberty_parser.c \
+	libhash.c \
+	libstrtab.c \
+	mymalloc.c \
+	syntax_decls.c \
+	syntax_checks.c \
+	token.c
+
+$(CURR_TARGET_DIR)/liberty.i: $(CURR_PROJECT_DIR)/liberty.i
+	cp '$<' '$@'
+
+$(CURR_TARGET_DIR)/liberty_wrap.c $(CURR_TARGET_DIR)/liberty.java: $(CURR_TARGET_DIR)/liberty.i $(LIBERTY_PARSER_DIR)/si2dr_liberty.h
+	cd '$(@D)' && swig '-I$(LIBERTY_PARSER_DIR)' -java -package com.avlsi.file.liberty.parser '$<'
+
+$(CURR_TARGET_DIR)/liberty_wrap.o: $(CURR_TARGET_DIR)/liberty_wrap.c
+	$(GCC) -I$(LIBERTY_PARSER_DIR) -c '$<' -fPIC -o '$@'
+
+$(CURR_TARGET_DIR)/$(LIBERTY_PARSER_DIST)/Makefile: $(shell find $(LIBERTY_PARSER_DIR) -type f)
+	rm -rf '$(@D)' && \
+	rsync -qaz --no-p --chmod=ugo=rwX $(LIBERTY_PARSER_DIR)/ '$(@D)' && \
+	cd '$(@D)' && \
+	./configure CFLAGS=-fPIC
+
+MAKE_ANTLR_RULES_G_FILE_NAME := Function.g
+MAKE_ANTLR_RULES_LEXER_NAME  := FunctionLexer
+MAKE_ANTLR_RULES_PARSER_NAME := FunctionParser
+MAKE_ANTLR_RULES_TOKEN_TYPES_NAME := FunctionLexer
+include $(BUILD_SYSTEM_ROOT)/filetypes/antlrfiles/mkantlrrules.mk

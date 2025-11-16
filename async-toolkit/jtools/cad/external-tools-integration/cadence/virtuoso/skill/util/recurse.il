@@ -1,0 +1,39 @@
+; Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+; SPDX-License-Identifier: Apache-2.0
+
+; From Fulcrum skill code.
+; Recursively find subcells of a cell that match a filter and apply an
+; action.  Returns the list of cells that passed the filter.
+(defun FindSubcells (@key (CV (geGetEditCellView))
+                          (visited (makeTable "visited" nil))
+                          (filter nil) ; lambda function to filter cell types
+                          (action nil) ; lambda function to apply to cell types
+                          (viewName nil) ; recurse to an alternate view
+                          (result nil) ; list of cells found so far
+                          )
+  (let (master)
+    (when !visited[CV]
+      visited[CV]=t
+      (foreach inst CV->instHeaders
+               master = inst->master
+               (when viewName
+                 master = (dbOpenCellViewByType master->libName master->cellName viewName)
+                 )
+               (when master
+                 result = (FindSubcells ?filter filter ?action action ?result result
+                                        ?CV master ?visited visited ?viewName viewName))
+               )
+      (when !filter || (apply filter (list CV))
+            (printf "%s\n" CV->cellName)
+            (when action (apply action (list CV)))
+            result = (cons CV result)
+            )
+      )
+    result
+    )
+  )
+
+; Filter and action functions for use with FindSubcells.
+leafCellFilter = (lambda (CV) (dbGetPropByName CV "LeafCell")->value=="TRUE")
+editCellAction = (lambda (CV) (cdsp4edit ?CV CV))
+addCellAction  = (lambda (CV) (cdsp4add ?CV CV))

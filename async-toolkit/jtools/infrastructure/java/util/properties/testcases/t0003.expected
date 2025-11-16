@@ -1,0 +1,3 @@
+log.scope=x.a:1,x.b:1,TESTBENCH.inst1.x.fc:-1,TESTBENCH.inst1.x.mgmt:-1,TESTBENCH:2,x:5,TESTBENCH.inst1._env:-1,TESTBENCH.inst1.x:-1,TESTBENCH:5
+topdir=.
+variant=log_fc,log_all

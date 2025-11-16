@@ -1,0 +1,4 @@
+#-v $CAST2VERILOG_RUNTIME/bd_perf_mon.sv
+-v $CAST2VERILOG_RUNTIME/bd_hist_mon.sv
+$CAST2VERILOG_RUNTIME/bd_hist_mon.cc
+#$CAST2VERILOG_RUNTIME/HistoryMonitor.cc

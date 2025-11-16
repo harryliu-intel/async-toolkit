@@ -1,0 +1,10 @@
+<options>
+
+<opt name="topdir"                       type="String" default=".">
+Top of regression checkout. Used for substituting into other strings
+to make checkout-relative filenames.
+</opt>
+
+<ignore prefix="test" />
+
+</options>

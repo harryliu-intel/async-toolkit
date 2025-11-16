@@ -1,0 +1,64 @@
+#!/usr/intel/bin/perl -l
+# AAG
+# $Id$
+# $DateTime$
+
+use strict;
+
+sub usage {
+    print STDERR <<EU;
+Usage: longlines [-f|-#] file-list
+    -f   = fix the long lines with 'fmt'
+    -#   = threshold for reporting/fixing, default 79
+EU
+    exit 1;
+}
+
+$|=1;
+my $len=79;
+my $fix=0;
+foreach my $file (@ARGV) {
+    if ( $file =~ /^-\d+$/) {
+        $len=$file;
+        $len =~ s/^-//;
+        next;
+    }
+    if ($file eq "-f") {
+        $fix=1;
+        next;
+    }
+    if ($file =~ /^-/) {
+        usage;
+    }
+    open (P, "<$file");
+    while (<P>) {
+        chomp;
+        # extraneous Windows characters
+        s/\r//g;
+        s/\x94/"/g;
+        s/\x92/'/g;
+        s/\x93/"/g;
+        s/\x96/-/g;
+        s/\xad/-/g;
+        s/\xf1/n/g;
+        if (length > $len) {
+            if (! $fix) {
+                if (@ARGV > 1) {
+                    print "$file $.";
+                }
+                else {
+                    print "$.";
+                }
+            }
+            else {
+                open (X, "| fmt -$len");
+                print X;
+                close X;
+            }
+        }
+        elsif ( $fix ) {
+            print;
+        }
+    }
+    close P;
+}

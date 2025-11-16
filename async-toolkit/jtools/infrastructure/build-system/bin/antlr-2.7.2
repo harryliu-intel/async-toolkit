@@ -1,0 +1,6 @@
+#!/bin/bash
+
+JAVAFILES_CLASSES_JAR_ROOT=`echo "$JAVAFILES_CLASSES_JAR_ROOT" | sed -e 's/ //g'`
+CLASSPATH=$JAVAFILES_CLASSES_JAR_ROOT/antlr-2.7.2.jar; export CLASSPATH
+echo "JJ  $JAVAFILES_CLASSES_JAR_ROOT $CLASSPATH"
+exec /usr/intel/bin/java antlr.Tool "$@"

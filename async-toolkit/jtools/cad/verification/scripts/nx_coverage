@@ -1,0 +1,1080 @@
+#!/usr/intel/bin/perl -w
+use Cwd qw(abs_path getcwd);
+use File::Spec::Functions;
+use File::Temp qw/ tempfile tempdir /;
+use FindBin qw($Bin);
+use File::Temp;
+use IO::File;
+use File::stat;
+use List::MoreUtils 'uniq';
+use IO::Uncompress::Gunzip;
+use strict;
+use DBI();
+use Data::Dumper;
+use POSIX qw( strftime );
+
+
+my $user = $ENV{"USER"};
+my $umask = umask();
+umask(007);
+
+
+my $LOG;
+my $pwd=getcwd();
+
+
+my $DEBUG_LEVEL=0;
+
+# task steps
+my %validtasks=("merge"  => 1,
+                "publish"=> 2);
+
+my $user_urg_options = undef;
+
+#cast path
+my $cast_dir = "";
+
+
+my %task=();
+my $task_str="";
+my $invalid_task="";
+
+#Search all directories under this $source_dir to get the vdb paths
+my $source_dir=undef;
+my $vdb_name = "run_test";
+
+
+#to reduce runtime and memory usage, we cannot merge all vdb together in one time.
+my $max_vdb=15;
+
+#publish coverage result to SQL database
+my $publish= 0;
+my $only_publish=0;
+
+
+
+my $vcsCoverageMetrics="line+cond+tgl+fsm+group";
+
+# vcs coverage source directory file
+my $urgFile=undef;
+
+# urg coverage mapping
+# these values are passed to urg using 
+# -map xxx
+# comma-seperated string will be unrolled
+# into individual -map xxx arguments
+#This is for -map options
+#my @defaultMergeMap=qw/
+#chip.n2.BASE_N2$narrow
+#core.neuro.neuron.v2.BASE_NEURON$narrow
+#/;
+my $config_dir=undef;
+
+#user input files
+my $user_exclude_file=undef;
+
+#coverage sources
+my @cov_sources=();
+
+#output directory
+my $user_output_dir=undef;
+my $output_dir=undef;
+my $publish_output_dir="";
+
+#coverage report data
+my $coverage_data={};
+my $plan_data={};
+
+#netbatch
+my $runlocal = 0;
+my $nb_pool="sc_normal";
+my $nb_qslot="/ncl/be";
+my $nb_class="SLES11SP4_EM64T_128G";
+
+#vcs tool setting
+my $vcs_version="vcs-mx.2017.12sp1";
+
+
+
+
+#sql database
+#my $dbh;
+#my $sth;
+my $coverage_table="nx_coverage";
+my @coverage_table_entry=(
+    "id INT NOT NULL AUTO_INCREMENT PRIMARY KEY",
+    "user varchar(64)",
+    "datetime DATETIME",
+    "score float",
+    "line:coverage float default NULL",
+    "line:info varchar(64)",
+    "cond:coverage float default NULL",
+    "cond:info varchar(64)",
+    "toggle:coverage float default NULL",
+    "toggle:info varchar(64)",
+    "fsm:coverage float default NULL",
+    "fsm:info varchar(64)",
+    "archive_dir TEXT"
+);
+my $plan_table="nx_plan_cov";
+my @plan_table_entry=(
+    "id INT NOT NULL AUTO_INCREMENT PRIMARY KEY",
+    "datetime DATETIME",
+    "cov_id INT default NULL",
+    "plan varchar(64)",
+    "feature varchar(64)",
+    "score float",
+    "line:coverage float default NULL",
+    "line:info varchar(64)",
+    "cond:coverage float default NULL",
+    "cond:info varchar(64)",
+    "toggle:coverage float default NULL",
+    "toggle:info varchar(64)"
+);
+
+
+#SQL
+my $sql_host = "mrlf1.sc.intel.com";
+my $sql_database = "mrlnx";
+my $sql_user = "mrlnx";
+my $sql_pw = "neuron";
+my $sql_port = 3306;
+
+#Archive path
+my $archive_site = "sc";
+my $archive_path = "/nfs/site/disks/mrl138/coverage_archive";
+
+########################### MAIN #################################
+&parseArgs(@ARGV);
+
+
+die usage() if (!keys %task);
+
+
+my $hier_file = undef;
+my $config_file = undef;
+my $hvp_file = undef;
+my @urgConfig;
+if($task_str =~ /merge/){
+    die usage() if (! defined ($urgFile) and ! defined ($source_dir));
+    die usage() if (!-e $cast_dir);
+    $config_dir = "$cast_dir/chip/n2/urg" unless defined $config_dir;
+    $hier_file = "$config_dir/hier.config";
+    $config_file = "$config_dir/urg.config";
+    $hvp_file = "$config_dir/nx.hvp";
+    if (! -e $hier_file) {
+      die "Cannot find hier file $hier_file\n";
+    }
+    if (! -e $config_file) {
+      die "Cannot find config file $config_file\n";
+    }
+    if (! -e $hvp_file) {
+      die "Cannot find plan file $hvp_file\n";
+    }
+    @urgConfig = parse_config($config_file);
+}
+
+
+
+#### prepare output directory
+if(not defined $user_output_dir){
+    $output_dir=tempdir("nx_coverage.XXXX",DIR => $pwd, CLEANUP => 0);
+}else{
+    my $abs  = File::Spec->rel2abs( $user_output_dir );
+    $output_dir = $abs;
+}
+
+#### Prepare directory & log ##################
+system("mkdir -p $output_dir") if (!-e $output_dir);
+debug_print(0, "***Information: running at $output_dir\n");
+my $lognum=get_log_postfix($output_dir, "nx_coverage");
+my $logfilename=sprintf("$output_dir/nx_coverage.log.%04d", $lognum);
+open ($LOG, ">$logfilename");
+debug_print(0, "***Information: nx_coverage log file is $logfilename\n");
+print $LOG `date`;
+print $LOG usage(1);
+print $LOG "=================================================================\n";
+
+
+pipe_stdout();
+pipe_stderr();
+
+#### netbatch command #########################
+my $nb_cmd = "NBUMASK=007 nbjob run --target $nb_pool --mode interactive --qslot $nb_qslot --class $nb_class";
+$nb_cmd.=" --log-file NB_LOG_FILE --task urg sh -c ";
+
+
+#### URG ######################################
+if(defined $task{"merge"}){
+    #prepare urg source file
+    if(defined $source_dir){
+      #find all vdb under this source directory
+      push @cov_sources, get_coverage_sources_from_dir($source_dir, $vdb_name);
+    }
+    if(defined $urgFile){
+        #get coverage sources
+        push @cov_sources, get_coverage_sources($urgFile);    
+    }
+    
+    # exclude file
+    my $urg_exclude_file = undef;
+    if(defined $user_exclude_file){
+        if(-e $user_exclude_file){
+            my ($vol,$dir,$file)= File::Spec->splitpath($user_exclude_file);
+            $urg_exclude_file = catfile($output_dir, $file);
+            system("rsync -H $user_exclude_file $urg_exclude_file");
+            debug_print(0, "***Information: Copy exclude file $user_exclude_file to $urg_exclude_file\n");
+        }else{
+            die "Cannot fine user defined excluded file $user_exclude_file\n";
+        }
+    }
+    
+    # hvp file
+#    my $urg_hvp_file = undef;
+#    if(defined $user_hvp_file){
+#        if(-e $user_hvp_file){
+#            my ($vol,$dir,$file)= File::Spec->splitpath($user_hvp_file);
+#            $urg_hvp_file = catfile($output_dir, $file);
+#            system("rsync -H $user_hvp_file $urg_hvp_file");
+#            debug_print(0, "***Information: Copy hvp file $user_hvp_file to $urg_hvp_file\n");
+#        }else{
+#            die "Cannot fine user defined hvp file $urg_hvp_file\n";
+#        }
+#    }
+     if(-e $hvp_file){
+         my ($vol,$dir,$file)= File::Spec->splitpath($hvp_file);
+         my $local_hvp_file = catfile($output_dir, $file);
+         system("rsync -H $hvp_file $local_hvp_file");
+         debug_print(0, "***Information: Copy hvp file $hvp_file to $local_hvp_file\n");
+     }
+     if(-e $hier_file){
+         my ($vol,$dir,$file)= File::Spec->splitpath($hier_file);
+         my $local_hier_file = catfile($output_dir, $file);
+         system("rsync -H $hier_file $local_hier_file");
+         debug_print(0, "***Information: Copy hier file $hier_file to $local_hier_file\n");
+     }
+    
+    #call urg to generate coverage
+    debug_print(0, "\n================= Generate Coverage Report ======================\n");
+
+    merge_coverage($output_dir, \@cov_sources, $hier_file, $urg_exclude_file, $hvp_file);
+
+
+}
+
+
+#### Publish ################################
+if(defined $task{"publish"}){
+    my $report_dir=catfile($output_dir, "coverage_report");
+    if(!-d $report_dir){
+       debug_print(0, "***Error: Cannot find $report_dir\n");
+       die usage();
+    }
+    my $vdb_dir=catfile($output_dir, "merged_coverage.vdb");
+    if(!-d $vdb_dir){
+       debug_print(0, "***Error: Cannot find $vdb_dir\n");
+       die usage();
+    }
+  
+   
+    
+    parse_coverage_report($report_dir);
+    my $archive_file_path = archive_cov_file($coverage_data->{'user'}, $output_dir, $vdb_dir, $report_dir);
+    print $archive_file_path;
+
+
+    ## Update data base
+    checkin_coverage_database($coverage_data, $archive_file_path);
+
+}
+
+close($LOG);
+umask($umask);
+######################## FUNCTIONS ################################
+sub checkin_coverage_database{
+    my($coverage_data, $archive_file_path)=@_;
+    debug_print(0, "***Information: Update SQL database ...\n");
+    my @cov;
+    foreach my $entry (@coverage_table_entry) {
+      $entry=~s/^\s*//;
+
+      my @infos = split(" ", $entry);
+      if ($infos[0] eq "id") {
+        push @cov, "" ;
+      } elsif ($infos[0] eq "user") {
+        push @cov, $coverage_data->{'user'};
+      } elsif ($infos[0] eq "datetime") {
+        push @cov, $coverage_data->{'date'};
+      } elsif ($infos[0] eq "score") {
+        push @cov, $coverage_data->{'SCORE'};
+      }
+      elsif ($infos[0] =~/:/) {
+        my ($type, $cov_info) = split(":", $infos[0]);
+        $type = uc($type);
+        if ($cov_info eq "coverage") {
+          push @cov, $coverage_data->{$type}->[0];
+        } else {
+          push @cov, $coverage_data->{$type}->[1];
+        }
+      } elsif ($infos[0] eq "archive_dir") {
+        push @cov, $archive_file_path;
+      } else {
+        push @cov, "";
+        debug_print(0, "***Warning: Unknown entry $entry\n");
+      }
+    }
+    
+    my $cov_str = join(",", @cov);
+    my ($dbh, $sth_cov, $sth_plan) = init_table();
+    add_data_to_table($sth_cov, \@cov);
+    debug_print(2, "***Information: Insert SQL coverage table entry:\n$cov_str\n");
+    my $cov_id = $dbh->{q{mysql_insertid}};
+
+    my @plan_cov;
+    my $plan_str;
+    foreach my $plan (keys %$plan_data) {
+      @plan_cov=();
+      push @plan_cov, ""; #id
+      push @plan_cov, $coverage_data->{'date'};
+      push @plan_cov, $cov_id;
+      push @plan_cov, $plan;
+      push @plan_cov, ""; #feature=="" when this is plan info
+      push @plan_cov, $plan_data->{$plan}->{'SCORE'};
+      foreach my $type ('LINE', 'COND','TOGGLE') {
+         push @plan_cov,  $plan_data->{$plan}->{$type}->[0];
+         push @plan_cov,  $plan_data->{$plan}->{$type}->[1];
+      }
+      $plan_str = join(",", @plan_cov);
+      debug_print(2, "***Information: Insert SQL plan table entry: $plan_str\n");
+      add_data_to_table($sth_plan, \@plan_cov);
+
+      @plan_cov=();
+      foreach my $feature (keys %{$plan_data->{$plan}->{'feature'}}) {
+        push @plan_cov, ""; #id
+        push @plan_cov, $coverage_data->{'date'};
+        push @plan_cov, $cov_id;
+        push @plan_cov, $plan;
+        push @plan_cov, $feature;
+        push @plan_cov, $plan_data->{$plan}->{'feature'}->{$feature}->{'SCORE'};
+        foreach my $type ('LINE', 'COND','TOGGLE') {
+             push @plan_cov, $plan_data->{$plan}->{"feature"}->{$feature}->{$type}->[0];
+             push @plan_cov, $plan_data->{$plan}->{"feature"}->{$feature}->{$type}->[1];
+        }
+        $plan_str = join(",", @plan_cov);
+        debug_print(2, "***Information: Insert SQL plan table entry: $plan_str\n");
+        add_data_to_table($sth_plan, \@plan_cov);
+        @plan_cov=();
+      }
+        
+    }
+
+    commit_table($dbh);
+}
+
+sub parse_coverage_report{
+    my($report_dir)=@_;
+    my $plan_file = `find $report_dir -type f -name plan.\\*.txt`;
+    my $dashboard_file = catfile($report_dir,"dashboard.txt");
+    my $top_level="";
+    open (DF, "<$dashboard_file") or die "Cannot open $dashboard_file\n";
+    
+    while(my $line=<DF>){
+        chomp($line);
+        if($line=~/^Date:\s*(.*)/){
+             my ($date, $time)= transfer_datetime_to_cvs($1);
+             $coverage_data->{'date'}="$date $time";
+        }elsif($line=~/^User:\s*(.*)/){
+             $coverage_data->{'user'}=$1;
+        }elsif($line=~/^Total Coverage Summary/){
+            $line=<DF>;
+            my @data_types=split(/\s+/, $line);
+            $line=<DF>;
+            chomp($line); $line=~ s/^\s*//;
+            my @values=split(/\s+/, $line);
+            foreach my $t (@data_types){
+                if($t =~ /SCORE/){
+                    $coverage_data->{$t}=shift(@values);
+                }else{
+                  @{$coverage_data->{$t}}=(shift(@values), shift(@values));
+                }
+            }
+        }else{ next; }
+    }
+    close(DF);
+
+    
+    open (PF, "<$plan_file") or die "Cannot open $plan_file\n";
+    my $plan;
+    while(my $line=<PF>){
+        chomp($line);
+        if($line=~/^Plan :\s*(.*)/){
+            $plan = $1;
+            $line=<PF>;
+            $line=<PF>;
+            my @data_types=split(/\s+/, $line);
+            $line=<PF>;
+            chomp($line); $line=~ s/^\s*//;
+            my @values=split(/\s+/, $line);
+            foreach my $t (@data_types){
+                if($t =~ /SCORE/){
+                    $plan_data->{$plan}->{$t}=shift(@values);
+                }else{
+                    @{$plan_data->{$plan}->{$t}}=(shift(@values), shift(@values));
+                }
+            }
+        }elsif($line=~/^Sub-features:/){
+            $line=<PF>;
+            $line=<PF>;
+            my @data_types=split(/\s+/, $line);
+            while($line=<PF>) {
+              chomp($line); $line=~ s/^\s*//;
+              last if ($line eq "");
+              my @values=split(/\s+/, $line);
+              my $feature = $values[$#values];
+              foreach my $t (@data_types){
+                if($t =~ /SCORE/){
+                    $plan_data->{$plan}->{"feature"}->{$feature}->{$t}=shift(@values);
+                }elsif($t !~ /NAME/){
+                    if ($values[0] eq "--") {
+                        shift(@values);
+                        @{$plan_data->{$plan}->{"feature"}->{$feature}->{$t}}=("NULL","");
+                    } else {
+                        @{$plan_data->{$plan}->{"feature"}->{$feature}->{$t}}=(shift(@values), shift(@values));
+                    }
+                }
+              }
+            }
+        }else{ next; }
+    }
+    close(PF);
+
+    
+    debug_print(2, "***Information: Coverage data\n");
+    debug_print(2, Dumper($coverage_data)."\n");
+    debug_print(2, "***Information: Coverage data\n");
+    debug_print(2, Dumper($plan_data)."\n");
+}
+
+
+sub parseArgs() {
+    my @args = @_;
+    my $help = 0; $help = 1 if (@args==0);
+    foreach my $arg (@args) {
+        next if($arg =~ /^\#/ );
+        if ($arg =~ /^-+(.*)/) {
+            # key-value pair
+            my ($key, $value) = split("=",$1,2);
+            if (!defined $value) { $value=1; } # fulcrum standard, assume 1
+            if ($key eq "include" || $key eq "config" ) {
+                my @config_args = ();
+                includeConfig($value,\@config_args);
+                &parseArgs(@config_args);
+            } elsif ($key eq "help") {
+                $help = 1;
+            } elsif($key eq "task") {
+               $task_str=$value;
+               foreach my $t (split(/,/,$value)){
+                    if(not defined $validtasks{$t}){
+                        %task=();
+                        $invalid_task="$t";
+                        last;
+                    }else{
+                      $task{$t}=1;
+                    }
+               }
+            } elsif($key eq "publish") {
+               $publish = ($value =~ /(true|yes|y|1)/)?1:0;
+            } elsif($key eq "metric") {
+                $vcsCoverageMetrics = $value;
+            } elsif($key eq "vdb-name") {
+                $vdb_name = $value;
+            } elsif($key eq "cast-dir") {
+                $cast_dir = $value;
+            } elsif($key eq "dir") {
+                $source_dir = $value;
+            } elsif($key eq "config-dir") {
+                $config_dir = $value;
+            } elsif($key eq "urg-file") {
+                $urgFile = $value;
+            } elsif($key eq "debug-level") {
+                $DEBUG_LEVEL = $value;
+            } elsif($key eq "elfile") {
+                $user_exclude_file=$value;
+            } elsif($key eq "output-dir") {
+                $user_output_dir=$value;
+            } elsif($key eq "nb-qslot") {
+                $nb_qslot=$value;
+            } elsif($key eq "nb-pool") {
+                $nb_pool=$value;
+            } elsif($key eq "nb-class") {
+                $nb_class=$value;
+            } elsif($key eq "runlocal") {
+                $runlocal=$value;
+            } elsif($key eq "max-vdb") {
+                $max_vdb=$value;
+            } elsif($key eq "urg-options") {
+                $user_urg_options=$value;
+            } elsif($key eq "vcs-version") {
+                $vcs_version=$value;
+            } else {
+               debug_print(0, "WARNING: unknown argument $arg\n");
+            }
+        }
+    }
+
+    die usage() if $help;
+}
+sub usage {
+    local $"=",";
+    my $source_dir_str = $source_dir // "";
+    my $urgfile_str = $urgFile // "";
+    my $user_exclude_file_str = $user_exclude_file // "";
+    my $user_urg_options_str =  $user_urg_options // "";
+    my $output_dir_str = $user_output_dir // "";
+    my $config_dir_str = $config_dir // "";
+
+    my $usages = <<ET;
+
+Report Coverage. 
+    Report coverage contain 3 steps: merge, report and publish.
+    User can use --task=[mege|report|publish] or concate by "," to execute each step.
+    
+USAGE: $0 [options]
+
+  Options:
+    --help\t\t(display this usage manual)
+    --cast-dir=[$cast_dir]\n\t\t\t(The cast path)
+    --task=[$task_str]\n\t\t\t([merge|publish] Execute the step. User should flow the sequence to execute the report coverage.)
+
+    --dir=[$source_dir_str]\n\t\t\t(URG will merged all $vdb_name.vdb directories it can find under this.\n\t\t\tIf dir is a vdb directory, URG will just use it. "seperated by ,")
+    --config-dir=[$config_dir_str]\n\t\t\t(Where to find hier.config, urg.config, nx.hvp)
+    --vdb-name=[$vdb_name]\n\t\t\t(URG will find the vdb based on this prefix)
+    --urg-file=[$urgfile_str]\n\t\t\t(A file contains a vcs coverage source list)\n\t\t\t(User need to specify dir or urg-file. Two setting can be used simultaneously)
+    --metric=[$vcsCoverageMetrics]\n\t\t\t(Optional. vcs coverage metrics. Note: urg map merging does not support assert and group metrics)
+    --output-dir=[$output_dir_str]\n\t\t\t(Optional. The default output directory is nx_coverage.XXXX)
+    --elfile=[$user_exclude_file_str]\n\t\t\t(Optional. URG exclude file format)
+    --urg-options=[$user_urg_options_str]\n\t\t\t(Optional. URG options. User can specify any user options by --urg-options="<options>")
+    --max-vdb=[$max_vdb]\n\t\t\t(Optional. Max vdb sources that URG runs in one process.)
+    --nb-pool=[$nb_pool]\n\t\t\t(netbatch --target option)
+    --nb-qslot=[$nb_qslot]\n\t\t\t(netbatch --qslot option)
+    --nb-class=[$nb_class]\n\t\t\t(netbatch --class option)
+    --runlocal=[$runlocal]\n\t\t\t([0|1] running urg at netbatch or not)
+    --debug-level=[$DEBUG_LEVEL]\n\t\t\t(Optional. print debug information according to level setting)
+    --vcs-version=[$vcs_version]\n\t\t\t(VCS version wrapper, default is vcs.2012.09sp1.)
+    
+ET
+   return $usages;
+}
+              
+sub pipe_stdout{
+    # pipes to record 
+    if (open(STDOUT, "|-") == 0) {
+        select $LOG; $| = 1;
+        while (<STDIN>) {
+            if(/^Warning-\[UCAPI-MAP-SHAPEMISMATCH\]/){
+                print $LOG $_;
+                while(<STDIN>){
+                    print $LOG $_;
+                    chomp;
+                    last if(/^\s*$/);
+                }
+            }elsif(/^Map Module Error:/){
+                print $LOG $_;
+                while(<STDIN>){
+                    print $LOG $_;
+                    chomp;
+                    last if(/^\s*$/);
+                }
+            }else{
+                chomp;
+                if(/^\s*$/){
+                  next;
+                }
+                print $LOG "$_\n";
+                print STDOUT "$_\n";
+            }
+        }
+        #while (<STDIN>) {
+        #    print $LOG $_;
+        #    print STDOUT $_;
+        #}
+        exit;
+    }
+}
+sub pipe_stderr{
+    # pipes to record 
+    if (open(STDERR, "|-") == 0) {
+        select $LOG; $| = 1;
+        while (<STDIN>) {
+            if(/^Warning-\[UCAPI-MAP-SHAPEMISMATCH\]/){
+                print $LOG $_;
+                while(<STDIN>){
+                    print $LOG $_;
+                    chomp;
+                    last if(/^\s*$/);
+                }
+            }elsif(/^Map Module Error:/){
+                print $LOG $_;
+                while(<STDIN>){
+                    print $LOG $_;
+                    chomp;
+                    last if(/^\s*$/);
+                }
+            }else{
+                chomp;
+                if(/^\s*$/){
+                  next;
+                }
+                print $LOG "$_\n";
+                print STDERR "$_\n";
+            }
+        }
+        exit;
+    }
+}
+
+sub get_coverage_sources_from_dir{
+  my ($source_dir, $vdb_name)=@_;
+  my @urg_sources=();
+  my @source_dirs = split(",", $source_dir);
+  foreach my $sd (@source_dirs) {
+    if ($sd =~/vdb$/) {
+      my $abs_dir = File::Spec->rel2abs( $sd ) ;
+      push @urg_sources, $abs_dir;
+    } else {
+      my @dirs = `find -L $sd -type d -name $vdb_name.vdb`;
+      foreach my $dir (@dirs) {
+        my $abs_dir  = File::Spec->rel2abs( $dir );
+        chomp $abs_dir;
+        debug_print(1, "***Information: get vdb $abs_dir\n");
+        push @urg_sources, $abs_dir;
+      }
+    }
+  }
+  debug_print(0, "***Information: merging coverage from $source_dir\n");
+  return @urg_sources;
+}
+sub get_coverage_sources{
+    my ($urg_file)=@_;
+    open(UF, "<$urg_file") or die "CANNOT open $urg_file\n";
+    my @sources=<UF>;
+    chomp(@sources);
+    my @urg_sources=();
+    foreach my $sd (@sources) {
+      my $abs_dir = File::Spec->rel2abs( $sd ) ;
+      if ($sd =~/vdb$/) {
+        my $abs_dir = File::Spec->rel2abs( $sd ) ;
+        push @urg_sources, $abs_dir;
+      } else {
+        my @dirs = `find -L $sd -type d -name $vdb_name.vdb`;
+        foreach my $dir (@dirs) {
+          my $abs_dir  = File::Spec->rel2abs( $dir );
+          chomp $abs_dir;
+          debug_print(1, "***Information: get vdb $abs_dir\n");
+          push @urg_sources, $abs_dir;
+        }
+      }
+    }
+    return @urg_sources;
+}
+
+
+sub get_log_postfix{
+    my($dir, $prefix)=@_;
+    my $lognr=0;
+    opendir (D, "$dir");
+    my @logs=sort(grep(/$prefix\.log\./, readdir(D)));
+    closedir D;
+    $lognr = $#logs+1;
+    foreach my $log (@logs) {
+        $log =~ s/$prefix\.log.//;
+        $log =~ s/\..*//;
+        if ($log =~ /^\d+$/) {
+            $log += 0;
+            $lognr = $log + 1 if $log >= $lognr;
+        }
+    }
+    undef @logs;
+    return $lognr;
+}
+
+sub debug_print{
+    my ($level, $string) = @_;
+    print $string if ($level <= $DEBUG_LEVEL);
+}
+
+
+# generates a merged coverage report from all passing tests using urg
+#merge_coverage($output_dir, $urg_source_file, $urg_hier_file, $urg_exclude_file, $urg_hvp_file);
+sub merge_coverage
+{   
+    my ($output_dir, $cov_sources_ref, $hier_file, $exclude_file, $hvp_file)=@_;
+    my @cov_sources = @$cov_sources_ref;
+    
+    my $urg_source_file = catfile($output_dir, "merge.conf");
+    my $total_vdb = 0;
+
+    my $lev_idx = 0;
+    while (scalar(@cov_sources) > 1 ) {
+       #merges vdbs
+       my $sub_idx = 0;
+       my @sub_sources;
+       my @pidlist;
+       my @merged_sources = ();
+       my $output_dir_sub = catdir($output_dir,"sub");
+       system("mkdir -p $output_dir_sub") if (!-e $output_dir_sub);
+       for(my $i=0; $i< scalar(@cov_sources);$i++) {
+          my $source = $cov_sources[$i];
+          push @sub_sources, $source;
+          if (scalar(@sub_sources)>=$max_vdb||$i==(scalar(@cov_sources)-1))  {
+            my $max_idx = scalar(@cov_sources) - 1;
+            if (($max_idx - $i)==1) {
+               $i++;
+               $source = $cov_sources[$i];
+               push @sub_sources, $source;
+            }
+            #fork a seperate process to run urg
+            my $idx = "$lev_idx.$sub_idx";
+            my $source_file = catfile($output_dir_sub, "merge.$idx.conf");
+            open(FH, ">$source_file") or die "Cannot write $source_file\n";
+            debug_print(1, "***Information: Saved urgfile $source_file\n");
+            print FH join("\n",@sub_sources);
+            close(FH);
+            push @merged_sources, "$output_dir_sub/merged.$idx.vdb";
+            if(my $pid=fork()) {
+               push @pidlist, $pid;
+               debug_print(0, "***Information: Fork urg sub process $idx $pid\n");
+            } else {
+               merge_coverage_sub($output_dir_sub, $idx, $source_file, $hier_file, $exclude_file);
+               exit 0;
+            }
+       
+            @sub_sources=();
+            $sub_idx++;
+            $total_vdb++;
+          }
+       }
+       foreach my $pid (@pidlist) {
+         waitpid $pid,0;
+       }
+       debug_print(0, "***Information: All level $lev_idx urg sub processes finished.\n");
+       debug_print(0, "***Information: Start to merge all sub urg reports\n");
+
+       #prepare urg config file for vdb sources
+       open(FH, ">$urg_source_file") or die "Cannot write $urg_source_file\n";
+       debug_print(1, "***Information: Saved urgfile $urg_source_file\n");
+       @cov_sources = ();
+       foreach my $vdb (@merged_sources) {
+         if (-d $vdb) {
+           push @cov_sources, $vdb;
+         } else {
+           debug_print(0, "***Error: sub process vdb database cannot be found $vdb\nThe merge process may not merge all tests\n");    
+         }
+       }
+       close(FH);
+       $lev_idx++;
+    }
+    $total_vdb = 1;
+    open(FH, ">$urg_source_file") or die "Cannot write $urg_source_file\n";
+    print FH "$cov_sources[0]\n";
+    close FH;
+
+
+
+    my $urgCoverageRpt="coverage_report";
+    my $urgMergedCoverage="merged_coverage";
+    my $urgLogFile="urg.log";
+
+    debug_print(0, "***Information: Saved urg log file $urgLogFile\n");
+    debug_print(0, "***Information: Writing coverage report to $output_dir\n");
+    
+    my $urg = "fulcrum --wrapper $vcs_version urg";
+    my $cmd = "$urg -full64\t\\
+\t-metric $vcsCoverageMetrics\t\\
+\t-report $urgCoverageRpt\t\\
+\t-format both\t\\
+\t-show ratios\t\\
+\t-log $urgLogFile\t\\";
+
+
+    $cmd .= "\t\\\n\t$user_urg_options " if (defined $user_urg_options);
+    $cmd .= "\t\\\n\t-group instcov_for_score -group flex_merge_drop -group merge_across_scopes -group ratio";    
+
+    my $rpt_cmd = $cmd; 
+    if (-s $hier_file) {
+      $cmd .= "\t\\\n\t-hier $hier_file";
+      my ($v,$dirs, $fname) = File::Spec->splitpath($hier_file);
+      $rpt_cmd .= "\t\\\n\t-hier $fname ";
+    }
+    if (defined $exclude_file) {
+      $cmd .= "\t\\\n\t-elfile $exclude_file -excl_bypass_checks ";
+      my ($v,$dirs, $fname) = File::Spec->splitpath($exclude_file);
+      $rpt_cmd .= "\t\\\n\t-elfile $fname -excl_bypass_checks ";
+    }
+    if (defined $hvp_file){
+      $cmd .= "\t\\\n\t-plan $hvp_file";
+      my ($v,$dirs, $fname) = File::Spec->splitpath($hvp_file);
+      $rpt_cmd .= "\t\\\n\t-plan $fname";
+    }
+    
+    my @map_cmd;
+    foreach my $c (@urgConfig) {
+      if ($c =~/-map /) {
+        push @map_cmd, $c;
+      } else {
+        $cmd .= "\t\\\n\t$c";
+        $rpt_cmd .= "\t\\\n\t$c";
+      }
+    }
+    print "map command:\n";
+    print @map_cmd;
+
+    my $map_cmds = "";
+    if ($total_vdb > 1) {
+      #only when we merge more than one vdb databases, we need to provide map option.
+      foreach my $map (@map_cmd)
+      {
+         $map_cmds .= "\t\\\n\t$map";
+      }
+    }
+    $cmd .=$map_cmds;
+    $cmd .="\t\\\n\t-f $urg_source_file";
+    $cmd .="\t\\\n\t-dbname $urgMergedCoverage";
+    $rpt_cmd .="\t\\\n\t-dir $urgMergedCoverage.vdb";
+
+
+    debug_print(0, "***Information: Running URG command :\n$cmd\n");
+    my $nb_cmd_t = $nb_cmd; $nb_cmd_t =~ s/NB_LOG_FILE/nb.log/;
+    $cmd = $runlocal ? "$cmd" : "$nb_cmd_t \"$cmd\"";
+    $rpt_cmd = $runlocal ? "$rpt_cmd" : "$nb_cmd_t \"$rpt_cmd\"";
+
+    my $rpt_file =catfile($output_dir, "gen_rpt");
+    open(FH, ">$rpt_file") or die "Cannot write $rpt_file\n";
+    print FH $rpt_cmd;
+    close(FH);
+    system("chmod +x $rpt_file");
+
+    my $run_file =catfile($output_dir, "run");
+    open(FH, ">$run_file") or die "Cannot write $run_file\n";
+    debug_print(1, "***Information: Saved run file $run_file\n");
+    print FH $cmd;
+    close(FH);
+    system("chmod +x $run_file; cd $output_dir; ./run");
+
+    debug_print(0, "***Information: End URG\n");
+}   # end coverage_report
+
+sub parse_config
+{
+  my($config)=@_;
+  my @cfg;
+  open (F, "<$config") or die "Cannot open $config\n";
+  while(<F>){
+    chomp($_);
+    $_=~s/^\s*//;
+    $_=~s/^\s$//;
+    $_=~s/^\\$//;
+    if ($_ ne"") {
+      push @cfg, $_;
+    }
+  }
+  close(F);
+  return @cfg;
+
+}
+
+sub merge_coverage_sub 
+{
+    my ($output_dir, $idx, $source_file, $hier_file, $exclude_file)=@_;
+
+    my $urgCoverageRpt="urgReport.$idx";
+    my $urgMergedCoverage="merged.$idx";
+    my $urgLogFile="$idx.log";
+
+    debug_print(1, "***Information: Saved urg merge config file $source_file\n");
+    debug_print(1, "***Information: Saved urg log file $urgLogFile\n");
+    my $urg = "fulcrum --wrapper $vcs_version urg";
+    my $cmd = "$urg -full64\t\\
+\t-f $source_file\t\\
+\t-metric $vcsCoverageMetrics\t\\
+\t-noreport\t\\
+\t-log $urgLogFile\t\\
+\t-dbname $urgMergedCoverage\t\\\n";
+    $cmd .= "\t-hier $hier_file" if -s $hier_file;
+
+    my @map_cmd;
+    foreach my $c (@urgConfig) {
+      if ($c =~/-map /) {
+        push @map_cmd, $c;
+      } else {
+        $cmd .= "\t\\\n\t$c";
+      }
+    }
+
+    my $map_cmds = "";
+    foreach my $map (@map_cmd)
+    {
+       $map_cmds .= "\t\\\n\t$map";
+    }
+
+
+    $cmd .= $map_cmds;
+    $cmd .= "\t\\\n\t-elfile $exclude_file -excl_bypass_checks " if (defined $exclude_file);
+    $cmd .= "\t\\\n\t$user_urg_options " if (defined $user_urg_options);
+    $cmd .= "\t\\\n\t-group instcov_for_score -group flex_merge_drop -group merge_across_scopes -group ratio";    
+    debug_print(1, "***Information: Running URG sub process $idx command :\n$cmd\n");
+    my $nb_cmd_t = $nb_cmd; $nb_cmd_t =~ s/NB_LOG_FILE/nb.$idx.log/;
+
+    $cmd = $runlocal ? "$cmd" : "$nb_cmd_t \"$cmd\"";
+    
+    my $run_file =catfile($output_dir, "run.$idx");
+    open(FH, ">$run_file") or die "Cannot write $run_file\n";
+    debug_print(1, "***Information: Saved run file $run_file\n");
+    print FH $cmd;
+    close(FH);
+    system("chmod +x $run_file; cd $output_dir; ./run.$idx ");
+    debug_print(1, "***Information: End URG sub process $idx\n");
+
+
+}
+
+sub transfer_datetime_to_cvs{
+    my ($org)=@_;
+    my %month; @month{qw/Jan Feb Mar Apr May Jun
+                     Jul Aug Sep Oct Nov Dec/} = (1 .. 12);
+    my $date = $org; $date =~ s/(\S+)\s+(\S+)\s+(\d+) (\d+:\d+:\d+) (\d+)/$5-$month{$2}-$3/;
+    my $time = $org; $time =~ s/(\S+)\s+(\S+)\s+(\d+) (\d+):(\d+):(\d+) (\d+)/$4-$5-$6/;
+    return ($date, $time);
+}
+
+
+###### SQL functions ######
+sub connectDB{
+  my  $dbh = DBI->connect("DBI:mysql:database=$sql_database;host=$sql_host;port=$sql_port",
+                     $sql_user, $sql_pw, { RaiseError => 1 });
+  return $dbh;
+}
+
+
+sub init_table {
+    my $dbh = connectDB();
+    my $sth_cov;
+    my $sth_plan;
+
+    my @table_str;
+    foreach my $entry (@coverage_table_entry){
+        if ($entry=~/([\w|:]+)\s+(.*)/){
+            push @table_str, "`$1` $2";
+        }
+    }
+    my $value_str =  join( ',', ('?') x @table_str );
+    my $table_str = join(", ", @table_str);
+
+    @table_str=();
+    foreach my $entry (@plan_table_entry){
+        if ($entry=~/([\w|:]+)\s+(.*)/){
+            push @table_str, "`$1` $2";
+        }
+    }
+    my $plan_value_str =  join( ',', ('?') x @table_str );
+    my $plan_table_str = join(", ", @table_str);
+
+    $sth_cov = $dbh->prepare(qq{
+          CREATE TABLE IF NOT EXISTS $coverage_table ($table_str)
+        });
+    $sth_cov->execute();
+
+    $sth_plan = $dbh->prepare(qq{
+          CREATE TABLE IF NOT EXISTS $plan_table ($plan_table_str)
+        });
+    $sth_plan->execute();
+
+    $dbh->begin_work() or die $dbh->errstr;
+
+    $sth_cov = $dbh->prepare(qq{
+          INSERT IGNORE INTO $coverage_table VALUES($value_str)
+        });
+
+    $sth_plan = $dbh->prepare(qq{
+          INSERT IGNORE INTO $plan_table VALUES($plan_value_str)
+        });
+    return($dbh, $sth_cov, $sth_plan);
+}
+
+sub add_data_to_table{
+  my($sth,$data)=@_;
+  my @data=@$data;
+  for(my $i=0; $i< scalar(@data); $i++){
+        $data[$i] =undef if($data[$i] eq "NULL");
+  }
+  $sth->execute(@data);
+}
+
+
+sub commit_table {
+  my($dbh)=@_;
+  $dbh->commit();
+  $dbh->disconnect();
+}
+
+
+
+sub archive_cov_file{
+   my($user, $publish_from, $vdb_dir, $report_dir)=@_;;
+   my $publish_from_abs  = File::Spec->rel2abs( $publish_from );
+   my $publish_from_dir  = $publish_from_abs;
+
+   my $archive_dir="$output_dir/archive_cov";
+   system("mkdir -p $archive_dir") if (!-d $archive_dir);
+
+   system("cp -r  $vdb_dir $archive_dir/.");
+   my $gen_rpt_file = "$publish_from/gen_rpt";
+   if (-e $gen_rpt_file) {
+     system("cp  $gen_rpt_file $archive_dir/.");
+   }
+   my $date = stat("$report_dir/dashboard.html")->mtime;   
+   system("cp  $publish_from_dir/*.hvp $archive_dir/.");
+   system("cp  $publish_from_dir/*.conf $archive_dir/.");
+   system("cp  $publish_from_dir/*.config $archive_dir/.");
+
+
+   system("cd $output_dir; tar -czf archive_cov.tgz archive_cov");
+
+   $date = strftime("%Y_%m_%d_%H_%M_%S", localtime($date));
+
+   my $prefix = `md5sum \'$output_dir/archive_cov.tgz\' | awk '{print \$1}'`; chomp($prefix);
+   $prefix = "$prefix"."_$date";
+   system("mv","-f", "$output_dir/archive_cov.tgz", "$output_dir/$prefix.tgz");
+
+   my $user_archive_dir=$archive_path;
+   my $site_addr = "$archive_site-login.$archive_site";
+   #create archive path
+   $user_archive_dir=catdir($user_archive_dir,$user);
+   if($ENV{EC_SITE} =~ /^$archive_site$/i ){
+      if(!-d $user_archive_dir){
+        system("mkdir -p $user_archive_dir");
+        system("chmod g+w -R $user_archive_dir");
+      }
+   }else{
+      system("ssh $user\@$site_addr -d $user_archive_dir");
+      my $rc = $? >> 8;
+      if ($rc){
+        system("ssh $user\@$site_addr mkdir -p $user_archive_dir"); 
+        system("ssh $user\@$site_addr chmod g+w -R $user_archive_dir"); 
+      }
+   }
+    
+   if($ENV{EC_SITE} =~ /^$archive_site$/i ){
+      system("rsync -aH  $output_dir/$prefix.tgz $user_archive_dir/$prefix.tgz");
+      system("chmod g+w $user_archive_dir/$prefix.tgz");
+   }else{
+      system("rsync -aH $output_dir/$prefix.tgz $user\@$site_addr:$user_archive_dir/$prefix.tgz");
+      system("ssh $user\@$site_addr chmod g+w $user_archive_dir/$prefix.tgz");
+   }
+
+
+   system("rm -rf $archive_dir");
+   system("rm -rf $output_dir/$prefix.tgz");
+   return "$user_archive_dir/$prefix.tgz";
+}
+

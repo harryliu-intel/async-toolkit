@@ -1,0 +1,214 @@
+#!/usr/intel/bin/perl -l
+# AAG
+# $Id: p4monitor 1.3 2006/09/27 16:33:57 aubrey Exp $
+# $DateTime$
+
+use Term::ANSIColor qw(:constants);
+use DBI();
+use Term::ReadKey;
+use Getopt::Long;
+
+sub usage {
+    my ($msg) = @_;
+    print STDERR "$msg\n" if defined $msg;
+    print STDERR <<EU;
+Usage : p4monitor <options> userlist
+    --interval=<minutes> update interval
+
+when running: 'r' to reset count
+              'q' to quit
+EU
+    exit 1;
+}
+
+my $interval = 1;
+my $users;
+my %userlist=();
+
+GetOptions (
+    "users=s" => \$users,
+    "interval=i" => \$interval,
+    "help" => sub {usage;},
+) or usage;
+
+usage ("Interval > 0 please!") if $interval <= 0;
+my $oldheader=`uname -n`;
+chomp $oldheader;
+my $pts=`/usr/bin/who am i`;
+chomp $pts;
+$pts =~ s/\s+/ /g;
+my @pts=split(/ /, $pts);
+$pts = $pts[1];
+$pts =~ s/\//_S_/g;
+print "$ENV{HOME}/.titles/${oldheader}-$pts";
+if ( -e "$ENV{HOME}/.titles/${oldheader}-$pts") {
+    $oldheader = `cat "$ENV{HOME}/.titles/${oldheader}-$pts"`;
+    chomp $oldheader;
+}
+else {
+    $pts =~ s/.*_//;
+    $oldheader=$oldheader."-".$pts;
+}
+
+my %aliases=();
+open (P, "</mnt/fulcrum/home/htmldirs/itgroup/zimbra/zimbraaliases.dat");
+while (<P>) {
+    chomp;
+    my ($alias,$list)=split;
+    $aliases{$alias}=$list;
+}
+close P;
+
+my %names;
+my %p4names=();
+my %login=();
+my $p4="P4PORT=10.0.80.6:1666 p4 -u system";
+open (P, "$p4 users |");
+while (<P>) {
+    chomp;
+    my @f=split;
+    $p4names{$f[0]}=1;
+}
+
+my @errs=();
+my $ok=0;
+sub adduser {
+    my ($user) = @_;
+    # prevent infinite recursion
+    return if defined $userlist{$user};
+    if (defined ($aliases{$user})) {
+        foreach my $u (split(/,/,$aliases{$user})) {
+            adduser($u);
+        }
+    }
+    elsif (defined ($p4names{$user})) {
+        $userlist{$user}=1;
+        $ok++;
+    }
+    else {
+        push @errs, "User/Group $user does not exist";
+    }
+}
+
+if (defined ($users) or defined ($ARGV[0])) {
+    %userlist=();
+    if (defined ($users)) {
+        foreach my $user (split(/,/, $users)) {
+            adduser($user);
+        }
+    }
+    while (defined ($ARGV[0])) {
+        foreach my $user (split(/,/, $ARGV[0])) {
+            adduser($user);
+        }
+        shift;
+    }
+}
+else {
+    $users = `whoami`;
+    chomp $users;
+    adduser($users);
+}
+
+usage(join("\n", @errs)) if $ok == 0;
+my $headertail='';
+$|=1;
+
+my $lastbug;
+my $headertail = '';
+my $addedcnt=0;
+
+ReadMode cbreak;
+
+sub wrap {
+    my $string=$_[0];
+    my @lines = split(/\n/, $string);
+    foreach my $line (@lines) {
+        while (length($line) > 79) {
+            my $ln = substr($line,0,79);
+            my $ri = rindex($ln,' ');
+            $ln = substr($ln,0,$ri);
+            print "$ln\n";
+            $line = substr($line, $ri);
+            $line =~ s/^ //;
+        }
+        print "$line\n" if length ($line)>0;
+    }
+}
+
+open (P, "$p4 changes -m 1 |");
+$_=<P>;
+chomp;
+my @f=split;
+my $lastchange=$f[1]-40;
+close P;
+my $R="";
+my $cnt=0;
+while(1) {
+    open (P, "$p4 changes -m 1 |");
+    $_=<P>;
+    chomp;
+    my @f=split;
+    my $thischange=$f[1];
+    close P;
+    if ($thischange <= $lastchange) {
+        my $ch = ReadKey -1;
+        my $n = 0;
+        while ($n < $interval*60 and ! defined ($ch)) {
+            $n++;
+            $ch = ReadKey -1;
+            sleep 1;
+        }
+        $R="R" if $ch eq "r";
+        $cnt=0 if $ch eq "r";
+        printf "%c]0;p4 ${lastchange}$R%c", 0x1b, 7;
+        last if $ch eq "q";
+        next;
+    }
+    my $diff=$thischange-$lastchange;
+    open (P, "$p4 changes -l -t -m $diff |");
+    my @lines=();
+    my $max=0;
+    my $chg;
+    my $owner="";
+    while (<P>) {
+        chomp;
+        my ($x,$xchg,$on,$date,$time,$by,$who,$msg) = split(/ /,$_, 8)
+            if (/^Change/);
+        s/^\s+/ /;
+        if (defined ($who) and /^Change/) {
+            $chg = $xchg;
+            $who =~ s/@.*//;
+            $owner = $who;
+        }
+        if ($userlist{$owner} == 1 and ($chg > $lastchange) and ! /^\s*$/) {
+            if (defined ($xchg)) {
+                push @lines, $_;
+                $cnt++;
+            }
+            else {
+                $lines[$#lines] .= "\n $_";
+            }
+        }
+        $max = $chg if $chg > $max;
+    }
+    close P;
+    $R = " $cnt" if $cnt > 0;
+    $lastchange = $max;
+    printf "%c]0;p4 ${lastchange}$R%c", 0x1b, 7;
+    if ($cnt > 0 and @lines) {
+        @lines = (sort @lines);
+        print join ("\n", @lines);
+    }
+    my $ch = ReadKey -1;
+    my $n = 0;
+    while ($n < $interval*60 and ! defined ($ch)) {
+        $n++;
+        $ch = ReadKey -1;
+        sleep 1;
+    }
+    $R="R" if $ch eq "r";
+    last if $ch eq "q";
+}
+print "\n";
+printf "%c]0;$oldheader%c", 0x1b, 7;

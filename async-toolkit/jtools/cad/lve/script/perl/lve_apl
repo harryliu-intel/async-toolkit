@@ -1,0 +1,317 @@
+#!/usr/intel/bin/perl -l
+# AAG
+# $Id$
+# $DateTime$
+
+use strict;
+use Getopt::Long;
+
+our $lve_root;
+BEGIN {
+    $lve_root=$0;
+    $lve_root =~ s:/[^/]*$::;
+    $lve_root =~ s:/[^/]*$::;
+    @INC = ("$lve_root/lib/perl", @INC);
+    local $"=",";
+}
+
+use LveUtil;
+use LveAspice;
+use LveDelay;
+$ENV{RH_SCRIPT}="/p/rrc/tools/bin/rh" if ! defined $ENV{RH_SCRIPT};
+
+my $cell=undef;
+my $corner=undef;
+my $true=undef;
+my $temp=undef;
+my $environment="redhawk";
+my $output_dir=undef;
+my $view=undef;
+my $mode=undef;
+my $debug=0;
+my $leakage=0;
+my $range=42e-9;
+my $dcap=undef;
+my $cap_load=0;
+my $name_space="gds2";
+
+#print STDERR "Error: ".join(" ", @ARGV);
+GetOptions (
+    "cell=s" => \$cell,
+    "corner=s" => \$corner,
+    "true=s" => \$true,
+    "temp=s" => \$temp,
+    "env=s" => \$environment,
+    "output-dir=s" => \$output_dir,
+    "view=s" => \$view,
+    "mode=s" => \$mode,
+    "cap-load=s" => \$cap_load,
+    "debug" => \$debug,
+    "name-space=s" => \$name_space,
+) or die;
+
+die "Usage: lve_apl [options]"
+    if (! defined($cell) or
+        ! defined($corner) or
+        ! defined($true) or
+        ! defined($temp) or
+        ! defined($environment) or
+        ! defined($output_dir) or ! -d $output_dir or
+        ! defined($view) or
+        ! defined($mode)); 
+
+$true =~ s/V$//;
+$temp =~ s/C$//;
+my $rundir=$cell;
+$rundir =~ s/\./\//g;
+my $celldir="$output_dir/$rundir";
+$rundir="$celldir/$view/$mode/aspice/$environment/$corner/${true}V/${temp}C/10ns/0.95_1.05/";
+die "not proper trace file $rundir/aspice.trace" if ! -s "$rundir/aspice.trace";
+my $leakfile="$celldir/$view/$mode/aspice/leakage/$corner/${true}V/${temp}C/10ns/0.95_1.05/aspice.raw";
+
+if ( open (P, "$leakfile")) {
+    while (<P>) {
+        chomp;
+        if (/ power=(\S+)/) {
+            $leakage=$1;
+        }
+    }
+}
+if ($leakage > 0) {
+    $leakage /= $true;
+}
+else {
+    $leakage=1e-8;
+    warn "No valid leakage found";
+}
+open (P, "captally --sdarea --cdl='$celldir/$view/$mode/cell.spice' |");
+my $c=0;
+while (<P>) {
+    chomp;
+    if (/^(Vdd|GND) /) {
+        my ($node,$cap,$area)=split;
+        $dcap += $cap;
+        $c++;
+    }
+}
+close P;
+$dcap /= $c if $c > 0;
+open (P, "<$celldir/jflat.routed/env-ntpc/$environment");
+$_=<P>;
+my ($node,$ntpc,$ntpc_signoff)=split;
+close P;
+chdir ($rundir);
+my $minv=$true/10;
+my $maxv=$true*9/10;
+open_aplot("$lve_root/bin/aplot");
+write_aplot("file \"$rundir/aspice\"");
+flush_aplot();
+write_aplot("write $node IGND| IVdd|");
+flush_aplot();
+write_aplot("trigger $node < $minv");
+my $slew=10e-12;
+my $trigcnt=read_aplot();
+my $tick=int($trigcnt/2);
+flush_aplot();
+write_aplot("trigger $node < $maxv $tick");
+my $starttime=read_aplot();
+flush_aplot;
+write_aplot("trigger $node < $minv $tick");
+my $endtime=read_aplot();
+if ($endtime < $starttime) {
+    $tick++;
+    flush_aplot();
+    write_aplot("trigger $node < $minv $tick");
+    $endtime=read_aplot();
+}
+my $slew=sprintf "%.3g", ($endtime-$starttime)*1e-9;
+flush_aplot();
+free_aplot();
+close_aplot();
+
+my $lastv=0;
+my $up=1;
+my $lastt=0;
+my $lastdt=1;
+my $count=0;
+my $sum=0;
+my @t=();
+my %v=();
+my @tf=();
+my @vf=();
+
+open (P, "<aspice:$node.pwl");
+while (<P>) {
+    chomp;
+    my ($t,$v)=split;
+    push @tf, $t;
+    push @vf, $v;
+    $v{$t}=$#tf;
+    if ($up and $v < $lastv) {
+        $up=0;
+        if (abs($lastdt-$t+$lastt) < 0.05*$lastdt) {
+            push @t, $lastt if ! @t;
+            push @t, $t;
+            $sum += $t-$lastt;
+            $count++;
+        }
+        $lastdt=$t-$lastt;
+        $lastt=$t;
+    }
+    elsif (! $up and $v > $lastv) {
+        $up=1;
+    }
+    $lastv=$v;
+}
+my @vg=();
+open (P, "<aspice:IGND.pwl") or die "IGND";
+while (<P>) {
+    chomp;
+    my ($t,$v)=split;
+    push @vg, $v;
+}
+my @vv=();
+open (P, "<aspice:IVdd.pwl") or die"IVdd";
+while (<P>) {
+    chomp;
+    my ($t,$v)=split;
+    push @vv, $v;
+}
+my $x=int($#t/2);
+my $st=$t[$x];
+my $t=$t[$x];
+my $nv1=$v{$t}-1;
+my $v1=$vf[$nv1];
+my $t1=$tf[$nv1];
+$st=$t1;
+$t = $tf[$nv1];
+my $cellname=$cell;
+if ($name_space ne "cast") {
+    $cellname=`echo '$cell' | rename --type=cell --from=cast --to=$name_space`;
+    chomp $cellname;
+    $cellname=$cell if ( ! length($cellname));
+}
+open (P, ">$cellname.pwl");
+select P;
+print "IGND PWL (";
+while ($t < $t[$x+1]) {
+    my $v=$vf[$nv1];
+    my $vg=$vg[$nv1];
+    my $vv=$vv[$nv1];
+    my $tt=sprintf "%.5f",$t-$st;
+    printf "+ ${tt}e-9 $vg\n";
+    $nv1++;
+    $t = $tf[$nv1];
+}
+print ")";
+$x=int($#t/2);
+$st=$t[$x];
+$t=$t[$x];
+$nv1=$v{$t}-1;
+$v1=$vf[$nv1];
+$t1=$tf[$nv1];
+$st=$t1;
+$t = $tf[$nv1];
+print "iVdd PWL (";
+while ($t < $t[$x+1]) {
+    my $v=$vf[$nv1];
+    my $vg=$vg[$nv1];
+    my $vv=$vv[$nv1];
+    my $tt=sprintf "%.5f",$t-$st;
+    printf "+ ${tt}e-9 $vv\n";
+    $nv1++;
+    $t = $tf[$nv1];
+}
+print ")";
+close P;
+$x=int($#t/2);
+$st=$t[$x];
+$t=$t[$x];
+$nv1=$v{$t}-1;
+$v1=$vf[$nv1];
+$t1=$tf[$nv1];
+$st=$t1;
+$t = $tf[$nv1];
+open (P, ">$cell.dat");
+select P;
+while ($t < $t[$x+1]) {
+    my $v=$vf[$nv1];
+    my $vg=$vg[$nv1];
+    my $vv=$vv[$nv1];
+    my $tt=sprintf "%.5f",$t-$st;
+    printf "$tt $v $vg $vv\n";
+    $nv1++;
+    $t = $tf[$nv1];
+    $range=$tf[$nv1]*1e-9;
+}
+if ($debug) {
+my $plt=<<PLT;
+set grid
+set title "CELLNAME CORNER VOLTAGE TEMPERATURE"
+plot "CELLNAME.dat" using 1:(\$3*1e3) smooth unique title "IGND*1e3", "CELLNAME.dat" using 1:(\$4*1e3) smooth unique title "IVdd*1e3", "CELLNAME.dat" using 1:2 smooth unique title "R.e", "CELLNAME.dat" using 1:((\$4+\$3)*1e3) smooth unique title "SumI*1e3"
+PLT
+
+$plt =~ s/CELLNAME/$cell/g;
+$plt =~ s/VOLTAGE/$true/g;
+$plt =~ s/TEMPERATURE/$temp/g;
+$plt =~ s/CORNER/$corner/g;
+open (P, "| gnuplot -persist");
+print P $plt;
+close P;
+} # end debug plot
+
+my $config_template=<<CONFIG;
+CELL CELLNAME {
+    FILENAME {
+        CELLNAME.pwl Vdd=VDDVALUE
+    }
+    SLEW {
+        MEASURED_SLEW
+    }
+    LOAD {
+        CAP_LOAD
+    }
+}
+CDEV {
+  Vdd GND {
+    C0 = DCAP
+    C1 = DCAP
+    R0 = 0
+    R1 = 0
+    LEAK0 = LEAKAGE
+    LEAK1 = LEAKAGE
+  }
+}
+
+CUSTOM_STATE_SIM_TIME {
+    state_on "" "" 0e-9 RANGE
+}
+VDD_PIN Vdd
+VSS_PIN GND
+
+CONFIG
+$dcap=0 if ! defined $dcap;
+my $config=$config_template;
+$config =~ s/CELLNAME/$cellname/g;
+$config =~ s/VDDVALUE/$true/g;
+$config =~ s/LEAKAGE/$leakage/g;
+$config =~ s/RANGE/$range/g;
+$config =~ s/DCAP/$dcap/g;
+$config =~ s/CAP_LOAD/$cap_load/g;
+$config =~ s/MEASURED_SLEW/$slew/g;
+open (P, ">$cellname.config");
+print P $config;
+close P;
+`sync`;
+sleep 1;
+`$ENV{RH_SCRIPT} sim2iprof $cellname.config`;
+if (! $debug) {
+    opendir (D, ".");
+    my @files=readdir(D);
+    foreach my $file (@files) {
+        $_=$file;
+        if (/^gmon\.out$/ or /^aspice:.*.pwl$/ or /\.dat$/ or /wvc.log/ or /^\.run\.setting/) {
+            unlink $file;
+        }
+    }
+}

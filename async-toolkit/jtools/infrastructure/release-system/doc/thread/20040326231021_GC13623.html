@@ -1,0 +1,39 @@
+<pre>
+
+On Fri, Mar 26, 2004 at 03:02:25PM -0800, Bevan C. Bennett wrote:
+> Jesse Rosenstock wrote:
+> >If we support three platforms, we should do the nightly build on all
+> >three platforms to make sure one doesn't get broken.  That would also
+> >mean having Bevan buy and maintain a Mac.  As you mention, we will also
+> >want build support to build and install on all 3 platforms, either through
+> >qsub or cross compilers.
+> 
+> Where did this requirement for PowerPC support come from?
+> Was there a discussion?
+> It's more likely that we'll need to support Linux/AMD (or other 64-bit 
+> Linux) in the not-very-distant future.
+
+Davies snuck it into
+http://internal/eng/depot/sw/infrastructure/release-system/main/doc/index.html
+Look under the Packages section.  "Three platforms will be supported":
+Linux-i686, SunOS-sun4u, and Darwin-powerpc.
+
+> It's my understanding that the plan already includes the ability for a 
+> particular project to stick with whatever tool releases they wish (by 
+> adjusting their project-specific config files). Once we release the v1.1 
+> tools into this structure, Nevada could keep using them even when Tahoe 
+> switches to v1.5 (or v2.0), and patches could be applied when needed 
+> against that older version without interfering with any other versions.
+> Downside: an important patch may need to be applied to all active versions.
+
+Their ability to stick with a specific "release" seems to be to stick
+with a changelist number in the single line of development.  There
+doesn't seem to be any place different branches to go.
+
+> The whole 'how to branch' discussion seems (to me) to be an issue 
+> internal to a particular tools' development team. Whichever method gets 
+> chosen for a particular tool shouldn't effect me, /usr/local/fulcrum, or 
+> this plan.
+
+Well, we need a place to put 1.1, 1.1.1, 1.2, etc.
+</pre>

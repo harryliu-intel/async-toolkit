@@ -1,0 +1,7 @@
+The system-level document describing the TSim System (version 1) is found in
+  source/java-cad/doc/systems/
+
+The file "package.html" is used to provide package-level documentation in
+Javadoc.  Do not remove this file.  Keep this file up-to-date as to important
+system-level issues.
+

@@ -1,0 +1,98 @@
+<html>
+<head> <title>CSP2Java</title></head>
+<body>
+    <h1> CSP2Java: A CSP to Java translator </h1>
+
+        <h2>Introduction</h2>
+            
+            <p> CSP2Java generates Java cosim modules from cell behavioral
+            models written in CSP. </p>
+
+            <p> For an introduction to CSP, see link (XXX: ref).
+            </p>
+
+        <h2>Example Usage</h2>
+
+            <p> Using the <code>FULLADDER</code> cell as an example,
+            let's look at the CAST:</p>
+
+            <pre>
+define FULLADDER()(e1of2 -a,-b,-c,+s,+d) {
+    csp {
+        var xa, xb, xc: int;
+        in *[a?xa,b?xb,c?xc; s!(xa+xb+xc)%2,d!(xa+xb+xc&gt;1)] 
+    }
+}
+            </pre>
+
+            <p> Run <code>dsim</code>. </p>
+
+        <h2>Limitations / Warts</h2>
+
+            <ol>
+                <li> Currently, CSP2Java is strictly a macro preprocessor,
+                having no understanding of the code being converted.  
+                It catches syntax errors, but any type checking errors
+                will not be caught until the generated Java is compiled.
+                This may change in the future. </li>
+
+                <li> The only first class objects are <code>int</code>s,
+                and arrays.  Channels are not first class objects. </li>
+
+                <li> <code>int</code>s are passed by value,
+                arrays by reference. </li>
+
+                <li> All operations are bitwise, ie there is no
+                <code>&amp;&amp;</code> operator.  
+                
+                <li>There is no boolean data type. </li>
+
+                <li>Comments are not nestable, but should be.</li>
+
+                <li><code> true = ~false = ~0 = -1 </code>
+
+                <li>Metaparameters are unsupported until cosim supports
+                them.</li>
+
+                <li>Macros are unsupported.</li>
+
+                <li>Ability to specify wide channels in the port list as
+                <code>e1of4[16] a</code>.  Currently, wide channels
+                must be specifed in the java block as
+                <code>a(e1of4*16)</code>.</li>
+            </ol>
+
+        <h2>Requested Features</h2>
+
+            <ol>
+                <li> Array slicing, ie <code>a[x..y]</code>.</li>
+
+                <li> Produce a runtime error if more than one guard of
+                a deterministic selection or repetition statement is true.
+                </li>
+
+                <li> Ability to link non-deterministic selection or
+                repetition statements to production rules via
+                LinkedArbiter class.  </li>
+                </li>
+            </ol>
+
+        <h2>Recently Added Features</h2>
+
+            <ol>
+                <li> Bit extraction from integers.  <code>x[n:m]</code>
+                (or some other syntax) as a synonym for
+                <code>(x &amp; ((1 &lt;&lt; (n + 1) - 1)) &gt;&gt; m</code>.
+		</li>
+
+                <li>Support for arrays of channels.</li>
+
+                <li> Channels no longer must be declared in the
+                <code>java</code> block.  They can be inferred from the CAST
+                cell port list. </li>
+
+            </ol>
+
+
+</body>
+</html>

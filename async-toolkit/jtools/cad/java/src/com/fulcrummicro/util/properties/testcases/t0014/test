@@ -1,0 +1,9 @@
+<test>
+<!-- basic math test -->
+<config>
+<opt name="test.a" type="String" default="${1+1}"/>
+<opt name="test.b" type="String" default="${1+1.5}x"/>
+<opt name="test.c" type="String" default="${1+}"/>
+</config>
+
+</test>

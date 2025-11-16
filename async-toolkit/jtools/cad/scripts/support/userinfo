@@ -1,0 +1,37 @@
+#!/bin/bash
+# AAG
+# $Id: userinfo,v 1.2 2013/03/22 15:55:47 aagrey Exp aagrey $
+
+export PATH=.:$PATH
+for user in $*; do
+user=`echo $user | sed -e 's/\..*//'`
+echo $user
+ldapout=`ldapsearch -x -LLL -h corpad.glb.intel.com:3268 -D 'CN=sys_ts_klocwork,OU=Generic-Account,OU=Resources,DC=amr,DC=corp,DC=intel,DC=com'  -w fulcrum99@ "(&(uid=$user))" | awk -F/ '/Linked User/ {u=$NF} /gecos/ {e=substr($NF,8)} /uidNumber:/ {wwid=$0} END {print wwid; print tolower(e); print u}' | sed -e 's/,[1-9].*/@intel.com/' -e 's/uidNumber: //'`
+wwid=`echo $ldapout | awk '{print $1}'`
+email=`echo $ldapout | awk '{print $2}'`
+echo $email $wwid
+name=`echo $ldapout | awk '{for (n=3; n<=NF; n++) {printf $n " "}}'`
+name=`echo $ldapout | awk '{for (n=3; n<=NF; n++) {printf toupper(substr($n,1,1)) substr($n,2) " "}}'`
+if [ -z "$name" -a -n "$email" ]; then
+    name=`echo $email | sed -e 's/@.*//' | grep -v ',' | awk -F. '{print toupper(substr($NF,1,1)) substr($NF,2) ", " toupper(substr($1,1,1)) substr($1,2)}'`
+fi
+echo "$name"
+grp=`groups $user 2>&1| sed -e 's/.*: *//'`
+echo "Unix Groups: $grp"
+p4user=`awk "\\$2 == \"$user\" {print \\$1}" /p/rrc/tools/triggerbin/users`
+if [ -z $p4user ]; then p4user=$user; fi
+if [[ `/usr/intel/bin/p4 -u aubrey users | grep -c "^$p4user "` -gt 0 ]] ; then 
+p4=`p4 groups $p4user`
+echo "P4 groups for $p4user :" $p4
+else 
+echo "No p4 account"
+fi
+if [ -n "$email" ]; then bugzillauser $email; else echo ""; fi
+if [[ -d "/p/work/$user" ]]; then
+    sz=`df -hP /p/work/$user | awk '/wdisk/ {print $4}'`;
+    dk=`/bin/ls -ld /p/work/$user/ | awk '/^d/{print $1,$4}'`;
+    echo "Work disk exists $sz $dk";
+else
+    echo "No work disk";
+fi
+done

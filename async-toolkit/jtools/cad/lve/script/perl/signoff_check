@@ -1,0 +1,60 @@
+#!/usr/intel/bin/perl -w
+
+# Goofy little script to find lvs_signoff and drc_signoff files, and
+# summarize them in a more user-friendly form.  Run from your dfII
+# root directory.
+
+$rename = "rename";
+
+# find all drc signoffs
+$find = `find . -name drc_signoff`;
+chomp($find);
+@drc_signoffs = split("\n",$find);
+
+# find all lvs signoffs
+$find = `find . -name lvs_signoff`;
+chomp($find);
+@lvs_signoffs = split("\n",$find);
+
+# which drc rules were signed off?
+open OUT, ">drc.signoff" or die "ERROR: can't write drc.signoff\n";
+foreach $d (@drc_signoffs) {
+    $cell = cadence_rename($d);
+    print OUT "/*** $cell ***/\n";
+    print OUT `grep LOCALLY_SIGNOFF_ALL $d`;
+    print OUT `grep rule $d | sort | uniq`;
+    print OUT "\n";
+}
+close OUT;
+
+# which cells were drc signed off?
+open OUT, ">cells.signoff" or die "ERROR: can't write cells.signoff\n";
+foreach $d (@drc_signoffs) {
+    $cell = cadence_rename($d);
+    print OUT "/*** $cell ***/\n";
+    print OUT `grep cell $d | sort | uniq`;
+    print OUT "\n";
+}
+close OUT;
+
+# what were the lvs signoffs all about?
+open OUT, ">lvs.signoff" or die "ERROR: can't write lvs.signoff\n";
+foreach $l (@lvs_signoffs) {
+    $cell = cadence_rename($l);
+    print OUT "/*** $cell ***/\n";
+    print OUT `cat $l`;
+    print OUT "\n";
+}
+close OUT;
+
+# rename cadence file name to cast name
+sub cadence_rename {
+    my ($cell) = @_;
+    my @fields = split("/",$cell);
+    my $name = $fields[@fields-3];
+    $name =~ s|#2e|\.|g;
+    $name =~ s|#2d|-|g;
+    $name = `echo \"$name\" | $rename --type=cell --from=cadence --to=cast`;
+    chomp($name);
+    return $name;
+}

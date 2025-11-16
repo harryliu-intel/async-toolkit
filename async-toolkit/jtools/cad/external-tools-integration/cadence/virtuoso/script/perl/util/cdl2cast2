@@ -1,0 +1,1025 @@
+#!/usr/bin/perl -l
+# AAG
+# $Id: cdl2cast2,v 1.1 2013/05/09 23:08:48 aagrey Exp aagrey $
+# $DateTime$
+
+# intended for large single cells with hierarchy.
+
+use strict;
+use Getopt::Long;
+
+my $library;
+my $sub_type=0;
+my $refinement_parent="";
+my $gnd_node="VSS";
+my $vdd_node="VDD";
+my @implied=();
+my %implied=();
+my $verbose=0;
+my $scale=1;
+my $sep=".";
+my %graybox_list=();
+my $max_heap_size="2G";
+my $libfile=""; # for determining port direction
+my %direction=();
+my $output_dir=undef;
+my %dirlookup=("input" => "-", "output" => "+", "inout" => "-+", "" => "-+");
+my %resistors=(
+   "rm1" => 1,
+   "rm10w" => 1,
+   "rm1w" => 1,
+   "rm2w" => 1,
+   "rm3w" => 1,
+   "rm4w" => 1,
+   "rm5w" => 1,
+   "rm6w" => 1,
+   "rm7w" => 1,
+   "rm8w" => 1,
+   "rm9w" => 1,
+   "rmap" => 1,
+   "rnmg" => 1,
+   "rnmg_m" => 1,
+   "rnodl" => 1,
+   "rnodl_m" => 1,
+   "rnods" => 1,
+   "rnods_m" => 1,
+   "rnodwo" => 1,
+   "rnodwo_m" => 1,
+   "rnpolywo" => 1,
+   "rnwod" => 1,
+   "rnwod_m" => 1,
+   "rnwsti" => 1,
+   "rnwsti_m" => 1,
+   "rpmg" => 1,
+   "rpmg_m" => 1,
+   "rpodl" => 1,
+   "rpodl_m" => 1,
+   "rpods" => 1,
+   "rpods_m" => 1,
+   "rpodwo" => 1,
+   "rpodwo_m" => 1,
+   "rppolywo" => 1,
+   "rupolym" => 1,
+   "rupolym_m" => 1,
+   "rupolym_rf" => 1,
+);
+
+my $cdl;
+
+my $topcell;
+
+my %devicetranslation = (
+   "N" => "nmos",
+   "NCH" => "nmos",
+   "NCHPD_SR" => "nmospd_sr",
+   "NCHPG_SR" => "nmospg_sr",
+   "NCH_HVT" => "nmos_hvt",
+   "NCH_SRAM" => "nmos_sram",
+   "P" => "pmos",
+   "PCH" => "pmos",
+   "PCHPU_SR" => "pmospu_sr",
+   "PCH_HVT" => "pmos_hvt",
+   "PCH_SRAM" => "pmos_sram",
+   "nch" => "nmos",
+   "nch_15_mac" => "nmos_15_mac",
+   "nch_15od18_mac" => "nmos_15od18_mac",
+   "nch_18" => "nmos_18",
+   "nch_18_mac" => "nmos_18_mac",
+   "nch_18ud12_mac" => "nmos_18ud12_mac",
+   "nch_18ud15_mac" => "nmos_18ud15_mac",
+   "nch_25_mac" => "nmos_25_mac",
+   "nch_25od33_mac" => "nmos_25od33_mac",
+   "nch_25ud18_mac" => "nmos_25ud18_mac",
+   "nch_33_mac" => "nmos_33_mac",
+   "nch_chvt_mac" => "nmos_chvt_mac",
+   "nch_dnw" => "nmos_dnw",
+   "nch_edc_mac" => "nmos_edc_mac",
+   "nch_hg_mac" => "nmos_hg_mac",
+   "nch_hguhvt_mac" => "nmos_hguhvt_mac",
+   "nch_hia15_mac" => "nmos_hia15_mac",
+   "nch_hia18_mac" => "nmos_hia18_mac",
+   "nch_hia25_mac" => "nmos_hia25_mac",
+   "nch_hia_mac" => "nmos_hia_mac",
+   "nch_hlqrpsr" => "nmos_hlqrpsr",
+   "nch_hlrpsr" => "nmos_hlrpsr",
+   "nch_hlsvtrpsr" => "nmos_hlsvtrpsr",
+   "nch_hvt" => "nmos_hvt",
+   "nch_hvt_mac" => "nmos_hvt_mac",
+   "nch_hvtrpsr" => "nmos_hvtrpsr",
+   "nch_io_lvt_mac" => "nmos_io_lvt_mac",
+   "nch_llrpsr" => "nmos_llrpsr",
+   "nch_lvt" => "nmos_lvt",
+   "nch_lvt18ud12_mac" => "nmos_lvt18ud12_mac",
+   "nch_lvt_mac" => "nmos_lvt_mac",
+   "nch_lvtrpsr" => "nmos_lvtrpsr",
+   "nch_mac" => "nmos_mac",
+   "nch_mlvt_mac" => "nmos_mlvt_mac",
+   "nch_na15_mac" => "nmos_na15_mac",
+   "nch_na18" => "nmos_na18",
+   "nch_na18_mac" => "nmos_na18_mac",
+   "nch_na18ud15_mac" => "nmos_na18ud15_mac",
+   "nch_na25_mac" => "nmos_na25_mac",
+   "nch_na25od33_mac" => "nmos_na25od33_mac",
+   "nch_na25ud18_mac" => "nmos_na25ud18_mac",
+   "nch_na33_mac" => "nmos_na33_mac",
+   "nch_na_mac" => "nmos_na_mac",
+   "nch_qrpsr" => "nmos_qrpsr",
+   "nch_rom" => "nmos_rom",
+   "nch_rpsr" => "nmos_rpsr",
+   "nch_svt_sp_mac" => "nmos_svt_sp_mac",
+   "nch_svtrpsr" => "nmos_svtrpsr",
+   "nch_uhvt_mac" => "nmos_uhvt_mac",
+   "nch_ulvt_mac" => "nmos_ulvt_mac",
+   "nch_zvt_mac" => "nmos_zvt_mac",
+   "nchpd_dpsr" => "nmospd_dpsr",
+   "nchpd_hldpsr" => "nmospd_hldpsr",
+   "nchpd_hlsr" => "nmospd_hlsr",
+   "nchpd_hvtsr" => "nmospd_hvtsr",
+   "nchpd_lldpsr" => "nmospd_lldpsr",
+   "nchpd_llsr" => "nmospd_llsr",
+   "nchpd_sr" => "nmospd_sr",
+   "nchpg_dpsr" => "nmospg_dpsr",
+   "nchpg_hldpsr" => "nmospg_hldpsr",
+   "nchpg_hlsr" => "nmospg_hlsr",
+   "nchpg_hvtsr" => "nmospg_hvtsr",
+   "nchpg_lldpsr" => "nmospg_lldpsr",
+   "nchpg_llsr" => "nmospg_llsr",
+   "nchpg_sr" => "nmospg_sr",
+   "nchrpd_sr" => "nmosrpd_sr",
+   "pch" => "pmos",
+   "pch_15_mac" => "pmos_15_mac",
+   "pch_15od18_mac" => "pmos_15od18_mac",
+   "pch_18" => "pmos_18",
+   "pch_18_mac" => "pmos_18_mac",
+   "pch_18ud12_mac" => "pmos_18ud12_mac",
+   "pch_18ud15_mac" => "pmos_18ud15_mac",
+   "pch_25_mac" => "pmos_25_mac",
+   "pch_25od33_mac" => "pmos_25od33_mac",
+   "pch_25ud18_mac" => "pmos_25ud18_mac",
+   "pch_33_mac" => "pmos_33_mac",
+   "pch_alvt_mac" => "pmos_alvt_mac",
+   "pch_hg_mac" => "pmos_hg_mac",
+   "pch_hguhvt_mac" => "pmos_hguhvt_mac",
+   "pch_hvt" => "pmos_hvt",
+   "pch_hvt_mac" => "pmos_hvt_mac",
+   "pch_lvt" => "pmos_lvt",
+   "pch_lvt_mac" => "pmos_lvt_mac",
+   "pch_mac" => "pmos_mac",
+   "pch_mlvt_mac" => "pmos_mlvt_mac",
+   "pch_svt_sp_mac" => "pmos_svt_sp_mac",
+   "pch_uhvt_mac" => "pmos_uhvt_mac",
+   "pch_ulvt_mac" => "pmos_ulvt_mac",
+   "pchpu_2psr" => "pmospu_2psr",
+   "pchpu_dpsr" => "pmospu_dpsr",
+   "pchpu_hldpsr" => "pmospu_hldpsr",
+   "pchpu_hlsr" => "pmospu_hlsr",
+   "pchpu_hvtsr" => "pmospu_hvtsr",
+   "pchpu_lldpsr" => "pmospu_lldpsr",
+   "pchpu_llsr" => "pmospu_llsr",
+   "pchpu_sr" => "pmospu_sr",
+);
+
+sub usage {
+    my ($msg) = @_;
+    print STDERR "$msg" if defined $msg;
+    print <<EU;
+Usage cdl2cast2 [options] <cdlfile>
+    options
+    lib               : the cast library name
+    sub-type          : the desired subtype for this cell
+    refinement-parent : the cast refinement parent
+    gnd-node          : the cdl GND node
+    vdd-node          : the cdl Vdd node
+    implied           : extra implied node(s)
+    max-heap-size     : normal java max-heap-size
+    cell              : the name of the top cell
+    libfile           : file with cell lib port directions defined
+    output-dir        : place for the cast/spec files
+    verbose           :
+EU
+exit 1;
+}
+
+sub getdirection {
+    my ($cell,$pin) = @_;
+    my %dir=();
+    %dir=%{$direction{$cell}} if defined $direction{$cell};
+    if (! defined ($dir{$pin})) {
+        my $x = $pin;
+        $x =~ s/\[.*//;
+        $dir{$pin} = $dir{$x} if defined $dir{$x};
+        $dir{$pin} = "-" if ! defined($dir{$pin}) and $pin =~ /VDD/i;
+        $dir{$pin} = "-" if ! defined($dir{$pin}) and $pin =~ /GND$/i;
+        $dir{$pin} = "-+" if ! defined $dir{$pin};
+    }
+    $dir{$pin};
+}
+
+sub parselibfile {
+    my ($file) = @_;
+    open (P, "<$file");
+    print STDERR "Parsing $file" if $verbose;
+    my $cell;
+    my $pin;
+    my $bus;
+    my $bus_type;
+    my %bit_width;
+    my %bit_from;
+    my %bit_to;
+    my $direction;
+    while (<P>) {
+        chomp;
+        if (/^\s*cell\s*\(\s*(.*)\s*\)/) {
+            $cell=$1;
+            $cell =~ s/\s//g;
+            $cell =~ s/"//g;
+            $cell =~ s/'//g;
+        }
+        if (/^\s*type\s*\(\s*(\S+)\s*\)/) {
+            $bus_type = $1;
+            while (<P>) {
+                chomp;
+                if (/^\s*(\S+)\s*:\s*(\S+)\s*;/) {
+                    if ($1 eq "bit_width") {
+                        $bit_width{$bus_type}=$2;
+                    }
+                    if ($1 eq "bit_from") {
+                        $bit_from{$bus_type}=$2;
+                    }
+                    if ($1 eq "bit_to") {
+                        $bit_to{$bus_type}=$2;
+                    }
+                }
+                if (/^\s*\x7d/) {
+                    last;
+                }
+            }
+        }
+        if (/^\s*pin\s*\(\s*(.*)\s*\)/) {
+            $pin = $1;
+            undef $bus;
+        }
+        if (/^\s*bus\s*\(\s*(.*)\s*\)/) {
+            $bus = $1;
+            undef $pin;
+        }
+        if (/^\s*bus_type\s*:\s*(\S+)\s*;/) {
+            $bus_type = $1;
+            print STDERR "BUS TYPE $bus_type not defined" if ! defined $bit_width{$bus_type};
+        }
+        if (/^\s*direction\s*:\s*(.*)\s*;/) {
+            $direction=$1;
+            $direction =~ s/\s//g;
+            $direction = $dirlookup{$direction};
+            if (defined ($pin)) {
+                $direction{$cell}->{$pin}=$direction;
+                if ($pin =~ /\[/) {
+                    my $base=$pin;
+                    $base =~ s/\[.*//;
+                    $direction{$cell}->{$base}=$direction;
+                }
+            }
+            elsif (defined ($bus)) {
+                my $to = $bit_to{$bus_type};
+                my $from = $bit_from{$bus_type};
+                my $width = $bit_width{$bus_type};
+                if (defined ($to) and defined ($from) and abs($from-$to)+1 != $width) {
+                    print STDERR "Bus definition may be inconsistent for $bus_type";
+                }
+                if ($to < $from) {
+                    my $x = $from;
+                    $from = $to;
+                    $to = $x;
+                }
+                $direction{$cell}->{"$bus"}=$direction;
+                for (my $n = $from; $n <= $to; $n++) {
+                    $direction{$cell}->{"$bus\[$n\]"}=$direction;
+                }
+            }
+        }
+    }
+}
+
+GetOptions (
+    "lib=s" => \$library,
+    "libfile=s" => \$libfile,
+    "sub-type=s" => \$sub_type,
+    "refinement-parent=s" => \$refinement_parent,
+    "gnd-node=s" => \$gnd_node,
+    "vdd-node=s" => \$vdd_node,
+    "verbose" => \$verbose,
+    "implied=s" => sub {
+        push @implied, split(/,/,$_[1]);
+        foreach my $i (@implied) {
+            $implied{$i}=1;
+        }
+    },
+    "max-heap-size=s" => \$max_heap_size,
+    "cell=s" => \$topcell,
+    "output-dir=s" => \$output_dir,
+) or usage "GetOptions";
+
+$implied{$gnd_node}=1;
+$implied{$vdd_node}=1;
+if ($libfile ne "" and -f $libfile) {
+    parselibfile($libfile);
+}
+print STDERR "Warning: $libfile not found" if (! -f $libfile and $libfile ne "");
+
+usage "Library or topcell or sub_type"
+    if ($library eq "") or ($sub_type eq "");
+$cdl = $ARGV[0] if defined $ARGV[0];
+usage if ! -s $cdl;
+
+my $path=$library;
+$path =~ s/\./\//g;
+my $cpath = $path;
+$cpath =~ s/\/[^\/]+$//;
+my $lname=$path;
+$lname =~ s/.*\///;
+$output_dir=$topcell if ! defined $output_dir;
+my $castpath="$output_dir/cast/$cpath";
+my $specpath="$output_dir/spec/$path";
+my $vcell="xCBLK4_mem28_sr1p11_16384x30_pgr_16lm_rrc"; #for debugging
+
+`mkdir -p "$castpath"` if ! -d "$castpath";
+`mkdir -p "$specpath"` if ! -d "$specpath";
+
+open (P, "<$cdl") or die "Cannot open $cdl";
+my %subckts=();
+my %subcktsinfo=();
+my %lines=();
+my $ln="";
+my $subckt="";
+my @lines=();
+my %types=();
+my %gnd=();
+my %vdd=();
+my %order=();
+my %place=();
+my %warnings=();
+my %sdefs=();
+my %subtypes=();
+my %hasnox=();
+my $xcnt=0;
+my $hasparams=0;
+my %called=();
+my @pins=();
+my @subckts=();
+my @subcktcalls=();
+my @lines=();
+my %localcalled=();
+# read in the cdl
+while (<P>) {
+    chomp;
+    next if (/^\*/);
+    s/ \$.*//;
+    if (/^\+/) {
+        s/^\+/ /;
+        $ln .= $_;
+        next;
+    }
+    my $lx = $_;
+    $_ = $ln;
+    $ln = $lx;
+    s/\s+/ /g;
+    next if /^\*/;
+    s/ \$.*//;
+    next if /^$/;
+    if (/^\.subckt/i) {
+        my @f=split;
+        shift @f;
+        $subckt = shift @f;
+        $gnd{$subckt}=$vdd{$subckt}=-1;
+        @lines=();
+        @pins=();
+        @subckts=();
+        @subcktcalls=();
+        %localcalled=();
+        my %params=();
+        my $type="subcells";
+        foreach my $n (0..$#f) {
+            if ($f[$n] eq "$gnd_node" or $f[$n] eq "GND" or $f[$n] =~ /^vss$/i) {
+                $gnd{$subckt} = $n;
+                $f[$n] = "GND";
+            }
+            if ($f[$n] eq "$vdd_node" or $f[$n] =~ /^vdd$/i) {
+                $vdd{$subckt} = $n;
+                $f[$n] = "Vdd";
+            }
+            print STDERR "ORDER $subckt $n $f[$n]" if $verbose and $subckt eq $vcell;
+            if ($f[$n] =~ /=/) {
+                my ($param,$val)=split(/=/,$f[$n]);
+                $val =~ s/'//g;
+                $val =~ s/(\d)u/${1}*1e-6/;
+                $val =~ s/(\d)n/${1}*1e-9/;
+                $val =~ s/(\d)p/${1}*1e-12/;
+                $val =~ s/(\d)f/${1}*1e-15/;
+                $params{$param}=$val;
+            }
+            else {
+                push @pins,$f[$n];
+                print STDERR "ORDER $subckt:$n $f[$n]" if $verbose;
+                $order{"$subckt:$n"}=$f[$n];
+            }
+        }
+        printf STDERR "SUBCKT $subckt $topcell\n" if $verbose;
+        $subckts{$subckt}=[@f];
+        $_=".SUBCKT ".join(" ", @f);
+        push @lines, $_;
+        $xcnt=0;
+        $hasparams=1 if /=/;
+        $subcktsinfo{$subckt}->{lines}=[@lines];
+        $subcktsinfo{$subckt}->{pins}=[@pins];
+        $subcktsinfo{$subckt}->{subckts}=[@subcktcalls];
+        $subcktsinfo{$subckt}->{params}={%params};
+        next;
+    }
+    if (/^\.ends/i) {
+        push @lines, $_;
+        $lines{$subckt}=[@lines];
+        $hasnox{$subckt}=$xcnt > 0 ? 0 : 1;
+        $subcktsinfo{$subckt}->{pins}=[@pins];
+        $subcktsinfo{$subckt}->{lines}=[@lines];
+        $subcktsinfo{$subckt}->{subckts}=[@subcktcalls];
+        $subcktsinfo{$subckt}->{called}={%localcalled};
+        $subckt = "";
+        next;
+    }
+    if ($subckt ne "") {
+        my @f=split;
+        if (/^x/i and !$resistors{$f[3]}) {
+            $xcnt++;
+            my $call=$f[$#f];
+            my $n=$#f;
+            for ($n=$#f; $f[$n] =~ /=/ and $n > 0; $n--) { }
+            $call=$f[$n];
+            $called{$call}=1;
+            $localcalled{$call}=1;
+            $types{$subckt}="subcells" if ! defined $types{$subckt};
+            if (! $warnings{$subckt} and defined($types{$subckt}) and $types{$subckt} ne "subcells") {
+                $warnings{$subckt}=1;
+                print STDERR "Mixed type in subckt $subckt line $." if $verbose;
+            }
+        }
+        elsif (/^[a-z]/i) {
+            if (! $warnings{$subckt} and defined($types{$subckt}) and $types{$subckt} ne "netlist") {
+                print STDERR "Mixed type in subckt $subckt line $." if $verbose;
+                $warnings{$subckt}=1;
+            }
+            $types{$subckt}="netlist";
+        }
+        foreach my $f (@f) {
+            $f = "Vdd" if $f eq $vdd_node or $f =~ /^vdd$/i;
+            $f = "GND" if $f eq $gnd_node or $f =~ /^gnd$/i or $f =~ /^vss$/i;
+        }
+        push @lines, join(" ", @f);
+        push @subcktcalls, join(" ", @f) if /^x/i;
+    }
+}
+if ($ln =~ /^\.ends/i) {
+    push @lines, $ln;
+    $lines{$subckt}=[@lines];
+    $hasnox{$subckt}=$xcnt > 0 ? 0 : 1;
+    $subcktsinfo{$subckt}->{pins}=[@pins];
+    $subcktsinfo{$subckt}->{lines}=[@lines];
+    $subcktsinfo{$subckt}->{subckts}=[@subcktcalls];
+    $subcktsinfo{$subckt}->{called}={%localcalled};
+}
+close P;
+my $lvl=0;
+my %subtypedefs=();
+my %celldone=();
+sub expandvalue {
+    my ($value, $ln) = @_;
+    $value =~ s/'//g;
+    printf STDERR "1 $ln $value => " if $verbose;
+    $value=~ s/([0-9\.])u/$1*1e-6/g;
+    $value=~ s/([0-9\.])n/$1*1e-9/g;
+    $value=~ s/([0-9\.])p/$1*1e-12/g;
+    $value=~ s/([0-9\.])f/$1*1e-15/g;
+    printf STDERR ("$value => ") if $verbose;
+    eval("\$value = $value");
+    printf STDERR ("$value\n") if $verbose;
+    $value;
+}
+
+my $checksubckt="";
+sub setvalue {
+    my ($ln, $value,%param1,%param2)=@_;
+    %param2=() if (!%param2);
+    %param1=() if (!%param1);
+    my $invalue=$value;
+    my $pp;
+    printf STDERR "setvalue $checksubckt $ln ".join(",",(sort keys %param1))." $value => " if $verbose;
+    foreach my $param (sort {$b cmp $a} keys %param1) {
+        $pp = $param1{$param};
+        $pp = expandvalue ($pp, __LINE__);
+        $value =~ s:\b$param\b:$pp:g;
+        printf STDERR "$value => " if $verbose;
+    }
+    foreach my $param (sort {$b cmp $a} keys %param2) {
+        $pp = $param2{$param};
+        $pp = expandvalue ($pp, __LINE__);
+        $value =~ s:\b$param\b:$pp:g;
+        printf STDERR "$value => " if $verbose;
+    }
+    $value=expandvalue ($value, __LINE__);
+    print STDERR "$value" if $verbose;
+    $value;
+}
+
+sub gensubtypes {
+    my ($subckt,$subt,$defs)=@_;
+    return 1 if (defined $celldone{$subckt}->{$subt});
+    $celldone{$subckt}->{$subt}=1;
+    if (! $subcktsinfo{$subckt}->{pins}) {
+        print STDERR "Warning: No pins for $subckt\n";
+        return 0;
+    }
+    my @pins = @{$subcktsinfo{$subckt}->{pins}};
+    my @lines = @{$subcktsinfo{$subckt}->{lines}};
+    # get the subckt default params
+    my %params = %{$subcktsinfo{$subckt}->{params}};
+    foreach my $p (sort keys %params) {
+        printf STDERR ":$p=$params{$p}" if $verbose;
+    }
+    printf STDERR " " if $verbose;
+    my $multiplier=1;
+    if (defined $defs) {
+        my @l=split(/  */,$defs);
+        for( my $n=$#l; $n >= 0 and $l[$n] =~ /=/; $n--) {
+            my ($p,$v)=split(/=/,$l[$n],2);
+            $params{$p}=$v;
+        }
+    }
+    foreach my $p (sort keys %params) {
+        printf STDERR ";$p=$params{$p}" if $verbose;
+    }
+    printf STDERR "\n" if $verbose;
+    $verbose=0;
+    foreach my $ln (@lines) {
+        $_=$ln;
+        next if /^\*/;
+        if (/^\./) {
+            if (/^\.subckt/i) {
+                my @f=split;
+                shift @f;
+                unshift @f, "$subckt.$subt";
+                unshift @f, ".SUBCKT";
+                my @p=();
+                for (my $n=0; ($f[$n] !~ /=/) and $n <= $#f; $n++) {
+                    push @p, $f[$n];
+                }
+                $ln=join(" ", @p);
+            }
+            push @{$subtypedefs{$subckt}->{$subt}}, $ln;
+            next;
+        }
+        $checksubckt=$subckt;
+        if (/^[md]/i) {
+            my @f=split(/ /);
+            my $n=$#f;
+            for ($n=$#f; $f[$n] =~ /=/; $n--) {
+                my ($l,$v)=split(/=/, $f[$n]);
+                $v=setvalue(__LINE__,$v,%params);
+                $f[$n]="$l=$v";
+            }
+            push @{$subtypedefs{$subckt}->{$subt}}, join (" ", @f);
+        }
+        elsif (/^x/i) {
+            my @f=split(/ /);
+            my $n=$#f;
+            my @p=();
+            for ($n=$#f; $f[$n] =~ /=/; $n--) {
+                my ($l,$v)=split(/=/, $f[$n]);
+                $v=setvalue(__LINE__,$v,%params);
+                push @p, "$l=$v";
+            }
+            my $st=$f[$n];
+            if ($st =~ /^r/) {
+                print STDERR "Warning: Unexpected RESISTOR $_";
+                next;
+            }
+            my @stdef;
+            foreach my $x (0..$n-1) {
+                push @stdef, $f[$x];
+            }
+            my $key="";
+            if (@p) {
+                $key=join(" ", sort @p);
+            }
+            if (! defined ($sdefs{$st})) {
+                $sdefs{$st}->{$key}=0;
+                $subtypes{$st}=0;
+            }
+            elsif (! defined ($sdefs{$st}->{$key})) {
+                $sdefs{$st}->{$key}=++$subtypes{$st};
+            }
+            push @stdef, "$st.$sdefs{$st}->{$key}";
+            push @{$subtypedefs{$subckt}->{$subt}}, join(" ", @stdef);
+            gensubtypes($st, $sdefs{$st}->{$key}, join(" ",@p));
+        }
+        else {
+            print STDERR "Warning: Unknown $_";
+        }
+    }
+}
+gensubtypes( $topcell, 0);
+my $totalsubtypes=0;
+foreach my $s (sort keys %subtypedefs) {
+    foreach my $st (sort keys %{$subtypedefs{$s}}) {
+        $totalsubtypes++;
+    }
+}
+my $new=1;
+if (! $new) {
+    foreach my $subckt (sort keys %subckts) {
+        my @f=@{$subckts{$subckt}};
+        my $bus="";
+        my @p=();
+        my $min=0;
+        my $max=0;
+        foreach my $f (sort @f) {
+            if ($f =~ /(.*)\[(\d+)]$/) {
+                my $b=$1;
+                my $c=$2;
+                if ($b ne $bus and $bus ne "") {
+                    push @p, "$bus\[$min..$max\]";
+                    $min = $max = $c;
+                }
+                $bus = $b;
+                $max = $c if $c > $max;
+                $min = $c if $c < $min;
+            }
+            else {
+                if ($bus ne "") {
+                    push @p, "$bus\[$min..$max\]";
+                    $min = $max = 0;
+                }
+                push @p, $f;
+                $bus="";
+            }
+        }
+        if ($bus ne "") {
+            push @p, "$bus\[$min..$max\]";
+            $min = $max = 0;
+            $bus = "";
+        }
+        $subckts{$subckt}=[@p];
+        my $seq=0;
+        foreach my $p (@p) {
+            if ($p =~ /(.*)\[(\d+)..(\d+)\]/) {
+                my $name=$1;
+                my $min=$2;
+                my $max=$3;
+                for (my $n = $min; $n <= $max; $n++) {
+                    $place{"$subckt:$name\[$n\]"} = $seq++;
+                }
+            }
+            else {
+                $place{"$subckt:$p"} = $seq++;
+            }
+        }
+    }
+}
+
+my $dollar='$';
+my $copyright= <<EC;
+/* Copyright 2013 Intel Corporation.  All rights reserved.
+ * ${dollar}Id:${dollar}
+ * ${dollar}DateTime:${dollar}
+ * ${dollar}Author:${dollar}
+ */
+/* Automatically generated.  Modify at your own risk. */
+EC
+
+open (P, ">$castpath/$lname.cast") or die "$!";
+select P;
+print "$copyright";
+print "module $library;";
+my $impliedlist="-".join(", -", sort keys %implied);
+foreach my $node (sort keys %implied) {
+    next if $node eq $gnd_node or $node eq $vdd_node;
+    $impliedlist .= "-$node, ";
+}
+$impliedlist =~ s/\s+$//;
+$impliedlist = "" if $impliedlist eq "-";
+print <<ER;
+
+/*** Refinement parent for all contained cells ***/
+define $refinement_parent()()(node $impliedlist) <+ synchronous <: NULL {
+    directives {
+    /**
+     * SIGNOFF(lines):
+     * Don't try to jlvs/jauto the auto-generated prs.
+     **/ 
+    prs_netlist_mismatch_ok = true;
+    fragment = true;
+    fixed_size = true;
+    routed = true;
+    }
+    env empty subcells {}
+}
+ER
+
+foreach my $subckt (sort keys %subtypedefs ) {
+    my @ports=();
+    if ($subckt eq $topcell) {
+        printf "define \"$subckt\"()( node ";
+        my $lastname="";
+        my $lastdir="-";
+        my $a=$b=-1;
+        foreach my $p (@{$subckts{$subckt}}) {
+            next if $implied{$p};
+            my $dir=getdirection($subckt,$p);
+            my $name=$p;
+            if ($p =~ /(\S+)\[(\d+)\]$/) {
+                $name=$1;
+                my $ndx=$2;
+                if (($name ne $lastname) and ($lastname ne "")) {
+                    if ($a >= 0) {
+                        push @ports, "$lastdir$lastname\[$a..$b\]";
+                    }
+                    else {
+                        push @ports, "$lastdir$lastname";
+                    }
+                }
+                if ($name ne $lastname) {
+                    $a = $b = $ndx;
+                    $lastname=$name;
+                    $lastdir=$dir;
+                }
+                else {
+                    $a=$a < $ndx ? $a : $ndx;
+                    $b=$b > $ndx ? $b : $ndx;
+                }
+            }
+            elsif($lastname ne "" and $a >= 0) {
+                push @ports, "$lastdir$lastname\[$a..$b\]";
+                $a=$b=-1;
+            }
+            elsif ($lastname ne "") {
+                push @ports, "$lastdir$lastname";
+            }
+            $lastname=$name;
+            $lastdir=$dir;
+        }
+        if($lastname ne "" and $a >= 0) {
+            push @ports, "$lastdir$lastname\[$a..$b\]";
+        }
+        else {
+            push @ports, "$lastdir$lastname";
+        }
+#    } {
+#    else {
+#        my $n = 0;
+#        foreach my $p (@{$subckts{$subckt}}) {
+#            next if $implied{$p};
+#            next if $p =~ /=/;
+#            my $dir=getdirection($subckt,$p);
+#            push @ports, "$dir$p";
+#        }
+#    }
+        print join(", ", @ports);
+        print " ) <: $refinement_parent {\n}";
+    }
+}
+select STDOUT;
+close P;
+
+# now the spec files
+sub namefix {
+    my ($s)=@_;
+    $s =~ s/\]/_R_/g;
+    $s =~ s/\[/_L_/g;
+    $s;
+}
+
+sub netlist {
+    my @lines=@_;
+    local $_;
+    print "  netlist \x7b";
+    foreach my $line (@lines) {
+        $_=$line;
+        if (/^x/i) {
+            my @f=split;
+            if ($f[3] =~ /^r/ and $f[4] =~ /=/) {
+                $f[3] = "standard.resistor.$f[3]";
+                $line=join(" ", @f);
+            }
+            print "    $line";
+        }
+        elsif (/^[a-z]/i) {
+            print "    $line";
+        }
+    }
+    print "  \x7d";
+        
+}
+
+sub subcells {
+    my @lines=@_;
+    local $_;
+    print "  subcells \x7b";
+    # collect nodes
+    my %ports=();
+    my %nodes=();
+    my @calls=();
+    my $subcell="";
+    my %subcellports=();
+    foreach my $line (@lines) {
+        $_=$line;
+        my @f=split;
+        if (/^\.subckt/i) {
+            for (my $n = 2; $n <= $#f; $n++) {
+                $ports{$f[$n]}=1 if $f[$n] !~ /=/;
+            }
+        }
+        elsif (/^[a-z]/i) {
+            my $l=$#f;
+            for ($l = $#f; $f[$l] =~ /=/; $l--) {};
+            $subcell=$f[$l];
+            $subcell =~ s/\.\d+$//;
+            my %subcell=();
+            my $x=1;
+            foreach my $p (@{$subckts{$subcell}}) {
+                last if $p =~ /=/;
+                $subcell{$x}=$p;
+                $x++;
+            }
+            my @c=();
+            my %impliedmatch=();
+            my $impliedmismatch=0;
+            for (my $n=1; $n < $l; $n++) {
+                $nodes{$f[$n]}=1 if ! $ports{$f[$n]} and ! $implied{$f[$n]};
+                push @c, $f[$n] if ! $implied{$subcell{$n}};
+                if ($implied{$subcell{$n}}) {
+                    $impliedmatch{$subcell{$n}}=$f[$n];
+                    if ($subcell{$n} ne $f[$n]) {
+                        print STDERR "Implied Mismatch in $subckt $subcell $f[$n] vs. $subcell{$n}" if $verbose;
+                        $impliedmismatch=1;
+                    }
+                }
+            }
+            if ($impliedmismatch) {
+                my @i;
+                foreach my $i (sort keys %impliedmatch) {
+                    push @i, $impliedmatch{$i};
+                }
+                push @calls, "$library.$f[$l] $f[0](".join(",", @c).")(".join(",", @i).");";
+            }
+            else {
+                push @calls, "$library.$f[$l] $f[0](".join(",", @c).");";
+            }
+        }
+    }
+    foreach my $node (sort keys %nodes) {
+        print "    node $node;";
+    }
+    foreach my $line (@calls) {
+        print "    $line";
+    }
+    print "  \x7d";
+}
+
+sub splitnetlist {
+    my @lines=@_;
+    my @netlist=();
+    my %netlistnodes=();
+    my %subcellsnodes=();
+    my @subcells=();
+    local $_;
+    my $netlistline="";
+    my $netlistname="";
+    my $netlistsubtype=0;
+    foreach my $line (@lines) {
+        $_=$line;
+        if (/^\./) {
+            my @f=split;
+            if ($f[0] =~ /^\.subckt$/i) {
+                $f[1] =~ s/\.(\d+)$/_netlist.$1/;
+                $netlistsubtype=$1;
+                $netlistline=join(" ", @f);
+                $netlistname=$f[1];
+                $netlistname =~ s/\.\d+$//;
+            }
+            push @netlist, join(" ", @f);
+            if ($line =~ /^\.ends/) {
+                push @subcells, "xnetlist ".join(" ", sort keys %netlistnodes)." $netlistname.$netlistsubtype";
+            }
+            push @subcells, $line;
+        }
+        if (/^x/i) {
+            my @f=split;
+            if ($f[3] =~ /^r/ and $f[4] =~ /=/) {
+                $f[3] = "standard.resistor.$f[3]";
+                $line=join(" ", @f);
+                $netlistnodes{$f[1]}=1 if ! $implied{$f[1]};
+                $netlistnodes{$f[2]}=1 if ! $implied{$f[2]};
+                push @netlist, $line;
+            }
+            else {
+                push @subcells, $line;
+            }
+        }
+        elsif (/^[a-z]/i) {
+            if (/^m/i) {
+                my @f=split;
+                for (my $n = 1; $n <= 4; $n++) {
+                    $netlistnodes{$f[$n]}=1 if ! $implied{$f[$n]};
+                }
+            }
+            else {
+                my @f=split;
+                for (my $n = 1; $n <= 2; $n++) {
+                    $netlistnodes{$f[$n]}=1 if ! $implied{$f[$n]};
+                }
+            }
+            push @netlist, $line;
+        }
+    }
+    subcells(@subcells);
+    printf "\x7d";
+    close P;
+    mkdir "$specpath/$netlistname";
+    open (P, ">$specpath/$netlistname/$netlistsubtype.cast") or die "$!";
+    select P;
+    print "$copyright";
+    print "module $library.$netlistname;\n";
+    printf "define \"$netlistsubtype\"()";
+    # put nodes here
+    my @f=sort keys %netlistnodes;
+    my @pins=();
+    my $f;
+    while ( (($f = shift @f) !~ /=/) and defined($f)) {
+        push @pins, $f;
+    }
+    if ($#pins >= 0) {
+        printf "( node -+".join(", -+", @pins)." )";
+    }
+    else {
+        printf "()";
+    }
+    print " <: $library.$refinement_parent \x7b";
+    netlist(@netlist);
+}
+
+foreach my $subckt (sort keys %subtypedefs) {
+    foreach my $subtype (sort keys %{$subtypedefs{$subckt}}) {
+        mkdir "$specpath/$subckt";
+        open (P, ">$specpath/$subckt/$subtype.cast") or die "$!";
+        select P;
+        print "$copyright";
+        print "module $library.$subckt;\n";
+        if ($subckt eq $topcell) {
+            print "define \"$subtype\"() <: $library.$subckt \x7b";
+        }
+        else {
+            my @ports=();
+            my $n = 0;
+            print "define \"$subtype\"()(";
+            foreach my $p (@{$subckts{$subckt}}) {
+                next if $implied{$p};
+                next if $p =~ /=/;
+                my $dir=getdirection($subckt,$p);
+                push @ports, namefix("$dir$p");
+            }
+            if (@ports) {
+                print "node ".join(", ", @ports);
+            }
+            print " ) <: $library.$refinement_parent \x7b";
+        }
+        my @lines=@{$subtypedefs{$subckt}->{$subtype}};
+        my $hasx=0;
+        my $hasnx=0;
+        foreach my $line (@lines) {
+            $line = namefix($line) if ($subckt ne $topcell);
+            $_=$line;
+            if (/^x/i) {
+                my @f=split;
+                if (($f[3] =~ /^r/) and ($f[4] =~ /=/)) {
+                    $hasnx++;
+                }
+                else {
+                    $hasx++;
+                }
+            }
+            elsif (/^[a-z]/i) {
+                $hasnx++;
+            }
+        }
+        if (! $hasx and $hasnx ) { # pure netlist or empty
+            netlist(@lines);
+        }
+        elsif (! $hasnx) { # subcells
+            subcells(@lines);
+        }
+        else {
+            print STDERR "Impure netlist for $subckt.$subtype" if $verbose;
+            splitnetlist(@lines);
+        }
+        printf "\x7d";
+        close P;
+    }
+}

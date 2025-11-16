@@ -1,0 +1,145 @@
+#!/bin/bash
+# $Id$
+
+function output() {
+	if [ "$VERBOSE" = "1" ]; then
+		echo "$1"
+	fi
+}
+
+function usage() {
+    echo "Usage: cadencize cell"
+	echo 
+	echo "  -v: verbose"
+	echo "  -o: do not overwrite existing .auto file"
+	echo "  -f: take floorplanning info from mag file"
+	echo "  -m: specify memory usage for java (ex 128M)"
+	echo "  -d: debug mode( honor CLASSPATH )"
+	echo "  -i: import hand layout from magic"
+	echo "  -c: Generate cdl file"
+    exit 1
+}
+
+VERBOSE=0
+OVERWRITE=0
+FLOORPLAN=AUTO
+DEBUG=0
+IMPORT=0
+CDLOUT=0
+
+while getopts ":vofdhcm:i" opt; do
+    case $opt in
+        v   ) VERBOSE=1 ;;
+        o   ) OVERWRITE=0 ;;
+        f   ) FLOORPLAN=MAG ;;
+		m	) JAVAMEM=$OPTARG ;;
+		d   ) DEBUGMODE=1;;
+		i   ) IMPORT=1;;
+        h   ) usage ;;
+		c	) CDLOUT=1 ;;
+        \?  ) usage
+    esac
+done
+shift $(($OPTIND - 1))
+
+if [ -z "$1" ]; then
+	usage
+fi
+
+CELLNAME=`basename $1`
+
+output "Cell name is $CELLNAME"
+
+mkdir $CELLNAME-blocks 2> /dev/null
+
+if [ `dirname $1` = "." ]; then
+    NEEDPOPD=0
+    UNITNAME=`pwd`
+    UNITNAME=`basename $UNITNAME`
+    CELLDIRNAME="."
+else
+    NEEDPOPD=1
+    
+    output "Looking up cell dir."
+
+    CELLDIRNAME=`new_fc -dC $1`
+
+    output "Cell dir is: $CELLDIRNAME"
+
+    UNITNAME=`dirname $1`
+
+    output "Cell unit is: $UNITNAME"
+
+    CELLDIRNAME="$CELLDIRNAME/$1"
+
+
+
+    CELLDIRNAME=`dirname $CELLDIRNAME`
+    pushd $CELLDIRNAME > /dev/null
+fi
+
+output "Verbose mode"
+
+if [ ! -e $HARDWARE_HOME/cast/sram32/link_sram32.cast ]; then
+	output "Creating link to real_sram32.cast"
+	ln -s $HARDWARE_HOME/cast/sram32/real_sram32.cast $HARDWARE_HOME/cast/sram32/link_sram32.cast
+fi
+
+output "finding cast file"
+
+CELLCASTFILE="`stlookup -c -p $CELLNAME`"
+CELLCASTNAME="`stlookup -c $CELLNAME`"
+
+# ensure that there is only one cast file
+if [ `echo "$CELLCASTFILE" | wc -l` != 1 ]; then
+    echo "Multiple cast files found for $CELLNAME:"
+    echo "$CELLCASTFILE"
+    exit 2
+fi
+
+if [ -z $CELLCASTFILE ] ; then
+	echo "Unable to get cast file for $CELLNAME."
+	exit 1
+fi
+
+
+output "found cell $CELLCASTNAME in file $CELLCASTFILE"
+
+
+MYCLASSPATH=$HOME/jars/jcast.jar:$HOME/jars/antlr.jar
+
+if [ "$DEBUGMODE" = "1" ] ; then
+    MYCLASSPATH=$CLASSPATH
+
+fi
+
+#TMPFILENAME=`date -u +"/tmp/%d-%m-%Y-%H-%M-%S-cadencize-$USER"`
+CASTTMPFILENAME="tmp.$$.0"
+
+output "creating cast temp file $TMPFILENAME"
+
+cat $CELLCASTFILE > $CASTTMPFILENAME
+echo "$CELLCASTNAME cadencize_inst ;" >> $CASTTMPFILENAME
+
+
+
+output "creating extract files"
+output "running java cadencize"
+
+if [ -z "$JAVAMEM" ]; then
+	JAVAMEM=128M
+fi
+if [ "$CDLOUT" = "1" ]; then
+    output "creating extract files"
+    magicextract "$UNITNAME/$CELLNAME" &>/dev/null
+    EXTRACTFILENAME="$CELLDIRNAME/$CELLNAME.ext"
+    output "Extract file name is $EXTRACTFILENAME"
+    echo \"$UNITNAME\" \"$CELLCASTNAME\" \"$CELLNAME\" \"$CASTTMPFILENAME\" \"$SUBCELLSTEMPFILENAME\" $CELLNAME-blocks/castinfo.il $CELLNAME-blocks/$CELLNAME.cdl $EXTRACTFILENAME
+else
+    echo \"$UNITNAME\" \"$CELLCASTNAME\" \"$CELLNAME\" \"$CASTTMPFILENAME\" \"$SUBCELLSTEMPFILENAME\" $CELLNAME-blocks/castinfo.il 
+fi
+
+output "removing temp files"
+
+rm $CASTTMPFILENAME
+

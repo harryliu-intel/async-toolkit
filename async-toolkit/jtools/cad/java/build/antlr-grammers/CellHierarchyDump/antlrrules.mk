@@ -1,0 +1,12 @@
+# Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+# SPDX-License-Identifier: Apache-2.0
+
+
+ANTLR_TARGETS += src/com/avlsi/tools/jauto/CellHierarchyDumpLexer.java  \
+                 src/com/avlsi/tools/jauto/CellHierarchyDumpParser.java
+
+# CellHierarchyDump.g
+
+src/com/avlsi/tools/jauto/CellHierarchyDumpLexer.java\
+src/com/avlsi/tools/jauto/CellHierarchyDumpParser.java : src/com/avlsi/tools/jauto/CellHierarchyDump.g
+	cd src/com/avlsi/tools/jauto && $(ANTLR) CellHierarchyDump.g

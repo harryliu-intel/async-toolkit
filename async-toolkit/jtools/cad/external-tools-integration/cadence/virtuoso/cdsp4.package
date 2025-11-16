@@ -1,0 +1,20 @@
+2 2
+# Copyright 2002 Fulcrum Microsystems.  All rights reserved.
+# $Id$
+# $DateTime$
+# $Author$
+
+### perforce integration for cadence <package ui>/command line usage
+# See <a href=http://internal/eng/physical/framework/Design_Framework_II_Perforce_Integration.html>Documentation</a>
+
+$arch/bin/cdsp4.sh             script/sh/p4/cdsp4.sh            775 p
+$arch/bin/cdsp4add.sh          script/sh/p4/cdsp4add.sh         775 p
+$arch/bin/cdsp4delete.sh       script/sh/p4/cdsp4delete.sh      775 p
+$arch/bin/cdsp4edit.sh         script/sh/p4/cdsp4edit.sh        775 p
+$arch/bin/cdsp4sync.sh         script/sh/p4/cdsp4sync.sh        775 p
+$arch/bin/cdsp4submit.sh       script/sh/p4/cdsp4submit.sh      775 p
+$arch/bin/cdsp4revert.sh       script/sh/p4/cdsp4revert.sh      775 p
+$arch/bin/cdsp4celllog.sh      script/sh/p4/cdsp4celllog.sh     775 p
+$arch/bin/cdsp4addlibs.sh      script/sh/p4/cdsp4addlibs.sh     775 p
+$arch/bin/cdsp4smartedit.sh    script/sh/p4/cdsp4smartedit.sh   775 p
+$arch/bin/cdsp4opened.sh       script/sh/p4/cdsp4opened.sh      775 p

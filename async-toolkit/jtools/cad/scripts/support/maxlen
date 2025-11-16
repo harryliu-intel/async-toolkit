@@ -1,0 +1,40 @@
+#!/usr/intel/bin/perl -l
+# AAG
+# $Id$
+# $DateTime$
+
+use strict;
+
+if (! @ARGV) {
+    print STDERR <<EU;
+Usage: maxlen [file list]
+EU
+    exit 1;
+}
+
+my $testlen=79;
+foreach my $f (@ARGV) {
+   if ( $f < 0) {
+      $testlen= $f * -1;
+      next;
+   }
+   my $ln=0;
+   my $cnt=0;
+   if (open (P, "<$f")) {
+      my $len=0;
+      while (<P>) {
+	 chomp;
+	 $ln++;
+	 if (length > $len) {
+	    $len = length;
+	 }
+	 if (length >= $testlen) {
+            $cnt++;
+	 }
+      }
+      print "$f worst $len";
+   }
+   else {
+      print "Cannot open $f : $!";
+   }
+}

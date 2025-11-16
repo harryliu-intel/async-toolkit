@@ -1,0 +1,9 @@
+<test>
+<!-- bug 14008: loop expansion with variables -->
+<config>
+<opt name="test.range.[0-3].enable" type="Boolean" default="true"/>
+<opt name="test.minPort" type="Integer" default="1"/>
+<set name="test.range.[0-3].enable">false</set>
+<set name="test.range.$(test.minPort).enable">true</set>
+</config>
+</test>

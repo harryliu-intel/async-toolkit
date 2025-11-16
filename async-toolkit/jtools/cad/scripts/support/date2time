@@ -1,0 +1,106 @@
+#!/usr/intel/bin/perl -lw
+# AAG
+# $Id$
+# $DateTime$
+
+use strict;
+
+BEGIN {
+    my $package_root = $0;
+    my $exe = $package_root;
+    $exe =~ s:.*/::;
+    if (! ($package_root =~ m:^/:)) {
+        my $pwd = `pwd`;
+        chomp $pwd;
+        $package_root = $pwd;
+        $package_root .= "/$0";
+        $package_root =~ s:$exe$::;
+        $package_root =~ s://:/:g;
+        chdir $package_root;
+        $package_root = `pwd`;
+        chomp $package_root;
+        chdir $pwd;
+    }
+    else {
+        $package_root =~ s:/bin/$exe::;
+    }
+    if ( -d $package_root ) {
+        push @INC, "$package_root/lib/perl";
+    }
+}
+
+my %months = (
+   "january" => 1,
+   "february" => 2,
+   "march" => 3,
+   "april" => 4,
+   "may" => 5,
+   "june" => 6,
+   "july" => 7,
+   "august" => 8,
+   "september" => 9,
+   "october" => 10,
+   "november" => 11,
+   "december" => 12,
+);
+
+my @months;
+
+sub initarrays {
+   foreach my $x (keys %months) {
+      $months[$months{$x}-1]=$x;
+      substr($months[$months{$x}-1],0,1) =~ tr/a-z/A-Z/;
+      $months{substr($x,0,3)}=$months{$x};
+   }
+}
+
+require 'date2time.pm';
+
+sub usage {
+   print <<EU;
+Usage: date2time month day year hour minute second
+   month is either a name or a number, name is either 3 characters or full
+   year is either 4 digits or two digits, or eliminate it is this year
+   hours, minutes, seconds optional and result in zero
+   Fields may be delimited with :, /, space, or -.
+EU
+exit 1;
+}
+
+initarrays;
+my @arg=();
+foreach my $f (@ARGV) {
+   $f =~ s/[-:,\/]/ /g;
+   my @f=split(/ /, $f);
+   push (@arg, @f);
+}
+my $mo = $arg[0];
+my $md = $arg[1];
+usage if ! defined $md;
+if ($mo =~ /^\d+/ && $mo >= 1 && $mo <= 12) {
+  $mo=$months[$mo-1];
+}
+$mo =~ tr/A-Z/a-z/;
+if (!(defined($md) && defined($months{$mo}))) {
+  usage;
+}
+$mo=$months{$mo};
+$arg[0] = $mo;
+$arg[1] = $md;
+if ( ! defined ($arg[2])) {
+    my @l = localtime(time);
+    $arg[2] = $l[5]+1900;
+}
+if ($arg[2] < 69) {
+    $arg[2] += 2000;
+}
+elsif ($arg[2] < 1900) {
+    $arg[2] += 1900;
+}
+my $startdate=date2time(@arg);
+if ($startdate == 0) {
+   usage;
+}
+else {
+   print $startdate;
+}

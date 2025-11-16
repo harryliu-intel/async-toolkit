@@ -1,0 +1,82 @@
+*
+* Test spice file for VDN search code
+*
+* TO RUN THIS TEST:
+*   SpiceMine --test subnet vdn.spice
+*
+*
+.SUBCKT VDN_TEST / D
+*
+* Driver nodes are D:1..D:6
+* VDN node should be A:3.
+* VDN resistance should be 3, MaxR=4
+*
+*                        D:4   D:5 
+*                          \   /
+*        D:1 D:2            A:6
+*          \ /              /
+*          A:1       D:3  A:5
+*            \         \  /
+*            A:2--A:3--A:4--D:6
+*           /
+*         A:7
+*        /   \
+*      A:8   A:9 
+*
+* If D:6 is removed, VDN node should still be A:3.
+* VDN resistance should become 3.2.
+*
+M0  D:1     G0      GND! GND! nmos_2v L=0.18U W=1.2U
+M1  D:2     G1      GND! GND! nmos_2v L=0.18U W=1.2U
+M2  D:3     G2      GND! GND! nmos_2v L=0.18U W=1.2U
+M4  D:4     G4      GND! GND! nmos_2v L=0.18U W=1.2U
+M5  D:5     G5      GND! GND! nmos_2v L=0.18U W=1.2U
+M6  D:6     G3      GND! GND! nmos_2v L=0.18U W=1.2U
+*
+R0  D:1     A:1     1.0 $x
+R1  D:2     A:1     1.0 $x
+R2  A:1     A:2     1.0 $x
+R3  A:2     A:7     1.0 $x
+R4  A:7     A:8     1.0 $x
+R5  A:7     A:9     1.0 $x
+R6  A:2     A:3     1.0 $x
+R7  A:3     A:4     1.0 $x
+R8  A:4     D:3     1.0 $x
+R9  A:4     A:5     1.0 $x
+RA  A:5     A:6     1.0 $x
+RB  A:6     D:4     1.0 $x
+RC  A:6     D:5     1.0 $x
+RX  D:6     A:4     1.0 $x
+*
+* Driver nodes are D:7 D:8 D:9
+* VDN node should be B:1 or B:2
+* Resistance to VDN should be 1.67 (if B:2)
+* Capacitance to VDN should be 6.0e-14
+* MaxRes should be 2 (for B:1 or B:2)
+* MaxCap will either be 2/3/5e-14, depending on VDN node & path.
+*
+*      D:7  D:8
+*       \   /
+*        B:1  D:9
+*          \ / 
+*          B:2
+*           |
+*          B:3
+*
+M6  D:7     G6      GND! GND! nmos_2v L=0.18U W=1.2U
+M7  D:8     G6      GND! GND! nmos_2v L=0.18U W=1.2U
+M8  D:9     G6      GND! GND! nmos_2v L=0.18U W=1.2U
+*
+RD  D:7     B:1     1.0 $x
+RE  D:8     B:1     1.0 $x
+RF  B:1     B:2     1.0 $x
+RG  B:2     B:3     1.0 $x
+RH  D:9     B:2     1.0 $x
+*
+C0  D:7     GND!    1.0e-14
+C1  D:8     GND!    3.0e-14
+C2  B:1     Vdd!    2.0e-14
+C3  D:7     D:8     1.0e-12
+C4  B:3     A:7     1.0e-15
+*
+.ENDS

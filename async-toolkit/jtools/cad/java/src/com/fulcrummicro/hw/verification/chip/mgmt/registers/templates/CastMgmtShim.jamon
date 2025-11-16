@@ -1,0 +1,163 @@
+<%escape #n>
+<%extends CastCommon>
+<%import>
+java.util.Collection;
+com.fulcrummicro.util.misc.Utility;
+com.fulcrummicro.hw.verification.chip.mgmt.registers.*;
+</%import>\
+<%args>
+Collection<RegisterCrossbarPort> crossbarPorts;
+String chip;
+</%args>\
+module chip.<% chip %>.base.register_mgmt_shim;
+
+import chip.<% chip %>.mgmt.channel.TargetInternalMgmtInterface;
+
+<%for RegisterCrossbarPort xbPort : crossbarPorts %>\
+<%if !xbPort.hasBusStops() %>\
+\
+define <% xbPort.getName() %>_RegisterHandling (int N_D)(TargetInternalMgmtInterface(
+       <% xbPort.getName().replaceAll("."," ") %>                              <% xbPort.getNumRegisters() %> /*=N_REG*/,
+       <% xbPort.getName().replaceAll("."," ") %>                              <% xbPort.getMaxEntriesAtomic() %> /*=MAX_ENTRIES_A*/,
+       <% xbPort.getName().replaceAll("."," ") %>                              <% xbPort.getMaxEntries(0) %> /*=MAX_ENTRIES_0*/,
+       <% xbPort.getName().replaceAll("."," ") %>                              <% xbPort.getMaxEntries(1) %> /*=MAX_ENTRIES_1*/,
+       <% xbPort.getName().replaceAll("."," ") %>                              <% xbPort.getMaxEntries(2) %> /*=MAX_ENTRIES_2*/,
+        <% xbPort.getName().replaceAll("."," ") %>                             N_D) +M) attributes
+  <+ chip.<% chip %>.mgmt.base.MgmtIfCell
+  <+ chip.<% chip %>.mgmt.crossbar.shim.impl.<% xbPort.getName() %>_RegisterEnumeration
+<%for RegisterBase base : xbPort.getRegisterBases() %>\
+<%java String camelCaseBaseName = Utility.underscoreToCamelCase(base.getName(), true); %>\
+  <+ chip.<% chip %>.base.registers.<% camelCaseBaseName %>RegisterFields
+</%for>\
+  <+ chip.<% chip %>.base.registers.AddressSpace
+  <+ chip.<% chip %>.base.functions.RegisterFunctions
+  <+ functions {
+
+  int W_IDX_R = max(1,log2(<% xbPort.getNumRegisters() %>));
+  int W_IDX_A = max(1,log2(<% xbPort.getMaxEntriesAtomic() %>));
+  int W_IDX_0 = max(1,log2(<% xbPort.getMaxEntries(0) %>));
+  int W_IDX_1 = max(1,log2(<% xbPort.getMaxEntries(1) %>));
+  int W_IDX_2 = max(1,log2(<% xbPort.getMaxEntries(2) %>));
+
+  csp {
+
+<%java String camelCasePortName = Utility.underscoreToCamelCase(xbPort.getName(), true); %>\
+    structure <% camelCasePortName %>Mgmt = (
+        int(1) rw;
+        int(W_IDX_R) idx_r;
+        int(W_IDX_A) idx_a;
+        int(W_IDX_0) idx_0;
+        int(W_IDX_1) idx_1;
+        int(W_IDX_2) idx_2;
+        int(N_D*32)  data
+    );
+
+    function receive<% camelCasePortName %>Mgmt()
+      : int(1+W_IDX_R+W_IDX_A+W_IDX_0+W_IDX_1+W_IDX_2+N_D*32) = (
+      <% camelCasePortName %>Mgmt m;
+      M.RW?     m::rw,
+      M.IDX_R?  m::idx_r,
+      M.IDX_A?  m::idx_a,
+      M.IDX_0?  m::idx_0,
+      M.IDX_1?  m::idx_1,
+      M.IDX_2?  m::idx_2;
+      #[m::rw==1 ->
+        M.WD?   m::data
+       ];
+      receive<% camelCasePortName %>Mgmt = pack(m)
+    );
+
+    function send<% camelCasePortName %>Mgmt(<% camelCasePortName %>Mgmt -mgmt) = (
+      #[mgmt::rw==0 -> M.RD!mgmt::data]
+    );
+<%for RegisterBase base : xbPort.getRegisterBases() %>\
+<%java String camelCaseBaseName = Utility.underscoreToCamelCase(base.getName(), true); %>\
+<%for String group : base.getGroups() %>\
+<%java>
+String camelCaseGroupName = base.getName();
+if (group != null) camelCaseGroupName += "_" + group.toUpperCase();
+camelCaseGroupName = Utility.underscoreToCamelCase(camelCaseGroupName, true);
+Collection<Register> groupRegisters = base.getRegisters("group", group);
+</%java>\
+
+<%doc>************************************************************</%doc>\
+<& registerStructureBase; registers=groupRegisters; camelCaseBaseName=camelCaseGroupName &>
+<%if group==null %><%for String g : base.getGroups() %><%if g != null %>\
+      <% Utility.underscoreToCamelCase(base.getName() + "_" + g.toUpperCase(), true) %>Registers <% g.toLowerCase() %>;
+</%if></%for></%if>\
+    );
+<%doc>************************************************************</%doc>\
+<%doc><& _generateTcamLookupFunction; base = base &></%doc>\
+<& CastMgmtTcam; base = base; registers=groupRegisters; baseNamePrefixCC = camelCaseGroupName &>\
+<%doc>************************************************************</%doc>\
+<%doc>Initialization of Registers</%doc>\
+    function rw<% camelCaseGroupName %>Registers(<% camelCasePortName %>Mgmt -+mgmt; <% camelCaseGroupName %>Registers -+s) = (
+<%if group==null %>\
+<%for String g : base.getGroups() %><%if g != null %>\
+      rw<% Utility.underscoreToCamelCase(base.getName() + "_" + g.toUpperCase(), true) %>Registers(mgmt, s::<% g.toLowerCase() %>);
+</%if></%for></%if>\
+<%if !groupRegisters.isEmpty() %>\
+      #[\
+<%java boolean first = true; %>\
+<%for Register reg : groupRegisters %><%if reg.getAlias() == null %>\
+<%java String index; %>\
+<% first ? "" : "      []" %><%java first=false; %>\
+mgmt::idx_r==<% reg.getName() %>_NUM &
+<%if reg.getNumEntries() > 1 && reg.getNumEntries()%2 != 0 %>\
+mgmt::idx_0 < <% reg.getNumEntries() %> & </%if>\
+<%if reg.getNumEntries1() > 1 && reg.getNumEntries1()%2 != 0 %>\
+mgmt::idx_1 < <% reg.getNumEntries1() %> & </%if>\
+<%if reg.getNumEntries2() > 1 && reg.getNumEntries2()%2 != 0 %>\
+mgmt::idx_2 < <% reg.getNumEntries2() %> & </%if> true ->
+<%if reg.getNumEntries() == 1 %><%doc>single entry</%doc>\
+<%java index = ""; %>\
+<%elseif reg.getNumEntries1() == 1 %>\
+<%java index = "[mgmt::idx_0 & ((1<<log2("+reg.getNumEntries()+"))-1)]"; %>\
+<%elseif reg.getNumEntries2() == 1 %>\
+<%java index = "[mgmt::idx_1 & ((1<<log2("+reg.getNumEntries1()+"))-1), mgmt::idx_0 & ((1<<log2("+reg.getNumEntries()+"))-1)]"; %>\
+<%else>\
+<%java index = "[mgmt::idx_2 & ((1<<log2("+reg.getNumEntries2()+"))-1), mgmt::idx_1 & ((1<<log2("+reg.getNumEntries1()+"))-1), mgmt::idx_0 & ((1<<log2("+reg.getNumEntries()+"))-1)]"; %>\
+</%if>\
+\
+<%if reg.isStructure() %>\
+          int(<% reg.getImplementationWidth() %>) reg = pack(s::<% reg.getName().toLowerCase() %><% index %>);
+<%else>\
+          int(<% reg.getImplementationWidth() %>) reg = s::<% reg.getName().toLowerCase() %><% index %>;
+</%if>\
+          [ mgmt::rw==0 ->
+            mgmt::data = reg
+          []else ->
+            <i:<% reg.getImplementationWidth() %>:(
+              regWriteBit(i,
+                <% reg.getName() %>_RW_MASK | <% reg.getName() %>_RV_MASK,
+                <% reg.getName() %>_RO_MASK,
+                <% reg.getName() %>_CW_MASK,
+                <% reg.getName() %>_CW1_MASK,
+                mgmt::data, reg)
+            )>;
+<%if reg.isStructure() %>\
+            unpack(s::<% reg.getName().toLowerCase() %><% index %>, reg);
+<%else>\
+            s::<% reg.getName().toLowerCase() %><% index %> = reg;
+</%if>\
+          ];
+</%if></%for>\
+      ]
+</%if>\
+    );
+
+<%doc>************************************************************</%doc>\
+<& registerInitBase; registers=groupRegisters; camelCaseBaseName=camelCaseGroupName &>\
+<%if group == null %>\
+<%for String g : base.getGroups() %><%if g != null %>\
+      init<% Utility.underscoreToCamelCase(base.getName() + "_" + g.toUpperCase(), true) %>Registers(mgmt, s::<% g.toLowerCase() %>);
+</%if></%for></%if>\
+    );
+<%doc>************************************************************</%doc>\
+</%for></%for>\
+  }
+}
+
+</%if></%for>
+
+

@@ -1,0 +1,71 @@
+
+when( boundp('custom_layout)
+
+
+hiSetBindKey( "Layout" "a" "leHiCreatePath()" )
+
+
+;quick start paths
+  procedure( start_path( layer )
+        leSetEntryLayer( layer )
+        leHiCreatePath()
+  )
+
+hiSetBindKey( "Layout" "=" "start_path(PolyLPP)" )
+hiSetBindKey( "Layout" "<key>`" "start_path(PolyLPP)" )
+hiSetBindKey( "Layout" "1" "start_path(Metal1LPP)" )
+hiSetBindKey( "Layout" "2" "start_path(Metal2LPP)" )
+hiSetBindKey( "Layout" "3" "start_path(Metal3LPP)" )
+hiSetBindKey( "Layout" "4" "start_path(Metal4LPP)" )
+hiSetBindKey( "Layout" "5" "start_path(Metal5LPP)" )
+hiSetBindKey( "Layout" "6" "start_path(Metal6LPP)" )
+hiSetBindKey( "Layout" "7" "start_path(Metal7LPP)" )
+hiSetBindKey( "Layout" "F6" "start_path(Metal6LPP)" )
+hiSetBindKey( "Layout" "F7" "start_path(Metal7LPP)" )
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  procedure( drop_cont( via )
+        point = hiGetPoint( hiGetCurrentWindow() )
+        cv = geGetEditCellView()
+         dbCreateVia(cv techFindViaDefByName(TechLib via) point "R0")
+  )
+hiSetBindKey( "Layout" "Ctrl<key>2" "drop_cont(Metal12RectViaV)" )
+hiSetBindKey( "Layout" "Ctrl<key>3" "drop_cont(Metal23RectViaH)" )
+hiSetBindKey( "Layout" "Ctrl<key>4" "drop_cont(Metal34RectViaH)" )
+hiSetBindKey( "Layout" "Ctrl<key>5" "drop_cont(Metal45RectViaH)" )
+hiSetBindKey( "Layout" "Ctrl<key>6" "drop_cont(Metal56RectViaH)" )
+hiSetBindKey( "Layout" "Ctrl<key>7" "drop_cont(Metal67RectViaH)" )
+hiSetBindKey( "Layout" "Ctrl<key>F6" "drop_cont(Metal56RectViaH)" )
+hiSetBindKey( "Layout" "Ctrl<key>F7" "drop_cont(Metal67RectViaH)" )
+
+hiSetBindKey( "Layout" "Alt<key>2" "drop_cont(Metal12Via)" )
+hiSetBindKey( "Layout" "Alt<key>3" "drop_cont(Metal23Via)" )
+hiSetBindKey( "Layout" "Alt<key>4" "drop_cont(Metal34Via)" )
+hiSetBindKey( "Layout" "Alt<key>5" "drop_cont(Metal45Via)" )
+hiSetBindKey( "Layout" "Alt<key>6" "drop_cont(Metal56Via)" )
+hiSetBindKey( "Layout" "Alt<key>7" "drop_cont(Metal67Via)" )
+hiSetBindKey( "Layout" "Alt<key>F6" "drop_cont(Metal56Via)" )
+hiSetBindKey( "Layout" "Alt<key>F7" "drop_cont(Metal67Via)" )
+
+
+procedure( drop_M1_PO_min( )
+let( (point cv viaid encparams)
+        point = hiGetPoint( hiGetCurrentWindow() )
+        cv = geGetEditCellView()
+  viaid = techFindViaDefByName(techGetTechFile(cv) PolyContact)
+  encparams = list(list("layer1Enc" list(0.05 -0.005)) list("layer2Enc" list(0.02 0.01)))
+  dbCreateVia(cv viaid point "R0" encparams)
+  )
+)
+
+hiSetBindKey( "Layout" "Ctrl<key>1" "drop_M1_PO_min( )" )
+hiSetBindKey( "Layout" "Alt<key>1" "drop_M1_PO_min( )" )
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+
+
+)
+
+

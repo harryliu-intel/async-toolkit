@@ -1,0 +1,72 @@
+#!/usr/intel/bin/perl -w
+use strict;
+use warnings;
+
+# default arguments
+my $work_dir=".";
+my $pdk_root;
+my $cast_path=$ENV{CAST_PATH};
+my $dfII_dir=$ENV{DFII_DIR};
+my $output="cell.gds2";
+my $view="layout";
+my $map="";
+my $cell;
+
+# usage banner
+sub usage {
+    die("USAGE: ExportGDS\n" .
+        " --work-dir=[$work_dir]\n" .
+        " --cast-path=[$cast_path]\n" .
+        " --dfII-dir=[$dfII_dir]\n" .
+        " --output=[$output]\n" .
+        " --view=[$view]\n" .
+        " --map=[$map]\n" .
+        " cellName\n");
+}
+
+# parse command-line arguments
+my @args;
+while (@ARGV) {
+    if    ($ARGV[0] =~ /^--work-dir=(.*)/ ) { $work_dir =$1; }
+    elsif ($ARGV[0] =~ /^--fulcrum-pdk-root=(.*)/) { $pdk_root=$1; }
+    elsif ($ARGV[0] =~ /^--cast-path=(.*)/) { $cast_path=$1; }
+    elsif ($ARGV[0] =~ /^--dfII-dir=(.*)/)  { $dfII_dir =$1; }
+    elsif ($ARGV[0] =~ /^--output=(.*)/)    { $output   =$1; }
+    elsif ($ARGV[0] =~ /^--view=(.*)/)      { $view    = $1; }
+    elsif ($ARGV[0] =~ /^--map=(.*)/)       { $map = $1; }
+    else { $cell = $ARGV[0]; }
+    shift @ARGV;
+}
+usage() unless defined($cell);
+
+# create cdswd and write replay.il
+my $cdswd = "${work_dir}/ExportGDS.cdswd";
+system("mkdir -p '$cdswd'")==0 || die("unable to mkdir $cdswd\n");
+chdir($cdswd);
+open  OUT, ">replay.il" or die("unable to write ${cdswd}/replay.il\n");
+print OUT "(ExportGDS ?renameTop nil ?CV (ReadCV (GetCastLibName \"$cell\") \"$cell\" \"$view\"))\n";
+close OUT;
+
+# run mkcdswd
+system("mkcdswd --fulcrum-pdk-root=$pdk_root --target-dir=. --dfII-dir='$dfII_dir' --cast-path='$cast_path' --force")==0 ||
+    die("mkcdswd failed\n");
+
+# run virtuoso
+# HACK: retry Xvnc server sharing on display [10..99]
+my $attempt=0;
+my $status=0;
+do {
+    my $display = int(rand(90)) + 10;
+    $ENV{CDS_XVNC_TENBASE} = $display / 10;
+    $ENV{CDS_XVNC_OFFSET}  = $display % 10;
+    $status = system("$ENV{IC_SCRIPT} virtuoso -log CDS.log -replay replay.il -nograph");
+    if ($status!=0) { print STDERR "Virtuoso attempt $attempt, display port $display, error status $status\n"; }
+    $attempt++;
+} while ($status!=0 && ($attempt<10));
+$status==0 || die("virtuoso failed\n");
+
+# move output file
+system("mv 'temp/gds/$cell'/*.gds '$output'")==0 || die("unable to move to $output\n");
+if ($map ne "") {
+    system("mv 'temp/gds/$cell'/cellmap '$map'")==0 || die("unable to move to $map\n");
+}

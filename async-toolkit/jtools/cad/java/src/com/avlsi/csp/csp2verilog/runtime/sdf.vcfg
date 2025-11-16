@@ -1,0 +1,13 @@
+-sv_net_ports
+-sdfretain
++sdfverbose
++transport_path_delays
++pulse_r/0
++pulse_e/0
++pathpulse
++neg_tchk
+-negdelay
++define+INTC_MEM_GLS
++define+RINIT_GLS_SEED_PATH="TESTBENCH.rinit_gls"
++define+random_init_enable
++define+BD_EXTRA_DELAY=#1ps
