@@ -1,0 +1,486 @@
+/**
+ * INTEL TOP SECRET
+ * Copyright 2002-2012 Intel Corporation. All Rights Reserved.
+ * $Id: //mrl/hw/dev/cast/standard/base.cast#48 $
+ */
+module standard.base;
+
+import standard.attributes.*;
+import standard.null.NULL;
+import standard.reset.local_reset;
+
+/** Default base cell unless explicitly specified ***/
+define CELL <: BD_CELL {}
+
+/*** Used when you want to handle reset ports explicitly ***/
+define NO_RESET_CELL()()(node -Vdd, -GND) <: NULL {
+  directives {
+    power_net(Vdd) = true;
+    ground_net(GND) = true;
+    primary_power = Vdd;
+  }
+}
+
+/*** Connect VUG to parent Vdd for power gated cells.  Assumes no reset too. **/
+define POWER_GATED_CELL()()(node -VUG:Vdd, -GND) <: NULL {
+  directives {
+    power_net(VUG) = true;
+    ground_net(GND) = true;
+  }
+}
+
+/*** Connect VUG to parent Vdd for power gated cells.  Assumes no reset too. **/
+define POWER_GATED_CELL_WITH_VDDM()()(node -VUG:Vdd, -GND, -VDDM) <: NULL {
+  directives {
+    power_net(VUG) = true;
+    ground_net(GND) = true;
+    power_net(VDDM) = true;
+  }
+}
+
+/*** Add VDDM **/
+define NO_RESET_CELL_WITH_VDDM()()(node -Vdd, -GND, -VDDM) <: NULL {
+  directives {
+    power_net(Vdd) = true;
+    ground_net(GND) = true;
+    power_net(VDDM) = true;
+    primary_power = Vdd;
+  }
+}
+
+/** Just add reset **/
+define RESET_CELL()()(node -Vdd, -GND, -_RESET) <: NULL {
+  directives {
+    idle_state(_RESET) = IDLE_1;
+    power_net(Vdd) = true;
+    ground_net(GND) = true;
+    reset_net(_RESET) = true;
+    primary_power = Vdd;
+  }
+}
+
+/** Add _RESET and START **/
+define RESET_START_CELL()()(node -Vdd, -GND, -_RESET, -START) <: NULL {
+  directives {
+    idle_state(_RESET) = IDLE_1;
+    idle_state(START) = IDLE_1;
+    power_net(Vdd) = true;
+    ground_net(GND) = true;
+    reset_net(_RESET) = true;
+    start_net(START) = true;
+    primary_power = Vdd;
+  }
+}
+
+/*** Add VDDM **/
+define RESET_CELL_WITH_VDDM()()(node -Vdd, -GND, -VDDM, -_RESET) <: NULL {
+  directives {
+    power_net(Vdd) = true;
+    ground_net(GND) = true;
+    power_net(VDDM) = true;
+    reset_net(_RESET) = true;
+    primary_power = Vdd;
+  }
+}
+
+/*** Add VUG and VDDM **/
+define RESET_CELL_WITH_VUG_VDDM()()(node -Vdd, -GND, -VUG, -VDDM, -_RESET) <: NULL {
+  directives {
+    power_net(Vdd) = true;
+    ground_net(GND) = true;
+    power_net(VUG) = true;
+    power_net(VDDM) = true;
+    reset_net(_RESET) = true;
+    primary_power = Vdd;
+  }
+}
+
+/*** Used when you want to ramp reset locally **/
+define RAMP_RESET_CELL()()(node -Vdd, -GND, -_reset:_RESET) <: NULL {
+  directives {
+    idle_state(_reset) = IDLE_1;
+    power_net(Vdd) = true;
+    ground_net(GND) = true;
+    reset_net(_reset) = true;
+    primary_power = Vdd;
+  }
+}
+
+/*** Used when you want to ramp reset locally, plus VDDM **/
+define RAMP_RESET_CELL_WITH_VDDM()()(node -Vdd, -GND, -VDDM, -_reset:_RESET) <: NULL {
+  directives {
+    idle_state(_reset) = IDLE_1;
+    power_net(Vdd) = true;
+    ground_net(GND) = true;
+    power_net(VDDM) = true;
+    reset_net(_reset) = true;
+    primary_power = Vdd;
+  }
+}
+
+/*** BD base cell has lots of implicit ports **/
+define BD_CELL()()(node -Vdd, -GND, -_RESET, -START, -DLY, -CAPTURE, -PASSTHRU, -INJECT) <:NULL {
+  directives {
+    idle_state(_RESET) = IDLE_1;
+    power_net(Vdd) = true;
+    ground_net(GND) = true;
+    reset_net(_RESET) = true;
+    start_net(START) = true;
+    delay_net(DLY) = true;
+    capture_net(CAPTURE) = true;
+    passthru_net(PASSTHRU) = true;
+    inject_net(INJECT) = true;
+    synchronous = true;         // Tell RTE not to run with full random timing
+    primary_power = Vdd;
+  }
+}
+
+/*** CELL with VDDM **/
+define BD_CELL_WITH_VDDM()()(node -Vdd, -GND, -VDDM, -_RESET, -START, -DLY, -CAPTURE, -PASSTHRU, -INJECT) <:NULL {
+  directives {
+    idle_state(_RESET) = IDLE_1;
+    power_net(Vdd) = true;
+    ground_net(GND) = true;
+    power_net(VDDM) = true;
+    reset_net(_RESET) = true;
+    start_net(START) = true;
+    delay_net(DLY) = true;
+    capture_net(CAPTURE) = true;
+    passthru_net(PASSTHRU) = true;
+    inject_net(INJECT) = true;
+    synchronous = true;         // Tell RTE not to run with full random timing
+    primary_power = Vdd;
+  }
+}
+
+/*** Used when you want to ramp reset locally **/
+define BD_RAMP_RESET_CELL()()
+  (node -Vdd, -GND, -_reset:_RESET, -start:START, -dly:DLY, -capture:CAPTURE, -passthru:PASSTHRU, -inject:INJECT) <:NULL {
+  directives {
+    idle_state(_reset) = IDLE_1;
+    power_net(Vdd) = true;
+    ground_net(GND) = true;
+    reset_net(_reset) = true;
+    start_net(start) = true;
+    delay_net(dly) = true;
+    capture_net(capture) = true;
+    passthru_net(passthru) = true;
+    inject_net(inject) = true;
+    synchronous = true;         // Tell RTE not to run with full random timing
+    primary_power = Vdd;
+  }
+}
+
+/*** Add VDDM **/
+define BD_RAMP_RESET_CELL_WITH_VDDM()()
+  (node -Vdd, -GND, -VDDM, -_reset:_RESET, -start:START, -dly:DLY, -capture:CAPTURE, -passthru:PASSTHRU, -inject:INJECT) <:NULL {
+  directives {
+    idle_state(_reset) = IDLE_1;
+    power_net(Vdd) = true;
+    ground_net(GND) = true;
+    power_net(VDDM) = true;
+    reset_net(_reset) = true;
+    start_net(start) = true;
+    delay_net(dly) = true;
+    capture_net(capture) = true;
+    passthru_net(passthru) = true;
+    inject_net(inject) = true;
+    synchronous = true;         // Tell RTE not to run with full random timing
+    primary_power = Vdd;
+  }
+}
+
+/*** Used when you want to handle reset ports explicitly ***/
+define BD_NO_RESET_CELL <+ synchronous <: NO_RESET_CELL {}
+
+/*** CELL with VDDM **/
+define BD_NO_RESET_CELL_WITH_VDDM <+ synchronous <: NO_RESET_CELL_WITH_VDDM {}
+
+/*** CELL with VUG **/
+define BD_NO_RESET_CELL_WITH_VUG <+ synchronous <: NO_RESET_CELL_WITH_VUG {}
+
+/*** CELL with VUG and VDDM **/
+define BD_NO_RESET_CELL_WITH_VUG_VDDM <+ synchronous <: NO_RESET_CELL_WITH_VUG_VDDM {}
+
+/** Cells which also need ungated power (VUG) **/
+define RESET_CELL_WITH_VUG()()(node -Vdd, -GND, -VUG, -_RESET) <: NULL {
+  directives {
+    idle_state(_RESET) = IDLE_1;
+    power_net(VUG) = true;
+    power_net(Vdd) = true;
+    ground_net(GND) = true;
+    reset_net(_RESET) = true;
+    primary_power = Vdd;
+  }
+}
+
+/** Cells which also need ungated power (VUG) **/
+define RAMP_RESET_CELL_WITH_VUG()()(node -Vdd, -GND, -VUG, -_reset:_RESET) <: NULL {
+  directives {
+    idle_state(_reset) = IDLE_1;
+    power_net(VUG) = true;
+    power_net(Vdd) = true;
+    ground_net(GND) = true;
+    reset_net(_reset) = true;
+    primary_power = Vdd;
+  }
+}
+
+/** Cells which also need ungated power (VUG) but no reset **/
+define NO_RESET_CELL_WITH_VUG()()(node -Vdd, -GND, -VUG) <: NULL {
+  directives {
+    power_net(VUG) = true;
+    power_net(Vdd) = true;
+    ground_net(GND) = true;
+    primary_power = Vdd;
+  }
+}
+
+/** Cells which also need ungated power (VUG) and memory power (VDDM) but no reset **/
+define NO_RESET_CELL_WITH_VUG_VDDM()()(node -Vdd, -GND, -VUG, -VDDM) <: NULL {
+  directives {
+    power_net(Vdd) = true;
+    power_net(VUG) = true;
+    power_net(VDDM) = true;
+    ground_net(GND) = true;
+    primary_power = Vdd;
+  }
+}
+
+/*** CELL with VUG **/
+define BD_CELL_WITH_VUG()()(node -Vdd, -GND, -VUG, -_RESET, -START, -DLY, -CAPTURE, -PASSTHRU, -INJECT) <:NULL {
+  directives {
+    idle_state(_RESET) = IDLE_1;
+    power_net(Vdd) = true;
+    ground_net(GND) = true;
+    power_net(VUG) = true;
+    reset_net(_RESET) = true;
+    start_net(START) = true;
+    delay_net(DLY) = true;
+    capture_net(CAPTURE) = true;
+    passthru_net(PASSTHRU) = true;
+    inject_net(INJECT) = true;
+    synchronous = true;         // Tell RTE not to run with full random timing
+    primary_power = Vdd;
+  }
+}
+
+/*** CELL with VUG **/
+define BD_CELL_WITH_VUG_VDDM()()(node -Vdd, -GND, -VUG, -VDDM, -_RESET, -START, -DLY, -CAPTURE, -PASSTHRU, -INJECT) <:NULL {
+  directives {
+    idle_state(_RESET) = IDLE_1;
+    power_net(Vdd) = true;
+    ground_net(GND) = true;
+    power_net(VUG) = true;
+    power_net(VDDM) = true;
+    reset_net(_RESET) = true;
+    start_net(START) = true;
+    delay_net(DLY) = true;
+    capture_net(CAPTURE) = true;
+    passthru_net(PASSTHRU) = true;
+    inject_net(INJECT) = true;
+    synchronous = true;         // Tell RTE not to run with full random timing
+    primary_power = Vdd;
+  }
+
+}
+/*** Special case for delay cells with tunable DLY input **/
+define TDL_CELL()()(node -Vdd, -GND, -DLY) <+ height(1) <: NULL {
+  directives {
+    power_net(Vdd) = true;
+    ground_net(GND) = true;
+    delay_net(DLY) = true;
+    primary_power = Vdd;
+  }
+}
+
+/*** Base cell for primitive types without reset ***/
+define PRIMITIVE()()(node -Vdd, -GND) <+ routed <+ frag <: NO_RESET_CELL {
+  directives {
+    density_factor = 1.5*DENSITY_FACTOR;
+  }
+}
+
+/*** Leaf cell parent.  Instantiates reset inverters. ***/
+define LEAF <+ local_reset <+ routed <+ leaf <: RESET_CELL {
+  directives {
+    power_net(Vdd) = true;
+    ground_net(GND) = true;
+    reset_net(_RESET) = true;
+    primary_power = Vdd;
+  }
+}
+
+/*** Fragment cell parent.  Assumes parent provides _Reset and Reset ***/
+define FRAGMENT()()(node -Vdd, -GND, -_RESET, -+Reset, -+_Reset) <+ routed <+ frag <: NULL {
+  directives {
+    density_factor = 1.5*DENSITY_FACTOR;
+    idle_state(_RESET) = IDLE_1;
+    idle_state(_Reset) = IDLE_1;
+    idle_state(Reset)  = IDLE_0;
+    power_net(Vdd) = true;
+    ground_net(GND) = true;
+    reset_net(_RESET) = true;
+    primary_power = Vdd;
+  }
+}
+
+/*** Refinement parent for BD controllers with only _RESET **/
+define BD_CONTROLLER()()(node -Vdd, -GND, -_RESET)
+  <+ leaf <+ routed <+ frag <+ bd_controller <: NULL {
+  directives {
+    idle_state(_RESET) = IDLE_1;
+    power_net(Vdd) = true;
+    ground_net(GND) = true;
+    reset_net(_RESET) = true;
+    synchronous = true;         // Tell RTE not to run with full random timing
+    primary_power = Vdd;
+  }
+}
+
+/*** Refinement parent for BD controllers with _RESET and DLY ***/
+define BD_CONTROLLER_DLY()()(node -Vdd, -GND, -_RESET, -DLY)
+  <+ leaf <+ routed <+ frag <+ bd_controller <: NULL {
+  directives {
+    idle_state(_RESET) = IDLE_1;
+    power_net(Vdd) = true;
+    ground_net(GND) = true;
+    reset_net(_RESET) = true;
+    delay_net(DLY) = true;
+    synchronous = true;         // Tell RTE not to run with full random timing
+    primary_power = Vdd;
+  }
+}
+
+/*** Datapath unit Dybble base cell ***/
+define DPU_DYB <+ height(1) <: FRAGMENT {}
+
+/*** Datapath unit Bit base cell ***/
+define DPU_BIT <: FRAGMENT {}
+
+/*** Base cell for datapath unit control cells ***/
+define DPU_CTRL()()(node -Vdd, -GND, -_RESET, +Reset, +_Reset) <+ local_reset <+ routed <+ frag <: NULL {
+  directives {
+    density_factor = 1.5*DENSITY_FACTOR;
+    idle_state(_RESET) = IDLE_1;
+    power_net(Vdd) = true;
+    ground_net(GND) = true;
+    reset_net(_RESET) = true;
+    primary_power = Vdd;
+  }
+}
+
+/** Refinment parents for cells with Intel supply names with subcells body **/
+define STDCELL()()(node -vcc:Vdd, -vssx:GND)
+  <+ standard_cell <+ synchronous <+ frag <: NULL {
+  directives {
+    power_net(vcc) = true;
+    ground_net(vssx) = true;
+  }
+}
+
+define STDCELL_AON()()(node -vcc_in:VUG, -vssx:GND)
+  <+ standard_cell <+ synchronous <+ frag <: NULL {
+  directives {
+    power_net(vcc_in) = true;
+    ground_net(vssx) = true;
+  }
+}
+
+define STDCELL_RESET()()(node -vcc:Vdd, -vssx:GND, -rb:_RESET)
+  <+ standard_cell <+ synchronous <+ frag <: NULL {
+  directives {
+    power_net(vcc) = true;
+    ground_net(vssx) = true;
+    reset_net(rb) = true;
+  }
+}
+
+define STDCELL_DLY()()(node -vcc:Vdd, -vssx:GND, -DLY)
+  <+ standard_cell <+ synchronous <+ frag <: NULL {
+  directives {
+    power_net(vcc) = true;
+    ground_net(vssx) = true;
+    delay_net(DLY) = true;
+  }
+}
+
+define STDCELL_RESET_DLY()()(node -vcc:Vdd, -vssx:GND, -rb:_RESET, -DLY)
+  <+ standard_cell <+ synchronous <+ frag <: NULL {
+  directives {
+    power_net(vcc) = true;
+    ground_net(vssx) = true;
+    reset_net(rb) = true;
+  }
+}
+
+/** Refinment parents for cells with Intel supply names with prs body **/
+define STDCELL_LEAF <: STDCELL {
+  fragment prs {
+    // work-around BUG 28432
+    node GND=vssx;
+    node Vdd=vcc;
+  }
+}
+
+define STDCELL_LEAF_RESET <: STDCELL_RESET {
+  fragment prs {
+    // work-around BUG 28432
+    node GND=vssx;
+    node Vdd=vcc;
+  }
+}
+
+define STDCELL_LEAF_RESET_DLY <: STDCELL_RESET_DLY {
+  fragment prs {
+    // work-around BUG 28432
+    node GND=vssx;
+    node Vdd=vcc;
+  }
+}
+
+define STDCELL_LEAF_AON <: STDCELL_AON {
+  fragment prs {
+    // work-around BUG 28432
+    node GND=vssx;
+    node Vdd=vcc_in;
+  }
+}
+
+/**
+ * Refinements for imported standard cells.  Add empty netlist to
+ * prevent Jauto create_subtypes from converting PRS to netlist before
+ * resubtype points to the correct explicit netlist.
+ */
+define G1I_LEAF <: STDCELL_LEAF { netlist {} }
+define G1I_LEAF_AON()()(node -vcc:Vdd, -vssx:GND,-vcc_in:VUG)
+  <+ standard_cell <+ synchronous <+ frag <: NULL {
+  directives {
+    power_net(vcc) = true; // stupid useless port
+    power_net(vcc_in) = true;
+    ground_net(vssx) = true;
+  }
+  fragment prs {
+    // work-around BUG 28432
+    node GND=vssx;
+    node Vdd=vcc_in;
+  }
+  netlist {}
+}
+define G1M_LEAF <: STDCELL_LEAF { netlist {} }
+define I0S_LEAF <: STDCELL_LEAF { netlist {} }
+define I0S_LEAF_AON <: STDCELL_LEAF_AON { netlist {} }
+define I0M_LEAF <: STDCELL_LEAF { netlist {} }
+
+/*** Imported IP ***/
+define IMPORTED_CELL <+ routed <: NULL { directives { wiring=true; }}
+
+/*** Imported IP ***/
+define IMPORTED_CELL_WITH_VSS()()(node -vss) <+ routed <: NULL { directives { wiring=true; }}
+
+/*** Imported IP ***/
+define IMPORTED_SRAM <: IMPORTED_CELL {
+  directives {
+    rte_ignore=true;
+  }
+}

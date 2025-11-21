@@ -1,0 +1,177 @@
+/*
+ * Copyright 2015 Intel.  All rights reserved.
+ * $Id: //mrl/hw/main/cast/standard/source.cast#1 $
+ */
+
+module standard.bd;
+
+import standard.attributes.unimplementable;
+import standard.base.BD_CELL;
+import standard.base.LEAF;
+import standard.channel.bdc;
+import standard.channel.bd;
+import standard.channel.1of2;
+import standard.source.source_cell;
+import standard.source.start_cell;
+import standard.attributes.bd_controller;
+
+define bd_env_attributes attributes <+ bd_controller {
+  bool bd_verbose=false;
+  csp {
+    // wait random time between 0T and 20T
+    function random_wait() =
+      (int(32) w;
+       w=random(32)%2000;
+       wait(w)
+       );
+
+    directives { cycle_time = 6; }
+  }
+}
+
+define base_source_bd(bool verbose; int W,N,d[0..N-1])(bd(W) +R)
+  <+ unimplementable <+ bd_env_attributes <: BD_CELL {
+  csp { s=0; *[R!d[s]; #[bd_verbose|verbose -> print(hex(d[s]))]; s=(s+1)%N; random_wait()] }
+  prs {
+    node RCa,go,sdv;
+    node[N] sd;
+    node l[0..N],le[0..N];
+    node[W] r;
+
+    // control handshake
+    after 200 R.C.a => RCa+
+    after 0   ~RCa & ~R.C.q | RCa & R.C.q => go+
+    after 100 ~START | sdv &  RCa -> R.C.q-
+    after 100  START & sdv & ~RCa -> R.C.q+
+
+    // round-robin 1ofN token
+    <i:N: source_cell _(l[i],le[i],sd[i],go,l[i+1],le[i+1]); >
+    start_cell _(l[N],le[N],l[0],le[0]);
+    after 0 <|i:N: sd[i]> => sdv+
+
+    // output data
+    <j:W:
+      [(d[0]/2**j)%2==0 -> after 0 ~_RESET -> r[j]- ]
+      [(d[0]/2**j)%2==1 -> after 0 ~_RESET -> r[j]+ ]
+      <i:N:
+        [(d[i]/2**j)%2==0 -> after 0 _RESET & go & sd[i] -> r[j]- ]
+        [(d[i]/2**j)%2==1 -> after 0 _RESET & go & sd[i] -> r[j]+ ]
+      >
+    >
+    <i:W: r[i] => R.D[i]+ >
+
+    directives {
+      extra_delay(RCa)     =ExtraTimingMargin;
+      extra_delay(R.C.q)   =ExtraTimingMargin;
+      bd_extra_delay(RCa)  =BD_A_DELAY/2;
+      bd_extra_delay(R.C.q)=BD_Q_DELAY/2;
+    }
+  }
+}
+
+define source_bd(int W,N,d[0..N-1])       <: base_source_bd(false,W,N,d) {}
+define print_source_bd(int W,N,d[0..N-1]) <: base_source_bd(true,W,N,d) {}
+
+define base_rsource_bd(bool verbose; int W)(bd(W) +R)
+  <+ unimplementable <+ bd_env_attributes <: BD_CELL {
+  csp { *[int(W) x=random(W); R!x; #[bd_verbose|verbose -> print(hex(x))]; random_wait()] }
+  prs {
+    node RCa,go;
+    1of2[W] D;
+    node[W] r;
+
+    // control handshake
+    after 200 R.C.a => RCa+
+    after 0   ~RCa & ~R.C.q | RCa & R.C.q => go+
+    after 100 ~START | RCa => R.C.q-
+
+    // datapath
+    <i:W: unstab _RESET & go & ~D[i].0 => D[i].1+ >
+    <i:W: unstab _RESET & go & ~D[i].1 => D[i].0+ >
+    <i:W: after 0 ~_RESET | D[i].0 -> r[i]- >
+    <i:W: after 0  _RESET & D[i].1 -> r[i]+ >
+    <i:W: r[i] => R.D[i]+ >
+
+    directives {
+      extra_delay(RCa)     =ExtraTimingMargin;
+      extra_delay(R.C.q)   =ExtraTimingMargin;
+      bd_extra_delay(RCa)  =BD_A_DELAY/2;
+      bd_extra_delay(R.C.q)=BD_Q_DELAY/2;
+    }
+  }
+}
+
+define rsource_bd(int W)       <: base_rsource_bd(false,W) {}
+define print_rsource_bd(int W) <: base_rsource_bd(true,W) {}
+
+define rsource_list_bd(int W, N; int d[0..N-1])(bd(W) +R)
+  <+ unimplementable <+ bd_env_attributes <: BD_CELL {
+  csp { *[int(W) x=d[random(32)%N]; R!x; #[bd_verbose -> print(hex(x))]; random_wait() ] }
+}
+
+define base_sink_bd(bool verbose; int W)(bd(W) -L)
+  <+ unimplementable <+ bd_env_attributes <: BD_CELL {
+  csp { *[int(W) x; L?x; #[bd_verbose|verbose -> print(hex(x))]; random_wait()] }
+  prs {
+    // control handshake
+    after 400 ~_RESET | ~L.C.q => L.C.a-
+    directives {
+      extra_delay(L.C.a)   =2*ExtraTimingMargin;
+      bd_extra_delay(L.C.a)=BD_Q_DELAY/2+BD_A_DELAY/2;
+    }
+  }
+}
+
+define sink_bd(int W)       <: base_sink_bd(false,W) {}
+define print_sink_bd(int W) <: base_sink_bd(true,W) {}
+
+define sink_bd_expect(int W,N; int d[0..N-1])(bd(W) -L) <+ unimplementable <+ bd_env_attributes <: BD_CELL {
+  csp { s=0; *[int(W) x; L?x; #[bd_verbose -> print(hex(x))]; assert(x==d[s]); s=(s+1)%N; random_wait()] }
+}
+
+define source_bdc()(bdc +R) <+ unimplementable <+ bd_env_attributes <: BD_CELL {
+  csp {
+    function resetNodes() = (R.q-);
+    *[[~R.a]; wait(800); random_wait(); R.q+; [R.a]; wait(800); random_wait(); R.q-]
+  }
+  prs {
+    after 400 ~START | R.a => R.q-
+    directives {
+      extra_delay(R.q)   =2*ExtraTimingMargin;
+      bd_extra_delay(R.q)=BD_A_DELAY/2+BD_Q_DELAY/2;
+    }
+  }
+}
+
+define sink_bdc()(bdc -L) <+ unimplementable <+ bd_env_attributes <: BD_CELL {
+  csp {
+    function resetNodes() = (L.a-);
+    *[[L.q]; wait(800); random_wait(); L.a+; [~L.q]; wait(800); random_wait(); L.a-]
+  }
+  prs {
+    after 400 ~_RESET | ~L.q => L.a-
+    directives {
+      extra_delay(L.a)   =2*ExtraTimingMargin;
+      bd_extra_delay(L.a)=BD_Q_DELAY/2+BD_A_DELAY/2;
+    }
+  }
+}
+
+define monitor_bd(int W)(node    -q;
+                         node[W] -d;
+                         bd(W)   +DATA)
+                 <+ unimplementable
+                 <+ bd_env_attributes
+                 <: BD_CELL {
+  csp {
+    bool q_old = false;
+    int(W) data;
+    *[[q != q_old -> wait(1); data=d;];
+      q_old = q; DATA!data;
+    ];
+  }
+}
+
+define drop_initial_bd(int W,N)(bd(W) -L, +R) <+ bd_env_attributes <: BD_CELL {
+  csp { <i:N: L? >; *[ R!L? ] }
+}

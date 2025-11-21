@@ -1,0 +1,223 @@
+/*
+ * Copyright 2002 Fulcrum Microsystems.  All rights reserved.
+ * $Id: //mrl/hw/dev/cast/standard/random.cast#4 $
+ */
+
+module standard.random;
+
+import standard.base.*;
+import standard.attributes.*;
+import standard.channel.*;
+
+/*****************************************************************************/
+/***                      Random data generator cells                      ***/
+/*****************************************************************************/
+
+/*
+ * defined to support
+ *  {...-standard.random.random_<narrow/wide>_csp_source{csp}
+ *      -standard.random.random_csp_source{csp}}
+ * in cosim specs
+ */
+define random_csp_source()() attributes {}
+define random_narrow_csp_source ()() attributes <+ random_csp_source {}
+define random_wide_csp_source ()() attributes <+ random_csp_source {}
+
+define rsource_a1of (int N)(a1of(N) +R) <+ unimplementable <: RESET_CELL {
+  prs {
+    a1of(N) r;
+    r.a=R.a;
+    // NOTE: should really be metastab, but didn't want to disrupt LVE
+    <i:N: unstab after 200 _RESET & ~r.a & <&j:N: ~r.d[j]> -> r.d[i]+ >
+    <i:N: <j:0..i-1: after 200 r.d[i] -> r.d[j]- >>
+    <i:N: <j:i+1..N-1: after 200 r.d[i] -> r.d[j]- >>
+    <i:N: after 200 ~_RESET | r.a -> r.d[i]- >
+    <i:N: r.d[i] => R.d[i]+ >
+  }
+}
+
+define rsource_e1of (int N)(e1of(N) +R) <+ random_narrow_csp_source
+                                        <+ unimplementable <: RESET_CELL {
+  csp { *[ R!(random(32)%N) ] }
+  prs {
+    e1of(N) r;
+    r.e=R.e;
+    <i:N: metastab after 100 _RESET & r.e & <&j:N: ~r.d[j]> -> r.d[i]+ >
+    <i:N: <j:0..i-1: after 100 r.d[i] -> r.d[j]- >>
+    <i:N: <j:i+1..N-1: after 100 r.d[i] -> r.d[j]- >>
+    <i:N: after 100 ~_RESET | ~r.e -> r.d[i]- >
+    <i:N: after 100 r.d[i] => R.d[i]+ >
+  }
+  verilog rtl {
+    standard.random.rsource_e1of #(N)(R.d, R.e, _RESET) : 'standard/random.rsource_e1of.v';
+  }
+}
+
+define rsource_N_e1of(int N,X)(e1of(X)[N] +R) <+ random_wide_csp_source
+  <+ unimplementable <: RESET_CELL {
+  int NBITS = log2(X**N);
+  csp { *[R!random(NBITS)] }
+  subcells {
+    <i:N: rsource_e1of(X) src[i](R[i]); >
+  }
+}
+
+/*** Refinements for specific 1of(N) random sources ***/
+
+define rsource_a1of1 ()(a1of1 +R) <: rsource_a1of(1) {}
+define rsource_a1of2 ()(a1of2 +R) <: rsource_a1of(2) {}
+define rsource_a1of3 ()(a1of3 +R) <: rsource_a1of(3) {}
+define rsource_a1of4 ()(a1of4 +R) <: rsource_a1of(4) {}
+define rsource_a1of5 ()(a1of5 +R) <: rsource_a1of(5) {}
+define rsource_a1of6 ()(a1of6 +R) <: rsource_a1of(6) {}
+define rsource_a1of7 ()(a1of7 +R) <: rsource_a1of(7) {}
+define rsource_a1of8 ()(a1of8 +R) <: rsource_a1of(8) {}
+
+define rsource_e1of1 ()(e1of1 +R) <: rsource_e1of(1) {}
+define rsource_e1of2 ()(e1of2 +R) <: rsource_e1of(2) {}
+define rsource_e1of3 ()(e1of3 +R) <: rsource_e1of(3) {}
+define rsource_e1of4 ()(e1of4 +R) <: rsource_e1of(4) {}
+define rsource_e1of5 ()(e1of5 +R) <: rsource_e1of(5) {}
+define rsource_e1of6 ()(e1of6 +R) <: rsource_e1of(6) {}
+define rsource_e1of7 ()(e1of7 +R) <: rsource_e1of(7) {}
+define rsource_e1of8 ()(e1of8 +R) <: rsource_e1of(8) {}
+define rsource_e1of9 ()(e1of9 +R) <: rsource_e1of(9) {}
+define rsource_e1of16 ()(e1of16 +R) <: rsource_e1of(16) {}
+
+define rsource_N_e1of1  (int N)(e1of1 [N] +R) <: rsource_N_e1of(N,1) {}
+define rsource_N_e1of2  (int N)(e1of2 [N] +R) <: rsource_N_e1of(N,2) {}
+define rsource_N_e1of3  (int N)(e1of3 [N] +R) <: rsource_N_e1of(N,3) {}
+define rsource_N_e1of4  (int N)(e1of4 [N] +R) <: rsource_N_e1of(N,4) {}
+define rsource_N_e1of5  (int N)(e1of5 [N] +R) <: rsource_N_e1of(N,5) {}
+define rsource_N_e1of6  (int N)(e1of6 [N] +R) <: rsource_N_e1of(N,6) {}
+define rsource_N_e1of7  (int N)(e1of7 [N] +R) <: rsource_N_e1of(N,7) {}
+define rsource_N_e1of8  (int N)(e1of8 [N] +R) <: rsource_N_e1of(N,8) {}
+define rsource_N_e1of9  (int N)(e1of9 [N] +R) <: rsource_N_e1of(N,9) {}
+define rsource_N_e1of16 (int N)(e1of16[N] +R) <: rsource_N_e1of(N,16){}
+
+
+/*****************************************************************************/
+/***                   Generate random numbers with bias                   ***/
+/*****************************************************************************/
+
+/* W[i] is the weight with which each output value i is produced */
+define biased_rsource_e1of (int N; int W[0..N-1])(e1of(N) +R)
+  <+ unimplementable <: RESET_CELL {
+  csp {
+    int wsum, rbits, r, n;
+
+    wsum = 0; <;i:N:( wsum = wsum + W[i] )>;
+    rbits = log2(wsum);
+
+    *[r = random(rbits);
+      #[r < wsum ->
+          n = 0;
+          *[r >= 0 ->
+               #[r < W[n] -> R!n];
+               r = r - W[n];
+               n = n + 1
+           ]
+       ]
+     ]
+
+    directives { cycle_time = 14; }
+  }
+}
+
+define biased_rsource_e1of2(int W0,W1)(e1of2 +R)
+    <: biased_rsource_e1of  (2,{W0,W1}) {}
+define biased_rsource_e1of3(int W0,W1,W2)(e1of3 +R)
+    <: biased_rsource_e1of  (3,{W0,W1,W2}) {}
+define biased_rsource_e1of4(int W0,W1,W2,W3)(e1of4 +R)
+    <: biased_rsource_e1of  (4,{W0,W1,W2,W3}) {}
+define biased_rsource_e1of5(int W0,W1,W2,W3,W4)(e1of5 +R)
+    <: biased_rsource_e1of  (5,{W0,W1,W2,W3,W4}) {}
+define biased_rsource_e1of6(int W0,W1,W2,W3,W4,W5)(e1of6 +R)
+    <: biased_rsource_e1of  (6,{W0,W1,W2,W3,W4,W5}) {}
+define biased_rsource_e1of7(int W0,W1,W2,W3,W4,W5,W6)(e1of7 +R)
+    <: biased_rsource_e1of  (7,{W0,W1,W2,W3,W4,W5,W6}) {}
+define biased_rsource_e1of8(int W0,W1,W2,W3,W4,W5,W6,W7)(e1of8 +R)
+    <: biased_rsource_e1of  (8,{W0,W1,W2,W3,W4,W5,W6,W7}) {}
+
+/*****************************************************************************/
+/***                   Generate random numbers in a range                  ***/
+/*****************************************************************************/
+
+define rsource_range_Mxe1ofN (int M, N, MIN, MAX)(e1of(N)[M] +R)
+  <+ unimplementable <: RESET_CELL {
+  csp { *[ R!(MIN + random(32)%(MAX-MIN+1)) ] }
+  env {
+    digital <: standard.null.NULL {
+      csp {
+        int SIMCYCLES = (MAX-MIN+1)*(MAX-MIN+1);
+        int c[MAX-MIN+1];
+        int cnt=0;
+        *[ cnt < SIMCYCLES ->
+              R?x;
+              assert (x >= MIN); assert (x <= MAX);
+              c[x-MIN]++;
+              cnt++;
+         ];
+         i = MIN;
+         *[ i <= MAX -> assert(c[i-MIN] > 0, "zero count for i=" + i +
+                                             " cycles=" + cnt);
+            i++
+         ];
+         print("SUCCESS.")
+      }
+    }
+  }
+}
+
+define rsource_range_Mxe1of2 (int M, MIN, MAX)(e1of2[M] +R)
+                                <: rsource_range_Mxe1ofN(M,2,MIN,MAX) {}
+
+define rsource_range_Mxe1of3 (int M, MIN, MAX)(e1of3[M] +R)
+                                <: rsource_range_Mxe1ofN(M,3,MIN,MAX) {}
+
+define rsource_range_Mxe1of4 (int M, MIN, MAX)(e1of4[M] +R)
+                                <: rsource_range_Mxe1ofN(M,4,MIN,MAX) {}
+
+// Aliases for consistency with other rsource cells
+define rsource_range_N_e1of2(int N, MIN, MAX)
+        <: rsource_range_Mxe1of2(N,MIN,MAX) {}
+define rsource_range_N_e1of3(int N, MIN, MAX)
+        <: rsource_range_Mxe1of3(N,MIN,MAX) {}
+define rsource_range_N_e1of4(int N, MIN, MAX)
+        <: rsource_range_Mxe1of4(N,MIN,MAX) {}
+
+define rsource_ranges_Mxe1ofN (int M, N, RANGES;
+                               int MIN[0..RANGES-1], MAX[0..RANGES-1])
+                              (e1of(N)[M] +R)
+  <+ unimplementable <: RESET_CELL {
+  // as rsource_range_Mxe1ofN but allow the number to be chosen from one
+  // of several ranges (e.g., widely-separated address ranges)
+  csp {
+    *[ range = random(log2(RANGES)+3)%RANGES;
+       R!(MIN[range] + random(32)%(MAX[range]-MIN[range]+1))
+     ]
+  }
+}
+
+
+/*****************************************************************************/
+/***                   Randomly send values from a list                    ***/
+/*****************************************************************************/
+
+define rsource_list_Mxe1of2 (int M,N; int d[0..N-1]) (e1of2[M] +R)
+  <+ unimplementable <: RESET_CELL {
+  csp { *[R!d[random(32)%N]] }
+}
+
+define rsource_list_Mxe1of3 (int M,N; int d[0..N-1]) (e1of3[M] +R)
+  <+ unimplementable <: RESET_CELL {
+  csp { *[R!d[random(32)%N]] }
+}
+
+define rsource_list_Mxe1of4 (int M,N; int d[0..N-1]) (e1of4[M] +R)
+  <+ unimplementable <: RESET_CELL {
+  csp { *[R!d[random(32)%N]] }
+}
+
+
+

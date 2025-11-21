@@ -1,0 +1,342 @@
+/*
+ * Copyright 2002 Fulcrum Microsystems.  All rights reserved.
+ * $Id: //mrl/hw/dev/cast/standard/synchronous.cast#7 $
+ */
+
+module standard.synchronous;
+
+import standard.base.*;
+import standard.attributes.*;
+import standard.null.*;
+import standard.channel.*;
+import standard.random.*;
+import standard.timed.*;
+import standard.source.source_cell;
+import standard.source.start_cell;
+
+/*****************************************************************************/
+/*                         Base and Assertion Cells                          */
+/*****************************************************************************/
+
+/** 
+ * Synchronous flip-flop cell.  Defines setup/hold time properties that
+ * may optionally be tested when enable_timing_checks == true.  Note that
+ * enable_timing_checks==true causes unimplementable production rules to
+ * be included in the design, so NEVER leave this true during physical
+ * synthesis.
+ **/
+define synchronous_flop attributes {
+  bool enable_timing_checks = false;
+  directives {
+    synchronous = true;
+  }
+}
+
+/** Posedge flop for use in envs.  Setup=0T, hold=0T, delay=2T **/
+define posedge_flop()(node -CLK, -D, +Q) <+ unimplementable <: LEAF {
+  prs {
+    1of2 q;
+    after 0 CLK &  D & ~q.0 -> q.1+    ~CLK -> q.1-
+    after 0 CLK & ~D & ~q.1 -> q.0+    ~CLK -> q.0-
+    after 200  _RESET & q.1 -> Q+
+    after 200 ~_RESET | q.0 -> Q-
+  }
+}
+
+/** 
+ * Tests input setup/hold times of L relative to clk+ (EDGE==0) or clk-
+ * (EDGE==1).  Test fails if SETUP_TEST or HOLD_TEST glitches.
+ **/
+define synchronous_timing_check (int T_setup, T_hold, EDGE)(node -clk, -L) 
+  <+ unimplementable <: LEAF {
+  prs {
+    node Ls,_clk,SETUP_TEST,HOLD_TEST;
+    node xclk;
+    [EDGE==0 -> xclk = clk;]
+    [EDGE==1 -> after_ps 0 clk => xclk-]
+    after_ps T_setup L => Ls+
+    after_ps 0  _clk & xclk & (L & Ls | ~L & ~Ls) -> SETUP_TEST+
+    after_ps T_setup ~_RESET | _clk & xclk & (L & ~Ls | ~L & Ls) -> SETUP_TEST-
+    after_ps T_hold _clk & xclk & (L | ~L) -> HOLD_TEST+
+    after_ps 0 (~_RESET | HOLD_TEST) & xclk -> _clk-
+    after_ps 0 ~_RESET | xclk & ~_clk -> HOLD_TEST-
+    after_ps 0 ~xclk -> _clk+
+  }
+}
+
+
+/*****************************************************************************/
+/*                   Synchronous clock & pattern generators                  */
+/*****************************************************************************/
+
+/** drive a clock signal at given period (in units of ps) **/
+define source_clock_with_delay (int T,D)(node +clk) <+ unimplementable <: RESET_CELL {
+  [T<=0 -> subcells { clk=GND; } ]
+  [T> 0 -> prs {
+    node _RES2,digital_clk;
+    after_ps D _RESET => _RES2+
+    after_ps T/2  _RES2 & ~digital_clk -> digital_clk+
+    after_ps T/2 ~_RES2 |  digital_clk -> digital_clk-
+    after_ps 0 digital_clk => clk+
+  } ]
+  directives {
+    fragment=true;
+  }
+}
+
+/** by default, start clock one period after _RESET+ **/
+define source_clock(int T) <: source_clock_with_delay(T,T/2) {}
+
+/**
+ * csp clock generator.  When RANDOM==0, sources clock with specified period
+ * (in transitions).  When RANDOM==1, toggles the clock whenever the event
+ * queue empties.  Useful for verifying a synchronous design's DI correctness
+ * relative to clock edges.
+ **/
+define source_test_clock (int Tclk; bool RANDOM)(node +clk) <+ unimplementable <: RESET_CELL {
+  csp {
+    function resetNodes() = ( clk- );
+    eventQueueIsEmpty();
+    *[[ RANDOM -> eventQueueIsEmpty()
+      []else   -> wait(Tclk*100/2)];
+      clk = ~clk
+     ]
+  }
+}
+
+/**
+ * General synchronous node source.  Transitions R to the values of
+ * d[i] cycle-by-cycle, either following the positive edge of clk
+ * (EDGE==0) or the negative edge (EDGE==1).  The transition of R is
+ * scheduled between T ps after the specified edge.
+ *
+ * See also the 'posedge' and 'negedge' refinements below.
+ **/
+define source_synchronous_node (int N, d[0..N-1], T, EDGE)
+                               (node -clk, +R)
+  <+ unimplementable <: RESET_CELL {
+  subcells {
+    source_synchronous_bus(1,N,d,T,EDGE) bus(clk,{R});
+  }
+  env { digital subcells { source_clock(1000) _(clk); } }
+}
+
+/** Output transitions on clk+ **/
+define source_posedge_node (int N, d[0..N-1])(node -clk, +R)
+  <: source_synchronous_node(N,d,0,0) {}
+
+/** Output transitions on clk- **/
+define source_negedge_node (int N, d[0..N-1])(node -clk, +R)
+  <: source_synchronous_node(N,d,0,1) {}
+
+/** Multi-bit synchronous source **/
+define source_synchronous_bus (int W, N, d[0..N-1], T, EDGE)
+  (node -clk; node[W] +R) <: RESET_CELL {
+  prs {
+    node[N] sd;
+    node l[0..N],le[0..N];
+    node[W] r;
+    node go;
+
+    // generate go from clk
+    [EDGE==0 -> after_ps 0 clk => go+ ]
+    [EDGE==1 -> after_ps 0 clk => go- ]
+
+    // round-robin 1ofN token
+    <i:N: source_cell _(l[i],le[i],sd[i],go,l[i+1],le[i+1]); >
+    start_cell _(l[N],le[N],l[0],le[0]);
+
+    // output data
+    <j:W:
+      [(d[0]/2**j)%2==0 -> after_ps 0 ~_RESET -> r[j]- ]
+      [(d[0]/2**j)%2==1 -> after_ps 0 ~_RESET -> r[j]+ ]
+      <i:N:
+        [(d[i]/2**j)%2==0 -> after_ps 0 _RESET & go & sd[i] -> r[j]- ]
+        [(d[i]/2**j)%2==1 -> after_ps 0 _RESET & go & sd[i] -> r[j]+ ]
+      >
+    >
+    <i:W: after_ps T r[i] => R[i]+ >
+  }
+}
+
+/** Bus source: Output transitions on clk+ **/
+define source_posedge_bus (int W, N, d[0..N-1])(node -clk; node[W] +R)
+  <: source_synchronous_bus(W,N,d,0,0) {}
+
+/** Bus source: Output transitions on clk- **/
+define source_negedge_bus (int W, N, d[0..N-1])(node -clk; node[W] +R)
+  <: source_synchronous_bus(W,N,d,0,1) {}
+
+define fast_rsource_e1of2 ()(e1of2 +R) <: rsource_e1of2 {
+  prs {
+    directives {
+     <i:N: extra_delay(R.d[i]) = -100; >
+    }
+  }
+}
+
+/**
+ * Similar to source_synchronous_node, but randomly chooses R on each
+ * transition edge.  (EDGE==0 => R transitions on clk+)
+ **/
+define rsource_synchronous_node (int T, EDGE)(node -clk, +R)
+  <+ unimplementable <: LEAF {
+  prs {
+    /** Edge remapping **/
+    node ck,_ck;
+    [EDGE==0 -> ck = clk; ]
+    [EDGE==1 -> after_ps 0 clk => ck- ]
+
+    /** Random data value **/
+    e1of2 value;
+    fast_rsource_e1of2 random_data(value);
+    value.e = _ck;
+
+    /** Set synchronous 1of2 on the right edge **/
+    1of2 rr;
+    <i:2: isochronic after_ps 0 ~_RESET | ~ck -> rr.d[i]- >
+    isochronic after_ps 0 _ck & ck & ~rr.0 & ~rr.1 & value.0 -> rr.0+
+    isochronic after_ps 0 _ck & ck & ~rr.0 & ~rr.1 & value.1 -> rr.1+
+    isochronic after_ps 0 ~_RESET | ck & (rr.0 | rr.1) -> _ck-
+    after_ps 0 _RESET & ~ck -> _ck+
+
+    /** after_ps 0 RS latch to set r **/
+    node r,_r;
+    isochronic after_ps 0 ~_RESET | rr.0 | _r => r-
+    isochronic after_ps 0 rr.1 |  r => _r-
+
+    /*** Delay ***/
+    after_ps T r => R+
+  }
+  env { digital subcells { source_clock(2000) _(clk); } }
+}
+
+/** Output transitions on clk+ **/
+define rsource_posedge_node ()(node -clk, +R)
+  <: rsource_synchronous_node(0,0) {}
+
+/** Output transitions on clk- **/
+define rsource_negedge_node ()(node -clk, +R)
+  <: rsource_synchronous_node(0,1) {}
+
+/**
+ * Verifies that the input L synchronous node matches the specified sequence
+ * for 'length' cycles, starting from 'start' cycles out of reset.  Checks
+ * the L value on the rising edge of clk.
+ *
+ * Example:
+ *   start = 2
+ *   length = 4
+ *   sequence = { 0, 1, 0, 1 }
+ *
+ *   L:        0   0   1   0   1   1   0   0 
+ *   OK:      [0] [0]  0   0   0   1  [0] [0]
+ *   ERROR:   [0] [0]  1   1   1   0  [0] [0]
+ *
+ * "[0]" indicates cycles on which L is not checked.  Both OK and ERROR
+ * remain to 0 on these cycles.  On check cycles, either ERROR or OK will
+ * transition high immediately following clk+ and will return low 
+ * immediately after clk-.
+ **/
+define check_synchronous_node (int start, length, sequence[0..length-1])
+  (node -clk, -L, +OK, +ERROR) 
+  <+ unimplementable <+ frag <: LEAF {
+  prs {
+    node[start+length+1] cycle;
+    node _clk;
+
+    /** Reset state: **/
+    after_ps 0 ~_RESET -> cycle[0]+
+    <i:1..start+length: after_ps 0 ~_RESET -> cycle[i]- >
+    after_ps 0 ~_RESET -> _clk-
+    after_ps 0 ~_RESET -> ERROR-
+    after_ps 0 ~_RESET -> OK-
+
+    /** Unconditional: **/
+    after_ps 0 _RESET & ~clk -> _clk+
+    after_ps 0 ~clk -> ERROR-
+    after_ps 0 ~clk -> OK-
+
+    /** Conditional cycle rules **/
+    <i:0..0:
+          after_ps 0 clk & _clk & cycle[i] -> cycle[i+1]+ >
+    <i:1..start+length-1: 
+          after_ps 0 clk & _clk & ~cycle[i-1] & cycle[i] -> cycle[i+1]+ >
+    <i:0..start-1:
+          after_ps 0 clk & _clk & cycle[i] & cycle[i+1] -> _clk- >
+    <i:start..start+length-1:
+      [sequence[i-start]==0 -> 
+          after_ps 0 clk & _clk & cycle[i] & cycle[i+1] & ~L -> OK+ 
+          after_ps 0 clk & _clk & cycle[i] & cycle[i+1] &  L -> ERROR+ ]
+      [sequence[i-start]==1 -> 
+          after_ps 0 clk & _clk & cycle[i] & cycle[i+1] & ~L -> ERROR+
+          after_ps 0 clk & _clk & cycle[i] & cycle[i+1] &  L -> OK+ ] >
+    <i:start..start+length-1:
+          after_ps 0 clk & _clk & (ERROR | OK) -> _clk- >
+    <i:0..start+length-1:
+          after_ps 0 clk & ~_clk & cycle[i] & cycle[i+1] -> cycle[i]- >
+  }
+  env { 
+    digital {
+      subcells { 
+        source_clock(2000) _(clk);
+        source_negedge_node(6,{0,1,1,0,0,1}) _(clk,L);
+      }
+    }
+  }
+}
+
+/** Print data values captured on rising edge of a CLK **/
+define print_posedge_bus(int W)(node -CLK; node[W] -L) <+ unimplementable <: RESET_CELL {
+  csp { *[[CLK]; print(hex(L)); [~CLK]] }
+}
+
+/** Print data values captured on falling edge of a CLK **/
+define print_negedge_bus(int W)(node -CLK; node[W] -L) <+ unimplementable <: RESET_CELL {
+  csp { *[[CLK]; [~CLK]; print(hex(L))] }
+}
+
+/** Print data values captured on both edges of a CLK **/
+define print_ddredge_bus(int W)(node -CLK; node[W] -L) <+ unimplementable <: RESET_CELL {
+  csp { *[[CLK]; print(hex(L)); [~CLK]; print(hex(L))] }
+}
+
+/************** utilities for setting up synchronous vs CSP cosim **************/
+
+/** Convert an e1of2 into a node on each CLK+ **/
+define cosim_A2S_BIT(int PHASE)(node -CLK; e1of2 -L; node +R) <+ unimplementable <: RESET_CELL {
+  prs {
+    1of2 q;
+    node r;
+    after_ps 0 CLK & L.0 & ~q.1 -> q.0+   after_ps 0 ~CLK -> q.0-
+    after_ps 0 CLK & L.1 & ~q.0 -> q.1+   after_ps 0 ~CLK -> q.1-
+    after_ps 0 ~_RESET | q.0 | q.1 => L.e-
+    after_ps 0 ~_RESET | q.0 -> r-
+    after_ps 0  _RESET & q.1 -> r+
+    after_ps PHASE r => R+
+  }
+}
+
+/** Convert a node to an e1of2 handshake on each CLK+ **/
+define cosim_S2A_BIT()(node -CLK; node -L; e1of2 +R) <: RESET_CELL {
+  prs {
+    after_ps 0 CLK & ~R.1 & ~L -> R.0+    after_ps 0 ~CLK -> R.0-
+    after_ps 0 CLK & ~R.0 &  L -> R.1+    after_ps 0 ~CLK -> R.1-
+  }
+}
+
+/** An N-bit datapath of cosim_A2S_BIT's **/
+define cosim_A2S(int N, PHASE)(node -CLK; e1of2[N] -L; node[N] +R)
+  <+ unimplementable <: RESET_CELL {
+  subcells {
+    <i:N: cosim_A2S_BIT(PHASE) bit[i](CLK,L[i],R[i]); >
+  }
+}
+
+/** An N-bit datapath of cosim_S2A_BIT's **/
+define cosim_S2A(int N)(node -CLK; node[N] -L; e1of2[N] +R)
+  <+ unimplementable <: RESET_CELL {
+  subcells {
+    <i:N: cosim_S2A_BIT bit[i](CLK,L[i],R[i]); >
+  }
+}

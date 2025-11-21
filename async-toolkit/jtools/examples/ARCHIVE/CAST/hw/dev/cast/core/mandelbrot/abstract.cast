@@ -1,0 +1,90 @@
+/**
+ * Tutorial example of evaluating the Mandelbrot Set fractal.
+ **/
+
+module core.mandelbrot.abstract;
+
+/** Attributes for Mandelbrot engines, parameterized by bit width. **/
+define mandelbrot(int W) attributes {
+  int W_TOP  =  4;       // bits above decimal point to represent -8.0 to 8.0
+  int W_ITER = 16;       // bits of iteration counters
+  int SHIFT  = W-W_TOP;  // how much to downshift after multiplication
+  int SCALE  = 2**SHIFT; // how much to multiply by to convert to fixed point
+  csp {
+    // single iteration of Mandelbrot set computation
+    function iterate(sint(W) -cr, -ci, -+zr, -+zi; int(W_ITER) -+iter) : bool =
+      (sint(W) zr_zr = zr*zr>>SHIFT;
+       sint(W) zi_zi = zi*zi>>SHIFT;
+       sint(W) zr_zi = zr*zi>>SHIFT;
+       zr = cr + zr_zr - zi_zi;
+       zi = ci + 2*zr_zi;
+       iter--;
+       iterate = iter==0 | zr_zr + zi_zi > 4<<SHIFT
+       );
+  }
+}
+
+/** Core engine to evaluate if a given point is in the Mandelbrot set. **/
+define ABSTRACT_MANDELBROT(int W)
+  (bd(W) -CR, -CI;
+   bd(W_ITER) -MAX, +ITER)
+  <+ mandelbrot(W) {
+  csp {
+    *[sint(W) cr,ci,zr,zi;
+      int(W_ITER) iter;
+      bool done;
+      CR?cr, CI?ci, MAX?iter;
+      zr=cr, zi=ci;
+      *[~done -> done=iterate(cr,ci,zr,zi,iter)];
+      ITER!iter
+     ]
+  }
+  env {
+    digital { // random for cosimulation
+      subcells {
+        rsource_bd(W) _(CR);
+        rsource_bd(W) _(CI);
+        rsource_bd(W_ITER) _(MAX);
+        sink_bd(W_ITER) _(ITER);
+      }
+    }
+    plot(int PIXELS, MAX_ITER, WIDTH, X, Y) { // square plot centered on X, Y and WIDTH wide
+      csp {
+        sint(W) x0,y0,x1,y1,dx,dy,x,y;
+        int(W_ITER) iter;
+        x0 = X-WIDTH/2;
+        x1 = X+WIDTH/2;
+        y0 = Y-WIDTH/2;
+        y1 = Y+WIDTH/2;
+        dx = (x1-x0)/PIXELS;
+        dy = (y1-y0)/PIXELS;
+        y  = y1;
+        <i:PIXELS:
+          (string row="";
+           x = x0;
+           <j:PIXELS:
+             (CR!x, CI!y, MAX!MAX_ITER; ITER?iter; x+=dx;
+              [iter==0 -> row += "*" [] else -> row += " "]
+              )
+           >;
+           y-=dy;
+           print(row)
+          )
+        >
+      }
+    }
+    // some interesting zooms in the Mandelbrot set
+    mandelbrot_full(int PIXELS, MAX_ITER)
+      <: plot(PIXELS,MAX_ITER,3*SCALE/1,-5*SCALE/10,0*SCALE/1) {}
+    mandelbrot_zoom1(int PIXELS, MAX_ITER)
+      <: plot(PIXELS,MAX_ITER,1*SCALE/1000,-11455*SCALE/100000,8902*SCALE/10000) {}
+    mandelbrot_zoom2(int PIXELS, MAX_ITER)
+      <: plot(PIXELS,MAX_ITER,3*SCALE/1000,-9515*SCALE/10000,249*SCALE/1000) {}
+    mandelbrot_zoom4(int PIXELS, MAX_ITER)
+      <: plot(PIXELS,MAX_ITER,2*SCALE/10000,-17745*SCALE/10000,413*SCALE/100000) {}
+    mandelbrot_zoom5(int PIXELS, MAX_ITER)
+      <: plot(PIXELS,MAX_ITER,11*SCALE/1000,-745*SCALE/1000,1271*SCALE/10000) {}
+    mandelbrot_zoom6(int PIXELS, MAX_ITER)
+      <: plot(PIXELS,MAX_ITER,3*SCALE/10000,342*SCALE/1000,-417*SCALE/1000) {}
+  }
+}

@@ -1,0 +1,40 @@
+/*
+ * Copyright 2002 Fulcrum Microsystems.  All rights reserved.
+ * $Id: //mrl/hw/dev/cast/standard/copy.cast#2 $
+ */
+
+module standard.copy;
+
+import standard.base.*;
+import standard.channel.*;
+
+/******************************************************************************/
+/***               Environment copy cells                                   ***/
+/******************************************************************************/
+
+define copyN_1of (int X,N)(e1of(X) -L, +R[0..N-1]) <+ unimplementable <: LEAF {
+  csp {
+    *[L?x; <;i:N: (R[i]!x) >]
+  }
+  prs {
+    <i:N: L.d = R[i].d; >
+    after 0 <&i:N: R[i].e > #> L.e+
+  }
+}
+
+define copyN_1of1 (int N)(e1of1 -L, +R[0..N-1]) <+ unimplementable <: LEAF {
+  csp { *[L?x; <;i:N: (R[i]!x) >] }
+  prs {
+    <i:N: L.d = R[i].d; >
+    after 0 <&i:N: R[i].e > #> L.e+
+  }
+}
+
+/** specific refinements **/
+define copyN_1of2 (int N)(e1of2 -L,+R[0..N-1]) <: copyN_1of(2,N) {}
+define copyN_1of3 (int N)(e1of3 -L,+R[0..N-1]) <: copyN_1of(3,N) {}
+define copyN_1of4 (int N)(e1of4 -L,+R[0..N-1]) <: copyN_1of(4,N) {}
+define copyN_1of5 (int N)(e1of5 -L,+R[0..N-1]) <: copyN_1of(5,N) {}
+define copyN_1of6 (int N)(e1of6 -L,+R[0..N-1]) <: copyN_1of(6,N) {}
+define copyN_1of7 (int N)(e1of7 -L,+R[0..N-1]) <: copyN_1of(7,N) {}
+define copyN_1of8 (int N)(e1of8 -L,+R[0..N-1]) <: copyN_1of(8,N) {}

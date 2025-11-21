@@ -1,0 +1,103 @@
+/** BD signed multiplier.  Optional fixed point shift. **/
+
+module lib.bd.math.multiply;
+
+/**
+ * Abstract.  WX, WY, WZ are channel bit widths, SHR is optional
+ * downshift for fixed point, and STAGES of pipelining.
+ **/
+define ABSTRACT_MUL(int WX, WY, WZ, SHR, STAGES)
+  (bd(WX) -X; bd(WY) -Y; bd(WZ) +Z) {
+  csp {
+    *[sint(WX) x;
+      sint(WY) y;
+      X?x, Y?y;
+      Z!x*y>>SHR
+     ]
+    directives {
+      [STAGES==0 -> slack(X)=0; slack(Y)=0;]
+      [STAGES<=1 -> slack(Z)=0;]
+      [STAGES>=2 -> internal_slack(Z)=STAGES-2;]
+    }
+  }
+  env {
+    digital {
+      subcells {
+        rsource_bd(WX) _(X);
+        rsource_bd(WY) _(Y);
+        sink_bd(WZ) _(Z);
+      }
+      directives { ntpc_spec(Z.C.q) = 36; }
+    }
+  }
+}
+
+/**
+ * Signed W-bit multiplier which produces only the least significant W
+ * bits of the product and an overflow bit.  Uses Gok, Schulte, Arnold
+ * paper "Integer Multipliers with Overflow Detection" for reference.
+ * Basic idea is to predict overflow by more than 1 bit by adding the
+ * significance of the operands.  Then simply produce W+1 bits of
+ * product see if it overflows only a little bit.
+ **/
+define ABSTRACT_MUL_OVERFLOW(int W, STAGES)(bd(W) -X, -Y, +Z; bd(1) +OF) {
+  csp {
+    // predict large overflow (iterative algorithm from the paper)
+    function predictOverflow(sint(W) -x, -y) : int(1) =
+      (#[x<0 -> x=~x], #[y<0 -> y=~y]; // invert negative numbers
+       <i:W-1: (x{W-2-i}|=x{W-1-i}) >; // copy most significant bit of x to lower bits of x
+       predictOverflow = <|j:W: (y{j} & x{W-1-j}) > // significance of product equals W+1 (or more)
+       );
+
+    // obvious overflow test for reference
+    function checkOverflow(sint(W) -x, -y; int(1) -of) =
+      (sint(2*W) z = x*y; // compute full precision product
+       bool o = z{W-1}==0 & z{2*W-1:W}!=0 | z{W-1}==1 & z{2*W-1:W}!=~(-1<<W);
+       assert(o==(of==1),"x=" +hex(x) + " y=" + hex(y) + " z=" + hex(z) + " bad of=" + of)
+       );
+
+    *[sint(W) x,y;
+      sint(W+1) z;
+      int(1) of;
+      X?x, Y?y;
+      z=x*y;
+      of = predictOverflow(x,y); // predict large overflow
+      of |= z{W}^z{W-1};         // check for overflow by only 1 bit
+      // checkOverflow(x,y,of); // assert correctness
+      Z!z, OF!of
+     ]
+
+    directives {
+      [STAGES==0 -> slack(X)=0; slack(Y)=0;]
+      [STAGES<=1 -> slack(Z)=0; slack(OF)=0;]
+      [STAGES>=2 -> internal_slack(Z)=STAGES-2; internal_slack(OF) = STAGES-2;]
+    }
+  }
+  env {
+    digital {
+      subcells {
+        rsource_bd(W) _(X);
+        rsource_bd(W) _(Y);
+        sink_bd(W) _(Z);
+        sink_bd(1) _(OF);
+      }
+      directives { ntpc_spec(Z.C.q) = 36; }
+    }
+    random {
+      csp {
+        *[sint(W) x,y;
+          int(1) of;
+          x=random(W), y=random(W);
+          X!x, Y!y, Z?, OF?of;
+          checkOverflow(x,y,of)
+         ]
+      }
+    }
+    targeted {
+      csp {
+        <x:1<<W: (<y:1<<W: (int(1) of; X!x, Y!y; Z?, OF?of; checkOverflow(x,y,of)) >)>;
+        print("PASS")
+      }
+    }
+  }
+}

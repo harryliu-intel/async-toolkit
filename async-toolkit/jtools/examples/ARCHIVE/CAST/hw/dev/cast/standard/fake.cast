@@ -1,0 +1,65 @@
+/*
+ * Copyright 2002 Fulcrum Microsystems.  All rights reserved.
+ * $Id: //mrl/hw/dev/cast/standard/fake.cast#2 $
+ */
+
+module standard.fake;
+
+import standard.base.*;
+import standard.channel.*;
+
+define fake_arbiter_1of2(int F,P,Q)(e1of1 -L[0..1]; e1of2 +A)
+    <+ unimplementable {
+  csp {
+    int first,second;
+
+    [ F==0 -> first=0
+    []F==1 -> first=1
+    []else -> [#L[0] -> first=0
+              :#L[1] -> first=1
+              ]
+    ];
+    second = (first+1)%2;
+
+    [ P>0  -> <;i:P:( L[first]?; A!first )>
+    []else -> *[ ~#L[second] -> L[first]?; A!first ]
+    ];
+    *[ <;i:Q:( L[second]?; A!second )>;
+       <;i:Q:( L[first]?;  A!first  )>
+     ]
+
+    directives {
+      latency(A) = 4;
+      <i:2: fb(L[i]) = 5; >
+    }
+  }
+}
+
+define fake_arb_merge2_1of(int X,F,P,Q)(e1of(X) -L[0..1];  // Inputs
+                                        e1of(X) +R;        // Merged output
+                                        e1of2   +A)
+    <+ unimplementable {
+  csp {
+    int first,second;
+
+    [ F==0 -> first=0
+    []F==1 -> first=1
+    []else -> [#L[0] -> first=0
+              :#L[1] -> first=1
+              ]
+    ];
+    second = (first+1)%2;
+
+    [ P>0  -> <;i:P:( R!(L[first]?); A!first )>
+    []else -> *[ ~#L[second] -> R!(L[first]?); A!first ]
+    ];
+    *[ <;i:Q:( R!(L[second]?); A!second )>;
+       <;i:Q:( R!(L[first]?);  A!first  )>
+     ]
+
+    directives {
+      latency(A) = 4;
+      latency(R) = 4;
+    }
+  }
+}

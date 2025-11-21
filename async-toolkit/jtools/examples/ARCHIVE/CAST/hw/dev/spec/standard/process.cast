@@ -1,0 +1,59 @@
+module standard.process;
+
+/** Process specific constants (Template -- replace with correct numbers) **/
+define standard_layout_cell attributes <+ standard.attributes.constants {
+  // integer process identifier (sometimes used in CAST)
+  int PROCESS = 123;
+
+  // delay constants for DSim
+  int DEFAULT_UP_DELAY = 100;
+  int DEFAULT_DN_DELAY = 100;
+
+  // pitches and density (for Jauto and CDL writing)
+  float ROW_PITCH        = 10.0e-6; // standard cell row height
+  float BIT_PITCH        = 2*ROW_PITCH;
+  float POLY_PITCH       = 1.0e-6;
+  float WIRE_LAMBDA      = 1.0e-6; // used to name nondefault router rules, if any
+  float WIDTH_MINIMUM    = POLY_PITCH*2;
+  float WIDTH_INCREMENT  = POLY_PITCH;
+  float WIDTH_OVERHEAD   = POLY_PITCH;
+  float HEIGHT_MINIMUM   = ROW_PITCH;
+  float HEIGHT_INCREMENT = ROW_PITCH;
+  float HEIGHT_OVERHEAD  = 0;
+  float TRANSISTOR_LENGTH_GRID = 1.0e-6; // used when emitting CDL
+  float TRANSISTOR_WIDTH_GRID  = 1.0e-6; // used when emitting CDL
+  float DENSITY_FACTOR         = 1.25;   // target ratio of cell area to diffusion area for Jauto
+
+  // pitch for repeater invertersm, relative to BIT_PITCH
+  int FAST_REPEATER_BP = 45; // hop distance with the best latency for 12dg+12dg inverter chain
+  int BEST_REPEATER_BP = 60; // hop distance with the best Ett for 12dg+12dg inverter chain
+
+  // toggle if metastable mid-level cells are routed or inlined into parent cells
+  bool METASTABLE_LEAF_ROUTED = true;
+
+  directives {
+    // transistor model names for CDL/SPICE
+    transistor_name( LVT_TRANSISTOR) = 'plvt';
+    transistor_name(-LVT_TRANSISTOR) = 'nlvt';
+    transistor_name( SVT_TRANSISTOR) = 'psvt';
+    transistor_name(-SVT_TRANSISTOR) = 'nsvt';
+    transistor_name( HVT_TRANSISTOR) = 'phvt';
+    transistor_name(-HVT_TRANSISTOR) = 'nhvt';
+    transistor_name( HDC_TRANSISTOR) = 'phdc'; // for SRAM
+    transistor_name(-HDC_TRANSISTOR) = 'nhdc'; // for SRAM
+
+    // power supplies
+    powergrid_gndnet = 'GND';
+    powergrid_vddnet = 'Vdd';
+  }
+}
+
+/** Sizing attributes (for Jauto) **/
+define sizing_defaults attributes <+ standard_layout_cell {
+  directives {
+    // boundary sizing rules
+    internal_wirelength = 16*BIT_PITCH;                 // medium wire length
+    internal_loadcap    = 10.0e-15;                     // 16*MED_INV input capacitance
+    internal_driver     = lib.util.operator.MED_INV.c0; // MED_INV driver
+  }
+}
