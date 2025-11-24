@@ -1,7 +1,7 @@
 #!/usr/bin/csh
 
 dev
-../archive_cast "core.mandelbrot.tutorial.BASE_MANDELBROT1\(32\)"
+./archive_cast "core.mandelbrot.tutorial.BASE_MANDELBROT1\(32\)"
 
 
 setenv DEST_DIR `pwd`
