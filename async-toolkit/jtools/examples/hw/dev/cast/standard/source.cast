@@ -1,0 +1,184 @@
+/*
+ * Copyright 2002 Fulcrum Microsystems.  All rights reserved.
+ * $Id: //mrl/hw/dev/cast/standard/source.cast#3 $
+ */
+
+module standard.source;
+
+import standard.base.*;
+import standard.attributes.*;
+import standard.channel.*;
+
+/*****************************************************************************/
+/***                Deterministic pattern data generator cells             ***/
+/*****************************************************************************/
+
+/*** unit cell for N state alternator ***/
+define source_cell ()(node -l,+le,+s,-se,+r,-re) <+ unimplementable <: RESET_CELL {
+  // hse { *[[l]; le-; [~l]; le+; [se & re]; s+; [~se & ~re]; s-] }
+  prs {
+    node x,y;
+    s=r;
+    after 0  _RESET & ~x & ~y & l -> le-
+    after 0  _RESET &  ~y & ~le -> x+
+    after 0 ~_RESET | x & ~y & ~l -> le+
+    after 0  _RESET & x & le -> y+
+    after 0  _RESET & x & y & se & re -> s+
+    after 0 ~_RESET | y & s -> x-
+    after 0 ~_RESET | ~x & y & ~se & ~re -> s-
+    after 0 ~_RESET | ~x & ~s -> y-
+  }
+}
+
+/*** initializes a token in the alternator ***/
+define start_cell ()(node -l,+le,+r,-re) <+ unimplementable <: RESET_CELL {
+  // hse { *[[re]; r+; [~re]; r-; [l]; le-; [~l]; le+] }
+  prs {
+    node x,y;
+    after 0  _RESET & ~x & ~y & re -> r+
+    after 0  _RESET & ~y & r -> x+
+    after 0 ~_RESET | x & ~y & ~re -> r-
+    after 0  _RESET & x & ~r -> y+
+    after 0  _RESET & x & y & l -> le-
+    after 0 ~_RESET | y & ~le -> x-
+    after 0 ~_RESET | ~x & y & ~l -> le+
+    after 0 ~_RESET | ~x & le -> y-
+  }
+}
+
+/*** step through N values for an a1of(M) channel ***/
+define source_a1of (int M,N; int d[0..N-1])(a1of(M) +rr) <+ unimplementable <: RESET_CELL  {
+  csp { int i=0; *[ rr!d[i]; i=(i+1)%N ] }
+  prs {
+    1of(M) r;
+    node[N] sd;
+    node se;
+    node l[0..N],le[0..N];
+
+    <i:0..N-1: source_cell _(l[i],le[i],sd[i],se,l[i+1],le[i+1]);>
+    start_cell _(l[N],le[N],l[0],le[0]);
+
+    <i:N: after 0 sd[i] -> r.d[d[i]]+ >
+    <i:M: after 0 <&j:0..N-1: ~sd[j] > -> r.d[i]- >
+    <i:M: r.d[i] => rr.d[i]+ >
+    after 200 rr.a => se-
+  }
+}
+
+/*** step through N values for an e1of(M) channel ***/
+define source_e1of (int M,N; int d[0..N-1])(e1of(M) +rr) <+ unimplementable <: RESET_CELL {
+  csp { int i=0; *[ rr!d[i]; i=(i+1)%N ] }
+  prs {
+    1of(M) r;
+    node[N] sd;
+    node se;
+    node l[0..N],le[0..N];
+
+    <i:0..N-1: source_cell _(l[i],le[i],sd[i],se,l[i+1],le[i+1]);>
+    start_cell _(l[N],le[N],l[0],le[0]);
+
+    <i:N: after 0 sd[i] -> r.d[d[i]]+ >
+    <i:M: after 0 <&j:0..N-1: ~sd[j] > -> r.d[i]- >
+    <i:M: after 100 r.d[i] => rr.d[i]+ >
+    after 100 rr.e => se+
+  }
+}
+
+/*** Refinements for specific 1of(N) sources ***/
+
+define source_a1of1 (int N; int d[0..N-1])(a1of1 +rr) <: source_a1of(1,N,d) {}
+define source_a1of2 (int N; int d[0..N-1])(a1of2 +rr) <: source_a1of(2,N,d) {}
+define source_a1of3 (int N; int d[0..N-1])(a1of3 +rr) <: source_a1of(3,N,d) {}
+define source_a1of4 (int N; int d[0..N-1])(a1of4 +rr) <: source_a1of(4,N,d) {}
+define source_a1of5 (int N; int d[0..N-1])(a1of5 +rr) <: source_a1of(5,N,d) {}
+define source_a1of6 (int N; int d[0..N-1])(a1of6 +rr) <: source_a1of(6,N,d) {}
+define source_a1of7 (int N; int d[0..N-1])(a1of7 +rr) <: source_a1of(7,N,d) {}
+define source_a1of8 (int N; int d[0..N-1])(a1of8 +rr) <: source_a1of(8,N,d) {}
+
+define source_e1of1 (int N; int d[0..N-1])(e1of1 +rr) <: source_e1of(1,N,d) {}
+define source_e1of2 (int N; int d[0..N-1])(e1of2 +rr) <: source_e1of(2,N,d) {}
+define source_e1of3 (int N; int d[0..N-1])(e1of3 +rr) <: source_e1of(3,N,d) {}
+define source_e1of4 (int N; int d[0..N-1])(e1of4 +rr) <: source_e1of(4,N,d) {}
+define source_e1of5 (int N; int d[0..N-1])(e1of5 +rr) <: source_e1of(5,N,d) {}
+define source_e1of6 (int N; int d[0..N-1])(e1of6 +rr) <: source_e1of(6,N,d) {}
+define source_e1of7 (int N; int d[0..N-1])(e1of7 +rr) <: source_e1of(7,N,d) {}
+define source_e1of8 (int N; int d[0..N-1])(e1of8 +rr) <: source_e1of(8,N,d) {}
+define source_e1of9 (int N; int d[0..N-1])(e1of9 +rr) <: source_e1of(9,N,d) {}
+
+
+/*****************************************************************************/
+/***                Multi-channel sources                                  ***/
+/*****************************************************************************/
+
+define source_Mxa1of4 (int M,N; int d[0..N-1])(a1of4 +r[0..M-1]) <+ unimplementable <: RESET_CELL {
+  subcells {
+    int f[0..N-1,0..M-1];
+    int pow[0..M-1];
+    pow[0]=1; <i:1..M-1: pow[i]=pow[i-1]*4;>
+    <i:M: <j:N: f[j,i]=(d[j]/pow[i])%4;> source_a1of4(N,f[0..N-1,i]) _(r[i]);>
+  }
+}
+
+define source_Mxe1of2 (int M,N; int d[0..N-1])(e1of2 +r[0..M-1]) <+ unimplementable <: RESET_CELL {
+  subcells {
+    int f[0..N-1,0..M-1];
+    int pow[0..M-1];
+    pow[0]=1; <i:1..M-1: pow[i]=pow[i-1]*2;>
+    <i:M: <j:N: f[j,i]=(d[j]/pow[i])%2;> source_e1of2(N,f[0..N-1,i]) _(r[i]);>
+  }
+}
+
+define source_Mxe1of4 (int M,N; int d[0..N-1])(e1of4 +r[0..M-1]) <+ unimplementable <: RESET_CELL {
+  subcells {
+    int f[0..N-1,0..M-1];
+    int pow[0..M-1];
+    pow[0]=1; <i:1..M-1: pow[i]=pow[i-1]*4;>
+    <i:M: <j:N: f[j,i]=(d[j]/pow[i])%4;> source_e1of4(N,f[0..N-1,i]) _(r[i]);>
+  }
+}
+
+// Aliases for consistency with other source cells
+define source_N_e1of2(int M, N; int d[0..N-1]) <: source_Mxe1of2(M,N,d) {}
+define source_N_e1of4(int M, N; int d[0..N-1]) <: source_Mxe1of4(M,N,d) {}
+
+
+/*****************************************************************************/
+/***    Deterministic pattern data generator cells w/initial pattern       ***/
+/*****************************************************************************/
+
+define init_source_e1of(int M,LI,NI,N; int di[0..NI-1],d[0..N-1])
+                       (e1of(M) +R)
+  <+ unimplementable <: RESET_CELL {
+  csp {
+    <;i:LI:( R!(di[i%NI]) )>;
+    j=0; *[R!d[j]; j=(j+1)%N]
+  }
+}
+
+/*****************************************************************************/
+/***                Generate an ordered sequence of numbers                ***/
+/*****************************************************************************/
+
+define seqsource_Mxe1ofN(int M,N,MIN,MAX)(e1of(N)[M] +R)
+  <+ unimplementable <: RESET_CELL {
+  csp {
+    int x = MIN;
+    assert(MIN <= MAX, "Error: params of seqsource don't satisfy MIN<=MAX");
+
+    *[// send number
+      R!x;
+      // calculate next number
+      x = x+1; #[x>MAX -> x=MIN]
+    ]
+  }
+}
+
+define seqsource_Mxe1of2 (int M,MIN,MAX)(e1of2[M] +R)
+  <: seqsource_Mxe1ofN(M,2,MIN,MAX) {}
+
+define seqsource_Mxe1of4 (int M,MIN,MAX)(e1of4[M] +R)
+  <: seqsource_Mxe1ofN(M,4,MIN,MAX) {}
+
+// Aliases for consistency with other rsource cells
+define seqsource_N_e1of2 (int M,MIN,MAX) <: seqsource_Mxe1of2(M,MIN,MAX) {}
+define seqsource_N_e1of4 (int M,MIN,MAX) <: seqsource_Mxe1of4(M,MIN,MAX) {}

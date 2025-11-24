@@ -1,0 +1,124 @@
+module core.mandelbrot.tutorial;
+
+import core.mandelbrot.abstract.mandelbrot;
+import core.mandelbrot.abstract.ABSTRACT_MANDELBROT;
+import lib.bd.math.multiply.ABSTRACT_MUL;
+
+define BASE_MANDELBROT1(int W) <: ABSTRACT_MANDELBROT(W) {
+  subcells {
+    CORE_MANDELBROT1(W) core(CR,CI,MAX,ITER);
+  }
+}
+
+define CORE_MANDELBROT1(int W)(bd(W) -CR, -CI; bd(W_ITER) -MAX, +ITER) <+ mandelbrot(W) {
+  csp {
+    bool done=true;
+    sint(W) cr,ci,zr,zi;
+    int(W_ITER) iter;
+    *[#[done ->
+        CR?cr, CI?ci, MAX?iter;
+        zr=cr, zi=ci;
+        done=false
+       ];
+      done=iterate(cr,ci,zr,zi,iter);
+      #[done -> ITER!iter]
+     ]
+    directives {
+      condition_time(CR) = 2;
+      condition_time(CI) = 2;
+      condition_time(MAX) = 2;
+    }
+  }
+}
+
+define BASE_MANDELBROT2(int W) <: ABSTRACT_MANDELBROT(W) {
+  subcells {
+    bd(W) a,b,p;
+    CORE_MANDELBROT2(W) core(CR,CI,MAX,ITER,a,b,p);
+    ABSTRACT_MUL(W,W,W,SHIFT,2) mul(a,b,p);
+  }
+}
+
+define CORE_MANDELBROT2(int W)
+  (bd(W) -CR, -CI; 
+   bd(W_ITER) -MAX, +ITER;
+   bd(W) +A, +B, -P)
+  <+ mandelbrot(W) {
+  csp {
+    bool done=true;
+    sint(W) cr,ci,zr,zi;
+    int(W_ITER) iter;
+    *[#[done ->
+        CR?cr, CI?ci, MAX?iter;
+        zr=cr, zi=ci;
+        done=false
+       ];
+      sint(W) zr_zr,zi_zi,zr_zi;
+      A!zr, B!zr, P?zr_zr;
+      A!zi, B!zi, P?zi_zi;
+      A!zr, B!zi, P?zr_zi;
+      zr = cr + zr_zr - zi_zi;
+      zi = ci + 2*zr_zi;
+      iter--;
+      done = iter==0 | zr_zr + zi_zi > 4<<SHIFT;
+      #[done -> ITER!iter]
+     ]
+  }
+}
+
+define BASE_MANDELBROT3(int W) <: ABSTRACT_MANDELBROT(W) {
+  subcells {
+    bd(W) a,b,p;
+    CORE_MANDELBROT3(W) core(CR,CI,MAX,ITER,a,b,p);
+    ABSTRACT_MUL(W,W,W,SHIFT,2) mul(a,b,p);
+  }
+}
+
+define CORE_MANDELBROT3(int W)
+  (bd(W) -CR, -CI; 
+   bd(W_ITER) -MAX, +ITER;
+   bd(W) +A, +B, -P)
+  <+ mandelbrot(W) {
+  csp {
+    bool done=true;
+    sint(W) cr,ci,zr,zi,zr_zr,zi_zi,zr_zi;
+    int(W_ITER) iter;
+    int(2) s;
+    bool mag2;
+    *[#[done ->
+        CR?cr, CI?ci, MAX?iter;
+        zr=cr, zi=ci;
+        done=false
+       ];
+      #[ s==0 ->
+         A!zr, B!zr;
+         s=1
+       []s==1 ->
+         P?zr_zr;
+         A!zi, B!zi;
+         s=2
+       []s==2 ->
+         P?zi_zi;
+         mag2 = zr_zr + zi_zi > 4<<SHIFT;
+         A!zr, B!zi;
+         s=3
+       []s==3 ->
+         P?zr_zi;
+         zr = cr + zr_zr - zi_zi;
+         zi = ci + 2*zr_zi;
+         iter--;
+         done = iter==0 | mag2;
+         [ done -> s=0
+         []else -> A!zr, B!zr, s=1
+         ]
+       ];
+      #[done -> ITER!iter]
+     ]
+    directives {
+      condition_time(CR) = 2;
+      condition_time(CI) = 2;
+      condition_time(MAX) = 2;
+      condition_time(P) = 2;
+    }
+  }
+}

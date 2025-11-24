@@ -1,0 +1,75 @@
+/*
+ * Copyright 2008 Fulcrum Microsystems.  All rights reserved.
+ * $Id: //mrl/hw/dev/cast/standard/expect.cast#2 $
+ */
+
+module standard.expect;
+
+import standard.base.*;
+import standard.channel.*;
+
+/*** expect a sequence of N values on an e1of(M) channel ***/
+define expect_e1of (int M,N; int d[0..N-1])(e1of(M) -L)
+    <+ unimplementable <: LEAF {
+  csp {
+    int i=0;
+    *[ L?x; assert(x==d[i], "unexpected value");
+       i=(i+1)%N
+    ]
+  }
+}
+
+/*** expect a sequence of N values on an a1of(M) channel ***/
+define expect_a1of (int M,N; int d[0..N-1])(a1of(M) -L)
+    <+ unimplementable <: LEAF {
+  csp {
+    int i=0;
+    *[ L?x; assert(x==d[i], "unexpected value");
+       i=(i+1)%N
+    ]
+  }
+}
+
+/*** expect a sequence of N values on an e1of2[M] channel ***/
+define expect_Mxe1of2 (int M,N; int d[0..N-1])(e1of2[M] -L)
+    <+ unimplementable <: LEAF {
+  csp {
+    int i=0;
+    *[ L?x; assert(x==d[i], "unexpected value");
+       i=(i+1)%N
+    ]
+  }
+}
+
+/*** expect a sequence of N values on an e1of4[M] channel ***/
+define expect_Mxe1of4 (int M,N; int d[0..N-1])(e1of4[M] -L)
+    <+ unimplementable <: LEAF {
+  csp {
+    int i=0;
+    *[ L?x; assert(x==d[i], "unexpected value");
+       i=(i+1)%N
+    ]
+  }
+}
+
+/*** Refinements for specific 1of(N) expects ***/ 
+
+define expect_e1of1 (int N; int d[0..N-1])(e1of1 -L) <: expect_e1of(1,N,d) {}
+define expect_e1of2 (int N; int d[0..N-1])(e1of2 -L) <: expect_e1of(2,N,d) {}
+define expect_e1of3 (int N; int d[0..N-1])(e1of3 -L) <: expect_e1of(3,N,d) {}
+define expect_e1of4 (int N; int d[0..N-1])(e1of4 -L) <: expect_e1of(4,N,d) {}
+define expect_e1of5 (int N; int d[0..N-1])(e1of5 -L) <: expect_e1of(5,N,d) {}
+define expect_e1of6 (int N; int d[0..N-1])(e1of6 -L) <: expect_e1of(6,N,d) {}
+define expect_e1of7 (int N; int d[0..N-1])(e1of7 -L) <: expect_e1of(7,N,d) {}
+define expect_e1of8 (int N; int d[0..N-1])(e1of8 -L) <: expect_e1of(8,N,d) {}
+define expect_e1of9 (int N; int d[0..N-1])(e1of9 -L) <: expect_e1of(9,N,d) {}
+
+define expect_a1of2 (int N; int d[0..N-1])(a1of2 -L) <: expect_a1of(2,N,d) {}
+define expect_a1of3 (int N; int d[0..N-1])(a1of3 -L) <: expect_a1of(3,N,d) {}
+define expect_a1of4 (int N; int d[0..N-1])(a1of4 -L) <: expect_a1of(4,N,d) {}
+define expect_a1of5 (int N; int d[0..N-1])(a1of5 -L) <: expect_a1of(5,N,d) {}
+define expect_a1of6 (int N; int d[0..N-1])(a1of6 -L) <: expect_a1of(6,N,d) {}
+define expect_a1of7 (int N; int d[0..N-1])(a1of7 -L) <: expect_a1of(7,N,d) {}
+define expect_a1of8 (int N; int d[0..N-1])(a1of8 -L) <: expect_a1of(8,N,d) {}
+define expect_a1of9 (int N; int d[0..N-1])(a1of9 -L) <: expect_a1of(9,N,d) {}
+

@@ -1,0 +1,544 @@
+/**
+ * INTEL TOP SECRET
+ * Copyright 2002-2012 Intel Corporation. All Rights Reserved.
+ * $Id: //mrl/hw/main/cast/standard/base.cast#8 $
+ */
+module standard.attributes;
+
+/*************************** Base Attributes Cells ***************************/
+
+/*** default attributes for leaf cells ***/
+define leaf attributes {
+  directives {
+    slacker_leaf = true;
+    slacker_primitive = true;
+  }
+}
+
+/*** shortcut to set height directive ***/
+define height(float H) attributes {
+  directives {
+    height = H;
+  }
+}
+
+/*** shortcut to set height directive for 1ofN ***/
+define buf_height(int X; float H) attributes {
+  directives {
+    [X<3  -> height=H;]
+    [X>=3 -> height=2*H;]
+  }
+}
+
+/** constants for BD controllers **/
+define bd_controller attributes <+ flat_extract {
+  float ExtraTimingMargin = 0;
+  int BD_Q_DELAY=600; // start/end delay budget on BD requests
+  int BD_A_DELAY=400; // start/end delay budget on BD acknowledges
+  int BD_QDI_DELAY=1; // arc delay for CUT_CTREE and QDI cells (minimal)
+  directives {
+    proteus_cell_type = custom_controller;
+  }
+}
+
+/*** attribute for LEVEL_SHIFT mid-cells **/
+define level_shift attributes {
+  directives {
+    routed = false; // TODO: maybe routed=true depending on routing methodology
+  }
+}
+
+/** Make aliases Vdd=vcc GND=vss for use in leaf cell prs (see BUG 28432) **/
+define alias_vcc_vss()(node -vcc, -vss) attributes {
+  fragment prs {
+    node GND=vss;
+    node Vdd=vcc;
+  }
+}
+
+/** Single-level datapath cell. Leaf cell can have up to MAXL inputs.
+ *  NX       = number of copies
+ *  NL[i]    = number of inputs for that leaf cell
+ *  START[i] = first input for that leaf cell
+ **/
+define datapath(int N, MAXL) attributes {
+  int NX = (N+MAXL-1)/MAXL;
+  int NL[0..NX-1];
+  [NX > 1 -> <i:NX-1: NL[i]=MAXL; > ]
+  NL[NX-1] = N - (NX-1)*MAXL;
+  int START[0..NX-1]; START[0] = 0;
+  <i:1..NX-1: START[i] = START[i-1] + NL[i-1]; >
+}
+
+define datapath_copy(int N, MAXL) attributes {
+  int NX = (N+MAXL-1)/MAXL;
+  int NL[0..NX-1];
+  [NX > 1 -> <i:NX-1: NL[i] = N/NX; > ]
+  NL[NX-1] = N - (NX-1)*(N/NX);
+
+  int START[0..NX-1]; START[0] = 0;
+  <i:1..NX-1: START[i] = START[i-1] + NL[i-1]; >
+}
+
+define datapath_with_2x1of2(int X, N, MAXL) attributes
+  <+ datapath(N,MAXL*(1+int(X==2))) {}
+
+/*** default attributes for unimplementable cells ***/
+define unimplementable attributes {
+  directives {
+    unimplementable = true;
+  }
+}
+
+/*** default attributes for fragment cells ***/
+define frag attributes <+ standard.process.standard_layout_cell {
+  directives {
+    density_factor = 1.5*DENSITY_FACTOR;
+    fragment = true;
+    cellnonobservable = true;
+  }
+}
+
+/*** default attributes for synchronous cells ***/
+define synchronous attributes {
+  directives {
+    synchronous = true;
+  }
+}
+
+/*** shortcut to set routed=true ***/
+define routed attributes {
+  directives {
+    routed = true;
+  }
+}
+
+/*** shortcut to set routed=false ***/
+define unrouted attributes {
+  directives {
+    routed = false;
+  }
+}
+
+/*** shortcut to set splittable=false **/
+define unsplittable attributes {
+  directives {
+    splittable = false;
+  }
+}
+
+/*** shortcut to set slacker_dont_touch=true **/
+define dont_touch attributes {
+  directives {
+    slacker_dont_touch = true;
+  }
+}
+
+/** Cell created just for floorplanning hierarchy **/
+define floorplan_hierarchy attributes {
+  directives {
+    /** SIGNOFF(mid): Exists only for floorplanning purposes. **/
+    rte_ignore = true;
+  }
+}
+
+/** shortcut to set cut_scan_ports=true **/
+define cut_scan_ports attributes {
+  directives {
+    cut_scan_ports = true;
+  }
+}
+
+/** marker cell for better-in-prs cosim spec **/
+define prs_model attributes {}
+
+/** marker cell for csp-only cosim spec **/
+define csp_model attributes {}
+
+/** marker cell for requiring verilog behavior in Verilog simulation **/
+define verilog_model attributes {}
+
+/** marker cell for snoop cells that require {csp} cosim spec to enable **/
+define snoop attributes <+ unimplementable {}
+
+/** set synthesizable directive for cells whose CSP can run thorugh Proteus **/
+define synthesizable attributes {
+  // a magic value used to indicate condition_time should be computed; this is
+  // intended as a workaround before conditional channels are auto-detected
+  float USE_DEFAULT = 0.0019531250;
+
+  csp { directives { synthesizable = true; } }
+}
+
+/** marker cell for cells intended to run through the Proteus flow **/
+define proteus attributes {
+  // TODO: more suitable default directives
+}
+
+/** marker attributes for recursive_graybox **/
+define graybox_extract attributes {}
+
+/** marker attributes for recursive_graybox **/
+define flat_extract attributes {}
+
+/** marker attributes to disable hierarcical LVS **/
+define signoff_lvs attributes {}
+
+/** utility to define default input and output slack **/
+define io_slack(int SLK) attributes {
+  int oSLK = int(SLK>0);
+  int iSLK = max(0,SLK-oSLK);
+}
+
+/** process-independent constants inherited by most cells **/
+define constants attributes {
+  // constants for "symmetrize" op/half-op directive
+  // consistent with NetGraph.addCellInterfacePrs
+  int SYM_NONE       = 0; // default
+  int SYM_PARTIAL    = 1;
+  int SYM_SKIP_FIRST = 2;
+  int SYM_FULL       = 3;
+  int SYM_TRUNK      = 4;
+  int SYM_FULL_X     = 5;
+
+  // constants for "staticizer_type" op/half-op/cell directive
+  // consistent with NetGraph.addStaticizer
+  int NO_STATICIZER        =-1; // no staticizer, useful for half-staticizers
+  int WEAK_STATICIZER      = 0; // weak feedback, use existing inverter if available
+  int FULL_STATICIZER      = 1; // weak feedback, always add a small inverter
+  int COMB_STATICIZER      = 2; // combinational feedback, use existing inverter if available
+  int FULL_COMB_STATICIZER = 3; // combinational feedback, always add a small inverter
+  int AUTO_STATICIZER      = 4; // choose automatically, might use existing inverter
+  int FULL_AUTO_STATICIZER = 5; // choose automatically, always add a small inverter
+
+  // constants for "signoff_constant" directive
+  int ALWAYS_LOW  = 0;
+  int ALWAYS_HIGH = 1;
+  int NONCONST    = 3; // default
+
+  // transistor type constants, names are defined in standard/process.cast
+  int SVT_TRANSISTOR  = 1;
+  int LVT_TRANSISTOR  = 2;
+  int HVT_TRANSISTOR  = 3;
+  int HDC_TRANSISTOR  = 4; // high density SRAM
+  int ULVT_TRANSISTOR = 5;
+  // transistor types for 180nm SRAM transistors
+  int SVT_A_TRANSISTOR  = 6;
+  int LVT_A_TRANSISTOR  = 7;
+  int HVT_A_TRANSISTOR  = 8;
+  int ULVT_A_TRANSISTOR = 9;
+
+  // signoff for slacker, use for semi-important slacker_ignores
+  bool SLACKER_SIGNOFF = true;
+
+  // toggle to skip subcells of Proteus blocks for Slacker
+  bool SlackerSkipProteusSubcells = false;
+
+  // constants for "idle_state" directive
+  int IDLE_0       = 0;
+  int IDLE_1       = 1;
+  int IDLE_UNKNOWN = 2;
+
+  // constants for "initialize_on_reset" directive
+  int INIT_RANDOM = -1;
+  int INIT_LOW    = 0;
+  int INIT_HIGH   = 1;
+
+  // constants for "power_domain" directive
+  int ALWAYS_ON   = 0;
+  int GATED       = 1;
+}
+
+/*** Common CSP functions ***/
+define functions attributes {
+  bool real_time=false; // make time() return real-time for silicon validation
+  csp {
+    // set byte array with a big-endian integer value
+    function setBytesFromInt(int -lo, -hi; int(8) -+data[0..0]; int -value) =
+      (<i:lo..hi: (data[i] = (value>>(8*(hi-i)))%256)>);
+
+    // get a big-endian integer from an array of bytes
+    function getIntFromBytes(int -lo, -hi; int(8) -data[0..0]) : int =
+      (<i:lo..hi: (x = x + (data[i]<<(8*(hi-i))))>;
+       getIntFromBytes = x
+       );
+
+    // boolean to integer
+    function b2i(boolean -b) : int =
+      ([b -> b2i=1 [] else -> b2i=0]);
+
+    // integer to boolean
+    function i2b(int -b) : bool =
+      (i2b= (b!=0));
+
+    // string to integer
+    function s2i(int -base; string -s) : int =
+      (int x = ord(s);
+       int (8) c;
+       int (5) d;
+       *[x > 0 ->
+         c = x;
+         x = x >> 8;
+         [ ord("0") <= c & c <= ord("9") -> d = c - ord("0")
+         []ord("a") <= c & c <= ord("z") -> d = c - ord("a") + 10
+         []ord("A") <= c & c <= ord("Z") -> d = c - ord("A") + 10
+         []else -> d = 0; print("invalid digit " + chr(c) + " in " + s)
+         ];
+         #[ d >= base ->
+            print("invalid digit " + chr(c) + " in " + s + " in base-" + base);
+            d = 0
+         ];
+         s2i = s2i * base + d
+        ]
+        );
+
+    // return binary value of number as a string
+    function bin(int -x) : string =
+      (bin = string(x,2));
+
+    // return hex value of number as a string
+    function hex(int -x) : string =
+      ([ x<0  -> hex = "-0x" + string(-x,16)
+       []else -> hex =  "0x" + string( x,16)
+       ]
+       );
+
+    // return hex value of a byte as a string
+    function hexByte(int(8) -byte) : string =
+      ([ byte >= 0x10 -> hexByte = "0x"  + string(byte, 16)
+       []else         -> hexByte = "0x0" + string(byte, 16)
+       ]
+       );
+
+    // return minimum of two values
+    function min(int -a, -b) : int =
+      ([a<b -> min=a [] else -> min=b]);
+
+    // return maximum of two values
+    function max(int -a, -b) : int =
+      ([a>b -> max=a [] else -> max=b]);
+
+    // returns absolute value of a signed integer
+    function abs(int -a) : int =
+      ([a<0 -> abs=-a [] else -> abs=a]);
+
+    // bitwise xor of two integers
+    function xor(int -a, -b) : int =
+      (xor = (a & ~b | b & ~a));
+
+    // return parity of N bits as a 1-bit integer
+    function parity(int -N, -x) : int(1) =
+      (<i:N: (parity{0}=parity{0}+x{i})>);
+
+    // report parity of an integer as a boolean
+    function checkParity(int -N, -x) : boolean =
+      (checkParity=parity(N,x)!=0);
+
+    // bitsum of an integer
+    function bitsum(int -N, -x) : int =
+      (<i:N: (bitsum=bitsum+x{i})>);
+
+    // get position of most significant 1
+    function get_msb_pos(int -N, -data) : int =
+      (<i:N: (#[data{i}==1 -> get_msb_pos=i]) >);
+
+    // keep only the most significant 1 in a mask
+    function keep_msb_bit(int -N, -mask) : int =
+      (<i:N: keep_msb_bit{i} = mask{i} & <&j:i+1..N-1: ~mask{j} > >
+       );
+
+    // return bottom W bits of an integer, even if W is 0
+    function truncate(int -W, -x) : int =
+      (truncate = x{W-1:0});
+
+    // return a range of bits from an integer
+    function subint(int -x, -i, -len) : int =
+      (subint = x{(i+1)*len-1:i*len});
+
+    // Clip S>=N to S<N in a manner that matches a binary tree
+    // such as RECURSE_MUX or RECURSE_DIVERTER.
+    function clip_binary_tree_index(int -N, -S) : int =
+      (int T;
+       <i:log2(N): (int b=log2(N)-1-i; T{b}=S{b}; #[T>=N -> T{b}=0]) >;
+       clip_binary_tree_index=T
+       );
+
+    // pack bitfield into a single big integer
+    function packBits(int -+data, -+pos, field, bits) =
+      (data{pos+bits-1:pos} = field{bits-1:0}; pos = pos+bits );
+
+    // unpack bitfield from a single big integer
+    function unpackBits(int -+data, -+pos, +field, bits) =
+      (field{bits-1:0} = data{pos+bits-1:pos}; pos = pos+bits );
+
+    // signed bit-extract
+    function sbe(int -data, -msb_pos,-lsb_pos) : int =
+      (int max_int = 2**(msb_pos-lsb_pos)-1;
+       int raw  = data{msb_pos:lsb_pos}; // unsigned
+       sbe = choose(raw > max_int, -(max_int+1)*2+raw, raw);
+      );
+
+    // rotate 32 bit number a left by b bits
+    function rol32(int(32) -a; int(5) -b) : int(32) =
+      (int(64) x=a|a<<32;
+       x<<=b;
+       rol32=x>>32
+       );
+
+    // rotate 64 bit number a left by b bits
+    function rol64(int(64) -a; int(6) -b) : int(64) =
+      (int(128) x=a|a<<64;
+       x<<=b;
+       rol64=x>>64
+       );
+
+    // rotate 32 bit number a right by b bits
+    function ror32(int(32) -a; int(5) -b) : int(32) =
+      (int(64) x=a|a<<32;
+       ror32=x>>b;
+       );
+
+    // rotate 64 bit number a right by b bits
+    function ror64(int(64) -a; int(6) -b) : int(64) =
+      (int(128) x=a|a<<64;
+       ror64=x>>b;
+       );
+
+    // implement fputs with fwrite (TODO: create a built-in function)
+    function fputs(int -fd; string -s) : bool =
+      (int n=ord(s);
+       int(8) buf[0..0];
+       *[n>0 ->
+         buf[0]=n&0xFF;
+         #[fwrite(buf,1,1,fd)>0 -> fputs=true];
+         n>>=8
+        ]
+       );
+
+    // implement fgets with fread (TODO: create a built-in function)
+    function fgets(int -fd; string +s) : bool =
+      (int(8) buf[0..0];
+       bool done;
+       *[~done && fread(buf,1,1,fd)>0 ->
+         fgets=true;
+         [ buf[0]==0 | buf[0]==ord("\n") -> done=true
+         []else -> s+=chr(buf[0])
+         ]
+        ]
+      );
+
+    // return the simulator time or realtime
+    function time() : int =
+      (time=choose(real_time,1000*walltime(),simtime()));
+
+    // 32-bit lfsr (all 1's does not change)
+    function lfsr32one(int(32) -lfsr) : int(32) =
+      (lfsr32one = (lfsr<<1) | lfsr{31}^lfsr{21}^lfsr{1}^lfsr{0}^1);
+
+    // 16-bit lfsr (all 1's does not change)
+    function lfsr16one(int(16) -lfsr) : int(16)=
+      (lfsr16one = (lfsr<<1) | lfsr{15}^lfsr{13}^lfsr{12}^lfsr{10}^1);
+
+    // 8-bit lfsr (all 1's does not change)
+    function lfsr8one(int(8) -lfsr) : int(8)=
+      (lfsr8one = (lfsr<<1) | lfsr{7}^lfsr{5}^lfsr{4}^lfsr{3}^1);
+
+    // 32-bit lfsr (all 1's does not change)
+    function lfsr32(int(32) -lfsr) : int(32) =
+      (<i:32: lfsr = lfsr32one(lfsr)>; lfsr32=lfsr);
+
+    // 16-bit lfsr (all 1's does not change)
+    function lfsr16(int(16) -lfsr) : int(16)=
+      (<i:16: lfsr = lfsr16one(lfsr)>; lfsr16=lfsr);
+
+    // 8-bit lfsr (all 1's does not change)
+    function lfsr8(int(8) -lfsr) : int(8)=
+      (<i:8: lfsr = lfsr8one(lfsr)>; lfsr8=lfsr);
+  }
+}
+
+/*** change default to all SVT transistors ***/
+define svt attributes <+ constants {
+  int FAST_TRANSISTOR    = SVT_TRANSISTOR;
+  int DEFAULT_TRANSISTOR = SVT_TRANSISTOR;
+  int SLOW_TRANSISTOR    = SVT_TRANSISTOR;
+  directives {
+    // disable optimize_threshold
+    transistor_type      = DEFAULT_TRANSISTOR;
+    fast_transistor_type = DEFAULT_TRANSISTOR;
+    slow_transistor_type = DEFAULT_TRANSISTOR;
+  }
+}
+
+/*** change default to all LVT transistors ***/
+define lvt attributes <+ constants {
+  int FAST_TRANSISTOR    =  LVT_TRANSISTOR;
+  int DEFAULT_TRANSISTOR =  LVT_TRANSISTOR;
+  int SLOW_TRANSISTOR    =  LVT_TRANSISTOR;
+  directives {
+    // disable optimize_threshold
+    transistor_type      = DEFAULT_TRANSISTOR;
+    fast_transistor_type = DEFAULT_TRANSISTOR;
+    slow_transistor_type = DEFAULT_TRANSISTOR;
+  }
+}
+
+/*** change default to all HVT transistors ***/
+define hvt attributes <+ constants {
+  int FAST_TRANSISTOR    = HVT_TRANSISTOR;
+  int DEFAULT_TRANSISTOR = HVT_TRANSISTOR;
+  int SLOW_TRANSISTOR    = HVT_TRANSISTOR;
+  directives {
+    // disable optimize_threshold
+    transistor_type      = DEFAULT_TRANSISTOR;
+    fast_transistor_type = DEFAULT_TRANSISTOR;
+    slow_transistor_type = DEFAULT_TRANSISTOR;
+  }
+}
+
+/*** change default to all ULVT transistors ***/
+define ulvt attributes <+ constants {
+  int FAST_TRANSISTOR    = ULVT_TRANSISTOR;
+  int DEFAULT_TRANSISTOR = ULVT_TRANSISTOR;
+  int SLOW_TRANSISTOR    = ULVT_TRANSISTOR;
+  directives {
+    // disable optimize_threshold
+    transistor_type      = DEFAULT_TRANSISTOR;
+    fast_transistor_type = DEFAULT_TRANSISTOR;
+    slow_transistor_type = DEFAULT_TRANSISTOR;
+  }
+}
+
+/*** change default to all bd cells ***/
+define bd_directives attributes {
+  csp {
+    directives {
+      cycle_time        = 10;
+      latency_per_slack = 3;
+      csp_time_inputs   = 0;
+      csp_time_outputs  = 6;
+      send_ctrl_latency = 1;
+    }
+  }
+  directives {
+    cycle_time = 10;
+  }
+}
+
+/*** common attributes for standard cells ***/
+define standard_cell attributes <+ standard.process.standard_layout_cell {
+  bool USE_LIBERTY_PRS = false;
+  directives {
+    routed = true;
+    prs_netlist_mismatch_ok = true; // SIGNOFF(amlines): cdl2cast PRS won't match exactly
+    density_factor = DENSITY_FACTOR;
+    rte_ignore = true;
+  }
+}
+
+/** Marker for routed metastable leaf cells **/
+define metastable_leaf attributes <+ flat_extract <+ leaf <+ standard.process.standard_layout_cell {
+  directives {
+    routed = METASTABLE_LEAF_ROUTED;
+  }
+}

@@ -1,0 +1,505 @@
+/**
+ * INTEL TOP SECRET
+ * Copyright 2002-2011 Intel Corporation. All Rights Reserved.
+ * $Id: //mrl/hw/dev/cast/standard/channel.cast#7 $
+ */
+module standard.channel;
+
+import standard.attributes.constants;
+
+/*------------------------------------------------------------------------
+ *
+ *   1of# --
+ *
+ *     A bundle of "#" uninverted rails encoding its data value as
+ *     a 1-of-# one-hot code.  (High node corresponds to a true value)
+ *
+ *   _1of# --
+ *
+ *     A bundle of "#" inverted rails encoding its data value as
+ *     a 1-of-# one-hot code.  (High node corresponds to a true value)
+ *
+ *   ts1of# --
+ *
+ *     A bundled of "#" data rails used for transition signalling.
+ *
+ *   e1of# --
+ *
+ *     A bundle of "#" inverted rails with an inverted acknowledge 
+ *     (enable).  Data is encoding as a 1-of-# one-hot code.
+ *
+ *   _e1of# --
+ *
+ *     A bundle of "#" inverted 1-of-N code with an inverted acknowledge.
+ *
+ *   a1of# --
+ *
+ *     A bundle of "#" inverted rails with an acknowledge signal.
+ *     Data is encoding as a 1-of-# one-hot code.
+ *
+ *   ev1of# --
+ *
+ *     A bundle of "#" inverted rails with an inverted acknowledge 
+ *     (enable) and a validity signal.  Data is encoding as a 1-of-# 
+ *     one-hot code.  Some time after a rail is raised, v+; some 
+ *     time after the raised rail returns to the neutral state, v-.
+ *
+ *   ts --
+ *
+ *     Wide transition signaling channel with enable.
+ *
+ *   bd, bdc --
+ *
+ *     BD (transition-signaling) channel and its control component.
+ *
+ *   Parameters:
+ *
+ *     d : array of two nodes corresponding to the '#' rails.
+ *
+ *     "0","1","2","3": aliased to the rails d[0], d[1], d[2], d[3] 
+ *         respectively.
+ *
+ *     e : enable  (e1of# only)
+ *
+ *     a : acknowledge (a1of# only)
+ *
+ *     v : validity (ev1of# only)
+ *
+ *------------------------------------------------------------------------
+ */
+
+/**************************** BASIC CHANNEL TYPES *****************************/
+
+defchan DifferentialPair()(node +n, +p) {}
+
+/**
+ * Synchronous handshake channel.  Valid bit V flows with data D.
+ * Enable E flows backward and blocks a token from moving forward
+ * while E is low.
+ **/
+defchan shs(int W)(node -E, +V; node[W] +D) {}
+
+/** wiring attributes for long range channels **/
+define fat_channel_attributes(int N) (node +d[0..N-1], -e) attributes
+  <+ standard.process.standard_layout_cell { 
+  directives {
+    <i:N: wirewidth(d[i]) = LONG_RANGE_WIRE_WIDTH; >
+    <i:N: wirespace(d[i]) = LONG_RANGE_WIRE_SPACE; >
+    wirewidth(e) = LONG_RANGE_ENABLE_WIDTH;
+    wirespace(e) = LONG_RANGE_ENABLE_SPACE;
+  }
+}
+
+/** 
+ * Indicates an asynchronous channel with an associated protocol for
+ * sending & receiving tokens.
+ **/
+defchan asynchronous_channel()() {}
+
+defchan 1of(int N)(node +d[0..N-1]) <+ constants {
+  assert{exclhi(d);}
+  alias {
+    [N>=1  -> node "0"=d[0];]
+    [N>=2  -> node "1"=d[1];]
+    [N>=3  -> node "2"=d[2];]
+    [N>=4  -> node "3"=d[3];]
+    [N>=5  -> node "4"=d[4];]
+    [N>=6  -> node "5"=d[5];]
+    [N>=7  -> node "6"=d[6];]
+    [N>=8  -> node "7"=d[7];]
+    [N>=9  -> node "8"=d[8];]
+    [N>=10 -> node "9"=d[9];]
+    [N>=11 -> node "10"=d[10];]
+    [N>=12 -> node "11"=d[11];]
+    [N>=13 -> node "12"=d[12];]
+    [N>=14 -> node "13"=d[13];]
+    [N>=15 -> node "14"=d[14];]
+    [N>=16 -> node "15"=d[15];]
+  }
+  directives {
+    <i:N: idle_state(d[i]) = IDLE_0; >
+  }
+}
+
+defchan _1of(int N)(node +d[0..N-1]) <+ constants {
+  assert{excllo(d);}
+  alias {
+    [N>=1  -> node "0"=d[0];]
+    [N>=2  -> node "1"=d[1];]
+    [N>=3  -> node "2"=d[2];]
+    [N>=4  -> node "3"=d[3];]
+    [N>=5  -> node "4"=d[4];]
+    [N>=6  -> node "5"=d[5];]
+    [N>=7  -> node "6"=d[6];]
+    [N>=8  -> node "7"=d[7];]
+    [N>=9  -> node "8"=d[8];]
+    [N>=10 -> node "9"=d[9];]
+    [N>=11 -> node "10"=d[10];]
+    [N>=12 -> node "11"=d[11];]
+    [N>=13 -> node "12"=d[12];]
+    [N>=14 -> node "13"=d[13];]
+    [N>=15 -> node "14"=d[14];]
+    [N>=16 -> node "15"=d[15];]
+  }
+  directives {
+    <i:N: idle_state(d[i]) = IDLE_1; >
+  }
+}
+
+defchan _a1of(int N)(node +d[0..N-1], -a) <+ constants
+                                          <: asynchronous_channel {
+  assert{excllo(d); exclcc(d,a);}
+  alias {
+    [N>=1  -> node "0"=d[0];]
+    [N>=2  -> node "1"=d[1];]
+    [N>=3  -> node "2"=d[2];]
+    [N>=4  -> node "3"=d[3];]
+    [N>=5  -> node "4"=d[4];]
+    [N>=6  -> node "5"=d[5];]
+    [N>=7  -> node "6"=d[6];]
+    [N>=8  -> node "7"=d[7];]
+    [N>=9  -> node "8"=d[8];]
+    [N>=10 -> node "9"=d[9];]
+    [N>=11 -> node "10"=d[10];]
+    [N>=12 -> node "11"=d[11];]
+    [N>=13 -> node "12"=d[12];]
+    [N>=14 -> node "13"=d[13];]
+    [N>=15 -> node "14"=d[14];]
+    [N>=16 -> node "15"=d[15];]
+  }
+  directives {
+    idle_state(a) = IDLE_0;
+    <i:N: idle_state(d[i]) = IDLE_1; >
+    slacker_cost = N+1;
+    <i:N: slacker_use_extra_delay(d[i]) = true; >
+    num_values = N;
+  }
+}
+
+defchan a1of(int N)(node +d[0..N-1], -a) <+ constants
+                                         <: asynchronous_channel {
+  assert{exclhi(d); exclcc(d,a);}
+  alias {
+    [N>=1  -> node "0"=d[0];]
+    [N>=2  -> node "1"=d[1];]
+    [N>=3  -> node "2"=d[2];]
+    [N>=4  -> node "3"=d[3];]
+    [N>=5  -> node "4"=d[4];]
+    [N>=6  -> node "5"=d[5];]
+    [N>=7  -> node "6"=d[6];]
+    [N>=8  -> node "7"=d[7];]
+    [N>=9  -> node "8"=d[8];]
+    [N>=10 -> node "9"=d[9];]
+    [N>=11 -> node "10"=d[10];]
+    [N>=12 -> node "11"=d[11];]
+    [N>=13 -> node "12"=d[12];]
+    [N>=14 -> node "13"=d[13];]
+    [N>=15 -> node "14"=d[14];]
+    [N>=16 -> node "15"=d[15];]
+  }
+  directives {
+    idle_state(a) = IDLE_0;
+    <i:N: idle_state(d[i]) = IDLE_0; >
+    slacker_cost = N+1;
+    <i:N: slacker_use_extra_delay(d[i]) = true; >
+    num_values = N;
+  }
+}
+
+defchan _e1of(int N)(node +d[0..N-1], -e) <+ constants
+                                          <: asynchronous_channel {
+  assert{excllo(d); exclcc(d,e);}
+  alias {
+    [N>=1  -> node "0"=d[0];]
+    [N>=2  -> node "1"=d[1];]
+    [N>=3  -> node "2"=d[2];]
+    [N>=4  -> node "3"=d[3];]
+    [N>=5  -> node "4"=d[4];]
+    [N>=6  -> node "5"=d[5];]
+    [N>=7  -> node "6"=d[6];]
+    [N>=8  -> node "7"=d[7];]
+    [N>=9  -> node "8"=d[8];]
+    [N>=10 -> node "9"=d[9];]
+    [N>=11 -> node "10"=d[10];]
+    [N>=12 -> node "11"=d[11];]
+    [N>=13 -> node "12"=d[12];]
+    [N>=14 -> node "13"=d[13];]
+    [N>=15 -> node "14"=d[14];]
+    [N>=16 -> node "15"=d[15];]
+  }
+  directives {
+    idle_state(e) = IDLE_1;
+    <i:N: idle_state(d[i]) = IDLE_1; >
+    slacker_cost = N+1;
+    <i:N: slacker_use_extra_delay(d[i]) = true; >
+    num_values = N;
+  }
+}
+
+defchan e1of(int N)(node +d[0..N-1], -e) <+ constants
+                                         <: asynchronous_channel {
+  assert{exclhi(d); exclcc(d,e);}
+  alias {
+    [N>=1  -> node "0"=d[0];]
+    [N>=2  -> node "1"=d[1];]
+    [N>=3  -> node "2"=d[2];]
+    [N>=4  -> node "3"=d[3];]
+    [N>=5  -> node "4"=d[4];]
+    [N>=6  -> node "5"=d[5];]
+    [N>=7  -> node "6"=d[6];]
+    [N>=8  -> node "7"=d[7];]
+    [N>=9  -> node "8"=d[8];]
+    [N>=10 -> node "9"=d[9];]
+    [N>=11 -> node "10"=d[10];]
+    [N>=12 -> node "11"=d[11];]
+    [N>=13 -> node "12"=d[12];]
+    [N>=14 -> node "13"=d[13];]
+    [N>=15 -> node "14"=d[14];]
+    [N>=16 -> node "15"=d[15];]
+  }
+  directives {
+    idle_state(e) = IDLE_1;
+    <i:N: idle_state(d[i]) = IDLE_0; >
+    slacker_cost = N+1;
+    <i:N: slacker_use_extra_delay(d[i]) = true; >
+    slacker_channel = true;
+    num_values = N;
+  }
+}
+
+defchan fat_e1of(int N)(node +d[0..N-1], -e) 
+  <+ fat_channel_attributes(N) <: e1of(N) {}
+
+defchan ev1of(int N)(node +d[0..N-1], +v, -e) <: asynchronous_channel {
+  assert{exclhi(d); exclcc(d,e);}
+  alias {
+    [N>=1  -> node "0"=d[0];]
+    [N>=2  -> node "1"=d[1];]
+    [N>=3  -> node "2"=d[2];]
+    [N>=4  -> node "3"=d[3];]
+    [N>=5  -> node "4"=d[4];]
+    [N>=6  -> node "5"=d[5];]
+    [N>=7  -> node "6"=d[6];]
+    [N>=8  -> node "7"=d[7];]
+    [N>=9  -> node "8"=d[8];]
+    [N>=10 -> node "9"=d[9];]
+    [N>=11 -> node "10"=d[10];]
+    [N>=12 -> node "11"=d[11];]
+    [N>=13 -> node "12"=d[12];]
+    [N>=14 -> node "13"=d[13];]
+    [N>=15 -> node "14"=d[14];]
+    [N>=16 -> node "15"=d[15];]
+  }
+  directives {
+    slacker_cost = N+2;
+    <i:N: slacker_use_extra_delay(d[i]) = true; >
+    num_values = N;
+  }
+}
+
+/************************* Transition signalling *****************************/
+
+defchan ts1of(int N)(node +d[0..N-1]) /* <: asynchronous_channel */ {
+  assert{exclcc(d);}
+  alias {
+    [N>=1  -> node "0"=d[0];]
+    [N>=2  -> node "1"=d[1];]
+    [N>=3  -> node "2"=d[2];]
+    [N>=4  -> node "3"=d[3];]
+    [N>=5  -> node "4"=d[4];]
+    [N>=6  -> node "5"=d[5];]
+    [N>=7  -> node "6"=d[6];]
+    [N>=8  -> node "7"=d[7];]
+    [N>=9  -> node "8"=d[8];]
+    [N>=10 -> node "9"=d[9];]
+    [N>=11 -> node "10"=d[10];]
+    [N>=12 -> node "11"=d[11];]
+    [N>=13 -> node "12"=d[12];]
+    [N>=14 -> node "13"=d[13];]
+    [N>=15 -> node "14"=d[14];]
+    [N>=16 -> node "15"=d[15];]
+  }
+  directives {
+    slacker_cost = N;
+    <i:N: slacker_use_extra_delay(d[i]) = true; >
+    num_values = N;
+  }
+}
+
+defchan ts1of2 <: ts1of(2) {}
+defchan ts1of4 <: ts1of(4) {}
+
+defchan ts(int X,W)(ts1of(X)[W] +D; node -a) /* <: asynchronous_channel */ {
+  assert{ <i:W: exclcc(D[i].d,a);> }
+  directives {
+    slacker_cost = X*W+1;
+    <i:W: <j:X: slacker_use_extra_delay(D[i].d[j]) = true; >>
+    num_values = X**W;
+  }
+}
+
+/*************************** Bundled data channel *****************************/
+
+defchan bdc()(node +q, -a) /* <: asynchronous_channel */ {
+  assert { exclcc(q,a); }
+  directives {
+    slacker_channel = true;
+    slacker_dont_touch = true;
+    slacker_cost = 2;
+    num_values = 0;
+    proteus_node_role(q) = req;
+    proteus_node_role(a) = ack;
+  }
+}
+
+defchan bd(int W)(bdc +C; node[W] +D) <: asynchronous_channel {
+  directives {
+    slacker_channel = true;
+    slacker_cost = W+2;
+    num_values = 2**W;
+    proteus_node_role(C.q) = req;
+    proteus_node_role(C.a) = ack;
+    <i:W:proteus_node_role(D[i]) = data; >
+  }
+}
+
+defchan bd4ph(int W)(e1of1 +C; node[W] +D) {
+  directives {
+    slacker_channel = true;
+    slacker_cost = W+2;
+    num_values = 2**W;
+    <i:W:proteus_node_role(D[i]) = data; >
+  }
+}
+
+
+/******************************* 1of1 ******************************/
+
+defchan 1of1 ()(node +d[0]) <: 1of(1) {}
+defchan _1of1 ()(node +d[0]) <: _1of(1) {}
+defchan a1of1 ()(node +d[0], -a) <: a1of(1) {}
+defchan _a1of1 ()(node +d[0], -a) <: _a1of(1) {}
+defchan e1of1 ()(node +d[0], -e) <: e1of(1) {}
+defchan _e1of1 ()(node +d[0], -e) <: _e1of(1) {}
+defchan fat_e1of1 ()(node +d[0], -e)
+  <+ fat_channel_attributes(1) <: e1of1 {}
+defchan ev1of1()(node +d[0], +v, -e) <: ev1of(1) {}
+
+/******************************* 1of2 ******************************/
+
+defchan   1of2()(node +d[0..1])     <:   1of(2) {}
+defchan  _1of2()(node +d[0..1])     <:  _1of(2) {}
+defchan  a1of2()(node +d[0..1], -a) <:  a1of(2) {}
+defchan _a1of2()(node +d[0..1], -a) <: _a1of(2) {}
+defchan  e1of2()(node +d[0..1], -e) <:  e1of(2) {}
+defchan _e1of2()(node +d[0..1], -e) <: _e1of(2) {}
+defchan fat_e1of2()(node +d[0..1], -e) <+ fat_channel_attributes(2) <: e1of2 {}
+defchan ev1of2()(node +d[0..1], +v, -e) <: ev1of(2) {}
+
+/******************************* 1of3 *******************************/
+
+defchan   1of3()(node +d[0..2])     <:   1of(3) {}
+defchan  _1of3()(node +d[0..2])     <:  _1of(3) {}
+defchan  a1of3()(node +d[0..2], -a) <:  a1of(3) {}
+defchan _a1of3()(node +d[0..2], -a) <: _a1of(3) {}
+defchan  e1of3()(node +d[0..2], -e) <:  e1of(3) {}
+defchan _e1of3()(node +d[0..2], -e) <: _e1of(3) {}
+defchan fat_e1of3()(node +d[0..2], -e) <+ fat_channel_attributes(3) <: e1of3 {}
+defchan ev1of3()(node +d[0..2], +v, -e) <: ev1of(3) {}
+
+/******************************* 1of4 *******************************/
+
+defchan   1of4()(node +d[0..3])     <:   1of(4) {}
+defchan  _1of4()(node +d[0..3])     <:  _1of(4) {}
+defchan  a1of4()(node +d[0..3], -a) <:  a1of(4) {}
+defchan _a1of4()(node +d[0..3], -a) <: _a1of(4) {}
+defchan  e1of4()(node +d[0..3], -e) <:  e1of(4) {}
+defchan _e1of4()(node +d[0..3], -e) <: _e1of(4) {}
+defchan fat_e1of4()(node +d[0..3], -e) <+ fat_channel_attributes(4) <: e1of4 {}
+defchan ev1of4()(node +d[0..3], +v, -e) <: ev1of(4) {}
+
+/******************************* 1of5 *******************************/
+
+defchan   1of5()(node +d[0..4])     <:   1of(5) {}
+defchan  _1of5()(node +d[0..4])     <:  _1of(5) {}
+defchan  a1of5()(node +d[0..4], -a) <:  a1of(5) {}
+defchan _a1of5()(node +d[0..4], -a) <: _a1of(5) {}
+defchan  e1of5()(node +d[0..4], -e) <:  e1of(5) {}
+defchan _e1of5()(node +d[0..4], -e) <: _e1of(5) {}
+defchan fat_e1of5()(node +d[0..4], -e) <+ fat_channel_attributes(5) <: e1of5 {}
+defchan ev1of5()(node +d[0..4], +v, -e) <: ev1of(5) {}
+
+/******************************* 1of6 *******************************/
+
+defchan   1of6()(node +d[0..5])     <:   1of(6) {}
+defchan  _1of6()(node +d[0..5])     <:  _1of(6) {}
+defchan  a1of6()(node +d[0..5], -a) <:  a1of(6) {}
+defchan _a1of6()(node +d[0..5], -a) <: _a1of(6) {}
+defchan  e1of6()(node +d[0..5], -e) <:  e1of(6) {}
+defchan _e1of6()(node +d[0..5], -e) <: _e1of(6) {}
+defchan fat_e1of6()(node +d[0..5], -e) <+ fat_channel_attributes(6) <: e1of6 {}
+defchan ev1of6()(node +d[0..5], +v, -e) <: ev1of(6) {}
+
+/******************************* 1of7 *******************************/
+
+defchan   1of7()(node +d[0..6])     <:   1of(7) {}
+defchan  _1of7()(node +d[0..6])     <:  _1of(7) {}
+defchan  a1of7()(node +d[0..6], -a) <:  a1of(7) {}
+defchan _a1of7()(node +d[0..6], -a) <: _a1of(7) {}
+defchan  e1of7()(node +d[0..6], -e) <:  e1of(7) {}
+defchan _e1of7()(node +d[0..6], -e) <: _e1of(7) {}
+defchan fat_e1of7()(node +d[0..6], -e) <+ fat_channel_attributes(7) <: e1of7 {}
+defchan ev1of7()(node +d[0..6], +v, -e) <: ev1of(7) {}
+
+/******************************* 1of8 *******************************/
+
+defchan   1of8()(node +d[0..7])     <:   1of(8) {}
+defchan  _1of8()(node +d[0..7])     <:  _1of(8) {}
+defchan  a1of8()(node +d[0..7], -a) <:  a1of(8) {}
+defchan _a1of8()(node +d[0..7], -a) <: _a1of(8) {}
+defchan  e1of8()(node +d[0..7], -e) <:  e1of(8) {}
+defchan _e1of8()(node +d[0..7], -e) <: _e1of(8) {}
+defchan fat_e1of8()(node +d[0..7], -e) <+ fat_channel_attributes(8) <: e1of8 {}
+defchan ev1of8()(node +d[0..7], +v, -e) <: ev1of(8) {}
+
+/******************************* 1of9 *******************************/
+
+defchan   1of9()(node +d[0..8])     <:   1of(9) {}
+defchan  _1of9()(node +d[0..8])     <:  _1of(9) {}
+defchan  a1of9()(node +d[0..8], -a) <:  a1of(9) {}
+defchan _a1of9()(node +d[0..8], -a) <: _a1of(9) {}
+defchan  e1of9()(node +d[0..8], -e) <:  e1of(9) {}
+defchan _e1of9()(node +d[0..8], -e) <: _e1of(9) {}
+defchan fat_e1of9()(node +d[0..8], -e) <+ fat_channel_attributes(9) <: e1of9 {}
+defchan ev1of9()(node +d[0..8], +v, -e) <: ev1of(9) {}
+
+/******************************* 1of10 *******************************/
+
+defchan   1of10()(node +d[0..9])     <:   1of(10) {}
+defchan  _1of10()(node +d[0..9])     <:  _1of(10) {}
+defchan  a1of10()(node +d[0..9], -a) <:  a1of(10) {}
+defchan _a1of10()(node +d[0..9], -a) <: _a1of(10) {}
+defchan  e1of10()(node +d[0..9], -e) <:  e1of(10) {}
+defchan _e1of10()(node +d[0..9], -e) <: _e1of(10) {}
+defchan fat_e1of10()(node +d[0..9], -e) <+ fat_channel_attributes(10) <: e1of10 {}
+defchan ev1of10()(node +d[0..9], +v, -e) <: ev1of(10) {}
+
+/***************************** large 1ofN *******************************/
+
+/**
+ * For channels larger than 1of9, just use e1of(N) directly.
+ * Unfortunately, there are still a fair number of 1of16's in use, so
+ * these are kept here.
+ * lines@fulcrummicro.com
+ **/
+
+defchan 1of16 ()(node +d[0..15]) <: 1of(16) {}
+defchan _1of16 ()(node +d[0..15]) <: _1of(16) {}
+defchan a1of16 ()(node +d[0..15], -a) <: a1of(16) {}
+defchan e1of16 ()(node +d[0..15], -e) <: e1of(16) {}
+defchan ev1of16 ()(node +d[0..15], +v, -e) <: ev1of(16) {}
+
+/*********************************************** DDR/QDR ********************************/
+
+defchan ChanDDR(int BITS)(node +Q;       node[BITS] +D) {}
+defchan ChanQDR(int BITS)(node +Q[0..1]; node[BITS] +D) {}

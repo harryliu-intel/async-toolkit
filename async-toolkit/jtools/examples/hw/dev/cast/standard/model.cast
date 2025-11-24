@@ -1,0 +1,115 @@
+/*
+ * Copyright 2003 Fulcrum Microsystems.  All rights reserved.
+ * $Id: //mrl/hw/dev/cast/standard/model.cast#3 $
+ */
+
+module standard.model;
+
+import standard.base.*;
+import standard.attributes.*;
+import standard.channel.*;
+import standard.source.*;
+import standard.random.*;
+import standard.sink.*;
+import standard.null.NULL;
+
+/*****************************************************************************/
+/***                        Pipeline Modeling Cells                        ***/
+/*****************************************************************************/
+
+define linear_pipeline_model_1of (int X,N)(e1of(X) -L,+R) <+ unimplementable <: RESET_CELL {
+  csp { *[L?x; R!x] }
+  subcells {
+    e1of(X) x[0..N];
+    x[0] = L;
+    <i:N: pipeline_buffer_model(X) _(x[i],x[i+1]); >
+    x[N] = R;
+  }
+}
+
+define linear_pipeline_model (int X,M,N)(e1of(X)[M] -L,+R) <+ unimplementable <: RESET_CELL {
+  csp { *[L?x; R!x] }
+  subcells {
+    e1of(X)[M] x[0..N];
+    x[0,0..M-1] = L[0..M-1];
+    <i:N: <j:M: pipeline_buffer_model(X) _(x[i,j],x[i+1,j]); >>
+    x[N,0..M-1] = R[0..M-1];
+  }
+  env digital subcells {
+    <i:M: rsource_e1of(X) _(L[i]); >
+    <i:M: bitbucket_e1of(X) _(R[i]); >
+  }
+}
+
+define linear_pipeline_model_1of2 (int N)(e1of2 -L,+R)
+    <: linear_pipeline_model_1of (2,N) {}
+
+define linear_pipeline_model_1of3 (int N)(e1of3 -L,+R)
+    <: linear_pipeline_model_1of (3,N) {}
+
+define linear_pipeline_model_1of4 (int N)(e1of4 -L,+R)
+    <: linear_pipeline_model_1of (4,N) {}
+
+define linear_pipeline_model_Mx1of2 (int M,N)(e1of2[M] -L,+R)
+    <: linear_pipeline_model (2,M,N) {}
+
+define linear_pipeline_model_Mx1of3 (int M,N)(e1of3[M] -L,+R)
+    <: linear_pipeline_model (3,M,N) {}
+
+define linear_pipeline_model_Mx1of4 (int M,N)(e1of4[M] -L,+R)
+    <: linear_pipeline_model (4,M,N) {}
+
+define pipeline_buffer_model (int X)(e1of(X) -L,+R)
+  <+ unimplementable <: RESET_CELL {
+  csp { *[L?x; R!x] }
+  prs {
+    /** data (2T latency) **/
+    <i:X: after 200 R.e & L.d[i] #> R.d[i]+ >
+
+    /** ack **/
+    ~_RESET | <|i:X:L.d[i]> & <|i:X:R.d[i]> #> L.e-
+
+    /** timing **/
+    directives {
+      extra_delay(L.e) = 400; // ack latency 7T
+    }
+  }
+  env digital subcells {
+    rsource_e1of(X) _(L);
+    bitbucket_e1of(X) _(R);
+  }
+}
+
+define linear_pipeline_model_1of1(int N)(e1of1 -L,+R) <+ unimplementable <: RESET_CELL {
+  csp { *[L?; R!] }
+  subcells {
+    e1of1 x[0..N];
+    x[0] = L;
+    <i:N: pipeline_buffer_model_1of1 _(x[i],x[i+1]); >
+    x[N] = R;
+  }
+  env digital subcells {
+    rsource_e1of1 _(L);
+    bitbucket_e1of1 _(R);
+  }
+}
+
+define pipeline_buffer_model_1of1()(e1of1 -L,+R) <+ unimplementable <: RESET_CELL {
+  csp { *[L?; R!] }
+  prs {
+    /** data (2T latency) **/
+    after 200 R.e & L.0 #> R.0+
+
+    /** ack **/
+    ~_RESET | L.0 & R.0 #> L.e-
+
+    /** timing **/
+    directives {
+      extra_delay(L.e) = 400; // ack latency 7T
+    }
+  }
+  env digital subcells {
+    rsource_e1of1 _(L);
+    bitbucket_e1of1 _(R);
+  }
+}

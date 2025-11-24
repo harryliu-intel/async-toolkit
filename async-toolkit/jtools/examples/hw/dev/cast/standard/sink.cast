@@ -1,0 +1,137 @@
+/*
+ * Copyright 2002 Fulcrum Microsystems.  All rights reserved.
+ * $Id: //mrl/hw/dev/cast/standard/sink.cast#3 $
+ */
+
+module standard.sink;
+
+import standard.base.*;
+import standard.attributes.*;
+import standard.channel.*;
+
+/******************************************************************************/
+/***                 Environment bitbuckets                                 ***/
+/******************************************************************************/
+
+/*** bitbucket for a1of(N) channel ***/
+define bitbucket_a1of (int N)(a1of(N) -l) <+ unimplementable <: RESET_CELL {
+  // csp { *[l?] }
+  prs {
+    node la;
+    after 100 ~_RESET | <|i:0..N-1: l.d[i]> => la+
+    after 100 la => l.a+
+  }
+}
+
+/*** bitbucket for e1of(N) channel ***/
+define bitbucket_e1of (int N)(e1of(N) -l) <+ unimplementable <: RESET_CELL {
+  csp { *[l?] }
+  prs {
+    node le;
+    after 200 ~_RESET | <|i:0..N-1: l.d[i]> => le-
+    ~le => l.e-
+  }
+}
+
+/*** bitbucket for e1of(X)[N] channel ***/
+define bitbucket_N_e1of (int N,X)(e1of(X)[N] -l) <+ unimplementable <: RESET_CELL {
+  csp { *[l?] }
+  subcells {
+    <i:N: bitbucket_e1of(X) bb[i](l[i]); >
+  }
+}
+
+
+/*** specific refinements ***/ 
+define bitbucket_a1of1 ()(a1of1 -l) <: bitbucket_a1of(1) {}
+define bitbucket_a1of2 ()(a1of2 -l) <: bitbucket_a1of(2) {}
+define bitbucket_a1of3 ()(a1of3 -l) <: bitbucket_a1of(3) {}
+define bitbucket_a1of4 ()(a1of4 -l) <: bitbucket_a1of(4) {}
+define bitbucket_a1of5 ()(a1of5 -l) <: bitbucket_a1of(5) {}
+define bitbucket_a1of6 ()(a1of6 -l) <: bitbucket_a1of(6) {}
+define bitbucket_a1of7 ()(a1of7 -l) <: bitbucket_a1of(7) {}
+define bitbucket_a1of8 ()(a1of8 -l) <: bitbucket_a1of(8) {}
+
+define bitbucket_e1of1 ()(e1of1  -l) <: bitbucket_e1of(1) {}
+define bitbucket_e1of2 ()(e1of2  -l) <: bitbucket_e1of(2) {}
+define bitbucket_e1of3 ()(e1of3  -l) <: bitbucket_e1of(3) {}
+define bitbucket_e1of4 ()(e1of4  -l) <: bitbucket_e1of(4) {}
+define bitbucket_e1of5 ()(e1of5  -l) <: bitbucket_e1of(5) {}
+define bitbucket_e1of6 ()(e1of6  -l) <: bitbucket_e1of(6) {}
+define bitbucket_e1of7 ()(e1of7  -l) <: bitbucket_e1of(7) {}
+define bitbucket_e1of8 ()(e1of8  -l) <: bitbucket_e1of(8) {}
+define bitbucket_e1of9 ()(e1of9  -l) <: bitbucket_e1of(9) {}
+define bitbucket_e1of16()(e1of16 -l) <: bitbucket_e1of(16){}
+
+define bitbucket_N_e1of1 (int N)(e1of1 [N] -l) <: bitbucket_N_e1of(N,1) {}
+define bitbucket_N_e1of2 (int N)(e1of2 [N] -l) <: bitbucket_N_e1of(N,2) {}
+define bitbucket_N_e1of3 (int N)(e1of3 [N] -l) <: bitbucket_N_e1of(N,3) {}
+define bitbucket_N_e1of4 (int N)(e1of4 [N] -l) <: bitbucket_N_e1of(N,4) {}
+define bitbucket_N_e1of5 (int N)(e1of5 [N] -l) <: bitbucket_N_e1of(N,5) {}
+define bitbucket_N_e1of6 (int N)(e1of6 [N] -l) <: bitbucket_N_e1of(N,6) {}
+define bitbucket_N_e1of7 (int N)(e1of7 [N] -l) <: bitbucket_N_e1of(N,7) {}
+define bitbucket_N_e1of8 (int N)(e1of8 [N] -l) <: bitbucket_N_e1of(N,8) {}
+define bitbucket_N_e1of9 (int N)(e1of9 [N] -l) <: bitbucket_N_e1of(N,9) {}
+define bitbucket_N_e1of16(int N)(e1of16[N] -l) <: bitbucket_N_e1of(N,16){}
+
+
+/******************************************************************************/
+/***                 Bundled acknowledge/enable bitbuckets                  ***/
+/******************************************************************************/
+
+/*** bundled bitbucket for a M x a1of(N) channel ***/
+define bitbucket_Mxa1of (int N,M)(a1of(N) -r[0..M-1]) <+ unimplementable <: RESET_CELL {
+  // csp { *[<,i:M:(r[i]?)>] }
+  prs {
+    a1of(N) s[0..M-1];
+    node sa;
+    after 0 <&i:M: s[i].a> #> sa+
+    <i:M: r[i].d=s[i].d; r[i].a=sa;>
+    <i:M: bitbucket_a1of(N) _(s[i]);>
+  }
+}
+
+/*** bundled bitbucket for a M x e1of(N) channel ***/
+define bitbucket_Mxe1of (int N,M)(e1of(N) -r[0..M-1]) <+ unimplementable <: RESET_CELL {
+  csp { *[<,i:M:(r[i]?)>] }
+  prs {
+    e1of(N) s[0..M-1];
+    node se;
+    after 0 <&i:M: ~s[i].e> #> se-
+    <i:M: r[i].d=s[i].d; r[i].e=se;>
+    <i:M: bitbucket_e1of(N) _(s[i]);>
+  }
+}
+
+/*** specific refinements ***/ 
+define bitbucket_Mxa1of2(int M)(a1of2 -r[0..M-1]) <: bitbucket_Mxa1of(2,M) {}
+define bitbucket_Mxa1of4(int M)(a1of4 -r[0..M-1]) <: bitbucket_Mxa1of(4,M) {}
+define bitbucket_Mxe1of2(int M)(e1of2 -r[0..M-1]) <: bitbucket_Mxe1of(2,M) {}
+define bitbucket_Mxe1of3(int M)(e1of3 -r[0..M-1]) <: bitbucket_Mxe1of(3,M) {}
+define bitbucket_Mxe1of4(int M)(e1of4 -r[0..M-1]) <: bitbucket_Mxe1of(4,M) {}
+define bitbucket_Mxe1of5(int M)(e1of5 -r[0..M-1]) <: bitbucket_Mxe1of(5,M) {}
+
+
+/******************************************************************************/
+/***                 Inactive reset bitbuckets                              ***/
+/******************************************************************************/
+
+define inactive_reset_bitbucket_e1of (int N)(e1of(N) -l)
+  <+ unimplementable <: RESET_CELL {
+  csp { *[l?] }
+  prs {
+    node le;
+    after 200 _RESET & <|i:0..N-1: l.d[i]> => le-
+    ~le => l.e-
+  }
+}
+
+/*** specific refinements ***/ 
+define inactive_reset_bitbucket_e1of1()(e1of1 -l) <: inactive_reset_bitbucket_e1of(1) {}
+define inactive_reset_bitbucket_e1of2()(e1of2 -l) <: inactive_reset_bitbucket_e1of(2) {}
+define inactive_reset_bitbucket_e1of3()(e1of3 -l) <: inactive_reset_bitbucket_e1of(3) {}
+define inactive_reset_bitbucket_e1of4()(e1of4 -l) <: inactive_reset_bitbucket_e1of(4) {}
+define inactive_reset_bitbucket_e1of5()(e1of5 -l) <: inactive_reset_bitbucket_e1of(5) {}
+define inactive_reset_bitbucket_e1of6()(e1of6 -l) <: inactive_reset_bitbucket_e1of(6) {}
+define inactive_reset_bitbucket_e1of7()(e1of7 -l) <: inactive_reset_bitbucket_e1of(7) {}
+define inactive_reset_bitbucket_e1of8()(e1of8 -l) <: inactive_reset_bitbucket_e1of(8) {}

@@ -1,0 +1,19 @@
+#!/usr/bin/csh
+
+dev
+./archive_cast "core.mandelbrot.tutorial.BASE_MANDELBROT1\(32\)"
+
+
+setenv DEST_DIR `pwd`
+echo "CAST_DIR=$CAST_DIR"
+echo "DEST_DIR=$DEST_DIR"
+pushd $CAST_DIR
+tar czvf $DEST_DIR/cast.tgz `find standard -name \*.cast`
+popd
+pushd hw/dev/cast
+tar xzvf $DEST_DIR/cast.tgz
+popd
+rm cast.tgz
+
+setenv CAST_PATH hw/dev/cast:hw/dev/spec
+jlint --cast-path=$CAST_PATH --cell="core.mandelbrot.tutorial.BASE_MANDELBROT1(32)"

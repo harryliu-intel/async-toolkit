@@ -1,0 +1,290 @@
+/*
+ * Copyright 2002 Fulcrum Microsystems.  All rights reserved.
+ * $Id: //mrl/hw/dev/cast/standard/timed.cast#4 $
+ */
+
+module standard.timed;
+
+import standard.base.*;
+import standard.attributes.*;
+import standard.null.*;
+import standard.channel.*;
+import standard.random.*;
+
+
+/******************************************************************************/
+/***                    Delay Insertion Cells                        ***/
+/******************************************************************************/
+
+/** 
+ * Simple one stage delay.  Can't be wave pipelined.
+ */
+define simple_delay_node(int tau)(node -l, +r) 
+  <+ unimplementable <: PRIMITIVE {
+  prs {
+    after_ps tau l => r+
+  }
+}
+
+/**
+ * Delays l to r by an arbitrarily large time value.  Works as long
+ * as l cycles no faster than 100 time units.
+ **/
+define delay_node(int tau)(node -l,+r)
+  <+ unimplementable <: RESET_CELL {
+  prs {
+    int delay = 100;
+    int num_stages = tau/delay;
+    node x[0..num_stages];
+    x[0]=l;
+    <i:num_stages: after_ps delay  x[i] | ~_RESET &  l -> x[i+1]+ >
+    <i:num_stages: after_ps delay ~x[i] | ~_RESET & ~l -> x[i+1]- >
+    [tau > delay*num_stages -> 
+      after_ps (tau - delay*num_stages)  x[num_stages] | ~_RESET &  l -> r+
+      after_ps (tau - delay*num_stages) ~x[num_stages] | ~_RESET & ~l -> r- ]
+    [tau == delay*num_stages ->
+      x[num_stages] = r; ]
+  }
+  env {
+    digital {
+      prs {
+        after 101 _RESET & l => l-
+      }
+      directives {
+        ntpc_spec(r) = 202;
+      }
+    }
+  }
+  directives {
+    fragment=true;
+  }
+}
+
+/******************************************************************************/
+/***                    Random Delay Insertion Cells                        ***/
+/******************************************************************************/
+
+/** Delays the *rising* edge of l to r by tau[i], depending on rand.d[i] **/
+define random_delay (int N, tau[0..N-1])(e1of(N) -rand; node -l,+r)
+  <+ unimplementable <: RESET_CELL {
+  prs {
+    _1of(N) _rand;
+    <i:N: after_ps tau[i]  l &  rand.d[i] -> _rand.d[i]- >
+    <i:N: after_ps 0      ~l & ~rand.d[i] -> _rand.d[i]+ >
+    after_ps 0 <|i:N: ~_rand.d[i] > => r+
+    after_ps 0 r => rand.e-
+  }
+  directives {
+    fragment=true;
+  }
+}
+
+define random_delay_e1of (int X, N, tau[0..N-1])(e1of(X) -L,+R) 
+  <+ unimplementable <: RESET_CELL {
+  csp { *[L?x;R!x] }
+  prs {
+    L.d=R.d;
+    e1of(N) rand;
+    rsource_e1of(N) _(rand);
+    random_delay(N,tau) delay(rand,R.e,L.e);
+  }
+}
+
+define random_delay_Mxe1of (int X, M, N, tau[0..N-1])(e1of(X)[M] -L,+R) 
+  <+ unimplementable <: RESET_CELL {
+  csp { *[L?x;R!x] }
+  prs {
+    <i:M: L[i].d=R[i].d; >
+    e1of(N) rand,rand2[0..M-1];
+    rsource_e1of(N) _(rand);
+    <i:M: rand2[i].d=rand.d; >
+    after_ps 0 <&i:M: rand2[i].e > #> rand.e+
+    <i:M: random_delay(N,tau) delay[i](rand2[i],R[i].e,L[i].e); >
+  }
+}
+
+/** specific refinements **/
+define random_delay_e1of1 (int N, tau[0..N-1])(e1of1 -L,+R) 
+  <+ unimplementable <: RESET_CELL {
+  csp { *[L?x;R!x] }
+  prs {
+    L.d=R.d;
+    e1of(N) rand;
+    rsource_e1of(N) _(rand);
+    random_delay(N,tau) delay(rand,R.e,L.e);
+  }
+}
+
+define random_delay_e1of2 (int N, tau[0..N-1])(e1of2 -L, +R)
+  <: random_delay_e1of(2,N,tau) {}
+define random_delay_e1of4 (int N, tau[0..N-1])(e1of4 -L, +R)
+  <: random_delay_e1of(4,N,tau) {}
+define random_delay_Mxe1of2 (int M, N, tau[0..N-1])(e1of2[M] -L,+R)
+  <: random_delay_Mxe1of(2,M,N,tau) {}
+define random_delay_Mxe1of4 (int M, N, tau[0..N-1])(e1of4[M] -L,+R)
+  <: random_delay_Mxe1of(4,M,N,tau) {}
+
+/**
+ * Sets R to l with a delay value tau[i], indexed by the value received on 
+ * the 'rand' channel, whenever l transitions.
+ **/
+define random_transition_delay (int N, tau[0..N-1])(e1of(N) -rand; node -l,+R)
+  <+ unimplementable <: RESET_CELL {
+  prs {
+    node r;
+    _1of(N) _up,_dn;
+    <i:N: after_ps tau[i] l & ~r & rand.d[i] -> _up.d[i]- >
+    <i:N: after_ps tau[i] ~l & r & rand.d[i] -> _dn.d[i]- >
+    isochronic after_ps 0 
+        ~_RESET | <|i:N: ~_up.d[i] > | <|i:N: ~_dn.d[i] > #> rand.e-
+    isochronic after_ps 0 <|i:N: ~_up.d[i] > & ~rand.e -> r+
+    isochronic after_ps 0 <|i:N: ~_dn.d[i] > & ~rand.e -> r-
+    <i:N: isochronic after_ps 0  l &  r & ~rand.d[i] | ~_RESET -> _up.d[i]+ >
+    <i:N: isochronic after_ps 0 ~l & ~r & ~rand.d[i] | ~_RESET -> _dn.d[i]+ >
+    isochronic after_ps 0 ~_RESET & l -> r+                     
+    isochronic after_ps 0 ~_RESET & ~l -> r-
+    after_ps 0 r => R+
+  }
+}
+
+/******************************************************************************/
+/***                    Node generation environment cells                   ***/
+/******************************************************************************/
+
+/**
+ * pulse_node
+ * Description: Generates T/2 long pulses in the middle of a
+ *              period, then returns to GND.
+ *              _____
+ * eg:   1 => __|   |__        0 => ________
+ **/
+define pulse_node (int T, N; int d[0..N-1])(node +src_node)
+  <+ unimplementable <: RESET_CELL {
+  prs {
+    int  Tq = T/4;
+    node pulse[0..4*N-1];
+    node dnode[0..4*N-1];
+    
+    <i:N:
+      dnode[4*i] = GND;
+      [d[i] == 0 -> dnode[4*i+1] = GND;]
+      [d[i] != 0 -> dnode[4*i+1] = Vdd;] 
+      [d[i] == 0 -> dnode[4*i+2] = GND;]
+      [d[i] != 0 -> dnode[4*i+2] = Vdd;]
+      dnode[4*i+3] = GND; >
+    
+    after_ps (T/4) ~_RESET -> pulse[0]+
+    <i:4*N-1: isochronic after_ps 0 ~_RESET -> pulse[i+1]- >
+    <i:4*N: after_ps (T/4) _RESET & pulse[i] -> pulse[(i+1)%(4*N)]+ >
+    <i:4*N: isochronic after_ps 0 _RESET & pulse[(i+1)%(4*N)] -> pulse[i]- >
+    <i:4*N: isochronic after_ps 0 pulse[i] & ~pulse[(i-1)%(4*N)] & ~dnode[i]-> src_node- >
+    <i:4*N: isochronic after_ps 0 pulse[i] & ~pulse[(i-1)%(4*N)] & dnode[i] -> src_node+ >
+	}
+  directives {
+    fragment=true;
+  }
+}
+
+/**
+ * _pulse_node
+ * Description: Generates T/2 long pulses in the middle of a
+ *              period, then returns to VDD.
+ *            _________         __      __
+ * eg:   1 =>              0 =>   |____|
+ **/
+define _pulse_node (int T, N; int d[0..N-1])(node +src_node)
+  <+ unimplementable <: RESET_CELL {
+  prs {
+    int  Tq = T/4;
+    node pulse[0..4*N-1];
+    node dnode[0..4*N-1];
+    
+    <i: N :
+    dnode[4*i] = Vdd;
+    [d[i] == 0 -> dnode[4*i+1] = GND;]
+    [d[i] != 0 -> dnode[4*i+1] = Vdd;] 
+    [d[i] == 0 -> dnode[4*i+2] = GND;]
+    [d[i] != 0 -> dnode[4*i+2] = Vdd;]
+    dnode[4*i+3] = Vdd;
+    >
+    
+    after_ps (T/4) ~_RESET -> pulse[0]+
+    <i:4*N-1: isochronic after_ps 0 ~_RESET -> pulse[i+1]- >
+    <i:4*N: after_ps (T/4) _RESET & pulse[i] -> pulse[(i+1)%(4*N)]+ >
+    <i:4*N: isochronic after_ps 0      _RESET & pulse[(i+1)%(4*N)] -> pulse[i]- >
+    <i:4*N: isochronic after_ps 0 pulse[i] & ~pulse[(i-1)%(4*N)] & ~dnode[i]-> src_node- >
+    <i:4*N: isochronic after_ps 0 pulse[i] & ~pulse[(i-1)%(4*N)] & dnode[i] -> src_node+ >
+  }
+  directives {
+    fragment=true;
+  }
+}
+
+/** drive a node with period and desired node pattern **/
+define source_node (int T, N; int d[0..N-1])(node +src_node)
+  <+ unimplementable <: RESET_CELL {
+  prs {
+    node pulse[0..N-1];
+    node dnode[0..N-1];
+    
+    /***** need to get around cflat bug *****/
+    <i:N: 
+      [d[i] == 0 -> dnode[i] = GND; ]
+      [d[i] != 0 -> dnode[i] = Vdd; ] >
+    
+    after_ps T ~_RESET -> pulse[0]+
+    <i:N-1: isochronic after_ps 0 ~_RESET -> pulse[i+1]- >
+    <i:N: after_ps T _RESET & pulse[i] -> pulse[(i+1)%N]+ >
+    <i:N: isochronic after_ps 0  _RESET & pulse[(i+1)%N] -> pulse[i]- >
+    <i:N: isochronic after_ps 0 pulse[i] & ~pulse[(i-1)%N] & ~dnode[i]-> src_node- >
+    <i:N: isochronic after_ps 0 pulse[i] & ~pulse[(i-1)%N] & dnode[i] -> src_node+ >
+  }
+  directives {
+    fragment=true;
+  }
+}
+
+/** a source_e1of1 with a configurable cycle time **/
+define timed_source_e1of1(int T)(e1of1 +R)
+  <+ unimplementable <: RESET_CELL {
+  csp {
+    *[R!]
+    directives {
+      cycle_time(R) = T;  time_unit = 1;
+    }
+  }
+  prs {
+    node en;
+    after_ps 0 ~_RESET | ~en & ~R.e #> R.0-
+    after_ps T/2 R.0 => en-
+  }
+}
+
+define timed_rsource_e1of(int T, X, W)(e1of(X)[W] +R)
+  <+ unimplementable <: RESET_CELL {
+  csp {
+    *[R!random(W*X/2);]
+    directives {
+      cycle_time(R) = T;  time_unit = 1;
+    }
+  }
+}
+
+define timed_rsource_e1of2(int T, W) <: timed_rsource_e1of(T,2,W) {}
+
+define timed_rsource_e1of4(int T, W) <: timed_rsource_e1of(T,4,W) {}
+
+define timed_bitbucket_e1of(int T, X, W)(e1of(X)[W] -L)
+  <+ unimplementable <: RESET_CELL {
+  csp {
+    *[L?]
+    directives {
+      cycle_time(L) = T;  time_unit = 1;
+    }
+  }
+}
+
+define timed_bitbucket_e1of2(int T, W) <: timed_bitbucket_e1of(T,2,W) {}
+
+define timed_bitbucket_e1of4(int T, W) <: timed_bitbucket_e1of(T,4,W) {}
+

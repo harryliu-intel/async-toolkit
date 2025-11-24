@@ -1,0 +1,40 @@
+/*
+ * Copyright 2002 Fulcrum Microsystems.  All rights reserved.
+ * $Id: //mrl/hw/dev/cast/standard/null.cast#6 $
+ */
+
+module standard.null;
+
+/** base properties refined by all cells somehow **/
+define NULL()()()
+  <+ standard.process.sizing_defaults
+  <+ standard.process.standard_layout_cell
+  <+ standard.attributes.bd_directives
+  <+ standard.attributes.constants
+  <+ standard.attributes.functions {
+
+  // Enable DFT scan modeling constructs when overridden to true
+  bool scan_coverage_model = false;
+  
+  // directives
+  directives {
+    density_factor       = 2*DENSITY_FACTOR;
+    bitpitch             = BIT_PITCH;
+    width                = -1;
+    width_minimum        = WIDTH_MINIMUM;
+    width_increment      = WIDTH_INCREMENT;
+    width_overhead       = WIDTH_OVERHEAD;
+    height               = 0.5;
+    height_minimum       = HEIGHT_MINIMUM;
+    height_increment     = HEIGHT_INCREMENT;
+    height_overhead      = HEIGHT_OVERHEAD;
+    default_up_delay     = DEFAULT_UP_DELAY;
+    default_dn_delay     = DEFAULT_DN_DELAY;
+    transistor_type      = SVT_TRANSISTOR;
+    fast_transistor_type = LVT_TRANSISTOR;
+    slow_transistor_type = HVT_TRANSISTOR;
+    staticizer_type      = AUTO_STATICIZER;
+    splittable           = true;
+    rte_cosim_spec       = subcells,prs,csp-standard.attributes.csp_model{csp};
+  }
+}

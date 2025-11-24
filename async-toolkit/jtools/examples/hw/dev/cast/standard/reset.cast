@@ -1,0 +1,57 @@
+/*
+ * Copyright 2002 Fulcrum Microsystems.  All rights reserved.
+ * $Id: //mrl/hw/dev/cast/standard/reset.cast#3 $
+ */
+
+module standard.reset;
+
+import standard.null.NULL;
+import standard.attributes.*;
+
+/*** Used in a leaf cell that can't refine LEAF **/
+define local_reset()(node -Vdd, -GND, -_RESET) attributes <+ frag {
+  fragment prs {
+    node Reset,_Reset;
+    LOCAL_RESET reset;
+  }
+}
+
+/**
+ * Refinement parent for all reset distribution cells.
+ **/
+define BASE_RESET <+ svt <: NULL {
+  directives {
+    slacker_leaf=true;
+    slacker_primitive=true;
+    fragment=true;
+    cellnonobservable=true;
+    density_factor=1.5*DENSITY_FACTOR;
+  }
+}
+
+/** 
+ * Inverter ramp for local reset generation.  Instantiate this in a
+ * mid-level cell when all its subcells are FRAGMENTs.
+ **/
+define LOCAL_RESET()()(node -Vdd, -GND, -_RESET, +Reset, +_Reset)
+  <+ routed <: BASE_RESET {
+  prs {
+    ~_RESET => Reset+
+    Reset => _Reset-
+
+    directives {
+      extra_delay(Reset)  = 100; // OK to be somewhat slow
+      extra_delay(_Reset) = 100; // OK to be somewhat slow
+      asta_extra_delay(Reset)  = 100; // 3*Tau for Asta verification
+      asta_extra_delay(_Reset) = 100; // 4*Tau for Asta verification
+
+      transistor_type(Reset) = SVT_TRANSISTOR;
+      transistor_type(_Reset) = SVT_TRANSISTOR;
+    }
+  }
+  directives {
+    idle_state(_RESET) = IDLE_1;
+    idle_state(Reset)  = IDLE_0;
+    idle_state(_Reset) = IDLE_1;
+  }
+}

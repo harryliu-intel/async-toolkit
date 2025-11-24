@@ -1,0 +1,32 @@
+#!/usr/intel/bin/perl -w
+
+my %map;
+$map{"hw-dev/cast"}="hw/dev/cast";
+$map{"hw-dev/spec"}="hw/dev/spec";
+$map{"hw-dev18a/cast"}="hw/dev18a/cast";
+$map{"hw-dev18a/spec"}="hw/dev18a/spec";
+my $jflat="$ENV{FULCRUM} jflat --max-heap-size=$ENV{MEM} $ENV{CAST_OPTS}";
+my %files;
+foreach my $cell (@ARGV) {
+    my @lines = split("\n",`$jflat --cast-deps=/dev/stdout --tool=check --cell=$cell`);
+    foreach my $line (@lines) {
+        if ($line =~ /^(\S+)(\s+)\\$/) {
+            my $from=$1;
+            my $to=$from;
+            foreach $key (keys %map) {
+                if ($line =~ /\S+\/$key\/(\S+)/) {
+                    $to="$map{$key}/$1";
+                    $files{$from}=$to; 
+                }
+            }
+        }
+    }
+}
+
+foreach my $file (sort keys %files) {
+    if (!(-e "$files{$file}")) {
+        system("mkdir -p \"$files{$file}\"");
+        system("rmdir \"$files{$file}\"");
+        system("cp \"$file\" \"$files{$file}\"");
+    }
+}

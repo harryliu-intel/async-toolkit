@@ -1,0 +1,102 @@
+/*
+ * Environments for synchronous-handshake (shs) channels.
+ *
+ * Copyright 2019 Intel.  All rights reserved.
+ */
+
+module standard.shs;
+
+import standard.channel.shs;
+import standard.attributes.unimplementable;
+import standard.base.RESET_CELL;
+
+/** Common attributes for shs(W) cells **/
+define shs_attr attributes {
+  bool shs_verbose=false;
+}
+
+/** Source shs(W) with deterministic data as fast as possible **/
+define source_shs(int W,N,d[0..N-1])(node -CLK; shs(W) +R) <+ unimplementable <+ shs_attr <: RESET_CELL {
+  csp {
+    function resetNodes() = (R.D=0, R.V-);
+    int i;
+    bool v; // is output token valid?
+    *[[CLK];
+      #[R.E -> v=false]; // drain token
+      wait(500);
+      #[~v ->
+        #[shs_verbose -> print("send " + hex(d[i]))];
+        R.D=d[i], R.V+, v=true; // send new token
+        i=(i+1)%N
+       ];
+      [~CLK]
+     ]
+  }
+}
+
+/** Source shs(W) with random data and skip random cycles **/
+define rsource_shs(int W)(node -CLK; shs(W) +R) <+ unimplementable <+ shs_attr <: RESET_CELL {
+  csp {
+    function resetNodes() = (R.D=0, R.V-);
+    bool v; // is output token valid?
+    *[[CLK];
+      #[R.E -> v=false]; // drain token
+      wait(500);
+      #[~v ->
+        int(W) d=random(W);
+        [ random(1)==1 ->
+          #[shs_verbose -> print("send " + hex(d))];
+          R.D=d, R.V+, v=true // send new token
+        []else -> R.V- // no new token this cycle
+        ]
+       ];
+      [~CLK]
+     ]
+  }
+}
+
+/** Sink shs(W) channel **/
+define sink_shs(int W)(node -CLK; shs(W) -L) <+ unimplementable <+ shs_attr <: RESET_CELL {
+  csp {
+    function resetNodes() = (L.E-);
+    *[[CLK];
+      #[L.V & L.E -> #[shs_verbose -> print("recv " + hex(L.D))]];
+      wait(500);
+      L.E+;
+      [~CLK]
+     ]
+  }
+}
+
+/** Sink shs(W) channel and compare against expected values**/
+define sink_shs_expect(int W, N, d[0..N-1])(node -CLK; shs(W) -L) <+ unimplementable <+ shs_attr <: RESET_CELL {
+  csp {
+    function resetNodes() = (L.E-);
+    int i;
+    *[[CLK];
+      #[L.V & L.E -> 
+        #[shs_verbose -> print("recv " + hex(L.D))];
+        assert(L.D==d[i], "Recv'd value does not match expected value");
+        i=(i+1)%N
+      ];
+      wait(500);
+      L.E+;
+      [~CLK]
+     ]
+  }
+}
+
+/** Sink shs(W) channel with random stalls **/
+define rsink_shs(int W)(node -CLK; shs(W) -L) <+ unimplementable <+ shs_attr <: RESET_CELL {
+  csp {
+    function resetNodes() = (L.E-);
+    *[[CLK];
+      bool e;
+      #[L.V & L.E -> #[shs_verbose -> print("recv " + hex(L.D))]];
+      #[random(1)==1 -> e+];
+      wait(500);
+      L.E=e;
+      [~CLK]
+     ]
+  }
+}
