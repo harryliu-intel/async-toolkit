@@ -1,6 +1,6 @@
 /*
  * Copyright 2002 Fulcrum Microsystems.  All rights reserved.
- * $Id: //mrl/hw/dev/cast/standard/sync.cast#3 $
+ * $Id: //mrl/hw/dev/cast/standard/sync.cast#4 $
  */
 
 module standard.sync;
@@ -49,10 +49,10 @@ define sync_Mxe1of4 (int M)(e1of1 -SYNC; e1of4[M] -L, +R) <: sync_Mxe1of(M,4) {}
 /******************************************************************************/
 
 /*** A '-1' in the d[..] array specifies the 'skip' case ***/
-define sync_source_e1of (int M,N; int d[0..N-1])(e1of1 -SYNC; e1of(M) +R) 
+define sync_source_e1of (int M,N; int d[0..N-1])(e1of1 -SYNC; e1of(M) +R)
   <+ unimplementable <: LEAF {
-  csp { 
-    int i=0; *[ SYNC?; [d[i]!=-1 -> R!d[i] [] else -> skip]; i=(i+1)%N ] 
+  csp {
+    int i=0; *[ SYNC?; [d[i]!=-1 -> R!d[i] [] else -> skip]; i=(i+1)%N ]
   }
   prs {
     1of(M+1) r;
@@ -72,32 +72,32 @@ define sync_source_e1of (int M,N; int d[0..N-1])(e1of1 -SYNC; e1of(M) +R)
 }
 
 /*** Specific refinements ***/
-define sync_source_e1of2 (int N; int d[0..N-1])(e1of1 -SYNC; e1of2 +R) 
+define sync_source_e1of2 (int N; int d[0..N-1])(e1of1 -SYNC; e1of2 +R)
   <: sync_source_e1of(2,N,d) {}
-define sync_source_e1of3 (int N; int d[0..N-1])(e1of1 -SYNC; e1of3 +R) 
+define sync_source_e1of3 (int N; int d[0..N-1])(e1of1 -SYNC; e1of3 +R)
   <: sync_source_e1of(3,N,d) {}
-define sync_source_e1of4 (int N; int d[0..N-1])(e1of1 -SYNC; e1of4 +R) 
+define sync_source_e1of4 (int N; int d[0..N-1])(e1of1 -SYNC; e1of4 +R)
   <: sync_source_e1of(4,N,d) {}
-define sync_source_e1of5 (int N; int d[0..N-1])(e1of1 -SYNC; e1of5 +R) 
+define sync_source_e1of5 (int N; int d[0..N-1])(e1of1 -SYNC; e1of5 +R)
   <: sync_source_e1of(5,N,d) {}
-define sync_source_e1of6 (int N; int d[0..N-1])(e1of1 -SYNC; e1of6 +R) 
+define sync_source_e1of6 (int N; int d[0..N-1])(e1of1 -SYNC; e1of6 +R)
   <: sync_source_e1of(6,N,d) {}
-define sync_source_e1of7 (int N; int d[0..N-1])(e1of1 -SYNC; e1of7 +R) 
+define sync_source_e1of7 (int N; int d[0..N-1])(e1of1 -SYNC; e1of7 +R)
   <: sync_source_e1of(7,N,d) {}
-define sync_source_e1of8 (int N; int d[0..N-1])(e1of1 -SYNC; e1of8 +R) 
+define sync_source_e1of8 (int N; int d[0..N-1])(e1of1 -SYNC; e1of8 +R)
   <: sync_source_e1of(8,N,d) {}
 
 /*** Important: Only works for X==2 or X==4 ***/
 define sync_source_Mxe1of (int X,M,N; int d[0..N-1])(e1of1 -SYNC; e1of(X)[M] +R)
   <+ unimplementable {
-  csp { 
-    int i=0; *[ SYNC?; [d[i]!=-1 -> R!d[i] [] else -> skip]; i=(i+1)%N ] 
+  csp {
+    int i=0; *[ SYNC?; [d[i]!=-1 -> R!d[i] [] else -> skip]; i=(i+1)%N ]
   }
   subcells {
     int f[0..N-1,0..M-1];
     e1of1 sync[0..M-1];
     copyN_1of1(M) _(SYNC,sync);
-    <i:M: <j:N: 
+    <i:M: <j:N:
         [d[j]>=0  -> f[j,i]=(d[j]/X**i)%X;]
         [d[j]==-1 -> f[j,i]=-1;] >
       sync_source_e1of(X,N,f[0..N-1,i]) _(sync[i],R[i]); >
@@ -108,126 +108,3 @@ define sync_source_Mxe1of2 (int M, N, d[0..N-1])(e1of1 -SYNC; e1of2[M] +R)
   <: sync_source_Mxe1of(2,M,N,d) {}
 define sync_source_Mxe1of4 (int M, N, d[0..N-1])(e1of1 -SYNC; e1of4[M] +R)
   <: sync_source_Mxe1of(4,M,N,d) {}
-
-
-/******************************************************************************/
-/*** channel_sync cells ensure that all L inputs are available before any R ***/
-/*** outputs are written.  The original purpose for these is to synchronize ***/
-/*** a group of channels that all go through the same DFT scan register.    ***/
-/*** This makes it easier to generate appropriate DFT scan vectors based    ***/
-/*** on the behavior of cells in dsim.                                      ***/
-/******************************************************************************/
-
-define channel_sync_1(int ID,N,X)(e1of(X) -L[0..N-1];
-                                  e1of(X) +R[0..N-1]) <+ unimplementable {
-  csp {
-    int x[0..N-1];
-    *[
-      <;i:N: (L[i]?x[i]) >;
-      [print (ID)];
-      <;i:N: (R[i]!x[i]) >
-    ]
-  }
-}
-
-define channel_sync_1_4(int ID,N)(e1of4 -L[0..N-1];
-                                  e1of4 +R[0..N-1]) <: channel_sync_1(ID,N,4) {}
-
-define chansync_1_1_4(int ID)(e1of4 -L[0], +R[0]) <: channel_sync_1_4(ID,1) {
-  env {
-    digital {
-      subcells {
-        BG_1of4(0) _(L[0]);
-        BB_1of4    _(R[0]);
-      }
-    }
-  }
-}
-
-define chansync_1_2_4(int ID)(e1of4 -L[0..1], +R[0..1]) <: channel_sync_1_4(ID,2) {
-  env {
-    digital {
-      subcells {
-        <i:2: BG_1of4(0) _(L[i]); >
-        <i:2: BB_1of4    _(R[i]); >
-      }
-    }
-  }
-}
-
-define channel_sync_2(int ID,N[0..1],X[0..1])(e1of(X[0]) -La[0..N[0]-1];
-                                              e1of(X[1]) -Lb[0..N[1]-1];
-                                              e1of(X[0]) +Ra[0..N[0]-1];
-                                              e1of(X[1]) +Rb[0..N[1]-1])
-                                              <+ unimplementable {
-  csp {
-    int xa[0..N[0]-1];
-    int xb[0..N[1]-1];
-    *[
-      <;i:N[0]: (La[i]?xa[i]) >;
-      <;i:N[1]: (Lb[i]?xb[i]) >;
-      [print (ID)];
-      <;i:N[0]: (Ra[i]!xa[i]) >;
-      <;i:N[1]: (Rb[i]!xb[i]) >
-    ]
-  }
-}
-
-define channel_sync_2_2_4(int ID,N[0..1])(e1of2 -La[0..N[0]-1];
-                                          e1of4 -Lb[0..N[1]-1];
-                                          e1of2 +Ra[0..N[0]-1];
-                                          e1of4 +Rb[0..N[1]-1])
-                                            <: channel_sync_2(ID,N,{2,4}) {}
-
-define channel_sync_3(int ID,N[0..2],X[0..2])(e1of(X[0]) -La[0..N[0]-1];
-                                              e1of(X[1]) -Lb[0..N[1]-1];
-                                              e1of(X[2]) -Lc[0..N[2]-1];
-                                              e1of(X[0]) +Ra[0..N[0]-1];
-                                              e1of(X[1]) +Rb[0..N[1]-1];
-                                              e1of(X[2]) +Rc[0..N[2]-1])
-                                              <+ unimplementable {
-  csp {
-    int xa[0..N[0]-1];
-    int xb[0..N[1]-1];
-    int xc[0..N[2]-1];
-    *[
-      <;i:N[0]: (La[i]?xa[i]) >;
-      <;i:N[1]: (Lb[i]?xb[i]) >;
-      <;i:N[2]: (Lc[i]?xc[i]) >;
-      [print (ID)];
-      <;i:N[0]: (Ra[i]!xa[i]) >;
-      <;i:N[1]: (Rb[i]!xb[i]) >;
-      <;i:N[2]: (Rc[i]!xc[i]) >
-    ]
-  }
-}
-
-define channel_sync_3_1(int ID,N[0..2],X[0..2])(e1of1      -La[0..N[0]-1];
-                                                e1of(X[1]) -Lb[0..N[1]-1];
-                                                e1of(X[2]) -Lc[0..N[2]-1];
-                                                e1of1      +Ra[0..N[0]-1];
-                                                e1of(X[1]) +Rb[0..N[1]-1];
-                                                e1of(X[2]) +Rc[0..N[2]-1]) {
-  csp {
-    int xa[0..N[0]-1];
-    int xb[0..N[1]-1];
-    int xc[0..N[2]-1];
-    *[
-      <;i:N[0]: (La[i]?xa[i]) >;
-      <;i:N[1]: (Lb[i]?xb[i]) >;
-      <;i:N[2]: (Lc[i]?xc[i]) >;
-      [print (ID)];
-      <;i:N[0]: (Ra[i]!xa[i]) >;
-      <;i:N[1]: (Rb[i]!xb[i]) >;
-      <;i:N[2]: (Rc[i]!xc[i]) >
-    ]
-  }
-}
-
-define channel_sync_3_1_2_4(int ID,N[0..2])(e1of1 -La[0..N[0]-1];
-                                            e1of2 -Lb[0..N[1]-1];
-                                            e1of4 -Lc[0..N[2]-1];
-                                            e1of1 +Ra[0..N[0]-1];
-                                            e1of2 +Rb[0..N[1]-1];
-                                            e1of4 +Rc[0..N[2]-1])
-                                              <: channel_sync_3_1(ID,N,{1,2,4}) {}
