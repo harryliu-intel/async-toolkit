@@ -20,6 +20,7 @@ define standard_layout_cell attributes <+ standard.attributes.constants {
   float HEIGHT_MINIMUM   = ROW_PITCH;
   float HEIGHT_INCREMENT = ROW_PITCH;
   float HEIGHT_OVERHEAD  = 0;
+  float TRANSISTOR_LENGTH      = 1.0e-6; // default transistor length
   float TRANSISTOR_LENGTH_GRID = 1.0e-6; // used when emitting CDL
   float TRANSISTOR_WIDTH_GRID  = 1.0e-6; // used when emitting CDL
   float DENSITY_FACTOR         = 1.25;   // target ratio of cell area to diffusion area for Jauto
