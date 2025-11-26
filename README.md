@@ -18,6 +18,12 @@ A toolkit specializing in:
 - Analog circuit simulation  
 - Debugging asynchronous analog behavior  
 
+###    `jtools`
+A toolkit consisting of mainly Java tools containing:
+- CSP parsing tools
+- CAST parsing tools
+- Examples and common setup files for the above
+
 ## 🖥️ Usage Model
 
 These tools are intended to be used **stand-alone** within an **interactive Unix-based engineering environment**, operating on **pre-validated user data**—a standard practice in hardware design workflows.
