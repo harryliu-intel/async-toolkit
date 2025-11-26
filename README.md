@@ -18,7 +18,7 @@ A toolkit specializing in:
 - Analog circuit simulation  
 - Debugging asynchronous analog behavior  
 
-###    `jtools`
+### 🔹 `jtools`
 A toolkit consisting of mainly Java tools containing:
 - CSP parsing tools
 - CAST parsing tools
