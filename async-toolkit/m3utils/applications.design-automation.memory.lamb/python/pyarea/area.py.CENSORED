@@ -1,0 +1,346 @@
+#!/usr/bin/env python
+# Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+# SPDX-License-Identifier: Apache-2.0
+
+
+#
+# compute estimated lamb size & area
+# information current as of 2022-FEB-15
+# Author : Mika Nystrom <mika.nystroem@intel.com>
+#
+
+import getopt
+import sys
+
+#
+# BASIC GEOMETRIC DEFS
+#
+
+# N.B. depth of memory runs in X, width in Y
+#
+# SO to avoid confusion.  This file consistently uses the following
+# nomenclature:
+#
+# depth             - # of entries in a RAM array
+# width             - # of bits in each entry of a RAM array
+# X [NOT "width"]   - a physical dimension in the horizontal direction when
+#                     viewing a physical design representation on
+#                     a graphics display
+# Y [NOT "height" ] - a physical dimension in the vertical direction when
+#                     viewing a physical design representation on
+#                     a graphics display
+#
+# units are appended as suffixes
+# if no units are mentioned for physical quantities, they are in SI base units
+#
+
+supported_techs = [ 'n5', 'n3', 'n3b', 'n3e' ]
+default_tech = 'n5'
+
+pg_nm = {}
+rw_nm = {}
+
+pg_nm['n5']    =  XX   # value of pg in nanometers
+rw_nm['n5']    = XXX   # value of row height in nanometers
+
+pg_nm['n3']    =  XX
+rw_nm['n3']    = XXX
+
+pg_nm['n3b']   =  pg_nm['n3'] * 1.04
+rw_nm['n3b']   =  rw_nm['n3'] * 1.04
+
+pg_nm['n3e']   =  XX
+rw_nm['n3e']   = XXX
+
+######################################################################
+#
+# for now we assume all LAMB parameters supported are the same across
+# techs.  This would be easy to change.
+
+bitx_pg        =   5   # width of a bit in PG
+bity_rw        =   1   # height of a bit in rows
+
+chunkdepth     =  16   # max depth of a chunk in words
+maxchunks      =   8   # max # of chunks in a macro
+maxwidth       = 256   # max width of a Lamb in bits
+maxdepth       = 256   # max depth of a Lamb in words, n/c DFT words
+widthmod       =   2   # increment of width
+depthmod       =   2   # increment of depth
+
+dftextra_words =   1   # how many extra words for DFT in a macro (gets snuck in)
+
+##################################
+#
+# overheads in X direction
+#
+rw_width_pg    = 50    # width of env region in / [PG]
+snout_pg       = 20    # width of Lamb "snout" (central control) region / [PG]
+extra_width_pg = 10    # extra overhead /[PG]
+perchunk_pg    = 20    # extra overhead per chunk /[PG]
+
+dft_ox_pg      = dftextra_words * bitx_pg  # overhead from DFT word(s)
+
+fixed_ox_pg    = rw_width_pg + snout_pg + extra_width_pg + dft_ox_pg
+
+
+###################################
+#
+# overheads in Y direction
+#
+decoder_h_rw   = 18    # height of decoder in rows
+halo_h_rw      =  2    # halo at top and bottom of macro
+
+fixed_oy_rw    = decoder_h_rw + halo_h_rw
+
+###################################
+#
+# formatting globals
+#
+verbose        = False
+quiet          = False
+genformat      = False
+multi          = False
+
+def help():
+    print("%s : Lamb memory size estimator" % sys.argv[0])
+    print("");
+    print("detailed help on arguments")
+    print("--------------------------")
+    print("-q | --quiet     -- be unverbose")
+    print("-m | --multi     -- allow multiple instances under --quiet")
+    print("-g | --genformat -- produce output for tcl scripts to consume")
+    print("-w | --width     -- width of requested memory in bits")
+    print("                    (laid out in Y direction)")
+    print("")
+    print("-d | --depth     -- depth of requested memory in words/entries")
+    print("                    (laid out in X direction)")
+    print("-T | --technode  -- TSMC technology node requested")
+    print("                    supported values: {}, default: {}".format(" ".join(supported_techs), default_tech))
+
+def usage():
+    print ("%s : usage : %s [-h|--help] | [(-q|--quiet) [-m|--multi]] [-g|--genformat] (-w|--width) <bits> (-d|--depth) <words> [-T <tech node>]" % (sys.argv[0], sys.argv[0]));
+
+def do_lamb(depth, width, tech, bit_area_nm2):
+    # do the work for a single Lamb macro
+    if depth > maxdepth:
+        print("ERROR Lamb depth %d > maxdepth %d" % (depth, maxdepth))
+        sys.exit(3)
+    if width > maxwidth:
+        print("ERROR Lamb width %d > maxwidth %d" % (width, maxwidth))
+        sys.exit(3)
+    if depth % depthmod != 0:
+        print("ERROR Lamb depth %d not multiple of %d" % (depth, depthmod))
+        sys.exit(3)
+    if width % widthmod != 0:
+        print("ERROR Lamb width %d not multiple of %d" % (width, widthmod))
+        sys.exit(3)
+
+    if (not quiet):
+        print("INDIVIDUAL LAMB CALCULATION")
+        print("===========================")
+    
+    lamb_bits      = depth * width
+    lamb_bits_area = lamb_bits * bit_area_nm2 / 1e18
+
+    if (not quiet): 
+       print ("Indiv. Lamb bits      %5d x   %5d = %8d ; Lamb bits area %le m^2"
+               % (depth, width, lamb_bits, lamb_bits_area))
+
+    nchunks   = (depth - 1) // chunkdepth + 1
+    lastdepth = depth -  (nchunks-1) * chunkdepth
+    
+    if (not quiet):
+        print ("Indiv. Lamb: X chunks    %2d, last %3d deep" % (nchunks, lastdepth))
+
+    lamb_bits_x_pg = bitx_pg * depth
+    lamb_bits_y_rw = bity_rw * width
+
+    lamb_bits_x_nm = lamb_bits_x_pg * pg_nm[tech]
+    lamb_bits_y_nm = lamb_bits_y_rw * rw_nm[tech]
+
+    if (not quiet):
+        print ("Indiv. Lamb bits:     %5d pg x %4d rows;   %5d nm x  %5d nm" %
+               (lamb_bits_x_pg, lamb_bits_y_rw, lamb_bits_x_nm, lamb_bits_y_nm))
+
+    lamb_ox_pg = fixed_ox_pg + perchunk_pg * nchunks
+    lamb_oy_rw = fixed_oy_rw 
+
+    lamb_ox_nm = lamb_ox_pg * pg_nm[tech]
+    lamb_oy_nm = lamb_oy_rw * rw_nm[tech]
+
+    if (not quiet):
+        print ("Indiv. Lamb overheads: %4d pg,  %4d rows; X %5d nm, Y %5d nm" %
+               (lamb_ox_pg, lamb_oy_rw, lamb_ox_nm, lamb_oy_nm))
+
+    lamb_x_pg = lamb_bits_x_pg + lamb_ox_pg
+    lamb_y_rw = lamb_bits_y_rw + lamb_oy_rw
+    lamb_x_nm = lamb_x_pg * pg_nm[tech]
+    lamb_y_nm = lamb_y_rw * rw_nm[tech]
+
+    lamb_area = lamb_x_nm * lamb_y_nm / 1e18
+
+    if (not quiet):
+        print ("Indiv. Lamb size :     %4d pg x %4d rows:   %5d nm x  %5d nm = %le m^2" %
+               (lamb_x_pg, lamb_y_rw, lamb_x_nm, lamb_y_nm, lamb_area))
+        print ("Indiv. Lamb area      %6.2lf sq. microns" % (lamb_area * 1e12))
+
+    lamb_eff = (lamb_bits_area * 1.0) / (lamb_area * 1.0)
+    oh_frac  = (lamb_area - lamb_bits_area + 0.0) / (lamb_bits_area)
+    
+    if (not quiet):
+        print ("Indiv. Lamb efficiency : %le / %le = %5.1f%%, overhead = %5.1f%%" %
+               (lamb_bits_area, lamb_area, lamb_eff * 100.0, oh_frac * 100.0))
+
+    return [ lamb_area, lamb_x_nm, lamb_y_nm ]
+
+def doit(depth, width, tech, quiet):
+    # do the work for a full array (Hartvig!)
+    total_bits = depth * width
+
+    if (not quiet):
+        print ("OVERALL DESIGN PARAMETERS")
+        print ("=========================")
+        print ("requested size %dD x %dW" % (depth, width))
+        print ("technology requested \"%s\"" % tech)
+
+    bit_area_nm2   = pg_nm[tech] * bitx_pg * bity_rw * rw_nm[tech]
+
+    if (not quiet):
+        print ("raw bit cell area      %8d nm^2        %15le m^2" %
+               (bit_area_nm2, bit_area_nm2 / 1e18))
+
+    bits_area  = total_bits * bit_area_nm2 / 1e18
+
+    if (not quiet):
+        print ("total bits needed %5d x %5d = %d ; area %le m^2" %
+               (depth, width, total_bits, bits_area))
+
+    ndeep = (depth - 1) // maxdepth + 1
+    nwide = (width - 1) // maxwidth + 1
+    nlambs = ndeep * nwide
+
+    if (not quiet):
+        print ("")
+
+        print ("total Lamb instances %5dD x %5dW = %6d" % (ndeep, nwide, nlambs))
+
+    deptheach = (depth - 1) // ndeep + 1
+    widtheach = (width - 1) // nwide + 1
+    bitseach  = deptheach * widtheach
+
+    if (not quiet):
+        print ("each Lamb            %5dD x %5dW = %6d bits" % (deptheach, widtheach, bitseach))
+
+    physbits = bitseach * nlambs
+
+    if (not quiet):
+        print ("physical Lamb bits %8d, abstract bits %8d (%5.1f%%)" %
+               (physbits, total_bits, (physbits * 100.0 / (total_bits * 1.0))))
+
+        print("")
+    
+    lamb_area = do_lamb(deptheach, widtheach, tech, bit_area_nm2)[0]
+
+    total_lamb_area = nlambs * lamb_area
+
+    overall_eff = bits_area / total_lamb_area
+    overall_oh  = (total_lamb_area - bits_area) / bits_area
+
+    if (not quiet):
+        print("")
+        print("SUMMARY")
+        print("=======")
+        print("tot area of Lambs = %e, overall efficiency %5.1f%% overhead %5.1f%%"%
+              (total_lamb_area, overall_eff * 100.0, overall_oh * 100.0))
+        print("tot area of Lambs = %8.2f sq. microns" % (total_lamb_area * 1e12))
+    else:
+        print("%f" % (total_lamb_area * 1e12))
+        
+def do_quiet(depth, width, tech):
+    bit_area_nm2   = pg_nm[tech] * bitx_pg * bity_rw * rw_nm[tech]
+    lamb_area = do_lamb(depth, width, tech, bit_area_nm2)[0]
+    print ("%f" % (lamb_area * 1e12))
+
+    
+def do_genformat(depth, width, tech):
+    bit_area_nm2   = pg_nm[tech] * bitx_pg * bity_rw * rw_nm[tech]
+    lamb_specs = do_lamb(depth, width, tech, bit_area_nm2)
+    print ("%e %d %d" % ((lamb_specs[0]), lamb_specs[1], lamb_specs[2]))
+
+    
+def main():
+    global verbose
+    global quiet
+    global genformat
+    global multi
+    
+    gotargs = 0
+    tech = default_tech
+    
+    try:
+        opts, args = getopt.getopt(sys.argv[1:],
+                                   "gqmvhow:d:T:",
+                                   ["help",
+                                    "quiet",
+                                    "multi",
+                                    "output=",
+                                    "width=",
+                                    "depth=",
+                                    "technode=","tech_node="])
+    except getopt.GetoptError as err:
+        # print help information and exit:
+        print(err)  # will print something like "option -a not recognized"
+        usage()
+        sys.exit(2)
+
+    output  = None
+
+    for o, a in opts:
+        if   o == "-v":
+            verbose = True
+        elif o in ("-g", "--genformat"):
+            genformat = True
+            quiet = True
+        elif o in ("-q", "--quiet"):
+            quiet = True
+        elif o in ("-m", "--multi"):
+            multi = True
+        elif o in ("-h", "--help"):
+            usage()
+            help()
+            sys.exit()
+        elif o in ("-o", "--output"):
+            output = a
+        elif o in ("-d", "--depth"):
+            depth = int(a)
+            gotargs += 1
+        elif o in ("-w", "--width"):
+            width = int(a)
+            gotargs += 2
+        elif o in ("-T", "--technode", "--tech_node"):
+            tech = a
+            try:
+                dummy = supported_techs.index(tech)
+            except ValueError:
+                print("?unsupported tech \"{:s}\"".format(tech))
+                sys.exit(5)
+                
+            bit_area_nm2   = pg_nm[tech] * bitx_pg * bity_rw * rw_nm[tech]
+        else:
+            assert False, "unhandled option"
+
+    if gotargs != 3:
+        print("?argument error")
+        usage()
+        sys.exit(4)
+
+    if quiet and not multi:
+        if genformat:
+            do_genformat(depth, width, tech)
+        else:
+            do_quiet(depth, width, tech)
+    else:
+        doit(depth, width, tech, quiet)
+            
+if __name__ == "__main__":
+    main()
