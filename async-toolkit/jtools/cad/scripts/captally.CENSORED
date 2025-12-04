@@ -1,0 +1,220 @@
+#!/usr/intel/bin/perl -w
+
+$EPSILON_OX = 3.9 * 8.854e-12;
+
+# T_OX values
+#  Process      NMOS        PMOS
+#   0.18        4.08e-9     4.23e-9
+#   0.15        3.51e-9
+#   0.13 low-k  2.5e-9      2.63e-9
+#   0.13 fsg    2.5e-9      2.63e-9
+
+%T_OX = ( "TSMC018" =>      [0.0e-9, 0.00e-9],
+          "TSMC015" =>      [0.00e-9, 0.00e-9],
+          "TSMC013LV_LOWK" => [0.0e-9,  0.00e-9],
+          "TSMC013LV_FSG"  =>  [0.0e-9,  0.00e-9],
+          "NV90" => [0.00e-9,  0.00e-9]  );
+
+$default_proc = "TSMC013LV_FSG";
+$proc         = "";
+
+$C = 0.0;
+$R = 0.0;
+$max_C = 0.0;
+$gateA_N = 0;
+$gateA_P = 0;
+$capnum = 0;
+$resnum = 0;
+$mosnum = 0;
+$total = 0;
+$diodenum = 0;
+$samecapnum = 0;
+
+sub usage_exit {
+    print STDERR "Usage: captally [--process=PROC] <node> <file>\n";
+    print STDERR "       --process=PROC      - Set the process type\n";
+    print STDERR "       --total             - Just print the total in pF.\n\n";
+    print STDERR "Valid processes: ";
+    foreach $p (keys(%T_OX)) { print STDERR "$p "; }
+    print STDERR "\nDefault process: $default_proc\n";
+    exit;
+}
+
+while (@ARGV) {
+    if ($ARGV[0] =~ /^--process=([^\s]+)$/) {
+        $proc = $1;
+    }
+    elsif ($ARGV[0] =~ /^--total$/) {
+        $total = 1;
+    }
+    elsif ($ARGV[0] =~ /^-/) {
+        usage_exit();
+    }
+    else {
+        if (! defined $node) {
+            $node = $ARGV[0];
+            $node =~ s/\[/\\\[/g;
+            $node =~ s/\]/\\\]/g;
+        }
+        elsif (! defined $file) {
+            $file = $ARGV[0];
+        }
+        else {
+            usage_exit();
+        }
+    }
+    shift;
+}
+usage_exit() if (!defined $node || !defined $file);
+$proc = $default_proc if ($proc eq "");
+
+open (FILE, $file) || die "ERROR: Couldn't read $file.\n";
+$linenum = 1;
+$line = "";
+while (<FILE>) {
+    chomp;
+    s/\*.*$//;
+    s/^\s+$//;
+    next if (/^$/);
+    if (!/^\+/) {
+        if ($line eq "") {
+            $line = $_;
+            next;
+        }
+        @fields = split(/\s+/,$line);
+        if ($fields[0] =~ /^[cC].*/) {
+            #if ($fields[1] =~ /^$node(:.*)?/ && $fields[2] eq "GND!" ||
+            #    $fields[1] =~ "GND!" && $fields[2] =~ /^$node(:.*)?/) {
+            if ($fields[1] =~ /^$node(:.*)?/ || $fields[2] =~ /^$node(:.*)?/) {
+                #print STDERR "Warning: non-cmodel cap type encountered.\n"
+                #    if ($fields[3] ne "cmodel");
+                if ($fields[1] =~ /^$node(:.*)?/ && $fields[2] =~ /^$node(:.*)?/) {
+                    $samecapnum++;
+                }
+                else {
+                    die "Bad cap syntax at line $linenum\n" 
+                        if (!defined($fields[3]));
+                    if ($fields[3] eq "cmodel") {
+                        die "Bad cap syntax at line $linenum\n" 
+                            if (!defined($fields[4]));
+                        $num = $fields[4];
+                    }
+                    else {
+                        $num = $fields[3];
+                    }
+                    if ($num eq "Inf") {
+                        print STDERR "Warning: Ignoring 'Inf' capacitance " .
+                        "at line $linenum.\n";
+                    }
+                    else {
+                        $C += $num;
+                        $max_C = $num if ($num > $max_C);
+                        $capnum++;
+                    }
+                }
+            }
+        }
+        elsif ($fields[0] =~ /^[rR].*/) {
+            if ($fields[1] =~ /^$node(:.*)?/ || $fields[2] =~ /^$node(:.*)?/) {
+                die "Bad resistor syntax at line $linenum\n"
+                    if (!defined($fields[3]));
+                $R += $fields[3];
+                $resnum++;
+            }
+        }
+        elsif ($fields[0] =~ /^[mM].*/) {
+            #
+            # Determine gate length/width
+            #
+            if ($fields[2] =~ /^$node(:.*)?/) {
+                ($area_n,$area_p) = parse_mosfet($line,$linenum,@fields);
+                $gateA_N += $area_n;
+                $gateA_P += $area_p;
+                $mosnum++;
+            }
+            if ($fields[1] =~ /^$node(:.*)?/ || $fields[3] =~ /^$node(:.*)/) {
+                # Grab drain/source
+                $diodenum++;
+            }
+        }
+        $line = $_;
+    }
+    else {
+        s/^\+\s*//;
+        $line = $line . " $_";
+    }
+    $linenum++;
+}
+close FILE;
+
+$gateC = $gateA_N * $EPSILON_OX / $T_OX{$proc}->[0] + 
+         $gateA_P * $EPSILON_OX / $T_OX{$proc}->[1];
+
+$S = max((length $capnum, length $samecapnum, length $mosnum,
+          length $diodenum), length $resnum);
+
+if ($total) {
+    printf "%.4g\n", $C/1e-12 + $gateC/1e-12;
+}
+else {
+    printf "%${S}d parasitic capacitors processed.\n", $capnum;
+    printf "%${S}d ($node:N,$node:M) capacitors ignored.\n", $samecapnum;
+    printf "%${S}d resistors processed.\n", $resnum;
+    printf "%${S}d mosfets processed (%.3g m^2 nmos_2v, %.3g m^2 pmos_2v)\n",
+           $mosnum, $gateA_N, $gateA_P;
+    printf "%${S}d source/drain diode areas ignored.\n", $diodenum;
+    print "--------------------------------------------------------------------\n";
+    printf "Total resistance on all branches of $node:   %.4g ohms\n", $R;
+    printf "Total lumped parasitic capacitance on $node: %.4g pF (%.2f%%)\n",
+           $C/1e-12, 100*$C/($C+$gateC);
+    printf "Total gate capacitance on $node:             %.4g pF (%.2f%%)\n",
+           $gateC/1e-12, 100*$gateC/($C+$gateC);
+    printf "Total load capacitance on $node:             %.4g pF\n",
+           $C/1e-12 + $gateC/1e-12;
+}
+
+sub max
+{
+    my @list = @_;
+    $m = 0;
+
+    foreach $num (@list) {
+        $m = $num if ($num > $m);
+    }
+    return $m;
+}
+
+sub parse_mosfet {
+    my ($line, $linenum, @fields) = @_;
+    my $area_n = 0;
+    my $area_p = 0;
+    if ($fields[0] !~ /^[mM].*/) {
+        die "Bad mosfet syntax at line $line\n";
+    }
+    if ($fields[5] !~ /^n/i && $fields[5] !~ /^p/i) {
+        print STDERR "Warning: Ignoring unknown transistor type "
+                     . "'$fields[5]' at line $linenum.\n";
+    }
+    #
+    # Determine gate length/width
+    #
+    for $i (6..$#fields) {
+        if ($fields[$i] =~ /^[lL]=([\d\.-eE]*)(\w)?$/) {
+            $l = $1; $unit = $2;
+            $l *= 1e-6 if ($unit =~ /^u$/i);
+            $l *= 1e-9 if ($unit =~ /^n$/i);
+        }
+        elsif ($fields[$i] =~ /^[wW]=([\d\.-eE]*)(\w)?$/) {
+            $w = $1; $unit = $2;
+            $w *= 1e-6 if ($unit =~ /^u$/i);
+            $w *= 1e-9 if ($unit =~ /^n$/i);
+        }
+    }
+    if ($fields[5] =~ /^n/i) {
+        $area_n += $w * $l;
+    }
+    else {
+        $area_p += $w * $l;
+    }
+    return ($area_n,$area_p);
+}
