@@ -1,0 +1,390 @@
+# Copyright (c) 2025 Intel Corporation.  All rights reserved.  See the file COPYRIGHT for more information.
+# SPDX-License-Identifier: Apache-2.0
+
+#
+# generate front-end (fake) LEF for LAMBs
+#
+# Author: Paul Donehue
+# modified by mika.nystroem@intel.com June, 2022
+#
+
+proc gtr_lamb_gen_lef { args } {
+    parse_proc_arguments -args $args arg
+    set proc_name [lindex [regsub "::" [info level 0]  "" ] 0 ]
+    set date [date ]
+    set flowthrough $arg(-ftr_value)
+    if { [info exists arg(-debug) ] } {
+        puts "INFO: Processing Memory $block_name"
+    }
+    set block_name $arg(-block_name)
+    set data_depth $arg(-data_depth)
+    set data_width $arg(-data_width)
+    set fname physical/lef/$block_name.lef
+    set tech_node $arg(-tech_node)
+    file mkdir [file dirname $fname]
+
+    puts "INFO: $proc_name, Generating LEF view: $fname"
+    puts "INFO: $proc_name, tech_node is $tech_node"
+    
+    if { [info exists arg(-filelistVar) ] } {
+        upvar $arg(-filelistVar) fileList
+        set thisEntry [dict create]
+        dict set thisEntry path $fname
+        dict set thisEntry standard_name lef
+        dict set thisEntry standard_version 5.8
+        dict set thisEntry layout_type abstract
+        dict set thisEntry design_view layout
+        dict set thisEntry type lef_filelist
+        lappend fileList $thisEntry
+    } 
+    set of_lef [open $fname "w" ]
+    set power "VDD"
+    set ground "VSS"
+
+    set area_x_y [gtr_lamb_area -data_width $data_width -data_depth $data_depth -tech_node $tech_node ]
+    puts "INFO: $proc_name, area_x_y is $area_x_y"
+    
+    set area                [lindex $area_x_y 0 ]
+    # in square meters
+    
+    set block_width   [expr [lindex $area_x_y 1 ] * 0.001 ]
+    # in microns
+    
+    set block_height  [expr [lindex $area_x_y 2 ] * 0.001 ]
+    # in microns
+    
+    set addr_width    [expr int(ceil(log($data_depth)/log(2))) ]
+    set cell_llx 0
+    set cell_lly 0
+    set cell_urx $block_width
+    set cell_ury $block_height
+    set layer "M2"
+
+    # the sizes and pitches are from email from Ameya 6/24/22
+    if { ( $tech_node == "n3" ) || ( $tech_node == "n3b" ) } {
+        # if n3b, using TSMC fake units
+	set m0_width  X.XXX
+        set m0_pitch  X.XXX
+
+        set m1_width  X.XXX
+        set m1_pitch  X.XXX
+
+        set m2_width  X.XXX
+        set m2_pitch  X.XXX
+
+	set m3_width  X.XXX
+        set m3_pitch  X.XXX
+
+        set m4_width  X.XXX
+        set m4_pitch  X.XXX
+
+        set m2_length [expr 4 * $m2_pitch]
+        set row_height XXX
+    } elseif { $tech_node == "n5" } {
+	set m0_width  X.XXX
+        set m0_pitch  X.XXX
+
+        set m1_width  X.XXX
+        set m1_pitch  X.XXX
+
+        set m2_width  X.XXX
+        set m2_pitch  X.XXX
+
+	set m3_width  X.XXX
+        set m3_pitch  X.XXX
+
+        set m4_width  X.XXX
+        set m4_pitch  X.XXX
+
+        set m2_length [expr 4 * $m2_pitch]
+        set row_height XXX
+    } elseif { $tech_node == "n7" } {
+        set m0_width  X.XXX
+        set m0_pitch  X.XXX
+
+        set m1_width  X.XXX
+        set m1_pitch  X.XXX
+
+	set m2_width  X.XXX
+        set m2_pitch  X.XXX
+        
+	set m3_width  X.XXX
+        set m3_pitch  X.XXX
+
+        set m4_width  X.XXX
+        set m4_pitch  X.XXX
+        set m2_length [expr 4 * $m2_pitch]
+        set row_height XXX # not sure this is right
+    } elseif { $tech_node == "n3e" } {
+        set m0_width  X.XXX
+        set m0_pitch  X.XXX
+
+        set m1_width  X.XXX
+        set m1_pitch  X.XXX
+
+	set m2_width  X.XXX
+        set m2_pitch  X.XXX
+        
+	set m3_width  X.XXX
+        set m3_pitch  X.XXX
+
+	set m4_width  X.XXX
+        set m4_pitch  X.XXX
+        set m2_length [expr 4 * $m2_pitch]
+        set row_height XXX
+    } else {
+        error "unsupported tech_node $tech_node"
+    }
+
+    set m0_spacing [ expr $m0_pitch - $m0_width ]
+    set m1_spacing [ expr $m1_pitch - $m1_width ]
+    set m2_spacing [ expr $m2_pitch - $m2_width ]
+    set m3_spacing [ expr $m3_pitch - $m3_width ]
+    set m4_spacing [ expr $m4_pitch - $m4_width ]
+
+    
+    set m0_spacing [ expr $m0_pitch - $m0_width ]
+    set m1_spacing [ expr $m1_pitch - $m1_width ]
+    set m2_spacing [ expr $m2_pitch - $m2_width ]
+    set m3_spacing [ expr $m3_pitch - $m3_width ]
+    set m4_spacing [ expr $m4_pitch - $m4_width ]
+    
+    set keepout_region 0
+    # probably no reason for keepout in LAMBs
+    
+    set dmsb [expr $data_width - 1 ]
+    set amsb [expr $addr_width - 1 ]
+
+    #set m2_y0 [expr floor($keepout_region/$m2_pitch) * $m2_pitch + $m2_pitch / 2.0 ]
+
+    #2022 0829 Update for M2 on track pins. 
+    #Lamb needs to be instantiated on an even cell row (or  0 mod 338nm).
+    #Track 0, 7 (mod 13) are illegal as they are reserved for VSS and VDD respectively.
+    # Asserting a y0 offset of 1 M2 track to start pinning on legal signal track.
+    
+    set m2_y0 $m2_pitch
+    set m4_y0 [expr floor($keepout_region/$m4_pitch) * $m4_pitch + $m4_pitch / 2.0 ]
+
+    set power_lly [expr $m4_y0 - $m4_width/2 ]
+    set power_ury [expr $m4_y0 + $m4_width/2 ]
+    set gnd_lly [expr $power_lly + $m4_pitch ]
+    set gnd_ury [expr $power_lly + $m4_pitch + $m4_width ]
+    set pins [list "clk"]
+    if { [info exists arg(-dual_clocks) ] } {
+        lappend pins "rclk"
+    }
+    lappend pins "wen" "test__scan_en" "dft__core_si" "icg_force_on" "dft_read_bypass" "dft__mem_wr_disable"
+    if { $flowthrough == 0 } {
+        lappend pins "ren"
+    }
+    lappend pins "dft__core_so" 
+    lappend pins "dout\[$dmsb:0\]" "radr\[$amsb:0\]" "wdata\[$dmsb:0\]" 
+    if { $addr_width == 1 } {
+        lappend pins "wadr"
+    } else {
+        ## TBD fix this to work with other endian
+
+        lappend pins "wadr\[$amsb:0\]" 
+    }
+    ## LEF GENERATION
+    puts $of_lef "\#\# Generated by BXD GTR Flow: $proc_name"
+    puts $of_lef "\#\# DATE: $date REVISION: [gtr_get_revision ]\n"
+    puts $of_lef "UNITS"
+    if { $tech_node == "n5" || \
+         $tech_node == "n3b" || \
+         $tech_node == "n3e" } {
+        puts $of_lef "    DATABASE MICRONS 2000 ;"
+    } else {
+        error "Unsupported, this should not happen due to arg check"
+    }
+    puts $of_lef "END UNITS\n"
+
+
+    puts $of_lef "VERSION 5.8 ;\n"
+    puts $of_lef "BUSBITCHARS \"\[\]\" ;"
+    puts $of_lef "DIVIDERCHAR \"/\" ;\n"
+
+    puts $of_lef "MACRO $block_name"
+    puts $of_lef "   FIXEDMASK ;"
+    puts $of_lef "   CLASS BLOCK ;"
+    puts $of_lef "   SIZE $block_width BY $block_height ;"
+    puts $of_lef "   FOREIGN $block_name 0 0 ;"
+    puts $of_lef "   ORIGIN 0 0 ;"
+    puts $of_lef "   SYMMETRY X Y ;"
+
+    set m2_y $m2_y0
+    set m4_y $m4_y0
+    set color_index 0
+
+    set npins 0
+    foreach pin $pins {
+      if { [regexp "\\\[" $pin ] } {
+            set pin_info [split $pin "\[\]" ]
+            set b_name [lindex $pin_info 0 ]
+            set msb_lsb [split [lindex $pin_info 1 ] ":" ]
+            set msb [lindex $msb_lsb 0 ]
+            set lsb [lindex $msb_lsb 1 ]
+       } else {
+            set b_name $pin
+            set lsb 0
+            set msb 0
+       }
+       incr npins [expr $msb - $lsb + 1]
+    }
+
+    # compute vertical span of pins and how many microns per pin to allow
+    # (for fake LEF)
+    set pins_span         [ expr ($block_height - 2 * $m2_y0 ) ]
+    set ave_pitch_nm      [ expr {floor(1000.0 * $pins_span / $npins)} ]
+    set ave_pitch_microns [ expr $ave_pitch_nm * 0.001 ]
+    
+    #set pin_y_pitch $m2_pitch
+    #set pin_y_pitch $ave_pitch_microns
+
+    #2022_0829 Converting the avg pin y pitch into closest integer multiple of m2_pitch
+    set pin_y_pitch [expr {int ($ave_pitch_microns / $m2_pitch)} ]
+    #Decrementing the avg_pitch by 1. To counter too much spread and keep pins within y-span for larger lambs.
+    incr pin_y_pitch -1
+
+    puts "INFO: $proc_name, npins $npins ; m2_pitch $m2_pitch ; block_height $block_height ; pin_y_pitch $pin_y_pitch ; ave_pitch_microns $ave_pitch_microns"
+    
+    # Initialize m2_track_number corresponding to $m2_y0. Only for consistency. Will get overwritten during pin y calc.
+    set m2_track_number [ expr {int ($m2_y0 / $m2_pitch)} ]
+
+    foreach pin $pins {
+        #set m2_y [expr $m2_y + $pin_y_pitch ]
+	#set m2_track_number [ expr {round ( ($m2_y + ($pin_y_pitch*$m2_pitch) ) / $m2_pitch)} ]
+
+	if { [expr ($m2_track_number % 13) == 0] || [expr ($m2_track_number % 13) == 7] } {
+		incr m2_track_number
+	}
+	
+        set m2_y [expr $m2_pitch*$m2_track_number]
+	
+	puts "INFO: $proc_name, pin $pin ; m2_pitch $m2_pitch ; block_height $block_height ; pin_y_pitch $pin_y_pitch ; m2_track_number $m2_track_number ; m2_y $m2_y"
+
+	set llx 0  
+        set lly [expr $m2_y - $m2_width/2 ]
+        set urx $m2_length
+        set ury [expr $m2_y + $m2_width/2 ]
+        if { [expr $color_index % 2 ] == 0 } {
+            set str "MASK 2"
+        } else {
+            set str "MASK 1"
+        }
+        if { [regexp "dout" $pin ] || [regexp "dft__core_so" $pin ] } {
+            set pin_dir "output"
+        } else {
+            set pin_dir "input"
+        }
+        ## check for bus
+        if { [regexp "\\\[" $pin ] } {
+
+            set pin_info [split $pin "\[\]" ]
+            set b_name [lindex $pin_info 0 ]
+            set msb_lsb [split [lindex $pin_info 1 ] ":" ]
+            set msb [lindex $msb_lsb 0 ]
+            set lsb [lindex $msb_lsb 1 ]
+        } else {
+            set b_name $pin
+            set lsb 0
+            set msb 0
+        }
+        if { $msb != $lsb } {
+            ## its a bus
+            for { set i $lsb } { $i <= $msb } { incr i } {
+                if { $i != $lsb } {
+                    #set m2_y [expr $m2_y + $pin_y_pitch ]
+		    #set m2_track_number [ expr {round ( ($m2_y + ($pin_y_pitch*$m2_pitch) ) / $m2_pitch)} ]
+
+		    if { [expr ($m2_track_number % 13) == 0] || [expr ($m2_track_number % 13) == 7] } {
+	 	    incr m2_track_number
+		    }
+  		    set m2_y [expr $m2_pitch*$m2_track_number]
+		
+		    puts "INFO: $proc_name, pin $pin ; m2_pitch $m2_pitch ; block_height $block_height ; pin_y_pitch $pin_y_pitch ; m2_track_number $m2_track_number ; m2_y $m2_y"	
+                    
+		    set llx 0  
+                    set lly [expr $m2_y - $m2_width/2 ]
+                    set urx $m2_length
+                    set ury [expr $m2_y + $m2_width/2 ]
+                }
+                if { [expr $color_index % 2 ] == 0 } {
+                    set str "MASK 2"
+                } else {
+                    set str "MASK 1"
+                }
+                puts $of_lef "   PIN $b_name\[$i\]"
+                puts $of_lef "      DIRECTION $pin_dir ;"
+                puts $of_lef "      USE SIGNAL ;"
+                puts $of_lef "      PORT"
+                puts $of_lef "         LAYER $layer ;"
+                puts $of_lef "            RECT $str $llx $lly $urx $ury ;"
+                puts $of_lef "      END"
+                puts $of_lef "   END $b_name\[$i\]\n"
+                incr color_index
+		incr m2_track_number $pin_y_pitch
+            } 
+        } else {
+            puts $of_lef "   PIN $pin"
+            puts $of_lef "      DIRECTION $pin_dir ;"
+            puts $of_lef "      USE SIGNAL ;"
+            puts $of_lef "      PORT"
+            puts $of_lef "         LAYER $layer ;"
+            puts $of_lef "            RECT $str $llx $lly $urx $ury ;"
+            puts $of_lef "      END"
+            puts $of_lef "   END $pin\n"
+            incr color_index
+	    incr m2_track_number $pin_y_pitch	
+        }
+    }
+    puts $of_lef "   PIN $power"
+    puts $of_lef "      DIRECTION input ;"
+    puts $of_lef "      USE POWER ;"
+    puts $of_lef "      PORT"
+    puts $of_lef "       LAYER M4 ;"
+    puts $of_lef "          RECT  $cell_llx $power_lly $urx $power_ury ;"
+    puts $of_lef "      END"
+    puts $of_lef "   END $power\n"
+    puts $of_lef "   PIN $ground"
+    puts $of_lef "      DIRECTION input ;"
+    puts $of_lef "      USE GROUND ;"
+    puts $of_lef "      PORT"
+    puts $of_lef "       LAYER M4 ;"
+    puts $of_lef "          RECT  $cell_llx $gnd_lly $urx $gnd_ury ;"
+    puts $of_lef "      END"
+    puts $of_lef "   END $ground\n"
+
+    # add obstructions
+    puts $of_lef "OBS\n"
+    puts $of_lef "  LAYER M0 SPACING $m0_spacing ;\n"
+    puts $of_lef "    RECT 0.0 0.0 $cell_urx $cell_ury ;\n"
+    puts $of_lef "  LAYER M1 SPACING $m1_spacing ;\n"
+    puts $of_lef "    RECT 0.0 0.0 $cell_urx $cell_ury ;\n"
+    puts $of_lef "  LAYER M2 SPACING $m2_spacing ;\n"
+    puts $of_lef "    RECT $m2_length 0.0 $cell_urx $cell_ury ;\n"
+    puts $of_lef "  LAYER M3 SPACING $m3_spacing ;\n"
+    puts $of_lef "    RECT $m2_length 0.0 $cell_urx $cell_ury ;\n"
+    puts $of_lef "  LAYER M4 SPACING $m4_spacing ;\n"
+    puts $of_lef "    RECT $m2_length 0.0 $cell_urx $cell_ury ;\n"
+    puts $of_lef "END\n"
+    
+    puts $of_lef "END $block_name"
+    puts $of_lef "END LIBRARY"
+    close $of_lef
+    return $fname
+}
+
+define_proc_attributes gtr_lamb_gen_lef \
+    -info "Utility to generate LAMB Memory collaterals" \
+    -define_args {
+        {-ftr_value "Specify flow-through or not" "int" int required}
+	{-tech_node "Specify tech node (default n3b)" "AnOos" one_of_string {required {values {"n3b" "n3e" "n5"}}}}
+	{-block_name "Specify memory name" "<block_name>" string required}
+	{-data_depth "Specify the depth" "int" int required}
+	{-data_width "Specify the data bus width in bits" "int" int required}
+	{-dual_clocks "Specify if dual async clocks are to be used" "" boolean optional}
+   {-filelistVar "Update filelist for manifest.xml" "" string optional}
+	{-debug "Report additional logging for debug purposes" "" boolean optional}
+}
+
