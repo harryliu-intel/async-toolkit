@@ -129,6 +129,39 @@ bsdmainutils
 
 (Clearly not all are required.)
 
+CHANGES TO CM3
+==============
+
+I also made the following changes to CM3 itself before compiling, not sure whether required (in the CM3 git checkout):
+
+
+diff --git a/m3-db/mysql/src/mysql_wrap.c b/m3-db/mysql/src/mysql_wrap.c
+index ec939d8de1..256839b186 100644
+--- a/m3-db/mysql/src/mysql_wrap.c
++++ b/m3-db/mysql/src/mysql_wrap.c
+@@ -165,7 +165,7 @@
+ #include <stdio.h>
+ 
+ 
+-#include <mysql.h>
++#include <mysql/mysql.h>
+ 
+ 
+ #include <string.h>
+diff --git a/scripts/python/pylib.py b/scripts/python/pylib.py
+index faa11b3a34..01fb0e6ccf 100755
+--- a/scripts/python/pylib.py
++++ b/scripts/python/pylib.py
+@@ -340,7 +340,7 @@ def TargetOnlyHasCBackend(a):
+     #
+     # Nevertheless:
+     #
+-    return a.lower() != "i386_nt"
++    return False
+ 
+ _PossibleCm3Flags = ["boot", "keep", "override", "commands", "verbose", "why", "debug", "trace"]
+ _SkipGccFlags = ["nogcc", "skipgcc", "omitgcc"]
+
 
 
 
