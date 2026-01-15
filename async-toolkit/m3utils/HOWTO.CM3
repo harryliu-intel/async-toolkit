@@ -1,0 +1,172 @@
+How to set up CM3.  Current as of 12/24/2025
+============================================
+
+There are probably other methods, but this method works.
+
+This assumes all the libraries are set up right, etc.  That is probably not the case.  See below for hints.
+
+We assume we're on AMD64_LINUX (x86_64 running Linux).
+
+Download the boot file from CM3:
+
+https://github.com/modula3/cm3/releases/download/d5.11.4/cm3-dist-AMD64_LINUX-d5.11.4.tar.xz
+
+This file is the latest release as of now.
+
+Unpack this file and install it in a good location using, e.g.,:
+
+./scripts/concierge.py install --prefix /home/mika/cm3 all
+
+I then did the following---although it's possible some steps can be skipped!
+
+git clone the cm3 repo
+
+within the cm3 repo, cd to scripts/python 
+
+run 
+
+./do-cm3-all.py realclean
+./do-cm3-all.py buildship
+
+This builds and ships everything EXCEPT the compiler itself (cm3).
+
+Make a backup of the cm3 compiler from the bootstrap (cp cm3 cm3.000) and then copy the new compiler over the old:
+
+e.g.,
+
+cp ../../m3-sys/cm3/AMD64_LINUX/cm3 /home/mika/cm3/bin
+
+Then rebuild everything with the new compiler:
+
+./do-cm3-all.py realclean
+./do-cm3-all.py buildship
+
+save the compiler (cp cm3 cm3.001) and copy the new compiler over the old
+
+cp ../../m3-sys/cm3/AMD64_LINUX/cm3 /home/mika/cm3/bin
+
+now, switch the back-end to using gcc rather than the C-based compiler:
+
+edit cm3.cfg (which is in the same directory as cm3 itself) and change
+
+from:
+readonly M3_BACKEND_MODE = "C"
+
+to:
+readonly M3_BACKEND_MODE = "3"
+
+(3 is the special gcc back end)
+
+now recompile everything again:
+
+./do-cm3-all.py realclean
+./do-cm3-all.py buildship
+
+for good measure, install the new compiler, and do it all over...
+
+At this point, cm3 should be set up and set up for compiling using the gcc back end, with all the libraries compiled by the gcc back end.  This is important, because otherwise they may not be compatible with the output of the compiler.
+
+Then 
+
+cd to m3utils/m3utils
+
+setenv RTA_CM3_HOME /home/mika/cm3 # or whatever you used to install the compiler
+setenv M3UTILS `pwd`
+
+and 
+
+make
+
+It should complete without errors.
+
+ERRORS and PROBLEMS
+===================
+
+Most or all of what goes wrong will have to do with library setups.  cm3 requires a bunch of libraries, and m3utils requires a bunch more.
+
+Here is a diff from the CM3 installer to my working config:
+
+diff -r /truffles/mika/cm3-dist-AMD64_LINUX-d5.11.4/m3-sys/cminstall/src/config-no-install/Linux.common /home/mika/cm3/bin/config/Linux.common
+50c50
+< %SYSTEM_LIBS{"POSTGRES95"} = [ "-L/usr/local/pgsql/lib", "-lpq" ]
+---
+> SYSTEM_LIBS{"POSTGRES95"} = [ "-L/usr/local/pgsql/lib", "-lpq" ]
+diff -r /truffles/mika/cm3-dist-AMD64_LINUX-d5.11.4/m3-sys/cminstall/src/config-no-install/Unix.common /home/mika/cm3/bin/config/Unix.common
+54c54
+<     "X11"        : [  "-L/usr/X11R6/lib", "-lXft", "-lfontconfig", "-lXaw", "-lXmu", "-lXext", "-lXt", "-lSM", "-lICE", "-lX11" ],
+---
+>     "X11"        : [  "-L/usr/X11R6/lib", "-lXft", "-lfontconfig", "-lXaw", "-lXmu", "-lXext", "-lXt", "-lSM", "-lICE", "-lX11", "-lXpm" ],
+
+But of course this presupposes that all the libraries are installed correctly.
+
+If running for example Debian, the following is a list of useful packages (apt-get install [package]):
+
+cmake
+net-tools
+libxft-dev
+libxaw-dev
+libxaw7-dev
+libxext-dev
+libx11-dev
+libice-dev
+x11-apps
+libglu1-mesa-dev
+libgl-dev
+git
+libxpm-dev
+gv
+ntp
+libmpfr-dev
+libgmp-dev
+mariadb-server
+mariadb-client
+libmysqlclient-dev
+libmariadb-dev
+libmariadb-dev-compat
+libpq-dev
+util-linux
+bsdmainutils
+
+(Clearly not all are required.)
+
+CHANGES TO CM3
+==============
+
+I also made the following changes to CM3 itself before compiling, not sure whether required (in the CM3 git checkout):
+
+
+diff --git a/m3-db/mysql/src/mysql_wrap.c b/m3-db/mysql/src/mysql_wrap.c
+index ec939d8de1..256839b186 100644
+--- a/m3-db/mysql/src/mysql_wrap.c
++++ b/m3-db/mysql/src/mysql_wrap.c
+@@ -165,7 +165,7 @@
+ #include <stdio.h>
+ 
+ 
+-#include <mysql.h>
++#include <mysql/mysql.h>
+ 
+ 
+ #include <string.h>
+diff --git a/scripts/python/pylib.py b/scripts/python/pylib.py
+index faa11b3a34..01fb0e6ccf 100755
+--- a/scripts/python/pylib.py
++++ b/scripts/python/pylib.py
+@@ -340,7 +340,7 @@ def TargetOnlyHasCBackend(a):
+     #
+     # Nevertheless:
+     #
+-    return a.lower() != "i386_nt"
++    return False
+ 
+ _PossibleCm3Flags = ["boot", "keep", "override", "commands", "verbose", "why", "debug", "trace"]
+ _SkipGccFlags = ["nogcc", "skipgcc", "omitgcc"]
+
+
+
+
+
+
+
+
+
